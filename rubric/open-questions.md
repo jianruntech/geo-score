@@ -29,18 +29,7 @@ a judgement call we would rather make in the open.
 Two of these changed more than a verdict. #1 changed what the number means. #6 made Chinese
 and English sites comparable on the content pillar for the first time.
 
----|---|
-| 1 | 档名描述的是分数不是站点健康度 | 五档全部换成阶段语义（未起步／起步期／成长期／基础扎实／领先）；「危急」删除，CI 现在拦截判决式档名。同时把「就绪度」与「引用表现」拆成两个数——36 分刺眼的根因是把可修的和天然低的搅在一起 |
-| 2 | `llms.txt` 的「分节链接组」是否要求该节含链接 | **要求含链接**。阶梯第 3 档写死「2 个以上**含链接**的主题分节」，无链接的散文分节不计入 |
-| 3 | `llms-full.txt` 允不允许放在非根路径 | **允许**，但须可从 `llms.txt` 或 `robots.txt` 发现。同时该项移出分母，改为加分项 |
-| 4 | 「具名作者」是否强制要求站内 bio 页 | **不强制**。阶梯第 3 档为「姓名链向可核实的身份页」，站内作者页或本人主页等效 |
-| 5 | 日期可见但无 `dateModified` 算不算时间信号 | **算**。schema 日期与页面可见日期等效，二者其一即可得中间档；两者一致才给满分 |
-| 6 | 「40–90 词」在中文没有权威换算 | 定为**中文 50–200 字**（英文同时放宽到 25–120 词），写进量表第 7 条规则，不再由审计者各自决定 |
-| 7 | 站点声明 0 个 `sameAs` 时是 failed 还是 not_applicable | **记 0 分，不退出分母**。没声明就是没做，不是不适用 |
-| 8 | `robots.txt` 里声明的 sitemap 路径是否优先 | **优先于约定路径**，写进 `p1.sitemap` 的判据 |
-
-其中第 1、6 两条改变的不只是判定，也改变了分数的含义：第 1 条重新定义了分数说的是什么，
-第 6 条让中文站与英文站在内容支柱上第一次可比。
+*同一张表的中文版见 [open-questions.zh-CN.md](open-questions.zh-CN.md)。*
 
 ---
 

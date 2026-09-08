@@ -314,6 +314,31 @@ for r in MODERN:
         check(len(a["sampled_urls"]) == 8 or a.get("notes"),
               f"{fp}: 抽样 {len(a['sampled_urls'])} 页而非 8 页，且 notes 里没有说明")
 
+# 14 · 英文主文档不得混入中文正文（语言切换链接与公司名除外）
+#      —— 仓库主语言是英文，读者点进来撞上整屏读不懂的字，是最刺眼的一种不完整
+CJK = re.compile(r'[\u4e00-\u9fff]')
+ALLOW = re.compile(r'<a [^>]*>[^<]*简体中文[^<]*</a>'            # HTML 形式的语言切换链接
+                   r'|\[[^\]]*简体中文[^\]]*\]\([^)]*\)'      # Markdown 形式
+                   r'|(?:简体中文|中文版|同一张表的中文版见)\s*[：:]?\s*\[[^\]]*\]\([^)]*\)'
+                   r'|\(见润科技\)')                            # 公司中文名
+EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md",
+              "CODE_OF_CONDUCT.md", "rubric/README.md", "examples/README.md",
+              "examples/sample-report.md", "reference/ai-crawlers.md",
+              "reference/platform-source-selection.md"]
+for r in MODERN:
+    EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
+                   "rubric/open-questions.md"]
+import glob as _g2
+EN_PRIMARY += sorted(_g2.glob("examples/audits/v1.1/*.md"))
+for pth in dict.fromkeys(EN_PRIMARY):
+    if not os.path.exists(pth): continue
+    body = ALLOW.sub("", io.open(pth, encoding="utf-8").read())
+    # 引用被审站点的原句可以保留原文，用反引号或引号包起来的不算
+    body = re.sub(r'`[^`]*`|「[^」]*」|"[^"]*"', "", body)
+    bad = [l.strip()[:70] for l in body.split("\n") if CJK.search(l)]
+    check(not bad, f"{pth}: 英文主文档里有 {len(bad)} 行中文正文，第一行是 {bad[0] if bad else ''!r} "
+                   f"—— 中文内容应放到对应的 .zh-CN.md")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

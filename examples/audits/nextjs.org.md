@@ -89,6 +89,9 @@ Counted quantitative claims about the world across the 8 sampled pages, excludin
 
 **✗ `p3.named-author` 0/5**
 
+> **Note added 2026-09-08.** This check was read differently here than in [stripe.com](stripe.com.md), on the same v1.0 criterion ("a real, identifiable person **with a bio**"). That disagreement between two of our own audits is how ambiguity #4 in [open-questions](../../rubric/open-questions.md) was found. v1.1 settles it: an on-site author page and the person's own homepage are equivalent. Neither audit was rewritten.
+
+
 Denominator: the 4 blog articles. All 4 name real, identifiable people - Marcos Hernanz, Sam Poder, Josh Story, Karim Rahal, Sebastian Silbermann - never 'admin' and never a brand name, and each byline links to the author's public X profile. What is absent is the bio the check also requires: the byline renders as name plus handle and nothing else, there is no author page, and the byline does not link to /team. Checked /team (343,703 bytes) for all five names: only 'Josh Story' appears; the other four are not on it. 0 of 4 meet both conditions, so floor(5 x 0/4) = 0. This is the single most contestable zero in the report: a reader who treats a linked public profile as satisfying 'with a bio' would score this 5/5 and the site total 45/82.
 
 **✓ `p3.natural-questions` 1/5**

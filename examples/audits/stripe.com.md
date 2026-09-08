@@ -99,6 +99,9 @@ Scored per page over the 8-URL sample; 3 pass. PASS — /blog/why-global-workers
 
 **✓ `p3.named-author` 5/5**
 
+> **Note added 2026-09-08.** This check was read differently here than in [nextjs.org](nextjs.org.md), on the same v1.0 criterion ("a real, identifiable person **with a bio**"). That disagreement between two of our own audits is how ambiguity #4 in [open-questions](../../rubric/open-questions.md) was found. v1.1 settles it: an on-site author page and the person's own homepage are equivalent. Neither audit was rewritten.
+
+
 Denominator is the 4 authored pages in the sample; the homepage and 3 product pages carry no byline by design, matching the rubric's own worked example which scores this check over articles rather than the full 8. All 4 name a real person with a role title rendered on the page and an external identity link: 'Scott Woody' (CEO, Metronome); 'Siddharth Kulkarni, Quant Research Lead, Link' and 'Mitchell Martins-Collum, UX Research Lead, Money Management'; 'Bart Heideman'; 'Abhi Tiwari'. Each name resolves to a LinkedIn profile in both the byline and the JSON-LD author node. No 'admin', no brand-name bylines. floor(5 x 4/4) = 5. Counterweight recorded in notes: the /resources library ships "author": null.
 
 **✗ `p3.natural-questions` 0/5**
