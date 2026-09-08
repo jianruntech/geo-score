@@ -57,7 +57,7 @@ The first line of robots.txt declares `Sitemap: https://stripe.com/sitemap/sitem
 
 *Why this tier:* Meets every tier 5 condition: 200, a site definition section present, and far beyond "more than 2 topic sections containing links" (26 measured).
 
-https://stripe.com/llms.txt HTTP=200, 65026 bytes, content-type text/plain. Definition section, verbatim: "> Stripe is a technology company that provides financial infrastructure for businesses. Businesses of every size—from new startups to established public companies—use Stripe to accept payments online and in person, embed financial services, and create custom revenue models." 26 `^## ` sections (Payments / Connect / Payment Links / Checkout / Elements / Billing / Invoicing / Tax / Atlas / Terminal / Radar / Issuing / … / External domains / Optional), 285 `^- [` entries, each in the form "[title](URL): description". Also https://docs.stripe.com/llms.txt HTTP=200, 90052 bytes, text/markdown.
+https://stripe.com/llms.txt HTTP=200, 65026 bytes, content-type text/plain. Definition section, verbatim: "> Stripe is a technology company that provides financial infrastructure for businesses. Businesses of every size—from new startups to established public companies—use Stripe to accept payments online and in person, embed financial services, and create custom revenue models." 26 `^## ` sections (Payments / Connect / Payment Links / Checkout / Elements / Billing / Invoicing / Tax / Atlas / Terminal / Radar / Issuing / … / External domains / Optional), 285 `^- [` entries, each in the form `[title](URL): description`. Also https://docs.stripe.com/llms.txt HTTP=200, 90052 bytes, text/markdown.
 
 **✓ `p1.organization` 6/6** — Organization + WebSite sitewide
 

@@ -353,8 +353,24 @@ for pth in dict.fromkeys(EN_PRIMARY):
     check(not bad, f"{pth}: 英文主文档里有 {len(bad)} 行中文正文，第一行是 {bad[0] if bad else ''!r} "
                    f"—— 中文内容应放到对应的 .zh-CN.md")
 
+# 15 · 内部链接必须指向存在的文件 —— 一个 404 的链接比没有链接更伤信任
+import glob as _g3
+_seen_links = 0
+for pth in _g3.glob("**/*.md", recursive=True):
+    if pth.startswith(".git"): continue
+    body = io.open(pth, encoding="utf-8").read()
+    body = re.sub(r'```.*?```', '', body, flags=re.S)          # 代码块里的路径是示例
+    body = re.sub(r'`[^`\n]*`', '', body)                      # 行内代码同理
+    for m in re.finditer(r'\]\(([^)\s]+)\)', body):
+        t = m.group(1).split("#")[0]
+        if not t or t.startswith(("http://", "https://", "mailto:")): continue
+        _seen_links += 1
+        tgt = os.path.normpath(os.path.join(os.path.dirname(pth), t))
+        check(os.path.exists(tgt), f"{pth}: 链接指向不存在的 {t!r}")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)
     sys.exit(1)
-print(f"OK — {len(rub)} rubric version(s) ({len(MODERN)} tiered), scope rule clean, metadata consistent")
+print(f"OK — {len(rub)} rubric version(s) ({len(MODERN)} tiered), {_seen_links} internal links resolve, "
+      f"scope rule clean, metadata consistent")
