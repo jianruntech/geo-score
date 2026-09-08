@@ -14,8 +14,28 @@
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
-  | python3 - stripe.com
+  | python3 - stripe.com --brief
 ```
+
+```
+  AIV READINESS  https://stripe.com
+──────────────────────────────────────────────────────────
+  71 / 100   Solid          12 points to Leading
+
+  Reachable             11/15   ◐✓◐
+  Understandable        15/22   ◐✓✓✗◐
+  Content Citability    25/35   ✓◐◐✓◐
+  Brand Credibility      8/10   ⊘⊘✓◐◐
+  Answer Fit              2/4   ◐⊘⊘
+
+  Biggest gaps
+   +4   Headings match how people ask
+   +3   Named, verifiable authorship
+   +3   Freshness signal present
+```
+
+<details>
+<summary>Full output — every check, its evidence, and what the next tier asks for</summary>
 
 ```
   AIV READINESS  https://stripe.com
@@ -61,8 +81,12 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
   https://github.com/jianruntech/geo-score
 ```
 
+</details>
+
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
 a score against a **published, versioned rubric** — not a black box.
+
+**[See how 106 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them cannot be cited at all.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.

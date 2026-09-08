@@ -14,8 +14,28 @@
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
-  | python3 - stripe.com
+  | python3 - stripe.com --brief
 ```
+
+```
+  AIV READINESS  https://stripe.com
+──────────────────────────────────────────────────────────
+  71 / 100   Solid          12 points to Leading
+
+  Reachable             11/15   ◐✓◐
+  Understandable        15/22   ◐✓✓✗◐
+  Content Citability    25/35   ✓◐◐✓◐
+  Brand Credibility      8/10   ⊘⊘✓◐◐
+  Answer Fit              2/4   ◐⊘⊘
+
+  Biggest gaps
+   +4   Headings match how people ask
+   +3   Named, verifiable authorship
+   +3   Freshness signal present
+```
+
+<details>
+<summary>完整输出（每一项的分数、证据与下一档要求）</summary>
 
 ```
   AIV READINESS  https://stripe.com
@@ -61,8 +81,12 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
   https://github.com/jianruntech/geo-score
 ```
 
+</details>
+
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
+
+**[看 106 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/)**  ·  其中四分之一根本无法被引用。
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。

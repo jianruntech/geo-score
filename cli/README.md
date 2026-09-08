@@ -12,6 +12,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 
 | Flag | What it does |
 |---|---|
+| `--brief` | Pillar totals and the three biggest gaps only — what fits in a screenshot |
 | `--explain`, `-e` | Print the evidence behind every check, not just the score |
 | `--json` | Machine-readable output conforming to [`schema/report.v2.json`](../schema/report.v2.json) |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |

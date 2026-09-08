@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The state of AI visibility — 106 sites scored</title>
+<meta name="description" content="106 well-known sites scored on whether AI answer engines can find, parse, trust and cite them. Open rubric, reproducible, median 59.5.">
+<meta property="og:title" content="The state of AI visibility">
+<meta property="og:description" content="A quarter of 106 well-known sites cannot be cited by an AI answer engine at all. Open rubric, one command, reproducible.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B120E;--panel:#101913;--line:#2C3B33;--soft:#1E2A24;--ink:#E7ECE7;--dim:#A7B4AC;--mute:#5F6761;--brass:#A9854C;--green:#4FAE80;--pine:#26714F;--red:#C4705F;--amber:#C9A227}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+ background-image:linear-gradient(var(--soft) 1px,transparent 1px),linear-gradient(90deg,var(--soft) 1px,transparent 1px);background-size:40px 40px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+header{padding:56px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{color:var(--brass);letter-spacing:4px;font-size:12px;margin:0 0 22px}
+h1{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:clamp(32px,5.2vw,54px);line-height:1.05;margin:0 0 16px;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:16px;max-width:60ch;margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:32px 0 0}
+.stat{background:var(--panel);padding:16px 18px}
+.stat b{display:block;font-size:26px;color:var(--green);font-weight:500;line-height:1.1}
+.stat span{color:var(--mute);font-size:11px;letter-spacing:1.4px}
+h2{font-family:Fraunces,Georgia,serif;font-size:26px;margin:56px 0 6px;font-weight:600}
+h2+p{color:var(--dim);margin:0 0 22px;max-width:66ch}
+.finding{border-left:2px solid var(--brass);padding:2px 0 2px 18px;margin:22px 0;color:var(--dim);max-width:70ch}
+.finding b{color:var(--ink)}
+.hist{display:flex;align-items:flex-end;gap:3px;height:112px;margin:22px 0 6px}
+.hist div{flex:1;background:var(--pine);position:relative;min-height:2px}
+.hist div.hot{background:var(--green)}
+.hist div span{position:absolute;top:-19px;left:0;right:0;text-align:center;font-size:11px;color:var(--mute)}
+.histx{display:flex;gap:3px;color:var(--mute);font-size:11px}
+.histx div{flex:1;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--mute);font-weight:400;font-size:11px;letter-spacing:1.4px;padding:10px 8px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--dim)}
+td{padding:9px 8px;border-bottom:1px solid var(--soft)}
+tr:hover td{background:var(--panel)}
+.num{font-variant-numeric:tabular-nums;text-align:right;width:58px}
+.bar{width:120px}
+.bar i{display:block;height:7px;background:var(--pine)}
+.bar i.hi{background:var(--green)} .bar i.lo{background:var(--red)}
+.band{font-size:11px;letter-spacing:.6px;white-space:nowrap}
+.pill{display:inline-block;border:1px solid var(--brass);color:var(--brass);font-size:10px;padding:1px 6px;letter-spacing:.6px}
+.sect{color:var(--mute);font-size:12px;white-space:nowrap}
+.gaps{color:var(--mute);font-size:11.5px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 14px;align-items:center}
+input,select{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:9px 12px;font:inherit;font-size:13px}
+input{flex:1;min-width:200px} input::placeholder{color:var(--mute)}
+input:focus,select:focus{outline:2px solid var(--brass);outline-offset:-2px}
+pre{background:var(--panel);border:1px solid var(--line);padding:16px 18px;overflow-x:auto;font-size:12.5px;color:var(--dim);margin:18px 0}
+pre b{color:var(--green);font-weight:500}
+a{color:var(--brass)} a:hover{color:var(--green)}
+footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);color:var(--mute);font-size:12.5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.two>div{background:var(--panel);padding:18px 20px}
+.two h3{margin:0 0 8px;font-size:13px;color:var(--brass);letter-spacing:1px;font-weight:500}
+.two p{margin:0;color:var(--dim);font-size:13px;line-height:1.55}
+.two code{color:var(--ink);font-size:12px}
+@media(max-width:720px){.two{grid-template-columns:1fr}.bar,.gaps{display:none}}
+</style></head><body><div class="wrap">
+
+<header>
+<p class="eyebrow">JIANRUNTECH / GEO-SCORE</p>
+<h1>The state of<br>AI visibility</h1>
+<p class="sub">106 well-known sites, scored on whether an AI answer engine can find, parse,
+trust and cite them. One open rubric, one public tool, the same eight-page sample for every
+site. Nothing here is a black box — <a href="https://github.com/jianruntech/geo-score">re-run it yourself</a>.</p>
+<div class="stats">
+<div class="stat"><b>106</b><span>SITES</span></div>
+<div class="stat"><b>59.5</b><span>MEDIAN</span></div>
+<div class="stat"><b>73.0</b><span>UPPER QUARTILE</span></div>
+<div class="stat"><b>14–92</b><span>RANGE</span></div>
+<div class="stat"><b>27</b><span>CANNOT BE CITED</span></div>
+</div>
+</header>
+
+<h2>A quarter of the field cannot be cited at all</h2>
+<p>27 sites have a gate check at zero — a retrieval crawler cannot get the content, so
+nothing else on the page matters. Two very different problems live inside that number.</p>
+
+<div class="two">
+<div><h3>DELIBERATE — 11 SITES</h3><p>Their <code>robots.txt</code> disallows AI retrieval
+crawlers by name. A site that does not want to be quoted is not misconfigured, and this
+rubric reports it as it is.<br><br><code>figma.com, healthline.com, khanacademy.org, loom.com, payoneer.com, qcloud.com, stackoverflow.blog, techcrunch.com, theverge.com, together.ai, webmd.com</code></p></div>
+<div><h3>ACCIDENTAL — 13 SITES</h3><p>Body copy only exists after JavaScript runs. The
+content is there and a browser sees it; a retrieval crawler gets an empty shell. This group
+almost certainly did not choose it.<br><br><code>01.ai, airtable.com, aliyun.com, booking.com, cohere.com, feishu.cn, freecodecamp.org, huggingface.co, shein.com, solidjs.com, temu.com, weaviate.io, yuque.com</code></p></div>
+</div>
+
+<div class="finding"><b>Sites built for the Chinese market score 23 points lower</b> —
+median 43.0 against 66.0 for everyone else. The gap is not content quality. It is
+<code>llms.txt</code>, <code>Organization</code> schema, visible dates and real bylines —
+conventions that spread through the English web first and have not crossed over.</div>
+
+<h2>Where everyone lands</h2>
+<p>Bars are counts of sites per ten-point band. The rubric is not graded on a curve; this is
+the distribution that falls out of it.</p>
+<div class="hist"><div class="" style="height:3%"><span></span></div><div class="" style="height:19%"><span>4</span></div><div class="" style="height:19%"><span>4</span></div><div class="" style="height:33%"><span>7</span></div><div class="hot" style="height:100%"><span>21</span></div><div class="" style="height:81%"><span>17</span></div><div class="" style="height:71%"><span>15</span></div><div class="hot" style="height:100%"><span>21</span></div><div class="" style="height:71%"><span>15</span></div><div class="" style="height:10%"><span>2</span></div></div>
+<div class="histx"><div>0</div><div>10</div><div>20</div><div>30</div><div>40</div><div>50</div><div>60</div><div>70</div><div>80</div><div>90</div></div>
+
+<h2>Check your own site</h2>
+<p>No install, no dependencies, no account. Python 3.8+ and about twenty seconds.</p>
+<pre>curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+  | python3 - <b>yoursite.com</b></pre>
+<p style="color:var(--mute);font-size:13px">Add <code>--explain</code> for the evidence behind every check and what the next tier
+asks for, or <code>--compare competitor.com</code> to see the two side by side.</p>
+
+<h2>Every site</h2>
+<p>Click a column to sort. The score is <em>readiness</em> — whether an engine <em>can</em>
+cite the site, not whether one does.</p>
+<div class="toolbar">
+<input id="q" type="search" placeholder="Find a site or sector…" autocomplete="off">
+<select id="sec"><option value="">All sectors</option><option>Cloud & DevOps</option><option>Ecommerce</option><option>Developer tools</option><option>Marketing / CRM</option><option>Payments / Fintech</option><option>SaaS / Productivity</option><option>AI</option><option>China / enterprise</option><option>China / AI</option><option>China / no-code</option><option>Healthcare</option><option>Media / Publishing</option><option>China / consumer</option><option>Education</option><option>China / cloud</option><option>Travel</option></select>
+<select id="fil"><option value="">All sites</option><option value="cap">Cannot be cited</option><option value="top">Solid or better</option><option value="low">Below 50</option></select>
+</div>
+<table id="t"><thead><tr>
+<th data-k="s">SITE</th><th data-k="n" class="num">SCORE</th><th></th>
+<th data-k="b">BAND</th><th data-k="k">SECTOR</th><th>BIGGEST GAPS</th>
+</tr></thead><tbody id="tb"></tbody></table>
+<p id="count" style="color:var(--mute);font-size:12px"></p>
+
+<h2>By sector</h2>
+<table><thead><tr><th>SECTOR</th><th class="num">SITES</th><th class="num">MEDIAN</th><th></th></tr></thead><tbody><tr><td>Cloud & DevOps</td><td class="num">10</td><td class="num" style="color:var(--green)">81.0</td><td class="bar"><i style="width:81%"></i></td></tr><tr><td>Ecommerce</td><td class="num">6</td><td class="num" style="color:var(--green)">73.5</td><td class="bar"><i style="width:73%"></i></td></tr><tr><td>Developer tools</td><td class="num">16</td><td class="num" style="color:var(--green)">70.0</td><td class="bar"><i style="width:70%"></i></td></tr><tr><td>Marketing / CRM</td><td class="num">8</td><td class="num" style="color:var(--green)">70.0</td><td class="bar"><i style="width:70%"></i></td></tr><tr><td>Payments / Fintech</td><td class="num">7</td><td class="num" style="color:var(--green)">70</td><td class="bar"><i style="width:70%"></i></td></tr><tr><td>SaaS / Productivity</td><td class="num">12</td><td class="num" style="color:var(--green)">63.5</td><td class="bar"><i style="width:63%"></i></td></tr><tr><td>AI</td><td class="num">10</td><td class="num" style="color:var(--green)">60.5</td><td class="bar"><i style="width:60%"></i></td></tr><tr><td>China / enterprise</td><td class="num">6</td><td class="num" style="color:var(--green)">55.5</td><td class="bar"><i style="width:55%"></i></td></tr><tr><td>China / AI</td><td class="num">4</td><td class="num" style="color:var(--green)">49.5</td><td class="bar"><i style="width:49%"></i></td></tr><tr><td>China / no-code</td><td class="num">5</td><td class="num" style="color:var(--green)">45</td><td class="bar"><i style="width:45%"></i></td></tr><tr><td>Healthcare</td><td class="num">2</td><td class="num" style="color:var(--green)">40.0</td><td class="bar"><i style="width:40%"></i></td></tr><tr><td>Media / Publishing</td><td class="num">6</td><td class="num" style="color:var(--green)">40.0</td><td class="bar"><i style="width:40%"></i></td></tr><tr><td>China / consumer</td><td class="num">6</td><td class="num" style="color:var(--green)">32.0</td><td class="bar"><i style="width:32%"></i></td></tr><tr><td>Education</td><td class="num">3</td><td class="num" style="color:var(--green)">24</td><td class="bar"><i style="width:24%"></i></td></tr><tr><td>China / cloud</td><td class="num">3</td><td class="num" style="color:var(--green)">23</td><td class="bar"><i style="width:23%"></i></td></tr><tr><td>Travel</td><td class="num">2</td><td class="num" style="color:var(--green)">22.0</td><td class="bar"><i style="width:22%"></i></td></tr></tbody></table>
+
+<footer>
+Scored with <a href="https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md">AIV rubric v1.1</a>
+on 2026-09-09 · <a href="https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json">raw data</a> ·
+<a href="https://github.com/jianruntech/geo-score/blob/main/benchmark/run.py">the script</a> ·
+<a href="https://github.com/jianruntech/geo-score">the repository</a><br><br>
+This measures readiness, not outcomes: whether an engine <em>can</em> cite a site. Whether one
+<em>does</em> depends on competition and query intent, which no site-side audit can observe.
+Four checks needing off-site search are left out of the denominator rather than guessed, so
+these run lower than a hand-scored audit. Sites change; every number carries the date it was
+measured. <br><br>Built by <a href="https://www.jianruntech.com">Jianrun Tech</a>. MIT.
+</footer>
+</div>
+<script>
+const D=[{"s":"netlify.com","n":92,"b":"Leading","k":"Cloud & DevOps","c":false,"w":"","g":["p2.named-author","p2.answer-passages","p3.video"],"r":79,"m":86},{"s":"pulumi.com","n":91,"b":"Leading","k":"Cloud & DevOps","c":false,"w":"","g":["p2.freshness","g.robots","g.reachable"],"r":75,"m":82},{"s":"bun.sh","n":88,"b":"Leading","k":"Developer tools","c":false,"w":"","g":["p2.freshness","p2.question-intent","p2.answer-passages"],"r":76,"m":86},{"s":"prisma.io","n":87,"b":"Leading","k":"Developer tools","c":false,"w":"","g":["p2.question-intent","p3.video","p2.freshness"],"r":71,"m":82},{"s":"clickup.com","n":87,"b":"Leading","k":"SaaS / Productivity","c":false,"w":"","g":["p3.video","p2.freshness","p2.answer-passages"],"r":71,"m":82},{"s":"zapier.com","n":87,"b":"Leading","k":"SaaS / Productivity","c":false,"w":"","g":["p2.freshness","p3.knowledge-graph","p2.named-author"],"r":75,"m":86},{"s":"elevenlabs.io","n":84,"b":"Leading","k":"AI","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p2.freshness"],"r":72,"m":86},{"s":"intercom.com","n":84,"b":"Leading","k":"Marketing / CRM","c":false,"w":"","g":["p2.named-author","p2.freshness","p2.answer-passages"],"r":72,"m":86},{"s":"twilio.com","n":83,"b":"Leading","k":"Cloud & DevOps","c":false,"w":"","g":["p2.named-author","p2.freshness","p1.breadcrumb"],"r":68,"m":82},{"s":"vercel.com","n":83,"b":"Leading","k":"Cloud & DevOps","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p2.freshness"],"r":68,"m":82},{"s":"supabase.com","n":83,"b":"Leading","k":"Developer tools","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p2.freshness"],"r":71,"m":86},{"s":"mistral.ai","n":81,"b":"Solid","k":"AI","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p1.breadcrumb"],"r":70,"m":86},{"s":"cloudflare.com","n":81,"b":"Solid","k":"Cloud & DevOps","c":false,"w":"","g":["p2.freshness","p1.page-type","p3.video"],"r":70,"m":86},{"s":"render.com","n":81,"b":"Solid","k":"Cloud & DevOps","c":false,"w":"","g":["p2.freshness","p2.named-author","p1.breadcrumb"],"r":70,"m":86},{"s":"sentry.io","n":81,"b":"Solid","k":"Cloud & DevOps","c":false,"w":"","g":["p2.freshness","p1.page-type","p2.named-author"],"r":67,"m":83},{"s":"fly.io","n":81,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p2.named-author","p2.freshness","p1.breadcrumb"],"r":70,"m":86},{"s":"nextjs.org","n":80,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p3.video","p2.named-author","p1.breadcrumb"],"r":69,"m":86},{"s":"nuxt.com","n":79,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p2.freshness","p3.video","p2.named-author"],"r":68,"m":86},{"s":"woocommerce.com","n":79,"b":"Solid","k":"Ecommerce","c":false,"w":"","g":["p3.video","p2.named-author","p2.freshness"],"r":68,"m":86},{"s":"calendly.com","n":78,"b":"Solid","k":"SaaS / Productivity","c":false,"w":"","g":["p2.named-author","p2.freshness","p1.breadcrumb"],"r":64,"m":82},{"s":"checkout.com","n":77,"b":"Solid","k":"Payments / Fintech","c":false,"w":"","g":["p2.named-author","p2.freshness","p1.organization"],"r":66,"m":86},{"s":"klaviyo.com","n":76,"b":"Solid","k":"Marketing / CRM","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p2.freshness"],"r":62,"m":82},{"s":"grafana.com","n":74,"b":"Solid","k":"Cloud & DevOps","c":false,"w":"","g":["p2.freshness","p1.page-type","p3.sameas"],"r":61,"m":82},{"s":"squarespace.com","n":74,"b":"Solid","k":"Ecommerce","c":false,"w":"","g":["p2.answer-passages","p3.video","p2.named-author"],"r":64,"m":86},{"s":"webflow.com","n":74,"b":"Solid","k":"Ecommerce","c":false,"w":"","g":["p2.freshness","p2.named-author","p1.breadcrumb"],"r":64,"m":86},{"s":"monday.com","n":74,"b":"Solid","k":"SaaS / Productivity","c":false,"w":"","g":["p2.answer-passages","p2.named-author","p2.freshness"],"r":64,"m":86},{"s":"anker.com","n":73,"b":"Solid","k":"China / consumer","c":false,"w":"","g":["p2.freshness","p2.answer-passages","p2.named-author"],"r":63,"m":86},{"s":"railway.com","n":73,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p3.knowledge-graph","p2.named-author","p2.freshness"],"r":63,"m":86},{"s":"shopify.com","n":73,"b":"Solid","k":"Ecommerce","c":false,"w":"","g":["p2.answer-passages","p1.page-type","p2.named-author"],"r":63,"m":86},{"s":"moz.com","n":73,"b":"Solid","k":"Marketing / CRM","c":false,"w":"","g":["p1.llms-txt","p1.page-type","p2.named-author"],"r":63,"m":86},{"s":"arstechnica.com","n":72,"b":"Solid","k":"Media / Publishing","c":false,"w":"","g":["p1.llms-txt","p2.question-intent","p3.sameas"],"r":62,"m":86},{"s":"hubspot.com","n":71,"b":"Solid","k":"Marketing / CRM","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p2.named-author"],"r":59,"m":83},{"s":"stripe.com","n":71,"b":"Solid","k":"Payments / Fintech","c":false,"w":"","g":["p2.question-intent","p2.named-author","p2.freshness"],"r":61,"m":86},{"s":"deno.com","n":70,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p1.organization","p1.page-type","p3.sameas"],"r":60,"m":86},{"s":"vuejs.org","n":70,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p1.organization","p1.page-type","p3.video"],"r":60,"m":86},{"s":"adyen.com","n":70,"b":"Solid","k":"Payments / Fintech","c":false,"w":"","g":["p2.freshness","p1.page-type","p3.video"],"r":60,"m":86},{"s":"airwallex.com","n":70,"b":"Solid","k":"Payments / Fintech","c":false,"w":"","g":["p2.freshness","p2.answer-passages","p1.page-type"],"r":60,"m":86},{"s":"asana.com","n":70,"b":"Solid","k":"SaaS / Productivity","c":false,"w":"","g":["p2.freshness","p2.answer-passages","p2.named-author"],"r":60,"m":86},{"s":"tencent.com","n":69,"b":"Solid","k":"China / enterprise","c":false,"w":"","g":["p1.llms-txt","p2.question-intent","p1.page-type"],"r":59,"m":86},{"s":"semrush.com","n":69,"b":"Solid","k":"Marketing / CRM","c":false,"w":"","g":["p2.freshness","p1.page-type","p2.named-author"],"r":59,"m":86},{"s":"pinecone.io","n":67,"b":"Solid","k":"AI","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p1.page-type"],"r":53,"m":79},{"s":"kingdee.com","n":67,"b":"Solid","k":"China / enterprise","c":false,"w":"","g":["p2.named-author","p3.knowledge-graph","p2.question-intent"],"r":56,"m":83},{"s":"linear.app","n":67,"b":"Solid","k":"SaaS / Productivity","c":false,"w":"","g":["p1.organization","p1.page-type","p3.sameas"],"r":55,"m":82},{"s":"replicate.com","n":66,"b":"Solid","k":"AI","c":false,"w":"","g":["p1.organization","p1.page-type","p3.video"],"r":54,"m":82},{"s":"svelte.dev","n":66,"b":"Solid","k":"Developer tools","c":false,"w":"","g":["p1.organization","p1.sitemap","p1.page-type"],"r":57,"m":86},{"s":"bigcommerce.com","n":66,"b":"Solid","k":"Ecommerce","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p1.page-type"],"r":52,"m":79},{"s":"coursera.org","n":64,"b":"Growing","k":"Education","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p3.knowledge-graph"],"r":55,"m":86},{"s":"braze.com","n":64,"b":"Growing","k":"Marketing / CRM","c":false,"w":"","g":["p2.answer-passages","p3.knowledge-graph","p3.video"],"r":55,"m":86},{"s":"langchain.com","n":62,"b":"Growing","k":"AI","c":false,"w":"","g":["p2.freshness","p1.organization","p1.llms-txt"],"r":51,"m":82},{"s":"alibabagroup.com","n":62,"b":"Growing","k":"China / enterprise","c":false,"w":"","g":["p1.organization","p2.answer-passages","p2.question-intent"],"r":49,"m":79},{"s":"datadoghq.com","n":60,"b":"Growing","k":"Cloud & DevOps","c":false,"w":"","g":["p1.organization","p2.answer-passages","p1.page-type"],"r":52,"m":86},{"s":"notion.com","n":60,"b":"Growing","k":"SaaS / Productivity","c":false,"w":"","g":["p2.freshness","p1.organization","p1.page-type"],"r":52,"m":86},{"s":"slack.com","n":60,"b":"Growing","k":"SaaS / Productivity","c":false,"w":"","g":["p2.freshness","p1.organization","p1.page-type"],"r":52,"m":86},{"s":"anthropic.com","n":59,"b":"Growing","k":"AI","c":false,"w":"","g":["p2.freshness","p1.organization","p1.llms-txt"],"r":51,"m":86},{"s":"smashingmagazine.com","n":59,"b":"Growing","k":"Media / Publishing","c":false,"w":"","g":["p2.named-author","p1.organization","p1.llms-txt"],"r":49,"m":83},{"s":"miro.com","n":59,"b":"Growing","k":"SaaS / Productivity","c":false,"w":"","g":["p2.named-author","p1.llms-txt","p3.sameas"],"r":48,"m":82},{"s":"deepseek.com","n":58,"b":"Growing","k":"China / AI","c":false,"w":"","g":["p2.question-intent","p2.named-author","p1.organization"],"r":50,"m":86},{"s":"vitejs.dev","n":58,"b":"Growing","k":"Developer tools","c":false,"w":"","g":["p1.organization","p2.question-intent","p1.page-type"],"r":50,"m":86},{"s":"ahrefs.com","n":58,"b":"Growing","k":"Marketing / CRM","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p1.llms-txt"],"r":50,"m":86},{"s":"mingdao.com","n":57,"b":"Growing","k":"China / no-code","c":false,"w":"","g":["p2.freshness","p2.answer-passages","p3.knowledge-graph"],"r":50,"m":88},{"s":"wise.com","n":57,"b":"Growing","k":"Payments / Fintech","c":false,"w":"","g":["p2.freshness","p2.answer-passages","p1.llms-txt"],"r":49,"m":86},{"s":"moonshot.cn","n":56,"b":"Growing","k":"China / AI","c":false,"w":"","g":["p2.question-intent","p2.named-author","p1.organization"],"r":48,"m":85},{"s":"mailchimp.com","n":56,"b":"Growing","k":"Marketing / CRM","c":false,"w":"","g":["p2.freshness","p1.organization","p2.sourced-stats"],"r":46,"m":82},{"s":"astro.build","n":55,"b":"Growing","k":"Developer tools","c":false,"w":"","g":["p1.organization","p2.answer-passages","p1.llms-txt"],"r":45,"m":82},{"s":"digitalocean.com","n":52,"b":"Growing","k":"Cloud & DevOps","c":false,"w":"","g":["p2.answer-passages","p1.organization","p1.llms-txt"],"r":43,"m":82},{"s":"tailwindcss.com","n":52,"b":"Growing","k":"Developer tools","c":false,"w":"","g":["p2.named-author","p1.organization","p1.llms-txt"],"r":45,"m":86},{"s":"wix.com","n":52,"b":"Growing","k":"Ecommerce","c":false,"w":"","g":["p2.answer-passages","p2.freshness","p3.knowledge-graph"],"r":45,"m":86},{"s":"remix.run","n":51,"b":"Growing","k":"Developer tools","c":false,"w":"","g":["p2.named-author","p2.freshness","p1.organization"],"r":42,"m":82},{"s":"qwik.dev","n":50,"b":"Early","k":"Developer tools","c":false,"w":"","g":["p2.freshness","p1.organization","p1.llms-txt"],"r":43,"m":86},{"s":"plaid.com","n":50,"b":"Early","k":"Payments / Fintech","c":false,"w":"","g":["p2.freshness","p1.organization","p2.answer-passages"],"r":41,"m":82},{"s":"huawei.com","n":49,"b":"Early","k":"China / enterprise","c":false,"w":"","g":["p2.freshness","p1.organization","p2.answer-passages"],"r":42,"m":86},{"s":"bytedance.com","n":45,"b":"Early","k":"China / enterprise","c":false,"w":"","g":["p2.answer-passages","p2.question-intent","p2.freshness"],"r":37,"m":83},{"s":"jiandaoyun.com","n":45,"b":"Early","k":"China / no-code","c":false,"w":"","g":["p2.question-intent","p2.named-author","p2.answer-passages"],"r":38,"m":84},{"s":"teambition.com","n":45,"b":"Early","k":"China / no-code","c":false,"w":"","g":["p2.question-intent","p2.named-author","p1.organization"],"r":38,"m":85},{"s":"zhipuai.cn","n":43,"b":"Early","k":"China / AI","c":false,"w":"","g":["p2.answer-passages","p2.question-intent","p1.organization"],"r":38,"m":88},{"s":"yonyou.com","n":43,"b":"Early","k":"China / enterprise","c":false,"w":"","g":["p2.question-intent","p2.named-author","p1.organization"],"r":37,"m":86},{"s":"cohere.com","n":40,"b":"Early","k":"AI","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.freshness","g.ssr"],"r":36,"m":86},{"s":"huggingface.co","n":40,"b":"Early","k":"AI","c":true,"w":"content needs JavaScript","g":["p2.named-author","p1.organization","p2.answer-passages"],"r":37,"m":86},{"s":"together.ai","n":40,"b":"Early","k":"AI","c":true,"w":"blocks crawlers","g":["p2.answer-passages","g.robots","p3.video"],"r":65,"m":86},{"s":"weaviate.io","n":40,"b":"Early","k":"AI","c":true,"w":"content needs JavaScript","g":["g.ssr","p2.named-author","p2.freshness"],"r":60,"m":86},{"s":"01.ai","n":40,"b":"Early","k":"China / AI","c":true,"w":"content needs JavaScript","g":["p2.freshness","p1.organization","g.ssr"],"r":42,"m":79},{"s":"healthline.com","n":40,"b":"Early","k":"Healthcare","c":true,"w":"blocks crawlers","g":["p1.organization","p1.llms-txt","g.robots"],"r":50,"m":82},{"s":"webmd.com","n":40,"b":"Early","k":"Healthcare","c":true,"w":"blocks crawlers","g":["p2.named-author","p2.freshness","p1.organization"],"r":35,"m":83},{"s":"css-tricks.com","n":40,"b":"Early","k":"Media / Publishing","c":true,"w":"serves crawlers an error","g":["g.reachable","p1.sitemap","p2.named-author"],"r":68,"m":86},{"s":"stackoverflow.blog","n":40,"b":"Early","k":"Media / Publishing","c":true,"w":"blocks crawlers","g":["p1.organization","p1.llms-txt","g.robots"],"r":49,"m":86},{"s":"techcrunch.com","n":40,"b":"Early","k":"Media / Publishing","c":true,"w":"blocks crawlers","g":["p1.llms-txt","g.robots","p2.named-author"],"r":69,"m":86},{"s":"theverge.com","n":40,"b":"Early","k":"Media / Publishing","c":true,"w":"blocks crawlers","g":["p1.llms-txt","g.robots","p2.question-intent"],"r":60,"m":86},{"s":"payoneer.com","n":40,"b":"Early","k":"Payments / Fintech","c":true,"w":"blocks crawlers","g":["g.robots","g.reachable","p3.knowledge-graph"],"r":61,"m":83},{"s":"airtable.com","n":40,"b":"Early","k":"SaaS / Productivity","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.freshness","p1.organization"],"r":37,"m":86},{"s":"figma.com","n":40,"b":"Early","k":"SaaS / Productivity","c":true,"w":"blocks crawlers","g":["p2.answer-passages","p2.freshness","p1.llms-txt"],"r":42,"m":79},{"s":"loom.com","n":40,"b":"Early","k":"SaaS / Productivity","c":true,"w":"blocks crawlers","g":["p2.named-author","p2.freshness","p2.answer-passages"],"r":43,"m":86},{"s":"dji.com","n":38,"b":"Early","k":"China / consumer","c":false,"w":"","g":["p2.question-intent","p2.named-author","p2.freshness"],"r":33,"m":86},{"s":"volcengine.com","n":33,"b":"Early","k":"China / cloud","c":false,"w":"","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":28,"m":86},{"s":"insta360.com","n":33,"b":"Early","k":"China / consumer","c":false,"w":"","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":26,"m":79},{"s":"solidjs.com","n":33,"b":"Early","k":"Developer tools","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":27,"m":83},{"s":"temu.com","n":31,"b":"Early","k":"China / consumer","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.freshness"],"r":26,"m":83},{"s":"xiaomi.com","n":30,"b":"Not started","k":"China / consumer","c":true,"w":"serves crawlers an error","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":25,"m":83},{"s":"airbnb.com","n":30,"b":"Not started","k":"Travel","c":true,"w":"serves crawlers an error","g":["p2.answer-passages","p2.freshness","p1.llms-txt"],"r":25,"m":82},{"s":"khanacademy.org","n":24,"b":"Not started","k":"Education","c":true,"w":"blocks crawlers","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":20,"m":82},{"s":"qcloud.com","n":23,"b":"Not started","k":"China / cloud","c":true,"w":"blocks crawlers","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":18,"m":79},{"s":"shein.com","n":23,"b":"Not started","k":"China / consumer","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":20,"m":86},{"s":"feishu.cn","n":20,"b":"Not started","k":"China / no-code","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":16,"m":81},{"s":"freecodecamp.org","n":19,"b":"Not started","k":"Education","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":15,"m":79},{"s":"yuque.com","n":18,"b":"Not started","k":"China / no-code","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":15,"m":83},{"s":"aliyun.com","n":16,"b":"Not started","k":"China / cloud","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":13,"m":83},{"s":"booking.com","n":14,"b":"Not started","k":"Travel","c":true,"w":"content needs JavaScript","g":["p2.answer-passages","p2.question-intent","p2.named-author"],"r":11,"m":79},{"s":"openai.com","n":null,"b":"Not scored","k":"AI","c":false,"w":"could not fetch https://www.openai.com — all requests returned 308","g":[],"r":null,"m":null},{"s":"perplexity.ai","n":null,"b":"Not scored","k":"AI","c":false,"w":"could not fetch https://www.perplexity.ai — all requests returned 403","g":[],"r":null,"m":null},{"s":"runwayml.com","n":null,"b":"Not scored","k":"AI","c":false,"w":"could not fetch https://www.runwayml.com — all requests returned 308","g":[],"r":null,"m":null},{"s":"hashicorp.com","n":null,"b":"Not scored","k":"Cloud & DevOps","c":false,"w":"could not fetch https://www.hashicorp.com — all requests returned 429","g":[],"r":null,"m":null},{"s":"etsy.com","n":null,"b":"Not scored","k":"Ecommerce","c":false,"w":"could not fetch https://www.etsy.com — all requests returned 403","g":[],"r":null,"m":null},{"s":"udemy.com","n":null,"b":"Not scored","k":"Education","c":false,"w":"could not fetch https://www.udemy.com — all requests returned 403","g":[],"r":null,"m":null},{"s":"mayoclinic.org","n":null,"b":"Not scored","k":"Healthcare","c":false,"w":"could not fetch https://www.mayoclinic.org — all requests returned 403","g":[],"r":null,"m":null},{"s":"expedia.com","n":null,"b":"Not scored","k":"Travel","c":false,"w":"could not fetch https://www.expedia.com — all requests returned 429","g":[],"r":null,"m":null}];
+const bandCol={Leading:"var(--green)",Solid:"var(--green)",Growing:"var(--dim)",Early:"var(--amber)","Not started":"var(--red)","Not scored":"var(--mute)"};
+let sortK="n",sortD=-1;
+const tb=document.getElementById("tb"),q=document.getElementById("q"),sec=document.getElementById("sec"),fil=document.getElementById("fil"),cnt=document.getElementById("count");
+function rows(){
+  const t=q.value.trim().toLowerCase(),sv=sec.value,fv=fil.value;
+  let r=D.filter(d=>(!t||d.s.toLowerCase().includes(t)||d.k.toLowerCase().includes(t))&&(!sv||d.k===sv)
+    &&(!fv||(fv==="cap"?d.c:fv==="top"?d.n>=66:d.n!==null&&d.n<50)));
+  r.sort((a,b)=>{const x=a[sortK],y=b[sortK];
+    if(x===null)return 1; if(y===null)return -1;
+    return (typeof x==="number"?x-y:String(x).localeCompare(String(y)))*sortD;});
+  return r;
+}
+function draw(){
+  const r=rows();
+  tb.innerHTML=r.map(d=>{
+    const w=d.n===null?0:d.n, cls=w>=66?"hi":w<40?"lo":"";
+    return `<tr><td>${d.s}${d.c?' <span class="pill">NOT CITABLE</span>':''}</td>`+
+      `<td class="num" style="color:${bandCol[d.b]}">${d.n===null?"—":d.n}</td>`+
+      `<td class="bar"><i class="${cls}" style="width:${w}%"></i></td>`+
+      `<td class="band" style="color:${bandCol[d.b]}">${d.b}</td>`+
+      `<td class="sect">${d.k}</td>`+
+      `<td class="gaps">${d.n===null?(d.w||"").slice(0,60):d.g.join(" · ")}</td></tr>`;
+  }).join("");
+  cnt.textContent=`${r.length} of ${D.length} sites`;
+}
+document.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k; sortD=(k===sortK)?-sortD:(k==="n"?-1:1); sortK=k; draw();});
+[q,sec,fil].forEach(el=>el.oninput=draw);
+draw();
+</script></body></html>

@@ -838,6 +838,36 @@ def bar(t, mx, w=18):
     col = c.green if t == mx else (c.amber if t else c.red)
     return col + "█" * f + c.grey + "░" * (w - f) + c.r
 
+def brief(res):
+    """Pillar totals and the three biggest gaps. What fits in a screenshot."""
+    rows, total, den, b, norm, bd, capped = score(res)
+    nxt = [(t, n) for t, n in BANDS if t > norm]
+    gap = (min(nxt)[0] - norm, min(nxt, key=lambda x: x[0])[1]) if nxt else None
+    big = c.green if norm >= 66 else (c.amber if norm >= 31 else c.red)
+    print()
+    print("  %s%sAIV READINESS%s  %s" % (c.b, c.brass, c.r, res["root"]))
+    print(c.grey + "─" * 58 + c.r)
+    print("  %s%s%d / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.b, big, bd, c.r)
+          + ("%s          %d points to %s%s" % (c.grey, gap[0], gap[1], c.r) if gap else ""))
+    if capped: print("  %sGATE CAPPED — a gate check scored zero%s" % (c.red, c.r))
+    print()
+    for pil in dict.fromkeys(r[1] for r in rows):
+        rs = [r for r in rows if r[1] == pil]
+        got = sum(r[3] for r in rs if r[3] is not None)
+        mx = sum(r[4] for r in rs if r[3] is not None)
+        marks = "".join((c.grey + "⊘" + c.r) if r[3] is None else
+                        (c.green + "✓" + c.r if r[3] == r[4] else
+                         (c.red + "✗" + c.r if r[3] == 0 else c.amber + "◐" + c.r)) for r in rs)
+        print("  %-20s %s%6s%s   %s" % (pil, c.dim, ("%d/%d" % (got, mx)) if mx else "—", c.r, marks))
+    gaps = sorted([(mx - t, name) for _, _, name, t, mx, _ in rows
+                   if t is not None and t < mx], reverse=True)[:3]
+    if gaps:
+        print()
+        print("  %sBiggest gaps%s" % (c.b, c.r))
+        for d, name in gaps:
+            print("   %s+%-2d%s  %s" % (c.brass, d, c.r, name))
+    print()
+
 def report(res, args):
     rows, total, den, b, norm, bd, capped = score(res)
     nxt = [(t, n) for t, n in BANDS if t > norm]
@@ -970,6 +1000,7 @@ def main():
     ap.add_argument("url")
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
+    ap.add_argument("--brief", action="store_true", help="pillar totals and the three biggest gaps only")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
@@ -994,6 +1025,8 @@ def main():
         res = run(url, a.sample, verbose=not a.quiet and not a.json)
         if a.json:
             print(json.dumps(as_json(res), ensure_ascii=False, indent=2))
+        elif a.brief:
+            brief(res)
         else:
             report(res, a)
     if a.fail_under is not None:
