@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "The AIV rubric: an open standard for AI answer-engine visibility"
+message: "If you use this rubric, please cite it and state the rubric version."
+type: dataset
+authors:
+  - name: "Jianrun Tech"
+    website: "https://www.jianruntech.com"
+repository-code: "https://github.com/jianruntech/geo-score"
+url: "https://www.jianruntech.com"
+license: MIT
+version: "1.0"
+date-released: "2026-09-08"
+keywords:
+  - generative engine optimization
+  - answer engine optimization
+  - AI search
+  - LLM citation
+  - llms.txt

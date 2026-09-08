@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Remediation / how do I fix this
+    url: https://github.com/jianruntech/geo-score#scope--what-this-does-not-do
+    about: This repository scopes to measurement. Fixes are deliberately out of scope.

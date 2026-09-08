@@ -1,0 +1,25 @@
+name: Wrong score
+description: A site scores in a way that is clearly wrong
+title: "[score] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "False positives and negatives are the highest-signal reports we get."
+  - type: input
+    id: url
+    attributes:
+      label: URL audited
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: Rubric version
+      placeholder: "v1.0"
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: What was scored, and what you expected instead
+      description: Name the specific check, not just the total.
+    validations: { required: true }

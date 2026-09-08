@@ -1,0 +1,43 @@
+name: Rubric proposal
+description: Propose adding, removing or reweighting a check
+title: "[rubric] "
+labels: ["rubric"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rubric changes need evidence. A well-argued proposal with a small sample beats
+        an assertion with none. Proposals without any observation will be closed.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change
+      options: [Add a check, Remove a check, Change a weight, Change a pass condition]
+    validations: { required: true }
+  - type: input
+    id: pillar
+    attributes:
+      label: Which pillar
+      placeholder: "e.g. Pillar 3 · Content Citability"
+    validations: { required: true }
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The change
+      description: State it precisely enough that someone could implement it.
+    validations: { required: true }
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: |
+        What did you observe? On how many sites? Over what period? Against which engines?
+        Published research is welcome; so is your own field data. Say which it is.
+    validations: { required: true }
+  - type: textarea
+    id: observable
+    attributes:
+      label: How would anyone verify this from outside the site
+      description: |
+        Checks that need engine internals or private analytics cannot be in the rubric.
+    validations: { required: true }

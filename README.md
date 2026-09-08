@@ -1,0 +1,214 @@
+<p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
+
+# geo-score
+
+**An open, versioned rubric for Generative Engine Optimization — score any site 0–100
+on whether AI answer engines can find, parse, trust and cite it.**
+
+The rubric it publishes is the **AIV score** (AI Visibility). 28 checks, 5 pillars,
+100 points, one specification anyone can implement.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
+[![Rubric v1.0](https://img.shields.io/badge/rubric-v1.0-A9854C.svg)](rubric/v1.0.md)
+[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+> **GEO here means Generative Engine Optimization** — getting cited by ChatGPT,
+> Perplexity, Google AI Overviews, Gemini and Copilot. It has nothing to do with
+> geography, maps or geolocation.
+
+[Rubric](rubric/v1.0.md) · [Quickstart](#quickstart) · [What it checks](#what-it-checks) ·
+[Sample output](#sample-output) · [Scope](#scope--what-this-does-not-do) · [Research](#research-behind-the-weights)
+
+---
+
+Classic SEO asks *where do I rank*. Answer engines don't rank — they retrieve passages,
+decide whether a source is worth quoting, and cite it. That is a different question,
+and it has different failure modes: a site can sit at position 3 on Google and never be
+quoted, while a page nobody links to gets cited daily because its passages are clean.
+
+**AIV Score is the measurement half of that problem.** It is a published, versioned
+rubric — 28 checks across 5 pillars, adding to 100 — plus a Claude Code skill that runs it.
+
+It deliberately stops at measurement. See [Scope](#scope--what-this-does-not-do).
+
+## Who this is for
+
+- **Site owners** who want a number they can track month over month, and a list of what specifically is failing
+- **Agencies and consultants** who need a defensible, auditable score to show a client instead of "trust me, it's better now"
+- **Anyone building GEO tooling** who wants a shared rubric so scores mean the same thing across tools
+
+## Quickstart
+
+```bash
+# Install as a Claude Code skill
+git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-score
+```
+
+Restart Claude Code, then:
+
+```
+/geo-score audit https://example.com
+```
+
+**Verify it installed:** type `/geo-score` with no arguments. You should see the
+command list. If nothing appears, check that the clone landed in `~/.claude/skills/`
+and that the folder contains `SKILL.md`.
+
+You do not need Claude Code to use this. The [rubric](rubric/v1.0.md) is a plain
+specification — score a site by hand, or implement it in your own tool.
+
+## What it checks
+
+Full specification with pass conditions: **[rubric/v1.0.md](rubric/v1.0.md)**
+
+| Pillar | Pts | Checks | Examples |
+|---|:-:|:-:|---|
+| Infrastructure | 20 | 7 | AI crawlers allowed in `robots.txt`, `llms.txt` present and well-formed, content in server-rendered HTML |
+| Structured Data | 20 | 6 | `Organization`, `Article` with a resolvable author, `FAQPage`, `speakable` |
+| **Content Citability** | **25** | 5 | Self-contained 40–90 word answer passages, statistics with named sources, real bylines, freshness |
+| Brand Authority | 20 | 5 | Knowledge-graph record, independent listings, `sameAs` links that resolve both ways |
+| Platform Visibility | 15 | 5 | Search Console and Bing verified, a fixed query set tested across ≥3 engines |
+
+Content Citability is weighted highest on purpose: answer engines retrieve **passages**,
+not domains. Structure of the passage beats authority of the domain more often than
+classic SEO intuition expects.
+
+### Score bands
+
+| 0–40 | 41–60 | 61–75 | 76–90 | 91–100 |
+|:-:|:-:|:-:|:-:|:-:|
+| Critical | Below average | Good | Strong | Leading |
+
+## Sample output
+
+<details>
+<summary><strong>AIV report for a small Shopify storefront (click to expand)</strong></summary>
+
+```
+AIV Score  41 / 100   ·  rubric v1.0  ·  2026-09-08
+Band: Below average — reachable, but not structured for retrieval
+
+  Infrastructure        11 / 20
+    ✓  robots.txt allows 9 of 12 known AI user-agents          4/4
+    ✗  llms.txt                              not found         0/4
+    ✗  llms-full.txt                         not found         0/3
+    ✗  ai.txt                                not found         0/2
+    ✓  sitemap.xml resolves, referenced from robots.txt        3/3
+    ✗  no GEO <link> tags in <head>                            0/2
+    ✓  primary content present in server-rendered HTML         2/2
+
+  Structured Data        7 / 20
+    ✓  Organization + WebSite sitewide                         4/4
+    ✗  Article schema present but author is "admin"            0/4
+    ✗  FAQPage absent on 6 pages structured as Q&A             0/3
+    ✗  speakable not declared                                  0/3
+    ✓  Product/Offer on 24 product pages                       3/3
+    ✗  no BreadcrumbList                                       0/3
+
+  Content Citability    10 / 25
+    ✗  0 of 8 sampled pages open with a self-contained passage 0/5
+    ✗  11 numeric claims, 2 carry a source                     1/5
+    ✗  author is a brand name, not a person                    0/5
+    ✓  headings phrased as natural questions on 5 of 8 pages   4/5
+    ✓  dateModified present, median age 61 days                5/5
+
+  Brand Authority        8 / 20
+    ✗  no Wikidata item                                        0/5
+    ✓  listed on 2 independent directories                     5/5
+    ✗  no video channel linked via sameAs                      0/4
+    ✓  brand discussed on 3 domains you don't control          3/3
+    ✗  2 of 5 sameAs URLs 404                                  0/3
+
+  Platform Visibility    5 / 15
+    ✓  Search Console verified                                 3/3
+    ✗  not submitted to Bing Webmaster                         0/3
+    ✗  no recorded multi-engine query test                     0/3
+    ✓  answer-shape fit acceptable on sampled pages            2/3
+    ✗  audience is non-English; no regional engine tested      0/3
+
+Largest single gap: Content Citability (10/25).
+```
+
+</details>
+
+## Scope — what this does *not* do
+
+This is the part most tools leave out, so it's stated plainly.
+
+**AIV Score measures. It does not fix.**
+
+| Not included | Why |
+|---|---|
+| Fix templates — `robots.txt`, JSON-LD blocks, `llms.txt` boilerplate | Remediation is where the actual work and judgement live. It is a separate, non-open project |
+| Content rewriting — how to shape a passage so it gets quoted | Same |
+| Per-engine tactics — what to do differently for Perplexity vs Gemini | Same |
+| A remediation roadmap | Same |
+
+**Other honest limits:**
+
+- **It measures input-side readiness, not outcomes.** A high AIV score means engines
+  *can* cite you. Whether they *do* depends on competition, query intent and factors
+  no external audit can observe. Pillar 5 partially covers this by requiring an actual
+  query test, but that test is manual and small.
+- **Pillar 4 and 5 need human judgement.** "Is this author a real identifiable person"
+  and "did the engines surface you" are not fully automatable. Treat those 35 points
+  as assisted, not automatic.
+- **Heavily client-rendered sites score low, sometimes unfairly.** If your content only
+  appears after hydration, most checks will read the pre-hydration HTML — which is also
+  roughly what a crawler sees, so the low score is usually right, but verify by hand.
+- **Engine behaviour moves.** The rubric is versioned for exactly this reason. A score
+  from an older rubric version is not comparable to a current one.
+
+## Research behind the weights
+
+The weights are opinionated but not invented. The two findings that most shaped them:
+
+- **[Aggarwal et al., *GEO: Generative Engine Optimization*, KDD 2024](https://arxiv.org/abs/2311.09735)** —
+  citing sources, adding statistics and quoting experts raise visibility by
+  **up to 40%** (measured as Position-Adjusted Word Count, not citation count).
+  Notably, the paper found an *authoritative tone* produced **no significant improvement** —
+  which is why this rubric scores structure and attribution, not voice.
+- **[llms.txt proposal, Answer.AI](https://llmstxt.org/)** — the convention this rubric
+  checks for in Pillar 1.
+
+Where a check rests on our own field observation rather than published research, the
+rubric says so. If you have evidence that a weight is wrong,
+[open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml) — that is the
+main thing we want contributions on.
+
+## Related tools
+
+Deliberately naming what this is *not*, so you can pick correctly:
+
+| Project | What it does | Relationship |
+|---|---|---|
+| [llms-txt](https://github.com/AnswerDotAI/llms-txt) | The `llms.txt` specification itself | AIV checks for compliance with it |
+| [yao-geo-skills](https://github.com/yaojingang/yao-geo-skills) | 21 categorized GEO skills, execution-oriented | Complementary — they do production, this does measurement |
+| [GEOFlow](https://github.com/yaojingang/GEOFlow) | Full GEO operations system for company sites | Much larger scope; AGPL |
+
+If you need remediation and not just a score, those projects overlap with the part
+this repo deliberately excludes.
+
+## Who maintains this
+
+Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen —
+we run GEO and AI-adoption programs for cross-border commerce companies. The rubric came
+out of client work and out of optimizing our own products; publishing it is how we'd like
+AI visibility to be measured consistently, including by people who never become our clients.
+
+Commercial use of this repository is unrestricted under MIT — including inside paid
+consulting work. You do not need our permission, and there is no separate commercial licence.
+
+## Contributing
+
+The most valuable contribution is evidence about the weights.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Citation
+
+If you reference the rubric in research or a report, see [CITATION.cff](CITATION.cff).
+
+## License
+
+[MIT](LICENSE)
