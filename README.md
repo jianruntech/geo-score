@@ -112,32 +112,38 @@ change has any effect.
 Band names describe a **stage, not a verdict**. External benchmarks put most business
 sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
-## 38 sites, scored in public
+## 106 sites, scored in public
 
-We ran the same tool over 40 well-known sites. **Median 61.5. Range 19 to 86.**
+**A quarter of them cannot be cited at all.** 27 sites have a gate check at zero — a
+retrieval crawler simply cannot get the content. 11 of those block AI crawlers by name in
+`robots.txt`, which is an editorial choice and reported as such. **13 serve a page whose
+body only exists after JavaScript runs** — their content is there, a browser sees it, and
+a crawler gets an empty shell. That group almost certainly did not choose it.
+
+Median **59.5**. Range 14 to 92.
 
 | Site | Score | Band |
 |---|:-:|---|
-| twilio.com | **86** | Leading |
-| supabase.com | **83** | Leading |
-| fly.io | **81** | Solid |
-| nextjs.org | **80** | Solid |
-| cloudflare.com | **80** | Solid |
+| netlify.com | **92** | Leading |
+| pulumi.com | **91** | Leading |
+| bun.sh | **88** | Leading |
+| prisma.io | **87** | Leading |
+| clickup.com | **87** | Leading |
 | … | | |
-| figma.com | 40 | Early |
-| airtable.com | 40 | Early |
-| feishu.cn | 19 | Not started |
+| yuque.com | 18 | Not started |
+| aliyun.com | 16 | Not started |
+| booking.com | 14 | Not started |
 
 **[The full table, by sector →](benchmark/README.md)** · [raw data](benchmark/results.json) · [re-run it](benchmark/run.py)
 
-Three findings worth the click: half the field sits between 55.0 and 70.8; sites built for the
-Chinese market score **21 points lower** than everyone else; and the same three cheap
-things — a date in the template, an opening paragraph that stands alone, one JSON-LD
-block — are missing from more than half of them.
+Two more findings worth the click: sites built for the Chinese market score **23 points
+lower** than everyone else (median 43.0 against 66.0), and the same three cheap things — a
+date in the page template, an opening paragraph that stands on its own, one JSON-LD block
+— are missing from more than half the field.
 
-Every number is reproducible with the command at the top of this page. For the five
-reference sites we also publish **hand-scored audits** covering all 21 checks, with the
-evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
+Every number is reproducible with the command at the top of this page. For five reference
+sites we also publish **hand-scored audits** covering all 21 checks, with the evidence
+behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
 
 ## Three ways to run it
 
