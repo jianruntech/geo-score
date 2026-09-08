@@ -1,0 +1,252 @@
+{
+  "rubric_version": "v1.0",
+  "audited_at": "2026-09-08",
+  "target": "https://www.anthropic.com/",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://www.anthropic.com/",
+    "https://www.anthropic.com/claude/fable",
+    "https://www.anthropic.com/claude/sonnet",
+    "https://www.anthropic.com/claude/opus",
+    "https://www.anthropic.com/research/formalizing-fermats-last-theorem",
+    "https://www.anthropic.com/news/improving-alignment-security-efforts",
+    "https://www.anthropic.com/research/india-brief-economic-index",
+    "https://www.anthropic.com/research/reviewing-the-evidence-on-worker-retraining-programs"
+  ],
+  "checks": [
+    {
+      "id": "p1.robots-allows-retrieval",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "robots.txt returns 200, 71 bytes, and its entire body is: \"User-Agent: *\" / \"Allow: /\" / \"Sitemap: https://www.anthropic.com/sitemap.xml\". No Disallow line, no per-agent block, no opt-out token. All 10 retrieval user-agents in reference/ai-crawlers.md are therefore allowed: floor(3 x 10/10) = 3."
+    },
+    {
+      "id": "p1.retrieval-reachable",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "Requested the homepage once per retrieval user-agent (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Googlebot, Bingbot, Applebot, Amazonbot). All 10 returned HTTP 200 with a byte-identical 176,945-byte body carrying <title>Home \\ Anthropic</title>, the H1 \"AI research and products that put safety at the frontier\" and the footer nav - not a challenge page or interstitial. floor(3 x 10/10) = 3."
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "failed",
+      "points": 0,
+      "max": 3,
+      "evidence": "GET /llms.txt returns HTTP 404 (verified with -L on both https://anthropic.com/llms.txt and https://www.anthropic.com/llms.txt, and under Chrome, Googlebot and OAI-SearchBot user-agents - 404 every time). The response body is 59,696 bytes of the site's HTML 404 page, so body size is not evidence of presence; only the status code is. Note: docs.claude.com/llms.txt and claude.com/llms.txt both return 200 (73,533 and 4,146 bytes), so the file exists on sibling Anthropic hosts but not on the audited one."
+    },
+    {
+      "id": "p1.llms-full-txt",
+      "state": "failed",
+      "points": 0,
+      "max": 2,
+      "evidence": "GET /llms-full.txt returns HTTP 404 with a 59,749-byte HTML 404 page. No alternate path found (/.well-known/llms-full.txt not present either)."
+    },
+    {
+      "id": "p1.ai-txt",
+      "state": "failed",
+      "points": 0,
+      "max": 2,
+      "evidence": "GET /ai.txt returns HTTP 404 (59,735-byte HTML 404 page). /.well-known/ai.txt also returns HTTP 404 (59,806 bytes). robots.txt contains no AI-policy directive or pointer."
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "sitemap.xml returns 200, 68,561 bytes, application/xml, a flat <urlset> of 524 <url> entries, every one carrying a <lastmod>. It is referenced from robots.txt line 4. The site is single-locale: <html lang=\"en\">, zero hreflang/rel=alternate tags on any sampled page, and probes of /ja /ko /fr /de /es /zh-CN /pt-BR all return 404 - so there are no other indexable locales to cover. (Observed gap, not scored here: /pricing and /contact-sales 301 off-domain to claude.com, so they are not this host's pages.)"
+    },
+    {
+      "id": "p1.geo-link-tags",
+      "state": "failed",
+      "points": 0,
+      "max": 2,
+      "evidence": "Enumerated every <link> element in <head> on all 8 sampled pages. Present: preconnect, stylesheet, preload, canonical, shortcut icon, apple-touch-icon, mask-icon. Absent on all 8: rel=\"llms\", rel=\"llms-full\", rel=\"ai-policy\" (0 occurrences of any of the three strings in any sampled HTML)."
+    },
+    {
+      "id": "p1.ssr-content",
+      "state": "scored",
+      "points": 2,
+      "max": 2,
+      "evidence": "Plain curl with no JavaScript execution returns the full primary content on all 8 pages. Extracted visible text after stripping <script>/<style>: homepage 4,859 chars, /claude/opus 13,444, FLT article 16,655, alignment-and-security article 26,592 (4,071 words) - full body prose, all H2/H3 headings and footnote text are in the delivered HTML. The homepage is Webflow-rendered, the other 7 are Next.js RSC; both stacks ship complete markup."
+    },
+    {
+      "id": "p2.organization-website",
+      "state": "failed",
+      "points": 0,
+      "max": 4,
+      "evidence": "The homepage carries zero <script type=\"application/ld+json\"> blocks. Across all 8 sampled pages the strings \"Organization\" and \"WebSite\" appear 0 times as a JSON-LD @type. The only JSON-LD anywhere in the sample is one FAQPage block each on the three /claude/* pages. There is consequently no machine-readable brand entity, no logo, no url and no sameAs anywhere on the site."
+    },
+    {
+      "id": "p2.article-author",
+      "state": "failed",
+      "points": 0,
+      "max": 4,
+      "evidence": "0 of the 4 sampled article pages (/research/formalizing-fermats-last-theorem, /news/improving-alignment-security-efforts, /research/india-brief-economic-index, /research/reviewing-the-evidence-on-worker-retraining-programs) emit Article or BlogPosting JSON-LD - 0 occurrences of either @type. og:type is \"website\" rather than \"article\" on all four, and there is no article:published_time or article:author meta. floor(4 x 0/4) = 0."
+    },
+    {
+      "id": "p2.faqpage",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "3 pages in the sample are structured as questions - /claude/fable, /claude/sonnet and /claude/opus each end in a \"Frequently asked questions\" H2 with question-phrased H3s - and all 3 emit valid FAQPage JSON-LD whose mainEntity Question/acceptedAnswer pairs match the rendered H3s (Fable 5 questions, Sonnet 2, Opus 2). No other sampled page is Q&A-structured. floor(3 x 3/3) = 3."
+    },
+    {
+      "id": "p2.speakable",
+      "state": "failed",
+      "points": 0,
+      "max": 3,
+      "evidence": "The string \"speakable\" appears 0 times in all 8 sampled HTML files (case-insensitive). At least 2 sampled pages have a clean answer passage that would qualify - the 49-word italic dek on the FLT article and the 90-word opening paragraph of the alignment-and-security post - so the check applies. floor(3 x 0/2) = 0."
+    },
+    {
+      "id": "p2.product-offer",
+      "state": "failed",
+      "points": 0,
+      "max": 3,
+      "evidence": "The three /claude/* pages are product pages in substance: H1 is the product name (\"Claude Opus 4.8\"), with \"Availability and pricing\" sections quoting concrete prices (\"Claude Fable 5.1 is priced at $10 per million input tokens and $50 per million output tokens\"; \"Pricing for Opus 5 starts at $5 per million input tokens\") and \"Get API access\" CTAs. Neither \"Product\" nor \"Offer\" appears as a JSON-LD @type on any of them. Note: the transactional pricing page itself lives off-domain - /pricing 301s to claude.com/pricing - so only these on-domain product pages were scorable."
+    },
+    {
+      "id": "p2.howto-breadcrumb",
+      "state": "failed",
+      "points": 0,
+      "max": 3,
+      "evidence": "Every sampled page sits in a two-level hierarchy and renders its parent as a visible eyebrow label above the H1 (\"Science\" on the FLT article, \"Economics\" on both economics briefs, \"Announcements\" on the news post, \"Claude\" on /claude/fable), so the hierarchy condition applies. \"BreadcrumbList\" appears 0 times across all 8 pages; \"HowTo\" also 0."
+    },
+    {
+      "id": "p3.answer-passages",
+      "state": "scored",
+      "points": 1,
+      "max": 5,
+      "evidence": "Measured the first substantive block after each H1. Inside the 40-90 word window and self-contained: FLT article 49 words (italic dek: \"We are sharing the first complete computer-checked proof of Fermat's Last Theorem...\") and the alignment-and-security post exactly 90 words (\"On July 30, we reported three incidents...\"). Outside it: homepage 24 words, /claude/fable 12, /claude/sonnet 18, /claude/opus 15 (all one-line product deks), worker-retraining 21, and the India brief 104 words - a strong executive-summary paragraph that misses only on length. 2 of 8 -> floor(5 x 2/8) = 1."
+    },
+    {
+      "id": "p3.sourced-statistics",
+      "state": "scored",
+      "points": 4,
+      "max": 5,
+      "evidence": "Denominator is the 7 sampled pages that actually make numeric claims (the homepage makes none and is excluded from this check only). 6 attribute them: FLT article has a numbered Footnotes section linking en.wikipedia.org/wiki/Kepler_conjecture, github.com/flyspeck/flyspeck and ias.edu, plus github.com/anthropics/fermats-last-theorem behind the \"13 million lines of Lean / 29,500 theorems\" claims; the alignment post links aisi.gov.uk's own incident report for the UK AISI incident; the India brief has a Methodology section naming O*NET/SOC, the >=200-observation cutoff and a link to the fourth Anthropic Economic Index report behind figures like \"45.2% of O*NET-mapped tasks\" and \"5.8% of total Claude.ai use\"; the worker-retraining page attributes \"56 randomized US studies\" to a linked PDF (www-cdn.anthropic.com/.../WorkerRetraining.pdf) with a BibTeX block naming Roodman and Massenkoff; /claude/sonnet and /claude/opus carry benchmark footnotes naming harnesses and third parties (\"Terminal-Bench 2.0: we used the Terminus-2 harness...\", \"MCP-Atlas: revised grading methodology from Scale AI\") plus a system-card link. /claude/fable's Benchmarks section names its benchmarks but carries no link or footnote of its own. 6 of 7 -> floor(5 x 6/7) = 4."
+    },
+    {
+      "id": "p3.named-author",
+      "state": "scored",
+      "points": 2,
+      "max": 5,
+      "evidence": "Denominator is the 4 sampled article pages. No page in the sample has a byline element, an author link, or an author bio anywhere - the site publishes editorially in the corporate first person. Two do name individuals in machine-readable form inside their Citation blocks: the India brief's BibTeX reads author = {Ruth Appel}, and the worker-retraining page reads author = {Roodman, David and Massenkoff, Maxim} and repeats it in prose (\"coauthored by independent researcher David Roodman and Anthropic's Maxim Massenkoff\"). The FLT article names \"Tianyi Peng, an Anthropic researcher\" in the body but as a subject, not an author; the alignment post names no individual. Scored 2 of 4 on the reading that a named, identifiable individual satisfies the check; a strict reading that also requires an on-page bio scores 0 of 4, i.e. 0/5. floor(5 x 2/4) = 2."
+    },
+    {
+      "id": "p3.natural-questions",
+      "state": "scored",
+      "points": 1,
+      "max": 5,
+      "evidence": "Extracted every H1/H2/H3 from all 8 pages. 3 carry interrogative, assistant-style headings: /claude/fable (\"When should I use Claude Fable 5.1?\", \"Why did you create new safeguards for Claude Fable 5.1?\", \"How does the fallback work?\"), /claude/sonnet (\"When should I use Claude Sonnet 5?\", plus prompt-shaped H3s like \"What should I look for when reviewing a Pull Request for a Python web app?\") and /claude/opus. The other 5 use declarative section headings - none of them keyword strings, and the India brief's are answer-shaped (\"India is among the leading countries in global AI adoption\"), but none are phrased as a question. 3 of 8 -> floor(5 x 3/8) = 1. A looser reading that credits answer-shaped declaratives would give 4 of 8 -> 2."
+    },
+    {
+      "id": "p3.freshness",
+      "state": "failed",
+      "points": 0,
+      "max": 5,
+      "evidence": "No dateModified in any machine-readable form on any of the 8 pages: 0 schema.org dateModified, 0 <time> elements, 0 article:modified_time meta. The Next.js RSC payload does contain Sanity _updatedAt fields, but the values are identical across all 7 Next.js pages (2023-11-20T23:54:09Z, 2026-04-09T19:48:51Z, 2026-09-04T17:17:43Z), i.e. site-chrome documents rather than per-article timestamps. What exists instead: a rendered publication date on 7 of 8 pages (Sep 4 2026, Aug 31 2026, Aug 12 2026, Feb 16 2026 on the articles) as plain text, and <lastmod> on 524 of 524 sitemap URLs - but 18 of those, the homepage included, read 2026-09-08T08:31:41.600Z, equal to my fetch time, so lastmod is partly generated rather than a true modification date. 0 of 8."
+    },
+    {
+      "id": "p4.knowledge-graph",
+      "state": "failed",
+      "points": 0,
+      "max": 5,
+      "evidence": "The authority record exists and is strong: Wikidata Q116758847 \"Anthropic\" returns 200, describes it as \"American artificial intelligence corporation\", carries P856 official website = https://www.anthropic.com/ (so the destination references the brand back), P571 inception 2021-01-26, and 57 sitelinks including en.wikipedia.org/wiki/Anthropic (200). The check fails on its second half only: the site references it via sameAs 0 times, because it emits no Organization JSON-LD at all. All-or-nothing, so 0/5 - the gap is the declaration, not the record."
+    },
+    {
+      "id": "p4.third-party-listings",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "Independently maintained authority records confirmed by direct fetch: wikidata.org/wiki/Q116758847 returns 200 with <title>Anthropic - Wikidata</title> and 57 language sitelinks; en.wikipedia.org/wiki/Anthropic returns 200. Both are outside Anthropic's control and both point back at www.anthropic.com. (crunchbase.com/organization/anthropic and g2.com/products/claude/reviews returned 403 to my client - their own bot protection, not evidence of absence - so they are not counted either way.)"
+    },
+    {
+      "id": "p4.video-presence",
+      "state": "failed",
+      "points": 0,
+      "max": 4,
+      "evidence": "The channel exists and publishes: youtube.com/@anthropic-ai returns 200 (1.16 MB) and its /videos tab returns 200 with 30 distinct videoId values in the delivered HTML. It is linked from the footer of every sampled page as a plain <a href=\"https://www.youtube.com/@anthropic-ai\">. But the check requires the link to be in sameAs, and there are 0 sameAs properties on the site. All-or-nothing, so 0/4 despite the channel being real."
+    },
+    {
+      "id": "p4.independent-mentions",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "Verified by fetch on domains Anthropic does not control: news.ycombinator.com/from?site=anthropic.com returns 200 and lists multiple discussion threads on the audited pages themselves (\"Formalizing Fermat's Last Theorem\", \"Improving our alignment and security efforts\", \"Claude Fable 5.1\"); aisi.gov.uk publishes its own incident report that the sampled news post links to; en.wikipedia.org/wiki/Anthropic returns 200."
+    },
+    {
+      "id": "p4.sameas-resolve",
+      "state": "failed",
+      "points": 0,
+      "max": 3,
+      "evidence": "There are no sameAs URLs to resolve: 0 occurrences of sameAs across all 8 sampled pages, a direct consequence of there being no Organization/WebSite JSON-LD. The brand profiles do exist as plain footer anchors and 2 of 3 resolve cleanly on direct fetch - x.com/AnthropicAI 200, youtube.com/@anthropic-ai 200, linkedin.com/company/anthropicresearch 429 (LinkedIn rate-limiting my client, not a broken link) - but none of them is declared as sameAs, so the proportional numerator and denominator are both empty and the check earns nothing."
+    },
+    {
+      "id": "p5.search-console",
+      "state": "unobservable",
+      "max": 3,
+      "reason": "unobservable",
+      "evidence": "Verification state lives inside the Search Console property and cannot be read from outside. The one public artifact: <meta name=\"google-site-verification\" content=\"BqiAW_sWOg-KrPk-Accxm6ge9dtnFEyV6DB6vzVZSGs\"> is present on all 8 sampled pages, which is consistent with a verified property but proves only that the token was published - not that verification succeeded or is still current. Reported as unobservable rather than scored either way."
+    },
+    {
+      "id": "p5.bing-webmaster",
+      "state": "unobservable",
+      "max": 3,
+      "reason": "unobservable",
+      "evidence": "Submission and index status are inside Bing Webmaster Tools and are not externally readable. What I could check is only weak negative evidence and does not decide it: no msvalidate.01 meta on any of the 8 pages, and /BingSiteAuth.xml returns 404. Bing verification can also be done by DNS record, so neither absence implies non-verification. Bingbot itself reaches the homepage with 200 (see p1.retrieval-reachable)."
+    },
+    {
+      "id": "p5.multi-engine-cited",
+      "state": "unobservable",
+      "max": 3,
+      "reason": "unobservable",
+      "evidence": "This check requires a human to run a fixed set of >=10 buyer-intent queries against >=3 answer engines and record whether anthropic.com is cited. That cannot be done with curl or fetch, and I will not simulate or infer an engine's citation behaviour. Requires a manual query-set run before this check can be scored; its 3 points are removed from the denominator until then."
+    },
+    {
+      "id": "p5.answer-shape-fit",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "6 of 8 sampled pages are shaped the way answer engines chunk and quote: the three /claude/* pages pair a scannable H2 spine (Availability and pricing / Use cases / Benchmarks / FAQ) with an explicit FAQ block, and the FLT article (2,561 words), the alignment post (4,071 words) and the India brief (1,808 words, opening with an \"Executive summary\" H2) are sectioned long-form with short paragraphs and footnotes. 2 do not: the homepage delivers only 695 words of extracted text, most of it navigation and release-card labels, and the worker-retraining page is a 739-word stub whose substance is a downloadable PDF. floor(3 x 6/8) = 2."
+    },
+    {
+      "id": "p5.non-english-engines",
+      "state": "not_applicable",
+      "max": 3,
+      "reason": "not_applicable",
+      "evidence": "The audited host serves one language only: <html lang=\"en\"> on every sampled page, zero hreflang or rel=alternate tags, no locale segments in the 524-URL sitemap, and probes of /ja /ko /fr /de /es /zh-CN /pt-BR all return 404. Per rule 6 the audience is English-speaking, so this check does not apply and is never awarded by default."
+    }
+  ],
+  "score": 32,
+  "observable_max": 88,
+  "normalised": 36,
+  "band": "Critical",
+  "excluded": [
+    {
+      "id": "p5.search-console",
+      "points": 3,
+      "reason": "unobservable",
+      "detail": "Property verification state is only visible inside Search Console. A google-site-verification meta token is published on all 8 pages but does not prove the verification succeeded."
+    },
+    {
+      "id": "p5.bing-webmaster",
+      "points": 3,
+      "reason": "unobservable",
+      "detail": "Submission and index status are only visible inside Bing Webmaster Tools. No msvalidate.01 meta and /BingSiteAuth.xml 404, but DNS verification would leave no public trace."
+    },
+    {
+      "id": "p5.multi-engine-cited",
+      "points": 3,
+      "reason": "unobservable",
+      "detail": "Needs a human to run a fixed >=10 query buyer-intent set against >=3 engines and record citations. Not simulated."
+    },
+    {
+      "id": "p5.non-english-engines",
+      "points": 3,
+      "reason": "not_applicable",
+      "detail": "Single-locale English site: lang=en, no hreflang, no locale paths (7 locale probes all 404). Rule 6."
+    }
+  ],
+  "notes": "Sampling (rule 3). Homepage plus the 3 most recently modified product/service pages and the 4 most recently modified articles, taken from the 524-URL sitemap.xml. One caveat a re-runner needs: 18 sitemap entries, the homepage among them, carry <lastmod> 2026-09-08T08:31:41.600Z - exactly my fetch time - so those timestamps are generated at request time, not real modification dates. I therefore ordered by genuine lastmod values, which puts /claude/fable (2026-09-01), /claude/sonnet and /claude/opus (both 2026-06-09) at the top of the product/service set, and /research/formalizing-fermats-last-theorem (2026-09-07), /news/improving-alignment-security-efforts (2026-09-07), /research/india-brief-economic-index (2026-09-04) and /research/reviewing-the-evidence-on-worker-retraining-programs (2026-09-04) at the top of the article set. https://anthropic.com 301s to https://www.anthropic.com/; every fetch followed redirects, and presence was decided on status code alone - the site's 404 page returns ~59 KB of HTML, so body size would have been misleading.\n\nThe shape of this score. The two halves of the rubric split cleanly here. Everything about reaching and reading the site is close to ideal: an unrestricted robots.txt, all 10 retrieval crawlers served an identical 200 with the real page, a complete sitemap, and full prose delivered without JavaScript on both the Webflow homepage and the Next.js content stack - a 4,000-word article arrives whole in the first response. Everything about *declaring* what the pages are is nearly absent: 1 JSON-LD block across 8 pages, and it is the same FAQPage pattern repeated on three model pages. That single missing Organization block cascades: it is why knowledge-graph (0/5), video presence (0/4) and sameAs resolution (0/3) all score zero even though the Wikidata item, the 30-video YouTube channel and the social profiles all demonstrably exist and resolve. 12 of the 20 Brand Authority points are lost to a declaration gap rather than a corroboration gap - the corroboration is there.\n\nWhere this is a trade-off rather than a defect. Anthropic publishes its GEO files on the domains where its documentation lives, not on its brand site: docs.claude.com/llms.txt and claude.com/llms.txt both return 200 (73,533 and 4,146 bytes) while www.anthropic.com/llms.txt is a 404. Likewise the transactional pricing page 301s to claude.com. Read as a multi-domain architecture that is a coherent choice; read as an audit of this hostname it costs 7 points across llms.txt, llms-full.txt and ai.txt. Similarly, the absence of bylines is an editorial posture - the site publishes in the corporate first person, and its research pages carry BibTeX citation blocks instead - not an \"admin\" byline of the kind the rubric was written to catch.\n\nJudgement calls a reviewer should check first. Three checks in Pillar 3 turn on a reading, and I have printed both readings in each evidence string: named-author scores 2/5 crediting individuals named in BibTeX blocks and 0/5 if an on-page bio is required; natural-questions scores 1/5 counting only interrogative headings and 2/5 if answer-shaped declaratives count; answer-passages excludes the India brief's executive summary at 104 words, 14 over the band's ceiling, which is the single harshest call in this report. Two more worth flagging: sourced-statistics uses a 7-page denominator because the homepage makes no numeric claims at all, and product-offer is scored as failed rather than not_applicable because the /claude/* pages quote per-token prices and are product pages in substance even though checkout lives on another domain.\n\nLargest single gap: Structured Data, 3 of 20. Nothing else in the report is more than one JSON-LD block away from moving.\n\nOne inconsistency in the rubric materials themselves, noted for the maintainers: reference/ai-crawlers.md says the first Pillar 1 check awards 4 points, while rubric/v1.0.md and v1.0.json both say 3. I scored 3, per the rubric files."
+}

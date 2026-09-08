@@ -156,6 +156,28 @@ Largest single gap: Content Citability, 6 of 25.
 
 </details>
 
+## Five real audits
+
+We ran the rubric against five public sites. **None cleared 51%** — not Stripe,
+not Anthropic, not the framework docs sites whose audience is developers.
+
+| Site | AIV | | Band |
+|---|:-:|:-:|---|
+| [stripe.com](examples/audits/stripe.com.md) | 45 / 88 | 51% | Below average |
+| [nextjs.org](examples/audits/nextjs.org.md) | 40 / 82 | 49% | Below average |
+| [svelte.dev](examples/audits/svelte.dev.md) | 34 / 85 | 40% | Critical |
+| [anthropic.com](examples/audits/anthropic.com.md) | 32 / 88 | 36% | Critical |
+| [mingdao.com](examples/audits/mingdao.com.md) | 29 / 85 | 34% | Critical |
+
+Every check carries evidence — status codes, byte counts, MD5s across user-agents, the
+actual sentence that did or did not qualify. Every audit ends with the auditor's own
+caveats. [Read them here](examples/README.md).
+
+Running them surfaced eight places where two careful implementations would score the
+same evidence differently — including whether a band called *Critical* should be applied
+to a site with flawless crawler reachability. Those are published as
+[open questions](rubric/open-questions.md) rather than quietly patched.
+
 ## Scope — what this does *not* do
 
 This is the part most tools leave out, so it's stated plainly.

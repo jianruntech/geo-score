@@ -93,6 +93,27 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 见 [examples/sample-report.md](examples/sample-report.md)。
 每份真实报告必须带两样：**评分口径版本**和**审计日期**。
 
+## 五份真实审计
+
+我们用这套口径实测了五个公开站点。**没有一个超过 51%** ——
+Stripe 不行，Anthropic 自己不行，受众就是开发者的框架文档站也不行。
+
+| 站点 | AIV | | 评级 |
+|---|:-:|:-:|---|
+| [stripe.com](examples/audits/stripe.com.md) | 45 / 88 | 51% | 偏低 |
+| [nextjs.org](examples/audits/nextjs.org.md) | 40 / 82 | 49% | 偏低 |
+| [svelte.dev](examples/audits/svelte.dev.md) | 34 / 85 | 40% | 危急 |
+| [anthropic.com](examples/audits/anthropic.com.md) | 32 / 88 | 36% | 危急 |
+| [mingdao.com](examples/audits/mingdao.com.md) | 29 / 85 | 34% | 危急 |
+
+每一项检查都带证据——状态码、字节数、不同 UA 的响应 MD5、
+到底是哪一句话算或不算「自足答案段」。每份审计末尾都有审计者自己的存疑。
+[在这里读](examples/README.md)。
+
+跑完这五份，暴露出**八处两个实现会算出不同分数的地方**——
+包括「一个爬虫可达性满分、服务端渲染 60KB 正文的站，评级叫『危急』是否合适」。
+这些没有被悄悄改掉，而是公开成了[待决问题](rubric/open-questions.md)。
+
 ## 边界 · 这个仓库不做什么
 
 这是大多数工具会略过的部分，所以直说。
