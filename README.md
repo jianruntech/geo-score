@@ -38,6 +38,18 @@ It deliberately stops at measurement. See [Scope](#scope--what-this-does-not-do)
 - **Agencies and consultants** who need a defensible, auditable score to show a client instead of "trust me, it's better now"
 - **Anyone building GEO tooling** who wants a shared rubric so scores mean the same thing across tools
 
+## Why publish a rubric instead of just a tool
+
+Most GEO tools give you a number and keep the method. That number is unfalsifiable —
+you cannot check it, cannot reproduce it, and cannot compare it to anything.
+
+A published rubric is checkable. You can disagree with a weight and say why. You can
+implement it yourself and see whether your result matches ours. You can hand a client
+a score and a spec, and they can audit both.
+
+That is the whole bet here: **a measure that everyone can run is worth more than a
+measure only we can run** — even though we sell the remediation on the other side of it.
+
 ## Quickstart
 
 ```bash
