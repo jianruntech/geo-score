@@ -1,5 +1,6 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
+<p align="center"><img src="assets/cover.svg" alt="geo-score — an open rubric for AI answer-engine visibility" width="100%"></p>
 # geo-score
 
 **An open, versioned rubric for Generative Engine Optimization — score any site 0–100

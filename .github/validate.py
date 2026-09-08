@@ -83,6 +83,20 @@ for r in rub:
     bad = [x.strip() for x in rows if x.strip() not in ("prop.", "all/none")]
     check(not bad, f"rubric/{r}: checks missing a valid Credit value: {bad[:3]}")
 
+# 8 · cover 图里的数字必须与示例报告一致
+if os.path.exists("assets/cover.svg"):
+    cv = io.open("assets/cover.svg", encoding="utf-8").read()
+    sr = io.open("examples/sample-report.md", encoding="utf-8").read()
+    hm = re.search(r'AIV (\d+) / (\d+)', sr)
+    if hm:
+        check(f">{hm.group(1)}<" in cv, f"cover.svg: score {hm.group(1)} not shown")
+        check(f"/ {hm.group(2)}" in cv, f"cover.svg: observable max {hm.group(2)} not shown")
+    pm = re.search(r'normalised (\d+)%', sr)
+    if pm: check(f"NORMALISED {pm.group(1)}%" in cv, f"cover.svg: normalised % out of sync")
+    for m in re.finditer(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)', sr, re.M):
+        check(f">{m.group(2)}/{m.group(3)}<" in cv,
+              f"cover.svg: {m.group(1)} shows a value other than {m.group(2)}/{m.group(3)}")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

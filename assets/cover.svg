@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-labelledby="t">
+<title id="t">geo-score — an open rubric for AI answer-engine visibility</title>
+<defs>
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M40 0H0v40" fill="none" stroke="#16241C" stroke-width="1"/>
+  </pattern>
+  <clipPath id="cl"><rect x="0" y="0" width="1280" height="640"/></clipPath>
+</defs>
+<g clip-path="url(#cl)">
+  <rect width="1280" height="640" fill="#0B120E"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+
+  <!-- 左：标题 -->
+  <text x="72" y="132" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="15" letter-spacing="4.5" fill="#A9854C">JIANRUNTECH / GEO-SCORE</text>
+  <text x="70" y="222" font-family="Georgia,'Times New Roman',serif" font-size="76" font-weight="700" fill="#E7ECE7">geo-score</text>
+  <text x="72" y="278" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="25" fill="#A7B4AC">An open rubric for</text>
+  <text x="72" y="316" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="25" fill="#A7B4AC">Generative Engine Optimization</text>
+
+  <line x1="72" y1="356" x2="560" y2="356" stroke="#2C3B33" stroke-width="1"/>
+
+  <text x="72" y="398" font-family="system-ui,-apple-system,sans-serif" font-size="19" fill="#7E8B84">Can ChatGPT, Perplexity and Google AI</text>
+  <text x="72" y="426" font-family="system-ui,-apple-system,sans-serif" font-size="19" fill="#7E8B84">find, parse, trust and <tspan fill="#4FAE80" font-weight="600">cite</tspan> your site?</text>
+
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" letter-spacing="1.6" fill="#5F6761">
+    <text x="72" y="500">29 CHECKS · 5 PILLARS · 100 POINTS</text>
+    <text x="72" y="528">VERSIONED · MIT · IMPLEMENT IT YOURSELF</text>
+  </g>
+
+  <!-- 右：仪表卡 -->
+  <rect x="676" y="96" width="532" height="448" fill="#101913" stroke="#2C3B33" stroke-width="1"/>
+  <rect x="676" y="96" width="532" height="46" fill="#0E1611" stroke="#2C3B33" stroke-width="1"/>
+  <text x="700" y="125" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="2" fill="#A9854C">AIV REPORT</text>
+  <text x="1184" y="125" text-anchor="end" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="1.5" fill="#5F6761">rubric v1.0</text>
+
+  <text x="700" y="212" font-family="ui-monospace,Menlo,monospace" font-size="66" font-weight="500" fill="#4FAE80">33</text>
+  <text x="778" y="212" font-family="ui-monospace,Menlo,monospace" font-size="30" fill="#5F6761">/ 88</text>
+  <text x="700" y="242" font-family="ui-monospace,Menlo,monospace" font-size="13.5" letter-spacing="1.2" fill="#7E8B84">NORMALISED 38%  ·  CRITICAL</text>
+
+  <line x1="700" y1="270" x2="1184" y2="270" stroke="#1E2A24" stroke-width="1"/>
+
+  <!-- 五支柱条 -->
+  <g font-family="ui-monospace,Menlo,monospace" font-size="12.5">
+    <text x="700" y="308" fill="#A7B4AC">Infrastructure</text>
+    <rect x="884" y="298" width="300" height="11" fill="#1B2620"/><rect x="884" y="298" width="135" height="11" fill="#26714F"/>
+    <text x="1184" y="308" text-anchor="end" fill="#5F6761" dx="0" dy="16">9/20</text>
+
+    <text x="700" y="352" fill="#A7B4AC">Structured Data</text>
+    <rect x="884" y="342" width="300" height="11" fill="#1B2620"/><rect x="884" y="342" width="124" height="11" fill="#26714F"/>
+    <text x="1184" y="352" text-anchor="end" fill="#5F6761" dy="16">7/17</text>
+
+    <text x="700" y="396" fill="#E7ECE7">Content Citability</text>
+    <rect x="884" y="386" width="300" height="11" fill="#1B2620"/><rect x="884" y="386" width="72" height="11" fill="#46A87A"/>
+    <text x="1184" y="396" text-anchor="end" fill="#A9854C" dy="16">6/25</text>
+
+    <text x="700" y="440" fill="#A7B4AC">Brand Authority</text>
+    <rect x="884" y="430" width="300" height="11" fill="#1B2620"/><rect x="884" y="430" width="135" height="11" fill="#26714F"/>
+    <text x="1184" y="440" text-anchor="end" fill="#5F6761" dy="16">9/20</text>
+
+    <text x="700" y="484" fill="#A7B4AC">Platform Visibility</text>
+    <rect x="884" y="474" width="300" height="11" fill="#1B2620"/><rect x="884" y="474" width="100" height="11" fill="#26714F"/>
+    <text x="1184" y="484" text-anchor="end" fill="#5F6761" dy="16">2/6</text>
+  </g>
+
+  <line x1="700" y1="510" x2="1184" y2="510" stroke="#1E2A24" stroke-width="1"/>
+  <text x="700" y="532" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#5F6761">12 pts excluded — not applicable / unobservable</text>
+</g>
+</svg>

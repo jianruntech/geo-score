@@ -1,5 +1,6 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
+<p align="center"><img src="assets/cover.svg" alt="geo-score — 开源的 AI 可见度评分口径" width="100%"></p>
 # geo-score
 
 **一套开源、带版本号的 GEO（生成式引擎优化）评分口径 —— 给任何网站打 0–100 分，
