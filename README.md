@@ -112,23 +112,32 @@ change has any effect.
 Band names describe a **stage, not a verdict**. External benchmarks put most business
 sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
-## Five sites, scored in public
+## 38 sites, scored in public
 
-Not screenshots — [full reports](examples/README.md) with reproducible evidence behind
-every check: status codes, byte counts, hashes compared across ten user-agents, the
-actual sentence that did or did not qualify, and a line saying why each score landed on
-that tier rather than the next one.
+We ran the same tool over 40 well-known sites. **Median 61.5. Range 19 to 86.**
 
-| Site | Readiness | Band |
+| Site | Score | Band |
 |---|:-:|---|
-| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | **87** | Leading |
-| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | **78** | Solid |
-| [stripe.com](examples/audits/v1.1/stripe.com.md) | **77** | Solid |
-| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | **70** | Solid |
-| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | **69** | Solid |
+| twilio.com | **86** | Leading |
+| supabase.com | **83** | Leading |
+| fly.io | **81** | Solid |
+| nextjs.org | **80** | Solid |
+| cloudflare.com | **80** | Solid |
+| … | | |
+| figma.com | 40 | Early |
+| airtable.com | 40 | Early |
+| feishu.cn | 19 | Not started |
 
-These five are among the best-built sites in their categories, and they score like it.
-A typical business site scores well below this — which is the point of publishing them.
+**[The full table, by sector →](benchmark/README.md)** · [raw data](benchmark/results.json) · [re-run it](benchmark/run.py)
+
+Three findings worth the click: half the field sits between 55.0 and 70.8; sites built for the
+Chinese market score **21 points lower** than everyone else; and the same three cheap
+things — a date in the template, an opening paragraph that stands alone, one JSON-LD
+block — are missing from more than half of them.
+
+Every number is reproducible with the command at the top of this page. For the five
+reference sites we also publish **hand-scored audits** covering all 21 checks, with the
+evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
 
 ## Three ways to run it
 

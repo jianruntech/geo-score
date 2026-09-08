@@ -450,7 +450,10 @@ def run(base, sample=8, verbose=False):
     pages = dict(zip(urls, pmap(fetch, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
     if not live:
-        raise SystemExit("%sCould not fetch %s — check the URL is reachable.%s" % (c.red, base, c.r))
+        why = next((r.err for r in pages.values() if r.err), None)
+        codes = sorted({r.status for r in pages.values() if r.status})
+        raise RuntimeError("could not fetch %s — %s" % (base,
+            why or ("all requests returned %s" % ", ".join(map(str, codes)) if codes else "no response")))
     n = len(live)
 
     home_html_early = live.get(root + "/", list(live.values())[0]).text
@@ -917,5 +920,10 @@ def main():
             sys.exit(1)
 
 if __name__ == "__main__":
-    try: main()
-    except KeyboardInterrupt: sys.exit(130)
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(130)
+    except RuntimeError as e:
+        print("%s%s%s" % (c.red, e, c.r), file=sys.stderr)
+        sys.exit(2)

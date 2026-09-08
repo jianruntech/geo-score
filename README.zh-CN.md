@@ -109,22 +109,32 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
 所以四十几分是常态，不是警报。
 
-## 五个站点，公开打分
+## 38 个站点，公开打分
 
-不是截图——是[完整报告](examples/README.md)，每一项检查背后都有可复核的证据：
-状态码、字节数、十个 UA 的响应比对、到底是哪一句话算或不算自足答案段，
-以及一句「为什么落在这一档而不是上一档」。
+我们用同一个工具跑了 40 个知名站点。**中位数 61.5，区间 19 到 86。**
 
-| 站点 | 就绪度 | 档 |
+| 站点 | 分数 | 档 |
 |---|:-:|---|
-| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | **87** | 领先 |
-| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | **78** | 基础扎实 |
-| [stripe.com](examples/audits/v1.1/stripe.com.md) | **77** | 基础扎实 |
-| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | **70** | 基础扎实 |
-| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | **69** | 基础扎实 |
+| twilio.com | **86** | 领先 |
+| supabase.com | **83** | 领先 |
+| fly.io | **81** | 基础扎实 |
+| nextjs.org | **80** | 基础扎实 |
+| cloudflare.com | **80** | 基础扎实 |
+| … | | |
+| figma.com | 40 | 起步期 |
+| airtable.com | 40 | 起步期 |
+| feishu.cn | 19 | 未起步 |
 
-这五个是各自领域里做得最好的站，分数也确实如此。
-一个普通商业网站会明显低于这个区间——这正是把它们公开出来的意义。
+**[完整榜单与分行业中位数 →](benchmark/README.md)** · [原始数据](benchmark/results.json) · [自己重跑](benchmark/run.py)
+
+三个值得点进去看的发现：一半的站落在 55.0 到 70.8 之间；
+面向中文市场的站比其余站**低 21 分**；
+以及同样三件很便宜的事——模板里的一个日期、一段能独立成立的开头、一个 JSON-LD 块——
+在超过一半的站上都缺。
+
+每个数字都能用页首那条命令复现。对其中五个参照站，
+我们另外发布了**人工逐项审计**，覆盖全部 21 项检查、每一项都附证据：
+[examples/audits/v1.1/](examples/audits/v1.1/)。
 
 ## 三种跑法
 
