@@ -25,7 +25,10 @@ for root, dirs, files in os.walk("."):
         if not f.endswith(".md"): continue
         p = os.path.join(root, f)
         s = io.open(p, encoding="utf-8").read()
-        for lang in ("typescript", "javascript", "json", "jsonld", "html", "python"):
+        langs = ("typescript", "javascript", "jsonld", "html", "python")
+        if not (root.startswith("./rubric") or root.startswith("./schema")):
+            langs = langs + ("json",)
+        for lang in langs:
             check(f"```{lang}" not in s,
                   f"{p}: contains a ```{lang} block — this repo is measurement-only, "
                   f"fix templates belong in the private repo")
@@ -101,6 +104,30 @@ if os.path.exists("assets/cover.svg"):
     check(want == got,
           f"cover.svg pillar values out of sync with sample report — "
           f"report has {dict(want)}, cover has {dict(got)}")
+
+# 9 · rubric 的 JSON 与 MD 必须逐条一致
+import json as _json
+for r in rub:
+    jp = f"rubric/{r[:-3]}.json"
+    check(os.path.exists(jp), f"{jp} missing — every released rubric needs a machine-readable twin")
+    if not os.path.exists(jp): continue
+    j = _json.load(io.open(jp, encoding="utf-8"))
+    md = io.open(f"rubric/{r}", encoding="utf-8").read()
+    md_rows = re.findall(r'^\| (.+?) \| (\d+) \| (prop\.|all/none) \|', md, re.M)
+    check(len(j["checks"]) == len(md_rows),
+          f"{jp}: {len(j['checks'])} checks but {r} has {len(md_rows)}")
+    check(sum(c["points"] for c in j["checks"]) == j["nominal_max"] == 100,
+          f"{jp}: points do not sum to nominal_max 100")
+    ids = [c["id"] for c in j["checks"]]
+    check(len(ids) == len(set(ids)), f"{jp}: duplicate check ids")
+    check(all(re.match(r'^p[1-5]\.[a-z0-9-]+$', i) for i in ids),
+          f"{jp}: ids must look like p1.some-slug")
+    md_pts = [int(x[1]) for x in md_rows]
+    check(sorted(md_pts) == sorted(c["points"] for c in j["checks"]),
+          f"{jp}: point values differ from {r}")
+    for c in j["checks"]:
+        check(c["credit"] in ("proportional", "all-or-nothing"),
+              f"{jp}: {c['id']} has invalid credit '{c['credit']}'")
 
 if fail:
     print("FAIL")

@@ -46,6 +46,19 @@ Brand Authority 20 · Platform Visibility 15.
 the homepage, one product or service page, and one article. Note which URLs you used —
 the report must list them.
 
+**Fetching rules — get these wrong and every number after is wrong.**
+
+- **Always follow redirects.** A site answering `301` to `/llms.txt` is not missing it;
+  it may be a locale or `www` redirect. Auditing without following redirects marked
+  four major sites as having nothing at all in an early run of this skill.
+- **Judge presence by status code only, never by response size.** Custom 404 pages
+  routinely return 40–400 KB of HTML. A 404 that returns content is still a 404.
+- **Send a real retrieval user-agent** (`OAI-SearchBot`, `PerplexityBot`) when testing
+  reachability, and a normal browser UA when reading content. The difference between
+  the two *is* the reachability check.
+- **Do not execute JavaScript when checking `p1.ssr-content`.** The point of that check
+  is what a crawler receives.
+
 **2 · Pillar 1 — Infrastructure.** Fetch `/robots.txt`, `/llms.txt`, `/llms-full.txt`,
 `/ai.txt`, `/sitemap.xml`. Check the `<head>` of sampled pages for GEO `<link>` tags.
 Determine whether primary content is present in server-rendered HTML — fetch without

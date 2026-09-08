@@ -1,0 +1,328 @@
+{
+  "rubric": "AIV",
+  "version": "1.0",
+  "released": "2026-09-08",
+  "nominal_max": 100,
+  "spec": "https://github.com/jianruntech/geo-score/blob/main/rubric/v1.0.md",
+  "license": "MIT",
+  "states": {
+    "scored": "met, points awarded",
+    "failed": "applies and not met, 0 points, stays in denominator",
+    "unobservable": "could not be verified from outside, points removed from denominator",
+    "not_applicable": "page type does not exist on this site, points removed from denominator"
+  },
+  "rounding": "proportional checks use floor(points * meeting / total); never round up",
+  "banding": "read the band from score / observable_max * 100",
+  "bands": [
+    {
+      "max": 40,
+      "band": "Critical"
+    },
+    {
+      "max": 60,
+      "band": "Below average"
+    },
+    {
+      "max": 75,
+      "band": "Good"
+    },
+    {
+      "max": 90,
+      "band": "Strong"
+    },
+    {
+      "max": 100,
+      "band": "Leading"
+    }
+  ],
+  "pillars": [
+    {
+      "id": "p1",
+      "name": "Infrastructure",
+      "points": 20
+    },
+    {
+      "id": "p2",
+      "name": "Structured Data",
+      "points": 20
+    },
+    {
+      "id": "p3",
+      "name": "Content Citability",
+      "points": 25
+    },
+    {
+      "id": "p4",
+      "name": "Brand Authority",
+      "points": 20
+    },
+    {
+      "id": "p5",
+      "name": "Platform Visibility",
+      "points": 15
+    }
+  ],
+  "checks": [
+    {
+      "id": "p1.robots-allows-retrieval",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "AI crawlers allowed in robots.txt",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "The retrieval user-agents are not disallowed. floor(3 × allowed / 10) — see ai-crawlers.md. Opt-out tokens and training crawlers are not counted"
+    },
+    {
+      "id": "p1.retrieval-reachable",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "Retrieval crawlers actually reachable",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "Requesting the homepage with each retrieval user-agent returns **200 with the real page** — not 403, not a challenge page, not a JS interstitial. floor(3 × reachable / 10)"
+    },
+    {
+      "id": "p1.llms-txt",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "llms.txt present and complete",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "Resolves at /llms.txt, valid Markdown, has an H1, a summary blockquote, and ≥3 sectioned link groups"
+    },
+    {
+      "id": "p1.llms-full-txt",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "llms-full.txt present",
+      "points": 2,
+      "credit": "all-or-nothing",
+      "pass": "Resolves and is substantially longer than llms.txt"
+    },
+    {
+      "id": "p1.ai-txt",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "ai.txt policy file",
+      "points": 2,
+      "credit": "all-or-nothing",
+      "pass": "Resolves at /ai.txt"
+    },
+    {
+      "id": "p1.sitemap",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "Sitemap completeness",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "sitemap.xml resolves, is referenced from robots.txt, covers all indexable locales"
+    },
+    {
+      "id": "p1.geo-link-tags",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "GEO <link> tags in <head>",
+      "points": 2,
+      "credit": "all-or-nothing",
+      "pass": "rel=\"llms\", rel=\"llms-full\", or rel=\"ai-policy\" present"
+    },
+    {
+      "id": "p1.ssr-content",
+      "pillar": "p1",
+      "pillar_name": "Infrastructure",
+      "name": "Content in server-rendered HTML",
+      "points": 2,
+      "credit": "all-or-nothing",
+      "pass": "Fetching without executing JavaScript returns the page's primary content"
+    },
+    {
+      "id": "p2.organization-website",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "Organization + WebSite sitewide",
+      "points": 4,
+      "credit": "all-or-nothing",
+      "pass": "Valid JSON-LD on every indexable page"
+    },
+    {
+      "id": "p2.article-author",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "Article/BlogPosting with author",
+      "points": 4,
+      "credit": "proportional",
+      "pass": "Present on article pages, with a named author that has a resolvable identity"
+    },
+    {
+      "id": "p2.faqpage",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "FAQPage on Q&A pages",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "Present wherever the page is structured as questions"
+    },
+    {
+      "id": "p2.speakable",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "speakable coverage",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "Declared on pages with a clear answer passage"
+    },
+    {
+      "id": "p2.product-offer",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "Product/Offer on commercial pages",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "Present on pricing or product pages"
+    },
+    {
+      "id": "p2.howto-breadcrumb",
+      "pillar": "p2",
+      "pillar_name": "Structured Data",
+      "name": "HowTo / BreadcrumbList",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "Present where the page is a procedure or sits in a hierarchy"
+    },
+    {
+      "id": "p3.answer-passages",
+      "pillar": "p3",
+      "pillar_name": "Content Citability",
+      "name": "Answer passages on key pages",
+      "points": 5,
+      "credit": "proportional",
+      "pass": "Each key page opens its main section with a self-contained 40–90 word passage that answers the page's question without needing surrounding context"
+    },
+    {
+      "id": "p3.sourced-statistics",
+      "pillar": "p3",
+      "pillar_name": "Content Citability",
+      "name": "Statistics carry a source",
+      "points": 5,
+      "credit": "proportional",
+      "pass": "Numeric claims are attributed to a named, linkable source"
+    },
+    {
+      "id": "p3.named-author",
+      "pillar": "p3",
+      "pillar_name": "Content Citability",
+      "name": "Named expert authorship",
+      "points": 5,
+      "credit": "proportional",
+      "pass": "Author is a real, identifiable person with a bio, not \"admin\" or a brand name"
+    },
+    {
+      "id": "p3.natural-questions",
+      "pillar": "p3",
+      "pillar_name": "Content Citability",
+      "name": "Questions match natural phrasing",
+      "points": 5,
+      "credit": "proportional",
+      "pass": "Headings are phrased the way a person would ask an assistant, not as keyword strings"
+    },
+    {
+      "id": "p3.freshness",
+      "pillar": "p3",
+      "pillar_name": "Content Citability",
+      "name": "Freshness signals",
+      "points": 5,
+      "credit": "proportional",
+      "pass": "dateModified present and within the last 180 days on evergreen pages"
+    },
+    {
+      "id": "p4.knowledge-graph",
+      "pillar": "p4",
+      "pillar_name": "Brand Authority",
+      "name": "Knowledge-graph presence",
+      "points": 5,
+      "credit": "all-or-nothing",
+      "pass": "A Wikidata item or equivalent authority record exists and is referenced via sameAs"
+    },
+    {
+      "id": "p4.third-party-listings",
+      "pillar": "p4",
+      "pillar_name": "Brand Authority",
+      "name": "Third-party listings",
+      "points": 5,
+      "credit": "all-or-nothing",
+      "pass": "Present on at least one independent review or directory site"
+    },
+    {
+      "id": "p4.video-presence",
+      "pillar": "p4",
+      "pillar_name": "Brand Authority",
+      "name": "Video presence",
+      "points": 4,
+      "credit": "all-or-nothing",
+      "pass": "A channel with published content exists and is linked via sameAs"
+    },
+    {
+      "id": "p4.independent-mentions",
+      "pillar": "p4",
+      "pillar_name": "Brand Authority",
+      "name": "Independent mentions",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "The brand is discussed on sites you do not control"
+    },
+    {
+      "id": "p4.sameas-resolve",
+      "pillar": "p4",
+      "pillar_name": "Brand Authority",
+      "name": "sameAs links resolve",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "Every sameAs URL returns 200 and the destination references the brand back"
+    },
+    {
+      "id": "p5.search-console",
+      "pillar": "p5",
+      "pillar_name": "Platform Visibility",
+      "name": "Search Console verified",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "Property verified"
+    },
+    {
+      "id": "p5.bing-webmaster",
+      "pillar": "p5",
+      "pillar_name": "Platform Visibility",
+      "name": "Bing Webmaster submitted",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "Site submitted and indexed"
+    },
+    {
+      "id": "p5.multi-engine-cited",
+      "pillar": "p5",
+      "pillar_name": "Platform Visibility",
+      "name": "Cited in a multi-engine query test",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "A fixed set of ≥10 buyer-intent queries is run against ≥3 engines. Score floor(3 × engines-where-cited / 3). Running the test but never being cited scores **0** — this check measures the outcome, not the procedure"
+    },
+    {
+      "id": "p5.answer-shape-fit",
+      "pillar": "p5",
+      "pillar_name": "Platform Visibility",
+      "name": "Answer-shape fit",
+      "points": 3,
+      "credit": "proportional",
+      "pass": "Content length and structure match how the target engines format answers"
+    },
+    {
+      "id": "p5.non-english-engines",
+      "pillar": "p5",
+      "pillar_name": "Platform Visibility",
+      "name": "Non-English engine coverage",
+      "points": 3,
+      "credit": "all-or-nothing",
+      "pass": "If the audience is non-English, the corresponding regional engines were tested"
+    }
+  ]
+}

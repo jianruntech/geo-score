@@ -73,3 +73,17 @@ Everything else can be checked from outside; this one cannot be faked by inspect
 **Nothing here scores writing quality or tone.**
 The Princeton GEO study found an authoritative tone produced *no significant improvement*.
 So the rubric scores structure, sourcing and attribution, and stays out of style.
+
+## Machine-readable
+
+| File | What it is |
+|---|---|
+| [`v1.0.json`](v1.0.json) | The same 29 checks with **stable ids** (`p3.answer-passages`), points, credit type and pass conditions |
+| [`../schema/report.v1.json`](../schema/report.v1.json) | JSON Schema for audit output — emit this and your results are comparable with anyone else's |
+
+Check ids are **permanent**. A future rubric version may retire an id, but never reuses
+one for a different check — that is what makes it possible to diff v1.0 against v1.1 and
+map an old score onto a new one.
+
+CI enforces that the `.json` and the `.md` agree: same number of checks, same point
+values, unique well-formed ids, valid credit types.
