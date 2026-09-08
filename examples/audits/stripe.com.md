@@ -34,7 +34,7 @@ Requested https://stripe.com/ once per retrieval user-agent. All 10 returned HTT
 
 **✓ `p1.llms-txt` 3/3**
 
-https://stripe.com/llms.txt returns 200, 65,026 bytes, 379 lines of valid Markdown. One H1 ('# Stripe'), one summary blockquote ('> Stripe is a technology company that provides financial infrastructure for businesses...'), 30 '##' sectioned link groups (Payments, Connect, Payment Links, Checkout, Elements, Billing, Invoicing, Tax, Atlas, Terminal, Radar, Issuing, Revenue Recognition, Identity, Financial Connections, Treasury, Capital, Data Pipeline, Sigma, Climate, Link, Global Payouts, Crypto, Solutions, Ecosystem, Documentation, Resources, Other, External domains, Optional) and 285 '- [title](url): description' link lines. Requirement is >=3 sectioned groups; this has 30.
+https://stripe.com/llms.txt returns 200, 65,026 bytes, 379 lines of valid Markdown. One H1 ('# Stripe'), one summary blockquote ('> Stripe is a technology company that provides financial infrastructure for businesses...'), 30 '##' sectioned link groups (Payments, Connect, Payment Links, Checkout, Elements, Billing, Invoicing, Tax, Atlas, Terminal, Radar, Issuing, Revenue Recognition, Identity, Financial Connections, Treasury, Capital, Data Pipeline, Sigma, Climate, Link, Global Payouts, Crypto, Solutions, Ecosystem, Documentation, Resources, Other, External domains, Optional) and 285 `- [title](url): description` link lines. Requirement is >=3 sectioned groups; this has 30.
 
 **✗ `p1.llms-full-txt` 0/2**
 

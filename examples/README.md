@@ -7,7 +7,12 @@
 
 ## The five audits
 
-Run 2026-09-08 against rubric v1.0, using only publicly observable data.
+Run 2026-09-08 against rubric **v1.0**, using only publicly observable data.
+
+> These are the audits that surfaced v1.0's miscalibration and became the evidence base
+> for [v1.1](../rubric/calibration-v1.1.md). They are kept exactly as run — v1.0 numbers,
+> v1.0 band names — because rewriting them would destroy the record of what was wrong.
+> **v1.1 audits of the same five sites are below where available.**
 Each has a human-readable `.md` and a machine-readable `.json` conforming to
 [`schema/report.v1.json`](../schema/report.v1.json).
 

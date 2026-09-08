@@ -1,80 +1,92 @@
 # Sample report
 
 The output shape `/geo-score audit` produces. This example is a composite built from
-real audit patterns — the site is not a real client, and the numbers are illustrative
-of the *format*, not benchmarks to compare yourself against.
+real audit patterns — the site is not a real client, and the numbers illustrate the
+*format*, not a benchmark to compare yourself against.
 
-Two things every real report must carry, both shown here: **the rubric version** and
-**the audit date**.
+Four things every real report must carry, all shown here: **the rubric version**, **the
+audit date**, **the gap to the next band**, and **which checks left the denominator and why**.
 
 ```
-AIV 33 / 88  (v1.0)  ·  normalised 38%  ·  2026-09-08
-Band: Critical
+AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
+Band: Early  —  5 points below Growing
 
 Sampled (8 URLs)
   /  /products/kettle  /products/grinder  /products/scale
   /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
 
-  Infrastructure                 9 / 20
-    ✓  robots.txt allows 9 of 10 retrieval user-agents            2/3
-    ✓  9 of 10 return 200 with the real page (Applebot 403)       2/3
-    ✗  llms.txt                                not found          0/3
-    ✗  llms-full.txt                           not found          0/2
-    ✗  ai.txt                                  not found          0/2
-    ✓  sitemap.xml resolves, referenced from robots.txt           3/3
-    ✗  no GEO <link> tags in <head>                               0/2
-    ✓  primary content present without executing JS               2/2
+  Reachable                    15 / 15   ← gate checks
+    ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
+       full tier
+    ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
+       full tier
+    ✓  primary content present without executing JS             5/5
+       full tier
 
-  Structured Data                7 / 17   (nominal 20, −3 excluded)
-    ✓  Organization + WebSite sitewide                            4/4
-    ✗  Article on 4 of 4 articles, but author is "admin"          0/4
-    ✗  FAQPage absent on 3 pages structured as Q&A                0/3
-    ✗  speakable not declared                                     0/3
-    ✓  Product/Offer on 3 of 3 product pages                      3/3
-    ⊘  HowTo / BreadcrumbList   not applicable — no procedural pages   —
+  Understandable               15 / 22
+    ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
+    ✗  llms.txt not found                                       0/5
+       tier 1 of 4
+    ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
+       tier 3 of 4
+    ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
+       tier 2 of 3
+    ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
 
-  Content Citability             6 / 25
-    ✗  0 of 8 pages open with a self-contained passage            0/5
-    ✗  11 numeric claims, 2 carry a source                        0/5
-    ✗  author is a brand name on 4 of 4 articles                  0/5
-    ✓  headings phrased as natural questions on 5 of 8            3/5
-    ✓  dateModified on 5 of 8, median age 61 days                 3/5
+  Content Citability            9 / 35
+    ✗  0 of 8 pages open with a self-contained passage          0/9
+       tier 1 of 4
+    ◐  2 of 8 headings phrased as a task or question            3/7
+       tier 2 of 4
+    ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
+       tier 2 of 3
+    ◐  11 numeric claims, 2 carry a source                      3/7
+       tier 2 of 4
+    ✗  author is the brand name on 4 of 4 articles              0/6
+       tier 1 of 3
 
-  Brand Authority                9 / 20
-    ✗  no Wikidata item                                           0/5
-    ✓  listed on 2 independent directories                        5/5
-    ✗  no video channel linked via sameAs                         0/4
-    ✓  brand discussed on 3 domains you don't control             3/3
-    ✗  2 of 5 sameAs URLs resolve, 3 return 404                   1/3
+  Brand Credibility             2 / 18
+    ◐  listed in 2 directories                                  2/4
+       tier 2 of 4
+    ✗  no independent coverage found                            0/4
+       tier 1 of 4
+    ✗  no Wikidata or Wikipedia entity                          0/4
+    ✗  sameAs not declared                                      0/3
+       tier 1 of 3 — absent scores 0, it is not excluded
+    ✗  no official video channel                                0/3
+       tier 1 of 3
 
-  Platform Visibility            2 / 6   (nominal 15, −9 excluded)
-    ⊘  Search Console verification   unobservable — external audit   —
-    ⊘  Bing Webmaster submission     unobservable — external audit   —
-    ✗  cited in 0 of 3 engines on a 12-query buyer-intent set     0/3
-    ✓  answer-shape fit acceptable on 6 of 8 pages                2/3
-    ⊘  non-English engines           not applicable — EN audience   —
+  Answer Fit                    4 / 8
+    ◐  headings present, paragraphs run long                    2/4
+       tier 2 of 3
+    ◐  3 of 10 common buyer questions answered on site          2/4
+       tier 2 of 4
 
-Excluded from denominator  −12
-  3   HowTo / BreadcrumbList
-  3   Search Console verification
-  3   Bing Webmaster submission
-  3   non-English engines
+  ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
 
-Largest single gap: Content Citability, 6 of 25.
+  Bonus checks: none found (+0, outside the denominator; caps at +6)
+
+Citation performance — not scored
+  Whether engines actually cite this site is an outcome, not a property of the site.
+  It is reported separately once query tests are run. A readiness score says engines
+  *can* cite you; it does not say they *do*.
 ```
 
 ## Reading it
 
-- **Every check is shown, including passes.** A report that lists only failures reads
-  as a sales document rather than an audit.
-- **`✓` means observed, not reported.** Where the site owner told us something we could
-  not verify from outside — Search Console verification, for instance — a real report
-  marks it `(reported)`.
-- **The band matters more than the number.** Moving 41 → 47 inside "Below average" is
-  noise; crossing into "Good" reflects a structural change.
-- **The largest single gap is called out** because remediation sequencing is usually
-  obvious once you see where the weight is lost.
+**The score is readiness, not results.** It says whether an engine *can* find, parse,
+trust and cite the site. Whether one *does* depends on competition and query intent,
+which no site-side audit can observe. The two are reported separately and never summed.
 
-## What this report deliberately does not include
+**Tiers, not pass/fail.** `2/4` on a 4-point check means the evidence satisfied the
+second tier, not that someone awarded half marks. The tier reason says why it did not
+reach the next one — that line is the actionable part.
 
-No fix instructions. See [Scope](../README.md#scope--what-this-does-not-do).
+**Excluded checks leave the denominator.** A site with no product pages is not penalised
+for missing `Product` schema; the check is removed and the maximum drops. This is why
+the header reads `45 / 98` rather than `45 / 100`, and why two sites' raw scores are only
+comparable after normalising.
+
+**Gate checks come first.** If `g.robots`, `g.reachable` or `g.ssr` is short of full
+marks, readiness caps at 40 and the report leads with it. Until a crawler can reach the
+content, nothing else you change has any effect.

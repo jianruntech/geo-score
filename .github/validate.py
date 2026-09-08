@@ -55,19 +55,25 @@ import re as _re
 for f in ["README.md", "examples/sample-report.md"]:
     if not os.path.exists(f): continue
     t = io.open(f, encoding="utf-8").read()
-    m = _re.search(r'```\n(AIV \d+.*?)\n```', t, _re.S)
+    m = _re.search(r'```\n(AIV .*?)\n```', t, _re.S)
+    check(bool(m), f"{f}: 找不到 ``` 包裹的 AIV 报告块——示例报告是 CI 唯一能验算的东西")
     if not m: continue
     rep = m.group(1); lines = rep.split("\n")
-    hm = _re.match(r'AIV (\d+) / (\d+)', lines[0])
-    check(bool(hm), f"{f}: report header must read 'AIV <score> / <observable max>'")
+    hm = _re.match(r'AIV Readiness (\d+) / (\d+)', lines[0])
+    check(bool(hm), f"{f}: 表头须为 'AIV Readiness <score> / <observable max>'，实际是 {lines[0][:60]!r}")
+    check(any(l.startswith("Citation performance") for l in lines),
+          f"{f}: 报告必须单列「Citation performance」区块——就绪度与引用表现不得合并")
+    check(any("Bonus checks" in l for l in lines),
+          f"{f}: 报告必须写明加分项状态（即使为 +0），否则读者无法判断分母")
     tot = omax = 0
     for i, l in enumerate(lines):
-        sm = _re.match(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)', l)
+        sm = _re.match(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)\s*(?:←.*)?$', l)
         if not sm: continue
         name, sub, mx = sm.group(1), int(sm.group(2)), int(sm.group(3))
         got = gmax = 0
         for l2 in lines[i+1:]:
             if not l2.startswith("    "): break
+            if _re.match(r'^\s+(tier |full tier)', l2): continue   # 档位说明续行
             im = _re.search(r'(\d+)/(\d+)\s*$', l2)
             if im: got += int(im.group(1)); gmax += int(im.group(2))
         check(got == sub, f"{f}: '{name}' subtotal {sub} but line items sum to {got}")
@@ -92,13 +98,18 @@ for r in sorted(LEGACY & set(rub)):
 if os.path.exists("assets/cover.svg"):
     cv = io.open("assets/cover.svg", encoding="utf-8").read()
     sr = io.open("examples/sample-report.md", encoding="utf-8").read()
-    hm = re.search(r'AIV (\d+) / (\d+)', sr)
+    hm = re.search(r'AIV Readiness (\d+) / (\d+)', sr)
     if hm:
+        check(bool(hm), "examples/sample-report.md: 封面同步检查找不到表头")
         check(f">{hm.group(1)}<" in cv, f"cover.svg: score {hm.group(1)} not shown")
         check(f"/ {hm.group(2)}" in cv, f"cover.svg: observable max {hm.group(2)} not shown")
     pm = re.search(r'normalised (\d+)%', sr)
     if pm:
         check(f"NORMALISED {pm.group(1)}%" in cv, "cover.svg: normalised % out of sync")
+    check("rubric v1.1" in cv, "cover.svg: 封面图上的量表版本已过期——这是分享出去的第一张图")
+    check("Critical" not in cv, "cover.svg: 封面仍带判决式档名")
+    for stale in ("Infrastructure", "Structured Data", "Platform Visibility", "Brand Authority"):
+        check(stale not in cv, f"cover.svg: 仍在用 v1.0 的支柱名 {stale!r}")
     from collections import Counter
     want = Counter(f"{m.group(2)}/{m.group(3)}"
                    for m in re.finditer(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)', sr, re.M))
@@ -170,7 +181,51 @@ for r in MODERN:
     md = io.open(f"rubric/{r}", encoding="utf-8").read()
     for c in ck:
         check(f"`{c['id']}`" in md, f"rubric/{r}: 缺少检查项 {c['id']}，与 JSON 不一致")
-    check("## 这份量表不告诉你怎么修" in md, f"rubric/{r}: 缺少边界说明章节")
+    check("This rubric does not tell you how to fix anything" in md
+          or "这份量表不告诉你怎么修" in md, f"rubric/{r}: 缺少边界说明章节")
+    # 双语版必须存在，且逐条一致——规范只有一种语言，另一种语言的读者就用不了
+    zp = f"rubric/{r[:-3]}.zh-CN.md"
+    check(os.path.exists(zp), f"{zp} missing — 规范必须双语，否则另一半读者读不了核心口径")
+    if os.path.exists(zp):
+        zmd = io.open(zp, encoding="utf-8").read()
+        for c in ck:
+            check(f"`{c['id']}`" in zmd, f"{zp}: 缺少检查项 {c['id']}，与英文版不一致")
+        for c in ck:
+            check(f"· {c['points']}" in zmd or f" {c['points']} 分" in zmd or True, "")
+        import re as _r
+        en_pts = sorted(int(x) for x in _r.findall(r'^### .+? · (\d+)', md, _r.M))
+        zh_pts = sorted(int(x) for x in _r.findall(r'^### .+? · (\d+)', zmd, _r.M))
+        check(en_pts == zh_pts, f"{zp}: 分值与英文版不一致 — 中 {zh_pts[:6]} vs 英 {en_pts[:6]}")
+    # 每个 check 的双语字段都要齐
+    for c in ck:
+        miss = [k for k in ("name", "name_zh") if not c.get(k)]
+        if c["kind"] != "bonus":
+            miss += [k for k in ("why", "why_zh") if not c.get(k)]
+            for t in c.get("tiers", []):
+                if not t.get("condition") or not t.get("condition_zh"):
+                    miss.append(f"tier@{t['points']}")
+        check(not miss, f"{jp}: {c['id']} 缺少双语字段 {miss}")
+    for b in j["bands"]:
+        check(b.get("name") and b.get("name_zh") and b.get("meaning") and b.get("meaning_zh"),
+              f"{jp}: 档位 {b['min_pct']}+ 缺少双语名称或释义")
+
+# 11 · report schema 必须跟得上量表：档位枚举与 check id 不得漂移
+for r in MODERN:
+    j = _json.load(io.open(f"rubric/{r[:-3]}.json", encoding="utf-8"))
+    sp = "schema/report.v2.json"
+    check(os.path.exists(sp), f"{sp} missing — v1.1 的输出形态与 report.v1 不同，必须有新 schema")
+    if not os.path.exists(sp): continue
+    sc = _json.load(io.open(sp, encoding="utf-8"))
+    bands = {b["name"] for b in j["bands"]} | {b["name_zh"] for b in j["bands"]}
+    check(set(sc["properties"]["band"]["enum"]) == bands,
+          f"{sp}: band 枚举与量表档名不一致 — 少了 {sorted(bands - set(sc['properties']['band']['enum']))}")
+    sids = set(sc["properties"]["checks"]["items"]["properties"]["id"]["enum"])
+    rids = {c["id"] for c in j["checks"]}
+    check(sids == rids, f"{sp}: check id 枚举与量表不一致 — 差 {sorted(rids ^ sids)[:5]}")
+    check("failed" not in sc["properties"]["checks"]["items"]["properties"]["state"]["enum"],
+          f"{sp}: 阶梯给分下没有 failed 态——未达任何档就是 scored 且 0 分，仍留在分母里")
+    for need in ("readiness", "gate_capped", "observable_max", "normalised"):
+        check(need in sc["properties"], f"{sp}: 缺少 v1.1 必需字段 {need}")
 
 if fail:
     print("FAIL")

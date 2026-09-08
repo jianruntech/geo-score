@@ -6,11 +6,11 @@
 **An open, versioned rubric for Generative Engine Optimization — score any site 0–100
 on whether AI answer engines can find, parse, trust and cite it.**
 
-The rubric it publishes is the **AIV score** (AI Visibility). 28 checks, 5 pillars,
+The rubric it publishes is the **AIV score** (AI Visibility). 25 tiered checks,
 100 points, one specification anyone can implement.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
-[![Rubric v1.0](https://img.shields.io/badge/rubric-v1.0-A9854C.svg)](rubric/v1.0.md)
+[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -18,7 +18,7 @@ The rubric it publishes is the **AIV score** (AI Visibility). 28 checks, 5 pilla
 > Perplexity, Google AI Overviews, Gemini and Copilot. It has nothing to do with
 > geography, maps or geolocation.
 
-[Rubric](rubric/v1.0.md) · [Quickstart](#quickstart) · [What it checks](#what-it-checks) ·
+[Rubric](rubric/v1.1.md) · [Quickstart](#quickstart) · [What it checks](#what-it-checks) ·
 [Sample output](#sample-output) · [Scope](#scope--what-this-does-not-do) · [Research](#research-behind-the-weights)
 
 ---
@@ -29,7 +29,7 @@ and it has different failure modes: a site can sit at position 3 on Google and n
 quoted, while a page nobody links to gets cited daily because its passages are clean.
 
 **AIV Score is the measurement half of that problem.** It is a published, versioned
-rubric — 28 checks across 5 pillars, adding to 100 — plus a Claude Code skill that runs it.
+rubric — 25 tiered checks adding to 100 — plus a Claude Code skill that runs it.
 
 It deliberately stops at measurement. See [Scope](#scope--what-this-does-not-do).
 
@@ -68,30 +68,43 @@ Restart Claude Code, then:
 command list. If nothing appears, check that the clone landed in `~/.claude/skills/`
 and that the folder contains `SKILL.md`.
 
-You do not need Claude Code to use this. The [rubric](rubric/v1.0.md) is a plain
+You do not need Claude Code to use this. The [rubric](rubric/v1.1.md) is a plain
 specification — score a site by hand, or implement it in your own tool.
 
 ## What it checks
 
-Full specification with pass conditions: **[rubric/v1.0.md](rubric/v1.0.md)**
+Full specification with tier conditions: **[rubric/v1.1.md](rubric/v1.1.md)** ·
+[简体中文](rubric/v1.1.zh-CN.md)
 
 | Pillar | Pts | Checks | Examples |
 |---|:-:|:-:|---|
-| Infrastructure | 20 | 7 | AI crawlers allowed in `robots.txt`, `llms.txt` present and well-formed, content in server-rendered HTML |
-| Structured Data | 20 | 6 | `Organization`, `Article` with a resolvable author, `FAQPage`, `speakable` |
-| **Content Citability** | **25** | 5 | Self-contained 40–90 word answer passages, statistics with named sources, real bylines, freshness |
-| Brand Authority | 20 | 5 | Knowledge-graph record, independent listings, `sameAs` links that resolve both ways |
-| Platform Visibility | 15 | 5 | Search Console and Bing verified, a fixed query set tested across ≥3 engines |
+| Reachable — *gates* | 15 | 3 | Retrieval crawlers allowed in `robots.txt`, all 10 actually served 200, content in server-rendered HTML |
+| Understandable | 22 | 5 | `Organization` + `WebSite`, `llms.txt` with sectioned link groups, `BreadcrumbList`, page-type schema |
+| **Content Citability** | **35** | 5 | Self-contained answer passages, headings that match how people ask, sourced statistics, real bylines, freshness |
+| Brand Credibility | 18 | 5 | Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
+| Answer Fit | 10 | 3 | Extractable content shape, coverage of the questions buyers actually ask |
+| *Bonus* | *+6* | *4* | `ai.txt`, `speakable`, GEO `<link>` tags, `llms-full.txt` — outside the denominator |
 
-Content Citability is weighted highest on purpose: answer engines retrieve **passages**,
-not domains. Structure of the passage beats authority of the domain more often than
-classic SEO intuition expects.
+Content Citability carries the most weight on purpose: answer engines retrieve
+**passages**, not domains. Structure of the passage beats authority of the domain more
+often than classic SEO intuition expects.
+
+**Every check is tiered**, 2–4 tiers each — you take the highest tier the evidence
+satisfies. Binary pass/fail is what made v1.0 unable to tell two sites apart.
+
+**Three checks are gates.** Miss full marks on `g.robots`, `g.reachable` or `g.ssr` and
+readiness caps at 40, because until a crawler can reach the content, nothing else you
+change has any effect.
 
 ### Score bands
 
-| 0–40 | 41–60 | 61–75 | 76–90 | 91–100 |
+| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
 |:-:|:-:|:-:|:-:|:-:|
-| Critical | Below average | Good | Strong | Leading |
+| Not started | Early | Growing | Solid | Leading |
+
+Band names describe a **stage, not a verdict**. This is a diagnostic meant to decide what
+to do next. External benchmarks put most business sites in the 30–55 range — a score in
+the forties is ordinary, not alarming.
 
 ## Sample output
 
@@ -99,62 +112,73 @@ classic SEO intuition expects.
 <summary><strong>AIV report for a small Shopify storefront (click to expand)</strong></summary>
 
 ```
-AIV 33 / 88  (v1.0)  ·  normalised 38%  ·  2026-09-08
-Band: Critical
+AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
+Band: Early  —  5 points below Growing
 
 Sampled (8 URLs)
   /  /products/kettle  /products/grinder  /products/scale
   /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
 
-  Infrastructure                 9 / 20
-    ✓  robots.txt allows 9 of 10 retrieval user-agents            2/3
-    ✓  9 of 10 return 200 with the real page (Applebot 403)       2/3
-    ✗  llms.txt                                not found          0/3
-    ✗  llms-full.txt                           not found          0/2
-    ✗  ai.txt                                  not found          0/2
-    ✓  sitemap.xml resolves, referenced from robots.txt           3/3
-    ✗  no GEO <link> tags in <head>                               0/2
-    ✓  primary content present without executing JS               2/2
+  Reachable                    15 / 15   ← gate checks
+    ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
+       full tier
+    ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
+       full tier
+    ✓  primary content present without executing JS             5/5
+       full tier
 
-  Structured Data                7 / 17   (nominal 20, −3 excluded)
-    ✓  Organization + WebSite sitewide                            4/4
-    ✗  Article on 4 of 4 articles, but author is "admin"          0/4
-    ✗  FAQPage absent on 3 pages structured as Q&A                0/3
-    ✗  speakable not declared                                     0/3
-    ✓  Product/Offer on 3 of 3 product pages                      3/3
-    ⊘  HowTo / BreadcrumbList   not applicable — no procedural pages   —
+  Understandable               15 / 22
+    ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
+    ✗  llms.txt not found                                       0/5
+       tier 1 of 4
+    ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
+       tier 3 of 4
+    ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
+       tier 2 of 3
+    ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
 
-  Content Citability             6 / 25
-    ✗  0 of 8 pages open with a self-contained passage            0/5
-    ✗  11 numeric claims, 2 carry a source                        0/5
-    ✗  author is a brand name on 4 of 4 articles                  0/5
-    ✓  headings phrased as natural questions on 5 of 8            3/5
-    ✓  dateModified on 5 of 8, median age 61 days                 3/5
+  Content Citability            9 / 35
+    ✗  0 of 8 pages open with a self-contained passage          0/9
+       tier 1 of 4
+    ◐  2 of 8 headings phrased as a task or question            3/7
+       tier 2 of 4
+    ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
+       tier 2 of 3
+    ◐  11 numeric claims, 2 carry a source                      3/7
+       tier 2 of 4
+    ✗  author is the brand name on 4 of 4 articles              0/6
+       tier 1 of 3
 
-  Brand Authority                9 / 20
-    ✗  no Wikidata item                                           0/5
-    ✓  listed on 2 independent directories                        5/5
-    ✗  no video channel linked via sameAs                         0/4
-    ✓  brand discussed on 3 domains you don't control             3/3
-    ✗  2 of 5 sameAs URLs resolve, 3 return 404                   1/3
+  Brand Credibility             2 / 18
+    ◐  listed in 2 directories                                  2/4
+       tier 2 of 4
+    ✗  no independent coverage found                            0/4
+       tier 1 of 4
+    ✗  no Wikidata or Wikipedia entity                          0/4
+    ✗  sameAs not declared                                      0/3
+       tier 1 of 3 — absent scores 0, it is not excluded
+    ✗  no official video channel                                0/3
+       tier 1 of 3
 
-  Platform Visibility            2 / 6   (nominal 15, −9 excluded)
-    ⊘  Search Console verification   unobservable — external audit   —
-    ⊘  Bing Webmaster submission     unobservable — external audit   —
-    ✗  cited in 0 of 3 engines on a 12-query buyer-intent set     0/3
-    ✓  answer-shape fit acceptable on 6 of 8 pages                2/3
-    ⊘  non-English engines           not applicable — EN audience   —
+  Answer Fit                    4 / 8
+    ◐  headings present, paragraphs run long                    2/4
+       tier 2 of 3
+    ◐  3 of 10 common buyer questions answered on site          2/4
+       tier 2 of 4
 
-Excluded from denominator  −12
-  3   HowTo / BreadcrumbList
-  3   Search Console verification
-  3   Bing Webmaster submission
-  3   non-English engines
+  ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
 
-Largest single gap: Content Citability, 6 of 25.
+  Bonus checks: none found (+0, outside the denominator; caps at +6)
+
+Citation performance — not scored
+  Whether engines actually cite this site is an outcome, not a property of the site.
+  It is reported separately once query tests are run. A readiness score says engines
+  *can* cite you; it does not say they *do*.
 ```
 
 </details>
+
+Full walkthrough of how to read it: [`examples/sample-report.md`](examples/sample-report.md).
 
 ## Five real audits, and what they changed
 

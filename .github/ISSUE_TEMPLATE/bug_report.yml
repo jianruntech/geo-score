@@ -15,7 +15,7 @@ body:
     id: version
     attributes:
       label: Rubric version
-      placeholder: "v1.0"
+      placeholder: "v1.1"
     validations: { required: true }
   - type: textarea
     id: expected

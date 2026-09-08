@@ -5,7 +5,19 @@ the Claude Code skill is one implementation of it, not the definition.
 
 | Version | Status | Checks | Released |
 |---|---|:-:|---|
-| [v1.0](v1.0.md) | **current** | 28 | 2026-09-08 |
+| [v1.1](v1.1.md) · [简体中文](v1.1.zh-CN.md) | **current** | 25 tiered | 2026-09-08 |
+| [v1.0](v1.0.md) | superseded | 29 binary | 2026-09-08 |
+
+**v1.0 was never released to users.** It was written, then run against five real public
+sites before announcing it — and it labelled a site returning 200 to all ten retrieval
+crawlers, byte-identical to a browser, with 60 KB of server-rendered prose, as *Critical*.
+That is a failed calibration check, so v1.1 shipped instead.
+
+Both stay published. The [five v1.0 audits](../examples/audits/) are the evidence that
+found the problem, [eight ambiguities](open-questions.md) were settled by the correction,
+and [the calibration record](calibration-v1.1.md) shows the reasoning against three
+external benchmarks. A rubric that quietly rewrites its own history is not one you can
+compare against.
 
 ## Why version a rubric
 
@@ -14,7 +26,7 @@ to what a different tool measured. That requires everyone to agree on what was m
 
 So two rules, and they are not negotiable:
 
-1. **Every score reports its rubric version.** `AIV 62 (v1.0)` is a claim. `AIV 62` is not.
+1. **Every score reports its rubric version.** `AIV 62 (v1.1)` is a claim. `AIV 62` is not.
 2. **Scores from different rubric versions are not comparable.** Don't average them,
    don't chart them on the same axis. Re-score with the current version instead.
 
@@ -38,8 +50,8 @@ The rubric is a plain specification. To score a site by hand:
 
 1. Pick your sample — at minimum the homepage, one product/service page, one article.
    Write the URLs down; the score is only meaningful with them.
-2. Walk each pillar in [v1.0.md](v1.0.md) and mark each check against its pass condition.
-   Where the condition names a proportion, award partial credit; otherwise 0 or full.
+2. Walk each pillar in [v1.1.md](v1.1.md) and give each check the **highest tier its
+   evidence actually satisfies** — not the one it nearly reaches.
 3. Sum, find the band, and record **the rubric version and the date**.
 4. Note what you could not verify. An audit that hides its blind spots is worth less
    than a lower score that states them.
@@ -78,8 +90,10 @@ So the rubric scores structure, sourcing and attribution, and stays out of style
 
 | File | What it is |
 |---|---|
-| [`v1.0.json`](v1.0.json) | The same 29 checks with **stable ids** (`p3.answer-passages`), points, credit type and pass conditions |
-| [`../schema/report.v1.json`](../schema/report.v1.json) | JSON Schema for audit output — emit this and your results are comparable with anyone else's |
+| [`v1.1.json`](v1.1.json) | The 25 checks with **stable ids** (`p2.answer-passages`), tier conditions, points, bands and gate rules |
+| [`v1.0.json`](v1.0.json) | Superseded — the 29 binary checks, kept so old audits stay resolvable |
+| [`../schema/report.v2.json`](../schema/report.v2.json) | JSON Schema for audit output under v1.1 — emit this and your results are comparable with anyone else's |
+| [`../schema/report.v1.json`](../schema/report.v1.json) | Superseded — the v1.0 output shape, kept so v1.0 reports still validate |
 
 Check ids are **permanent**. A future rubric version may retire an id, but never reuses
 one for a different check — that is what makes it possible to diff v1.0 against v1.1 and

@@ -6,11 +6,11 @@
 **一套开源、带版本号的 GEO（生成式引擎优化）评分口径 —— 给任何网站打 0–100 分，
 衡量 AI 回答引擎能不能找到、读懂、信任并引用它。**
 
-它发布的这套口径叫 **AIV 分**（AI Visibility，AI 可见度）。5 个支柱、28 项检查、满分 100，
+它发布的这套口径叫 **AIV 分**（AI Visibility，AI 可见度）。25 项阶梯式检查、满分 100，
 一份任何人都能照着实现的规范。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
-[![Rubric v1.0](https://img.shields.io/badge/rubric-v1.0-A9854C.svg)](rubric/v1.0.md)
+[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -18,7 +18,7 @@
 > 是让 ChatGPT、Perplexity、Google AI Overviews、Gemini、Copilot 引用你，
 > 与地理信息、地图、定位无关。
 
-[评分口径](rubric/v1.0.md) · [快速开始](#快速开始) · [查什么](#查什么) ·
+[评分口径](rubric/v1.1.zh-CN.md) · [快速开始](#快速开始) · [查什么](#查什么) ·
 [示例输出](#示例输出) · [边界](#边界--这个仓库不做什么) · [研究依据](#权重的研究依据)
 
 ---
@@ -28,7 +28,7 @@
 而一个没什么外链的页面天天被引，因为它的段落干净。
 
 **geo-score 做的是这件事的测量那一半。** 它是一份公开、带版本号的评分口径——
-5 个支柱 28 项检查合计 100 分——外加一个能跑这套口径的 Claude Code 技能。
+25 项阶梯式检查合计 100 分——外加一个能跑这套口径的 Claude Code 技能。
 
 **它刻意停在测量。** 见[边界](#边界--这个仓库不做什么)。
 
@@ -64,34 +64,115 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 **验证装好了**：不带参数输入 `/geo-score`，应该看到命令列表。
 没反应就检查 clone 是不是落在 `~/.claude/skills/` 下、目录里有没有 `SKILL.md`。
 
-**不用 Claude Code 也能用。**[评分口径](rubric/v1.0.md)就是一份普通规范，
+**不用 Claude Code 也能用。**[评分口径](rubric/v1.1.zh-CN.md)就是一份普通规范，
 可以手工打分，也可以在你自己的工具里实现。
 
 ## 查什么
 
-完整规范与通过条件见 **[rubric/v1.0.md](rubric/v1.0.md)**。
+完整规范与各档判据见 **[rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md)**。
 
 | 支柱 | 分值 | 检查项 | 举例 |
 |---|:-:|:-:|---|
-| 基础设施 | 20 | 7 | `robots.txt` 放行 AI 爬虫、`llms.txt` 存在且格式正确、内容在服务端渲染的 HTML 里 |
-| 结构化数据 | 20 | 6 | `Organization`、带可解析作者的 `Article`、`FAQPage`、`speakable` |
-| **内容可引用性** | **25** | 5 | 40–90 词的自足答案段、数字带出处、真实署名、更新时间 |
-| 品牌权威 | 20 | 5 | 知识图谱记录、第三方收录、`sameAs` 双向可达 |
-| 平台可见度 | 15 | 5 | Search Console 与 Bing 已验证、固定问题集在 ≥3 个引擎上实测过 |
+| 可被抓取 —— *门槛* | 15 | 3 | `robots.txt` 放行检索爬虫、10 个检索 UA 实测都返回 200、正文在服务端渲染的 HTML 里 |
+| 可被理解 | 22 | 5 | `Organization` + `WebSite`、带分节链接组的 `llms.txt`、`BreadcrumbList`、页型专用 schema |
+| **内容可被引用** | **35** | 5 | 自足答案段、标题匹配人们真实的提问措辞、数据带出处、真实署名、时间信号 |
+| 品牌可信 | 18 | 5 | 知识图谱实体、第三方收录、`sameAs` 可解析、视频存在 |
+| 问答适配 | 10 | 3 | 内容形态便于摘录、覆盖客户真实会问的问题 |
+| *加分项* | *+6* | *4* | `ai.txt`、`speakable`、GEO `<link>` 标签、`llms-full.txt` —— 不进分母 |
 
-内容可引用性权重最高是有意的：回答引擎检索的是**段落**，不是域名。
+内容可被引用权重最高是有意的：回答引擎检索的是**段落**，不是域名。
 段落的结构比域名的权威更常起决定作用——这一点和传统 SEO 的直觉相反。
+
+**每一项都是阶梯给分**，2–4 档，取证据实际满足的最高档。
+二元的非 0 即满，正是 v1.0 分不出两个站差别的原因。
+
+**其中三项是门槛。** `g.robots`、`g.reachable`、`g.ssr` 任一未拿满，
+就绪度总分封顶 40——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
 
 ### 分数段
 
-| 0–40 | 41–60 | 61–75 | 76–90 | 91–100 |
+| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
 |:-:|:-:|:-:|:-:|:-:|
-| 危急 | 偏低 | 良好 | 强 | 领先 |
+| 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
+
+档名描述的是**所处阶段，不是判决**。这是一份用来决定下一步做什么的诊断。
+外部基准显示多数商业网站落在 30–55 之间——四十几分是常态，不是警报。
 
 ## 示例输出
 
-见 [examples/sample-report.md](examples/sample-report.md)。
-每份真实报告必须带两样：**评分口径版本**和**审计日期**。
+<details>
+<summary><strong>一个小型 Shopify 店铺的 AIV 报告（点开）</strong></summary>
+
+```
+AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
+Band: Early  —  5 points below Growing
+
+Sampled (8 URLs)
+  /  /products/kettle  /products/grinder  /products/scale
+  /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
+
+  Reachable                    15 / 15   ← gate checks
+    ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
+       full tier
+    ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
+       full tier
+    ✓  primary content present without executing JS             5/5
+       full tier
+
+  Understandable               15 / 22
+    ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
+    ✗  llms.txt not found                                       0/5
+       tier 1 of 4
+    ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
+       tier 3 of 4
+    ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
+       tier 2 of 3
+    ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
+
+  Content Citability            9 / 35
+    ✗  0 of 8 pages open with a self-contained passage          0/9
+       tier 1 of 4
+    ◐  2 of 8 headings phrased as a task or question            3/7
+       tier 2 of 4
+    ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
+       tier 2 of 3
+    ◐  11 numeric claims, 2 carry a source                      3/7
+       tier 2 of 4
+    ✗  author is the brand name on 4 of 4 articles              0/6
+       tier 1 of 3
+
+  Brand Credibility             2 / 18
+    ◐  listed in 2 directories                                  2/4
+       tier 2 of 4
+    ✗  no independent coverage found                            0/4
+       tier 1 of 4
+    ✗  no Wikidata or Wikipedia entity                          0/4
+    ✗  sameAs not declared                                      0/3
+       tier 1 of 3 — absent scores 0, it is not excluded
+    ✗  no official video channel                                0/3
+       tier 1 of 3
+
+  Answer Fit                    4 / 8
+    ◐  headings present, paragraphs run long                    2/4
+       tier 2 of 3
+    ◐  3 of 10 common buyer questions answered on site          2/4
+       tier 2 of 4
+
+  ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
+
+  Bonus checks: none found (+0, outside the denominator; caps at +6)
+
+Citation performance — not scored
+  Whether engines actually cite this site is an outcome, not a property of the site.
+  It is reported separately once query tests are run. A readiness score says engines
+  *can* cite you; it does not say they *do*.
+```
+
+</details>
+
+怎么读这份报告：[`examples/sample-report.md`](examples/sample-report.md)。
+每份真实报告必须带四样：**口径版本**、**审计日期**、**距下一档还差几分**、
+以及**哪些项退出了分母、为什么**。
 
 ## 五份真实审计，以及它们改变了什么
 
@@ -103,7 +184,7 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 被判为**危急**。三份外部基准都指向天花板设低了：GeoReady 在 282–750 个域名上的均分是 54–56，
 GW Content 的公开口径是「多数商业网站落在 30–55」。
 
-[**v1.1**](rubric/v1.1.md) 是这次重新标定——阶梯给分取代二元判定、
+[**v1.1**](rubric/v1.1.zh-CN.md) 是这次重新标定——阶梯给分取代二元判定、
 就绪度与引用表现拆开、站外看不见的检查移出基数、档名描述阶段而不是下判决。
 [标定依据](rubric/calibration-v1.1.md) ·
 [它定掉的 8 条歧义](rubric/open-questions.md)

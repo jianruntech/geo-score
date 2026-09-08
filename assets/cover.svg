@@ -10,7 +10,6 @@
   <rect width="1280" height="640" fill="#0B120E"/>
   <rect width="1280" height="640" fill="url(#grid)"/>
 
-  <!-- 左：标题 -->
   <text x="72" y="132" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="15" letter-spacing="4.5" fill="#A9854C">JIANRUNTECH / GEO-SCORE</text>
   <text x="70" y="222" font-family="Georgia,'Times New Roman',serif" font-size="76" font-weight="700" fill="#E7ECE7">geo-score</text>
   <text x="72" y="278" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="25" fill="#A7B4AC">An open rubric for</text>
@@ -22,46 +21,41 @@
   <text x="72" y="426" font-family="system-ui,-apple-system,sans-serif" font-size="19" fill="#7E8B84">find, parse, trust and <tspan fill="#4FAE80" font-weight="600">cite</tspan> your site?</text>
 
   <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" letter-spacing="1.6" fill="#5F6761">
-    <text x="72" y="500">29 CHECKS · 5 PILLARS · 100 POINTS</text>
+    <text x="72" y="500">25 CHECKS · TIERED · 100 POINTS</text>
     <text x="72" y="528">VERSIONED · MIT · IMPLEMENT IT YOURSELF</text>
   </g>
 
-  <!-- 右：仪表卡 -->
   <rect x="676" y="96" width="532" height="448" fill="#101913" stroke="#2C3B33" stroke-width="1"/>
   <rect x="676" y="96" width="532" height="46" fill="#0E1611" stroke="#2C3B33" stroke-width="1"/>
-  <text x="700" y="125" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="2" fill="#A9854C">AIV REPORT</text>
-  <text x="1184" y="125" text-anchor="end" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="1.5" fill="#5F6761">rubric v1.0</text>
+  <text x="700" y="125" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="2" fill="#A9854C">READINESS</text>
+  <text x="1184" y="125" text-anchor="end" font-family="ui-monospace,Menlo,monospace" font-size="12.5" letter-spacing="1.5" fill="#5F6761">rubric v1.1</text>
 
-  <text x="700" y="212" font-family="ui-monospace,Menlo,monospace" font-size="66" font-weight="500" fill="#4FAE80">33</text>
-  <text x="778" y="212" font-family="ui-monospace,Menlo,monospace" font-size="30" fill="#5F6761">/ 88</text>
-  <text x="700" y="242" font-family="ui-monospace,Menlo,monospace" font-size="13.5" letter-spacing="1.2" fill="#7E8B84">NORMALISED 38%  ·  CRITICAL</text>
+  <text x="700" y="212" font-family="ui-monospace,Menlo,monospace" font-size="66" font-weight="500" fill="#4FAE80">45</text>
+  <text x="780" y="212" font-family="ui-monospace,Menlo,monospace" font-size="30" fill="#5F6761">/ 98</text>
+  <text x="700" y="242" font-family="ui-monospace,Menlo,monospace" font-size="13.5" letter-spacing="1.2" fill="#7E8B84">NORMALISED 46%  ·  EARLY</text>
+  <text x="1184" y="242" text-anchor="end" font-family="ui-monospace,Menlo,monospace" font-size="12" letter-spacing="1" fill="#A9854C">5 TO GROWING</text>
 
   <line x1="700" y1="270" x2="1184" y2="270" stroke="#1E2A24" stroke-width="1"/>
 
-  <!-- 五支柱条 -->
   <g font-family="ui-monospace,Menlo,monospace" font-size="12.5">
-    <text x="700" y="308" fill="#A7B4AC">Infrastructure</text>
-    <rect x="884" y="298" width="300" height="11" fill="#1B2620"/><rect x="884" y="298" width="135" height="11" fill="#26714F"/>
-    <text x="1184" y="308" text-anchor="end" fill="#5F6761" dx="0" dy="16">9/20</text>
-
-    <text x="700" y="352" fill="#A7B4AC">Structured Data</text>
-    <rect x="884" y="342" width="300" height="11" fill="#1B2620"/><rect x="884" y="342" width="124" height="11" fill="#26714F"/>
-    <text x="1184" y="352" text-anchor="end" fill="#5F6761" dy="16">7/17</text>
-
-    <text x="700" y="396" fill="#E7ECE7">Content Citability</text>
-    <rect x="884" y="386" width="300" height="11" fill="#1B2620"/><rect x="884" y="386" width="72" height="11" fill="#46A87A"/>
-    <text x="1184" y="396" text-anchor="end" fill="#A9854C" dy="16">6/25</text>
-
-    <text x="700" y="440" fill="#A7B4AC">Brand Authority</text>
-    <rect x="884" y="430" width="300" height="11" fill="#1B2620"/><rect x="884" y="430" width="135" height="11" fill="#26714F"/>
-    <text x="1184" y="440" text-anchor="end" fill="#5F6761" dy="16">9/20</text>
-
-    <text x="700" y="484" fill="#A7B4AC">Platform Visibility</text>
-    <rect x="884" y="474" width="300" height="11" fill="#1B2620"/><rect x="884" y="474" width="100" height="11" fill="#26714F"/>
-    <text x="1184" y="484" text-anchor="end" fill="#5F6761" dy="16">2/6</text>
+    <text x="700" y="308" fill="#A7B4AC">Reachable</text><text x="700" y="323" font-size="10" letter-spacing="1.4" fill="#5F6761">GATE</text>
+    <rect x="884" y="298" width="300" height="11" fill="#1B2620"/><rect x="884" y="298" width="300" height="11" fill="#26714F"/>
+    <text x="1184" y="308" text-anchor="end" fill="#5F6761" dy="16">15/15</text>
+    <text x="700" y="350" fill="#A7B4AC">Understandable</text>
+    <rect x="884" y="340" width="300" height="11" fill="#1B2620"/><rect x="884" y="340" width="205" height="11" fill="#26714F"/>
+    <text x="1184" y="350" text-anchor="end" fill="#5F6761" dy="16">15/22</text>
+    <text x="700" y="392" fill="#E7ECE7">Content Citability</text>
+    <rect x="884" y="382" width="300" height="11" fill="#1B2620"/><rect x="884" y="382" width="77" height="11" fill="#46A87A"/>
+    <text x="1184" y="392" text-anchor="end" fill="#A9854C" dy="16">9/35</text>
+    <text x="700" y="434" fill="#A7B4AC">Brand Credibility</text>
+    <rect x="884" y="424" width="300" height="11" fill="#1B2620"/><rect x="884" y="424" width="33" height="11" fill="#26714F"/>
+    <text x="1184" y="434" text-anchor="end" fill="#5F6761" dy="16">2/18</text>
+    <text x="700" y="476" fill="#A7B4AC">Answer Fit</text>
+    <rect x="884" y="466" width="300" height="11" fill="#1B2620"/><rect x="884" y="466" width="150" height="11" fill="#26714F"/>
+    <text x="1184" y="476" text-anchor="end" fill="#5F6761" dy="16">4/8</text>
   </g>
 
   <line x1="700" y1="510" x2="1184" y2="510" stroke="#1E2A24" stroke-width="1"/>
-  <text x="700" y="532" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#5F6761">12 pts excluded — not applicable / unobservable</text>
+  <text x="700" y="532" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#5F6761">Citation performance reported separately — never folded in</text>
 </g>
 </svg>

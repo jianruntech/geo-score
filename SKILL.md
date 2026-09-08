@@ -123,7 +123,8 @@ version and the date.
   and you could not confirm it, mark it as reported, not observed.
 - **State what you could not check** and why. An audit that hides its blind spots is
   worse than a lower score.
-- Report format: [`examples/sample-report.md`](examples/sample-report.md).
+- Report format: [`examples/sample-report.md`](examples/sample-report.md). Emit machine-readable output against
+  [`schema/report.v2.json`](schema/report.v2.json).
 
 ## Boundaries
 
