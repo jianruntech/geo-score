@@ -1,13 +1,15 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
 <p align="center"><img src="assets/cover.svg" alt="geo-score — an open rubric for AI answer-engine visibility" width="100%"></p>
+
 # geo-score
 
 **An open, versioned rubric for Generative Engine Optimization — score any site 0–100
 on whether AI answer engines can find, parse, trust and cite it.**
 
-The rubric it publishes is the **AIV score** (AI Visibility). 25 tiered checks,
-100 points, one specification anyone can implement.
+The rubric it publishes is the **AIV score** (AI Visibility). 21 tiered checks totalling
+100 points, plus 4 bonus checks worth up to +6 outside the denominator — one
+specification anyone can implement.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
@@ -29,7 +31,8 @@ and it has different failure modes: a site can sit at position 3 on Google and n
 quoted, while a page nobody links to gets cited daily because its passages are clean.
 
 **AIV Score is the measurement half of that problem.** It is a published, versioned
-rubric — 25 tiered checks adding to 100 — plus a Claude Code skill that runs it.
+rubric — 21 tiered checks adding to 100, plus 4 bonus checks outside the denominator —
+and a Claude Code skill that runs it.
 
 It deliberately stops at measurement. See [Scope](#scope--what-this-does-not-do).
 
@@ -89,8 +92,12 @@ Content Citability carries the most weight on purpose: answer engines retrieve
 **passages**, not domains. Structure of the passage beats authority of the domain more
 often than classic SEO intuition expects.
 
-**Every check is tiered**, 2–4 tiers each — you take the highest tier the evidence
-satisfies. Binary pass/fail is what made v1.0 unable to tell two sites apart.
+**Every scored check is tiered**, 2–4 tiers each — you take the highest tier the evidence
+satisfies, and each tier states a page count rather than "most". Bonus checks are not
+tiered. Tiers exist so a site can show partial progress and so a re-audit can detect movement.
+On our five-site sample the spread was 18 points against v1.0's 17 — five sites in the
+same tier is too small a sample to prove anything either way
+([the numbers](rubric/calibration-v1.1.md)).
 
 **Three checks are gates.** Miss full marks on `g.robots`, `g.reachable` or `g.ssr` and
 readiness caps at 40, because until a crawler can reach the content, nothing else you
@@ -115,56 +122,60 @@ the forties is ordinary, not alarming.
 AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
 Band: Early  —  5 points below Growing
 
+Largest gaps
+  9 pts  0 of 8 pages open with a self-contained pass…  p2.answer-passages
+  6 pts  author is the brand name on 4 of 4 articles    p2.named-author
+  5 pts  llms.txt not found                             p1.llms-txt
+
+------------------------------------------------------------------------
+
 Sampled (8 URLs)
   /  /products/kettle  /products/grinder  /products/scale
   /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
 
   Reachable                    15 / 15   ← gate checks
     ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
-       full tier
     ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
-       full tier
     ✓  primary content present without executing JS             5/5
-       full tier
 
   Understandable               15 / 22
     ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
     ✗  llms.txt not found                                       0/5
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs the file to exist and return 200
     ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
        tier 3 of 4
     ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs it on half the nested pages or more
     ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
 
   Content Citability            9 / 35
     ✗  0 of 8 pages open with a self-contained passage          0/9
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs 1 of the 8 sampled pages
     ◐  2 of 8 headings phrased as a task or question            3/7
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 4 of 8
     ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs 6 of 8 with dateModified matching
     ◐  11 numeric claims, 2 carry a source                      3/7
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 4 or more attributed
     ✗  author is the brand name on 4 of 4 articles              0/6
-       tier 1 of 3
+       tier 1 of 3 - tier 2 needs a real person's name, not the brand
 
   Brand Credibility             2 / 18
     ◐  listed in 2 directories                                  2/4
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 3 or 4
     ✗  no independent coverage found                            0/4
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs occasional mentions
     ✗  no Wikidata or Wikipedia entity                          0/4
     ✗  sameAs not declared                                      0/3
        tier 1 of 3 — absent scores 0, it is not excluded
     ✗  no official video channel                                0/3
-       tier 1 of 3
+       tier 1 of 3 - tier 2 needs a channel with some content
 
   Answer Fit                    4 / 8
     ◐  headings present, paragraphs run long                    2/4
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs lists or tables and shorter paragraphs
     ◐  3 of 10 common buyer questions answered on site          2/4
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 6 of 10
 
   ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
 
@@ -182,33 +193,35 @@ Full walkthrough of how to read it: [`examples/sample-report.md`](examples/sampl
 
 ## Five real audits, and what they changed
 
-We ran v1.0 against five public sites. **None cleared 51%** — not Stripe, not Anthropic,
-not the framework docs sites whose audience is developers.
+We wrote v1.0, then ran it against five public sites before announcing it. It labelled
+anthropic.com — a site returning 200 to all ten retrieval crawlers, byte-identical to a
+browser, with 60 KB of server-rendered prose — as **Critical**. That is a failed
+calibration check, so v1.1 shipped instead, and both are published.
 
-Then we looked at *why*, and concluded the rubric was wrong before the sites were.
-A site returning 200 to all ten retrieval crawlers, byte-identical to a browser, with
-60 KB of server-rendered prose, was being labelled **Critical**. Three external
-benchmarks agree the ceiling was set too low: GeoReady reports a mean of 54–56 across
-282–750 domains; GW Content states most business sites land between 30 and 55.
-
-[**v1.1**](rubric/v1.1.md) is the recalibration — tiered scoring instead of pass/fail,
-readiness split from citation performance, unobservable checks out of the base, and band
-names that describe a stage rather than a verdict.
-[How it was calibrated](rubric/calibration-v1.1.md) ·
-[the 8 ambiguities it settled](rubric/open-questions.md)
-
-| Site | v1.0 | v1.1 (projected) | Band |
+| Site | v1.0 | **v1.1** | Band |
 |---|:-:|:-:|---|
-| [nextjs.org](examples/audits/nextjs.org.md) | 49% | **62%** | Growing |
-| [stripe.com](examples/audits/stripe.com.md) | 51% | **61%** | Growing |
-| [svelte.dev](examples/audits/svelte.dev.md) | 40% | **53%** | Growing |
-| [mingdao.com](examples/audits/mingdao.com.md) | 34% | **50%** | Early |
-| [anthropic.com](examples/audits/anthropic.com.md) | 36% | **48%** | Early |
+| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | 49% | **85 / 98 = 87%** | Leading |
+| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | 40% | **76 / 98 = 78%** | Solid |
+| [stripe.com](examples/audits/v1.1/stripe.com.md) | 51% | **77 / 100 = 77%** | Solid |
+| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | 36% | **69 / 98 = 70%** | Solid |
+| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | 34% | **69 / 100 = 69%** | Solid |
 
-The published audits are the original v1.0 runs, unaltered — every check carries evidence
-(status codes, byte counts, MD5s across user-agents, the actual sentence that did or did
-not qualify) and every audit ends with the auditor's own caveats. The v1.1 column is a
-**projection** recomputed from that evidence, not a fresh audit. [Read them](examples/README.md).
+Every check carries reproducible evidence: status codes, byte counts, hashes compared
+across ten user-agents, the actual sentence that did or did not qualify, and a line
+saying why the score landed on that tier rather than the next one. Every audit ends with
+the auditor's own caveats. The [v1.0 runs](examples/audits/) are kept unaltered — they are
+the evidence that found the problem.
+
+**Re-running them found a second design error.** Under the first draft of v1.1,
+stripe.com scored 77/100 and nextjs.org 85/98 — and both displayed as **40%, Early**,
+because the gate rule capped any site whose gate checks fell short of full marks.
+nextjs.org has a 40-byte `robots.txt` with no user-agent groups at all, which allows
+everything; that scored 3 of 5 and capped the site. It was v1.0's mistake in a new place:
+treating *not ideal* as *not working*. Gates now cap only at tier zero.
+
+Read the [calibration record](rubric/calibration-v1.1.md) for the reasoning against four
+external benchmarks, or the [eight ambiguities](rubric/open-questions.md) the first round
+settled.
 
 ## Scope — what this does *not* do
 
@@ -225,13 +238,18 @@ This is the part most tools leave out, so it's stated plainly.
 
 **Other honest limits:**
 
-- **It measures input-side readiness, not outcomes.** A high AIV score means engines
-  *can* cite you. Whether they *do* depends on competition, query intent and factors
-  no external audit can observe. Pillar 5 partially covers this by requiring an actual
-  query test, but that test is manual and small.
-- **Pillar 4 and 5 need human judgement.** "Is this author a real identifiable person"
-  and "did the engines surface you" are not fully automatable. Treat those 35 points
-  as assisted, not automatic.
+- **It measures input-side readiness, not outcomes.** A high readiness score means
+  engines *can* cite you. Whether they *do* depends on competition, query intent and
+  factors no external audit can observe. Citation performance is reported as a separate,
+  unscored block and never folded into the 100 — see
+  [Two scores](rubric/v1.1.md#two-scores-never-one).
+- **Brand Credibility and the named-author check need human judgement.** "Is this a real
+  identifiable person" and "is this mention independent" are not fully automatable.
+  Treat those ~24 points as assisted, not automatic.
+- **Tiers reduce disagreement, they do not remove it.** Every tier names a count out of
+  the 8 sampled pages, so two auditors agree on the arithmetic. They can still disagree
+  on whether a given paragraph is a self-contained answer. The
+  [settled ambiguities](rubric/open-questions.md) are the ones we found; there will be more.
 - **Heavily client-rendered sites score low, sometimes unfairly.** If your content only
   appears after hydration, most checks will read the pre-hydration HTML — which is also
   roughly what a crawler sees, so the low score is usually right, but verify by hand.
@@ -248,7 +266,7 @@ The weights are opinionated but not invented. The two findings that most shaped 
   Notably, the paper found an *authoritative tone* produced **no significant improvement** —
   which is why this rubric scores structure and attribution, not voice.
 - **[llms.txt proposal, Answer.AI](https://llmstxt.org/)** — the convention this rubric
-  checks for in Pillar 1.
+  checks for in the Understandable pillar (`p1.llms-txt`).
 
 Where a check rests on our own field observation rather than published research, the
 rubric says so. If you have evidence that a weight is wrong,

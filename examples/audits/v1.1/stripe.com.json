@@ -1,0 +1,238 @@
+{
+  "rubric_version": "v1.1",
+  "audited_at": "2026-09-08",
+  "target": "https://stripe.com",
+  "audience_language": "zh-CN",
+  "sampled_urls": [
+    "https://stripe.com/",
+    "https://stripe.com/payments",
+    "https://stripe.com/billing",
+    "https://docs.stripe.com/payments/accept-a-payment",
+    "https://docs.stripe.com/connect",
+    "https://stripe.com/blog/five-monetization-trends-from-global-pricing-leaders",
+    "https://stripe.com/blog/mapping-the-ai-economy",
+    "https://stripe.com/blog/analyzing-the-evidence-that-helps-businesses-win-product-not-received-disputes"
+  ],
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "tier_reason": "达不到 5 档「对主流检索 UA 明确放行」——目标主机 stripe.com/robots.txt 里没有任何一个 AI 检索 UA 被点名；被点名的只有 ia_archiver 和 rogerbot。也没有任何 Disallow 命中检索 UA 或抽样页，所以不是 0 档，落在 3 档「未显式禁止也未显式放行」。",
+      "evidence": "https://stripe.com/robots.txt HTTP=200, 643 bytes, MD5=ddde213a0a5c2155e1a43b1e4ebce207（浏览器 UA 与 GPTBot UA 取回字节数同为 643）。全文只有三个 User-agent 组：ia_archiver、*、rogerbot。通配组内容为 Allow: /docs、Allow: /docs$ 以及 6 条 Disallow（/bitcoin/refund、/sources/*、/unsupported-browser、/handoff*），无一命中 8 个抽样 URL。GPTBot、OAI-SearchBot、ChatGPT-User、ClaudeBot、Claude-SearchBot、PerplexityBot、Perplexity-User、Google-Extended、Applebot、Bingbot 共 10 个 UA 名字在文件中出现 0 次。子域 https://docs.stripe.com/robots.txt HTTP=200, 174 bytes 反而更明确：`User-agent: *` / `Content-Signal: ai-train=yes, search=yes, ai-input=yes` / `Allow: /`。"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "tier_reason": "达不到 5 档「10 个检索 UA 均 200 且内容一致」——8 个抽样页里有 2 个（docs.stripe.com 两页）返回给检索 UA 的正文与浏览器所得不是同一份，且这两份响应额外带了只发给检索 UA 的 x-robots-tag: none。没有任何 UA 被拦（80/80 全 200），所以不是 0 档，落 3 档。",
+      "evidence": "88 次抓取（11 个 UA × 8 URL），HTTP 全部 200，无一 403/429/challenge。MD5 在本站不可用作一致性判据：同一 URL 换任意两个 UA（含两个浏览器类 UA）MD5 均不同，因为页面注入了 per-request nonce 与 edge-experiment id；故改用字节数 + 抽取正文比对。stripe.com 的 6 个 URL 上 10 个检索 UA 与浏览器字节差 <1.3%（home 浏览器 184736 B vs GPTBot 187116 B；blog-pricing 42785 B vs GPTBot 43910 B；payments 251739 B vs ClaudeBot 252999 B）。docs.stripe.com 两页则是内容协商：docs-accept 浏览器 text/html 257712 B，10 个检索 UA 全部得到 text/markdown 854 B（MD5 42d2aed2a08a2151cbeb335928bc8b75，10 个 UA 完全一致）；docs-connect 浏览器 61338 B vs 检索 UA 3346 B。两份 markdown 已逐字读过，实质与浏览器版等价（浏览器版 docs-accept 抽取正文也只有 9227 字符、同样是变体索引页）。但 curl -sIL 显示 docs.stripe.com 对 GPTBot 与 PerplexityBot 返回 `x-robots-tag: none`，对浏览器 UA 不返回该头。"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "tier_reason": "8/8 抽样页在不执行 JS 的 HTML 响应里就有实质正文，够 5 档；没有任何一页正文依赖 JS。",
+      "evidence": "对 curl 取回的原始 HTML 剥标签抽正文（未执行 JS）字数：home 1883 词、payments 4121、billing 2738、docs-accept 1478、docs-connect 490、blog-pricing 2564、blog-aiecon 2046、blog-disputes 2196。命中原句（blog-disputes 原始 HTML 内）：「we analyzed evidence packets from one million disputes over a 16-week period」。docs-connect 仅 490 词是因为该页本身就是枢纽索引页，其浏览器版全文亦仅 3375 字符。通过页数 8/8。"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "tier_reason": "可发现且 200，够 2 档；上不了 4 档是因为两个 sitemap 的 lastmod 数量都是 0，检索侧无法判断哪些页值得重抓。",
+      "evidence": "robots.txt 首行声明 `Sitemap: https://stripe.com/sitemap/sitemap.xml` → HTTP=200, 805 bytes, sitemapindex 含 9 个 partition。partition-0.xml HTTP=200, 5188683 bytes, `<loc>` 计数 1783、`<lastmod>` 计数 0。docs.stripe.com/sitemap.xml HTTP=200, 441587 bytes, `<loc>` 4690、`<lastmod>` 0。"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "tier_reason": "满足 5 档全部条件：200、有站点定义段、且远超「2 个以上含链接的主题分节」（实测 26 个）。",
+      "evidence": "https://stripe.com/llms.txt HTTP=200, 65026 bytes, content-type text/plain。定义段原句：「> Stripe is a technology company that provides financial infrastructure for businesses. Businesses of every size—from new startups to established public companies—use Stripe to accept payments online and in person, embed financial services, and create custom revenue models.」`^## ` 分节 26 个（Payments / Connect / Payment Links / Checkout / Elements / Billing / Invoicing / Tax / Atlas / Terminal / Radar / Issuing / …/ External domains / Optional），`^- [` 条目 285 条，每条为「[标题](URL): 描述」。另有 https://docs.stripe.com/llms.txt HTTP=200, 90052 bytes, text/markdown。"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "tier_reason": "5 档（两者齐全含 name/url/logo）之上，logo 实测可解析且 sameAs 已声明，因此取 6 档。未因「只在首页出现」降档，是因为该项的档位判据只看字段完整性与 logo/sameAs，不计通过页数——但这一点写进了 notes。",
+      "evidence": "首页单个 ld+json 块内 @graph 含两个实体：WebSite{name:\"Stripe\", url:\"https://stripe.com/\"} 与 Organization{@id:\"https://stripe.com/#organization\", name:\"Stripe\", legalName:\"Stripe, LLC\", url, description, logo:ImageObject→images.stripeassets.com/fzn2n1nzq965/1hgcBNd12BfT9VLgbId7By/01d91920114b124fb4cf6d448f9f06eb/favicon.svg, sameAs[12], founders[Patrick Collison, John Collison], contactPoint, location[多个 Place]}。logo URL 实测 HTTP=200, 412 bytes, content-type image/svg+xml。通过页数：8 个抽样页中仅 home 1/8 带 Organization+WebSite（payments、docs-accept、docs-connect 的 ld+json 块数为 0）。"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "tier_reason": "0 档：抽样 8 页 grep 「BreadcrumbList」命中文件数为 0。站点有明确层级（docs.stripe.com/payments/accept-a-payment、stripe.com/blog/<slug>），因此不退出分母。",
+      "evidence": "grep -l 'BreadcrumbList' pages/*__BROWSER.html 返回空。docs 页有肉眼可见的面包屑文本（docs-accept 抽取正文含「Home / Payments Accept a payment」），但无对应结构化标注。通过页数 0/8。"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "tier_reason": "2 档「部分页型有」：FAQPage 在 billing 上做得完整且字段真实，但作为文档站最该有的 HowTo 在两个 docs 页上完全缺席，达不到 4 档「适用页型普遍有」。",
+      "evidence": "stripe.com/billing 唯一 ld+json 块为 {\"@type\":\"FAQPage\",\"url\":\"https://stripe.com/billing\",\"mainEntity\":[3 个 Question]}，acceptedAnswer 为真实长文本，如「Stripe Billing is modern monetization infrastructure. It's the only billing software with a built-in payment system…」。grep 'HowTo' 在 8 个抽样页命中 0 文件，而 docs-accept 本身是分步教程（h2 含「Redirect your customer to Stripe Checkout」「Show a success page」「Handle post-payment events」「Test your integration」）。grep '\"Product\"' 仅命中 docs-accept 内的代码示例文本，非 schema。通过页数 1/8。"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "tier_reason": "落 7 档「半数页有」而非 9 档「多数页有」：按本量表约定（英文 25–120 词，不限首段，正文前部任一段均可）逐段实测，5/8 通过、3/8 不通过；要判 9 档得把 docs-accept 那段 41 词的「无代码方案」旁注也算进来，但它不是该页要回答的问题。",
+      "evidence": "判定约定：英文 25–120 词（中文站为 50–200 汉字），正文前部任一段。通过 5/8——billing 35 词「Consumption-based billing, hybrid models, flexible tiers—pricing models are evolving and you need to keep up…」与 28 词「Stripe Billing lets you localize pricing, customize billing logic, and collect payments faster…」；payments 三段支柱文案 30/26/28 词，如「Automatically decrease fraud and improve authorization rates using Stripe Radar and Authorization Boost, powered by AI trained on billions of data points.」；blog-disputes 49 词「To understand what can influence win rates, we analyzed evidence packets from one million disputes over a 16-week period…」；blog-aiecon 77 词；blog-pricing 70 词。不通过 3/8——home（正文前部每段均低于 25 词下限，hero 实测 23 词，统计数字说明 1–6 词）；docs-connect（最长真实段落 23 词）；docs-accept（页首导语 14 词，全页唯一落在 25–120 词区间的 41 词段落是无代码方案旁注）。"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "tier_reason": "7 档「多数贴近」：6/8 是任务句或说明句，只有 2 个产品页标题是「品牌标签 + 关键词串」。按 v1.1 规则 6，不要求问号。",
+      "evidence": "通过 6/8：docs-accept「Accept a payment」（量表正文点名的任务句范例）、docs-connect「Platforms and marketplaces with Stripe Connect」、blog-pricing「Five monetization trends from global pricing leaders」、blog-disputes「Analyzing the evidence that helps businesses win \"product not received\" disputes」、blog-aiecon「Mapping the AI economy」、home（title 与 h1 同为说明句「Financial infrastructure to grow your revenue. Accept payments, offer financial services, and implement custom revenue models…」）。不通过 2/8：payments「Stripe Payments | Global Payment Processing Platform」、billing「Stripe Billing | Recurring Payments & Subscription Solutions」——两者都是品牌标签加关键词短语。另：三篇 blog 的 h2 本身即完整结论句，如「Businesses that submitted delivery information saw a 44 percentage point higher win rate」。"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "tier_reason": "3 档「部分页有」：只有 3/8 带日期，且全站抽样中 dateModified 出现 0 次，6 档要求的「多数页有 + 与 dateModified 一致」两个条件都不成立。",
+      "evidence": "带日期 3/8：blog-pricing 页面可见「August 20, 2026」+ schema datePublished 2026-08-20T00:00-04:00；blog-aiecon「August 11, 2026」+ 2026-08-11；blog-disputes「July 21, 2026」+ 2026-07-21，三者可见日期与 schema 日期一致。无日期 5/8：home、payments、billing、docs-accept、docs-connect——对抽取正文跑月日年与 ISO 日期正则命中 0，页内也无「Last updated / Updated」。全 8 页 grep '\"dateModified\"' 命中 0 次。审计日 2026-09-08。"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "tier_reason": "3 档「部分标注」：blog 侧有方法论与可点击的溯源链接，但三个营销页的数字几乎全是无出处的第一方声明，且全站 8 页「Source:」字样命中 0，达不到 5 档「多数标注」。",
+      "evidence": "已标注：blog-disputes 正文内嵌方法「we analyzed evidence packets from one million disputes over a 16-week period」；blog-aiecon 有两处可点击溯源 anchor——锚文本「previous analyses」→ https://stripe.com/blog/testing-the-conversion-impact-of-50-plus-global-payment-methods、「a previous analysis」→ https://stripe.com/blog/adaptive-pricing-for-subscriptions，并注明「88% of the 2026 Forbes AI 50」；billing 外链两份分析师报告 go.stripe.global/gartner-magic-quadrant-billing-2025、go.stripe.global/forrester-wave-billing-2025，并写「Our recent survey of 2,000+ global business leaders」。未标注：home「$1.9T in payments volume processed in 2025」「99.999% historical uptime」「200M+ active subscriptions」「50% of Fortune 100 companies」；payments「Businesses see a 3.8% revenue increase and 32% lower fraud on average」「boost eligible revenue by up to 14%」；billing「Businesses using Stripe recover 55% of failed payments on average」「92% of cards have been seen before by Stripe」「increase lifetime value by 18% on average」——均无出处、无方法、无链接。8 页正则搜「Source[s]?:」命中 0。"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "tier_reason": "6 档：不止署真实姓名（3 档），姓名还带 url 指向本人身份页。量表明确「身份页在站内或本人主页均可，不强制站内 bio」，LinkedIn 个人页符合。",
+      "evidence": "3/3 blog 页 schema author 为 Person 数组且含 url：blog-aiecon → {\"name\":\"Abhi Tiwari\",\"url\":\"https://www.linkedin.com/in/abhinav-tiwari-4687117/\"}；blog-pricing → {\"name\":\"Scott Woody\",\"url\":\"https://www.linkedin.com/in/scott-woody-21677121/\"}；blog-disputes → 两位作者 Kai Strubel (linkedin.com/in/kaistrubel/)、Nithin Chandy (linkedin.com/in/nithinchandy/)。姓名同时出现在可见正文中并带职务，命中原句「August 11, 2026 Abhi Tiwari Product Lead, Global」。局限：LinkedIn 个人页未做匿名 HTTP 复核（会限流）；linkedin.com/company/stripe/ 以浏览器 UA 实测 HTTP=200, 375417 bytes。另 5/8 页（首页、两个产品页、两个文档页）无署名，属该页型常态。"
+    },
+    {
+      "id": "p3.listings",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "tier_reason": "4 档「5 家以上」：仅用 HTTP 200 实测就已凑满 5 家，另有 3 家评测平台经检索确认（其自身对 curl 返回 403，属反爬，不作缺席证据）。",
+      "evidence": "实测 200：en.wikipedia.org/wiki/Stripe,_Inc.（472653 B）、wikidata.org/wiki/Q7624104（330820 B）、apps.apple.com/us/app/stripe-dashboard/id978516833（656558 B）、play.google.com/store/apps/details?id=com.stripe.android.dashboard（1201451 B）、wordpress.org/plugins/woocommerce-gateway-stripe/（228403 B）——5 家。检索确认另 3 家：G2（Stripe Payments 4.2/5，417 条评价）、Capterra（/p/123889/Stripe/）、TrustRadius（/products/stripe-payments/reviews，360 条特性评分）；这三家对 curl 分别返回 403/403/403，为平台反爬。合计 ≥8 家。"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "tier_reason": "4 档「多渠道持续提及」：不是零星（2 档）也不止一次独立报道（3 档），而是多家主流财经/科技媒体在半年内多次独立报道，另有第三方评测平台的用户评价体量。",
+      "evidence": "Bloomberg 2026-02-24「Stripe Reaches $159 Billion Valuation as Payment Volume Jumps 34%」与 2026-08-16「Stripe Finalizes Deal to Acquire AI Startup OpenRouter for Over $7 Billion」；TechCrunch 2026-02-24「Stripe's valuation soars 74% to $159 billion」与 2026-08-16「Stripe will reportedly acquire AI gateway startup OpenRouter for $7B+」；Yahoo Finance 与 investing.com 有二次报道。评测侧：G2 417 条第三方评价、TrustRadius 360 条特性评分。跨渠道、跨月份、非自有渠道。"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "tier_reason": "该项只有 0/4 两档，维基百科与维基数据条目均存在且实测可达，取 4。",
+      "evidence": "https://en.wikipedia.org/wiki/Stripe,_Inc. HTTP=200, 472653 bytes；https://www.wikidata.org/wiki/Q7624104 HTTP=200, 330820 bytes。两者同时被首页 Organization schema 的 sameAs 数组显式声明，实体绑定闭环。"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "tier_reason": "2 档「声明了但部分失效」：12 条中有 1 条实测 404，因此够不到 3 档「全部可解析」；另 3 条为平台反爬（403/400），不计为失效。",
+      "evidence": "首页 Organization.sameAs 共 12 条。实测 HTTP=200 共 8 条：twitter.com/stripe（261894 B）、youtube.com/@stripe（2167079 B）、youtube.com/@StripeDev（1499129 B）、linkedin.com/company/stripe/（375417 B）、en.wikipedia.org/wiki/Stripe,_Inc.、github.com/stripe（321664 B）、instagram.com/stripehq/（620471 B）、wikidata.org/wiki/Q7624104。反爬但页面真实存在 3 条：crunchbase.com/organization/stripe（403）、bloomberg.com/profile/company/0170016D:US（403）、facebook.com/StripeHQ（400）。实测失效 1 条：https://finance.yahoo.com/quote/STRI.PVT/ → HTTP=404, 502 bytes（浏览器 UA），换 WebFetch 复测返回 503，两次均未取到 Stripe 公司主页。"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "tier_reason": "卡在 2 档：3 档要求「持续输出且站内带 VideoObject」两个条件同时成立，Stripe 满足前者但站内 VideoObject 为 0，所以只能取 2——需说明的是 2 档判据文字「内容零星」并不符合实情，Stripe 的问题只在站内标注缺失。",
+      "evidence": "官方频道实测：youtube.com/@stripe HTTP=200, 2167079 bytes；youtube.com/@StripeDev HTTP=200, 1499129 bytes，两者均在 sameAs 中声明。检索确认存在「Stripe Sessions 2026」播放列表（当年度更新）及 Stripe Developers 频道。站内：8 个抽样页 grep 'VideoObject' 命中文件数 0；payments 页正文有多处「Watch video」入口但无结构化标注。"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "tier_reason": "取 4 档而非 2 档，关键在 2 档的判据是「有小标题但段落偏长」——这一条实测不成立，本站正文段落长度普遍在 25–95 词的可摘取区间。争议点是表格只在 1/8 页出现，我把它写进 notes。",
+      "evidence": "小标题 8/8：home h2×5 h3×25、payments h2×8 h3×3、billing h2×6 h3×18、docs-accept h2×10 h3×6、docs-connect h2×7、三篇 blog 各 h2×4–6 且为完整结论句（如「Businesses that included evidence of a refund issued through Stripe saw a 63 percentage point higher win rate」）。段落长度：抽样正文最长段落 95 词（blog-pricing），主体段落集中在 25–95 词。列表：billing <ul>16/<li>80、home 5/60、payments 115/159、docs-accept 5/34、三篇 blog 各含 <ol>1。表格：全样本 <table> 合计 1 个，仅在 docs-accept。"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "tier_reason": "4 档「覆盖 9–10 个」：10 问中 9 问有专页正面回答且实测 200；唯一缺口是同行横向比较类问题。要落到 3 档需要至少 2 个缺口，实测只有 1 个。",
+      "evidence": "10 个高频问题与实测结果——①怎么开始收在线付款→docs.stripe.com/payments/accept-a-payment 200 ✓；②Stripe 费率多少→stripe.com/pricing 200(971451 B) ✓；③什么是支付网关/网关与处理商区别→stripe.com/resources/more/payment-gateways-101 200 + /payment-processor-vs-payment-gateway 200 ✓；④怎么做订阅与周期扣款→docs.stripe.com/billing/subscriptions/overview 200 ✓；⑤怎么处理拒付争议→stripe.com/payments/dispute-management 200(602203 B) + docs.stripe.com/disputes 200 ✓；⑥能接哪些支付方式→stripe.com/payments/payment-methods 200(2928077 B) ✓；⑦PCI 合规怎么办→stripe.com/guides/pci-compliance 200 ✓；⑧多久能到账→docs.stripe.com/payouts 200 ✓；⑨哪些国家可用→stripe.com/global 200(494345 B) ✓；⑩Stripe 与 PayPal/Adyen 怎么选→✗ 无页面：猜测路径 stripe.com/resources/more/stripe-vs-paypal 返回 404，且对 llms.txt 的 285 条目录条目做「vs / comparison / alternative」检索，4 条命中全部是概念对比（ACH vs 电汇、处理商 vs 网关等），无任何厂商横评。覆盖 9/10。"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "scored",
+      "points": 1,
+      "max": 2,
+      "tier_reason": "判为「适用」而非退出分母，依据是站点确有完整 zh-CN 语言版且百度爬虫实测可达；取 1 档「可抓取」而非 2 档，因为无 ICP 备案与中国大陆主体信息。",
+      "evidence": "https://stripe.com/cn HTTP=200, 722268 bytes, `<html lang=\"zh-CN\">`，title「Stripe | 金融基础设施，托举营收增长」，正文为完整中文。首页 hreflang 集合含 zh-CN（→https://stripe.com/cn）、zh-HK、zh-MY、zh-SG、zh-US。Baiduspider UA 实测 https://stripe.com/ HTTP=200, 654296 bytes。备案：对首页与 /cn 页正文搜「ICP备」「备案」命中 0（首页那次 ICP 命中经核为 CSS id `:R3kicpmr6l6:` 的误报）。"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "tier_reason": "加分项未达成：无全文聚合文件，也无法从 llms.txt 或 robots.txt 发现。",
+      "evidence": "https://stripe.com/llms-full.txt HTTP=404（返回 366769 bytes 的 HTML 404 页）；https://docs.stripe.com/llms-full.txt HTTP=404, 23881 bytes。对已下载的两个 llms.txt 与两个 robots.txt 搜「llms-full」，命中计数均为 0。docs 提供逐页 `.md` 变体（如 accept-a-payment.md?payment-ui=checkout&ui=stripe-hosted 实测 200, 31258 bytes），但那是逐页文件，不是单一聚合文件。"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "tier_reason": "加分项未达成：目标主机既无 ai.txt 也未在 robots.txt 声明 AI 使用政策。子域 docs 的 Content-Signal 声明是实质等价物，但不在目标主机上，故记 0——这是我自认最可争的一条加分判定，见 notes。",
+      "evidence": "https://stripe.com/ai.txt HTTP=404（366769 bytes HTML 404 页）。https://stripe.com/robots.txt 全文 643 bytes 内无 Content-Signal 或任何 AI 政策行。对比：https://docs.stripe.com/robots.txt 含 `Content-Signal: ai-train=yes, search=yes, ai-input=yes`。"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "tier_reason": "加分项未达成：head 里没有任何面向 AI 检索的 link 关系，全部 alternate 都是 hreflang 语言备份。",
+      "evidence": "逐页解析 <head> 的 rel 取值集合，8 页合计只有：canonical、alternate、icon、apple-touch-icon、shortcut icon、stylesheet、preload、preconnect、dns-prefetch。抽查 alternate 全部形如 `<link rel=\"alternate\" hrefLang=\"de-DE\" href=\"https://docs.stripe.com/payments/accept-a-payment?locale=de-DE\"/>`，无 type=\"text/markdown\" 或 llms 类关系。近似物是 HTTP 响应头 `link: </.well-known/skills/index.json>; rel=\"service-meta\"`（该文件实测 200, 6422 bytes，是给 agent 的 skills 索引），但它是子域的响应头，不是 head 内的 link 标签。"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "tier_reason": "加分项未达成：抽样页无 speakable 标注。",
+      "evidence": "grep -l 'speakable' pages/*__BROWSER.html 返回空，8 个抽样页命中文件数 0。"
+    }
+  ],
+  "readiness": 77,
+  "observable_max": 100,
+  "normalised": 77,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "notes": [
+    "最大的一处争议在 g.reachable 判 3 而不是 5。docs.stripe.com 对 10 个检索 UA 返回的不是浏览器那份 HTML，而是刻意准备的 markdown（docs-accept 854 B vs 257712 B，docs-connect 3346 B vs 61338 B），这恰恰是「对 AI 友好」的主动设计，不是 cloaking，也不是软封禁——我逐字读过两份 markdown，实质与浏览器版等价（浏览器版 docs-accept 本身也只是变体索引页）。按 v1.1 规则 6「判定看实质不看格式」，完全可以判 5。我最终判 3，决定性的不是格式差异而是那个只发给检索 UA 的 `x-robots-tag: none` 响应头：浏览器不带、GPTBot 与 PerplexityBot 都带，而 none = noindex+nofollow，是指令层面的差异，不是排版层面的。读者若认为该头是 markdown 变体的防重复索引措施、不应算作对检索侧的不一致，那这项应改判 5、readiness 变 79。需要强调：即使改判 5，封顶依然成立，因为 g.robots 独立地没有拿满。",
+    "g.robots 判 3 也值得复核。stripe.com/robots.txt 通配组里确实写了 Allow: /docs，从字面看是「有 Allow 指令」；但 5 档要求的是「对主流检索 UA 明确放行」，而全文点名的 UA 只有 ia_archiver 和 rogerbot，10 个 AI 检索 UA 名字出现 0 次，那条 Allow 只是路径例外，不是对检索 UA 的放行声明。反过来说，子域 docs.stripe.com 的 robots.txt 反而写了 `Content-Signal: ai-train=yes, search=yes, ai-input=yes` + `Allow: /`，比主站更明确——8 个抽样 URL 里有 2 个在该子域。我按主机主次（6/8 在 stripe.com、且审计对象就叫 stripe.com）以主站为准判 3。若审计口径改为「按抽样 URL 所在主机加权」，结论会松动。",
+    "本站不能用 MD5 判内容一致性，这一点会影响任何复核者的复现。同一 URL 换任意两个 UA（包括两个都像浏览器的 UA）MD5 都不同，因为页面注入了 per-request 的 nonce 与 edge-experiment id。所以我用的是「字节数差 + 抽取正文比对」：stripe.com 的 6 个 URL 上 10 个检索 UA 与浏览器差 <1.3%，我判为一致。若复核者用 MD5 做严格相等，会得到「10 个 UA 全部不一致」的结论，那 g.reachable 就该判 0 而不是 3——我认为那是误判，但这个方法论分歧必须写明。",
+    "p2.answer-passages 判 7（半数）而不是 9（多数），卡在 5/8 与 6/8 之间。docs-accept 全页唯一落在 25–120 词区间的段落是 41 词的「无代码方案」旁注，页首导语只有 14 词；home 的 hero 实测 23 词，差两个词够不到下限。这两页只要有一页被判通过就是 6/8、按「多数」应判 9，readiness 变 79。v1.1 的标定记录里恰好写过 svelte「核心句 39 词，差一个词」被判 0 是 v1.0 的错，25 词这条线依然会在边界上制造同类问题——我这次是靠边界线本身把 home 判出局的，读者有理由不同意。",
+    "p2.question-intent 判满分 7 分带有一点宽容。6/8 通过里，home 和 blog-aiecon 都是边界：「Financial infrastructure to grow your revenue」和「Mapping the AI economy」都是说明句而非任务句或问句，我按 v1.1「只排除纯关键词串或品牌标签」的口径计入。若只认更硬的任务句/问句，通过数落到 4/8，该项应判 5 分。反向看，payments 与 billing 的标题（「Global Payment Processing Platform」「Recurring Payments & Subscription Solutions」）是典型的品牌标签+关键词串，这两个最重要的商业页恰恰是最不像人话的——这个结构性事实不该被 7 分掩盖。",
+    "p1.organization 判 6 分，但 Organization+WebSite 只在首页出现，8 个抽样页里 7 页没有（payments、docs-accept、docs-connect 的 ld+json 块数为 0）。该项在量表里的标题写的是「sitewide / 全站」，而三档判据本身只考察字段完整性、logo 可解析与 sameAs，不计通过页数。我按判据文字判 6，但若按标题的「全站」意图判，这 6 分至少该降一档。同类形状的还有 p3.video：3 档要求「持续输出且站内带 VideoObject」，Stripe 前半满足、后半为 0，只能落到判据文字写着「内容零星」的 2 档——档位描述与实情不符，是量表的表述问题，不是站点的。",
+    "p4.question-coverage 的 10 个问题是我自己拟的，这本身就是偏差来源。Stripe 的 resources 库有上千篇概念页（llms.txt 单是目录就 285 条），几乎换哪一组概念问题都会得到高覆盖；真正稳定的缺口只有一个——厂商横评（Stripe vs PayPal/Adyen/Square）完全没有，而这类问题在 AI 检索里频次极高。若把 10 问里再多放两条横评类问题，该项会从 4 分掉到 3 分甚至 2 分。这一项的分数应当连同问题清单一起被复核，单看分数没有意义。",
+    "最后是这份报告最刺眼的地方，必须说清楚：未封顶的归一化分是 77（77/100），落在「基础扎实」上沿；封顶后是 40，落在「起步期」。38 分的落差全部来自两个门槛项各差 2 分，而 Stripe 在内容层面（自足答案段、标题意图、具名作者、第三方背书、问题覆盖）的表现明显强于我们 v1.0 五站样本里的任何一个。规则我照执行了，但读者应当同时看到两个数字：77 是这个站现在的实际水平，40 是规则在「robots.txt 没点名放行 AI 爬虫」这一条上的强制表态。封顶设计对「爬虫根本进不来」的站是对的，用在一个 80/80 全 200、正文全部服务端渲染、还主动给 AI 供 markdown 的站上，是否仍然合理，是 v1.2 该回答的问题——calibration 里已经承认过一次「不是站点的问题，是量表的问题」。"
+  ],
+  "citation": {
+    "measured": false,
+    "note": "AI 引用表现本次未测，因此不给分、也不并入就绪度。原因有二：一是量表本身规定它是结果型指标，由就绪度与时间共同决定，同一问题多次提问结果不同，不可复现，并进主分会同时伤害客户与口径可信度；二是本次审计全程使用 curl 与 HTTP 头做站外可复核观测，没有对 ChatGPT / Perplexity / Google AI Overviews 等引擎发起过真实提问，任何「被引用率」数字都会是我编的。若要补测，需另行设计：固定 10 条支付行业真实问题、固定引擎与地区、同一问题重复 3 次取命中频次，并明确记录测试时间窗——那是一份独立报告，不是这份分数的一部分。"
+  }
+}

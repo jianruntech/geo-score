@@ -15,8 +15,21 @@ a judgement call we would rather make in the open.
 
 ## Resolutions at a glance
 
-| # | 问题 | v1.1 的决定 |
+| # | Question | What v1.1 decided |
 |:-:|---|---|
+| 1 | Band labels described the score, not the site's health | All five bands renamed to stage language (Not started / Early / Growing / Solid / Leading). "Critical" is deleted and CI now rejects verdict-style band names. Separately, readiness and citation performance were split into two numbers — a 36 reads as damning mainly because a fixable score and a naturally low one were being averaged together. |
+| 2 | Does a "sectioned link group" in `llms.txt` have to contain links | **Yes.** The top tier reads "2 or more topic sections that contain links". A prose section with no links does not count. |
+| 3 | May `llms-full.txt` live somewhere other than the root | **Yes**, provided it is discoverable from `llms.txt` or `robots.txt`. The check also moved out of the denominator and became a bonus. |
+| 4 | Does "named authorship" require an on-site bio page | **No.** The top tier is "the name links to a verifiable identity page" — an on-site author page and the person's own homepage are equivalent. This is the ambiguity two of our own v1.0 audits resolved in opposite directions. |
+| 5 | Does a visible date count as freshness without `dateModified` | **Yes.** A schema date and a reader-visible date are equivalent for the middle tier; the top tier requires both, and that they agree. |
+| 6 | "40–90 words" has no authoritative equivalent in Chinese | Fixed at **50–200 Chinese characters** (English widened to 25–120 words), written into scoring rule 7 so it is no longer each auditor's call. |
+| 7 | With zero `sameAs` declared, is the check failed or not applicable | **Scored zero, stays in the denominator.** Not declaring is not doing, not "does not apply". |
+| 8 | Does a sitemap path declared in `robots.txt` take precedence | **Yes**, over the conventional path. Written into `p1.sitemap`. |
+
+Two of these changed more than a verdict. #1 changed what the number means. #6 made Chinese
+and English sites comparable on the content pillar for the first time.
+
+---|---|
 | 1 | 档名描述的是分数不是站点健康度 | 五档全部换成阶段语义（未起步／起步期／成长期／基础扎实／领先）；「危急」删除，CI 现在拦截判决式档名。同时把「就绪度」与「引用表现」拆成两个数——36 分刺眼的根因是把可修的和天然低的搅在一起 |
 | 2 | `llms.txt` 的「分节链接组」是否要求该节含链接 | **要求含链接**。阶梯第 3 档写死「2 个以上**含链接**的主题分节」，无链接的散文分节不计入 |
 | 3 | `llms-full.txt` 允不允许放在非根路径 | **允许**，但须可从 `llms.txt` 或 `robots.txt` 发现。同时该项移出分母，改为加分项 |
@@ -88,7 +101,7 @@ check is named *Freshness signals*, and a visible date is a signal.
 ## 6 · The passage length rule has no CJK equivalent
 
 "40–90 words" does not transfer to Chinese. The auditor of mingdao.com adopted
-60–160 汉字 (at 1.5–1.8 characters per word) and said so in the evidence — a reasonable
+60–160 Chinese characters (at 1.5–1.8 characters per word) and said so in the evidence — a reasonable
 choice, and one that directly decided two checks.
 
 **The rubric must state a CJK-equivalent range**, or state the rule in a script-neutral

@@ -6,7 +6,12 @@
 
 Machine-readable: [`stripe.com.json`](stripe.com.json)
 
-## Sampled URLs (78)
+## URLs fetched (78)
+
+> The **first 8** are the scored sample. The rest are supporting fetches —
+> `robots.txt`, `llms.txt`, sitemaps, and the same pages re-requested under each
+> retrieval user-agent. v1.0 did not distinguish the two in this heading; v1.1 reports
+> only the 8 scored URLs under `sampled_urls`.
 
 - `https://stripe.com/`
 - `https://stripe.com/payments`

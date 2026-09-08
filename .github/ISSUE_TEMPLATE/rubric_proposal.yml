@@ -18,7 +18,7 @@ body:
     id: pillar
     attributes:
       label: Which pillar
-      placeholder: "e.g. Pillar 3 · Content Citability"
+      placeholder: "e.g. p2.answer-passages, or the Content Citability pillar"
     validations: { required: true }
   - type: textarea
     id: proposal

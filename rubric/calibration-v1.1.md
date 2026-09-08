@@ -1,8 +1,10 @@
-# v1.1 标定记录
+# How v1.1 was calibrated
 
-v1.0 用真实站点跑出来的结果是这样的：
+*简体中文：[calibration-v1.1.zh-CN.md](calibration-v1.1.zh-CN.md)*
 
-| 站点 | AIV | 归一化 | v1.0 档名 |
+Running v1.0 against five real public sites produced this:
+
+| Site | AIV | Normalised | v1.0 band |
 |---|:-:|:-:|---|
 | stripe.com | 45/88 | 51% | Below average |
 | nextjs.org | 40/82 | 49% | Below average |
@@ -10,112 +12,167 @@ v1.0 用真实站点跑出来的结果是这样的：
 | anthropic.com | 32/88 | 36% | **Critical** |
 | mingdao.com | 29/85 | 34% | **Critical** |
 
-一个对十个检索爬虫全部返回 200、正文服务端渲染完好的站被判为 *Critical*，
-这不是站点的问题，是量表的问题。v1.1 是对此的修正。
+A site returning 200 to all ten retrieval crawlers, byte-identical to a browser, with
+60 KB of server-rendered prose, was labelled *Critical*. That is not a fact about the
+site. It is a fact about the rubric. v1.1 is the correction.
 
-## 逐项表现暴露的四个结构问题
+## Four structural problems the audits exposed
 
-把 29 项检查在 5 个站上的得分摊开看：
+Laying out all 29 checks across all five sites:
 
-**13 分落在无人区。** `ai.txt`、`GEO link 标签`、`speakable`、`HowTo/BreadcrumbList`、
-`Product/Offer` 五项**五个站全部 0 分**。Web Almanac 2025 的采纳率数据解释了原因：
-llms.txt 桌面端 2.13%，JSON-LD 里 BreadcrumbList 5.66%、Product 0.77%、FAQPage 约 0.34%。
-这些分数不是在测量差异，是在惩罚所有人。
+**13 points sat in no-man's-land.** `ai.txt`, GEO `<link>` tags, `speakable`,
+`HowTo`/`BreadcrumbList` and `Product`/`Offer` scored **zero on all five sites**. Web
+Almanac 2025 explains why: `llms.txt` appears on 2.13% of desktop sites, and among
+JSON-LD types `BreadcrumbList` is 5.66%, `Product` 0.77%, `FAQPage` about 0.34%. Those
+points were not measuring a difference. They were penalising everyone equally.
 
-**16 分没有区分度。** `robots 放行`、`检索可达`、`服务端渲染`、`第三方收录`、`独立提及`
-五项五个站全部满分。它们重要，但作为二元判定不产生任何信息。
+**16 points had no discrimination.** Crawler access, live reachability, server-rendered
+content, third-party listings and independent mentions were **full marks on all five**.
+They matter, but as binary checks they carried no information.
 
-**12 分从站外根本看不见。** 支柱 5 的 15 分里，`Search Console 验证`、`Bing 验证`、
-`多引擎实测`、`非英文引擎`四项在五个站上全部记为 `unobservable`。
-给一个潜在客户做诊断时，这个支柱基本失效，而且各站退出分母的项不同，
-导致 82/85/88 三种不同的满分——分数之间不可比。
+**12 points were invisible from outside.** Of Platform Visibility's 15, the Search
+Console check, the Bing check, the multi-engine test and the non-English-engine check
+came back `unobservable` on every site. For diagnosing a site you do not own — the entire
+use case — that pillar did nothing. Worse, different checks dropped out on different
+sites, producing three different maximums (82, 85, 88), so the scores were not comparable
+to each other.
 
-**二元判定塌陷了区分度。** 29 项几乎等权（平均 3.4 分）且非 0 即满，
-结果五个站挤在 34–51 的 17 分区间里。
+**Binary judgement collapsed the range.** With 29 near-equal checks (mean 3.4 points) and
+no partial credit, five sites landed inside a 17-point band, 34–51.
 
-## 外部基准：这个区间到底正不正常
+## Is that range actually abnormal?
 
-| 来源 | 数据 |
+| Source | Figure |
 |---|---|
-| GeoReady（Auriti 团队托管版） | 282 个域名均分 **56.4**；更早 750+ 站样本均分 54.3、中位数 56 |
-| GW Content | 官方口径「多数商业网站得分在 **30–55** 之间」 |
-| Foglift 2026Q1 | 分行业中位数：SaaS/B2B **62**、教育 58、医疗 55、代理 51、电商 48 |
-| Seomator | 2026 年 1–7 月评过的站中 **54.6%** 未达其 56 分就绪线 |
+| [GeoReady](https://geoready.dev/state-of-geo/) (Auriti's hosted build) | Mean **56.4** across 282 domains; **54.3** mean, median 56 across an earlier 750+ sample |
+| [GW Content](https://www.gwcontent.com/pages/aeo-readiness-score) | States plainly that most business websites score **30–55** |
+| [Foglift](https://foglift.io/blog/ai-visibility-benchmarks-2026) Q1 2026 | Sector medians: SaaS/B2B **62**, education 58, healthcare 55, agencies 51, ecommerce 48; upper quartile 73–84 |
+| [Seomator](https://seomator.com/geo-audit-tool) | **54.6%** of sites it scored between Jan and Jul 2026 fell below its 56-point readiness line |
 
-两个结论同时成立，方向相反，都要接受：
+Two conclusions hold at once, and both have to be accepted.
 
-一是**我们实测的 34–51 大致就是市场常态**，GW Content 的「30–55」几乎完全重合——
-低分本身不是误差。二是**我们的天花板设低了**：全网均分在 54–56，而我们样本里最好的站只有 51。
-真正错得离谱的是档名——把市场常态叫作 *Critical*。
+First, **34–51 is roughly where the market is.** GW Content's "30–55" overlaps almost
+exactly. Low scores are not, in themselves, an error.
 
-## v1.1 做了什么
+Second, **our ceiling was set too low.** The web-wide mean is 54–56 and our best site was
+51. But the thing that was most wrong was not the numbers — it was calling the market
+norm *Critical*.
 
-**① 判定看实质不看格式。** 三条改判，全部是格式崇拜：
+## What v1.1 changed
 
-- `标题匹配提问意图`：v1.0 要求标题是问句，stripe 因此得 0 分。但 “Accept a payment”、
-  “How Connect works” 本来就是好标题，用户向助手提问时用的正是这种措辞。
-  v1.1 把问句、任务句、说明句一并计入，只排除纯关键词串。
-  明道云的审计者自己在 evidence 里写了「这些标题是干净的中文小节名，并不是关键词堆砌串」，
-  却仍被判 0——这正是需要修的。
-- `自足答案段`：v1.0 要求**第一段**且**40–90 词**。svelte 的核心句 39 词，差一个词。
-  v1.1 放宽到 25–120 词（中文 50–200 字），且不限定第一段，正文前部任一段均可。
-- `时间信号`：v1.0 只认 `dateModified`。stripe 四篇文章有 `datePublished` 且都在 20 天内，
-  仍判 0 分。v1.1 接受 schema 日期或页面可见日期，二者其一即可。
+**1 · Judge substance, not format.** Three re-readings, all of them format worship:
 
-**② 二元改阶梯。** 21 个计分项全部拆成 2–4 档。这是区分度的主要来源。
+- *Headings match question intent.* v1.0 required a question mark, which gave stripe.com
+  0 of 5. But "Accept a payment" and "How Connect works" are exactly how someone phrases
+  a question to an assistant. v1.1 counts questions, tasks and explanations, and excludes
+  only keyword strings. mingdao.com's auditor had written into the evidence that its
+  headings "are clean Chinese section names, not keyword strings" — and scored it 0
+  anyway. That is the gap that needed closing.
+- *Answer passages.* v1.0 required the **first** paragraph at **40–90 words**. svelte.dev's
+  core sentence is 39 words. One word. v1.1 widened to 25–120 words (50–200 characters for
+  Chinese) and dropped the first-paragraph requirement.
+- *Freshness.* v1.0 accepted only `dateModified`. stripe.com's four sampled articles carry
+  `datePublished` dates within 20 days and scored 0. v1.1 accepts a schema date or a date a
+  reader can see — either one.
 
-**③ 站外不可观测项移出主分。** 支柱 5 的四项从 100 分基数里删除。
-它们改为「客户授权接入数据后可测」的独立区块，而「授权我们接入」本身是第一个转化动作。
+**2 · Tiers replace pass/fail.** All 21 scored checks now have 2–4 tiers, and each tier
+names a count out of the 8 sampled pages.
 
-**④ 两个分数拆开。**「站点就绪度」是站方可修、服务可承诺的部分；
-「AI 引用表现」是结果型指标，天然低（LumenGEO 的数据：SaaS 品类平均 15–30，
-本地中小企业 0–10），单独报告。Anthropic 的 36 分之所以刺眼，
-正是因为把「可修的」和「本来就低的」搅进了同一个 100 分。
+**3 · Unobservable checks left the base.** The four Platform Visibility checks are out of
+the 100. They are reported as an unscored block, marked measurable once access is granted,
+rather than silently scored zero.
 
-**⑤ 无人区降权。** 四项新兴约定合并为不进分母的加分项，封顶 +6（原为 13 分计入分母）。
-参照 Auriti 对整个新约定家族只给 6/100，并把更前瞻的 WebMCP 完全移出计分。
+**4 · Two scores, not one.** *Readiness* is what the owner can change and what a service
+can commit to. *Citation performance* is an outcome — LumenGEO's data has SaaS brands
+averaging 15–30 and local businesses 0–10 — and is reported separately. Anthropic's 36
+was jarring precisely because a fixable score and a naturally low one were being averaged
+into a single number.
 
-**⑥ 门槛项既计分又封顶。** `robots 放行`、`检索可达`、`服务端渲染` 三项保留计分，
-同时任一未拿满则总分封顶 40 并置顶为 P0。
+**5 · Emerging conventions moved to bonus.** Those four checks were 9 points inside the
+denominator in v1.0 (`ai.txt` 2 + GEO link tags 2 + `speakable` 3 + `llms-full.txt` 2).
+They are now bonus, capped at +6, outside the denominator. Auriti gives its whole
+emerging-conventions family 6 of 100 and keeps WebMCP readiness out of the score entirely.
 
-> 关于第 ⑥ 条我们与同类工具取了不同做法。aeo-lite 的 hard-fail 设计是「准入项不占分」，
-> 这对 CI/fail-the-build 场景是对的。但我们实测发现：移除人人满分的项**必然拉低所有人的百分比**
-> （分子分母同减一个满分项，比值下降），实测跨度反而从 17 分压缩到 12 分。
-> 对一份要给非技术决策者看的诊断，我们选择保留计分 + 封顶，两个好处都要。
+**6 · Gates score and cap.** `g.robots`, `g.reachable` and `g.ssr` are scored normally,
+and a **zero** on any of them caps the normalised percentage at 40.
 
-**⑦ 档名换成阶段语义，五档。** 档位线直接取自 GW Content 已被其自述分布背书的阶梯。
-「危急」这个词删除——开发者工具（CI、fail-the-build）才用 Critical，销售型诊断一律用进度词。
+> We diverged from comparable tools here, and it cost us a bug — see below. aeo-lite's
+> hard-fail design removes table-stakes checks from scoring entirely, which is right for
+> a CI, fail-the-build context. For a diagnostic a non-technical reader will act on, we
+> kept them scored: removing a check everyone passes lowers everyone's percentage
+> arithmetically (numerator and denominator both drop by a full-marks item), and in
+> testing it compressed the range from 17 points to 12.
 
-## 回测
+**7 · Five bands, stage names.** Thresholds come from GW Content's published AEO ladder,
+which its own stated distribution backs. "Critical" is deleted. The pattern across the
+category is consistent: tools built for CI use *Critical*, because their reader wants a
+red light. Diagnostics written for people use stage language, because their reader wants
+to know what to do next. This is the latter.
 
-把五个站在 v1.0 中留下的逐项证据按 v1.1 的权重与阶梯重算
-（三条改判项依据各站 evidence 中已列明的通过页重新判档）：
+## Backtest
 
-| 站点 | v1.0 | **v1.1** | 档 | 距下一档 |
-|---|:-:|:-:|---|:-:|
-| nextjs.org | 49% | **62%** | 成长期 | 4 分 |
-| stripe.com | 51% | **61%** | 成长期 | 5 分 |
-| svelte.dev | 40% | **53%** | 成长期 | 13 分 |
-| mingdao.com | 34% | **50%** | 起步期 | **1 分** |
-| anthropic.com | 36% | **48%** | 起步期 | 3 分 |
+We projected first — recomputing the five sites' v1.0 evidence under v1.1's weights — and
+then re-audited them properly. **The projection was wrong.**
 
-**均值 54**，落在 GeoReady 全网基准 54–56 之内。
-stripe 的 61% 与 Foglift 给的 SaaS/B2B 行业中位数 62 基本一致。
+| Site | v1.0 | Projected | **v1.1, measured** | Band |
+|---|:-:|:-:|:-:|---|
+| nextjs.org | 49% | 62% | **85 / 98 = 87%** | Leading |
+| svelte.dev | 40% | 53% | **76 / 98 = 78%** | Solid |
+| stripe.com | 51% | 61% | **77 / 100 = 77%** | Solid |
+| anthropic.com | 36% | 48% | **69 / 98 = 70%** | Solid |
+| mingdao.com | 34% | 50% | **69 / 100 = 69%** | Solid |
 
-> **这五个数字是投影，不是新审计。** 它们由 v1.0 审计留下的逐项证据按 v1.1 规则重算得到，
-> 其中三条改判项依据 evidence 中已列明的通过页重新判档。`examples/audits/` 里发布的
-> 仍是原始的 v1.0 审计，未被改写。按 v1.1 重跑的真实审计尚未进行。
+The projection predicted 48–62%; measurement gave 69–87%. The gap is in the projection's
+method: it scaled v1.0's fractional scores onto the new point values, which assumes a site
+keeps the same *proportion* of credit. The tier conditions grant far more than that scaling
+implied. The starkest case is stripe.com's `p2.question-intent`: 0 of 5 under v1.0 because
+its headings are not questions, 7 of 7 under v1.1 with 6 of 8 pages qualifying. Changing a
+criterion from form to substance is not a discount you can apply.
 
-## 仍未解决
+**The spread is 18 points against v1.0's 17.** The projection had shown it narrowing to 14,
+and on that basis we were prepared to state that tiers had not improved discrimination.
+Measurement overturned that — but the way it overturned it also shows that five sites in
+the same tier cannot test discrimination at all. 18 versus 17 means nothing.
 
-**跨度只有 14 分**（v1.0 为 17）。这五个站是同一梯队的成熟英文技术站，
-样本本身不足以检验区分度。要验证需要引入明显薄弱的站点。
+**The mean is 76%, far above GeoReady's web-wide 54–56.** This one is not a calibration
+problem, it is the wrong comparison. GeoReady's figure comes from 282–750 random domains;
+these five are among the best-built sites in their categories. The right reference is
+Foglift's SaaS/B2B **upper quartile, 73–84** — and 69–87 sits on it. A typical business
+site still scores 30–55 under this rubric, which is what GW Content reports.
 
-**档位线尚未用自有分布校准。** Google 定 Core Web Vitals 阈值的元规则是：
-任何一档阈值须先验证「至少 10% 的真实站点已达到」。我们目前借用 GW Content 的阶梯，
-自有样本只有 5 个。把参照池扩到 30–50 个站、按行业分档存档，
-既能校准档位线，也能让报告给出「你在同行中的位置」而不是光秃秃的绝对分——
-一次投入两处用。这是 v1.2 的主要工作。
+### A design error the re-audit caught
 
-**`p4.question-coverage`（高频问题覆盖）与 `p4.cn-engines`（中文引擎适配）是 v1.1 新增，
-没有回测数据。** 上表的分母因此不含这两项。
+In the first draft of v1.1, stripe.com scored 77/100 and nextjs.org 85/98 — and both
+displayed as **40%, Early**, because the gate rule capped any site whose gate checks fell
+short of full marks. stripe.com's `g.robots` scored 3 of 5 only because its `robots.txt`
+names no AI retrieval user-agent — while blocking none of them, and serving all ten a 200.
+nextjs.org's `robots.txt` is 40 bytes with no user-agent groups at all, which permits
+everything, and it scored 3 of 5 too.
+
+**That is v1.0's mistake relocated**: treating *not ideal* as *not working*.
+
+The rule now caps only when a gate scores **zero**, which is the only state that means a
+crawler genuinely cannot reach the content. A middle tier means reachable but not ideal —
+a deduction, not a cap.
+
+This was found by auditing real sites, not by reasoning about the rubric. That is the
+argument for publishing the audits: a rubric that finds no problems in itself has usually
+not been pointed at anything real.
+
+## Still unresolved
+
+**The sample cannot test discrimination.** These five are the best-built English technical
+sites in their categories, and an 18-point spread against v1.0's 17 is not a meaningful
+difference. Testing whether tiers help needs visibly weak sites, and the same site audited
+before and after remediation.
+
+**Band thresholds are borrowed, not derived.** Google's meta-rule for Core Web Vitals
+thresholds is that any threshold must be one at least 10% of real sites already meet. We
+use GW Content's ladder and have five sites of our own. Widening the reference pool to
+30–50 sites, filed by sector, would both calibrate the thresholds and let a report say
+"you are here relative to your sector" instead of quoting a bare number. That is the main
+v1.2 task.
+
+**`p4.question-coverage` still depends on which ten questions the auditor picks.** Pick
+different questions, get a different score, and the rubric does not say how to pick them.
+It is the largest remaining source of irreproducibility.

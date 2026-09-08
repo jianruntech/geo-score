@@ -1,13 +1,14 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
 <p align="center"><img src="assets/cover.svg" alt="geo-score — 开源的 AI 可见度评分口径" width="100%"></p>
+
 # geo-score
 
 **一套开源、带版本号的 GEO（生成式引擎优化）评分口径 —— 给任何网站打 0–100 分，
 衡量 AI 回答引擎能不能找到、读懂、信任并引用它。**
 
-它发布的这套口径叫 **AIV 分**（AI Visibility，AI 可见度）。25 项阶梯式检查、满分 100，
-一份任何人都能照着实现的规范。
+它发布的这套口径叫 **AIV 分**（AI Visibility，AI 可见度）。21 项阶梯式检查合计 100 分，
+另有 4 项加分检查、不进分母、最多 +6——一份任何人都能照着实现的规范。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
@@ -28,7 +29,7 @@
 而一个没什么外链的页面天天被引，因为它的段落干净。
 
 **geo-score 做的是这件事的测量那一半。** 它是一份公开、带版本号的评分口径——
-25 项阶梯式检查合计 100 分——外加一个能跑这套口径的 Claude Code 技能。
+21 项阶梯式检查合计 100 分，另有 4 项不进分母的加分检查——外加一个能跑这套口径的 Claude Code 技能。
 
 **它刻意停在测量。** 见[边界](#边界--这个仓库不做什么)。
 
@@ -83,8 +84,10 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 内容可被引用权重最高是有意的：回答引擎检索的是**段落**，不是域名。
 段落的结构比域名的权威更常起决定作用——这一点和传统 SEO 的直觉相反。
 
-**每一项都是阶梯给分**，2–4 档，取证据实际满足的最高档。
-二元的非 0 即满，正是 v1.0 分不出两个站差别的原因。
+**每个计分项都是阶梯给分**，2–4 档，取证据实际满足的最高档，每一档写的是具体页数而不是「多数」。
+加分项不分档。阶梯的作用是让站点能体现部分进展、让复审能看出移动。
+在我们那五个站的样本上跨度是 18 分、v1.0 是 17 分——五个同梯队的站，
+这个差别不足以证明任何一方（[数据](rubric/calibration-v1.1.zh-CN.md)）。
 
 **其中三项是门槛。** `g.robots`、`g.reachable`、`g.ssr` 任一未拿满，
 就绪度总分封顶 40——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
@@ -107,56 +110,60 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
 Band: Early  —  5 points below Growing
 
+Largest gaps
+  9 pts  0 of 8 pages open with a self-contained pass…  p2.answer-passages
+  6 pts  author is the brand name on 4 of 4 articles    p2.named-author
+  5 pts  llms.txt not found                             p1.llms-txt
+
+------------------------------------------------------------------------
+
 Sampled (8 URLs)
   /  /products/kettle  /products/grinder  /products/scale
   /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
 
   Reachable                    15 / 15   ← gate checks
     ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
-       full tier
     ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
-       full tier
     ✓  primary content present without executing JS             5/5
-       full tier
 
   Understandable               15 / 22
     ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
     ✗  llms.txt not found                                       0/5
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs the file to exist and return 200
     ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
        tier 3 of 4
     ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs it on half the nested pages or more
     ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
 
   Content Citability            9 / 35
     ✗  0 of 8 pages open with a self-contained passage          0/9
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs 1 of the 8 sampled pages
     ◐  2 of 8 headings phrased as a task or question            3/7
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 4 of 8
     ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs 6 of 8 with dateModified matching
     ◐  11 numeric claims, 2 carry a source                      3/7
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 4 or more attributed
     ✗  author is the brand name on 4 of 4 articles              0/6
-       tier 1 of 3
+       tier 1 of 3 - tier 2 needs a real person's name, not the brand
 
   Brand Credibility             2 / 18
     ◐  listed in 2 directories                                  2/4
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 3 or 4
     ✗  no independent coverage found                            0/4
-       tier 1 of 4
+       tier 1 of 4 - tier 2 needs occasional mentions
     ✗  no Wikidata or Wikipedia entity                          0/4
     ✗  sameAs not declared                                      0/3
        tier 1 of 3 — absent scores 0, it is not excluded
     ✗  no official video channel                                0/3
-       tier 1 of 3
+       tier 1 of 3 - tier 2 needs a channel with some content
 
   Answer Fit                    4 / 8
     ◐  headings present, paragraphs run long                    2/4
-       tier 2 of 3
+       tier 2 of 3 - tier 3 needs lists or tables and shorter paragraphs
     ◐  3 of 10 common buyer questions answered on site          2/4
-       tier 2 of 4
+       tier 2 of 4 - tier 3 needs 6 of 10
 
   ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
 
@@ -176,31 +183,32 @@ Citation performance — not scored
 
 ## 五份真实审计，以及它们改变了什么
 
-我们用 v1.0 实测了五个公开站点。**没有一个超过 51%** —— Stripe 不行，Anthropic 自己不行，
-受众就是开发者的框架文档站也不行。
+我们写完 v1.0，在对外宣布之前先拿五个公开站点实测。它把 anthropic.com 判成了**危急**——
+一个对十个检索爬虫全部返回 200、响应与浏览器逐字节一致、正文 60KB 服务端渲染的站。
+那是标定没通过，所以直接发了 v1.1，两版都公开。
 
-然后我们去看*为什么*，结论是**量表先错了，站点其次**。
-一个对十个检索爬虫全部返回 200、响应与浏览器逐字节一致、正文 60KB 服务端渲染的站，
-被判为**危急**。三份外部基准都指向天花板设低了：GeoReady 在 282–750 个域名上的均分是 54–56，
-GW Content 的公开口径是「多数商业网站落在 30–55」。
-
-[**v1.1**](rubric/v1.1.zh-CN.md) 是这次重新标定——阶梯给分取代二元判定、
-就绪度与引用表现拆开、站外看不见的检查移出基数、档名描述阶段而不是下判决。
-[标定依据](rubric/calibration-v1.1.md) ·
-[它定掉的 8 条歧义](rubric/open-questions.md)
-
-| 站点 | v1.0 | v1.1（投影） | 档 |
+| 站点 | v1.0 | **v1.1** | 档 |
 |---|:-:|:-:|---|
-| [nextjs.org](examples/audits/nextjs.org.md) | 49% | **62%** | 成长期 |
-| [stripe.com](examples/audits/stripe.com.md) | 51% | **61%** | 成长期 |
-| [svelte.dev](examples/audits/svelte.dev.md) | 40% | **53%** | 成长期 |
-| [mingdao.com](examples/audits/mingdao.com.md) | 34% | **50%** | 起步期 |
-| [anthropic.com](examples/audits/anthropic.com.md) | 36% | **48%** | 起步期 |
+| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | 49% | **85 / 98 = 87%** | Leading |
+| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | 40% | **76 / 98 = 78%** | Solid |
+| [stripe.com](examples/audits/v1.1/stripe.com.md) | 51% | **77 / 100 = 77%** | Solid |
+| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | 36% | **69 / 98 = 70%** | Solid |
+| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | 34% | **69 / 100 = 69%** | Solid |
 
-已发布的审计是原始的 v1.0 实测，未做追溯改写——每一项都带证据
-（状态码、字节数、不同 UA 的响应 MD5、到底是哪一句话算或不算自足答案段），
-每份末尾都有审计者自己的存疑。v1.1 那一列是从同一份证据**重算的投影，不是新审计**。
-[在这里读](examples/README.md)。
+每一项检查都带可复核的证据：状态码、字节数、十个 UA 的响应比对、
+到底是哪一句话算或不算自足答案段，以及一句「为什么落在这一档而不是上一档」。
+每份审计末尾都有审计者自己的存疑。[v1.0 的那五份](examples/audits/)原样保留——
+它们正是发现问题的证据。
+
+**重跑的时候又发现了第二个设计错误。** 在 v1.1 的第一版规则下，
+stripe.com 原始分 77/100、nextjs.org 85/98，却双双显示为 **40%、起步期**——
+因为当时的门槛规则是「任一门槛项未拿满即封顶」。nextjs.org 的 `robots.txt` 全文 40 字节、
+连一个 User-agent 组都没有，等于全放行，却因此只拿 3/5 并把整站封顶。
+这是 v1.0 的错误换了个位置重演：把「没做到最好」当成「根本不通」。
+现在封顶只在门槛项得 0 分时触发。
+
+推理过程见[标定记录](rubric/calibration-v1.1.zh-CN.md)，
+第一轮定掉的八条歧义见[待决问题](rubric/open-questions.md)。
 
 ## 边界 · 这个仓库不做什么
 
@@ -219,9 +227,13 @@ GW Content 的公开口径是「多数商业网站落在 30–55」。
 
 - **它测的是输入侧的就绪度，不是结果。** 分高只说明引擎**能**引用你，
   至于**会不会**引用，取决于竞争和提问意图，这些外部审计观察不到。
-  支柱 5 通过要求真实跑一遍问题集来部分覆盖，但那个测试是人工的、样本小。
-- **支柱 4 和 5 需要人的判断。**「这个作者是不是真实可查的人」「引擎有没有真的引用你」
-  没法完全自动化。这 35 分应当视为辅助判定，不是自动判定。
+  引用表现单独测、单独报，**不进这 100 分**——见
+  [两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)。
+- **品牌可信与具名作者这一项需要人的判断。**「这个作者是不是真实可查的人」
+  「这条提及是不是独立的」没法完全自动化。这 24 分左右应当视为辅助判定。
+- **阶梯降低分歧，但消不掉分歧。** 每一档都写成 8 个抽样页里的具体页数，
+  所以两个审计者在算术上不会分歧；但「这一段算不算自足答案」仍然是判断。
+  [已定掉的歧义](rubric/open-questions.md)是我们发现的那些，一定还有别的。
 - **重客户端渲染的站会打低分，有时不公平。** 如果内容要 hydration 之后才出现，
   大部分检查读到的是 hydration 之前的 HTML——那也大致就是爬虫看到的，
   所以低分通常是对的，但值得人工复核一遍。
@@ -236,7 +248,7 @@ GW Content 的公开口径是「多数商业网站落在 30–55」。
   （度量口径是 Position-Adjusted Word Count，不是引用次数）。
   值得注意的是，论文发现**「权威语气」没有显著提升**——
   这正是本口径给结构和出处打分、而不给语气打分的原因。
-- **[llms.txt 提案，Answer.AI](https://llmstxt.org/)** —— 支柱 1 检查的就是它。
+- **[llms.txt 提案，Answer.AI](https://llmstxt.org/)** —— 可被理解支柱里 `p1.llms-txt` 检查的就是它。
 
 凡是依据我们自己的观察而非公开研究的检查项，口径里都会注明。
 如果你有证据表明某个权重不对，

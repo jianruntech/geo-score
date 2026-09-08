@@ -181,6 +181,16 @@ for r in MODERN:
     md = io.open(f"rubric/{r}", encoding="utf-8").read()
     for c in ck:
         check(f"`{c['id']}`" in md, f"rubric/{r}: 缺少检查项 {c['id']}，与 JSON 不一致")
+    # 封顶数字必须在所有语言版本与 JSON 之间完全一致 —— 一处翻错就让整套实现算出不同的分
+    gc = j["gate_cap"]
+    for f2 in [f"rubric/{r}", f"rubric/{r[:-3]}.zh-CN.md"]:
+        if not os.path.exists(f2): continue
+        t2 = io.open(f2, encoding="utf-8").read()
+        # 排除加分项的「+6」写法：那里数字前带 +，门槛封顶不带
+        nums = {int(x) for x in re.findall(r'(?:caps? at|capped at|封顶)\s*\**\s*(?!\+)(\d+)', t2)}
+        check(nums == {gc},
+              f"{f2}: 门槛封顶数字与 JSON 的 gate_cap={gc} 不一致，文中出现 {sorted(nums)} "
+              f"—— 一处写错，照这份规范实现的人算出的分就和官方技能对不上")
     check("This rubric does not tell you how to fix anything" in md
           or "这份量表不告诉你怎么修" in md, f"rubric/{r}: 缺少边界说明章节")
     # 双语版必须存在，且逐条一致——规范只有一种语言，另一种语言的读者就用不了
@@ -226,6 +236,83 @@ for r in MODERN:
           f"{sp}: 阶梯给分下没有 failed 态——未达任何档就是 scored 且 0 分，仍留在分母里")
     for need in ("readiness", "gate_capped", "observable_max", "normalised"):
         check(need in sc["properties"], f"{sp}: 缺少 v1.1 必需字段 {need}")
+
+# 12 · 全仓不得残留上一版的支柱名、已失效的 check id、或「Pillar N」编号
+#      —— 只查封面图不够：这批错误当初散落在 README / SKILL.md / rubric/README.md / reference/
+CURRENT = set()
+for r in MODERN:
+    CURRENT |= {c["id"] for c in _json.load(io.open(f"rubric/{r[:-3]}.json", encoding="utf-8"))["checks"]}
+LEGACY_IDS = set()
+for r in sorted(LEGACY & set(rub)):
+    jp0 = f"rubric/{r[:-3]}.json"
+    if os.path.exists(jp0):
+        LEGACY_IDS |= {c["id"] for c in _json.load(io.open(jp0, encoding="utf-8"))["checks"]}
+LEGACY_IDS -= CURRENT
+STALE_NAMES = ("Infrastructure", "Structured Data", "Platform Visibility", "Brand Authority")
+EXEMPT = ("CHANGELOG", "rubric/v1.0", "rubric/calibration", "rubric/open-questions",
+          "examples/audits", "examples/README", "rubric/README")
+for root, dirs, files in os.walk("."):
+    dirs[:] = [d for d in dirs if d not in (".git",)]
+    for f in files:
+        if not f.endswith((".md", ".svg", ".yml")): continue
+        pth = os.path.join(root, f)[2:]
+        if any(pth.startswith(e) for e in EXEMPT): continue
+        t = io.open(pth, encoding="utf-8").read()
+        for nm in STALE_NAMES:
+            check(nm not in t, f"{pth}: 残留 v1.0 支柱名 {nm!r} —— 当前支柱见 rubric/{MODERN[0]}")
+        for bad in sorted(LEGACY_IDS):
+            check(bad not in t, f"{pth}: 引用了已失效的 check id {bad!r}")
+        m2 = re.search(r'Pillar [1-5]|支柱 [1-5]', t)
+        check(not m2, f"{pth}: 用了「{m2.group(0) if m2 else ''}」这种编号 —— v1.1 请用支柱名或 check id 前缀，编号会随版本错位")
+
+# 13 · 发布的审计必须能通过自己发布的 schema，而且分数要能重算出来
+try:
+    import jsonschema
+    have_js = True
+except ImportError:
+    have_js = False
+    print("  · 提示：未安装 jsonschema，跳过 schema 校验（CI 里应装上）")
+for r in MODERN:
+    j = _json.load(io.open(f"rubric/{r[:-3]}.json", encoding="utf-8"))
+    RB = {c["id"]: c for c in j["checks"]}
+    d0 = f"examples/audits/{r[:-3]}"
+    check(os.path.isdir(d0), f"{d0}/ missing — 当前口径必须有按它跑出来的公开审计，否则没有任何真实参照")
+    if not os.path.isdir(d0): continue
+    import glob as _g
+    files = sorted(_g.glob(f"{d0}/*.json"))
+    check(len(files) >= 3, f"{d0}/: 只有 {len(files)} 份审计，太少不足以当参照")
+    sc = _json.load(io.open("schema/report.v2.json", encoding="utf-8")) if os.path.exists("schema/report.v2.json") else None
+    for fp in files:
+        a = _json.load(io.open(fp, encoding="utf-8"))
+        if have_js and sc:
+            try:
+                jsonschema.validate(a, sc)
+            except Exception as e:
+                check(False, f"{fp}: 不符合 schema/report.v2.json — {str(e)[:160]}")
+        got = den = bon = 0
+        gate_zero = False
+        for c in a["checks"]:
+            rr = RB.get(c["id"])
+            check(bool(rr), f"{fp}: check id {c['id']!r} 不在 {r[:-3]} 里")
+            if not rr or c["state"] != "scored": continue
+            tiers = [t["points"] for t in rr.get("tiers", [])] or [0, rr["points"]]
+            check(c["points"] in tiers,
+                  f"{fp}: {c['id']} 得 {c['points']} 分，但该项档位只有 {tiers}")
+            if rr["kind"] == "bonus":
+                bon += c["points"]
+            else:
+                got += c["points"]; den += rr["points"]
+                if rr["kind"] == "gate" and c["points"] == 0: gate_zero = True
+        tot = got + min(bon, j["bonus_cap"])
+        norm = min(round(100 * tot / den), j["gate_cap"]) if gate_zero else round(100 * tot / den)
+        band = next(b["name"] for b in j["bands"] if norm >= b["min_pct"])
+        check(a["readiness"] == tot, f"{fp}: readiness {a['readiness']} 但逐项之和是 {tot}")
+        check(a["observable_max"] == den, f"{fp}: observable_max {a['observable_max']} 但分母之和是 {den}")
+        check(a["normalised"] == norm, f"{fp}: normalised {a['normalised']} 但 {tot}/{den} 应为 {norm}")
+        check(a["band"] == band, f"{fp}: band {a['band']!r} 与 {norm}% 对应的 {band!r} 不符")
+        check(bool(a.get("gate_capped")) == gate_zero, f"{fp}: gate_capped 与门槛项实际状态不符")
+        check(len(a["sampled_urls"]) == 8 or a.get("notes"),
+              f"{fp}: 抽样 {len(a['sampled_urls'])} 页而非 8 页，且 notes 里没有说明")
 
 if fail:
     print("FAIL")

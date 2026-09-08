@@ -53,8 +53,10 @@ SEO intuition gets wrong:
 ## Microsoft Copilot
 
 - Rides the Bing index. If Bing has not indexed the site, Copilot cannot cite it,
-  regardless of Google standing. This is the single most common blind spot we see and
-  the reason Pillar 5 scores Bing verification separately.
+  regardless of Google standing. This is the single most common blind spot we see.
+  v1.1 does **not** score Bing verification: it is visible only to the site owner, so it
+  left the 100-point base along with the other unobservable checks. Report it as
+  "measurable once access is granted" rather than scoring a zero you cannot see.
 
 ## Claude
 
@@ -65,9 +67,10 @@ SEO intuition gets wrong:
 ## Non-English engines
 
 If the audience is not English-speaking, the engines above may be largely irrelevant.
-Regional engines have their own indexes and their own crawler behaviour. The rubric
-awards Pillar 5 points for testing the engines your audience actually uses rather than
-naming specific ones, because the right set differs by market.
+Regional engines have their own indexes and their own crawler behaviour. v1.1 scores this
+in one place only — `p4.cn-engines`, which applies when a site addresses the Chinese
+market and leaves the denominator when it does not. Other regional markets are not
+scored, because we have not done the observation work to define tiers we could defend.
 
 **We do not currently document regional engines in detail.** This is a known gap and a
 good contribution — see [CONTRIBUTING.md](../CONTRIBUTING.md).

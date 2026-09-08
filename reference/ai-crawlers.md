@@ -1,6 +1,6 @@
 # AI crawler user-agents
 
-The list Pillar 1 checks `robots.txt` against. Consolidated from vendor documentation;
+The list the `g.robots` check checks `robots.txt` against. Consolidated from vendor documentation;
 this is a reference, not original research. Vendors change these —
 [open an issue](https://github.com/jianruntech/geo-score/issues) if one is stale.
 
@@ -41,10 +41,10 @@ remaining quotable — and is not penalised.
 | `Applebot` | Apple | Feeds Siri and Spotlight, including their AI answers |
 | `Amazonbot` | Amazon | Alexa and Rufus |
 
-**9 of these 10 are the denominator for the Pillar 1 proportional check.**
-`Perplexity-User` and `ChatGPT-User` are user-initiated and are counted with their
-indexing counterparts, so the denominator is **10**. If a site's audience makes one
-of these irrelevant, mark that check partially unobservable rather than failing it.
+**All 10 are what `g.reachable` tests.** `Perplexity-User` and `ChatGPT-User` are
+user-initiated rather than scheduled, but they fetch pages on a person's behalf and a
+block on them is still a block, so they count. If a site's audience makes one of these
+genuinely irrelevant, mark the check partially unobservable rather than failing it.
 
 ## Training crawlers — blocking these costs no citations
 
@@ -65,12 +65,16 @@ of these irrelevant, mark that check partially unobservable rather than failing 
 | `Applebot-Extended` | Apple | Whether your content trains Apple's models. **Does not affect Applebot crawling or Siri/Spotlight results** |
 | `anthropic-ai` | Anthropic | Legacy token, superseded by the named agents above |
 
-## Scoring note
+## How this list is scored
 
-Pillar 1's first check awards 4 points by the proportion of **retrieval** crawlers
-allowed, out of the 10 listed above. Partial credit is `floor(4 × allowed / 10)`.
+This file is a reference, not a scoring rule. Two rubric checks use it, and both are
+defined in [`rubric/v1.1.md`](../rubric/v1.1.md) — read the tiers there, not here:
 
-A blanket `User-agent: * / Disallow: /` scores 0.
-Allowing all retrieval crawlers while blocking every training crawler and setting both
-opt-out tokens scores the full 4 — that combination is a deliberate, coherent posture,
-not a failure.
+- **`g.robots`** — whether `robots.txt` allows the retrieval crawlers above. Three tiers.
+- **`g.reachable`** — whether all 10 actually return 200 with the same main content a
+  browser gets. Three tiers, counted out of 10.
+
+One thing worth stating because it is counter-intuitive: **blocking every training
+crawler and setting both opt-out tokens costs nothing.** Only the retrieval crawlers
+affect either check. Allowing retrieval while refusing training is a coherent posture,
+not a compromise, and the rubric scores it as full marks.

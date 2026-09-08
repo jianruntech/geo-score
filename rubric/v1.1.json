@@ -53,9 +53,10 @@
     }
   ],
   "report": {
-    "order_zh": "失分项默认按「可回收分数 ÷ 工作量」排序，不按支柱顺序；解锁型修复（门槛项）永远排在增量型之前。",
-    "first_screen_zh": "首屏只放三样：当前分与所处档、距下一档还差几分、以及排序后的前 3 条。完整清单放附录。",
-    "each_finding_zh": "每条失分固定三段：为什么重要 / 怎么修 / 修完预计加几分与工期。"
+    "order_zh": "首屏的三处缺口按可回收分数排序；门槛项未拿满时永远排第一，因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。",
+    "first_screen_zh": "首屏三样：当前分与所处档、距下一档还差几分、以及最大的三处缺口。完整清单必须同时给出，放在首屏之后。",
+    "each_finding_zh": "每条失分固定三段：为什么重要、当前落在哪一档、上一档要求什么。「怎么修」与工期属于实施层，不在本量表范围内。",
+    "every_check_zh": "通过的项也要列出来。只列失败项的报告读起来像销售文件。"
   },
   "checks": [
     {
@@ -75,17 +76,17 @@
         {
           "points": 3,
           "condition": "no explicit Disallow, but no explicit Allow either",
-          "condition_zh": "未显式禁止，也未显式放行"
+          "condition_zh": "没有适用于检索 UA 的 Disallow，但也没有任何 Allow 指令"
         },
         {
           "points": 5,
           "condition": "mainstream retrieval user-agents explicitly allowed",
-          "condition_zh": "对主流检索 UA 明确放行"
+          "condition_zh": "检索 UA 被明确放行——逐个具名 Allow，或 User-agent: * 下有 Allow: / 且无适用的 Disallow"
         }
       ],
       "why": "The one check where failing makes every other change pointless. If a retrieval crawler is blocked, nothing you do on the page reaches an answer engine.",
       "why_zh": "唯一一条「没做到，后面全部白做」的检查。爬虫被挡住时，站内做得再好也进不了 AI 的答案。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
     },
     {
       "id": "g.reachable",
@@ -104,17 +105,17 @@
         {
           "points": 3,
           "condition": "some are blocked, or the body differs from what a browser receives",
-          "condition_zh": "部分被拦，或返回内容与浏览器不一致"
+          "condition_zh": "1–9 个 UA 返回 200，或正文与浏览器所见不一致"
         },
         {
           "points": 5,
           "condition": "all 10 retrieval user-agents return 200 with matching content",
-          "condition_zh": "10 个检索 UA 均 200 且内容一致"
+          "condition_zh": "10 个 UA 均 200，且正文与浏览器所见一致"
         }
       ],
       "why": "Allowing a crawler in robots.txt is not the same as serving it. CDNs and WAFs block by user-agent, and only a live request shows it.",
-      "why_zh": "robots.txt 写了放行不等于真拿得到——CDN 与 WAF 常按 UA 拦截，这一层只有实测看得见。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+      "why_zh": "robots.txt 写了放行不等于真拿得到——CDN 与 WAF 常按 UA 拦截，这一层只有实测看得见。「内容一致」指正文文本一致，按去掉空白后的正文比对，不按原始字节——CSRF token、nonce、时间戳的差异不算不一致。",
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
     },
     {
       "id": "g.ssr",
@@ -133,17 +134,17 @@
         {
           "points": 3,
           "condition": "present on some sampled pages",
-          "condition_zh": "部分页可见"
+          "condition_zh": "1–7 页可见"
         },
         {
           "points": 5,
           "condition": "present in the HTML response on every sampled page",
-          "condition_zh": "抽样页正文均在 HTML 响应中"
+          "condition_zh": "8 页正文均在 HTML 响应中"
         }
       ],
       "why": "Most retrieval crawlers do not execute JavaScript. Content that appears only in a browser does not exist as far as an answer engine is concerned.",
       "why_zh": "多数检索爬虫不执行 JS。正文只在浏览器里出现，等于对 AI 不存在。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
     },
     {
       "id": "p1.sitemap",
@@ -256,12 +257,12 @@
         {
           "points": 2,
           "condition": "present on some nested pages",
-          "condition_zh": "部分层级页有"
+          "condition_zh": "不足半数层级页有"
         },
         {
           "points": 3,
           "condition": "present across nested pages",
-          "condition_zh": "层级页普遍有"
+          "condition_zh": "半数及以上层级页有"
         }
       ],
       "why": "Tells the retrieval side where a page sits in the site — whether it is an overview or a detail. Excluded if the site has no hierarchy.",
@@ -284,12 +285,12 @@
         {
           "points": 2,
           "condition": "present on some page types",
-          "condition_zh": "部分页型有"
+          "condition_zh": "部分适用页型有"
         },
         {
           "points": 4,
           "condition": "present across applicable page types with real field values",
-          "condition_zh": "适用页型普遍有，且字段真实"
+          "condition_zh": "全部适用页型都有，且字段真实"
         }
       ],
       "why": "Product + Offer for commerce, HowTo for docs, FAQPage for Q&A. Excluded entirely if the site has no matching page type.",
@@ -312,17 +313,17 @@
         {
           "points": 4,
           "condition": "on a few pages",
-          "condition_zh": "少数页有"
+          "condition_zh": "1–3 页有"
         },
         {
           "points": 7,
           "condition": "on half the pages",
-          "condition_zh": "半数页有"
+          "condition_zh": "4–5 页有"
         },
         {
           "points": 9,
           "condition": "on most pages",
-          "condition_zh": "多数页有"
+          "condition_zh": "6 页及以上有"
         }
       ],
       "why": "An engine quotes a passage that stands on its own. Without one, good content still only gets summarised, never cited.",
@@ -345,17 +346,17 @@
         {
           "points": 3,
           "condition": "a few headings read like a question someone would ask",
-          "condition_zh": "少数贴近提问"
+          "condition_zh": "1–3 页贴近"
         },
         {
           "points": 5,
           "condition": "about half do",
-          "condition_zh": "半数贴近"
+          "condition_zh": "4–5 页贴近"
         },
         {
           "points": 7,
           "condition": "most do",
-          "condition_zh": "多数贴近"
+          "condition_zh": "6 页及以上贴近"
         }
       ],
       "why": "People ask assistants in natural language. Questions (What is X?), tasks (Accept a payment) and explanations (How Connect works) all count; only keyword strings and brand labels do not.",
@@ -378,12 +379,12 @@
         {
           "points": 3,
           "condition": "some pages carry a visible date or datePublished",
-          "condition_zh": "部分页有可见日期或 datePublished"
+          "condition_zh": "1–5 页有可见日期或 datePublished"
         },
         {
           "points": 6,
           "condition": "most pages do, and dateModified agrees with the visible date",
-          "condition_zh": "多数页有，且与 dateModified 一致"
+          "condition_zh": "6 页及以上有，且与 dateModified 一致"
         }
       ],
       "why": "Engines prefer content whose currency they can confirm. A schema date or a date a reader can see — either one qualifies.",
@@ -406,17 +407,17 @@
         {
           "points": 3,
           "condition": "some are attributed",
-          "condition_zh": "部分标注"
+          "condition_zh": "1–3 处标注"
         },
         {
           "points": 5,
           "condition": "most are attributed",
-          "condition_zh": "多数标注"
+          "condition_zh": "4 处及以上标注"
         },
         {
           "points": 7,
           "condition": "most are attributed and the source is clickable and checkable",
-          "condition_zh": "多数标注且来源可点击可核实"
+          "condition_zh": "4 处及以上标注，且来源可点击可核实"
         }
       ],
       "why": "An attributed number is quoted far more readily than a bare one — it gives the citing side something to stand on.",

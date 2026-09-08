@@ -1,47 +1,68 @@
 # Changelog
 
-Format follows [Keep a Changelog](https://keepachangelog.com/).
+Format follows [Keep a Changelog](https://keepachangelog.com/). 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 The **rubric** is versioned separately from the repository — see `rubric/`.
 
-## v1.1 — 重新标定
+## [1.1.0] — 2026-09-08
 
-v1.0 把 anthropic.com 判为 *Critical*，而该站对十个检索爬虫全部返回 200、
-正文服务端渲染完好。问题在量表不在站点。完整依据见
-[rubric/calibration-v1.1.md](rubric/calibration-v1.1.md)。
+Rubric **v1.1**. v1.0 was tagged a few hours earlier but never announced: running it
+against five real sites before release labelled anthropic.com *Critical* — a site
+returning 200 to all ten retrieval crawlers, byte-identical to a browser, with 60 KB of
+server-rendered prose. That is a failed calibration check, so v1.1 shipped instead.
+Full reasoning: [rubric/calibration-v1.1.md](rubric/calibration-v1.1.md).
 
-### 变更
+**Scores from v1.0 and v1.1 are not comparable.** v1.0 and its five audits stay published,
+unaltered — they are the evidence that found the problem.
 
-- **两个分数拆开**。「站点就绪度」（站方可修，本量表打分的对象）与
-  「AI 引用表现」（结果型，天然低）不再合并。
-- **二元改阶梯**。21 个计分项全部拆成 2–4 档，取证据满足的最高档。
-  这是 v1.0 区分度塌陷的主因。
-- **判定看实质不看格式**。标题匹配提问意图不再要求问号，任务句与说明句同等计入；
-  时间信号接受页面可见日期或 schema 日期；自足答案段放宽到 25–120 词
-  （中文 50–200 字）且不限定首段。
-- **站外不可观测项移出主分**。Search Console／Bing 验证状态、多引擎实测四项
-  离开 100 分基数，改为「授权后可测」的不计分区块。
-- **新兴约定降权**。`ai.txt`、`speakable`、GEO link 标签、`llms-full.txt`
-  从 13 分计入分母改为不进分母的加分项，封顶 +6。
-- **门槛项**。`g.robots`、`g.reachable`、`g.ssr` 计分，同时任一未拿满则总分封顶 40
-  并置顶为 P0。
-- **档位改五档，档名用阶段语义**。「危急」删除，CI 拦截判决式档名。
-- **公开／实施边界收紧**。修法、工作量、承担角色不再出现在公开量表，CI 强制。
-  公开的量表说测什么与为什么，实施层不在本仓库。
+### Changed
+- **Two scores, never one.** *Readiness* (what the site owner can change, observable from
+  outside) is what the rubric scores. *Citation performance* is reported separately and
+  never folded in. Merging them is what produced the *Critical* verdict above.
+- **Tiers replace pass/fail.** All 21 scored checks now carry 2–4 tiers, and every tier
+  states a count out of the 8 sampled pages rather than "most" or "a few".
+- **Substance over format.** Headings match question intent whether or not they carry a
+  question mark — tasks ("Accept a payment") and explanations ("How Connect works") count.
+  A freshness signal is a visible date *or* a schema date. Answer passages widened to
+  25–120 words (50–200 characters for Chinese) and no longer have to be the first paragraph.
+- **Unobservable checks left the base.** Search Console and Bing verification state and
+  multi-engine query tests are gone from the 100 — no external auditor can see them, and
+  scoring them zero silently penalised every site. They are reported as an unscored block.
+- **Emerging conventions moved to bonus.** `ai.txt`, `speakable`, GEO `<link>` tags and
+  `llms-full.txt` were 9 points inside the denominator; they are now bonus checks worth up
+  to +6 outside it.
+- **Gates.** `g.robots`, `g.reachable` and `g.ssr` score normally and cap the normalised
+  percentage at 40 — but only when one of them scores **zero**.
+- **Five bands with stage names.** "Critical" is gone; CI now rejects verdict-style band
+  names. Thresholds are taken from a published AEO ladder its own distribution backs.
+- **Rubric is bilingual.** [`rubric/v1.1.md`](rubric/v1.1.md) (English) and
+  [`rubric/v1.1.zh-CN.md`](rubric/v1.1.zh-CN.md), with both languages in the JSON.
 
-### 兼容性
+### Added
+- [`rubric/calibration-v1.1.md`](rubric/calibration-v1.1.md) — how the recalibration was
+  reasoned, against four external benchmarks
+- [`schema/report.v2.json`](schema/report.v2.json) — v1.1 changed the output shape
+  (`score` became `readiness`, `gate_capped` and `tier_reason` are new, the `failed` state
+  is gone). `report.v1.json` stays for v1.0 reports.
+- [`examples/audits/v1.1/`](examples/audits/v1.1/) — the five sites re-audited under v1.1
+- CI now validates published audits against the schema and recomputes every score,
+  checks that gate-cap figures agree across both languages and the JSON, rejects
+  implementation fields (`fix_zh`, `effort_days`, `owner`) in the public rubric, and
+  rejects stale pillar names and retired check ids anywhere in the repo
 
-v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五份审计保持原样，
-不做追溯改写。`examples/audits/` 里仍是 v1.0 审计；按 v1.1 重跑的真实审计尚未进行。
-
-### 被这一版定掉的
-
-[rubric/open-questions.md](rubric/open-questions.md) 里公开的 8 条口径歧义全部有了决定。
+### Fixed
+- A first draft of v1.1 capped any site whose gate checks fell short of full marks. That
+  showed stripe.com (77/100) and nextjs.org (85/98) as **40%, Early** — v1.0's mistake in a
+  new place, treating *not ideal* as *not working*. Gates now cap only at tier zero.
+- The eight ambiguities in [`rubric/open-questions.md`](rubric/open-questions.md) all have
+  decisions, recorded inline.
 
 ## [Unreleased]
 
 ## [1.0.0] — 2026-09-08
 
-First tagged release. The repository was pushed a few hours earlier without a tag;
+Tagged but never announced; superseded within hours by 1.1.0 after it failed its own
+calibration check. Kept published so the correction stays auditable.
+The repository was pushed a few hours earlier without a tag;
 the rubric was corrected before this tag, so v1.0 as released here is the only v1.0.
 Corrections made in that window are listed under *Fixed before first tag*.
 
@@ -49,7 +70,7 @@ Corrections made in that window are listed under *Fixed before first tag*.
 - Rubric v1.0: **29 checks** across 5 pillars, 100 nominal points, with pass conditions,
   an explicit Credit type per check, three-state scoring, and score bands
 - `SKILL.md` — Claude Code skill that runs the rubric
-- `reference/ai-crawlers.md` — the AI user-agent list Pillar 1 checks against
+- `reference/ai-crawlers.md` — the AI user-agent list the crawler checks run against
 - `reference/platform-source-selection.md` — how each engine selects sources
 - `examples/sample-report.md`
 

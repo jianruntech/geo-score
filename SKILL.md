@@ -23,12 +23,12 @@ out of scope for this skill. Say so plainly and point to
 
 | Command | What it does |
 |---|---|
-| `/geo-score audit <URL>` | Full 28-check audit, scored 0–100 with per-check breakdown |
-| `/geo-score infra <URL>` | Pillar 1 only — crawler access, `llms.txt`, sitemap, render mode |
-| `/geo-score schema <URL>` | Pillar 2 only — JSON-LD presence and validity |
-| `/geo-score content <URL>` | Pillar 3 only — passage shape, sourcing, authorship, freshness |
-| `/geo-score authority <URL>` | Pillar 4 only — knowledge graph, listings, `sameAs` integrity |
-| `/geo-score platforms <URL>` | Pillar 5 only — verification state and query-test record |
+| `/geo-score audit <URL>` | Full audit — 21 scored checks plus 4 bonus, readiness 0–100 with per-check tiers |
+| `/geo-score gates <URL>` | Gate checks only (`g.*`) — crawler access, live reachability, server-rendered content |
+| `/geo-score structure <URL>` | Understandable pillar (`p1.*`) — `llms.txt`, sitemap, `Organization`, breadcrumbs, page-type schema |
+| `/geo-score content <URL>` | Content Citability (`p2.*`) — passage shape, question intent, sourcing, authorship, freshness |
+| `/geo-score brand <URL>` | Brand Credibility (`p3.*`) — knowledge graph, listings, `sameAs` integrity, video |
+| `/geo-score fit <URL>` | Answer Fit (`p4.*`) — extractable shape, question coverage, Chinese engines |
 | `/geo-score rubric` | Print the current rubric with weights and pass conditions |
 
 ## The rubric
@@ -62,9 +62,11 @@ Superseded [`rubric/v1.0.md`](rubric/v1.0.md) remains published; v1.0 and v1.1 s
 
 ## How to run an audit
 
-**1 · Sample the site.** Score the site, not a page. Fetch at minimum:
-the homepage, one product or service page, and one article. Note which URLs you used —
-the report must list them.
+**1 · Sample the site.** Score the site, not a page. Fetch **exactly 8 URLs**: the
+homepage, 2 main product or service pages, 2 documentation or knowledge pages, and 3
+recent content pages. Take all of them if the site has fewer and say so in the report.
+Every tier in the rubric is defined as a count out of these 8, so a different sample size
+produces a different score — the report must list every URL you used.
 
 **Fetching rules — get these wrong and every number after is wrong.**
 
@@ -76,26 +78,26 @@ the report must list them.
 - **Send a real retrieval user-agent** (`OAI-SearchBot`, `PerplexityBot`) when testing
   reachability, and a normal browser UA when reading content. The difference between
   the two *is* the reachability check.
-- **Do not execute JavaScript when checking `p1.ssr-content`.** The point of that check
+- **Do not execute JavaScript when checking `g.ssr`.** The point of that check
   is what a crawler receives.
 
-**2 · Pillar 1 — Infrastructure.** Fetch `/robots.txt`, `/llms.txt`, `/llms-full.txt`,
+**2 · Gates (`g.*`) and the Understandable pillar (`p1.*`).** Fetch `/robots.txt`, `/llms.txt`, `/llms-full.txt`,
 `/ai.txt`, `/sitemap.xml`. Check the `<head>` of sampled pages for GEO `<link>` tags.
 Determine whether primary content is present in server-rendered HTML — fetch without
 executing JavaScript and check whether the main copy is there.
 Crawler list: [`reference/ai-crawlers.md`](reference/ai-crawlers.md).
 
-**3 · Pillar 2 — Structured Data.** Extract all JSON-LD from sampled pages. Validate that
+**3 · Structured data (`p1.organization`, `p1.breadcrumb`, `p1.page-type`).** Extract all JSON-LD from sampled pages. Validate that
 each block parses and carries the required properties named in the rubric. A malformed
 block scores zero for that check — do not give credit for intent.
 
-**4 · Pillar 3 — Content Citability.** This carries the most weight and needs the most
+**4 · Content Citability (`p2.*`).** This carries the most weight and needs the most
 care. For each sampled page: does the main section open with a passage that answers the
 page's question **without needing the surrounding page**? Count numeric claims and how
 many carry an attributable source. Identify the author and whether they resolve to a real
 person. Check `dateModified`.
 
-**5 · Pillar 4 — Brand Authority.** Look for a knowledge-graph record. Follow every
+**5 · Brand Credibility (`p3.*`).** Look for a knowledge-graph record. Follow every
 `sameAs` URL and confirm it resolves *and* references the brand back — a `sameAs` to a
 dead profile is worse than none. Check for mentions on domains the brand does not control.
 
