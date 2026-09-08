@@ -147,6 +147,7 @@ evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
 python3 cli/geo_score.py example.com            # human-readable
 python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
 python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # side by side
 ```
 
 **GitHub Action** — score on every push, fail the build when it regresses.

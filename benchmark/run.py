@@ -28,8 +28,18 @@ def one(site):
         rows, total, den, bon, norm, bd, capped = gs.score(res)
         gaps = sorted([(mx - t, cid) for cid, _, _, t, mx, _ in rows if t is not None and t < mx],
                       reverse=True)[:3]
+        gates = {cid: t for cid, _, _, t, _, _ in rows if cid.startswith("g.")}
+        zero = [cid for cid, t in gates.items() if t == 0]
+        reason = None
+        if zero:
+            # a robots.txt block is an editorial choice; a JS-only page is an accident.
+            # Reporting them as the same "capped" is what makes the number useless.
+            reason = ("blocks crawlers" if "g.robots" in zero else
+                      "serves crawlers an error" if "g.reachable" in zero else
+                      "content needs JavaScript")
         return dict(site=site["url"], sector=site["sector"], readiness=total,
                     observable_max=den, normalised=norm, band=bd, gate_capped=capped,
+                    gates=gates, gate_reason=reason,
                     bonus=bon, top_gaps=[c for _, c in gaps],
                     pillars={p: [sum(r[3] for r in rows if r[1] == p and r[3] is not None),
                                  sum(r[4] for r in rows if r[1] == p and r[3] is not None)]
@@ -89,6 +99,26 @@ def write_readme(p):
     row = [x["normalised"] for x in ok if not x["sector"].startswith("China")]
     from collections import Counter
     gap = Counter(g for x in ok for g in x["top_gaps"])
+    capped = [x for x in ok if x.get("gate_capped")]
+    A("## A quarter of the field cannot be cited at all\n")
+    A("**%d of %d sites have a gate check at zero** — a crawler cannot get the content, so"
+      % (len(capped), len(ok)))
+    A("nothing else on the page matters. These are two very different problems, and reporting")
+    A("them as one number is what makes such a number useless:\n")
+    _r = {}
+    for x in capped: _r.setdefault(x.get("gate_reason") or "other", []).append(x["site"])
+    A("| Why | Sites | Which |"); A("|---|:-:|---|")
+    LBL = {"blocks crawlers": "**Deliberate** — `robots.txt` disallows retrieval crawlers",
+           "serves crawlers an error": "**Deliberate or accidental** — the server returns 403 to crawlers",
+           "content needs JavaScript": "**Accidental** — body copy only exists after JS runs",
+           "other": "Other"}
+    for k in ("blocks crawlers", "serves crawlers an error", "content needs JavaScript", "other"):
+        if k in _r:
+            A("| %s | %d | %s |" % (LBL[k], len(_r[k]), ", ".join(sorted(_r[k]))))
+    A("\nThe first group made a choice. Several news and health publishers block AI crawlers by")
+    A("name, and this rubric reports that as it is — a site that does not want to be quoted is")
+    A("not misconfigured. The last group almost certainly did not choose it: their content is")
+    A("there, a browser can see it, and a retrieval crawler gets an empty shell.\n")
     A("## What the spread shows\n")
     A("**Half the field sits between %s and %s.** The rubric is not grading on a curve — these"
       % (s["p25"], s["p75"]))

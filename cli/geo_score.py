@@ -758,12 +758,13 @@ def run(base, sample=8, verbose=False):
     brands = brands[:3]
 
     langs = ["zh", "en"] if lo == 50 else ["en"]
-    kg_where, brand = [], brands[0] if brands else stem
+    kg_where, brand, kg_queries, kg_ok = [], brands[0] if brands else stem, 0, 0
     for cand in brands:
         q = urllib.parse.quote(cand)
         for lg in langs:
             wd = fetch("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
                        "&language=%s&uselang=%s&limit=5&search=%s" % (lg, lg, q))
+            kg_queries += 1; kg_ok += 1 if wd.ok else 0
             if wd.ok:
                 try:
                     for it in json.loads(wd.text).get("search", []):
@@ -773,6 +774,7 @@ def run(base, sample=8, verbose=False):
                 except Exception: pass
             wp = fetch("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
                        "&srlimit=3&srsearch=%s" % (lg, q))
+            kg_queries += 1; kg_ok += 1 if wp.ok else 0
             if wp.ok:
                 try:
                     for it in json.loads(wp.text).get("query", {}).get("search", []):
@@ -780,11 +782,20 @@ def run(base, sample=8, verbose=False):
                             kg_where.append("%s.wikipedia: %s" % (lg, it.get("title"))); break
                 except Exception: pass
         if kg_where: brand = cand; break
-    tier["p3.knowledge-graph"] = 4 if kg_where else 0
-    ev["p3.knowledge-graph"] = ("Brand read as %r%s. %s" % (
-        brand, "" if len(brands) < 2 else " (also tried %s)" % ", ".join(repr(x) for x in brands if x != brand),
-        ("Entity found — " + "; ".join(kg_where[:2])) if kg_where else
-        "No entity whose label matches exactly, in Wikidata or Wikipedia (%s)." % "/".join(langs)))
+    also = "" if len(brands) < 2 else " (also tried %s)" % ", ".join(repr(x) for x in brands if x != brand)
+    if kg_where:
+        tier["p3.knowledge-graph"] = 4
+        ev["p3.knowledge-graph"] = "Brand read as %r%s. Entity found — %s" % (brand, also, "; ".join(kg_where[:2]))
+    elif kg_ok == 0 and kg_queries:
+        # every lookup failed — that is our blind spot, not an absent entity
+        tier["p3.knowledge-graph"] = None
+        ev["p3.knowledge-graph"] = ("Brand read as %r%s. All %d Wikidata and Wikipedia lookups failed to "
+                                    "respond, so this check is unobservable rather than zero." % (brand, also, kg_queries))
+    else:
+        tier["p3.knowledge-graph"] = 0
+        ev["p3.knowledge-graph"] = ("Brand read as %r%s. No entity whose label matches exactly, in Wikidata "
+                                    "or Wikipedia (%s); %d of %d lookups answered."
+                                    % (brand, also, "/".join(langs), kg_ok, kg_queries))
 
     # ── judgement-bound checks ──
     for k in NEEDS_JUDGEMENT:
@@ -894,6 +905,65 @@ def as_json(res):
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
                "Checks needing off-site search or human judgement left the denominator."])
 
+def _try(u, sample):
+    try: return run(u, sample)
+    except Exception as e:
+        print("%s  %s — %s%s" % (c.red, u, e, c.r), file=sys.stderr); return None
+
+def compare(pairs, args):
+    """Two or more sites, check by check. The column that matters is the difference."""
+    cols = []
+    for u, res in pairs:
+        rows, total, den, b, norm, bd, capped = score(res)
+        cols.append(dict(host=urllib.parse.urlsplit(u).netloc.replace("www.", ""),
+                         rows={r[0]: r for r in rows}, norm=norm, band=bd, total=total, den=den))
+    w = max(22, max(len(c_["host"]) for c_ in cols) + 2)
+    print()
+    print("  %s%-35s%s%s" % (c.b, "AIV READINESS", "".join(("%-" + str(w) + "s") % x["host"] for x in cols), c.r))
+    print(c.grey + "─" * (35 + w * len(cols)) + c.r)
+    best = max(x["norm"] for x in cols)
+    line = ""
+    for x in cols:
+        col = c.green if x["norm"] == best else c.grey
+        line += ("%s%-" + str(w) + "s%s") % (col, "%d  %s" % (x["norm"], x["band"]), c.r)
+    print("  %-35s%s" % ("", line))
+    print()
+    cur = None
+    for cid, pil, name, _t, mx, _e in [r for r in cols[0]["rows"].values()]:
+        if pil != cur:
+            cur = pil; print("  %s%s%s" % (c.b, pil, c.r))
+        cells = ""
+        vals = [x["rows"].get(cid, (None,) * 6)[3] for x in cols]
+        top = max([v for v in vals if v is not None], default=None)
+        for v in vals:
+            if v is None: txt, col = "—", c.grey
+            else:
+                txt = "%d/%d" % (v, mx)
+                col = c.green if v == top and top == mx else (c.grey if v == top else c.red)
+            cells += ("%s%-" + str(w) + "s%s") % (col, txt, c.r)
+        gap = [v for v in vals if v is not None]
+        mark = " " if (not gap or max(gap) == min(gap)) else c.brass + "›" + c.r
+        print("   %s %-33s%s" % (mark, name[:32], cells))
+    print()
+    lead, trail = cols[0], None
+    for x in cols[1:]:
+        if trail is None or x["norm"] > trail["norm"]: trail = x
+    if trail:
+        wins = [(cols[0]["rows"][k][4] - (cols[0]["rows"][k][3] or 0)) - (trail["rows"][k][4] - (trail["rows"][k][3] or 0))
+                for k in cols[0]["rows"]
+                if cols[0]["rows"][k][3] is not None and trail["rows"].get(k, (None,)*6)[3] is not None]
+        behind = sorted([(trail["rows"][k][3] - cols[0]["rows"][k][3], cols[0]["rows"][k][2])
+                         for k in cols[0]["rows"]
+                         if cols[0]["rows"][k][3] is not None and trail["rows"].get(k, (None,)*6)[3] is not None
+                         and trail["rows"][k][3] > cols[0]["rows"][k][3]], reverse=True)[:3]
+        if behind:
+            print("  %sWhere %s is ahead of you%s" % (c.b, trail["host"], c.r))
+            for d, nm in behind:
+                print("   %s+%-2d%s  %s" % (c.brass, d, c.r, nm))
+            print()
+    print("  %sBoth scored with rubric %s · https://github.com/jianruntech/geo-score%s" % (c.grey, RUBRIC, c.r))
+    print()
+
 def main():
     ap = argparse.ArgumentParser(prog="geo-score",
         description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.")
@@ -901,6 +971,8 @@ def main():
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
+    ap.add_argument("--compare", metavar="URL", action="append",
+                    help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
     ap.add_argument("--quiet", "-q", action="store_true")
     ap.add_argument("--version", action="version", version="geo-score %s (rubric %s)" % (__version__, RUBRIC))
@@ -908,11 +980,22 @@ def main():
     url = a.url if "://" in a.url else "https://" + a.url
     if not a.json and not a.quiet:
         print("%s  scoring %s …%s" % (c.dim, url, c.r), file=sys.stderr)
-    res = run(url, a.sample, verbose=not a.quiet and not a.json)
-    if a.json:
-        print(json.dumps(as_json(res), ensure_ascii=False, indent=2))
+    targets = [url] + [(u if "://" in u else "https://" + u) for u in (a.compare or [])]
+    if len(targets) > 1:
+        done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
+        ok = [(u, r) for u, r in done if r is not None]
+        if not ok: raise RuntimeError("none of the given sites could be fetched")
+        if a.json:
+            print(json.dumps([as_json(r) for _, r in ok], ensure_ascii=False, indent=2))
+        else:
+            compare(ok, a)
+        res = ok[0][1]
     else:
-        report(res, a)
+        res = run(url, a.sample, verbose=not a.quiet and not a.json)
+        if a.json:
+            print(json.dumps(as_json(res), ensure_ascii=False, indent=2))
+        else:
+            report(res, a)
     if a.fail_under is not None:
         _, _, _, _, norm, _, _ = score(res)
         if norm < a.fail_under:

@@ -1,45 +1,461 @@
 {
-  "note": "A fixed, public list so the benchmark is reproducible. Sites were picked for category coverage and public prominence, not because they are customers or competitors of anyone.",
+  "note": "A fixed, public list so the benchmark is reproducible. Sites were picked for sector and language coverage and public prominence — not because they are customers or competitors of anyone. Adding a site is the easiest useful contribution to this repository: see CONTRIBUTING.md.",
   "sites": [
-    {"url": "stripe.com",        "sector": "Payments / Fintech"},
-    {"url": "plaid.com",         "sector": "Payments / Fintech"},
-    {"url": "wise.com",          "sector": "Payments / Fintech"},
-    {"url": "nextjs.org",        "sector": "Developer tools"},
-    {"url": "svelte.dev",        "sector": "Developer tools"},
-    {"url": "vuejs.org",         "sector": "Developer tools"},
-    {"url": "astro.build",       "sector": "Developer tools"},
-    {"url": "remix.run",         "sector": "Developer tools"},
-    {"url": "supabase.com",      "sector": "Developer tools"},
-    {"url": "railway.com",       "sector": "Developer tools"},
-    {"url": "fly.io",            "sector": "Developer tools"},
-    {"url": "anthropic.com",     "sector": "AI"},
-    {"url": "openai.com",        "sector": "AI"},
-    {"url": "huggingface.co",    "sector": "AI"},
-    {"url": "cohere.com",        "sector": "AI"},
-    {"url": "perplexity.ai",     "sector": "AI"},
-    {"url": "notion.com",        "sector": "SaaS / Productivity"},
-    {"url": "linear.app",        "sector": "SaaS / Productivity"},
-    {"url": "figma.com",         "sector": "SaaS / Productivity"},
-    {"url": "airtable.com",      "sector": "SaaS / Productivity"},
-    {"url": "slack.com",         "sector": "SaaS / Productivity"},
-    {"url": "asana.com",         "sector": "SaaS / Productivity"},
-    {"url": "hubspot.com",       "sector": "Marketing / CRM"},
-    {"url": "mailchimp.com",     "sector": "Marketing / CRM"},
-    {"url": "semrush.com",       "sector": "Marketing / CRM"},
-    {"url": "ahrefs.com",        "sector": "Marketing / CRM"},
-    {"url": "shopify.com",       "sector": "Ecommerce"},
-    {"url": "bigcommerce.com",   "sector": "Ecommerce"},
-    {"url": "squarespace.com",   "sector": "Ecommerce"},
-    {"url": "cloudflare.com",    "sector": "Cloud & DevOps"},
-    {"url": "digitalocean.com",  "sector": "Cloud & DevOps"},
-    {"url": "datadoghq.com",     "sector": "Cloud & DevOps"},
-    {"url": "sentry.io",         "sector": "Cloud & DevOps"},
-    {"url": "twilio.com",        "sector": "Cloud & DevOps"},
-    {"url": "mingdao.com",       "sector": "China / no-code"},
-    {"url": "jiandaoyun.com",    "sector": "China / no-code"},
-    {"url": "feishu.cn",         "sector": "China / no-code"},
-    {"url": "yonyou.com",        "sector": "China / enterprise"},
-    {"url": "kingdee.com",       "sector": "China / enterprise"},
-    {"url": "aliyun.com",        "sector": "China / cloud"}
+    {
+      "url": "anthropic.com",
+      "sector": "AI"
+    },
+    {
+      "url": "cohere.com",
+      "sector": "AI"
+    },
+    {
+      "url": "elevenlabs.io",
+      "sector": "AI"
+    },
+    {
+      "url": "huggingface.co",
+      "sector": "AI"
+    },
+    {
+      "url": "langchain.com",
+      "sector": "AI"
+    },
+    {
+      "url": "mistral.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "openai.com",
+      "sector": "AI"
+    },
+    {
+      "url": "perplexity.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "pinecone.io",
+      "sector": "AI"
+    },
+    {
+      "url": "replicate.com",
+      "sector": "AI"
+    },
+    {
+      "url": "runwayml.com",
+      "sector": "AI"
+    },
+    {
+      "url": "together.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "weaviate.io",
+      "sector": "AI"
+    },
+    {
+      "url": "01.ai",
+      "sector": "China / AI"
+    },
+    {
+      "url": "deepseek.com",
+      "sector": "China / AI"
+    },
+    {
+      "url": "moonshot.cn",
+      "sector": "China / AI"
+    },
+    {
+      "url": "zhipuai.cn",
+      "sector": "China / AI"
+    },
+    {
+      "url": "aliyun.com",
+      "sector": "China / cloud"
+    },
+    {
+      "url": "qcloud.com",
+      "sector": "China / cloud"
+    },
+    {
+      "url": "volcengine.com",
+      "sector": "China / cloud"
+    },
+    {
+      "url": "anker.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "dji.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "insta360.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "shein.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "temu.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "xiaomi.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "alibabagroup.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "bytedance.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "huawei.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "kingdee.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "tencent.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "yonyou.com",
+      "sector": "China / enterprise"
+    },
+    {
+      "url": "feishu.cn",
+      "sector": "China / no-code"
+    },
+    {
+      "url": "jiandaoyun.com",
+      "sector": "China / no-code"
+    },
+    {
+      "url": "mingdao.com",
+      "sector": "China / no-code"
+    },
+    {
+      "url": "teambition.com",
+      "sector": "China / no-code"
+    },
+    {
+      "url": "yuque.com",
+      "sector": "China / no-code"
+    },
+    {
+      "url": "cloudflare.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "datadoghq.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "digitalocean.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "grafana.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "hashicorp.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "netlify.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "pulumi.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "render.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "sentry.io",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "twilio.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "vercel.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "astro.build",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "bun.sh",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "deno.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "fly.io",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "nextjs.org",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "nuxt.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "prisma.io",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "qwik.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "railway.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "remix.run",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "solidjs.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "supabase.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "svelte.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "tailwindcss.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "vitejs.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "vuejs.org",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "bigcommerce.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "etsy.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "shopify.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "squarespace.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "webflow.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "wix.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "woocommerce.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "coursera.org",
+      "sector": "Education"
+    },
+    {
+      "url": "freecodecamp.org",
+      "sector": "Education"
+    },
+    {
+      "url": "khanacademy.org",
+      "sector": "Education"
+    },
+    {
+      "url": "udemy.com",
+      "sector": "Education"
+    },
+    {
+      "url": "healthline.com",
+      "sector": "Healthcare"
+    },
+    {
+      "url": "mayoclinic.org",
+      "sector": "Healthcare"
+    },
+    {
+      "url": "webmd.com",
+      "sector": "Healthcare"
+    },
+    {
+      "url": "ahrefs.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "braze.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "hubspot.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "intercom.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "klaviyo.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "mailchimp.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "moz.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "semrush.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "arstechnica.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "css-tricks.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "smashingmagazine.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "stackoverflow.blog",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "techcrunch.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "theverge.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "adyen.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "airwallex.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "checkout.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "payoneer.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "plaid.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "stripe.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "wise.com",
+      "sector": "Payments / Fintech"
+    },
+    {
+      "url": "airtable.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "asana.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "calendly.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "clickup.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "figma.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "linear.app",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "loom.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "miro.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "monday.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "notion.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "slack.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "zapier.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "airbnb.com",
+      "sector": "Travel"
+    },
+    {
+      "url": "booking.com",
+      "sector": "Travel"
+    },
+    {
+      "url": "expedia.com",
+      "sector": "Travel"
+    }
   ]
 }

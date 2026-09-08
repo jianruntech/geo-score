@@ -15,10 +15,22 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--explain`, `-e` | Print the evidence behind every check, not just the score |
 | `--json` | Machine-readable output conforming to [`schema/report.v2.json`](../schema/report.v2.json) |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
+| `--compare URL` | Score another site too and print them side by side. Repeatable. |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
 
 `NO_COLOR=1` turns off colour, as does piping to a file.
+
+## Comparing against a competitor
+
+```bash
+python3 geo_score.py yoursite.com --compare competitor.com
+```
+
+Both sites are scored the same way and printed check by check, with a `›` marking every
+row where they differ and a closing list of where the other site is ahead. That list is
+the useful part: it is the difference between two real sites, not a checklist in the
+abstract.
 
 ## What it measures, and what it does not
 

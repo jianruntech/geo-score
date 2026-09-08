@@ -144,6 +144,7 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 python3 cli/geo_score.py example.com            # 人读
 python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
 python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
 ```
 
 **GitHub Action** —— 每次 push 都打分，退步就让构建失败。
