@@ -27,8 +27,12 @@ for root, dirs, files in os.walk("."):
         if not f.endswith(".md"): continue
         p = os.path.join(root, f)
         s = io.open(p, encoding="utf-8").read()
+        # ```jsonld / ```html / ```typescript are the shapes a fix template takes —
+        # banned everywhere. Plain ```json is config and data, so it is allowed where
+        # config and data legitimately live.
         langs = ("typescript", "javascript", "jsonld", "html", "python")
-        if not (root.startswith("./rubric") or root.startswith("./schema")):
+        JSON_OK = ("./rubric", "./schema", "./benchmark", "./cli", "./examples/ci")
+        if not (root.startswith(JSON_OK) or p in ("./CONTRIBUTING.md",)):
             langs = langs + ("json",)
         for lang in langs:
             check(f"```{lang}" not in s,
