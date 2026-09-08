@@ -11,6 +11,7 @@
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![AIV readiness](docs/aiv-badge.svg)](https://jianruntech.github.io/geo-score/)
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
@@ -178,6 +179,7 @@ python3 cli/geo_score.py example.com            # human-readable
 python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
 python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
 python3 cli/geo_score.py example.com --compare competitor.com   # side by side
+python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
 ```
 
 **GitHub Action** — score on every push, fail the build when it regresses.

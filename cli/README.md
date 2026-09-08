@@ -17,6 +17,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--json` | Machine-readable output conforming to [`schema/report.v2.json`](../schema/report.v2.json) |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. |
+| `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
 
@@ -32,6 +33,25 @@ Both sites are scored the same way and printed check by check, with a `›` mark
 row where they differ and a closing list of where the other site is ahead. That list is
 the useful part: it is the difference between two real sites, not a checklist in the
 abstract.
+
+## A badge for your own README
+
+```bash
+python3 geo_score.py yoursite.com --badge docs/aiv-badge.svg
+```
+
+Writes a shields-shaped SVG you can commit next to your README and reference like any
+other badge:
+
+```
+![AIV readiness](docs/aiv-badge.svg)
+```
+
+It carries the score, the band and an accessible label, and it sits happily beside the
+build badges you already have. Colour follows the band, so a regression is visible at a
+glance. Re-run it in CI to keep it current — the
+[GitHub Action](../action.yml) does this for you if you point `json-out` at a path and
+regenerate from there.
 
 ## What it measures, and what it does not
 

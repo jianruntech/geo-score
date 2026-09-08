@@ -854,6 +854,40 @@ def bar(t, mx, w=18):
     col = c.green if t == mx else (c.amber if t else c.red)
     return col + "█" * f + c.grey + "░" * (w - f) + c.r
 
+def write_badge(res, path):
+    """An SVG anyone can commit next to their own README. Shields-shaped so it sits
+    happily beside the build badges people already have."""
+    _, _, _, _, norm, bd, _ = score(res)
+    col = ("#2f8f52" if norm >= 66 else "#a08020" if norm >= 51 else
+           "#b06b30" if norm >= 31 else "#a33")
+    right = "%d/100 %s" % (norm, bd)
+    lw = 88                                  # "AIV readiness" at 11px Verdana
+    rw = int(6.4 * len(right)) + 16
+    w = lw + rw
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="%(w)d" height="20" role="img"'
+        ' aria-label="AIV readiness: %(right)s">'
+        '<title>AIV readiness: %(right)s</title>'
+        '<linearGradient id="s" x2="0" y2="100%%">'
+        '<stop offset="0" stop-color="#fff" stop-opacity=".7"/>'
+        '<stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>'
+        '<stop offset=".9" stop-color="#000" stop-opacity=".3"/>'
+        '<stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>'
+        '<clipPath id="c"><rect width="%(w)d" height="20" rx="3" fill="#fff"/></clipPath>'
+        '<g clip-path="url(#c)">'
+        '<rect width="%(lw)d" height="20" fill="#1E5C46"/>'
+        '<rect x="%(lw)d" width="%(rw)d" height="20" fill="%(col)s"/>'
+        '<rect width="%(w)d" height="20" fill="url(#s)"/></g>'
+        '<g fill="#fff" text-anchor="middle"'
+        ' font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="11">'
+        '<text x="%(lx)d" y="15" fill="#010101" fill-opacity=".3">AIV readiness</text>'
+        '<text x="%(lx)d" y="14">AIV readiness</text>'
+        '<text x="%(rx)d" y="15" fill="#010101" fill-opacity=".3">%(right)s</text>'
+        '<text x="%(rx)d" y="14">%(right)s</text></g></svg>'
+    ) % dict(w=w, lw=lw, rw=rw, col=col, right=right, lx=lw // 2, rx=lw + rw // 2)
+    io.open(path, "w", encoding="utf-8").write(svg)
+    return path, norm, bd
+
 def brief(res):
     """Pillar totals and the three biggest gaps. What fits in a screenshot."""
     rows, total, den, b, norm, bd, capped = score(res)
@@ -1017,6 +1051,8 @@ def main():
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
     ap.add_argument("--brief", action="store_true", help="pillar totals and the three biggest gaps only")
+    ap.add_argument("--badge", metavar="FILE", nargs="?", const="aiv-badge.svg",
+                    help="also write an embeddable SVG badge (default aiv-badge.svg)")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
@@ -1045,6 +1081,12 @@ def main():
             brief(res)
         else:
             report(res, a)
+    if a.badge:
+        pth, nrm, bnd = write_badge(res, a.badge)
+        if not a.json:
+            print("  %sbadge%s %s  —  %d/100 %s" % (c.brass, c.r, pth, nrm, bnd))
+            print("  %sMarkdown:%s ![AIV readiness](%s)" % (c.grey, c.r, os.path.basename(pth)))
+            print()
     if a.fail_under is not None:
         _, _, _, _, norm, _, _ = score(res)
         if norm < a.fail_under:
