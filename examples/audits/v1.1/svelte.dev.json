@@ -19,197 +19,197 @@
       "state": "scored",
       "points": 5,
       "max": 5,
-      "tier_reason": "未落 0 档：robots.txt 里的 Disallow 值为空，按 robots 规范这是「全部放行」而非任何禁止。判 5 而非 3，依据量表规则 6「判定看实质不看格式」——该文件是一条显式、通用、机器可读的许可指令，并非「未表态」；且 10 个检索 UA 实测全部拿到与浏览器逐字节相同的正文。若严格要求逐个点名 UA 才算「显式放行」，本项应为 3，全站将被门槛封顶到 40。这是本次审计最有争议的一票，见 notes。",
-      "evidence": "GET https://svelte.dev/robots.txt → 200, 24 bytes, 全文两行：「User-agent: *」「Disallow:」（Disallow 值为空）。文件内无 Sitemap 指令，无任何具名 UA 段落，无 Allow 行。"
+      "tier_reason": "Not tier 0: the Disallow line in robots.txt has an empty value, which under the robots specification means everything is allowed, not that anything is forbidden. Scored 5 rather than 3 on rubric rule 6, “Substance over format” — the file is an explicit, universal, machine-readable permission directive, not the tier-3 case of “no explicit Disallow, but no explicit Allow either”; and all 10 retrieval user-agents were measured receiving the same body as a browser, byte for byte. If tier 5 strictly requires naming each user-agent before it counts as explicitly allowed, this check is a 3 and the whole site is gate-capped to 40. This is the most contested call in the audit; see notes.",
+      "evidence": "GET https://svelte.dev/robots.txt → 200, 24 bytes, two lines in full: “User-agent: *” and “Disallow:” (empty Disallow value). The file carries no Sitemap directive, no named user-agent section, and no Allow line."
     },
     {
       "id": "g.reachable",
       "state": "scored",
       "points": 5,
       "max": 5,
-      "tier_reason": "拿满 5 档需「10 个检索 UA 均 200 且内容一致」——10/10 全部 200，且 MD5 与字节数与浏览器 UA 完全相同，无一被拦、无一返回差异内容，因此不落 3 档。",
-      "evidence": "3 个目标 × 10 个检索 UA（GPTBot / OAI-SearchBot / ChatGPT-User / ClaudeBot / Claude-SearchBot / PerplexityBot / Perplexity-User / Google-Extended / Applebot / Bingbot），curl -L 全部 200：首页 89798 B md5=0ca70a3db0ae2c4a7295abcb9c9bf4dc（30/30 一致）；/docs/svelte/what-are-runes 80914 B md5=29169206ed1b3c4517575bea26274879；/blog/sveltekit-3-release-candidate 67350 B md5=9a612d8b953b29b718cc5ca91b09d408。浏览器 UA（Chrome 131）取同样 3 页得完全相同的 md5 与字节数。浏览器 UA 连取两次首页 md5 相同，证明响应确定性、md5 比对有效。"
+      "tier_reason": "Tier 5 requires “all 10 retrieval user-agents return 200 with matching content” — 10/10 returned 200, with MD5 and byte count identical to the browser user-agent. None was blocked and none returned differing content, so it does not fall to tier 3.",
+      "evidence": "3 targets × 10 retrieval user-agents (GPTBot / OAI-SearchBot / ChatGPT-User / ClaudeBot / Claude-SearchBot / PerplexityBot / Perplexity-User / Google-Extended / Applebot / Bingbot), all 200 under curl -L: homepage 89798 B md5=0ca70a3db0ae2c4a7295abcb9c9bf4dc (identical across 30/30); /docs/svelte/what-are-runes 80914 B md5=29169206ed1b3c4517575bea26274879; /blog/sveltekit-3-release-candidate 67350 B md5=9a612d8b953b29b718cc5ca91b09d408. The browser user-agent (Chrome 131) fetched the same 3 pages and returned exactly the same md5 values and byte counts. Two consecutive browser-user-agent fetches of the homepage returned the same md5, which shows the responses are deterministic and the md5 comparison is valid."
     },
     {
       "id": "g.ssr",
       "state": "scored",
       "points": 5,
       "max": 5,
-      "tier_reason": "5 档要求「抽样页正文均在 HTML 响应中」。7/8 页的完整散文正文在不执行 JS 的 HTML 里；第 8 页 /playground 是 REPL 应用，本身无散文正文，其渲染后 <main> 只有 1613 字符的示例索引导航，但示例源码字符串 name = $state('world') 确实出现在 HTML 响应体内（SvelteKit payload script）。按 5 档字面「在 HTML 响应中」判过；若按「渲染后 DOM 中可见」判，playground 不过，本项落 3 档并触发门槛封顶 40。见 notes。",
-      "evidence": "curl -L 不执行 JS，逐页剥标签后正文词数：首页 307、tutorial 658、playground 225、what-are-runes 378、kit/introduction 540、9月博客 1166、SvelteKit 3 RC 1200、8月博客 1540。命中原句示例（HTML 响应内）：首页「Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components…」；kit/introduction「SvelteKit is a framework for rapidly developing robust, performant web applications using Svelte.」；playground 渲染 <main> 文本 1613 字符全为示例目录，grep 'name = $state(' 命中 1 次但位于 <script> payload。"
+      "tier_reason": "Tier 5 requires the main content to be “present in the HTML response on every sampled page”. On 7 of 8 pages the full prose body is in the HTML with no JavaScript executed; the eighth, /playground, is a REPL application with no prose body of its own — its rendered <main> holds only 1613 characters of example-index navigation, though the example source string name = $state('world') does appear inside the HTML response body (in the SvelteKit payload script). Passed on the literal tier-5 wording “in the HTML response”; read instead as “visible in the rendered DOM”, playground fails, this check drops to tier 3, and the gate cap of 40 triggers. See notes.",
+      "evidence": "curl -L, no JavaScript executed; body word counts after stripping tags, page by page: homepage 307, tutorial 658, playground 225, what-are-runes 378, kit/introduction 540, September blog post 1166, SvelteKit 3 RC 1200, August blog post 1540. Sentences found in the HTML response: homepage “Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components…”; kit/introduction “SvelteKit is a framework for rapidly developing robust, performant web applications using Svelte.”; on playground the rendered <main> text of 1613 characters is entirely the example directory, and grep 'name = $state(' matches once, inside the <script> payload."
     },
     {
       "id": "p1.sitemap",
       "state": "scored",
       "points": 0,
       "max": 4,
-      "tier_reason": "0 档「无法发现或返回非 200」：robots.txt 无 Sitemap 指令，约定路径与 4 个常见变体全部 404，不存在可判 2 档的 200 响应。",
-      "evidence": "https://svelte.dev/sitemap.xml → 404（39549 B，SPA 404 页，<title>404</title>）；/sitemap-index.xml → 404 39549 B；/sitemap_index.xml → 404 39549 B；/sitemap.txt → 404 39549 B；/sitemap/sitemap.xml → 404 39584 B。curl -L https://svelte.dev/robots.txt | grep -i sitemap → 无输出。"
+      "tier_reason": "Tier 0, “cannot be discovered, or does not return 200”: robots.txt carries no Sitemap directive, and the conventional path plus 4 common variants all return 404, so there is no 200 response that could earn tier 2.",
+      "evidence": "https://svelte.dev/sitemap.xml → 404 (39549 B, SPA 404 page, <title>404</title>); /sitemap-index.xml → 404 39549 B; /sitemap_index.xml → 404 39549 B; /sitemap.txt → 404 39549 B; /sitemap/sitemap.xml → 404 39584 B. curl -L https://svelte.dev/robots.txt | grep -i sitemap → no output."
     },
     {
       "id": "p1.llms-txt",
       "state": "scored",
       "points": 5,
       "max": 5,
-      "tier_reason": "5 档需「含站点定义段 + 2 个以上含链接的主题分节」：站点定义段是开头的引用块，主题分节有 3 个（Documentation Sets / Individual Package Documentation / Notes），其中前两个各含 3–4 条带链接条目，超过「2 个」门槛，故不停在 4 档。",
-      "evidence": "GET https://svelte.dev/llms.txt → 200, 1676 B。定义段原句：「> Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components that do minimal work in the browser, using languages you already know — HTML, CSS and JavaScript.」分节：「## Documentation Sets」（3 条链接：llms-medium.txt / llms-small.txt / llms-full.txt）、「## Individual Package Documentation」（4 条链接：/docs/svelte/llms.txt、/docs/kit/llms.txt、/docs/cli/llms.txt、/docs/ai/llms.txt）、「## Notes」。"
+      "tier_reason": "Tier 5 requires a site definition passage plus “2+ topic sections that contain links”: the site definition passage is the blockquote at the top, and there are 3 topic sections (Documentation Sets / Individual Package Documentation / Notes), the first two carrying 3–4 linked entries each — above the threshold of 2, so it does not stop at tier 4.",
+      "evidence": "GET https://svelte.dev/llms.txt → 200, 1676 B. Definition passage, verbatim: “> Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components that do minimal work in the browser, using languages you already know — HTML, CSS and JavaScript.” Sections: “## Documentation Sets” (3 links: llms-medium.txt / llms-small.txt / llms-full.txt), “## Individual Package Documentation” (4 links: /docs/svelte/llms.txt, /docs/kit/llms.txt, /docs/cli/llms.txt, /docs/ai/llms.txt), and “## Notes”."
     },
     {
       "id": "p1.organization",
       "state": "scored",
       "points": 0,
       "max": 6,
-      "tier_reason": "0 档「两者皆无」：8/8 抽样页零条 JSON-LD、零处 schema.org 引用、零 microdata，Organization 与 WebSite 都不存在，连 3 档「有其一」都不成立。",
-      "evidence": "对 8 个抽样页 HTML 逐页统计：grep -c 'application/ld+json' = 0（8/8）；grep -c 'schema.org' = 0（8/8）；grep -c 'itemtype' = 0（8/8）；grep -c 'itemprop' = 0（8/8）。s7 head 内 <meta>/<link> 全量列出，只有 charset、viewport、theme-color、manifest、favicon、twitter:site=@sveltejs、twitter:creator=@sveltejs 与字体/模块 preload，无任何结构化数据。"
+      "tier_reason": "Tier 0, “neither present”: across 8/8 sampled pages there is no JSON-LD, no schema.org reference and no microdata. Neither Organization nor WebSite exists, so even tier 3, “one of the two present”, does not hold.",
+      "evidence": "Counted page by page over the HTML of the 8 sampled pages: grep -c 'application/ld+json' = 0 (8/8); grep -c 'schema.org' = 0 (8/8); grep -c 'itemtype' = 0 (8/8); grep -c 'itemprop' = 0 (8/8). Listing every <meta>/<link> in the head of s7 gives only charset, viewport, theme-color, manifest, favicon, twitter:site=@sveltejs, twitter:creator=@sveltejs and font/module preloads — no structured data of any kind."
     },
     {
       "id": "p1.breadcrumb",
       "state": "scored",
       "points": 0,
       "max": 3,
-      "tier_reason": "0 档「无」：站点有明确层级（/docs/svelte/* 、/docs/kit/* 、/blog/* ，页面上也渲染了 Docs › Svelte Runes › What are runes? 式路径），因此本项留在分母；但 BreadcrumbList 结构化数据一处也没有，连 2 档「部分层级页有」都够不上。",
-      "evidence": "8/8 页 grep -c 'application/ld+json' = 0，故 BreadcrumbList 计 0 处。层级存在的证据：/docs/svelte/what-are-runes 渲染文本含面包屑序列「Svelte Runes / What are runes?」，/docs/kit/introduction 含「SvelteKit Getting started / Introduction」。"
+      "tier_reason": "Tier 0, “absent”: the site has a clear hierarchy (/docs/svelte/*, /docs/kit/*, /blog/*, and pages render a Docs › Svelte Runes › What are runes? style path), so this check stays in the denominator; but there is not one instance of BreadcrumbList structured data, so it does not even reach tier 2, “present on some nested pages”.",
+      "evidence": "grep -c 'application/ld+json' = 0 on 8/8 pages, so BreadcrumbList counts 0 instances. Evidence that the hierarchy exists: the rendered text of /docs/svelte/what-are-runes contains the breadcrumb sequence “Svelte Runes / What are runes?”, and /docs/kit/introduction contains “SvelteKit Getting started / Introduction”."
     },
     {
       "id": "p1.page-type",
       "state": "scored",
       "points": 0,
       "max": 4,
-      "tier_reason": "不退出分母：站点有明确的 FAQ 页型（两处 Frequently asked questions 页）与 HowTo 型的 tutorial，属于量表点名的适用页型；但 0 档「无」，一处页型 schema 都没有。",
-      "evidence": "https://svelte.dev/docs/svelte/faq → 200, 107657 B，H1「Frequently asked questions」，14 个 H2 问句（如「Does Svelte scale?」「How do I test Svelte apps?」）；https://svelte.dev/docs/kit/faq → 200, 442668 B，H1「Frequently asked questions」，9 个 H2 问句。两页 grep -c 'application/ld+json' = 0，grep -c 'schema.org' = 0，无 FAQPage / HowTo。"
+      "tier_reason": "Does not leave the denominator: the site has clear FAQ page types (two Frequently asked questions pages) and a HowTo-shaped tutorial, both applicable page types the rubric names; but tier 0, “absent” — there is not one page-type schema anywhere.",
+      "evidence": "https://svelte.dev/docs/svelte/faq → 200, 107657 B, H1 “Frequently asked questions”, 14 H2 questions (e.g. “Does Svelte scale?”, “How do I test Svelte apps?”); https://svelte.dev/docs/kit/faq → 200, 442668 B, H1 “Frequently asked questions”, 9 H2 questions. On both pages grep -c 'application/ld+json' = 0 and grep -c 'schema.org' = 0 — no FAQPage, no HowTo."
     },
     {
       "id": "p2.answer-passages",
       "state": "scored",
       "points": 9,
       "max": 9,
-      "tier_reason": "9 档「多数页有」：7/8 页在正文前部存在 25–120 词（本站为英文，按量表英文口径）的自足段。未满 8/8 的唯一原因是 playground 页无任何散文段落（该页 <p> 数为 0），但 7/8 已达「多数」，不落 7 档。",
-      "evidence": "正文前部首个 ≥15 词段落的词数与原句（英文 25–120 词口径）：首页 40 词「Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components that do minimal work in the browser, using languages you already know — HTML, CSS and JavaScript. It's a love letter to web development.」；tutorial 29 词；what-are-runes 36 词「Runes are symbols that you use in .svelte and .svelte.js / .svelte.ts files to control the Svelte compiler…」；kit/introduction 33 词「SvelteKit is a framework for rapidly developing robust, performant web applications using Svelte…」；9月博客 27 词；SvelteKit 3 RC 48 词「SvelteKit 3 is now in the Release Candidate phase…」；8月博客 63 词。playground 页 <p> 段落数 = 0，判不通过。通过 7/8。"
+      "tier_reason": "Tier 9, “on most pages”: 7 of 8 pages carry a self-contained answer passage of 25–120 words near the top of the body (this site is in English, so the rubric's English measure applies). The only reason it is not 8/8 is that the playground page has no prose paragraph at all (<p> count 0 on that page), but 7/8 already meets “most”, so it does not fall to tier 7.",
+      "evidence": "Word count and source sentence of the first paragraph of ≥15 words near the top of the body (English 25–120 word measure): homepage 40 words “Svelte is a UI framework that uses a compiler to let you write breathtakingly concise components that do minimal work in the browser, using languages you already know — HTML, CSS and JavaScript. It's a love letter to web development.”; tutorial 29 words; what-are-runes 36 words “Runes are symbols that you use in .svelte and .svelte.js / .svelte.ts files to control the Svelte compiler…”; kit/introduction 33 words “SvelteKit is a framework for rapidly developing robust, performant web applications using Svelte…”; September blog post 27 words; SvelteKit 3 RC 48 words “SvelteKit 3 is now in the Release Candidate phase…”; August blog post 63 words. The playground page has a <p> count of 0 and fails. Passes 7/8."
     },
     {
       "id": "p2.question-intent",
       "state": "scored",
       "points": 7,
       "max": 7,
-      "tier_reason": "7 档「多数贴近」：6/8 页的 H1/H2 是问句、任务句或说明句。不给更低档是因为量表 v1.1 明确把说明句（How X works 式）计入，只排除纯关键词串与品牌标签——本站不通过的两页恰好正是这两种：首页是品牌名 + 标语，playground 页 H1–H3 数为 0。",
-      "evidence": "逐页标题/小标题（去 JS 后从 HTML 提取）：首页 h1「Svelte」/ h1「web development for the rest of us」/ h2「used by companies you've heard of」→ 品牌标签+标语，不计；playground h1–h3 共 0 个，不计；tutorial h2「What is Svelte?」「How to use this tutorial」→ 计；what-are-runes h1「What are runes?」→ 计；kit/introduction h2「What is SvelteKit?」「What is Svelte?」「SvelteKit vs Svelte」→ 计；9月博客 h1「What's new in Svelte: September 2026」+ h2「What's new in SvelteKit 3's RC」→ 计；SvelteKit 3 RC h2「What's changed?」+ h3「Error handling is way better」「Configuration now lives in vite.config.ts」→ 计；8月博客同型 → 计。通过 6/8。"
+      "tier_reason": "Tier 7, “most do”: on 6 of 8 pages the H1/H2 headings are questions, task phrasings or explanatory phrasings. No lower tier, because rubric v1.1 explicitly counts explanatory phrasings (the How X works form) and excludes only bare keyword strings and brand labels — and the two pages that fail here are exactly those two cases: the homepage is a brand name plus a tagline, and the playground page has an H1–H3 count of 0.",
+      "evidence": "Headings and subheadings page by page (extracted from the HTML with JavaScript stripped): homepage h1 “Svelte” / h1 “web development for the rest of us” / h2 “used by companies you've heard of” → brand label plus tagline, does not count; playground has 0 h1–h3 in total, does not count; tutorial h2 “What is Svelte?”, “How to use this tutorial” → counts; what-are-runes h1 “What are runes?” → counts; kit/introduction h2 “What is SvelteKit?”, “What is Svelte?”, “SvelteKit vs Svelte” → counts; September blog post h1 “What's new in Svelte: September 2026” plus h2 “What's new in SvelteKit 3's RC” → counts; SvelteKit 3 RC h2 “What's changed?” plus h3 “Error handling is way better”, “Configuration now lives in vite.config.ts” → counts; August blog post is the same shape → counts. Passes 6/8."
     },
     {
       "id": "p2.freshness",
       "state": "scored",
       "points": 3,
       "max": 6,
-      "tier_reason": "3 档「部分页有可见日期或 datePublished」：只有 3/8 页带日期，达不到 6 档要求的「多数页有」；6 档另需 dateModified 与可见日期一致，而全站零结构化数据，这一半条件也无从满足。",
-      "evidence": "grep '<time' 结果：9月博客 <time datetime=\"2026-09-01\">Sep 1 2026</time>；SvelteKit 3 RC <time datetime=\"2026-08-13\">Aug 13 2026</time>；8月博客 <time datetime=\"2026-08-01\">Aug 1 2026</time>。其余 5 页（首页、tutorial、playground、what-are-runes、kit/introduction）grep '<time' 无命中，grep -c 'datePublished' = 0，grep -ci 'last updated' = 0。8/8 页 JSON-LD = 0，故无任何 dateModified。（HTTP 响应头存在 last-modified: Thu, 03 Sep 2026 00:32:18 GMT，但量表要求的是页面可见日期或结构化数据日期，响应头不计。）通过 3/8。"
+      "tier_reason": "Tier 3, “some pages carry a visible date or datePublished”: only 3 of 8 pages carry a date, short of the “most pages do” that tier 6 requires. Tier 6 also requires dateModified to agree with the visible date, and with zero structured data across the site that half of the condition cannot be met either.",
+      "evidence": "grep '<time' results: September blog post <time datetime=\"2026-09-01\">Sep 1 2026</time>; SvelteKit 3 RC <time datetime=\"2026-08-13\">Aug 13 2026</time>; August blog post <time datetime=\"2026-08-01\">Aug 1 2026</time>. On the other 5 pages (homepage, tutorial, playground, what-are-runes, kit/introduction) grep '<time' matches nothing, grep -c 'datePublished' = 0 and grep -ci 'last updated' = 0. JSON-LD = 0 on 8/8 pages, so there is no dateModified anywhere. (The response header last-modified: Thu, 03 Sep 2026 00:32:18 GMT is present, but the rubric asks for a date visible on the page or in structured data; a response header does not count.) Passes 3/8."
     },
     {
       "id": "p2.sourced-stats",
       "state": "scored",
       "points": 7,
       "max": 7,
-      "tier_reason": "7 档「多数标注且来源可点击可核实」：抽样页中有实质数字/断言的 4 页里，3 页（三篇博客）逐条断言都挂着可点击的 PR/CHANGELOG 链接，首页那条第三方排名断言挂到 Stack Overflow 年度调查锚点。不停在 5 档是因为链接不仅存在，而且我逐个取回验证了 200。",
-      "evidence": "首页断言原句「But don't take our word for it. Developers consistently rank Svelte as the framework they're most excited about using.」紧邻锚点 href=\"https://survey.stackoverflow.co/2024/technology#2-web-frameworks-and-technologies\"，该页实测 200 / 3189185 B / 页内 'svelte' 出现 780 次。9月博客正文含 63 个外链锚点，形如 <a href=\"https://github.com/sveltejs/svelte/pull/18728\">、<a href=\"https://github.com/sveltejs/kit/pull/16684\">、<a href=\"https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md\">。反例（未标注）：首页「used by companies you've heard of」下方为纯 logo 墙，无来源；FAQ「Does Svelte scale?」的答案是「There will be a blog post about this eventually, but in the meantime, check out this issue.」，属延期而非标注。带断言页通过 3/4。"
+      "tier_reason": "Tier 7, “most are attributed and the source is clickable and checkable”: of the 4 sampled pages that carry substantive figures or claims, 3 (the three blog posts) attach a clickable PR or CHANGELOG link to every claim, and the homepage's third-party ranking claim links to an anchor in the annual Stack Overflow survey. It does not stop at tier 5 because the links not only exist — I fetched each one and confirmed 200.",
+      "evidence": "Homepage claim, verbatim: “But don't take our word for it. Developers consistently rank Svelte as the framework they're most excited about using.”, immediately adjacent to the anchor href=\"https://survey.stackoverflow.co/2024/technology#2-web-frameworks-and-technologies\", which measured 200 / 3189185 B with 'svelte' appearing 780 times on the page. The September blog post body carries 63 outbound anchors, of the form <a href=\"https://github.com/sveltejs/svelte/pull/18728\">, <a href=\"https://github.com/sveltejs/kit/pull/16684\">, <a href=\"https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md\">. Counter-examples (unattributed): below the homepage's “used by companies you've heard of” is a bare logo wall with no source; the FAQ answer to “Does Svelte scale?” is “There will be a blog post about this eventually, but in the meantime, check out this issue.” — a deferral, not an attribution. Pages carrying claims pass 3/4."
     },
     {
       "id": "p2.named-author",
       "state": "scored",
       "points": 6,
       "max": 6,
-      "tier_reason": "6 档「姓名链向可核实的身份页」：抽样中带署名的 3 页里 2 页署具名个人且姓名超链到本人主页，主页实测 200 且标题即本人。这是全审计中最有争议的一档——若按 8 页字面逐页判，5 页无署名 + 1 页署机构名共 6/8 落 0 档，本项应记 0；我按「该检查测的是有署名内容是否可追溯到人」取 6，理由与反证一并写进 notes。",
-      "evidence": "9月博客与8月博客渲染 HTML 中 <p class=\"byline\"><a href=\"https://dreamindani.com\">Dani Sandoval</a> <time datetime=\"2026-09-01\">Sep 1 2026</time></p>；https://dreamindani.com 实测 200 / 12685 B / <title>About Me | Dani Sandoval</title>。SvelteKit 3 RC 页 byline 为 <a href=\"https://svelte.dev/\">The Svelte team</a>，属机构名（0 档）。首页/tutorial/playground/两个 docs 页无 byline 元素。博客索引页（143695 B）扫描 ~110 条 <time> 前的署名，绝大多数为具名个人（Dani Sandoval、Rich Harris、Ben McCann、Geoff Rich、Simon Holthausen、Elliott Johnson、Puru Vijay、Orta Therox），少数为 The Svelte team。抽样带署名页通过 2/3。"
+      "tier_reason": "Tier 6, “the name links to a verifiable identity page”: of the 3 sampled pages that carry a byline, 2 are bylined to a named individual whose name hyperlinks to their own homepage, and that homepage measured 200 with the person's own name as its title. This is the most contested tier in the whole audit — judged literally page by page across the 8 sampled pages, 5 pages with no byline plus 1 bylined to an organisation put 6/8 at tier 0 and this check should score 0. I scored 6 on the reading that the check measures whether bylined content is traceable to a person; the reasoning and the counter-argument are both written up in notes.",
+      "evidence": "In the rendered HTML of the September and August blog posts: <p class=\"byline\"><a href=\"https://dreamindani.com\">Dani Sandoval</a> <time datetime=\"2026-09-01\">Sep 1 2026</time></p>; https://dreamindani.com measured 200 / 12685 B / <title>About Me | Dani Sandoval</title>. The SvelteKit 3 RC page byline is <a href=\"https://svelte.dev/\">The Svelte team</a>, an organisation name (tier 0). The homepage, tutorial, playground and both docs pages have no byline element. Scanning the blog index page (143695 B) for the byline preceding each of ~110 <time> elements: the large majority are named individuals (Dani Sandoval, Rich Harris, Ben McCann, Geoff Rich, Simon Holthausen, Elliott Johnson, Puru Vijay, Orta Therox), a minority are The Svelte team. Sampled pages carrying a byline pass 2/3."
     },
     {
       "id": "p3.listings",
       "state": "scored",
       "points": 4,
       "max": 4,
-      "tier_reason": "4 档「5 家以上」：逐个 curl 验证到 6 个返回 200 的第三方收录源，超过 5 家门槛，故不停在 3 档。",
-      "evidence": "实测 200 的收录页：https://github.com/sveltejs/svelte（333831 B，<title>GitHub - sveltejs/svelte: web development for the rest of us</title>）；https://libraries.io/npm/svelte（35089 B，<title>svelte 5.57.0 on npm - Libraries.io…</title>）；https://snyk.io/advisor/npm-package/svelte（476925 B，<title>svelte | Snyk</title>）；https://data.jsdelivr.com/v1/packages/npm/svelte（325693 B，JSON 含 \"latest\": \"5.57.0\"）；https://en.wikipedia.org/wiki/Svelte（249640 B）；https://www.wikidata.org/w/api.php 查得 Q16863097。另有两处因对方反爬未能取回状态码：https://www.npmjs.com/package/svelte → 403，https://stackoverflow.com/questions/tagged/svelte → 403，未计入。"
+      "tier_reason": "Tier 4, “5 or more”: curl verified 6 third-party listing sources returning 200, above the threshold of 5, so it does not stop at tier 3.",
+      "evidence": "Listing pages measured at 200: https://github.com/sveltejs/svelte (333831 B, <title>GitHub - sveltejs/svelte: web development for the rest of us</title>); https://libraries.io/npm/svelte (35089 B, <title>svelte 5.57.0 on npm - Libraries.io…</title>); https://snyk.io/advisor/npm-package/svelte (476925 B, <title>svelte | Snyk</title>); https://data.jsdelivr.com/v1/packages/npm/svelte (325693 B, JSON containing \"latest\": \"5.57.0\"); https://en.wikipedia.org/wiki/Svelte (249640 B); https://www.wikidata.org/w/api.php, which returned Q16863097. Two further sources could not be resolved to a status code because of anti-bot measures on their side: https://www.npmjs.com/package/svelte → 403 and https://stackoverflow.com/questions/tagged/svelte → 403; neither is counted."
     },
     {
       "id": "p3.mentions",
       "state": "scored",
       "points": 4,
       "max": 4,
-      "tier_reason": "4 档「多渠道持续提及」：验到 3 类互相独立、且逐年更新的渠道（开发者年度调查两家 + 百科条目 + 第三方制作的纪录片），不止 3 档所要求的「有独立报道或评测」这一次性证据。",
-      "evidence": "https://survey.stackoverflow.co/2024/technology → 200 / 3189185 B，页内 'svelte' 命中 780 次；https://2024.stateofjs.com/en-US/libraries/front-end-frameworks/ → 200 / 328616 B，页内 'svelte' 命中 3 次；https://en.wikipedia.org/wiki/Svelte → 200 / 249640 B，<title>Svelte - Wikipedia</title>，页内 'svelte' 命中 518 次；首页锚点 <a href=\"https://www.offerzen.com/community/svelte-origins-documentary\">Watch the full Svelte Origins documentary</a>（第三方 OfferZen 制作）。"
+      "tier_reason": "Tier 4, “sustained mentions across channels”: three mutually independent channels verified, each updated year on year (two annual developer surveys, an encyclopedia entry, and a documentary produced by a third party) — more than the one-off evidence tier 3 asks for, “independent coverage or reviews exist”.",
+      "evidence": "https://survey.stackoverflow.co/2024/technology → 200 / 3189185 B, 'svelte' matched 780 times on the page; https://2024.stateofjs.com/en-US/libraries/front-end-frameworks/ → 200 / 328616 B, 'svelte' matched 3 times; https://en.wikipedia.org/wiki/Svelte → 200 / 249640 B, <title>Svelte - Wikipedia</title>, 'svelte' matched 518 times; homepage anchor <a href=\"https://www.offerzen.com/community/svelte-origins-documentary\">Watch the full Svelte Origins documentary</a> (produced by the third party OfferZen)."
     },
     {
       "id": "p3.knowledge-graph",
       "state": "scored",
       "points": 4,
       "max": 4,
-      "tier_reason": "本项只有 0 与 4 两档，维基百科条目与维基数据实体都实测存在且确为本主体，直接落 4。",
-      "evidence": "https://en.wikipedia.org/wiki/Svelte → 200 / 249640 B / <title>Svelte - Wikipedia</title>。Wikidata API（action=wbgetentities&sites=enwiki&titles=Svelte）返回 {\"entities\":{\"Q16863097\":{\"id\":\"Q16863097\",\"labels\":{\"en\":{\"value\":\"Svelte\"}},\"descriptions\":{\"en\":{\"value\":\"JavaScript framework\"}}}},\"success\":1}。（注：我最初凭记忆猜的 Q56092956 取回的是无关条目 Trade Wars: Canada's Reaction to the Smoot-Hawley Tariff，已弃用，改由 enwiki 反查确认。）"
+      "tier_reason": "This check has only tiers 0 and 4. Both the Wikipedia entry and the Wikidata entity were measured to exist and to be this subject, so it lands directly on 4.",
+      "evidence": "https://en.wikipedia.org/wiki/Svelte → 200 / 249640 B / <title>Svelte - Wikipedia</title>. The Wikidata API (action=wbgetentities&sites=enwiki&titles=Svelte) returned {\"entities\":{\"Q16863097\":{\"id\":\"Q16863097\",\"labels\":{\"en\":{\"value\":\"Svelte\"}},\"descriptions\":{\"en\":{\"value\":\"JavaScript framework\"}}}},\"success\":1}. (Note: Q56092956, which I first guessed from memory, fetched an unrelated entry, Trade Wars: Canada's Reaction to the Smoot-Hawley Tariff; it was discarded and the entity confirmed instead by looking it up from enwiki.)"
     },
     {
       "id": "p3.sameas",
       "state": "scored",
       "points": 0,
       "max": 3,
-      "tier_reason": "0 档「未声明」：sameAs 依附于 JSON-LD，而全站零条 JSON-LD，因此无从声明。量表明确「未声明记 0 分，不退出分母」，故本项留在分母。",
-      "evidence": "8/8 抽样页 grep -c 'application/ld+json' = 0、grep -c 'schema.org' = 0，sameAs 出现 0 次。站方账号确实存在（head 内 <meta name=\"twitter:site\" content=\"@sveltejs\">、<meta name=\"twitter:creator\" content=\"@sveltejs\">，正文有 GitHub、Discord 链接），但均未以 sameAs 形式绑定实体。"
+      "tier_reason": "Tier 0, “not declared”: sameAs rides on JSON-LD, and there is no JSON-LD anywhere on the site, so there is nothing to declare it in. The rubric states that not declared scores 0 and does not leave the denominator, so this check stays in the denominator.",
+      "evidence": "On 8/8 sampled pages grep -c 'application/ld+json' = 0 and grep -c 'schema.org' = 0; sameAs appears 0 times. The site's own accounts do exist (<meta name=\"twitter:site\" content=\"@sveltejs\"> and <meta name=\"twitter:creator\" content=\"@sveltejs\"> in the head, GitHub and Discord links in the body), but none of them is bound to an entity as sameAs."
     },
     {
       "id": "p3.video",
       "state": "scored",
       "points": 2,
       "max": 3,
-      "tier_reason": "2 档「有账号但内容零星」：官方/姊妹组织视频渠道确实存在且首页有纪录片入口，但 3 档要求「站内带 VideoObject」，而全站零结构化数据，这半条硬性条件不可能满足，因此被卡在 2 档，与视频产量多寡无关。",
-      "evidence": "https://www.youtube.com/@SvelteSociety → 200 / 2304716 B；首页锚点 <a href=\"https://www.offerzen.com/community/svelte-origins-documentary\">Watch the full Svelte Origins documentary</a>；博客索引含「Advent of Svelte is back — We've pivoted to video」(2025-12-01) 与「Svelte Summit videos」。8/8 抽样页 grep -c 'VideoObject' = 0（JSON-LD 总数为 0）。"
+      "tier_reason": "Tier 2, “a channel exists but content is sparse”: an official or sister-organisation video channel does exist and the homepage links to the documentary, but tier 3 requires VideoObject on site, and with zero structured data across the site that half of the condition is impossible to satisfy. The check is therefore held at tier 2 for reasons unrelated to how much video is produced.",
+      "evidence": "https://www.youtube.com/@SvelteSociety → 200 / 2304716 B; homepage anchor <a href=\"https://www.offerzen.com/community/svelte-origins-documentary\">Watch the full Svelte Origins documentary</a>; the blog index carries “Advent of Svelte is back — We've pivoted to video” (2025-12-01) and “Svelte Summit videos”. On 8/8 sampled pages grep -c 'VideoObject' = 0 (total JSON-LD count is 0)."
     },
     {
       "id": "p4.answer-shape",
       "state": "scored",
       "points": 4,
       "max": 4,
-      "tier_reason": "给 4 而非 2，是因为 2 档的判据「段落偏长」与实测相反：8 页 <p> 平均 12–41 词、最长 125 词。4 档字面要求「小标题、列表、表格齐备」，而全站无表格（连 API 参考页也是 0）——这一档判得偏宽，是本审计第三个争议点，见 notes。",
-      "evidence": "逐页统计（渲染 <main> 内）：首页 h=4 lists=0 li=0 tables=0 paras=6 avg=23w max=40w；tutorial h=2 lists=36 li=133 tables=0 paras=10 avg=28w max=62w；playground h=0 lists=22 li=88 tables=0 paras=0；what-are-runes h=11 lists=12 li=99 tables=0 paras=9 avg=12w max=36w；kit/introduction h=13 lists=9 li=84 tables=0 paras=9 avg=39w max=125w；9月博客 h=8 lists=9 li=40 tables=0 paras=16 avg=13w max=43w；SvelteKit 3 RC h=12 lists=0 li=0 tables=0 paras=27 avg=41w max=114w；8月博客 h=8 lists=10 li=61 tables=0 paras=17 avg=17w max=63w。另取 API 参考页 https://svelte.dev/docs/svelte/svelte → 200 / 790769 B，grep -c '<table' = 0，确认无表格是全站风格而非抽样偏差。"
+      "tier_reason": "Scored 4 rather than 2 because tier 2's criterion, “subheadings present but paragraphs run long”, is contradicted by the measurements: across the 8 pages <p> averages 12–41 words with a maximum of 125. Tier 4 literally requires subheadings, lists and tables, and the site has no tables at all (0 even on the API reference page) — so this tier is scored generously, and it is the third contested point in this audit; see notes.",
+      "evidence": "Counted page by page inside the rendered <main>: homepage h=4 lists=0 li=0 tables=0 paras=6 avg=23w max=40w; tutorial h=2 lists=36 li=133 tables=0 paras=10 avg=28w max=62w; playground h=0 lists=22 li=88 tables=0 paras=0; what-are-runes h=11 lists=12 li=99 tables=0 paras=9 avg=12w max=36w; kit/introduction h=13 lists=9 li=84 tables=0 paras=9 avg=39w max=125w; September blog post h=8 lists=9 li=40 tables=0 paras=16 avg=13w max=43w; SvelteKit 3 RC h=12 lists=0 li=0 tables=0 paras=27 avg=41w max=114w; August blog post h=8 lists=10 li=61 tables=0 paras=17 avg=17w max=63w. The API reference page https://svelte.dev/docs/svelte/svelte was also fetched → 200 / 790769 B, grep -c '<table' = 0, confirming that the absence of tables is a sitewide style and not a sampling artefact."
     },
     {
       "id": "p4.question-coverage",
       "state": "scored",
       "points": 4,
       "max": 4,
-      "tier_reason": "4 档「覆盖 9–10 个」：我拟的 10 问里 9 个有专页正面回答（全部 curl 验到 200 且命中标题）。落在 4 而非 3，完全取决于问题清单的构成——若把比较型/采纳型问题（Svelte vs React、Svelte 还有人用吗、性能对比）多放两条，覆盖数掉到 7/10 即落 3 档。见 notes。",
-      "evidence": "覆盖（均实测 200）：1 What is Svelte? → /docs/kit/introduction 72647 B，H2「What is Svelte?」；2 Svelte 和 SvelteKit 有什么区别 → 同页 H2「SvelteKit vs Svelte」；3 What are runes? → /docs/svelte/what-are-runes 80914 B，H1 同名；4 怎么建项目 → /docs/svelte/getting-started 78446 B + /docs/kit/creating-a-project 70407 B；5 SvelteKit 怎么取数据 → /docs/kit/load 1750752 B；6 怎么部署 → /docs/kit/adapters 84190 B；7 怎么做鉴权 → /docs/kit/auth 69827 B；8 怎么测试 → /docs/svelte/testing 647540 B + FAQ H2「How do I test Svelte apps?」；9 Svelte 4 怎么升 5 → /docs/svelte/v5-migration-guide 1018575 B。未覆盖：10 Svelte 与 React/Vue 如何比较、是否可用于生产——全站无对比页，/docs/kit/introduction 只有一句旁白「If you're coming from React, SvelteKit is similar to Next.」；FAQ 的「Does Svelte scale?」原文答案为「There will be a blog post about this eventually, but in the meantime, check out this issue.」，属延期未答。llms-small.txt（52700 B）grep 'vs (react|vue)|compared to react|coming from react' 亦无实质命中。覆盖 9/10。"
+      "tier_reason": "Tier 4, “9–10 covered”: 9 of the 10 questions I drew up are answered directly by a dedicated page (all curl-verified at 200 with the heading matched). Landing on 4 rather than 3 depends entirely on how the question list is composed — add two more comparison or adoption questions (Svelte vs React, is anyone still using Svelte, performance comparison) and coverage drops to 7/10, which is tier 3. See notes.",
+      "evidence": "Covered (all measured at 200): 1 What is Svelte? → /docs/kit/introduction 72647 B, H2 “What is Svelte?”; 2 What is the difference between Svelte and SvelteKit? → same page, H2 “SvelteKit vs Svelte”; 3 What are runes? → /docs/svelte/what-are-runes 80914 B, H1 of the same name; 4 How do I create a project? → /docs/svelte/getting-started 78446 B plus /docs/kit/creating-a-project 70407 B; 5 How does SvelteKit load data? → /docs/kit/load 1750752 B; 6 How do I deploy? → /docs/kit/adapters 84190 B; 7 How do I handle authentication? → /docs/kit/auth 69827 B; 8 How do I test? → /docs/svelte/testing 647540 B plus the FAQ H2 “How do I test Svelte apps?”; 9 How do I upgrade from Svelte 4 to 5? → /docs/svelte/v5-migration-guide 1018575 B. Not covered: 10 How does Svelte compare with React/Vue, and is it usable in production — there is no comparison page anywhere on the site, and /docs/kit/introduction offers only the aside “If you're coming from React, SvelteKit is similar to Next.”; the FAQ's “Does Svelte scale?” is answered verbatim with “There will be a blog post about this eventually, but in the meantime, check out this issue.”, which defers rather than answers. On llms-small.txt (52700 B), grep 'vs (react|vue)|compared to react|coming from react' also returns no substantive match. Coverage 9/10."
     },
     {
       "id": "p4.cn-engines",
       "state": "not_applicable",
-      "reason": "量表原文「面向中文市场时适用；不面向中文市场则整项退出分母」。svelte.dev 是英文开源项目站，无中文版本、无中国大陆运营主体、无 ICP 备案义务，本项不适用，退出分母（分母由 100 降为 98）。"
+      "reason": "The rubric reads: \"applies when the site addresses the Chinese market; leaves the denominator entirely when it does not.\" svelte.dev is an English open-source project site with no Chinese version, no mainland-China operating entity and no ICP filing obligation. The check does not apply and leaves the denominator."
     },
     {
       "id": "b.llms-full",
       "state": "scored",
       "points": 2,
       "max": 2,
-      "tier_reason": "加分项判据「提供全文聚合文件，且可从 llms.txt 或 robots.txt 发现」两条都成立，故满分；加分项不进分母。",
-      "evidence": "https://svelte.dev/llms-full.txt → 200, 1186907 B。发现路径：llms.txt 内「- [Complete documentation](https://svelte.dev/llms-full.txt): The complete Svelte and SvelteKit documentation including all examples and additional content」。另有 llms-medium.txt、llms-small.txt（实测 200 / 52700 B）与 4 个分包 llms.txt。"
+      "tier_reason": "Both halves of the bonus criterion — a single aggregated full-text file, discoverable from llms.txt or robots.txt — hold, so full marks. Bonus checks stay out of the denominator.",
+      "evidence": "https://svelte.dev/llms-full.txt → 200, 1186907 B. Discovery path: inside llms.txt, “- [Complete documentation](https://svelte.dev/llms-full.txt): The complete Svelte and SvelteKit documentation including all examples and additional content”. Also present: llms-medium.txt, llms-small.txt (measured 200 / 52700 B) and 4 per-package llms.txt files."
     },
     {
       "id": "b.ai-txt",
       "state": "scored",
       "points": 0,
       "max": 2,
-      "tier_reason": "判据「声明 AI 使用政策」未成立：约定路径返回 404，不存在可判分的文件。加分项不进分母，记 0 不扣分。",
-      "evidence": "https://svelte.dev/ai.txt → 404，返回 39549 B 的 SPA 404 页（<title>404</title>），与 /sitemap.xml 的 404 响应同体积同页面。"
+      "tier_reason": "The criterion, “Declares an AI usage policy”, does not hold: the conventional path returns 404, so there is no file to score. Bonus checks stay out of the denominator; a 0 here is not a deduction.",
+      "evidence": "https://svelte.dev/ai.txt → 404, returning the 39549 B SPA 404 page (<title>404</title>) — the same size and the same page as the 404 for /sitemap.xml."
     },
     {
       "id": "b.geo-link",
       "state": "scored",
       "points": 0,
       "max": 1,
-      "tier_reason": "判据「在 head 声明面向 AI 检索的 link 关系」未成立：head 内除字体/模块 preload 与 icon/manifest 外无任何 link rel。docs 页正文底部虽有一个可见的「llms.txt」文字链，但那是 body 内的普通锚点，不是 head 的 link 关系声明。",
-      "evidence": "对首页、what-are-runes、SvelteKit 3 RC 三页提取 head 内 <link rel> 并排除 modulepreload/preload/stylesheet/icon/manifest 后，结果为空（0 条）。docs 页正文尾部原文「Edit this page on GitHub llms.txt」为 <a> 锚点。"
+      "tier_reason": "The criterion, “Declares retrieval-facing link relations in the head”, does not hold: apart from font and module preloads and icon/manifest, the head carries no link rel at all. The docs pages do show a visible “llms.txt” text link at the foot of the body, but that is an ordinary anchor inside the body, not a link relation declared in the head.",
+      "evidence": "Extracting every <link rel> in the head of three pages — homepage, what-are-runes, SvelteKit 3 RC — and excluding modulepreload/preload/stylesheet/icon/manifest leaves nothing (0 entries). At the foot of the docs page body, “Edit this page on GitHub llms.txt” is an <a> anchor."
     },
     {
       "id": "b.speakable",
       "state": "scored",
       "points": 0,
       "max": 1,
-      "tier_reason": "判据「为语音助手标注可朗读区域」未成立：speakable 依附 schema.org 标注，而全站零结构化数据。",
-      "evidence": "8/8 抽样页 grep -c 'speakable' = 0；同样 8/8 页 grep -c 'application/ld+json' = 0。"
+      "tier_reason": "The criterion, “Marks the region a voice assistant should read aloud”, does not hold: speakable rides on schema.org markup, and there is zero structured data across the site.",
+      "evidence": "On 8/8 sampled pages grep -c 'speakable' = 0; on the same 8/8 pages grep -c 'application/ld+json' = 0."
     }
   ],
   "readiness": 76,
@@ -221,21 +221,21 @@
   "excluded": [
     {
       "id": "p4.cn-engines",
-      "reason": "p4.cn-engines — not_applicable：英文开源框架站，无中文版本、无中国大陆运营主体与 ICP 备案义务，量表规定此情形整项退出分母，分母由 100 降为 98"
+      "reason": "The rubric reads: \"applies when the site addresses the Chinese market; leaves the denominator entirely when it does not.\" svelte.dev is an English open-source project site with no Chinese version, no mainland-China operating entity and no ICP filing obligation. The check does not apply and leaves the denominator."
     }
   ],
   "notes": [
-    "g.robots 判 5 还是 3，是本次审计影响最大的一票，直接决定 78 分还是被门槛封顶到 40 分。svelte.dev 的 robots.txt 只有两行「User-agent: *」「Disallow:」（24 字节）。我判 5 的理由：空值 Disallow 在 robots 规范里是「全部放行」的标准写法，是一条显式通用许可，不是 3 档描述的「未表态」；且 10 个检索 UA 实测拿到与浏览器逐字节相同的正文，门槛项的立意（爬虫拿不到内容之前其余白做）在事实层面完全满足。反方立场同样站得住：5 档字面写的是「对主流检索 UA 明确放行」，svelte.dev 一个 UA 名都没点，也没有一行 Allow。按这个读法本项 3 分，全站封顶 40、band 掉到「起步期」。量表在这一档缺一条明文裁决——通配符空 Disallow 到底算不算『明确放行』，建议 v1.2 补上，否则同一个站在两个审计者手里会差 38 分。",
-    "g.ssr 的 5 档同样吃紧，也同样会触发封顶。8 个抽样页里 7 页散文正文在不执行 JS 的 HTML 中完整可见；第 8 页是 /playground——一个 REPL 应用，渲染后 <main> 只有 1613 字符的示例目录导航，示例源码 name = $state('world') 虽出现在 HTML 响应体内，但位于 SvelteKit 的 payload <script> 里，不是渲染后的 DOM 文本。我按 5 档字面「正文均在 HTML 响应中」判过，另一个理由是 playground 本身没有散文正文可渲染。但如果审计者把判据读成「渲染后可见」，本项落 3 档，全站封顶 40。这里也暴露一个量表空白：交互式应用页（REPL、控制台、编辑器）参与 SSR 抽样时应当按什么标准判，量表没写。我的抽样把 /tutorial 和 /playground 当作『2 个主要产品或服务页』，这对 svelte.dev 是诚实的（它们确实是站点两大非文档服务面），但换个审计者若把 /docs/svelte/overview 和 /docs/kit 当产品页，playground 就不会进样本，g.ssr 的争议随之消失——抽样口径本身在左右门槛项，这不健康。",
-    "p2.named-author 给 6 分，是我最不安的一项。按量表逐页字面读，8 个抽样页里 5 页完全无署名、1 页署机构名「The Svelte team」，共 6/8 落在 0 档（『无署名，或署名为机构』），本项应记 0。我判 6 的依据是：另外 2 页署具名个人 Dani Sandoval 且姓名超链到 dreamindani.com（实测 200，标题就是 About Me | Dani Sandoval），而博客索引扫描 ~110 条历史文章显示绝大多数署具名个人；文档页无署名是开源集体维护的常态，不是隐匿。但这等于我把判据从『抽样页』悄悄换成了『有署名内容』，量表并没有授权这个换法——本项其他几档（少数/半数/多数）都是按页计的，唯独这一项不是，属于量表自身的措辞不一致。若按字面判 0，总分从 78 掉到 72，band 仍是『基础扎实』，不改变结论但改变了这项的诊断价值。",
-    "p4.answer-shape 给 4 分是硬判的：4 档字面要求「小标题、列表、表格齐备」，而 svelte.dev 全站不用表格——8 个抽样页 tables=0，连 API 参考页 /docs/svelte/svelte（790769 B）也是 0。我没有给 2 档，是因为 2 档的判据是『段落偏长』，而实测 8 页段落平均 12–41 词、最长 125 词，写 2 分等于在报告里断言一件与证据相反的事。量表在这两档之间没有落点，只能选一个说谎较轻的。真实情况是：层级极密（单页最多 13 个标题）、列表极多（tutorial 页 133 个 li）、段落短，唯独没有表格——这个站的内容形态其实很适合被整块摘出，只是不走表格这条路。",
-    "p4.question-coverage 的 4 分严重依赖我自己拟的 10 问清单，可重复性最差。我这份清单偏文档导向（怎么建项目、怎么取数据、怎么部署、怎么测试、怎么升级），9 条命中专页。但真实用户向助手问 Svelte 时，很大一块是比较型和采纳型问题——Svelte 和 React 哪个好、Svelte 还有人用吗、性能到底快多少、招聘市场如何——这类问题 svelte.dev 一条都没正面答（唯一相关的 FAQ 条目『Does Svelte scale?』原文是『There will be a blog post about this eventually』）。把清单里多放两条这类问题，覆盖数立刻掉到 7/10、落 3 档。这一项的分数本质上是审计者选题的函数，量表应当给出行业问题清单的构造规则（比如强制含 N 条比较型），否则跨审计者不可比。",
-    "证据采集过程中出过一次事故，写在这里以便复核者知道我怎么发现并排除的：本次运行的 scratchpad 目录被另一个并行 agent 共用，它以完全相同的文件名（pages/p1.html 等）写入 anthropic.com 的页面，覆盖了我第一轮抓取的结果，导致我一度读到「svelte.dev 首页返回 Anthropic 主页」这种荒谬观察。识别方法是 curl -w 报告的字节数（89798）与文件实际大小（176945）对不上。我改用独立目录 svelte_aiv_17343 重抓，并用 md5 与第一轮 UA 测试文件交叉校验（首页 0ca70a3d…、docs 页 29169206…、博客页 9a612d8b… 三组 md5 在两轮之间完全一致），确认 UA 可达性结论未被污染。checks 里所有 evidence 均取自重抓后的文件。",
-    "两处第三方源因对方反爬未能取回状态码，我按规则没有计入 p3.listings：https://www.npmjs.com/package/svelte 返回 403（5723 B），https://stackoverflow.com/questions/tagged/svelte 返回 403（5337 B）。这两处几乎肯定存在 Svelte 条目，但『几乎肯定』不是证据，所以宁可少算。即便算上也不改变档位（已达 5 家以上的 4 档上限）。另外我最初凭记忆猜的 Wikidata 编号 Q56092956 是错的（取回的是一个关于 Smoot-Hawley 关税的无关条目），已改用 enwiki 反查得到正确实体 Q16863097——凭记忆写实体 ID 这件事在任何审计里都不该做。",
-    "分数结构值得复核者注意：失掉的 24 分（98 分制）几乎全部集中在机器可读元数据这一类——Organization+WebSite 6、page-type 4、sitemap 4、breadcrumb 3、sameAs 3、video 的 VideoObject 半条 1、freshness 里结构化日期那半条 3。svelte.dev 全站零条 JSON-LD、零处 schema.org 引用。也就是说这是一个『内容与可达性接近满分、结构化数据完全空白』的站，78 分这个数字是这两个极端的平均，可能掩盖了它。band 名『基础扎实』的官方释义是『地基完备，缺口集中在内容深度与品牌资产』，这句话恰好与本站实情相反——它的缺口在地基里的元数据层，内容深度和品牌资产反而是强项。band 释义与实际诊断脱节，也是我对这份结果的保留之一。"
+    "Whether g.robots scores 5 or 3 is the most consequential call in this audit: it decides between 78 and a gate cap at 40. The robots.txt at svelte.dev is two lines, “User-agent: *” and “Disallow:” (24 bytes). My reason for 5: an empty-value Disallow is the standard way the robots specification expresses that everything is allowed — an explicit, universal permission, not the tier-3 case of “no explicit Disallow, but no explicit Allow either”; and all 10 retrieval user-agents were measured receiving the same body as a browser, byte for byte, so the point of a gate check (nothing else matters until a crawler can get the content) is satisfied as a matter of fact. The opposing position stands up just as well: tier 5 literally reads “mainstream retrieval user-agents explicitly allowed”, and svelte.dev names no user-agent and carries no Allow line. On that reading this check scores 3, the site caps at 40, and the band drops to Early. The rubric has no written ruling at this tier on whether a wildcard empty Disallow counts as explicitly allowed. v1.2 should add one, or the same site will differ by 38 points between two auditors.",
+    "Tier 5 on g.ssr is just as tight, and it too would trigger the cap. On 7 of the 8 sampled pages the prose body is fully visible in the HTML with no JavaScript executed; the eighth is /playground — a REPL application whose rendered <main> holds only 1613 characters of example-directory navigation. The example source name = $state('world') does appear in the HTML response body, but inside SvelteKit's payload <script>, not in the rendered DOM text. I passed it on the literal tier-5 wording, “present in the HTML response on every sampled page”, and on the further ground that playground has no prose body to render in the first place. Read as “visible once rendered”, this check drops to tier 3 and the site caps at 40. This also exposes a blank in the rubric: it says nothing about the standard to apply when an interactive application page (a REPL, a console, an editor) enters the SSR sample. My sample treats /tutorial and /playground as the “2 main product or service pages”, which is honest for svelte.dev — they are the site's two largest non-documentation surfaces — but another auditor who took /docs/svelte/overview and /docs/kit as the product pages would keep playground out of the sample, and the g.ssr dispute would disappear with it. The sampling choice is itself moving a gate check, which is not healthy.",
+    "Scoring p2.named-author a 6 is the call I am least comfortable with. Read literally page by page as the rubric asks, 5 of the 8 sampled pages carry no byline at all and 1 is bylined to an organisation, “The Svelte team” — 6/8 at tier 0 (“no byline, or the byline is the organisation”), which makes this check a 0. My grounds for 6: the other 2 pages are bylined to a named individual, Dani Sandoval, whose name hyperlinks to dreamindani.com (measured 200, title About Me | Dani Sandoval), and a scan of ~110 historical posts on the blog index shows the large majority bylined to named individuals; documentation pages carrying no byline is normal for collective open-source maintenance, not concealment. But that amounts to quietly swapping the unit of judgement from “sampled pages” to “bylined content”, and the rubric does not authorise the swap — the other tiers here (a few / half / most) are all counted by page, and this one alone is not, which is an inconsistency in the rubric's own wording. Judged literally at 0, the total falls from 78 to 72 and the band is still Solid: the conclusion does not change, but this check's diagnostic value does.",
+    "The 4 on p4.answer-shape is a forced call: tier 4 literally requires subheadings, lists and tables, and svelte.dev uses no tables anywhere — tables=0 on all 8 sampled pages, and 0 on the API reference page /docs/svelte/svelte (790769 B) as well. I did not score tier 2 because tier 2's criterion is “paragraphs run long”, while the measurements give paragraph averages of 12–41 words across the 8 pages with a maximum of 125; writing 2 would put a claim in the report that contradicts the evidence. The rubric offers no landing point between these two tiers, so the choice was which of the two lies less. What is actually true: the hierarchy is very dense (up to 13 headings on a single page), lists are abundant (133 li on the tutorial page) and paragraphs are short — tables are the one thing missing. This site's content shape is in fact well suited to being lifted out in whole blocks; it just does not take the table route.",
+    "The 4 on p4.question-coverage leans heavily on the 10-question list I drew up myself, and is the least reproducible score here. My list is documentation-oriented (how do I create a project, how do I load data, how do I deploy, how do I test, how do I upgrade), and 9 of the 10 hit a dedicated page. But a large share of what real users ask an assistant about Svelte is comparison and adoption questions — is Svelte or React better, is anyone still using Svelte, how much faster is it really, what is the hiring market like — and svelte.dev answers none of them directly (the one related FAQ entry, “Does Svelte scale?”, reads “There will be a blog post about this eventually”). Add two questions of that kind to the list and coverage drops immediately to 7/10, tier 3. This score is essentially a function of the auditor's choice of questions. The rubric should give rules for constructing the industry question list (for instance, requiring N comparison questions), or the check is not comparable across auditors.",
+    "There was one accident during evidence collection, recorded here so a reviewer knows how it was found and ruled out: the scratchpad directory for this run was shared with another agent running in parallel, which wrote anthropic.com pages under exactly the same filenames (pages/p1.html and so on) and overwrote my first round of fetches, at which point I was briefly reading the absurd observation that the svelte.dev homepage returns the Anthropic homepage. What flagged it was the byte count curl -w reported (89798) not matching the file's actual size (176945). I re-fetched into a separate directory, svelte_aiv_17343, and cross-checked with md5 against the first round's user-agent test files (homepage 0ca70a3d…, docs page 29169206…, blog page 9a612d8b… — all three md5 values identical between the two rounds), which confirms the user-agent reachability conclusion was not contaminated. Every piece of evidence in checks is taken from the re-fetched files.",
+    "Two third-party sources could not be resolved to a status code because of anti-bot measures on their side, and by the rules I did not count them toward p3.listings: https://www.npmjs.com/package/svelte returned 403 (5723 B) and https://stackoverflow.com/questions/tagged/svelte returned 403 (5337 B). A Svelte entry almost certainly exists at both, but “almost certainly” is not evidence, so undercounting is the safer error. Counting them would not change the tier in any case (the check is already at the tier-4 ceiling of 5 or more). Separately, the Wikidata id I first guessed from memory, Q56092956, was wrong — it fetched an unrelated entry about the Smoot-Hawley tariff — and was replaced by looking the entity up from enwiki, which gave the correct Q16863097. Writing an entity id from memory is something no audit should do.",
+    "The shape of the score is worth a reviewer's attention: nearly all of the 24 points lost (out of 98) sit in one category, machine-readable metadata — Organization+WebSite 6, page-type 4, sitemap 4, breadcrumb 3, sameAs 3, the VideoObject half of video 1, and the structured-date half of freshness 3. There is no JSON-LD and no schema.org reference anywhere on svelte.dev. This is a site with near-full marks on content and reachability and a complete blank on structured data, and the number 78, being the average of those two extremes, may hide that. The official gloss on the band name Solid is “Foundations are in place. What is left is content depth and brand assets” — the exact opposite of this site's situation, where the gap sits in the metadata layer of the foundations and content depth and brand assets are the strengths. That disconnect between the band gloss and the actual diagnosis is another of my reservations about this result."
   ],
   "citation": {
     "measured": false,
-    "note": "未测。量表把「AI 引用表现」定义为结果型指标，要求用行业真实问题在主流 AI 搜索里实测被引用情况，且明确它不并入就绪度。本次审计只有 curl，没有可用的 AI 搜索接口，同一问题多次提问结果本身也不可复现，因此不给分、不估计、不写成「大概会被引用」。真要出这个数，需要另开一轮：固定 10–15 个 Svelte 相关真实提问（如「Svelte 和 React 有什么区别」「SvelteKit 怎么部署到 Vercel」），在 ChatGPT Search / Perplexity / Google AI Overviews / Claude 各跑 3 次，统计 svelte.dev 出现在引用列表的比例，单独成表。"
+    "note": "Not measured. The rubric defines citation performance as an outcome metric, to be measured by putting real industry questions to mainstream AI search and observing whether the site is cited, and it states explicitly that this is never folded into readiness. This audit had only curl and no usable AI search interface, and asking the same question twice is itself not reproducible, so no score is given, no estimate is made, and nothing is written as “it would probably be cited”. Producing that number would take a separate round: fix 10–15 real Svelte questions (for example, what is the difference between Svelte and React, how do I deploy SvelteKit to Vercel), run each 3 times in ChatGPT Search / Perplexity / Google AI Overviews / Claude, and tabulate separately the share of runs in which svelte.dev appears in the citation list."
   }
 }

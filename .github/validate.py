@@ -311,6 +311,10 @@ for r in MODERN:
         check(a["normalised"] == norm, f"{fp}: normalised {a['normalised']} 但 {tot}/{den} 应为 {norm}")
         check(a["band"] == band, f"{fp}: band {a['band']!r} 与 {norm}% 对应的 {band!r} 不符")
         check(bool(a.get("gate_capped")) == gate_zero, f"{fp}: gate_capped 与门槛项实际状态不符")
+        al = a.get("audience_language")
+        check(al is None or re.match(r'^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$', al),
+              f"{fp}: audience_language {al!r} 不是 BCP 47 —— 按语言分流的规则（中文 50–200 字 "
+              f"vs 英文 25–120 词、报告语种）会静默用错分支")
         check(len(a["sampled_urls"]) == 8 or a.get("notes"),
               f"{fp}: 抽样 {len(a['sampled_urls'])} 页而非 8 页，且 notes 里没有说明")
 
@@ -329,7 +333,11 @@ for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md"]
 import glob as _g2
-EN_PRIMARY += sorted(_g2.glob("examples/audits/v1.1/*.md"))
+# 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
+for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
+    if _json.load(io.open(_a, encoding="utf-8")).get("audience_language", "en").startswith("zh"):
+        continue
+    EN_PRIMARY.append(_a[:-5] + ".md")
 for pth in dict.fromkeys(EN_PRIMARY):
     if not os.path.exists(pth): continue
     body = ALLOW.sub("", io.open(pth, encoding="utf-8").read())
