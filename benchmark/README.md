@@ -3,6 +3,11 @@
 Every site below scored with the same open rubric, the same public tool and the same
 eight-page sample. No private data, no vendor dashboards — [re-run it yourself](run.py).
 
+**Browse it as a page instead:** [English](https://jianruntech.github.io/geo-score/) ·
+[简体中文](https://jianruntech.github.io/geo-score/zh.html) — searchable, sortable, and
+filterable by sector. This file and those pages are both generated from
+[`results.json`](results.json), so they cannot drift.
+
 **106 sites · median 59.5 · mean 57.9 · upper quartile 73.0 · range 14–92** · rubric v1.1 · measured 2026-09-09
 
 ## A quarter of the field cannot be cited at all

@@ -77,6 +77,7 @@ def main():
     write_readme(payload)
     print("\n%d sites · mean %s · median %s · range %d-%d"
           % (stats["n"], stats["mean"], stats["median"], stats["min"], stats["max"]), file=sys.stderr)
+    print("next: python3 benchmark/build_page.py   (regenerates the public pages)", file=sys.stderr)
 
 def _rubric():
     return json.load(io.open(os.path.join(HERE, "..", "rubric", "v1.1.json"), encoding="utf-8"))

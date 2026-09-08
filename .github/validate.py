@@ -368,6 +368,30 @@ for pth in _g3.glob("**/*.md", recursive=True):
         tgt = os.path.normpath(os.path.join(os.path.dirname(pth), t))
         check(os.path.exists(tgt), f"{pth}: 链接指向不存在的 {t!r}")
 
+# 16 · 公开榜单页必须与 benchmark/results.json 同步 —— 页面是生成的，不该手改
+if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
+    import subprocess, tempfile, shutil
+    before = {f: io.open(os.path.join("docs", f), encoding="utf-8").read()
+              for f in os.listdir("docs") if f.endswith(".html")}
+    check(bool(before), "docs/ 里没有 html —— 榜单页应由 benchmark/build_page.py 生成")
+    r = subprocess.run([sys.executable, "benchmark/build_page.py"],
+                       capture_output=True, text=True)
+    check(r.returncode == 0, f"benchmark/build_page.py 跑不通：{(r.stderr or '')[-200:]}")
+    if r.returncode == 0:
+        for f, old in before.items():
+            new = io.open(os.path.join("docs", f), encoding="utf-8").read()
+            check(old == new,
+                  f"docs/{f} 与 results.json 不同步 —— 跑一遍 python3 benchmark/build_page.py 并提交")
+    # 双语页必须成对存在，且各自声明了 hreflang
+    for f in ("index.html", "zh.html"):
+        pth = os.path.join("docs", f)
+        check(os.path.exists(pth), f"{pth} missing —— 榜单页要中英成对")
+        if os.path.exists(pth):
+            t = io.open(pth, encoding="utf-8").read()
+            check('hreflang="en"' in t and 'hreflang="zh"' in t,
+                  f"docs/{f}: 缺少 hreflang，另一种语言的读者与搜索引擎都找不到对应版本")
+            check("%(" not in t, f"docs/{f}: 有未替换的模板占位符")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)
