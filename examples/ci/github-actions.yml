@@ -1,5 +1,5 @@
-# Example: score a site on every push and on a weekly schedule.
-# Copy this into your own repository and change the url.
+# Copy this into .github/workflows/ in your own repository and change the url.
+# It lives here rather than in this repo's own workflows so that it does not run here.
 name: AI visibility
 on:
   push: {branches: [main]}
