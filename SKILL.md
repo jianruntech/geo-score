@@ -2,8 +2,8 @@
 name: geo-score
 description: "Score a website's AI answer-engine visibility 0–100 against the open AIV rubric. Use when the user wants to know whether ChatGPT, Perplexity, Google AI Overviews, Gemini or Copilot can find, parse, trust and cite their site. Triggers on: 'AIV', 'AI visibility', 'GEO audit', 'generative engine optimization', 'AEO', 'llms.txt', 'will AI cite my site', 'AI search ranking', 'get cited by ChatGPT'."
 metadata:
-  version: 1.0.0
-  rubric: "v1.0"
+  version: 1.1.0
+  rubric: "v1.1"
   license: "MIT"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -33,12 +33,32 @@ out of scope for this skill. Say so plainly and point to
 
 ## The rubric
 
-The scoring specification lives in [`rubric/v1.0.md`](rubric/v1.0.md). **Read it before
+The scoring specification lives in [`rubric/v1.1.md`](rubric/v1.1.md). **Read it before
 scoring.** Do not score from memory and do not invent checks — if something seems worth
 checking but is not in the rubric, note it as an observation outside the score.
 
-Summary: Infrastructure 20 · Structured Data 20 · **Content Citability 25** ·
-Brand Authority 20 · Platform Visibility 15.
+Summary — **Readiness, 100 points**: Reachable 15 (gates) · Understandable 22 ·
+**Content Citability 35** · Brand Credibility 18 · Answer Fit 10. Plus up to +6 in
+bonus checks that stay out of the denominator.
+
+**Report two numbers, never one.** *Readiness* is what the site owner can fix and what
+this rubric scores. *Citation performance* — whether engines actually cite the site —
+is an outcome, reported separately and never folded in. Merging them produces the
+failure v1.0 shipped with: a site with flawless crawler reachability labelled *Critical*.
+See [`rubric/calibration-v1.1.md`](rubric/calibration-v1.1.md).
+
+**Score in tiers, not pass/fail.** Every check has 2–4 tiers. Take the highest tier the
+evidence satisfies. Binary judgement is what collapsed v1.0's discrimination.
+
+**Three gate checks** (`g.robots`, `g.reachable`, `g.ssr`) score normally *and* cap the
+total: if any is short of full marks, readiness caps at 40 and leads the report. Until a
+crawler can reach the content, nothing else you change has any effect.
+
+**Judge substance, not format.** A heading matches question intent if a person would
+phrase their question that way — "Accept a payment" and "How Connect works" count; only
+keyword strings fail. A freshness signal is a visible date *or* schema date, either one.
+Superseded [`rubric/v1.0.md`](rubric/v1.0.md) remains published; v1.0 and v1.1 scores are
+**not comparable**.
 
 ## How to run an audit
 
@@ -79,9 +99,11 @@ person. Check `dateModified`.
 `sameAs` URL and confirm it resolves *and* references the brand back — a `sameAs` to a
 dead profile is worse than none. Check for mentions on domains the brand does not control.
 
-**6 · Pillar 5 — Platform Visibility.** Some of this you cannot observe from outside.
-Ask the user for verification state rather than guessing. If a multi-engine query test
-has not been run, score it zero and say so — **do not simulate the test and do not
+**6 · Answer Fit.** Everything scored here is observable from outside. Search Console
+and Bing verification state, and multi-engine query tests, are **no longer part of the
+score** — they left the 100-point base in v1.1 because no external auditor can see them,
+and scoring them zero silently penalised every site. Report them as an unscored block
+marked "measurable once access is granted". **Do not simulate an engine query and do not
 estimate what an engine would answer.**
 
 **7 · Score and report.** Sum, band, and produce the report. Always state the rubric
@@ -93,7 +115,10 @@ version and the date.
   not comparable to anything.
 - **Show every check**, including the ones that passed. A list of only failures reads
   as a sales document.
-- **Never round up.** Partial credit only where the rubric explicitly allows a proportion.
+- **Never round up.** Take the highest tier the evidence *actually* satisfies, not the
+  one it nearly satisfies.
+- **State the band and the gap to the next one.** "Growing, 3 points below Solid" tells a
+  reader what to do; a bare number does not.
 - **Separate observed from reported.** If the user told you Search Console is verified
   and you could not confirm it, mark it as reported, not observed.
 - **State what you could not check** and why. An audit that hides its blind spots is
@@ -105,6 +130,8 @@ version and the date.
 - **Only audit sites the user is authorised to audit.** Ask if it is not obviously theirs.
 - **Do not modify the user's files.** This skill is read-only by design. If asked to
   fix something, decline and explain that remediation is out of scope.
+- **Name the gap, not the repair.** Saying `p1.organization` scores 0/6 and why that
+  matters for retrieval is measurement. Handing over the JSON-LD to paste is not.
 - **Do not fabricate engine behaviour.** You cannot see inside ChatGPT's retrieval. If a
   check requires actually querying an engine, either the user runs it and reports back,
   or the check scores zero.

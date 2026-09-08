@@ -156,27 +156,35 @@ Largest single gap: Content Citability, 6 of 25.
 
 </details>
 
-## Five real audits
+## Five real audits, and what they changed
 
-We ran the rubric against five public sites. **None cleared 51%** — not Stripe,
-not Anthropic, not the framework docs sites whose audience is developers.
+We ran v1.0 against five public sites. **None cleared 51%** — not Stripe, not Anthropic,
+not the framework docs sites whose audience is developers.
 
-| Site | AIV | | Band |
+Then we looked at *why*, and concluded the rubric was wrong before the sites were.
+A site returning 200 to all ten retrieval crawlers, byte-identical to a browser, with
+60 KB of server-rendered prose, was being labelled **Critical**. Three external
+benchmarks agree the ceiling was set too low: GeoReady reports a mean of 54–56 across
+282–750 domains; GW Content states most business sites land between 30 and 55.
+
+[**v1.1**](rubric/v1.1.md) is the recalibration — tiered scoring instead of pass/fail,
+readiness split from citation performance, unobservable checks out of the base, and band
+names that describe a stage rather than a verdict.
+[How it was calibrated](rubric/calibration-v1.1.md) ·
+[the 8 ambiguities it settled](rubric/open-questions.md)
+
+| Site | v1.0 | v1.1 (projected) | Band |
 |---|:-:|:-:|---|
-| [stripe.com](examples/audits/stripe.com.md) | 45 / 88 | 51% | Below average |
-| [nextjs.org](examples/audits/nextjs.org.md) | 40 / 82 | 49% | Below average |
-| [svelte.dev](examples/audits/svelte.dev.md) | 34 / 85 | 40% | Critical |
-| [anthropic.com](examples/audits/anthropic.com.md) | 32 / 88 | 36% | Critical |
-| [mingdao.com](examples/audits/mingdao.com.md) | 29 / 85 | 34% | Critical |
+| [nextjs.org](examples/audits/nextjs.org.md) | 49% | **62%** | Growing |
+| [stripe.com](examples/audits/stripe.com.md) | 51% | **61%** | Growing |
+| [svelte.dev](examples/audits/svelte.dev.md) | 40% | **53%** | Growing |
+| [mingdao.com](examples/audits/mingdao.com.md) | 34% | **50%** | Early |
+| [anthropic.com](examples/audits/anthropic.com.md) | 36% | **48%** | Early |
 
-Every check carries evidence — status codes, byte counts, MD5s across user-agents, the
-actual sentence that did or did not qualify. Every audit ends with the auditor's own
-caveats. [Read them here](examples/README.md).
-
-Running them surfaced eight places where two careful implementations would score the
-same evidence differently — including whether a band called *Critical* should be applied
-to a site with flawless crawler reachability. Those are published as
-[open questions](rubric/open-questions.md) rather than quietly patched.
+The published audits are the original v1.0 runs, unaltered — every check carries evidence
+(status codes, byte counts, MD5s across user-agents, the actual sentence that did or did
+not qualify) and every audit ends with the auditor's own caveats. The v1.1 column is a
+**projection** recomputed from that evidence, not a fresh audit. [Read them](examples/README.md).
 
 ## Scope — what this does *not* do
 

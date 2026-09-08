@@ -1,0 +1,581 @@
+{
+  "rubric_version": "1.1",
+  "supersedes": "1.0",
+  "scores": {
+    "readiness": {
+      "name_zh": "站点就绪度",
+      "total": 100,
+      "note_zh": "站外可观测、且站方可修的部分。这是本量表打分的对象，也是服务能承诺的范围。"
+    },
+    "citation": {
+      "name_zh": "AI 引用表现",
+      "total": null,
+      "note_zh": "用行业真实问题在主流 AI 搜索实测被引用情况。结果型指标，单独报告，不并入就绪度——它由就绪度与时间共同决定，且同一问题多次提问结果不同，不可复现。把它并进主分会同时伤害客户与口径可信度。"
+    }
+  },
+  "bonus_cap": 6,
+  "gate_cap": 40,
+  "bands": [
+    {
+      "min_pct": 83,
+      "name_zh": "领先",
+      "meaning_zh": "已建立优势，重点转向维持与扩大"
+    },
+    {
+      "min_pct": 66,
+      "name_zh": "基础扎实",
+      "meaning_zh": "地基完备，缺口集中在内容深度与品牌资产"
+    },
+    {
+      "min_pct": 51,
+      "name_zh": "成长期",
+      "meaning_zh": "主要项目已在做，差的是系统性与一致性"
+    },
+    {
+      "min_pct": 31,
+      "name_zh": "起步期",
+      "meaning_zh": "基础项有明显缺口，其中多数可在数人天内补齐"
+    },
+    {
+      "min_pct": 0,
+      "name_zh": "未起步",
+      "meaning_zh": "尚未针对 AI 检索做过建设，提升空间最大"
+    }
+  ],
+  "report": {
+    "order_zh": "失分项默认按「可回收分数 ÷ 工作量」排序，不按支柱顺序；解锁型修复（门槛项）永远排在增量型之前。",
+    "first_screen_zh": "首屏只放三样：当前分与所处档、距下一档还差几分、以及排序后的前 3 条。完整清单放附录。",
+    "each_finding_zh": "每条失分固定三段：为什么重要 / 怎么修 / 修完预计加几分与工期。"
+  },
+  "checks": [
+    {
+      "id": "g.robots",
+      "kind": "gate",
+      "pillar_zh": "可被抓取",
+      "name_zh": "robots 放行检索爬虫",
+      "points": 5,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "对检索类 UA 设了 Disallow"
+        },
+        {
+          "points": 3,
+          "condition_zh": "未显式禁止，也未显式放行"
+        },
+        {
+          "points": 5,
+          "condition_zh": "对主流检索 UA 明确放行"
+        }
+      ],
+      "why_zh": "唯一一条「没做到，后面全部白做」的检查。爬虫被挡住时，站内做得再好也进不了 AI 的答案。",
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+    },
+    {
+      "id": "g.reachable",
+      "kind": "gate",
+      "pillar_zh": "可被抓取",
+      "name_zh": "检索 UA 实测可达",
+      "points": 5,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "多数检索 UA 被拦"
+        },
+        {
+          "points": 3,
+          "condition_zh": "部分被拦，或返回内容与浏览器不一致"
+        },
+        {
+          "points": 5,
+          "condition_zh": "10 个检索 UA 均 200 且内容一致"
+        }
+      ],
+      "why_zh": "robots.txt 写了放行不等于真拿得到——CDN 与 WAF 常按 UA 拦截，这一层只有实测看得见。",
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+    },
+    {
+      "id": "g.ssr",
+      "kind": "gate",
+      "pillar_zh": "可被抓取",
+      "name_zh": "正文服务端可见",
+      "points": 5,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "正文完全依赖 JS 渲染"
+        },
+        {
+          "points": 3,
+          "condition_zh": "部分页可见"
+        },
+        {
+          "points": 5,
+          "condition_zh": "抽样页正文均在 HTML 响应中"
+        }
+      ],
+      "why_zh": "多数检索爬虫不执行 JS。正文只在浏览器里出现，等于对 AI 不存在。",
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项未拿满，就绪度总分封顶 40 分，并在报告首屏置顶为 P0——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。"
+    },
+    {
+      "id": "p1.sitemap",
+      "kind": "scored",
+      "pillar_zh": "可被理解",
+      "name_zh": "sitemap 可发现且新鲜",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无法发现或返回非 200"
+        },
+        {
+          "points": 2,
+          "condition_zh": "可发现且 200"
+        },
+        {
+          "points": 4,
+          "condition_zh": "且多数 URL 带 lastmod"
+        }
+      ],
+      "why_zh": "检索侧靠 sitemap 发现新页；没有 lastmod 就无法判断哪些内容值得重抓。robots.txt 中声明的路径优先于约定路径。"
+    },
+    {
+      "id": "p1.llms-txt",
+      "kind": "scored",
+      "pillar_zh": "可被理解",
+      "name_zh": "llms.txt",
+      "points": 5,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无"
+        },
+        {
+          "points": 2,
+          "condition_zh": "存在且 200"
+        },
+        {
+          "points": 4,
+          "condition_zh": "含站点定义段"
+        },
+        {
+          "points": 5,
+          "condition_zh": "且有 2 个以上含链接的主题分节"
+        }
+      ],
+      "why_zh": "你唯一能直接告诉检索侧「我是谁、该看哪几页」的地方，成本极低。"
+    },
+    {
+      "id": "p1.organization",
+      "kind": "scored",
+      "pillar_zh": "可被理解",
+      "name_zh": "Organization + WebSite",
+      "points": 6,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "两者皆无"
+        },
+        {
+          "points": 3,
+          "condition_zh": "有其一"
+        },
+        {
+          "points": 5,
+          "condition_zh": "两者齐全，含 name／url／logo"
+        },
+        {
+          "points": 6,
+          "condition_zh": "且 logo 可解析、含 sameAs"
+        }
+      ],
+      "why_zh": "AI 判断「你是哪家公司」的第一依据。缺了它，品牌名可能被归给同名的别人。"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "kind": "scored",
+      "pillar_zh": "可被理解",
+      "name_zh": "BreadcrumbList",
+      "points": 3,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无"
+        },
+        {
+          "points": 2,
+          "condition_zh": "部分层级页有"
+        },
+        {
+          "points": 3,
+          "condition_zh": "层级页普遍有"
+        }
+      ],
+      "why_zh": "让检索侧理解这一页在站内的位置，判断它是概览还是细节。全站无层级则退出分母。"
+    },
+    {
+      "id": "p1.page-type",
+      "kind": "scored",
+      "pillar_zh": "可被理解",
+      "name_zh": "页型专用 schema",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无"
+        },
+        {
+          "points": 2,
+          "condition_zh": "部分页型有"
+        },
+        {
+          "points": 4,
+          "condition_zh": "适用页型普遍有，且字段真实"
+        }
+      ],
+      "why_zh": "电商 Product+Offer、文档 HowTo、问答 FAQPage。站点无对应页型则整项退出分母。"
+    },
+    {
+      "id": "p2.answer-passages",
+      "kind": "scored",
+      "pillar_zh": "内容可被引用",
+      "name_zh": "自足答案段",
+      "points": 9,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "抽样页均无"
+        },
+        {
+          "points": 4,
+          "condition_zh": "少数页有"
+        },
+        {
+          "points": 7,
+          "condition_zh": "半数页有"
+        },
+        {
+          "points": 9,
+          "condition_zh": "多数页有"
+        }
+      ],
+      "why_zh": "AI 引用的是「一段能独立成立的话」。没有这样的段落，再好的内容也只会被概括，不会被引用。"
+    },
+    {
+      "id": "p2.question-intent",
+      "kind": "scored",
+      "pillar_zh": "内容可被引用",
+      "name_zh": "标题匹配提问意图",
+      "points": 7,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "标题多为关键词串或品牌标签"
+        },
+        {
+          "points": 3,
+          "condition_zh": "少数贴近提问"
+        },
+        {
+          "points": 5,
+          "condition_zh": "半数贴近"
+        },
+        {
+          "points": 7,
+          "condition_zh": "多数贴近"
+        }
+      ],
+      "why_zh": "用户向助手提问用的是自然语言。问句、任务句（Accept a payment）、说明句（How X works）都算；纯关键词串不算。"
+    },
+    {
+      "id": "p2.freshness",
+      "kind": "scored",
+      "pillar_zh": "内容可被引用",
+      "name_zh": "时间信号",
+      "points": 6,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "页面与结构化数据均无日期"
+        },
+        {
+          "points": 3,
+          "condition_zh": "部分页有可见日期或 datePublished"
+        },
+        {
+          "points": 6,
+          "condition_zh": "多数页有，且与 dateModified 一致"
+        }
+      ],
+      "why_zh": "AI 倾向引用能确认时效的内容。schema 日期或页面可见日期，二者其一即可。"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "kind": "scored",
+      "pillar_zh": "内容可被引用",
+      "name_zh": "数据带出处",
+      "points": 7,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "数字与结论均无来源"
+        },
+        {
+          "points": 3,
+          "condition_zh": "部分标注"
+        },
+        {
+          "points": 5,
+          "condition_zh": "多数标注"
+        },
+        {
+          "points": 7,
+          "condition_zh": "多数标注且来源可点击可核实"
+        }
+      ],
+      "why_zh": "带出处的数字被引用概率显著高于裸数字——它让引用方有据可依。"
+    },
+    {
+      "id": "p2.named-author",
+      "kind": "scored",
+      "pillar_zh": "内容可被引用",
+      "name_zh": "具名作者可核实",
+      "points": 6,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无署名或仅署机构名"
+        },
+        {
+          "points": 3,
+          "condition_zh": "署真实姓名"
+        },
+        {
+          "points": 6,
+          "condition_zh": "姓名链向可核实的身份页"
+        }
+      ],
+      "why_zh": "署名到人是 E-E-A-T 的核心。身份页在站内或本人主页均可，不强制站内 bio。"
+    },
+    {
+      "id": "p3.listings",
+      "kind": "scored",
+      "pillar_zh": "品牌可信",
+      "name_zh": "第三方平台收录",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "0 家"
+        },
+        {
+          "points": 2,
+          "condition_zh": "1–2 家"
+        },
+        {
+          "points": 3,
+          "condition_zh": "3–4 家"
+        },
+        {
+          "points": 4,
+          "condition_zh": "5 家以上"
+        }
+      ],
+      "why_zh": "行业目录、评测平台、应用市场是 AI 交叉验证你存在的地方。"
+    },
+    {
+      "id": "p3.mentions",
+      "kind": "scored",
+      "pillar_zh": "品牌可信",
+      "name_zh": "独立第三方提及",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无"
+        },
+        {
+          "points": 2,
+          "condition_zh": "零星提及"
+        },
+        {
+          "points": 3,
+          "condition_zh": "有独立报道或评测"
+        },
+        {
+          "points": 4,
+          "condition_zh": "多渠道持续提及"
+        }
+      ],
+      "why_zh": "自有渠道说自己好不构成证据，独立提及才构成。"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "kind": "scored",
+      "pillar_zh": "品牌可信",
+      "name_zh": "知识图谱实体",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无对应条目"
+        },
+        {
+          "points": 4,
+          "condition_zh": "维基数据／维基百科／百度百科等有对应实体"
+        }
+      ],
+      "why_zh": "知识库条目是 AI 确认实体身份最强的单一信号。"
+    },
+    {
+      "id": "p3.sameas",
+      "kind": "scored",
+      "pillar_zh": "品牌可信",
+      "name_zh": "sameAs 完整可解析",
+      "points": 3,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "未声明，或多数不可解析"
+        },
+        {
+          "points": 2,
+          "condition_zh": "声明了但部分失效"
+        },
+        {
+          "points": 3,
+          "condition_zh": "全部可解析且确为本品牌"
+        }
+      ],
+      "why_zh": "sameAs 把官网与各平台账号绑成同一实体。未声明记 0 分，不退出分母。"
+    },
+    {
+      "id": "p3.video",
+      "kind": "scored",
+      "pillar_zh": "品牌可信",
+      "name_zh": "视频与多模态",
+      "points": 3,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "无官方视频内容"
+        },
+        {
+          "points": 2,
+          "condition_zh": "有账号但内容零星"
+        },
+        {
+          "points": 3,
+          "condition_zh": "持续输出且站内带 VideoObject"
+        }
+      ],
+      "why_zh": "多模态内容进入 AI 答案的通道与文本不同，是增量而非替代。"
+    },
+    {
+      "id": "p4.answer-shape",
+      "kind": "scored",
+      "pillar_zh": "问答适配",
+      "name_zh": "答案形态适配",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "长段落为主，无层级"
+        },
+        {
+          "points": 2,
+          "condition_zh": "有小标题但段落偏长"
+        },
+        {
+          "points": 4,
+          "condition_zh": "小标题、列表、表格齐备，段落适中"
+        }
+      ],
+      "why_zh": "同样的内容，能被整块摘出来的形态被引用率更高。"
+    },
+    {
+      "id": "p4.question-coverage",
+      "kind": "scored",
+      "pillar_zh": "问答适配",
+      "name_zh": "高频问题覆盖",
+      "points": 4,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "覆盖 0–2 个"
+        },
+        {
+          "points": 2,
+          "condition_zh": "覆盖 3–5 个"
+        },
+        {
+          "points": 3,
+          "condition_zh": "覆盖 6–8 个"
+        },
+        {
+          "points": 4,
+          "condition_zh": "覆盖 9–10 个"
+        }
+      ],
+      "why_zh": "针对该行业 10 个高频真实问题，站内是否有页面正面回答。缺口清单直接就是选题表。"
+    },
+    {
+      "id": "p4.cn-engines",
+      "kind": "scored",
+      "pillar_zh": "问答适配",
+      "name_zh": "中文引擎适配",
+      "points": 2,
+      "tiers": [
+        {
+          "points": 0,
+          "condition_zh": "抓取受阻或备案信息缺失"
+        },
+        {
+          "points": 1,
+          "condition_zh": "可抓取"
+        },
+        {
+          "points": 2,
+          "condition_zh": "可抓取且备案与主体信息齐备"
+        }
+      ],
+      "why_zh": "面向中文市场时适用；不面向中文市场则整项退出分母。"
+    },
+    {
+      "id": "b.llms-full",
+      "kind": "bonus",
+      "pillar_zh": "前瞻信号",
+      "name_zh": "llms-full.txt",
+      "points": 2,
+      "pass_zh": "提供全文聚合文件；允许非根路径，但需可从 llms.txt 或 robots.txt 发现",
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+    },
+    {
+      "id": "b.ai-txt",
+      "kind": "bonus",
+      "pillar_zh": "前瞻信号",
+      "name_zh": "ai.txt",
+      "points": 2,
+      "pass_zh": "声明 AI 使用政策",
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+    },
+    {
+      "id": "b.geo-link",
+      "kind": "bonus",
+      "pillar_zh": "前瞻信号",
+      "name_zh": "GEO link 标签",
+      "points": 1,
+      "pass_zh": "在 head 声明面向 AI 检索的 link 关系",
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+    },
+    {
+      "id": "b.speakable",
+      "kind": "bonus",
+      "pillar_zh": "前瞻信号",
+      "name_zh": "speakable",
+      "points": 1,
+      "pass_zh": "为语音助手标注可朗读区域",
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+    }
+  ]
+}

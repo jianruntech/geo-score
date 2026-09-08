@@ -93,26 +93,33 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 见 [examples/sample-report.md](examples/sample-report.md)。
 每份真实报告必须带两样：**评分口径版本**和**审计日期**。
 
-## 五份真实审计
+## 五份真实审计，以及它们改变了什么
 
-我们用这套口径实测了五个公开站点。**没有一个超过 51%** ——
-Stripe 不行，Anthropic 自己不行，受众就是开发者的框架文档站也不行。
+我们用 v1.0 实测了五个公开站点。**没有一个超过 51%** —— Stripe 不行，Anthropic 自己不行，
+受众就是开发者的框架文档站也不行。
 
-| 站点 | AIV | | 评级 |
+然后我们去看*为什么*，结论是**量表先错了，站点其次**。
+一个对十个检索爬虫全部返回 200、响应与浏览器逐字节一致、正文 60KB 服务端渲染的站，
+被判为**危急**。三份外部基准都指向天花板设低了：GeoReady 在 282–750 个域名上的均分是 54–56，
+GW Content 的公开口径是「多数商业网站落在 30–55」。
+
+[**v1.1**](rubric/v1.1.md) 是这次重新标定——阶梯给分取代二元判定、
+就绪度与引用表现拆开、站外看不见的检查移出基数、档名描述阶段而不是下判决。
+[标定依据](rubric/calibration-v1.1.md) ·
+[它定掉的 8 条歧义](rubric/open-questions.md)
+
+| 站点 | v1.0 | v1.1（投影） | 档 |
 |---|:-:|:-:|---|
-| [stripe.com](examples/audits/stripe.com.md) | 45 / 88 | 51% | 偏低 |
-| [nextjs.org](examples/audits/nextjs.org.md) | 40 / 82 | 49% | 偏低 |
-| [svelte.dev](examples/audits/svelte.dev.md) | 34 / 85 | 40% | 危急 |
-| [anthropic.com](examples/audits/anthropic.com.md) | 32 / 88 | 36% | 危急 |
-| [mingdao.com](examples/audits/mingdao.com.md) | 29 / 85 | 34% | 危急 |
+| [nextjs.org](examples/audits/nextjs.org.md) | 49% | **62%** | 成长期 |
+| [stripe.com](examples/audits/stripe.com.md) | 51% | **61%** | 成长期 |
+| [svelte.dev](examples/audits/svelte.dev.md) | 40% | **53%** | 成长期 |
+| [mingdao.com](examples/audits/mingdao.com.md) | 34% | **50%** | 起步期 |
+| [anthropic.com](examples/audits/anthropic.com.md) | 36% | **48%** | 起步期 |
 
-每一项检查都带证据——状态码、字节数、不同 UA 的响应 MD5、
-到底是哪一句话算或不算「自足答案段」。每份审计末尾都有审计者自己的存疑。
+已发布的审计是原始的 v1.0 实测，未做追溯改写——每一项都带证据
+（状态码、字节数、不同 UA 的响应 MD5、到底是哪一句话算或不算自足答案段），
+每份末尾都有审计者自己的存疑。v1.1 那一列是从同一份证据**重算的投影，不是新审计**。
 [在这里读](examples/README.md)。
-
-跑完这五份，暴露出**八处两个实现会算出不同分数的地方**——
-包括「一个爬虫可达性满分、服务端渲染 60KB 正文的站，评级叫『危急』是否合适」。
-这些没有被悄悄改掉，而是公开成了[待决问题](rubric/open-questions.md)。
 
 ## 边界 · 这个仓库不做什么
 
