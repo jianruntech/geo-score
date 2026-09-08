@@ -52,11 +52,13 @@ check('license: "MIT"' in sk, 'SKILL.md frontmatter must declare license: "MIT" 
 
 # 6 · 示例报告的加法必须成立（KOL 最容易手加穿帮的地方）
 import re as _re
-for f in ["README.md", "examples/sample-report.md"]:
+for f in ["examples/sample-report.md", "README.md"]:
     if not os.path.exists(f): continue
     t = io.open(f, encoding="utf-8").read()
-    m = _re.search(r'```\n(AIV .*?)\n```', t, _re.S)
-    check(bool(m), f"{f}: 找不到 ``` 包裹的 AIV 报告块——示例报告是 CI 唯一能验算的东西")
+    m = _re.search(r'```\n(AIV Readiness .*?)\n```', t, _re.S)
+    if f == "examples/sample-report.md":
+        check(bool(m), f"{f}: 找不到 ``` 包裹的 AIV Readiness 报告块 —— "
+                       f"这是 CI 唯一能验算的格式范例")
     if not m: continue
     rep = m.group(1); lines = rep.split("\n")
     hm = _re.match(r'AIV Readiness (\d+) / (\d+)', lines[0])

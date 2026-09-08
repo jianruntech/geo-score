@@ -1,13 +1,55 @@
 name: validate
 on:
-  push: { branches: [main] }
+  push: {branches: [main]}
   pull_request:
+  schedule: [{cron: "0 7 * * 1"}]     # the CLI talks to live sites — catch drift weekly
+  workflow_dispatch:
 jobs:
-  validate:
+  structure:
+    name: rubric & docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Validate rubric and scope rules
-        run: python3 .github/validate.py
+        with: {python-version: "3.x"}
+      - run: pip install --quiet jsonschema
+      - run: python3 .github/validate.py
+
+  cli:
+    name: cli (python ${{ matrix.py }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: {py: ["3.8", "3.12"]}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "${{ matrix.py }}"}
+      - name: compiles and self-describes
+        run: |
+          python3 -m py_compile cli/geo_score.py
+          python3 cli/geo_score.py --version
+          python3 cli/geo_score.py --help > /dev/null
+      - name: scores a live site and emits valid JSON
+        run: |
+          python3 cli/geo_score.py example.com --json --quiet > out.json
+          pip install --quiet jsonschema
+          python3 - <<'PY'
+          import json, jsonschema
+          rep = json.load(open("out.json"))
+          # the CLI leaves judgement-bound checks out, so validate the shape, not completeness
+          sch = json.load(open("schema/report.v2.json"))
+          sch = {**sch, "required": [k for k in sch["required"] if k != "sampled_urls"]}
+          jsonschema.validate(rep, sch)
+          ids = {c["id"] for c in rep["checks"]}
+          spec = {c["id"] for c in json.load(open("rubric/v1.1.json"))["checks"]}
+          assert ids <= spec, f"CLI emitted unknown check ids: {sorted(ids - spec)}"
+          assert 0 <= rep["normalised"] <= 100
+          print(f"ok — {rep['normalised']}/100 {rep['band']}, {len(ids)} checks")
+          PY
+      - name: --fail-under gates correctly
+        run: |
+          python3 cli/geo_score.py example.com --fail-under 0  --quiet > /dev/null
+          if python3 cli/geo_score.py example.com --fail-under 101 --quiet > /dev/null 2>&1; then
+            echo "::error::--fail-under 101 should have failed"; exit 1
+          fi

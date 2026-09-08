@@ -1,0 +1,70 @@
+name: "geo-score"
+description: "Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it. Fails the build below a threshold."
+branding:
+  icon: "search"
+  color: "green"
+inputs:
+  url:
+    description: "The URL to score."
+    required: true
+  fail-under:
+    description: "Fail the job if the normalised score is below this. Omit to report without failing."
+    required: false
+  sample:
+    description: "How many pages to sample (default 8)."
+    required: false
+    default: "8"
+  json-out:
+    description: "Write the machine-readable report to this path."
+    required: false
+outputs:
+  score:
+    description: "Normalised score, 0-100."
+    value: ${{ steps.run.outputs.score }}
+  band:
+    description: "Band name — Not started / Early / Growing / Solid / Leading."
+    value: ${{ steps.run.outputs.band }}
+  report:
+    description: "The full report as JSON."
+    value: ${{ steps.run.outputs.report }}
+runs:
+  using: "composite"
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        OUT="${{ inputs.json-out }}"
+        [ -n "$OUT" ] || OUT="$(mktemp)"
+        python3 "${{ github.action_path }}/cli/geo_score.py" "${{ inputs.url }}" \
+          --sample "${{ inputs.sample }}" --json --quiet > "$OUT"
+        SCORE=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['normalised'])" "$OUT")
+        BAND=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['band'])" "$OUT")
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "band=$BAND"   >> "$GITHUB_OUTPUT"
+        { echo "report<<GEOEOF"; cat "$OUT"; echo; echo "GEOEOF"; } >> "$GITHUB_OUTPUT"
+        python3 "${{ github.action_path }}/cli/geo_score.py" "${{ inputs.url }}" \
+          --sample "${{ inputs.sample }}" --explain || true
+        {
+          echo "## AI visibility — ${{ inputs.url }}"
+          echo
+          echo "**$SCORE / 100 · $BAND**"
+          echo
+          echo '| Check | Score | Why |'
+          echo '|---|:-:|---|'
+          python3 - "$OUT" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+for c in d["checks"]:
+    if c["id"].startswith("b."): continue
+    s = f'{c["points"]}/{c["max"]}' if c["state"]=="scored" else "—"
+    why = (c.get("evidence") or c.get("reason") or "").replace("|","\\|")[:150]
+    print(f'| `{c["id"]}` | {s} | {why} |')
+PY
+          echo
+          echo "Scored against the open [AIV rubric v1.1](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md)."
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ -n "${{ inputs.fail-under }}" ] && [ "$SCORE" -lt "${{ inputs.fail-under }}" ]; then
+          echo "::error::geo-score $SCORE is below the ${{ inputs.fail-under }} threshold"
+          exit 1
+        fi

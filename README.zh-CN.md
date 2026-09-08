@@ -1,96 +1,100 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
-<p align="center"><img src="assets/cover.svg" alt="geo-score — 开源的 AI 可见度评分口径" width="100%"></p>
+<p align="center"><img src="assets/cover.svg" alt="geo-score — 面向 AI 回答引擎的开源可见度评分口径" width="100%"></p>
 
 # geo-score
 
-**一套开源、带版本号的 GEO（生成式引擎优化）评分口径 —— 给任何网站打 0–100 分，
-衡量 AI 回答引擎能不能找到、读懂、信任并引用它。**
-
-它发布的这套口径叫 **AIV 分**（AI Visibility，AI 可见度）。21 项阶梯式检查合计 100 分，
-另有 4 项加分检查、不进分母、最多 +6——一份任何人都能照着实现的规范。
+**ChatGPT 会不会引用你的网站？20 秒跑出分数。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-> **这里的 GEO 指生成式引擎优化（Generative Engine Optimization）**，
-> 是让 ChatGPT、Perplexity、Google AI Overviews、Gemini、Copilot 引用你，
-> 与地理信息、地图、定位无关。
+```bash
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+  | python3 - stripe.com
+```
 
-[评分口径](rubric/v1.1.zh-CN.md) · [快速开始](#快速开始) · [查什么](#查什么) ·
-[示例输出](#示例输出) · [边界](#边界--这个仓库不做什么) · [研究依据](#权重的研究依据)
+```
+  AIV READINESS  https://stripe.com
+──────────────────────────────────────────────────────────────────────────
+  71 / 100   Solid
+  12 points to Leading
+
+  Reachable 11/15
+   ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
+   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ◐ Main content server-rendered     ███████████░░░░░░░  3/5
+  Understandable 15/22
+   ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
+   ✓ llms.txt present and structured  ██████████████████  5/5
+   ✓ Organization + WebSite schema    ██████████████████  6/6
+   ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
+   ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
+  Content Citability 25/35
+   ✓ Self-contained answer passages   ██████████████████  9/9
+   ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
+   ◐ Freshness signal present         █████████░░░░░░░░░  3/6
+   ✓ Statistics carry a source        ██████████████████  7/7
+   ◐ Named, verifiable authorship     █████████░░░░░░░░░  3/6
+  Brand Credibility 8/10
+   ⊘ Third-party listings             ··················   —
+   ⊘ Independent mentions             ··················   —
+   ✓ Knowledge-graph entity           ██████████████████  4/4
+   ◐ sameAs links resolve             ████████████░░░░░░  2/3
+   ◐ Video and multimodal presence    ████████████░░░░░░  2/3
+  Answer Fit 2/4
+   ◐ Content shaped for extraction    █████████░░░░░░░░░  2/4
+   ⊘ Covers the questions people ask  ··················   —
+   ⊘ Chinese engine readiness         ··················   —
+
+  Scored 61 / 86 observable · 4 checks left the denominator · rubric v1.1
+  Needs judgement: p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines
+
+  Full rubric and what each tier means:
+  https://github.com/jianruntech/geo-score
+```
+
+Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
+按一套**公开、带版本号的评分口径**给分——不是黑箱。
+
+> **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
+> Gemini、Copilot 引用你。与地理、地图无关。
 
 ---
 
-传统 SEO 问的是「我排第几」。回答引擎不排名——它检索段落、判断这个来源值不值得引用、
-然后附上引文。这是另一个问题，失效方式也不一样：一个站可以在 Google 排第 3 却从不被引用，
-而一个没什么外链的页面天天被引，因为它的段落干净。
+## 这和 SEO 问的不是同一个问题
 
-**geo-score 做的是这件事的测量那一半。** 它是一份公开、带版本号的评分口径——
-21 项阶梯式检查合计 100 分，另有 4 项不进分母的加分检查——外加一个能跑这套口径的 Claude Code 技能。
+传统 SEO 问「我排第几」。回答引擎不排名——它检索段落、判断这个来源值不值得引用、
+然后引用它。问题不同，失效方式也不同：一个站可以在 Google 排第 3 却从不被引用，
+而一个没人链接的页面天天被引，因为它的段落干净。
 
-**它刻意停在测量。** 见[边界](#边界--这个仓库不做什么)。
-
-## 谁会用
-
-- **站长**：想要一个能按月追踪的数字，和一份具体哪里没做到的清单
-- **代理商与顾问**：需要一个站得住、可复核的分数拿给客户看，而不是「相信我，变好了」
-- **做 GEO 工具的人**：需要一份共享口径，让不同工具算出来的分是一个意思
-
-## 为什么发布口径，而不是只发一个工具
-
-大多数 GEO 工具给你一个分数，把方法留在自己手里。那个分数是**不可证伪**的——
-你没法核对、没法复现、也没法拿去跟任何东西比。
-
-公开的口径是可核对的。你可以不同意某个权重并说出理由；可以自己实现一遍，
-看结果跟我们的一致不一致；可以把分数和规范一起交给客户，让他两样都能查。
-
-这就是这里的赌注：**一个所有人都能跑的衡量方式，比一个只有我们能跑的更值钱**——
-即使我们卖的是它另一半的修复服务。
-
-## 快速开始
-
-```bash
-git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-score
-```
-
-重启 Claude Code，然后：
-
-```
-/geo-score audit https://example.com
-```
-
-**验证装好了**：不带参数输入 `/geo-score`，应该看到命令列表。
-没反应就检查 clone 是不是落在 `~/.claude/skills/` 下、目录里有没有 `SKILL.md`。
-
-**不用 Claude Code 也能用。**[评分口径](rubric/v1.1.zh-CN.md)就是一份普通规范，
-可以手工打分，也可以在你自己的工具里实现。
+决定这件事的东西，**大部分是机械的、改起来很便宜**——一行 `robots.txt`、
+一个 JSON-LD 块、模板里的一个日期、把一段话改写成能独立成立的样子。
+难的是知道自己缺了哪几项，以及每一项值多少分。
 
 ## 查什么
 
-完整规范与各档判据见 **[rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md)**。
+21 项阶梯式检查合计 100 分，另有 4 项加分检查、不进分母、最多 +6。
+完整规范：**[rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md)** · [English](rubric/v1.1.md)
 
-| 支柱 | 分值 | 检查项 | 举例 |
-|---|:-:|:-:|---|
-| 可被抓取 —— *门槛* | 15 | 3 | `robots.txt` 放行检索爬虫、10 个检索 UA 实测都返回 200、正文在服务端渲染的 HTML 里 |
-| 可被理解 | 22 | 5 | `Organization` + `WebSite`、带分节链接组的 `llms.txt`、`BreadcrumbList`、页型专用 schema |
-| **内容可被引用** | **35** | 5 | 自足答案段、标题匹配人们真实的提问措辞、数据带出处、真实署名、时间信号 |
-| 品牌可信 | 18 | 5 | 知识图谱实体、第三方收录、`sameAs` 可解析、视频存在 |
-| 问答适配 | 10 | 3 | 内容形态便于摘录、覆盖客户真实会问的问题 |
-| *加分项* | *+6* | *4* | `ai.txt`、`speakable`、GEO `<link>` 标签、`llms-full.txt` —— 不进分母 |
+| 支柱 | 分值 | 在问什么 |
+|---|:-:|---|
+| **可被抓取** —— *门槛* | 15 | 检索爬虫拿不拿得到这一页？`robots.txt`、10 个 AI UA 的实测可达性、正文是否服务端渲染 |
+| **可被理解** | 22 | 它能不能看懂这是什么页、你是哪家公司？`Organization` + `WebSite`、`llms.txt`、sitemap、面包屑、页型 schema |
+| **内容可被引用** | **35** | 这里有没有值得引用的东西？自足答案段、标题是否匹配人的提问措辞、数据带出处、真实署名、时间信号 |
+| **品牌可信** | 18 | 引擎凭什么信你？知识图谱实体、第三方收录、可解析的 `sameAs`、视频存在 |
+| **问答适配** | 10 | 内容的形态便不便于被摘进一个答案？ |
 
 内容可被引用权重最高是有意的：回答引擎检索的是**段落**，不是域名。
 段落的结构比域名的权威更常起决定作用——这一点和传统 SEO 的直觉相反。
 
-**每个计分项都是阶梯给分**，2–4 档，取证据实际满足的最高档，每一档写的是具体页数而不是「多数」。
-加分项不分档。阶梯的作用是让站点能体现部分进展、让复审能看出移动。
-在我们那五个站的样本上跨度是 18 分、v1.0 是 17 分——五个同梯队的站，
-这个差别不足以证明任何一方（[数据](rubric/calibration-v1.1.zh-CN.md)）。
-
-**其中三项是门槛。** `g.robots`、`g.reachable`、`g.ssr` 任一未拿满，
-就绪度总分封顶 40——因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
+**每个计分项都是阶梯给分**——2 到 4 档，每一档写的是 8 个抽样页里的具体页数，
+所以两个人给同一个站打分，在算术上不会有分歧。**其中三项是门槛**：
+爬虫可达性、实测可达、服务端渲染，任一项得 0 分则总分封顶 40——
+因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
 
 ### 分数段
 
@@ -98,117 +102,67 @@ git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-scor
 |:-:|:-:|:-:|:-:|:-:|
 | 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
 
-档名描述的是**所处阶段，不是判决**。这是一份用来决定下一步做什么的诊断。
-外部基准显示多数商业网站落在 30–55 之间——四十几分是常态，不是警报。
+档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
+所以四十几分是常态，不是警报。
 
-## 示例输出
+## 五个站点，公开打分
 
-<details>
-<summary><strong>一个小型 Shopify 店铺的 AIV 报告（点开）</strong></summary>
+不是截图——是[完整报告](examples/README.md)，每一项检查背后都有可复核的证据：
+状态码、字节数、十个 UA 的响应比对、到底是哪一句话算或不算自足答案段，
+以及一句「为什么落在这一档而不是上一档」。
 
-```
-AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
-Band: Early  —  5 points below Growing
+| 站点 | 就绪度 | 档 |
+|---|:-:|---|
+| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | **87** | 领先 |
+| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | **78** | 基础扎实 |
+| [stripe.com](examples/audits/v1.1/stripe.com.md) | **77** | 基础扎实 |
+| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | **70** | 基础扎实 |
+| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | **69** | 基础扎实 |
 
-Largest gaps
-  9 pts  0 of 8 pages open with a self-contained pass…  p2.answer-passages
-  6 pts  author is the brand name on 4 of 4 articles    p2.named-author
-  5 pts  llms.txt not found                             p1.llms-txt
+这五个是各自领域里做得最好的站，分数也确实如此。
+一个普通商业网站会明显低于这个区间——这正是把它们公开出来的意义。
 
-------------------------------------------------------------------------
+## 三种跑法
 
-Sampled (8 URLs)
-  /  /products/kettle  /products/grinder  /products/scale
-  /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
+**CLI** —— 不用装、无依赖、20 秒。
 
-  Reachable                    15 / 15   ← gate checks
-    ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
-    ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
-    ✓  primary content present without executing JS             5/5
-
-  Understandable               15 / 22
-    ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
-    ✗  llms.txt not found                                       0/5
-       tier 1 of 4 - tier 2 needs the file to exist and return 200
-    ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
-       tier 3 of 4
-    ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
-       tier 2 of 3 - tier 3 needs it on half the nested pages or more
-    ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
-
-  Content Citability            9 / 35
-    ✗  0 of 8 pages open with a self-contained passage          0/9
-       tier 1 of 4 - tier 2 needs 1 of the 8 sampled pages
-    ◐  2 of 8 headings phrased as a task or question            3/7
-       tier 2 of 4 - tier 3 needs 4 of 8
-    ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
-       tier 2 of 3 - tier 3 needs 6 of 8 with dateModified matching
-    ◐  11 numeric claims, 2 carry a source                      3/7
-       tier 2 of 4 - tier 3 needs 4 or more attributed
-    ✗  author is the brand name on 4 of 4 articles              0/6
-       tier 1 of 3 - tier 2 needs a real person's name, not the brand
-
-  Brand Credibility             2 / 18
-    ◐  listed in 2 directories                                  2/4
-       tier 2 of 4 - tier 3 needs 3 or 4
-    ✗  no independent coverage found                            0/4
-       tier 1 of 4 - tier 2 needs occasional mentions
-    ✗  no Wikidata or Wikipedia entity                          0/4
-    ✗  sameAs not declared                                      0/3
-       tier 1 of 3 — absent scores 0, it is not excluded
-    ✗  no official video channel                                0/3
-       tier 1 of 3 - tier 2 needs a channel with some content
-
-  Answer Fit                    4 / 8
-    ◐  headings present, paragraphs run long                    2/4
-       tier 2 of 3 - tier 3 needs lists or tables and shorter paragraphs
-    ◐  3 of 10 common buyer questions answered on site          2/4
-       tier 2 of 4 - tier 3 needs 6 of 10
-
-  ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
-
-  Bonus checks: none found (+0, outside the denominator; caps at +6)
-
-Citation performance — not scored
-  Whether engines actually cite this site is an outcome, not a property of the site.
-  It is reported separately once query tests are run. A readiness score says engines
-  *can* cite you; it does not say they *do*.
+```bash
+python3 cli/geo_score.py example.com            # 人读
+python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
+python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
 ```
 
-</details>
+**GitHub Action** —— 每次 push 都打分，退步就让构建失败。
 
-怎么读这份报告：[`examples/sample-report.md`](examples/sample-report.md)。
-每份真实报告必须带四样：**口径版本**、**审计日期**、**距下一档还差几分**、
-以及**哪些项退出了分母、为什么**。
+```yaml
+- uses: jianruntech/geo-score@v1
+  with:
+    url: https://example.com
+    fail-under: 40
+```
 
-## 五份真实审计，以及它们改变了什么
+**Claude Code 技能** —— CLI 只能测静态抓取看得见的东西。
+有四项需要站外检索或人的判断，技能把这些也做了。
 
-我们写完 v1.0，在对外宣布之前先拿五个公开站点实测。它把 anthropic.com 判成了**危急**——
-一个对十个检索爬虫全部返回 200、响应与浏览器逐字节一致、正文 60KB 服务端渲染的站。
-那是标定没通过，所以直接发了 v1.1，两版都公开。
+```bash
+git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
+# 然后：/geo-score audit https://example.com
+```
 
-| 站点 | v1.0 | **v1.1** | 档 |
-|---|:-:|:-:|---|
-| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | 49% | **85 / 98 = 87%** | Leading |
-| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | 40% | **76 / 98 = 78%** | Solid |
-| [stripe.com](examples/audits/v1.1/stripe.com.md) | 51% | **77 / 100 = 77%** | Solid |
-| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | 36% | **69 / 98 = 70%** | Solid |
-| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | 34% | **69 / 100 = 69%** | Solid |
+CLI 会把那四项**退出分母**而不是猜，所以它给出的分比完整审计略低——
+对一个已经有品牌积累的站，通常低 5 到 15 分，因为收录和第三方提及是 CLI 看不见的。
 
-每一项检查都带可复核的证据：状态码、字节数、十个 UA 的响应比对、
-到底是哪一句话算或不算自足答案段，以及一句「为什么落在这一档而不是上一档」。
-每份审计末尾都有审计者自己的存疑。[v1.0 的那五份](examples/audits/)原样保留——
-它们正是发现问题的证据。
+## 为什么发布口径，而不只发工具
 
-**重跑的时候又发现了第二个设计错误。** 在 v1.1 的第一版规则下，
-stripe.com 原始分 77/100、nextjs.org 85/98，却双双显示为 **40%、起步期**——
-因为当时的门槛规则是「任一门槛项未拿满即封顶」。nextjs.org 的 `robots.txt` 全文 40 字节、
-连一个 User-agent 组都没有，等于全放行，却因此只拿 3/5 并把整站封顶。
-这是 v1.0 的错误换了个位置重演：把「没做到最好」当成「根本不通」。
-现在封顶只在门槛项得 0 分时触发。
+一个你没法复核的分数，就是别人编出来的数字。所以规范本身才是产品，工具只是它的实现：
 
-推理过程见[标定记录](rubric/calibration-v1.1.zh-CN.md)，
-第一轮定掉的八条歧义见[待决问题](rubric/open-questions.md)。
+- **带版本号。** 每个分数都要报口径版本。`71（v1.1）`是一个主张，`71` 不是。
+- **阶梯给分，写明页数。** 每一档写的是 8 页里的具体页数，不是「多数」。
+- **必须有证据。** 每一项都要留一个别人能复现的观察。
+- **对着公开基准标定过**，并[公开了标定记录](rubric/calibration-v1.1.zh-CN.md)——包括档位线所对照的四份外部数据，以及真实审计暴露、v1.1 逐条定掉的[八处口径歧义](rubric/open-questions.zh-CN.md)。
+- **机器可读。** [`rubric/v1.1.json`](rubric/v1.1.json) 带永久 check id，[`schema/report.v2.json`](schema/report.v2.json) 让不同实现跑出来的结果可以互相比较。
+
+用你自己的技术栈实现它、对某个权重有异议，[开一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)。这是我们最希望收到的贡献。
 
 ## 边界 · 这个仓库不做什么
 

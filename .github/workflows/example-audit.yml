@@ -1,0 +1,21 @@
+# Example: score a site on every push and on a weekly schedule.
+# Copy this into your own repository and change the url.
+name: AI visibility
+on:
+  push: {branches: [main]}
+  schedule: [{cron: "0 6 * * 1"}]
+  workflow_dispatch:
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jianruntech/geo-score@v1
+        id: geo
+        with:
+          url: https://example.com
+          fail-under: 40           # remove this to report without failing the build
+          json-out: geo-score.json
+      - run: echo "Scored ${{ steps.geo.outputs.score }} — ${{ steps.geo.outputs.band }}"
+      - uses: actions/upload-artifact@v4
+        with: {name: geo-score-report, path: geo-score.json}

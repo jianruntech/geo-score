@@ -21,8 +21,9 @@
   <text x="72" y="426" font-family="system-ui,-apple-system,sans-serif" font-size="19" fill="#7E8B84">find, parse, trust and <tspan fill="#4FAE80" font-weight="600">cite</tspan> your site?</text>
 
   <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" letter-spacing="1.6" fill="#5F6761">
-    <text x="72" y="500">25 CHECKS · TIERED · 100 POINTS</text>
-    <text x="72" y="528">VERSIONED · MIT · IMPLEMENT IT YOURSELF</text>
+    <text x="72" y="492">21 TIERED CHECKS · 100 POINTS · VERSIONED</text>
+    <text x="72" y="518">PYTHON, ZERO DEPENDENCIES, 20 SECONDS</text>
+    <text x="72" y="544" fill="#4FAE80">curl -sL .../geo_score.py | python3 - yoursite.com</text>
   </g>
 
   <rect x="676" y="96" width="532" height="448" fill="#101913" stroke="#2C3B33" stroke-width="1"/>

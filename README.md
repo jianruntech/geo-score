@@ -4,224 +4,171 @@
 
 # geo-score
 
-**An open, versioned rubric for Generative Engine Optimization — score any site 0–100
-on whether AI answer engines can find, parse, trust and cite it.**
-
-The rubric it publishes is the **AIV score** (AI Visibility). 21 tiered checks totalling
-100 points, plus 4 bonus checks worth up to +6 outside the denominator — one
-specification anyone can implement.
+**Will ChatGPT cite your site? Score it in 20 seconds.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-> **GEO here means Generative Engine Optimization** — getting cited by ChatGPT,
-> Perplexity, Google AI Overviews, Gemini and Copilot. It has nothing to do with
-> geography, maps or geolocation.
+```bash
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+  | python3 - stripe.com
+```
 
-[Rubric](rubric/v1.1.md) · [Quickstart](#quickstart) · [What it checks](#what-it-checks) ·
-[Sample output](#sample-output) · [Scope](#scope--what-this-does-not-do) · [Research](#research-behind-the-weights)
+```
+  AIV READINESS  https://stripe.com
+──────────────────────────────────────────────────────────────────────────
+  71 / 100   Solid
+  12 points to Leading
+
+  Reachable 11/15
+   ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
+   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ◐ Main content server-rendered     ███████████░░░░░░░  3/5
+  Understandable 15/22
+   ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
+   ✓ llms.txt present and structured  ██████████████████  5/5
+   ✓ Organization + WebSite schema    ██████████████████  6/6
+   ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
+   ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
+  Content Citability 25/35
+   ✓ Self-contained answer passages   ██████████████████  9/9
+   ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
+   ◐ Freshness signal present         █████████░░░░░░░░░  3/6
+   ✓ Statistics carry a source        ██████████████████  7/7
+   ◐ Named, verifiable authorship     █████████░░░░░░░░░  3/6
+  Brand Credibility 8/10
+   ⊘ Third-party listings             ··················   —
+   ⊘ Independent mentions             ··················   —
+   ✓ Knowledge-graph entity           ██████████████████  4/4
+   ◐ sameAs links resolve             ████████████░░░░░░  2/3
+   ◐ Video and multimodal presence    ████████████░░░░░░  2/3
+  Answer Fit 2/4
+   ◐ Content shaped for extraction    █████████░░░░░░░░░  2/4
+   ⊘ Covers the questions people ask  ··················   —
+   ⊘ Chinese engine readiness         ··················   —
+
+  Scored 61 / 86 observable · 4 checks left the denominator · rubric v1.1
+  Needs judgement: p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines
+
+  Full rubric and what each tier means:
+  https://github.com/jianruntech/geo-score
+```
+
+Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
+a score against a **published, versioned rubric** — not a black box.
+
+> **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
+> Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
 
 ---
 
+## Why this is a different question from SEO
+
 Classic SEO asks *where do I rank*. Answer engines don't rank — they retrieve passages,
-decide whether a source is worth quoting, and cite it. That is a different question,
-and it has different failure modes: a site can sit at position 3 on Google and never be
-quoted, while a page nobody links to gets cited daily because its passages are clean.
+decide whether a source is worth quoting, and cite it. Different question, different
+failure modes: a site can sit at position 3 on Google and never be quoted, while a page
+nobody links to gets cited daily because its passages are clean.
 
-**AIV Score is the measurement half of that problem.** It is a published, versioned
-rubric — 21 tiered checks adding to 100, plus 4 bonus checks outside the denominator —
-and a Claude Code skill that runs it.
-
-It deliberately stops at measurement. See [Scope](#scope--what-this-does-not-do).
-
-## Who this is for
-
-- **Site owners** who want a number they can track month over month, and a list of what specifically is failing
-- **Agencies and consultants** who need a defensible, auditable score to show a client instead of "trust me, it's better now"
-- **Anyone building GEO tooling** who wants a shared rubric so scores mean the same thing across tools
-
-## Why publish a rubric instead of just a tool
-
-Most GEO tools give you a number and keep the method. That number is unfalsifiable —
-you cannot check it, cannot reproduce it, and cannot compare it to anything.
-
-A published rubric is checkable. You can disagree with a weight and say why. You can
-implement it yourself and see whether your result matches ours. You can hand a client
-a score and a spec, and they can audit both.
-
-That is the whole bet here: **a measure that everyone can run is worth more than a
-measure only we can run** — even though we sell the remediation on the other side of it.
-
-## Quickstart
-
-```bash
-# Install as a Claude Code skill
-git clone https://github.com/jianruntech/geo-score.git ~/.claude/skills/geo-score
-```
-
-Restart Claude Code, then:
-
-```
-/geo-score audit https://example.com
-```
-
-**Verify it installed:** type `/geo-score` with no arguments. You should see the
-command list. If nothing appears, check that the clone landed in `~/.claude/skills/`
-and that the folder contains `SKILL.md`.
-
-You do not need Claude Code to use this. The [rubric](rubric/v1.1.md) is a plain
-specification — score a site by hand, or implement it in your own tool.
+Most of what determines this is **mechanical and cheap to fix** — a `robots.txt` line, a
+JSON-LD block, a date in a template, a paragraph rewritten so it stands on its own. The
+hard part is knowing which of them you are missing, and what each one is worth.
 
 ## What it checks
 
-Full specification with tier conditions: **[rubric/v1.1.md](rubric/v1.1.md)** ·
-[简体中文](rubric/v1.1.zh-CN.md)
+21 tiered checks totalling 100 points, plus 4 bonus checks worth up to +6 outside the
+denominator. Full specification: **[rubric/v1.1.md](rubric/v1.1.md)** · [简体中文](rubric/v1.1.zh-CN.md)
 
-| Pillar | Pts | Checks | Examples |
-|---|:-:|:-:|---|
-| Reachable — *gates* | 15 | 3 | Retrieval crawlers allowed in `robots.txt`, all 10 actually served 200, content in server-rendered HTML |
-| Understandable | 22 | 5 | `Organization` + `WebSite`, `llms.txt` with sectioned link groups, `BreadcrumbList`, page-type schema |
-| **Content Citability** | **35** | 5 | Self-contained answer passages, headings that match how people ask, sourced statistics, real bylines, freshness |
-| Brand Credibility | 18 | 5 | Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
-| Answer Fit | 10 | 3 | Extractable content shape, coverage of the questions buyers actually ask |
-| *Bonus* | *+6* | *4* | `ai.txt`, `speakable`, GEO `<link>` tags, `llms-full.txt` — outside the denominator |
+| Pillar | Pts | Asks |
+|---|:-:|---|
+| **Reachable** — *gates* | 15 | Can a retrieval crawler get the page at all? `robots.txt`, live reachability across 10 AI user-agents, server-rendered content |
+| **Understandable** | 22 | Can it tell what the page and the company are? `Organization` + `WebSite`, `llms.txt`, sitemap, breadcrumbs, page-type schema |
+| **Content Citability** | **35** | Is there anything here worth quoting? Self-contained answer passages, headings that match how people ask, sourced figures, real bylines, freshness |
+| **Brand Credibility** | 18 | Why should an engine trust it? Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
+| **Answer Fit** | 10 | Is the content shaped to be lifted into an answer? |
 
 Content Citability carries the most weight on purpose: answer engines retrieve
-**passages**, not domains. Structure of the passage beats authority of the domain more
-often than classic SEO intuition expects.
+**passages**, not domains. Passage shape beats domain authority more often than classic
+SEO intuition expects.
 
-**Every scored check is tiered**, 2–4 tiers each — you take the highest tier the evidence
-satisfies, and each tier states a page count rather than "most". Bonus checks are not
-tiered. Tiers exist so a site can show partial progress and so a re-audit can detect movement.
-On our five-site sample the spread was 18 points against v1.0's 17 — five sites in the
-same tier is too small a sample to prove anything either way
-([the numbers](rubric/calibration-v1.1.md)).
-
-**Three checks are gates.** Miss full marks on `g.robots`, `g.reachable` or `g.ssr` and
-readiness caps at 40, because until a crawler can reach the content, nothing else you
+**Every scored check is tiered** — 2 to 4 tiers, each naming a count out of the 8 sampled
+pages, so two people scoring the same site agree on the arithmetic. **Three checks are
+gates**: score zero on crawler access, live reachability or server-rendered content and
+the result caps at 40, because until a crawler can reach the content nothing else you
 change has any effect.
 
-### Score bands
+### Bands
 
 | 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
 |:-:|:-:|:-:|:-:|:-:|
 | Not started | Early | Growing | Solid | Leading |
 
-Band names describe a **stage, not a verdict**. This is a diagnostic meant to decide what
-to do next. External benchmarks put most business sites in the 30–55 range — a score in
-the forties is ordinary, not alarming.
+Band names describe a **stage, not a verdict**. External benchmarks put most business
+sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
-## Sample output
+## Five sites, scored in public
 
-<details>
-<summary><strong>AIV report for a small Shopify storefront (click to expand)</strong></summary>
+Not screenshots — [full reports](examples/README.md) with reproducible evidence behind
+every check: status codes, byte counts, hashes compared across ten user-agents, the
+actual sentence that did or did not qualify, and a line saying why each score landed on
+that tier rather than the next one.
 
-```
-AIV Readiness 45 / 98  (rubric v1.1)  ·  normalised 46%  ·  2026-09-08
-Band: Early  —  5 points below Growing
+| Site | Readiness | Band |
+|---|:-:|---|
+| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | **87** | Leading |
+| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | **78** | Solid |
+| [stripe.com](examples/audits/v1.1/stripe.com.md) | **77** | Solid |
+| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | **70** | Solid |
+| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | **69** | Solid |
 
-Largest gaps
-  9 pts  0 of 8 pages open with a self-contained pass…  p2.answer-passages
-  6 pts  author is the brand name on 4 of 4 articles    p2.named-author
-  5 pts  llms.txt not found                             p1.llms-txt
+These five are among the best-built sites in their categories, and they score like it.
+A typical business site scores well below this — which is the point of publishing them.
 
-------------------------------------------------------------------------
+## Three ways to run it
 
-Sampled (8 URLs)
-  /  /products/kettle  /products/grinder  /products/scale
-  /blog/pour-over-ratio  /blog/grind-size  /blog/water-temp  /blog/storage
+**CLI** — no install, no dependencies, 20 seconds.
 
-  Reachable                    15 / 15   ← gate checks
-    ✓  robots.txt names all 10 retrieval UAs under Allow        5/5
-    ✓  all 10 retrieval UAs return 200, byte-identical to a b…  5/5
-    ✓  primary content present without executing JS             5/5
-
-  Understandable               15 / 22
-    ✓  sitemap.xml resolves, declared in robots.txt, lastmod …  4/4
-    ✗  llms.txt not found                                       0/5
-       tier 1 of 4 - tier 2 needs the file to exist and return 200
-    ◐  Organization + WebSite sitewide, logo resolves — no sa…  5/6
-       tier 3 of 4
-    ◐  BreadcrumbList on 3 of 7 nested pages                    2/3
-       tier 2 of 3 - tier 3 needs it on half the nested pages or more
-    ✓  Product + Offer on 3 of 3 product pages, price and ava…  4/4
-
-  Content Citability            9 / 35
-    ✗  0 of 8 pages open with a self-contained passage          0/9
-       tier 1 of 4 - tier 2 needs 1 of the 8 sampled pages
-    ◐  2 of 8 headings phrased as a task or question            3/7
-       tier 2 of 4 - tier 3 needs 4 of 8
-    ◐  visible dates on 4 blog posts, none on 4 product pages   3/6
-       tier 2 of 3 - tier 3 needs 6 of 8 with dateModified matching
-    ◐  11 numeric claims, 2 carry a source                      3/7
-       tier 2 of 4 - tier 3 needs 4 or more attributed
-    ✗  author is the brand name on 4 of 4 articles              0/6
-       tier 1 of 3 - tier 2 needs a real person's name, not the brand
-
-  Brand Credibility             2 / 18
-    ◐  listed in 2 directories                                  2/4
-       tier 2 of 4 - tier 3 needs 3 or 4
-    ✗  no independent coverage found                            0/4
-       tier 1 of 4 - tier 2 needs occasional mentions
-    ✗  no Wikidata or Wikipedia entity                          0/4
-    ✗  sameAs not declared                                      0/3
-       tier 1 of 3 — absent scores 0, it is not excluded
-    ✗  no official video channel                                0/3
-       tier 1 of 3 - tier 2 needs a channel with some content
-
-  Answer Fit                    4 / 8
-    ◐  headings present, paragraphs run long                    2/4
-       tier 2 of 3 - tier 3 needs lists or tables and shorter paragraphs
-    ◐  3 of 10 common buyer questions answered on site          2/4
-       tier 2 of 4 - tier 3 needs 6 of 10
-
-  ⊘ p4.cn-engines  not applicable — no Chinese-market presence  (−2 from the denominator)
-
-  Bonus checks: none found (+0, outside the denominator; caps at +6)
-
-Citation performance — not scored
-  Whether engines actually cite this site is an outcome, not a property of the site.
-  It is reported separately once query tests are run. A readiness score says engines
-  *can* cite you; it does not say they *do*.
+```bash
+python3 cli/geo_score.py example.com            # human-readable
+python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
+python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
 ```
 
-</details>
+**GitHub Action** — score on every push, fail the build when it regresses.
 
-Full walkthrough of how to read it: [`examples/sample-report.md`](examples/sample-report.md).
+```yaml
+- uses: jianruntech/geo-score@v1
+  with:
+    url: https://example.com
+    fail-under: 40
+```
 
-## Five real audits, and what they changed
+**Claude Code skill** — the CLI measures what a static fetch can see. Four checks need
+off-site search or human judgement, and the skill does those too.
 
-We wrote v1.0, then ran it against five public sites before announcing it. It labelled
-anthropic.com — a site returning 200 to all ten retrieval crawlers, byte-identical to a
-browser, with 60 KB of server-rendered prose — as **Critical**. That is a failed
-calibration check, so v1.1 shipped instead, and both are published.
+```bash
+git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
+# then: /geo-score audit https://example.com
+```
 
-| Site | v1.0 | **v1.1** | Band |
-|---|:-:|:-:|---|
-| [nextjs.org](examples/audits/v1.1/nextjs.org.md) | 49% | **85 / 98 = 87%** | Leading |
-| [svelte.dev](examples/audits/v1.1/svelte.dev.md) | 40% | **76 / 98 = 78%** | Solid |
-| [stripe.com](examples/audits/v1.1/stripe.com.md) | 51% | **77 / 100 = 77%** | Solid |
-| [anthropic.com](examples/audits/v1.1/anthropic.com.md) | 36% | **69 / 98 = 70%** | Solid |
-| [mingdao.com](examples/audits/v1.1/mingdao.com.md) | 34% | **69 / 100 = 69%** | Solid |
+The CLI leaves those four checks out of the denominator rather than guessing, so it
+reads a little lower than a full audit — typically by 5 to 15 points on an established
+brand, which has listings and mentions the CLI cannot see.
 
-Every check carries reproducible evidence: status codes, byte counts, hashes compared
-across ten user-agents, the actual sentence that did or did not qualify, and a line
-saying why the score landed on that tier rather than the next one. Every audit ends with
-the auditor's own caveats. The [v1.0 runs](examples/audits/) are kept unaltered — they are
-the evidence that found the problem.
+## Why a rubric, not just a tool
 
-**Re-running them found a second design error.** Under the first draft of v1.1,
-stripe.com scored 77/100 and nextjs.org 85/98 — and both displayed as **40%, Early**,
-because the gate rule capped any site whose gate checks fell short of full marks.
-nextjs.org has a 40-byte `robots.txt` with no user-agent groups at all, which allows
-everything; that scored 3 of 5 and capped the site. It was v1.0's mistake in a new place:
-treating *not ideal* as *not working*. Gates now cap only at tier zero.
+A score you cannot audit is a number someone made up. So the specification is the
+product, and the tools are implementations of it:
 
-Read the [calibration record](rubric/calibration-v1.1.md) for the reasoning against four
-external benchmarks, or the [eight ambiguities](rubric/open-questions.md) the first round
-settled.
+- **Versioned.** Every score reports the rubric version. `71 (v1.1)` is a claim; `71` is not.
+- **Tiered, with counts.** Each tier names a page count out of 8, not "most".
+- **Evidence-bound.** Every check requires an observation someone else can reproduce.
+- **Calibrated against public benchmarks**, with [the record published](rubric/calibration-v1.1.md) — including the four external sources the thresholds were checked against, and the [eight specification ambiguities](rubric/open-questions.md) that real audits surfaced and v1.1 settled.
+- **Machine-readable.** [`rubric/v1.1.json`](rubric/v1.1.json) with stable check ids, and [`schema/report.v2.json`](schema/report.v2.json) so results from different implementations are comparable.
+
+Implement it in your own stack, disagree with a weight, [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml). That is the main thing we want contributions on.
 
 ## Scope — what this does *not* do
 
