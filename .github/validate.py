@@ -83,7 +83,7 @@ for r in rub:
     bad = [x.strip() for x in rows if x.strip() not in ("prop.", "all/none")]
     check(not bad, f"rubric/{r}: checks missing a valid Credit value: {bad[:3]}")
 
-# 8 · cover 图里的数字必须与示例报告一致
+# 8 · cover 图里的数字必须与示例报告一致（按出现次数比对，重复值不会互相掩盖）
 if os.path.exists("assets/cover.svg"):
     cv = io.open("assets/cover.svg", encoding="utf-8").read()
     sr = io.open("examples/sample-report.md", encoding="utf-8").read()
@@ -92,10 +92,15 @@ if os.path.exists("assets/cover.svg"):
         check(f">{hm.group(1)}<" in cv, f"cover.svg: score {hm.group(1)} not shown")
         check(f"/ {hm.group(2)}" in cv, f"cover.svg: observable max {hm.group(2)} not shown")
     pm = re.search(r'normalised (\d+)%', sr)
-    if pm: check(f"NORMALISED {pm.group(1)}%" in cv, f"cover.svg: normalised % out of sync")
-    for m in re.finditer(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)', sr, re.M):
-        check(f">{m.group(2)}/{m.group(3)}<" in cv,
-              f"cover.svg: {m.group(1)} shows a value other than {m.group(2)}/{m.group(3)}")
+    if pm:
+        check(f"NORMALISED {pm.group(1)}%" in cv, "cover.svg: normalised % out of sync")
+    from collections import Counter
+    want = Counter(f"{m.group(2)}/{m.group(3)}"
+                   for m in re.finditer(r'^  ([A-Z][A-Za-z ]+?)\s{2,}(\d+) / (\d+)', sr, re.M))
+    got = Counter(re.findall(r'>(\d+/\d+)<', cv))
+    check(want == got,
+          f"cover.svg pillar values out of sync with sample report — "
+          f"report has {dict(want)}, cover has {dict(got)}")
 
 if fail:
     print("FAIL")
