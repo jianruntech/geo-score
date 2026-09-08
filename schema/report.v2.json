@@ -23,6 +23,11 @@
       "pattern": "^v1\\.[1-9]\\d*$",
       "description": "The rubric this was scored against. A score without it is not comparable to anything."
     },
+    "tool": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Which implementation produced this report, e.g. \"geo-score-cli/1.1.0\". Optional, but it makes two reports of the same site comparable — a heuristic tool and a human auditor will legitimately differ on the judgement-bound checks."
+    },
     "audited_at": {
       "type": "string",
       "format": "date",
@@ -121,14 +126,31 @@
         },
         "allOf": [
           {
+            "description": "A scored check must show the tier it reached and the evidence for it. Bonus checks (ids starting b.) are not tiered, so they need no tier_reason.",
             "if": {
-              "properties": {
-                "state": {
-                  "const": "scored"
+              "allOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "scored"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ]
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "id": {
+                        "pattern": "^b\\."
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ]
+                  }
                 }
-              },
-              "required": [
-                "state"
               ]
             },
             "then": {
@@ -137,6 +159,38 @@
                 "max",
                 "evidence",
                 "tier_reason"
+              ]
+            }
+          },
+          {
+            "if": {
+              "allOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "scored"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ]
+                },
+                {
+                  "properties": {
+                    "id": {
+                      "pattern": "^b\\."
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "required": [
+                "points",
+                "max"
               ]
             }
           },

@@ -49,6 +49,10 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
    ◐ Content shaped for extraction    █████████░░░░░░░░░  2/4
    ⊘ Covers the questions people ask  ··················   —
    ⊘ Chinese engine readiness         ··················   —
+  Biggest gaps
+   +4   Headings match how people ask    about half do
+   +3   Named, verifiable authorship     and the name links to a verifiable identity page
+   +3   Freshness signal present         most pages do, and dateModified agrees with the visible date
 
   Scored 61 / 86 observable · 4 checks left the denominator · rubric v1.1
   Needs judgement: p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines

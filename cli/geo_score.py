@@ -168,6 +168,191 @@ SPEC = [
  ("p4.question-coverage","Answer Fit","Covers the questions people ask",4,[0,2,3,4]),
  ("p4.cn-engines","Answer Fit","Chinese engine readiness",2,[0,1,2]),
 ]
+TIERS = {
+    "g.robots": [
+        [0,
+            "robots.txt carries a Disallow that applies to retrieval user-agents"],
+        [3,
+            "no explicit Disallow, but no explicit Allow either"],
+        [5,
+            "mainstream retrieval user-agents explicitly allowed"]
+    ],
+    "g.reachable": [
+        [0,
+            "most retrieval user-agents are blocked"],
+        [3,
+            "some are blocked, or the body differs from what a browser receives"],
+        [5,
+            "all 10 retrieval user-agents return 200 with matching content"]
+    ],
+    "g.ssr": [
+        [0,
+            "body copy exists only after JavaScript runs"],
+        [3,
+            "present on some sampled pages"],
+        [5,
+            "present in the HTML response on every sampled page"]
+    ],
+    "p1.sitemap": [
+        [0,
+            "cannot be discovered, or does not return 200"],
+        [2,
+            "discoverable and returns 200"],
+        [4,
+            "and lastmod covers most URLs"]
+    ],
+    "p1.llms-txt": [
+        [0,
+            "absent"],
+        [2,
+            "present and returns 200"],
+        [4,
+            "carries a site definition passage"],
+        [5,
+            "and has 2+ topic sections that contain links"]
+    ],
+    "p1.organization": [
+        [0,
+            "neither present"],
+        [3,
+            "one of the two present"],
+        [5,
+            "both present with name, url and logo"],
+        [6,
+            "and the logo resolves, with sameAs declared"]
+    ],
+    "p1.breadcrumb": [
+        [0,
+            "absent"],
+        [2,
+            "present on some nested pages"],
+        [3,
+            "present across nested pages"]
+    ],
+    "p1.page-type": [
+        [0,
+            "absent"],
+        [2,
+            "present on some page types"],
+        [4,
+            "present across applicable page types with real field values"]
+    ],
+    "p2.answer-passages": [
+        [0,
+            "none on the sampled pages"],
+        [4,
+            "on a few pages"],
+        [7,
+            "on half the pages"],
+        [9,
+            "on most pages"]
+    ],
+    "p2.question-intent": [
+        [0,
+            "headings are mostly keyword strings or brand labels"],
+        [3,
+            "a few headings read like a question someone would ask"],
+        [5,
+            "about half do"],
+        [7,
+            "most do"]
+    ],
+    "p2.freshness": [
+        [0,
+            "no date in the page or in structured data"],
+        [3,
+            "some pages carry a visible date or datePublished"],
+        [6,
+            "most pages do, and dateModified agrees with the visible date"]
+    ],
+    "p2.sourced-stats": [
+        [0,
+            "figures and claims carry no source"],
+        [3,
+            "some are attributed"],
+        [5,
+            "most are attributed"],
+        [7,
+            "most are attributed and the source is clickable and checkable"]
+    ],
+    "p2.named-author": [
+        [0,
+            "no byline, or the byline is the organisation"],
+        [3,
+            "bylined to a real person"],
+        [6,
+            "and the name links to a verifiable identity page"]
+    ],
+    "p3.listings": [
+        [0,
+            "none"],
+        [2,
+            "1–2"],
+        [3,
+            "3–4"],
+        [4,
+            "5 or more"]
+    ],
+    "p3.mentions": [
+        [0,
+            "none"],
+        [2,
+            "occasional mentions"],
+        [3,
+            "independent coverage or reviews exist"],
+        [4,
+            "sustained mentions across channels"]
+    ],
+    "p3.knowledge-graph": [
+        [0,
+            "no corresponding entry"],
+        [4,
+            "an entry exists in Wikidata, Wikipedia, Baidu Baike or similar"]
+    ],
+    "p3.sameas": [
+        [0,
+            "not declared, or most do not resolve"],
+        [2,
+            "declared but some are dead"],
+        [3,
+            "all resolve and belong to the brand"]
+    ],
+    "p3.video": [
+        [0,
+            "no official video"],
+        [2,
+            "a channel exists but content is sparse"],
+        [3,
+            "sustained output, with VideoObject on site"]
+    ],
+    "p4.answer-shape": [
+        [0,
+            "long paragraphs, no hierarchy"],
+        [2,
+            "subheadings present but paragraphs run long"],
+        [4,
+            "subheadings, lists and tables with paragraphs of workable length"]
+    ],
+    "p4.question-coverage": [
+        [0,
+            "0–2 of 10 covered"],
+        [2,
+            "3–5 covered"],
+        [3,
+            "6–8 covered"],
+        [4,
+            "9–10 covered"]
+    ],
+    "p4.cn-engines": [
+        [0,
+            "crawling blocked, or filing information absent"],
+        [1,
+            "crawlable"],
+        [2,
+            "crawlable with ICP filing and entity information complete"]
+    ]
+}
+
 BONUS = [("b.llms-full","llms-full.txt",2),("b.ai-txt","ai.txt",2),
          ("b.geo-link","GEO link tags",1),("b.speakable","speakable markup",1)]
 BANDS = [(83,"Leading"),(66,"Solid"),(51,"Growing"),(31,"Early"),(0,"Not started")]
@@ -176,6 +361,19 @@ GATE_CAP, BONUS_CAP = 40, 6
 NEEDS_JUDGEMENT = {"p3.listings","p3.mentions","p4.question-coverage"}
 
 def band(p): return next(n for t, n in BANDS if p >= t)
+
+def tier_reason(cid, t, mx):
+    """The one line worth reading: which tier the evidence reached, and what the next
+    one asks for. Generated from the rubric's own tier conditions."""
+    ts = TIERS.get(cid)
+    if not ts: return ""
+    pts = [p for p, _ in ts]
+    try: idx = pts.index(t)
+    except ValueError: idx = max(i for i, p in enumerate(pts) if p <= t)
+    here = "tier %d of %d" % (idx + 1, len(ts))
+    if t >= mx: return "%s — top tier: %s" % (here, ts[idx][1])
+    nxt = ts[idx + 1]
+    return "%s — tier %d (+%d) needs: %s" % (here, idx + 2, nxt[0] - t, nxt[1])
 
 # ── sampling ───────────────────────────────────────────────────────────────
 def discover(base, want=8, verbose=False):
@@ -650,8 +848,20 @@ def report(res, args):
             c.green + "✓" + c.r if t == mx else (c.red + "✗" + c.r if t == 0 else c.amber + "◐" + c.r))
         print("   %s %-32s %s %s%s%s" % (mark, name[:32], bar(t, mx),
               c.grey, ("  —" if t is None else "%2d/%d" % (t, mx)), c.r))
-        if args.explain and e: print("      %s%s%s" % (c.dim, e[:110], c.r))
-    print()
+        if args.explain:
+            if t is not None:
+                tr = tier_reason(cid, t, mx)
+                if tr: print("      %s%s%s" % (c.brass, tr[:112], c.r))
+            if e: print("      %s%s%s" % (c.dim, e[:112], c.r))
+    gaps = sorted([(mx - t, cid, name, tier_reason(cid, t, mx))
+                   for cid, pil, name, t, mx, e in rows if t is not None and t < mx],
+                  reverse=True)[:3]
+    if gaps:
+        print("  %sBiggest gaps%s" % (c.b, c.r))
+        for d, cid, name, tr in gaps:
+            need = tr.split("needs: ", 1)[-1] if "needs: " in tr else ""
+            print("   %s+%-2d%s  %-32s %s%s%s" % (c.brass, d, c.r, name, c.grey, need[:60], c.r))
+        print()
     if b: print("  %s+%d bonus%s (outside the denominator)" % (c.brass, b, c.r))
     skipped = [r for r in rows if r[3] is None]
     print("  %sScored %d / %d observable · %d checks left the denominator · rubric %s%s"
@@ -666,11 +876,14 @@ def report(res, args):
 def as_json(res):
     rows, total, den, b, norm, bd, capped = score(res)
     return dict(rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
+        audited_at=time.strftime("%Y-%m-%d"),
         target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"],
         readiness=total, observable_max=den, normalised=norm, band=bd,
         gate_capped=capped, bonus_awarded=b,
         checks=[dict(id=cid, state="scored" if t is not None else "unobservable",
-                     **({"points": t, "max": mx, "evidence": e} if t is not None else {"reason": e}))
+                     **({"points": t, "max": mx, "evidence": e,
+                         "tier_reason": tier_reason(cid, t, mx)}
+                        if t is not None else {"reason": e}))
                 for cid, pil, name, t, mx, e in rows]
                + [dict(id=bid, state="scored", points=res["bonus"].get(bid, 0), max=bpts,
                        evidence="Bonus check, outside the denominator.")

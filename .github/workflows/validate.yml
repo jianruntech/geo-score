@@ -37,10 +37,7 @@ jobs:
           python3 - <<'PY'
           import json, jsonschema
           rep = json.load(open("out.json"))
-          # the CLI leaves judgement-bound checks out, so validate the shape, not completeness
-          sch = json.load(open("schema/report.v2.json"))
-          sch = {**sch, "required": [k for k in sch["required"] if k != "sampled_urls"]}
-          jsonschema.validate(rep, sch)
+          jsonschema.validate(rep, json.load(open("schema/report.v2.json")))
           ids = {c["id"] for c in rep["checks"]}
           spec = {c["id"] for c in json.load(open("rubric/v1.1.json"))["checks"]}
           assert ids <= spec, f"CLI emitted unknown check ids: {sorted(ids - spec)}"
