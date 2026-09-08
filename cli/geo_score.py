@@ -113,7 +113,23 @@ def jsonld(h):
         elif isinstance(o, list):
             for x in o: walk(x)
     for o in out: walk(o)
-    return flat
+    return resolve_refs(flat)
+
+def resolve_refs(objs):
+    """Follow {"@id": "..."} references inside a @graph. Sites that use @graph name an
+    entity once and point at it everywhere else; a parser that does not follow the
+    pointer reports a page with a named author as having none."""
+    by_id = {o["@id"]: o for o in objs if isinstance(o.get("@id"), str) and len(o) > 1}
+    if not by_id: return objs
+    def deref(v, depth=0):
+        if depth > 3: return v
+        if isinstance(v, dict):
+            if set(v) == {"@id"} and v["@id"] in by_id:
+                return deref({k: x for k, x in by_id[v["@id"]].items() if k != "@id"}, depth + 1)
+            return {k: deref(x, depth + 1) for k, x in v.items()}
+        if isinstance(v, list): return [deref(x, depth + 1) for x in v]
+        return v
+    return [deref(o) for o in objs]
 
 def types_of(objs):
     t = []
