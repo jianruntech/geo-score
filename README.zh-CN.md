@@ -87,7 +87,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
-**[看 106 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一根本无法被引用。
+**[看 105 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一根本无法被引用。
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。
@@ -134,30 +134,30 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
 所以四十几分是常态，不是警报。
 
-## 106 个站点，公开打分
+## 105 个站点，公开打分
 
-**其中四分之一根本无法被引用。** 27 个站有门槛项得 0 分——检索爬虫压根拿不到内容。
+**其中四分之一根本无法被引用。** 25 个站有门槛项得 0 分——检索爬虫压根拿不到内容。
 其中 11 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可。
-**另有 13 个站的正文只在 JavaScript 跑完之后才存在**——内容是有的，浏览器看得见，
+**另有 11 个站的正文只在 JavaScript 跑完之后才存在**——内容是有的，浏览器看得见，
 爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。
 
-中位数 **59.5**，区间 14 到 92。
+中位数 **59**，区间 19 到 94。
 
 | 站点 | 分数 | 档 |
 |---|:-:|---|
+| pulumi.com | **94** | 领先 |
 | netlify.com | **92** | 领先 |
-| pulumi.com | **91** | 领先 |
+| zapier.com | **92** | 领先 |
 | bun.sh | **88** | 领先 |
-| prisma.io | **87** | 领先 |
 | clickup.com | **87** | 领先 |
 | … | | |
-| yuque.com | 18 | 未起步 |
-| aliyun.com | 16 | 未起步 |
-| booking.com | 14 | 未起步 |
+| qcloud.com | 22 | 未起步 |
+| feishu.cn | 19 | 未起步 |
+| yuque.com | 19 | 未起步 |
 
-**[完整榜单与分行业中位数 →](benchmark/README.md)** · [原始数据](benchmark/results.json) · [自己重跑](benchmark/run.py)
+**[完整榜单与分行业中位数 →](https://jianruntech.github.io/geo-score/zh.html)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [自己重跑](benchmark/run.py)
 
-另外两个值得点进去看的发现：面向中文市场的站比其余站**低 23 分**（中位 43.0 对 66.0）；
+另外两个值得点进去看的发现：面向中文市场的站比其余站**低 22 分**（中位 44 对 65.5）；
 以及同样三件很便宜的事——模板里的一个日期、一段能独立成立的开头、一个 JSON-LD 块——
 在超过一半的站上都缺。
 

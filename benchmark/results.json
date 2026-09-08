@@ -3,13 +3,13 @@
   "tool": "geo-score-cli/1.1.0",
   "measured_at": "2026-09-09",
   "stats": {
-    "n": 106,
-    "mean": 57.9,
-    "median": 59.5,
+    "n": 105,
+    "mean": 58.6,
+    "median": 59,
     "p25": 40.0,
     "p75": 73.0,
-    "min": 14,
-    "max": 92
+    "min": 19,
+    "max": 94
   },
   "sectors": {
     "AI": {
@@ -18,43 +18,43 @@
     },
     "China / AI": {
       "n": 4,
-      "median": 49.5
+      "median": 47.0
     },
     "China / cloud": {
       "n": 3,
-      "median": 23
+      "median": 30
     },
     "China / consumer": {
-      "n": 6,
-      "median": 32.0
+      "n": 5,
+      "median": 38
     },
     "China / enterprise": {
       "n": 6,
-      "median": 55.5
+      "median": 57.0
     },
     "China / no-code": {
       "n": 5,
-      "median": 45
+      "median": 44
     },
     "Cloud & DevOps": {
       "n": 10,
-      "median": 81.0
+      "median": 79.0
     },
     "Developer tools": {
       "n": 16,
-      "median": 70.0
+      "median": 69.0
     },
     "Ecommerce": {
       "n": 6,
-      "median": 73.5
+      "median": 72.5
     },
     "Education": {
       "n": 3,
-      "median": 24
+      "median": 28
     },
     "Healthcare": {
       "n": 2,
-      "median": 40.0
+      "median": 38.5
     },
     "Marketing / CRM": {
       "n": 8,
@@ -66,18 +66,61 @@
     },
     "Payments / Fintech": {
       "n": 7,
-      "median": 70
+      "median": 65
     },
     "SaaS / Productivity": {
       "n": 12,
-      "median": 63.5
+      "median": 64.0
     },
     "Travel": {
       "n": 2,
-      "median": 22.0
+      "median": 36.5
     }
   },
   "results": [
+    {
+      "site": "pulumi.com",
+      "sector": "Cloud & DevOps",
+      "readiness": 81,
+      "observable_max": 86,
+      "normalised": 94,
+      "band": "Leading",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 2,
+      "top_gaps": [
+        "p2.freshness",
+        "g.robots",
+        "p3.video"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          22,
+          22
+        ],
+        "Content Citability": [
+          32,
+          35
+        ],
+        "Brand Credibility": [
+          8,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
     {
       "site": "netlify.com",
       "sector": "Cloud & DevOps",
@@ -122,28 +165,28 @@
       }
     },
     {
-      "site": "pulumi.com",
-      "sector": "Cloud & DevOps",
-      "readiness": 75,
-      "observable_max": 82,
-      "normalised": 91,
+      "site": "zapier.com",
+      "sector": "SaaS / Productivity",
+      "readiness": 79,
+      "observable_max": 86,
+      "normalised": 92,
       "band": "Leading",
       "gate_capped": false,
       "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
+        "g.robots": 5,
+        "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 2,
+      "bonus": 3,
       "top_gaps": [
         "p2.freshness",
-        "g.robots",
-        "g.reachable"
+        "p2.named-author",
+        "p3.sameas"
       ],
       "pillars": {
         "Reachable": [
-          11,
+          15,
           15
         ],
         "Understandable": [
@@ -151,12 +194,12 @@
           22
         ],
         "Content Citability": [
-          32,
+          26,
           35
         ],
         "Brand Credibility": [
-          4,
-          6
+          9,
+          10
         ],
         "Answer Fit": [
           4,
@@ -167,8 +210,8 @@
     {
       "site": "bun.sh",
       "sector": "Developer tools",
-      "readiness": 76,
-      "observable_max": 86,
+      "readiness": 72,
+      "observable_max": 82,
       "normalised": 88,
       "band": "Leading",
       "gate_capped": false,
@@ -198,50 +241,7 @@
           35
         ],
         "Brand Credibility": [
-          9,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "prisma.io",
-      "sector": "Developer tools",
-      "readiness": 71,
-      "observable_max": 82,
-      "normalised": 87,
-      "band": "Leading",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p2.question-intent",
-        "p3.video",
-        "p2.freshness"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          20,
-          22
-        ],
-        "Content Citability": [
-          28,
-          35
-        ],
-        "Brand Credibility": [
-          2,
+          5,
           6
         ],
         "Answer Fit": [
@@ -253,8 +253,8 @@
     {
       "site": "clickup.com",
       "sector": "SaaS / Productivity",
-      "readiness": 71,
-      "observable_max": 82,
+      "readiness": 75,
+      "observable_max": 86,
       "normalised": 87,
       "band": "Leading",
       "gate_capped": false,
@@ -284,8 +284,8 @@
           35
         ],
         "Brand Credibility": [
-          2,
-          6
+          6,
+          10
         ],
         "Answer Fit": [
           4,
@@ -294,40 +294,40 @@
       }
     },
     {
-      "site": "zapier.com",
-      "sector": "SaaS / Productivity",
-      "readiness": 75,
+      "site": "prisma.io",
+      "sector": "Developer tools",
+      "readiness": 73,
       "observable_max": 86,
-      "normalised": 87,
+      "normalised": 85,
       "band": "Leading",
       "gate_capped": false,
       "gates": {
         "g.robots": 5,
-        "g.reachable": 5,
+        "g.reachable": 3,
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 3,
+      "bonus": 2,
       "top_gaps": [
-        "p2.freshness",
-        "p3.knowledge-graph",
-        "p2.named-author"
+        "p2.question-intent",
+        "p3.video",
+        "p2.freshness"
       ],
       "pillars": {
         "Reachable": [
-          15,
+          13,
           15
         ],
         "Understandable": [
-          22,
+          20,
           22
         ],
         "Content Citability": [
-          26,
+          28,
           35
         ],
         "Brand Credibility": [
-          5,
+          6,
           10
         ],
         "Answer Fit": [
@@ -380,6 +380,135 @@
       }
     },
     {
+      "site": "vercel.com",
+      "sector": "Cloud & DevOps",
+      "readiness": 72,
+      "observable_max": 86,
+      "normalised": 84,
+      "band": "Leading",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.named-author",
+        "p2.freshness"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          19,
+          22
+        ],
+        "Content Citability": [
+          22,
+          35
+        ],
+        "Brand Credibility": [
+          8,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "fly.io",
+      "sector": "Developer tools",
+      "readiness": 72,
+      "observable_max": 86,
+      "normalised": 84,
+      "band": "Leading",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.named-author",
+        "p2.freshness",
+        "p1.breadcrumb"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          15,
+          22
+        ],
+        "Content Citability": [
+          29,
+          35
+        ],
+        "Brand Credibility": [
+          9,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "nuxt.com",
+      "sector": "Developer tools",
+      "readiness": 72,
+      "observable_max": 86,
+      "normalised": 84,
+      "band": "Leading",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 3,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 3,
+      "top_gaps": [
+        "p2.freshness",
+        "p3.video",
+        "p2.question-intent"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          20,
+          22
+        ],
+        "Content Citability": [
+          25,
+          35
+        ],
+        "Brand Credibility": [
+          7,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
       "site": "intercom.com",
       "sector": "Marketing / CRM",
       "readiness": 72,
@@ -415,92 +544,6 @@
         "Brand Credibility": [
           8,
           10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "twilio.com",
-      "sector": "Cloud & DevOps",
-      "readiness": 68,
-      "observable_max": 82,
-      "normalised": 83,
-      "band": "Leading",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.named-author",
-        "p2.freshness",
-        "p1.breadcrumb"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          19,
-          22
-        ],
-        "Content Citability": [
-          29,
-          35
-        ],
-        "Brand Credibility": [
-          5,
-          6
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "vercel.com",
-      "sector": "Cloud & DevOps",
-      "readiness": 68,
-      "observable_max": 82,
-      "normalised": 83,
-      "band": "Leading",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.named-author",
-        "p2.freshness"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          19,
-          22
-        ],
-        "Content Citability": [
-          22,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          6
         ],
         "Answer Fit": [
           4,
@@ -552,40 +595,40 @@
       }
     },
     {
-      "site": "mistral.ai",
-      "sector": "AI",
+      "site": "woocommerce.com",
+      "sector": "Ecommerce",
       "readiness": 70,
       "observable_max": 86,
       "normalised": 81,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
-        "g.robots": 5,
+        "g.robots": 3,
         "g.reachable": 5,
-        "g.ssr": 5
+        "g.ssr": 3
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.answer-passages",
+        "p3.video",
         "p2.named-author",
-        "p1.breadcrumb"
+        "p2.freshness"
       ],
       "pillars": {
         "Reachable": [
-          15,
+          11,
           15
         ],
         "Understandable": [
-          19,
+          20,
           22
         ],
         "Content Citability": [
-          23,
+          29,
           35
         ],
         "Brand Credibility": [
-          9,
+          6,
           10
         ],
         "Answer Fit": [
@@ -597,9 +640,9 @@
     {
       "site": "cloudflare.com",
       "sector": "Cloud & DevOps",
-      "readiness": 70,
-      "observable_max": 86,
-      "normalised": 81,
+      "readiness": 66,
+      "observable_max": 82,
+      "normalised": 80,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
@@ -628,137 +671,8 @@
           35
         ],
         "Brand Credibility": [
-          7,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "render.com",
-      "sector": "Cloud & DevOps",
-      "readiness": 70,
-      "observable_max": 86,
-      "normalised": 81,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p2.freshness",
-        "p2.named-author",
-        "p1.breadcrumb"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          17,
-          22
-        ],
-        "Content Citability": [
-          24,
-          35
-        ],
-        "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "sentry.io",
-      "sector": "Cloud & DevOps",
-      "readiness": 67,
-      "observable_max": 83,
-      "normalised": 81,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p2.freshness",
-        "p1.page-type",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          10,
-          19
-        ],
-        "Content Citability": [
-          26,
-          35
-        ],
-        "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "fly.io",
-      "sector": "Developer tools",
-      "readiness": 70,
-      "observable_max": 86,
-      "normalised": 81,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.named-author",
-        "p2.freshness",
-        "p1.breadcrumb"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          15,
-          22
-        ],
-        "Content Citability": [
-          27,
-          35
-        ],
-        "Brand Credibility": [
-          9,
-          10
+          3,
+          6
         ],
         "Answer Fit": [
           4,
@@ -810,8 +724,8 @@
       }
     },
     {
-      "site": "nuxt.com",
-      "sector": "Developer tools",
+      "site": "render.com",
+      "sector": "Cloud & DevOps",
       "readiness": 68,
       "observable_max": 86,
       "normalised": 79,
@@ -823,11 +737,11 @@
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 3,
+      "bonus": 2,
       "top_gaps": [
         "p2.freshness",
-        "p3.video",
-        "p2.named-author"
+        "p2.named-author",
+        "p1.breadcrumb"
       ],
       "pillars": {
         "Reachable": [
@@ -835,15 +749,15 @@
           15
         ],
         "Understandable": [
-          19,
+          17,
           22
         ],
         "Content Citability": [
-          22,
+          24,
           35
         ],
         "Brand Credibility": [
-          7,
+          8,
           10
         ],
         "Answer Fit": [
@@ -853,54 +767,11 @@
       }
     },
     {
-      "site": "woocommerce.com",
-      "sector": "Ecommerce",
-      "readiness": 68,
-      "observable_max": 86,
-      "normalised": 79,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p3.video",
-        "p2.named-author",
-        "p2.freshness"
-      ],
-      "pillars": {
-        "Reachable": [
-          9,
-          15
-        ],
-        "Understandable": [
-          20,
-          22
-        ],
-        "Content Citability": [
-          29,
-          35
-        ],
-        "Brand Credibility": [
-          6,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "calendly.com",
-      "sector": "SaaS / Productivity",
-      "readiness": 64,
+      "site": "twilio.com",
+      "sector": "Cloud & DevOps",
+      "readiness": 65,
       "observable_max": 82,
-      "normalised": 78,
+      "normalised": 79,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
@@ -911,8 +782,8 @@
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.named-author",
         "p2.freshness",
+        "p2.named-author",
         "p1.breadcrumb"
       ],
       "pillars": {
@@ -921,16 +792,59 @@
           15
         ],
         "Understandable": [
-          16,
+          17,
           22
         ],
         "Content Citability": [
-          27,
+          26,
           35
         ],
         "Brand Credibility": [
-          4,
+          5,
           6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "mistral.ai",
+      "sector": "AI",
+      "readiness": 66,
+      "observable_max": 86,
+      "normalised": 77,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p3.knowledge-graph",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          19,
+          22
+        ],
+        "Content Citability": [
+          23,
+          35
+        ],
+        "Brand Credibility": [
+          5,
+          10
         ],
         "Answer Fit": [
           4,
@@ -982,28 +896,28 @@
       }
     },
     {
-      "site": "klaviyo.com",
-      "sector": "Marketing / CRM",
-      "readiness": 62,
-      "observable_max": 82,
+      "site": "anker.com",
+      "sector": "China / consumer",
+      "readiness": 65,
+      "observable_max": 86,
       "normalised": 76,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 3,
+        "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 0,
+      "bonus": 2,
       "top_gaps": [
+        "p2.freshness",
         "p2.answer-passages",
-        "p2.named-author",
-        "p2.freshness"
+        "p2.named-author"
       ],
       "pillars": {
         "Reachable": [
-          11,
+          13,
           15
         ],
         "Understandable": [
@@ -1011,12 +925,12 @@
           22
         ],
         "Content Citability": [
-          24,
+          19,
           35
         ],
         "Brand Credibility": [
-          4,
-          6
+          8,
+          10
         ],
         "Answer Fit": [
           4,
@@ -1025,11 +939,11 @@
       }
     },
     {
-      "site": "grafana.com",
+      "site": "sentry.io",
       "sector": "Cloud & DevOps",
-      "readiness": 61,
-      "observable_max": 82,
-      "normalised": 74,
+      "readiness": 63,
+      "observable_max": 83,
+      "normalised": 76,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
@@ -1038,11 +952,11 @@
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 2,
+      "bonus": 4,
       "top_gaps": [
         "p2.freshness",
-        "p1.page-type",
-        "p3.sameas"
+        "p3.knowledge-graph",
+        "p1.page-type"
       ],
       "pillars": {
         "Reachable": [
@@ -1050,15 +964,58 @@
           15
         ],
         "Understandable": [
-          12,
-          22
+          10,
+          19
         ],
         "Content Citability": [
           26,
           35
         ],
         "Brand Credibility": [
-          2,
+          4,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "moz.com",
+      "sector": "Marketing / CRM",
+      "readiness": 62,
+      "observable_max": 82,
+      "normalised": 76,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p1.llms-txt",
+        "p1.page-type",
+        "p1.organization"
+      ],
+      "pillars": {
+        "Reachable": [
+          11,
+          15
+        ],
+        "Understandable": [
+          10,
+          22
+        ],
+        "Content Citability": [
+          33,
+          35
+        ],
+        "Brand Credibility": [
+          4,
           6
         ],
         "Answer Fit": [
@@ -1111,50 +1068,7 @@
       }
     },
     {
-      "site": "webflow.com",
-      "sector": "Ecommerce",
-      "readiness": 64,
-      "observable_max": 86,
-      "normalised": 74,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.freshness",
-        "p2.named-author",
-        "p1.breadcrumb"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          15,
-          22
-        ],
-        "Content Citability": [
-          24,
-          35
-        ],
-        "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "monday.com",
+      "site": "calendly.com",
       "sector": "SaaS / Productivity",
       "readiness": 64,
       "observable_max": 86,
@@ -1162,75 +1076,32 @@
       "band": "Solid",
       "gate_capped": false,
       "gates": {
-        "g.robots": 5,
+        "g.robots": 3,
         "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.answer-passages",
+        "p3.knowledge-graph",
         "p2.named-author",
         "p2.freshness"
       ],
       "pillars": {
         "Reachable": [
-          15,
+          13,
           15
         ],
         "Understandable": [
-          17,
+          16,
           22
         ],
         "Content Citability": [
-          20,
+          27,
           35
         ],
         "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
           4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "anker.com",
-      "sector": "China / consumer",
-      "readiness": 63,
-      "observable_max": 86,
-      "normalised": 73,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p2.freshness",
-        "p2.answer-passages",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          19,
-          22
-        ],
-        "Content Citability": [
-          19,
-          35
-        ],
-        "Brand Credibility": [
-          8,
           10
         ],
         "Answer Fit": [
@@ -1283,11 +1154,97 @@
       }
     },
     {
+      "site": "webflow.com",
+      "sector": "Ecommerce",
+      "readiness": 60,
+      "observable_max": 82,
+      "normalised": 73,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.freshness",
+        "p2.named-author",
+        "p1.breadcrumb"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          15,
+          22
+        ],
+        "Content Citability": [
+          24,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "monday.com",
+      "sector": "SaaS / Productivity",
+      "readiness": 60,
+      "observable_max": 82,
+      "normalised": 73,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          17,
+          22
+        ],
+        "Content Citability": [
+          20,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
       "site": "shopify.com",
       "sector": "Ecommerce",
-      "readiness": 63,
-      "observable_max": 86,
-      "normalised": 73,
+      "readiness": 59,
+      "observable_max": 82,
+      "normalised": 72,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
@@ -1316,8 +1273,8 @@
           35
         ],
         "Brand Credibility": [
-          8,
-          10
+          4,
+          6
         ],
         "Answer Fit": [
           4,
@@ -1326,23 +1283,23 @@
       }
     },
     {
-      "site": "moz.com",
+      "site": "klaviyo.com",
       "sector": "Marketing / CRM",
-      "readiness": 63,
+      "readiness": 62,
       "observable_max": 86,
-      "normalised": 73,
+      "normalised": 72,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 3
+        "g.reachable": 3,
+        "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p1.llms-txt",
-        "p1.page-type",
+        "p2.answer-passages",
+        "p3.knowledge-graph",
         "p2.named-author"
       ],
       "pillars": {
@@ -1351,15 +1308,15 @@
           15
         ],
         "Understandable": [
-          10,
+          19,
           22
         ],
         "Content Citability": [
-          30,
+          24,
           35
         ],
         "Brand Credibility": [
-          8,
+          4,
           10
         ],
         "Answer Fit": [
@@ -1412,6 +1369,49 @@
       }
     },
     {
+      "site": "kingdee.com",
+      "sector": "China / enterprise",
+      "readiness": 56,
+      "observable_max": 79,
+      "normalised": 71,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.named-author",
+        "p2.question-intent",
+        "p1.page-type"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          15,
+          19
+        ],
+        "Content Citability": [
+          20,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          6
+        ],
+        "Answer Fit": [
+          2,
+          4
+        ]
+      }
+    },
+    {
       "site": "hubspot.com",
       "sector": "Marketing / CRM",
       "readiness": 59,
@@ -1446,92 +1446,6 @@
         ],
         "Brand Credibility": [
           8,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "stripe.com",
-      "sector": "Payments / Fintech",
-      "readiness": 61,
-      "observable_max": 86,
-      "normalised": 71,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.question-intent",
-        "p2.named-author",
-        "p2.freshness"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          15,
-          22
-        ],
-        "Content Citability": [
-          25,
-          35
-        ],
-        "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "site": "deno.com",
-      "sector": "Developer tools",
-      "readiness": 60,
-      "observable_max": 86,
-      "normalised": 70,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p1.organization",
-        "p1.page-type",
-        "p3.sameas"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          6,
-          22
-        ],
-        "Content Citability": [
-          27,
-          35
-        ],
-        "Brand Credibility": [
-          6,
           10
         ],
         "Answer Fit": [
@@ -1627,67 +1541,24 @@
       }
     },
     {
-      "site": "airwallex.com",
+      "site": "stripe.com",
       "sector": "Payments / Fintech",
-      "readiness": 60,
-      "observable_max": 86,
-      "normalised": 70,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.freshness",
-        "p2.answer-passages",
-        "p1.page-type"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          12,
-          22
-        ],
-        "Content Citability": [
-          21,
-          35
-        ],
-        "Brand Credibility": [
-          8,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "asana.com",
-      "sector": "SaaS / Productivity",
-      "readiness": 60,
-      "observable_max": 86,
+      "readiness": 57,
+      "observable_max": 82,
       "normalised": 70,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 5
+        "g.reachable": 5,
+        "g.ssr": 3
       },
       "gate_reason": null,
-      "bonus": 1,
+      "bonus": 0,
       "top_gaps": [
-        "p2.freshness",
-        "p2.answer-passages",
-        "p2.named-author"
+        "p2.question-intent",
+        "p2.named-author",
+        "p2.freshness"
       ],
       "pillars": {
         "Reachable": [
@@ -1695,19 +1566,19 @@
           15
         ],
         "Understandable": [
-          17,
+          15,
           22
         ],
         "Content Citability": [
-          19,
+          25,
           35
         ],
         "Brand Credibility": [
-          8,
-          10
+          4,
+          6
         ],
         "Answer Fit": [
-          4,
+          2,
           4
         ]
       }
@@ -1747,6 +1618,49 @@
         ],
         "Brand Credibility": [
           6,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "coursera.org",
+      "sector": "Education",
+      "readiness": 59,
+      "observable_max": 86,
+      "normalised": 69,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.freshness",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          17,
+          22
+        ],
+        "Content Citability": [
+          17,
+          35
+        ],
+        "Brand Credibility": [
+          8,
           10
         ],
         "Answer Fit": [
@@ -1799,97 +1713,11 @@
       }
     },
     {
-      "site": "pinecone.io",
-      "sector": "AI",
-      "readiness": 53,
-      "observable_max": 79,
-      "normalised": 67,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.freshness",
-        "p1.page-type"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          15,
-          19
-        ],
-        "Content Citability": [
-          17,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          6
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "kingdee.com",
-      "sector": "China / enterprise",
-      "readiness": 56,
-      "observable_max": 83,
-      "normalised": 67,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.named-author",
-        "p3.knowledge-graph",
-        "p2.question-intent"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          15,
-          19
-        ],
-        "Content Citability": [
-          20,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          10
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
       "site": "linear.app",
       "sector": "SaaS / Productivity",
-      "readiness": 55,
-      "observable_max": 82,
-      "normalised": 67,
+      "readiness": 59,
+      "observable_max": 86,
+      "normalised": 69,
       "band": "Solid",
       "gate_capped": false,
       "gates": {
@@ -1918,8 +1746,137 @@
           35
         ],
         "Brand Credibility": [
+          6,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "deno.com",
+      "sector": "Developer tools",
+      "readiness": 56,
+      "observable_max": 82,
+      "normalised": 68,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 4,
+      "top_gaps": [
+        "p1.organization",
+        "p1.page-type",
+        "p3.sameas"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          6,
+          22
+        ],
+        "Content Citability": [
+          27,
+          35
+        ],
+        "Brand Credibility": [
           2,
           6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "asana.com",
+      "sector": "SaaS / Productivity",
+      "readiness": 56,
+      "observable_max": 82,
+      "normalised": 68,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 1,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.freshness",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          17,
+          22
+        ],
+        "Content Citability": [
+          17,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "grafana.com",
+      "sector": "Cloud & DevOps",
+      "readiness": 58,
+      "observable_max": 86,
+      "normalised": 67,
+      "band": "Solid",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 2,
+      "top_gaps": [
+        "p2.named-author",
+        "p2.freshness",
+        "p3.knowledge-graph"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          12,
+          22
+        ],
+        "Content Citability": [
+          23,
+          35
+        ],
+        "Brand Credibility": [
+          2,
+          10
         ],
         "Answer Fit": [
           4,
@@ -1971,49 +1928,6 @@
       }
     },
     {
-      "site": "svelte.dev",
-      "sector": "Developer tools",
-      "readiness": 57,
-      "observable_max": 86,
-      "normalised": 66,
-      "band": "Solid",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p1.organization",
-        "p1.sitemap",
-        "p1.page-type"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          5,
-          22
-        ],
-        "Content Citability": [
-          27,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
       "site": "bigcommerce.com",
       "sector": "Ecommerce",
       "readiness": 52,
@@ -2057,17 +1971,103 @@
       }
     },
     {
-      "site": "coursera.org",
-      "sector": "Education",
-      "readiness": 55,
-      "observable_max": 86,
-      "normalised": 64,
+      "site": "alibabagroup.com",
+      "sector": "China / enterprise",
+      "readiness": 51,
+      "observable_max": 79,
+      "normalised": 65,
       "band": "Growing",
       "gate_capped": false,
       "gates": {
         "g.robots": 5,
         "g.reachable": 5,
-        "g.ssr": 3
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 4,
+      "top_gaps": [
+        "p1.organization",
+        "p2.answer-passages",
+        "p2.question-intent"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          8,
+          19
+        ],
+        "Content Citability": [
+          20,
+          35
+        ],
+        "Brand Credibility": [
+          2,
+          6
+        ],
+        "Answer Fit": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "site": "airwallex.com",
+      "sector": "Payments / Fintech",
+      "readiness": 56,
+      "observable_max": 86,
+      "normalised": 65,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.freshness",
+        "p2.answer-passages",
+        "p3.knowledge-graph"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          12,
+          22
+        ],
+        "Content Citability": [
+          21,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "pinecone.io",
+      "sector": "AI",
+      "readiness": 53,
+      "observable_max": 83,
+      "normalised": 64,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
@@ -2082,11 +2082,54 @@
           15
         ],
         "Understandable": [
-          17,
-          22
+          15,
+          19
         ],
         "Content Citability": [
           17,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "svelte.dev",
+      "sector": "Developer tools",
+      "readiness": 55,
+      "observable_max": 86,
+      "normalised": 64,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p1.organization",
+        "p1.sitemap",
+        "p1.page-type"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          5,
+          22
+        ],
+        "Content Citability": [
+          27,
           35
         ],
         "Brand Credibility": [
@@ -2145,14 +2188,14 @@
     {
       "site": "langchain.com",
       "sector": "AI",
-      "readiness": 51,
-      "observable_max": 82,
+      "readiness": 53,
+      "observable_max": 86,
       "normalised": 62,
       "band": "Growing",
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 5,
+        "g.reachable": 3,
         "g.ssr": 5
       },
       "gate_reason": null,
@@ -2164,7 +2207,7 @@
       ],
       "pillars": {
         "Reachable": [
-          13,
+          11,
           15
         ],
         "Understandable": [
@@ -2176,8 +2219,8 @@
           35
         ],
         "Brand Credibility": [
-          2,
-          6
+          6,
+          10
         ],
         "Answer Fit": [
           4,
@@ -2186,51 +2229,8 @@
       }
     },
     {
-      "site": "alibabagroup.com",
-      "sector": "China / enterprise",
-      "readiness": 49,
-      "observable_max": 79,
-      "normalised": 62,
-      "band": "Growing",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p1.organization",
-        "p2.answer-passages",
-        "p2.question-intent"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          8,
-          19
-        ],
-        "Content Citability": [
-          20,
-          35
-        ],
-        "Brand Credibility": [
-          2,
-          6
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "site": "datadoghq.com",
-      "sector": "Cloud & DevOps",
+      "site": "miro.com",
+      "sector": "SaaS / Productivity",
       "readiness": 52,
       "observable_max": 86,
       "normalised": 60,
@@ -2238,15 +2238,15 @@
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 5
+        "g.reachable": 5,
+        "g.ssr": 3
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p1.organization",
-        "p2.answer-passages",
-        "p1.page-type"
+        "p2.named-author",
+        "p1.llms-txt",
+        "p3.sameas"
       ],
       "pillars": {
         "Reachable": [
@@ -2258,7 +2258,7 @@
           22
         ],
         "Content Citability": [
-          22,
+          24,
           35
         ],
         "Brand Credibility": [
@@ -2266,50 +2266,7 @@
           10
         ],
         "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "notion.com",
-      "sector": "SaaS / Productivity",
-      "readiness": 52,
-      "observable_max": 86,
-      "normalised": 60,
-      "band": "Growing",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p2.freshness",
-        "p1.organization",
-        "p1.page-type"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          7,
-          22
-        ],
-        "Content Citability": [
-          22,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          10
-        ],
-        "Answer Fit": [
-          4,
+          2,
           4
         ]
       }
@@ -2401,6 +2358,49 @@
       }
     },
     {
+      "site": "wix.com",
+      "sector": "Ecommerce",
+      "readiness": 51,
+      "observable_max": 86,
+      "normalised": 59,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.freshness",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          11,
+          15
+        ],
+        "Understandable": [
+          14,
+          22
+        ],
+        "Content Citability": [
+          15,
+          35
+        ],
+        "Brand Credibility": [
+          9,
+          10
+        ],
+        "Answer Fit": [
+          2,
+          4
+        ]
+      }
+    },
+    {
       "site": "smashingmagazine.com",
       "sector": "Media / Publishing",
       "readiness": 49,
@@ -2444,7 +2444,7 @@
       }
     },
     {
-      "site": "miro.com",
+      "site": "notion.com",
       "sector": "SaaS / Productivity",
       "readiness": 48,
       "observable_max": 82,
@@ -2452,20 +2452,63 @@
       "band": "Growing",
       "gate_capped": false,
       "gates": {
+        "g.robots": 5,
+        "g.reachable": 3,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 2,
+      "top_gaps": [
+        "p2.freshness",
+        "p1.organization",
+        "p1.page-type"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          7,
+          22
+        ],
+        "Content Citability": [
+          22,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          6
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "datadoghq.com",
+      "sector": "Cloud & DevOps",
+      "readiness": 50,
+      "observable_max": 86,
+      "normalised": 58,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
         "g.robots": 3,
         "g.reachable": 5,
-        "g.ssr": 3
+        "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.named-author",
-        "p1.llms-txt",
-        "p3.sameas"
+        "p1.organization",
+        "p2.answer-passages",
+        "p3.knowledge-graph"
       ],
       "pillars": {
         "Reachable": [
-          11,
+          13,
           15
         ],
         "Understandable": [
@@ -2473,97 +2516,11 @@
           22
         ],
         "Content Citability": [
-          24,
+          22,
           35
         ],
         "Brand Credibility": [
           2,
-          6
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "site": "deepseek.com",
-      "sector": "China / AI",
-      "readiness": 50,
-      "observable_max": 86,
-      "normalised": 58,
-      "band": "Growing",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p2.question-intent",
-        "p2.named-author",
-        "p1.organization"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          4,
-          22
-        ],
-        "Content Citability": [
-          19,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "vitejs.dev",
-      "sector": "Developer tools",
-      "readiness": 50,
-      "observable_max": 86,
-      "normalised": 58,
-      "band": "Growing",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p1.organization",
-        "p2.question-intent",
-        "p1.page-type"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          6,
-          22
-        ],
-        "Content Citability": [
-          23,
-          35
-        ],
-        "Brand Credibility": [
-          4,
           10
         ],
         "Answer Fit": [
@@ -2659,40 +2616,83 @@
       }
     },
     {
-      "site": "wise.com",
-      "sector": "Payments / Fintech",
+      "site": "astro.build",
+      "sector": "Developer tools",
       "readiness": 49,
       "observable_max": 86,
       "normalised": 57,
       "band": "Growing",
       "gate_capped": false,
       "gates": {
-        "g.robots": 3,
+        "g.robots": 5,
         "g.reachable": 5,
-        "g.ssr": 3
+        "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.freshness",
+        "p1.organization",
         "p2.answer-passages",
         "p1.llms-txt"
       ],
       "pillars": {
         "Reachable": [
-          11,
+          15,
           15
         ],
         "Understandable": [
-          5,
+          2,
           22
         ],
         "Content Citability": [
-          21,
+          22,
           35
         ],
         "Brand Credibility": [
-          8,
+          6,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "qwik.dev",
+      "sector": "Developer tools",
+      "readiness": 49,
+      "observable_max": 86,
+      "normalised": 57,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.freshness",
+        "p1.organization",
+        "p1.llms-txt"
+      ],
+      "pillars": {
+        "Reachable": [
+          15,
+          15
+        ],
+        "Understandable": [
+          2,
+          22
+        ],
+        "Content Citability": [
+          24,
+          35
+        ],
+        "Brand Credibility": [
+          4,
           10
         ],
         "Answer Fit": [
@@ -2788,41 +2788,127 @@
       }
     },
     {
-      "site": "astro.build",
-      "sector": "Developer tools",
-      "readiness": 45,
-      "observable_max": 82,
+      "site": "plaid.com",
+      "sector": "Payments / Fintech",
+      "readiness": 47,
+      "observable_max": 86,
       "normalised": 55,
       "band": "Growing",
       "gate_capped": false,
       "gates": {
-        "g.robots": 5,
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.freshness",
+        "p1.organization",
+        "p2.answer-passages"
+      ],
+      "pillars": {
+        "Reachable": [
+          11,
+          15
+        ],
+        "Understandable": [
+          11,
+          22
+        ],
+        "Content Citability": [
+          17,
+          35
+        ],
+        "Brand Credibility": [
+          6,
+          10
+        ],
+        "Answer Fit": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "site": "remix.run",
+      "sector": "Developer tools",
+      "readiness": 46,
+      "observable_max": 86,
+      "normalised": 53,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
         "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p1.organization",
-        "p2.answer-passages",
-        "p1.llms-txt"
+        "p2.named-author",
+        "p2.freshness",
+        "p1.organization"
       ],
       "pillars": {
         "Reachable": [
-          15,
+          13,
           15
         ],
         "Understandable": [
-          2,
+          0,
           22
         ],
         "Content Citability": [
-          22,
+          23,
           35
         ],
         "Brand Credibility": [
-          2,
-          6
+          6,
+          10
+        ],
+        "Answer Fit": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "vitejs.dev",
+      "sector": "Developer tools",
+      "readiness": 46,
+      "observable_max": 86,
+      "normalised": 53,
+      "band": "Growing",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 2,
+      "top_gaps": [
+        "p1.organization",
+        "p3.knowledge-graph",
+        "p2.question-intent"
+      ],
+      "pillars": {
+        "Reachable": [
+          11,
+          15
+        ],
+        "Understandable": [
+          6,
+          22
+        ],
+        "Content Citability": [
+          23,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          10
         ],
         "Answer Fit": [
           4,
@@ -2917,8 +3003,8 @@
       }
     },
     {
-      "site": "wix.com",
-      "sector": "Ecommerce",
+      "site": "wise.com",
+      "sector": "Payments / Fintech",
       "readiness": 45,
       "observable_max": 86,
       "normalised": 52,
@@ -2926,164 +3012,78 @@
       "gate_capped": false,
       "gates": {
         "g.robots": 3,
-        "g.reachable": 3,
+        "g.reachable": 5,
         "g.ssr": 3
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
-        "p2.answer-passages",
         "p2.freshness",
-        "p3.knowledge-graph"
+        "p2.answer-passages",
+        "p1.llms-txt"
       ],
       "pillars": {
         "Reachable": [
-          9,
+          11,
           15
         ],
         "Understandable": [
-          14,
+          5,
           22
         ],
         "Content Citability": [
-          15,
+          21,
           35
         ],
         "Brand Credibility": [
-          5,
+          4,
           10
         ],
         "Answer Fit": [
-          2,
+          4,
           4
         ]
       }
     },
     {
-      "site": "remix.run",
-      "sector": "Developer tools",
+      "site": "deepseek.com",
+      "sector": "China / AI",
       "readiness": 42,
       "observable_max": 82,
       "normalised": 51,
       "band": "Growing",
       "gate_capped": false,
       "gates": {
-        "g.robots": 3,
+        "g.robots": 5,
         "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": null,
       "bonus": 0,
       "top_gaps": [
+        "p2.question-intent",
         "p2.named-author",
-        "p2.freshness",
         "p1.organization"
       ],
       "pillars": {
         "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          0,
-          22
-        ],
-        "Content Citability": [
-          23,
-          35
-        ],
-        "Brand Credibility": [
-          2,
-          6
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "qwik.dev",
-      "sector": "Developer tools",
-      "readiness": 43,
-      "observable_max": 86,
-      "normalised": 50,
-      "band": "Early",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.freshness",
-        "p1.organization",
-        "p1.llms-txt"
-      ],
-      "pillars": {
-        "Reachable": [
-          13,
-          15
-        ],
-        "Understandable": [
-          2,
-          22
-        ],
-        "Content Citability": [
-          24,
-          35
-        ],
-        "Brand Credibility": [
-          0,
-          10
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "plaid.com",
-      "sector": "Payments / Fintech",
-      "readiness": 41,
-      "observable_max": 82,
-      "normalised": 50,
-      "band": "Early",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 0,
-      "top_gaps": [
-        "p2.freshness",
-        "p1.organization",
-        "p2.answer-passages"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          11,
-          22
-        ],
-        "Content Citability": [
           15,
+          15
+        ],
+        "Understandable": [
+          4,
+          22
+        ],
+        "Content Citability": [
+          19,
           35
         ],
         "Brand Credibility": [
-          2,
+          0,
           6
         ],
         "Answer Fit": [
-          2,
+          4,
           4
         ]
       }
@@ -3132,11 +3132,11 @@
       }
     },
     {
-      "site": "bytedance.com",
-      "sector": "China / enterprise",
-      "readiness": 37,
-      "observable_max": 83,
-      "normalised": 45,
+      "site": "aliyun.com",
+      "sector": "China / cloud",
+      "readiness": 36,
+      "observable_max": 79,
+      "normalised": 46,
       "band": "Early",
       "gate_capped": false,
       "gates": {
@@ -3145,11 +3145,11 @@
         "g.ssr": 5
       },
       "gate_reason": null,
-      "bonus": 4,
+      "bonus": 0,
       "top_gaps": [
         "p2.answer-passages",
-        "p2.question-intent",
-        "p2.freshness"
+        "p2.freshness",
+        "p1.organization"
       ],
       "pillars": {
         "Reachable": [
@@ -3157,63 +3157,20 @@
           15
         ],
         "Understandable": [
-          8,
+          2,
           19
         ],
         "Content Citability": [
-          10,
+          17,
           35
         ],
         "Brand Credibility": [
+          2,
+          6
+        ],
+        "Answer Fit": [
           4,
-          10
-        ],
-        "Answer Fit": [
-          0,
           4
-        ]
-      }
-    },
-    {
-      "site": "jiandaoyun.com",
-      "sector": "China / no-code",
-      "readiness": 38,
-      "observable_max": 84,
-      "normalised": 45,
-      "band": "Early",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 2,
-      "top_gaps": [
-        "p2.question-intent",
-        "p2.named-author",
-        "p2.answer-passages"
-      ],
-      "pillars": {
-        "Reachable": [
-          9,
-          15
-        ],
-        "Understandable": [
-          7,
-          22
-        ],
-        "Content Citability": [
-          14,
-          35
-        ],
-        "Brand Credibility": [
-          0,
-          6
-        ],
-        "Answer Fit": [
-          6,
-          6
         ]
       }
     },
@@ -3256,6 +3213,92 @@
         ],
         "Answer Fit": [
           3,
+          6
+        ]
+      }
+    },
+    {
+      "site": "bytedance.com",
+      "sector": "China / enterprise",
+      "readiness": 35,
+      "observable_max": 79,
+      "normalised": 44,
+      "band": "Early",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 5,
+        "g.ssr": 5
+      },
+      "gate_reason": null,
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.freshness"
+      ],
+      "pillars": {
+        "Reachable": [
+          13,
+          15
+        ],
+        "Understandable": [
+          8,
+          19
+        ],
+        "Content Citability": [
+          10,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          6
+        ],
+        "Answer Fit": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "site": "jiandaoyun.com",
+      "sector": "China / no-code",
+      "readiness": 39,
+      "observable_max": 88,
+      "normalised": 44,
+      "band": "Early",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 3,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 2,
+      "top_gaps": [
+        "p2.named-author",
+        "p2.answer-passages",
+        "p1.llms-txt"
+      ],
+      "pillars": {
+        "Reachable": [
+          9,
+          15
+        ],
+        "Understandable": [
+          7,
+          22
+        ],
+        "Content Citability": [
+          17,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          10
+        ],
+        "Answer Fit": [
+          4,
           6
         ]
       }
@@ -3478,14 +3521,14 @@
     {
       "site": "weaviate.io",
       "sector": "AI",
-      "readiness": 60,
+      "readiness": 62,
       "observable_max": 86,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
       "gates": {
         "g.robots": 5,
-        "g.reachable": 3,
+        "g.reachable": 5,
         "g.ssr": 0
       },
       "gate_reason": "content needs JavaScript",
@@ -3497,7 +3540,7 @@
       ],
       "pillars": {
         "Reachable": [
-          8,
+          10,
           15
         ],
         "Understandable": [
@@ -3521,8 +3564,8 @@
     {
       "site": "01.ai",
       "sector": "China / AI",
-      "readiness": 42,
-      "observable_max": 79,
+      "readiness": 46,
+      "observable_max": 83,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
@@ -3552,8 +3595,8 @@
           35
         ],
         "Brand Credibility": [
-          0,
-          6
+          4,
+          10
         ],
         "Answer Fit": [
           2,
@@ -3564,8 +3607,8 @@
     {
       "site": "healthline.com",
       "sector": "Healthcare",
-      "readiness": 50,
-      "observable_max": 82,
+      "readiness": 54,
+      "observable_max": 86,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
@@ -3595,50 +3638,7 @@
           35
         ],
         "Brand Credibility": [
-          2,
-          6
-        ],
-        "Answer Fit": [
-          4,
-          4
-        ]
-      }
-    },
-    {
-      "site": "webmd.com",
-      "sector": "Healthcare",
-      "readiness": 35,
-      "observable_max": 83,
-      "normalised": 40,
-      "band": "Early",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 0,
-        "g.reachable": 3,
-        "g.ssr": 5
-      },
-      "gate_reason": "blocks crawlers",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.named-author",
-        "p2.freshness",
-        "p1.organization"
-      ],
-      "pillars": {
-        "Reachable": [
-          8,
-          15
-        ],
-        "Understandable": [
-          0,
-          19
-        ],
-        "Content Citability": [
-          19,
-          35
-        ],
-        "Brand Credibility": [
-          4,
+          6,
           10
         ],
         "Answer Fit": [
@@ -3736,14 +3736,14 @@
     {
       "site": "techcrunch.com",
       "sector": "Media / Publishing",
-      "readiness": 69,
+      "readiness": 72,
       "observable_max": 86,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
       "gates": {
         "g.robots": 0,
-        "g.reachable": 5,
+        "g.reachable": 3,
         "g.ssr": 5
       },
       "gate_reason": "blocks crawlers",
@@ -3751,11 +3751,11 @@
       "top_gaps": [
         "p1.llms-txt",
         "g.robots",
-        "p2.named-author"
+        "g.reachable"
       ],
       "pillars": {
         "Reachable": [
-          10,
+          8,
           15
         ],
         "Understandable": [
@@ -3763,7 +3763,7 @@
           22
         ],
         "Content Citability": [
-          30,
+          35,
           35
         ],
         "Brand Credibility": [
@@ -3779,8 +3779,8 @@
     {
       "site": "theverge.com",
       "sector": "Media / Publishing",
-      "readiness": 60,
-      "observable_max": 86,
+      "readiness": 56,
+      "observable_max": 82,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
@@ -3810,8 +3810,8 @@
           35
         ],
         "Brand Credibility": [
-          6,
-          10
+          2,
+          6
         ],
         "Answer Fit": [
           4,
@@ -3822,7 +3822,7 @@
     {
       "site": "payoneer.com",
       "sector": "Payments / Fintech",
-      "readiness": 61,
+      "readiness": 65,
       "observable_max": 83,
       "normalised": 40,
       "band": "Early",
@@ -3837,7 +3837,7 @@
       "top_gaps": [
         "g.robots",
         "g.reachable",
-        "p3.knowledge-graph"
+        "p1.page-type"
       ],
       "pillars": {
         "Reachable": [
@@ -3853,7 +3853,7 @@
           35
         ],
         "Brand Credibility": [
-          5,
+          9,
           10
         ],
         "Answer Fit": [
@@ -3863,53 +3863,10 @@
       }
     },
     {
-      "site": "airtable.com",
-      "sector": "SaaS / Productivity",
-      "readiness": 37,
-      "observable_max": 86,
-      "normalised": 40,
-      "band": "Early",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 3,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.freshness",
-        "p1.organization"
-      ],
-      "pillars": {
-        "Reachable": [
-          8,
-          15
-        ],
-        "Understandable": [
-          8,
-          22
-        ],
-        "Content Citability": [
-          13,
-          35
-        ],
-        "Brand Credibility": [
-          6,
-          10
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
       "site": "figma.com",
       "sector": "SaaS / Productivity",
-      "readiness": 42,
-      "observable_max": 79,
+      "readiness": 46,
+      "observable_max": 83,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
@@ -3939,8 +3896,8 @@
           35
         ],
         "Brand Credibility": [
-          4,
-          6
+          8,
+          10
         ],
         "Answer Fit": [
           4,
@@ -3951,14 +3908,14 @@
     {
       "site": "loom.com",
       "sector": "SaaS / Productivity",
-      "readiness": 43,
+      "readiness": 45,
       "observable_max": 86,
       "normalised": 40,
       "band": "Early",
       "gate_capped": true,
       "gates": {
         "g.robots": 0,
-        "g.reachable": 3,
+        "g.reachable": 5,
         "g.ssr": 5
       },
       "gate_reason": "blocks crawlers",
@@ -3970,7 +3927,7 @@
       ],
       "pillars": {
         "Reachable": [
-          8,
+          10,
           15
         ],
         "Understandable": [
@@ -3987,6 +3944,92 @@
         ],
         "Answer Fit": [
           4,
+          4
+        ]
+      }
+    },
+    {
+      "site": "temu.com",
+      "sector": "China / consumer",
+      "readiness": 31,
+      "observable_max": 79,
+      "normalised": 39,
+      "band": "Early",
+      "gate_capped": true,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 3,
+        "g.ssr": 0
+      },
+      "gate_reason": "content needs JavaScript",
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.freshness"
+      ],
+      "pillars": {
+        "Reachable": [
+          6,
+          15
+        ],
+        "Understandable": [
+          11,
+          19
+        ],
+        "Content Citability": [
+          6,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          6
+        ],
+        "Answer Fit": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "site": "booking.com",
+      "sector": "Travel",
+      "readiness": 32,
+      "observable_max": 83,
+      "normalised": 39,
+      "band": "Early",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 3,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.freshness",
+        "p1.organization"
+      ],
+      "pillars": {
+        "Reachable": [
+          9,
+          15
+        ],
+        "Understandable": [
+          2,
+          19
+        ],
+        "Content Citability": [
+          15,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          10
+        ],
+        "Answer Fit": [
+          2,
           4
         ]
       }
@@ -4035,153 +4078,24 @@
       }
     },
     {
-      "site": "volcengine.com",
-      "sector": "China / cloud",
-      "readiness": 28,
+      "site": "airtable.com",
+      "sector": "SaaS / Productivity",
+      "readiness": 33,
       "observable_max": 86,
-      "normalised": 33,
+      "normalised": 38,
       "band": "Early",
-      "gate_capped": false,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 3
-      },
-      "gate_reason": null,
-      "bonus": 4,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          11,
-          15
-        ],
-        "Understandable": [
-          4,
-          22
-        ],
-        "Content Citability": [
-          7,
-          35
-        ],
-        "Brand Credibility": [
-          0,
-          10
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "site": "insta360.com",
-      "sector": "China / consumer",
-      "readiness": 26,
-      "observable_max": 79,
-      "normalised": 33,
-      "band": "Early",
-      "gate_capped": false,
+      "gate_capped": true,
       "gates": {
         "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 5
+        "g.reachable": 3,
+        "g.ssr": 0
       },
-      "gate_reason": null,
+      "gate_reason": "content needs JavaScript",
       "bonus": 0,
       "top_gaps": [
         "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          15,
-          15
-        ],
-        "Understandable": [
-          2,
-          19
-        ],
-        "Content Citability": [
-          7,
-          35
-        ],
-        "Brand Credibility": [
-          2,
-          6
-        ],
-        "Answer Fit": [
-          0,
-          4
-        ]
-      }
-    },
-    {
-      "site": "solidjs.com",
-      "sector": "Developer tools",
-      "readiness": 27,
-      "observable_max": 83,
-      "normalised": 33,
-      "band": "Early",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 4,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          10,
-          15
-        ],
-        "Understandable": [
-          6,
-          19
-        ],
-        "Content Citability": [
-          3,
-          35
-        ],
-        "Brand Credibility": [
-          4,
-          10
-        ],
-        "Answer Fit": [
-          0,
-          4
-        ]
-      }
-    },
-    {
-      "site": "temu.com",
-      "sector": "China / consumer",
-      "readiness": 26,
-      "observable_max": 83,
-      "normalised": 31,
-      "band": "Early",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 4,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.freshness"
+        "p2.freshness",
+        "p1.organization"
       ],
       "pillars": {
         "Reachable": [
@@ -4189,62 +4103,62 @@
           15
         ],
         "Understandable": [
-          4,
-          19
+          8,
+          22
         ],
         "Content Citability": [
-          6,
+          13,
           35
         ],
         "Brand Credibility": [
-          4,
+          2,
           10
         ],
         "Answer Fit": [
-          0,
+          2,
           4
         ]
       }
     },
     {
-      "site": "xiaomi.com",
-      "sector": "China / consumer",
-      "readiness": 25,
+      "site": "webmd.com",
+      "sector": "Healthcare",
+      "readiness": 31,
       "observable_max": 83,
-      "normalised": 30,
-      "band": "Not started",
+      "normalised": 37,
+      "band": "Early",
       "gate_capped": true,
       "gates": {
-        "g.robots": 3,
-        "g.reachable": 0,
-        "g.ssr": 0
+        "g.robots": 0,
+        "g.reachable": 3,
+        "g.ssr": 5
       },
-      "gate_reason": "serves crawlers an error",
-      "bonus": 4,
+      "gate_reason": "blocks crawlers",
+      "bonus": 0,
       "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
+        "p2.named-author",
+        "p2.freshness",
+        "p1.organization"
       ],
       "pillars": {
         "Reachable": [
-          3,
+          8,
           15
         ],
         "Understandable": [
-          11,
+          0,
           19
         ],
         "Content Citability": [
-          3,
+          19,
           35
         ],
         "Brand Credibility": [
-          4,
+          0,
           10
         ],
         "Answer Fit": [
-          0,
+          4,
           4
         ]
       }
@@ -4252,10 +4166,10 @@
     {
       "site": "airbnb.com",
       "sector": "Travel",
-      "readiness": 25,
-      "observable_max": 82,
-      "normalised": 30,
-      "band": "Not started",
+      "readiness": 29,
+      "observable_max": 86,
+      "normalised": 34,
+      "band": "Early",
       "gate_capped": true,
       "gates": {
         "g.robots": 5,
@@ -4283,8 +4197,8 @@
           35
         ],
         "Brand Credibility": [
-          0,
-          6
+          4,
+          10
         ],
         "Answer Fit": [
           2,
@@ -4293,11 +4207,97 @@
       }
     },
     {
+      "site": "volcengine.com",
+      "sector": "China / cloud",
+      "readiness": 26,
+      "observable_max": 86,
+      "normalised": 30,
+      "band": "Not started",
+      "gate_capped": false,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 3,
+        "g.ssr": 3
+      },
+      "gate_reason": null,
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          9,
+          15
+        ],
+        "Understandable": [
+          4,
+          22
+        ],
+        "Content Citability": [
+          7,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          10
+        ],
+        "Answer Fit": [
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "site": "solidjs.com",
+      "sector": "Developer tools",
+      "readiness": 23,
+      "observable_max": 79,
+      "normalised": 29,
+      "band": "Not started",
+      "gate_capped": true,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 0
+      },
+      "gate_reason": "content needs JavaScript",
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          10,
+          15
+        ],
+        "Understandable": [
+          6,
+          19
+        ],
+        "Content Citability": [
+          3,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          6
+        ],
+        "Answer Fit": [
+          0,
+          4
+        ]
+      }
+    },
+    {
       "site": "khanacademy.org",
       "sector": "Education",
-      "readiness": 20,
-      "observable_max": 82,
-      "normalised": 24,
+      "readiness": 24,
+      "observable_max": 86,
+      "normalised": 28,
       "band": "Not started",
       "gate_capped": true,
       "gates": {
@@ -4326,8 +4326,137 @@
           35
         ],
         "Brand Credibility": [
+          4,
+          10
+        ],
+        "Answer Fit": [
           0,
-          6
+          4
+        ]
+      }
+    },
+    {
+      "site": "shein.com",
+      "sector": "China / consumer",
+      "readiness": 22,
+      "observable_max": 86,
+      "normalised": 26,
+      "band": "Not started",
+      "gate_capped": true,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 3,
+        "g.ssr": 0
+      },
+      "gate_reason": "content needs JavaScript",
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          6,
+          15
+        ],
+        "Understandable": [
+          5,
+          22
+        ],
+        "Content Citability": [
+          7,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          10
+        ],
+        "Answer Fit": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "site": "xiaomi.com",
+      "sector": "China / consumer",
+      "readiness": 21,
+      "observable_max": 83,
+      "normalised": 25,
+      "band": "Not started",
+      "gate_capped": true,
+      "gates": {
+        "g.robots": 3,
+        "g.reachable": 0,
+        "g.ssr": 0
+      },
+      "gate_reason": "serves crawlers an error",
+      "bonus": 4,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          3,
+          15
+        ],
+        "Understandable": [
+          11,
+          19
+        ],
+        "Content Citability": [
+          3,
+          35
+        ],
+        "Brand Credibility": [
+          0,
+          10
+        ],
+        "Answer Fit": [
+          0,
+          4
+        ]
+      }
+    },
+    {
+      "site": "freecodecamp.org",
+      "sector": "Education",
+      "readiness": 19,
+      "observable_max": 83,
+      "normalised": 23,
+      "band": "Not started",
+      "gate_capped": true,
+      "gates": {
+        "g.robots": 5,
+        "g.reachable": 5,
+        "g.ssr": 0
+      },
+      "gate_reason": "content needs JavaScript",
+      "bonus": 0,
+      "top_gaps": [
+        "p2.answer-passages",
+        "p2.question-intent",
+        "p2.named-author"
+      ],
+      "pillars": {
+        "Reachable": [
+          10,
+          15
+        ],
+        "Understandable": [
+          2,
+          19
+        ],
+        "Content Citability": [
+          3,
+          35
+        ],
+        "Brand Credibility": [
+          4,
+          10
         ],
         "Answer Fit": [
           0,
@@ -4339,8 +4468,8 @@
       "site": "qcloud.com",
       "sector": "China / cloud",
       "readiness": 18,
-      "observable_max": 79,
-      "normalised": 23,
+      "observable_max": 83,
+      "normalised": 22,
       "band": "Not started",
       "gate_capped": true,
       "gates": {
@@ -4370,49 +4499,6 @@
         ],
         "Brand Credibility": [
           0,
-          6
-        ],
-        "Answer Fit": [
-          0,
-          4
-        ]
-      }
-    },
-    {
-      "site": "shein.com",
-      "sector": "China / consumer",
-      "readiness": 20,
-      "observable_max": 86,
-      "normalised": 23,
-      "band": "Not started",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          8,
-          15
-        ],
-        "Understandable": [
-          5,
-          22
-        ],
-        "Content Citability": [
-          7,
-          35
-        ],
-        "Brand Credibility": [
-          0,
           10
         ],
         "Answer Fit": [
@@ -4425,50 +4511,7 @@
       "site": "feishu.cn",
       "sector": "China / no-code",
       "readiness": 16,
-      "observable_max": 81,
-      "normalised": 20,
-      "band": "Not started",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 5,
-        "g.reachable": 5,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          10,
-          15
-        ],
-        "Understandable": [
-          2,
-          19
-        ],
-        "Content Citability": [
-          3,
-          35
-        ],
-        "Brand Credibility": [
-          0,
-          6
-        ],
-        "Answer Fit": [
-          1,
-          6
-        ]
-      }
-    },
-    {
-      "site": "freecodecamp.org",
-      "sector": "Education",
-      "readiness": 15,
-      "observable_max": 79,
+      "observable_max": 85,
       "normalised": 19,
       "band": "Not started",
       "gate_capped": true,
@@ -4499,11 +4542,11 @@
         ],
         "Brand Credibility": [
           0,
-          6
+          10
         ],
         "Answer Fit": [
-          0,
-          4
+          1,
+          6
         ]
       }
     },
@@ -4511,8 +4554,8 @@
       "site": "yuque.com",
       "sector": "China / no-code",
       "readiness": 15,
-      "observable_max": 83,
-      "normalised": 18,
+      "observable_max": 79,
+      "normalised": 19,
       "band": "Not started",
       "gate_capped": true,
       "gates": {
@@ -4542,96 +4585,10 @@
         ],
         "Brand Credibility": [
           0,
-          10
-        ],
-        "Answer Fit": [
-          2,
-          4
-        ]
-      }
-    },
-    {
-      "site": "aliyun.com",
-      "sector": "China / cloud",
-      "readiness": 13,
-      "observable_max": 83,
-      "normalised": 16,
-      "band": "Not started",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 5,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          8,
-          15
-        ],
-        "Understandable": [
-          2,
-          19
-        ],
-        "Content Citability": [
-          3,
-          35
-        ],
-        "Brand Credibility": [
-          0,
-          10
-        ],
-        "Answer Fit": [
-          0,
-          4
-        ]
-      }
-    },
-    {
-      "site": "booking.com",
-      "sector": "Travel",
-      "readiness": 11,
-      "observable_max": 79,
-      "normalised": 14,
-      "band": "Not started",
-      "gate_capped": true,
-      "gates": {
-        "g.robots": 3,
-        "g.reachable": 3,
-        "g.ssr": 0
-      },
-      "gate_reason": "content needs JavaScript",
-      "bonus": 0,
-      "top_gaps": [
-        "p2.answer-passages",
-        "p2.question-intent",
-        "p2.named-author"
-      ],
-      "pillars": {
-        "Reachable": [
-          6,
-          15
-        ],
-        "Understandable": [
-          2,
-          19
-        ],
-        "Content Citability": [
-          3,
-          35
-        ],
-        "Brand Credibility": [
-          0,
           6
         ],
         "Answer Fit": [
-          0,
+          2,
           4
         ]
       }
@@ -4650,6 +4607,11 @@
       "site": "runwayml.com",
       "sector": "AI",
       "error": "could not fetch https://www.runwayml.com — all requests returned 308"
+    },
+    {
+      "site": "insta360.com",
+      "sector": "China / consumer",
+      "error": "could not fetch https://www.insta360.com — all requests returned 403"
     },
     {
       "site": "hashicorp.com",
