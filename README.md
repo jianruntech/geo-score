@@ -75,7 +75,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
 a score against a **published, versioned rubric** — not a black box.
 
-**[See how 229 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them cannot be cited at all.
+**[See how 314 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them cannot be cited at all.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
@@ -125,36 +125,36 @@ change has any effect.
 Band names describe a **stage, not a verdict**. External benchmarks put most business
 sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
-## 229 sites, scored in public
+## 314 sites, scored in public
 
-**A quarter of them cannot be cited at all.** 54 sites have a gate check at zero — a
-retrieval crawler simply cannot get the content. 14 block AI crawlers by name in
-`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 8
-for exactly this reason. **31 serve a page whose body only exists after JavaScript runs.**
+**A quarter of them cannot be cited at all.** 80 sites have a gate check at zero — a
+retrieval crawler simply cannot get the content. 19 block AI crawlers by name in
+`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 12
+for exactly this reason. **45 serve a page whose body only exists after JavaScript runs.**
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
-almost certainly did not choose it.
+almost certainly did not choose it. A further 16 hand a crawler an outright error.
 
-Median **57**. Range 7 to 98.
+Median **56**. Range 12 to 98.
 
 | Site | Score | Band |
 |---|:-:|---|
 | pulumi.com | **98** | Leading |
 | minimaxi.com | **95** | Leading |
-| resend.com | **94** | Leading |
 | lumalabs.ai | **93** | Leading |
-| zapier.com | **92** | Leading |
+| resend.com | **93** | Leading |
+| ironcladapp.com | **91** | Leading |
 | … | | |
 | amazon.com | 12 | Not started |
+| keepa.com | 12 | Not started |
 | mercadolibre.com | 12 | Not started |
-| keepa.com | 7 | Not started |
 
 **[The full table, by sector →](https://jianruntech.github.io/geo-score/)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [re-run it](benchmark/run.py)
 
-Two more findings worth the click: sites built for the Chinese market score **16 points
-lower** than everyone else (median 44 against 60.0 — a gap that has held between 16 and 23
-points across four separate samples), and the same three cheap things — a date in the page
-template, an opening paragraph that stands on its own, one JSON-LD block — are missing from
-more than half the field.
+Two more findings worth the click: sites built for the Chinese market score **19 points
+lower** than everyone else (median 40 against 59 — a gap that has held between 16 and 23
+points across five separate samples, from 38 sites up to 314), and the same three cheap
+things — a date in the page template, an opening paragraph that stands on its own, one
+JSON-LD block — are missing from more than half the field.
 
 Every number here is reproducible with the command at the top of this page — and we
 measured how reproducible. Running the whole benchmark twice and comparing every site:

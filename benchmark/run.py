@@ -7,6 +7,7 @@
 Runs the CLI in-process. Live sites change, so re-running gives slightly different
 numbers; every result records the date it was measured.
 """
+import urllib.parse
 import argparse, concurrent.futures as cf, importlib.util, io, json, os, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
@@ -37,8 +38,15 @@ def one(site):
             reason = ("blocks crawlers" if "g.robots" in zero else
                       "serves crawlers an error" if "g.reachable" in zero else
                       "content needs JavaScript")
+        def _apex(u):
+            h = urllib.parse.urlsplit(u if "://" in u else "https://" + u).netloc.lower()
+            h = h.split(":")[0]
+            return h[4:] if h.startswith("www.") else h
+        landed = res.get("landed") or ""
+        resolved = _apex(landed) if landed and _apex(landed) != _apex(site["url"]) else None
         return dict(site=site["url"], sector=site["sector"], readiness=total,
                     observable_max=den, normalised=norm, band=bd, gate_capped=capped,
+                    resolved_to=resolved,
                     gates=gates, gate_reason=reason,
                     bonus=bon, top_gaps=[c for _, c in gaps],
                     pillars={p: [sum(r[3] for r in rows if r[1] == p and r[3] is not None),

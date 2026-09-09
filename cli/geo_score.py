@@ -80,6 +80,33 @@ def idna(url):
     except Exception:
         return url
 
+class _Redirects(urllib.request.HTTPRedirectHandler):
+    """Follow 307 and 308 as well as 301/302.
+
+    urllib below Python 3.11 does not treat 307/308 as redirects — it raises HTTPError
+    instead. A site whose www-to-apex hop is a 308 then reads as unreachable, which
+    dropped openai.com, runwayml.com, neon.tech and others out of the benchmark
+    entirely. Worse, it made the score depend on which Python ran the tool: 3.11+
+    followed the hop and scored the site, 3.8-3.10 reported it as unfetchable.
+    Real retrieval crawlers follow these hops, so the score has to as well.
+    """
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # The base redirect_request in 3.9 rejects 308 outright, so aliasing
+        # http_error_308 is not enough on its own — this was the incomplete first fix.
+        if code in (307, 308) and req.get_method() in ("GET", "HEAD"):
+            return urllib.request.Request(
+                newurl, headers=req.headers, method=req.get_method(),
+                origin_req_host=req.origin_req_host, unverifiable=True)
+        return urllib.request.HTTPRedirectHandler.redirect_request(
+            self, req, fp, code, msg, headers, newurl)
+
+    http_error_307 = urllib.request.HTTPRedirectHandler.http_error_301
+    http_error_308 = urllib.request.HTTPRedirectHandler.http_error_301
+
+
+_OPENER = urllib.request.build_opener(_Redirects)
+
+
 def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
     url = idna(url)
     req = urllib.request.Request(url, method=method, headers={
@@ -87,7 +114,7 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
         "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
     t0 = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with _OPENER.open(req, timeout=timeout) as r:
             raw = r.read(4_000_000)
             if r.headers.get("Content-Encoding") == "gzip":
                 try: raw = gzip.decompress(raw)
@@ -917,7 +944,13 @@ def run(base, sample=8, verbose=False):
     bon["b.geo-link"] = 1 if re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', home_html, re.I) else 0
     bon["b.speakable"] = 1 if any("SpeakableSpecification" in json.dumps(o) for o in allld.values()) else 0
 
-    return dict(root=root, urls=list(live), tier=tier, ev=ev, bonus=bon,
+    # Where the request actually landed. A site can hand back a different origin than
+    # the one asked for — a rename (neon.tech to neon.com), or a locale swap driven by
+    # the Accept-Language header (aliyun.com to alibabacloud.com, xiaomi.com to mi.com).
+    # Scoring the landing page under the requested label hides that; recording it makes
+    # the substitution visible to anyone reading the result.
+    landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
+    return dict(root=root, landed=landed, urls=list(live), tier=tier, ev=ev, bonus=bon,
                 lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body))
 
 # ── scoring & output ───────────────────────────────────────────────────────
@@ -993,6 +1026,20 @@ def share_line(res):
         line += " Biggest gap: %s (+%d)." % (top[1].lower(), top[0])
     return line + " Measured with the open AIV rubric — github.com/jianruntech/geo-score"
 
+def landed_note(res):
+    """A one-line note when the site handed back a different origin than the one asked
+    for. Silence here is how a reader ends up thinking neon.tech was scored when
+    neon.com was, or that aliyun.com was scored when its English edition was."""
+    root, landed = res.get("root", ""), res.get("landed") or ""
+    if not landed:
+        return None
+    def apex(u):
+        h = urllib.parse.urlsplit(u if "://" in u else "https://" + u).netloc.lower().split(":")[0]
+        return h[4:] if h.startswith("www.") else h
+    a, b = apex(root), apex(landed)
+    return None if a == b else "redirected to %s — that is what was scored" % b
+
+
 def brief(res):
     """Pillar totals and the three biggest gaps. What fits in a screenshot."""
     rows, total, den, b, norm, bd, capped = score(res)
@@ -1001,6 +1048,8 @@ def brief(res):
     big = c.green if norm >= 66 else (c.amber if norm >= 31 else c.red)
     print()
     print("  %s%sAIV READINESS%s  %s" % (c.b, c.brass, c.r, res["root"]))
+    _ln = landed_note(res)
+    if _ln: print("  %s%s%s" % (c.amber, _ln, c.r))
     print(c.grey + "─" * 58 + c.r)
     print("  %s%s%d / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.b, big, bd, c.r)
           + ("%s          %d points to %s%s" % (c.grey, gap[0], gap[1], c.r) if gap else ""))

@@ -435,6 +435,22 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
                 check(os.path.getsize(cpth) < 5 * 1024 * 1024,
                       f"docs/{card} 超过 5MB，多数平台不会抓取")
 
+    # ── 19. 每个行业至少 10 站 ──
+    # 榜单页会印每个行业的中位数。两个站的「中位数」不是中位数，
+    # 但它印出来和真的一样，读者没办法分辨。
+    if os.path.exists("benchmark/sites.json"):
+        import collections
+        sj = json.load(io.open("benchmark/sites.json", encoding="utf-8"))
+        cnt = collections.Counter(x["sector"] for x in sj["sites"])
+        thin = sorted((k, v) for k, v in cnt.items() if v < 10)
+        check(not thin,
+              "sites.json 里这些行业不足 10 站，中位数印出去没有意义：%s"
+              % ", ".join("%s(%d)" % t for t in thin))
+        near = [k for k in cnt if k.replace(" ", "") in
+                {x.replace(" ", "") for x in cnt if x != k}]
+        check(not near,
+              "sites.json 里有只差空格的行业名，会把同一行业劈成两个：%s" % sorted(near))
+
     # ── 18. llms.txt 里的样本量必须等于 results.json 的 ──
     # 这条和上面的字节比对重叠，但失败信息可读得多：
     # 「llms.txt 写着 105 站，results.json 是 229」比「字节不一致」有用得多。

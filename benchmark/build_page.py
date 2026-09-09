@@ -24,8 +24,12 @@ REPO = "https://github.com/jianruntech/geo-score"
 SITE = "https://jianruntech.github.io/geo-score"
 
 def _fmt(x):
-    """同理：中位数与上四分位数是整数时不要印小数点。"""
-    return int(x) if float(x).is_integer() else x
+    """中位数与四分位数取整。
+
+    插值出来的分位数会带小数（上四分位 71.8）。但我们公开的复现区间是 ±5 分——
+    在一个 0–100 的分数上印一位小数，是在声称这套方法不具备的精度。
+    """
+    return int(round(float(x)))
 
 
 def jsonld(lang, v):

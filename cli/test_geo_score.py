@@ -132,6 +132,25 @@ ok(gs.depth_in_scope("https://x.io/geo-score/", "/geo-score") == 0,
 ok(gs.depth_in_scope("https://x.io/other/p.html", "/geo-score") == 1,
    "a URL outside the scope falls back to origin-relative depth")
 
+
+# ── 308 必须被当成重定向 ──
+# Python 3.11 之前 urllib 对 308 直接抛 HTTPError，而 redirect_request 又显式拒绝它，
+# 所以只给 http_error_308 起别名是不够的——第一版修补就是这么漏的。
+# 后果不只是丢站：3.11+ 会跟过去并给出分数，3.8–3.10 报「抓不到」，
+# 同一个站的分数取决于谁的 Python 在跑。
+import urllib.request as _ur
+_h = gs._Redirects()
+_req = _ur.Request("https://example.com/", method="GET")
+class _FakeFp:
+    def read(self, *a): return b""
+    def close(self): pass
+for _code in (307, 308):
+    _new = _h.redirect_request(_req, _FakeFp(), _code, "", {}, "https://example.org/")
+    ok(_new is not None and _new.full_url == "https://example.org/",
+       "%d is followed, not raised" % _code)
+    ok(_new.get_method() == "GET", "%d preserves the method" % _code)
+ok(hasattr(gs, "_OPENER"), "fetch goes through the redirect-aware opener")
+
 # ── as_json(): the published schema is a contract ──
 rep = gs.as_json(mk(full))
 for k in ("rubric_version", "audited_at", "target", "readiness", "observable_max",
