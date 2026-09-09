@@ -21,6 +21,54 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
            "Early": "起步期", "Not started": "未起步", "Not scored": "未打分"}
 
 REPO = "https://github.com/jianruntech/geo-score"
+SITE = "https://jianruntech.github.io/geo-score"
+
+def jsonld(lang, v):
+    """The leaderboard is a dataset. Saying so is the single highest-leverage thing
+    this page can do to be cited — engines treat a declared Dataset very differently
+    from an undeclared table."""
+    page = SITE + ("/" if lang == "en" else "/zh.html")
+    zh = lang == "zh"
+    return json.dumps({"@context": "https://schema.org", "@graph": [
+      {"@type": "Organization", "@id": SITE + "/#org", "name": "见润科技" if zh else "Jianrun Tech",
+       "alternateName": ["Jianrun Tech", "见润科技"], "url": "https://www.jianruntech.com/",
+       "logo": "https://www.jianruntech.com/icon-192.png",
+       "sameAs": [REPO, "https://www.jianruntech.com/"]},
+      {"@type": "Person", "@id": SITE + "/#author", "name": "多祝" if zh else "Duozhu",
+       "affiliation": {"@id": SITE + "/#org"}, "url": "https://www.jianruntech.com/"},
+      {"@type": "Dataset", "@id": page + "#dataset",
+       "name": ("AI 可见度公开基准：%d 个站点的实测评分" % v["n"]) if zh
+               else "The state of AI visibility: %d sites scored" % v["n"],
+       "description": (
+         "用同一套开源口径（AIV 量表 v1.1，21 项阶梯式检查）对 %d 个知名网站实测的 AI 可见度评分，"
+         "含分行业中位数、门槛失效归因与逐站最大缺口。中位数 %s，区间 %d–%d。" % (v["n"], v["med"], v["mn"], v["mx"])
+         if zh else
+         "AI answer-engine readiness scores for %d well-known websites, measured with one open "
+         "rubric (AIV v1.1, 21 tiered checks) and one public tool. Includes sector medians, "
+         "gate-failure attribution and each site's largest gaps. Median %s, range %d-%d."
+         % (v["n"], v["med"], v["mn"], v["mx"])),
+       "url": page, "license": "https://opensource.org/licenses/MIT",
+       "isAccessibleForFree": True, "dateModified": v["date"], "datePublished": v["date"],
+       "creator": {"@id": SITE + "/#org"}, "author": {"@id": SITE + "/#author"},
+       "publisher": {"@id": SITE + "/#org"},
+       "inLanguage": "zh-CN" if zh else "en",
+       "keywords": ["generative engine optimization", "GEO", "AEO", "AI search visibility",
+                    "llms.txt", "structured data", "AI crawlers"],
+       "measurementTechnique": ("AIV rubric v1.1 — 21 tiered checks over an 8-page sample, "
+                                "10 retrieval user-agents probed live"),
+       "variableMeasured": [
+         {"@type": "PropertyValue", "name": "readiness", "description": "0-100 normalised score"},
+         {"@type": "PropertyValue", "name": "band", "description": "Not started / Early / Growing / Solid / Leading"},
+         {"@type": "PropertyValue", "name": "gate_capped", "description": "whether a retrieval crawler can reach the content at all"}],
+       "distribution": [{"@type": "DataDownload", "encodingFormat": "application/json",
+                         "contentUrl": REPO + "/blob/main/benchmark/results.json"}],
+       "citation": REPO + "/blob/main/rubric/v1.1.md"},
+      {"@type": "WebSite", "@id": SITE + "/#website", "url": SITE + "/",
+       "name": "geo-score", "publisher": {"@id": SITE + "/#org"}},
+      {"@type": "WebPage", "@id": page + "#webpage", "url": page,
+       "isPartOf": {"@id": SITE + "/#website"}, "about": {"@id": page + "#dataset"},
+       "author": {"@id": SITE + "/#author"}, "dateModified": v["date"],
+       "inLanguage": "zh-CN" if zh else "en"}]}, ensure_ascii=False, separators=(",", ":"))
 
 def strings(lang, v):
     """All page copy. Both languages say the same things — if you change one, change both."""
@@ -177,7 +225,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
     io.open(os.path.join(ROOT, "docs", ".nojekyll"), "a", encoding="utf-8").close()
     for lang, name in (("en", "index.html"), ("zh", "zh.html")):
-        vals = dict(v, **strings(lang, v))
+        vals = dict(v, **strings(lang, v), jsonld=jsonld(lang, v))
         # bandmap only translates on the Chinese page
         if lang == "en":
             vals["bandmap"] = "{}"

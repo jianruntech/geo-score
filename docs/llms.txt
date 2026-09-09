@@ -1,0 +1,41 @@
+# geo-score
+
+> An open, versioned rubric for Generative Engine Optimization — score any site 0–100
+> on whether AI answer engines can find, parse, trust and cite it. MIT licensed,
+> machine-readable, with a zero-dependency Python CLI and a public benchmark of 105
+> well-known sites.
+
+The rubric it publishes is the AIV score: 21 tiered checks totalling 100 points, plus
+4 bonus checks worth up to +6 outside the denominator. Every tier states a count out of
+the 8 sampled pages, so two people scoring the same site agree on the arithmetic.
+Three checks are gates — score zero on crawler access, live reachability or
+server-rendered content and the result caps at 40.
+
+## The benchmark
+
+- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 105 well-known sites scored. Median 59, range 19–94. A quarter of them cannot be cited at all — 11 block AI crawlers by name, 11 serve a page whose body only exists after JavaScript runs.
+- [简体中文版](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
+- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
+
+## The rubric
+
+- [AIV rubric v1.1](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md): the full specification, tier by tier.
+- [简体中文](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.zh-CN.md): the same specification in Chinese.
+- [Machine-readable rubric](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.json): stable check ids, tier conditions, bands.
+- [Report schema](https://github.com/jianruntech/geo-score/blob/main/schema/report.v2.json): emit this and results from different implementations are comparable.
+- [Calibration record](https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md): how the thresholds were set, against four public benchmarks.
+
+## The tool
+
+- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`
+- [GitHub Action](https://github.com/jianruntech/geo-score/blob/main/action.yml): score on every push, fail the build on regression.
+- [Five hand-scored audits](https://github.com/jianruntech/geo-score/tree/main/examples/audits/v1.1): all 21 checks scored by hand with reproducible evidence.
+
+## Scope
+
+This measures readiness — whether an engine *can* cite a site. Whether one *does*
+depends on competition and query intent, which no site-side audit can observe.
+Remediation is deliberately out of scope: the rubric names the gap and what the next
+tier requires; it does not ship fix templates.
+
+Maintained by [Jianrun Tech](https://www.jianruntech.com) (见润科技), Shenzhen. MIT.

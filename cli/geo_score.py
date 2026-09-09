@@ -392,12 +392,24 @@ def tier_reason(cid, t, mx):
     return "%s — tier %d (+%d) needs: %s" % (here, idx + 2, nxt[0] - t, nxt[1])
 
 # ── sampling ───────────────────────────────────────────────────────────────
+def scope_of(base):
+    """A site can live under a path — a project page, a docs subtree, a country folder.
+    robots.txt and llms.txt are always at the origin by spec, but sampling has to stay
+    inside the path the user actually gave, or every page check scores the wrong site."""
+    u = urllib.parse.urlsplit(base if "://" in base else "https://" + base)
+    origin = "%s://%s" % (u.scheme or "https", u.netloc)
+    path = re.sub(r"/+$", "", u.path or "")
+    if re.search(r"\.[a-z0-9]{2,5}$", path, re.I):          # a file, not a directory
+        path = path.rsplit("/", 1)[0]
+    return origin, path
+
 def discover(base, want=8, verbose=False):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
     depends on the sample being representative."""
-    root = "{0.scheme}://{0.netloc}".format(urllib.parse.urlsplit(base))
-    host = urllib.parse.urlsplit(root).netloc
+    origin, scope = scope_of(base)
+    root = origin + scope
+    host = urllib.parse.urlsplit(origin).netloc
     home = fetch(root + "/")
     pool, seen = [], {root + "/", root}
 
@@ -405,7 +417,9 @@ def discover(base, want=8, verbose=False):
         out = []
         for m in re.finditer(r'<a\b[^>]*href=["\']([^"\'#]+)', text, re.I):
             u = urllib.parse.urljoin(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/")
-            if urllib.parse.urlsplit(u).netloc != host: continue
+            pu = urllib.parse.urlsplit(u)
+            if pu.netloc != host: continue
+            if scope and not pu.path.startswith(scope): continue
             if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
             if re.search(r"/(login|signin|signup|register|cart|checkout|account|admin|search)(/|$)", u, re.I): continue
             if u in seen: continue
@@ -415,9 +429,9 @@ def discover(base, want=8, verbose=False):
     pool += harvest(home.text, root + "/")
 
     # sitemap gives real content URLs, which a homepage nav often does not
-    rb = fetch(root + "/robots.txt")
+    rb = fetch(origin + "/robots.txt")
     sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "") \
-              or [root + "/sitemap.xml", root + "/sitemap_index.xml"]
+              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"]
     sm = next((r for r in pmap(fetch, sm_urls[:2]) if r.ok), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         kids = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
@@ -427,7 +441,8 @@ def discover(base, want=8, verbose=False):
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
         for u in locs[:600]:
             u = u.split("#")[0].split("?")[0].rstrip("/")
-            if urllib.parse.urlsplit(u).netloc == host and u not in seen:
+            pu2 = urllib.parse.urlsplit(u)
+            if pu2.netloc == host and (not scope or pu2.path.startswith(scope)) and u not in seen:
                 seen.add(u); pool.append(u)
 
     # section indexes are where recent posts actually live
@@ -455,7 +470,8 @@ def discover(base, want=8, verbose=False):
 
 # ── checks ─────────────────────────────────────────────────────────────────
 def run(base, sample=8, verbose=False):
-    root = "{0.scheme}://{0.netloc}".format(urllib.parse.urlsplit(base))
+    origin, scope = scope_of(base)
+    root = origin + scope
     ev, tier, notes = {}, {}, []
     def say(msg):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
@@ -475,7 +491,7 @@ def run(base, sample=8, verbose=False):
     home_html_early = live.get(root + "/", list(live.values())[0]).text
 
     # ── g.robots ──
-    rb = fetch(root + "/robots.txt")
+    rb = fetch(origin + "/robots.txt")
     txt = rb.text if rb.ok else ""
     groups, cur = {}, None
     for line in txt.splitlines():
@@ -539,7 +555,7 @@ def run(base, sample=8, verbose=False):
     ev["g.ssr"] = "%d of %d sampled pages carry substantive body text in the HTML response with no JavaScript executed." % (ssr, n)
 
     # ── p1.sitemap ──
-    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) or [root + "/sitemap.xml", root + "/sitemap_index.xml"]
+    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"]
     sm = next((r for r in pmap(fetch, sm_urls[:3]) if r.ok), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
@@ -555,7 +571,7 @@ def run(base, sample=8, verbose=False):
             "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path", locs, mods)
 
     # ── p1.llms-txt ──
-    lt = fetch(root + "/llms.txt")
+    lt = fetch(origin + "/llms.txt")
     if not lt.ok:
         tier["p1.llms-txt"] = 0; ev["p1.llms-txt"] = "/llms.txt returned HTTP %d." % lt.status
     else:
@@ -820,9 +836,9 @@ def run(base, sample=8, verbose=False):
 
     # ── bonus ──
     bon = {}
-    lf = fetch(root + "/llms-full.txt"); bon["b.llms-full"] = 2 if lf.ok else 0
-    at = fetch(root + "/ai.txt")
-    at2 = fetch(root + "/.well-known/ai.txt") if not at.ok else at
+    lf = fetch(origin + "/llms-full.txt"); bon["b.llms-full"] = 2 if lf.ok else 0
+    at = fetch(origin + "/ai.txt")
+    at2 = fetch(origin + "/.well-known/ai.txt") if not at.ok else at
     bon["b.ai-txt"] = 2 if at2.ok else 0
     home_html = home_html_early
     bon["b.geo-link"] = 1 if re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', home_html, re.I) else 0

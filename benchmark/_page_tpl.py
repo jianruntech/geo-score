@@ -11,7 +11,9 @@ TPL = '''<!doctype html>
 <link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>%(css)s</style></head><body>
+<style>%(css)s</style>
+<script type="application/ld+json">%(jsonld)s</script>
+</head><body>
 <nav class="langs"><a href="./" class="%(on_en)s">EN</a><a href="./zh.html" class="%(on_zh)s">中文</a></nav>
 <div class="wrap">
 
@@ -66,6 +68,7 @@ TPL = '''<!doctype html>
 <div class="tw"><table><thead><tr><th>%(l_sector)s</th><th class="num">%(l_sites)s</th><th class="num">%(l_median)s</th><th></th></tr></thead><tbody>%(sectbl)s</tbody></table></div>
 
 <footer>%(t_footer)s</footer>
+<p style="color:var(--mute);font-size:12px;margin-top:14px"><time datetime="%(date)s">%(date)s</time></p>
 </div>
 <script>
 const D=%(data)s;
