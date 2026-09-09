@@ -52,3 +52,23 @@ jobs:
           if python3 cli/geo_score.py example.com --fail-under 101 --quiet > /dev/null 2>&1; then
             echo "::error::--fail-under 101 should have failed"; exit 1
           fi
+
+  # README 和 examples/ci 都写 `uses: jianruntech/geo-score@v1`。v1 是浮动大版本标签，
+  # 手动移它就会忘 —— 上一次它落后 main 二十一个提交，照 README 做的人拿到的是修
+  # 三个静默测错站的 bug 之前的 CLI。让它跟着走，而且只在 CI 全绿之后才跟，
+  # 这样 v1 永远不会指向一个没过检查的提交。
+  tag:
+    name: move v1
+    needs: [structure, cli]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions: {contents: write}
+    steps:
+      - uses: actions/checkout@v4
+      - name: point v1 at this commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f v1 "$GITHUB_SHA"
+          git push --force origin v1
+          echo "v1 → $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
