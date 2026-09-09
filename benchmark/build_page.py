@@ -196,7 +196,8 @@ def strings(lang, v):
                  '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/run.py">跑分脚本</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
-                 '<a href="%(repo)s">仓库</a><br><br>'
+                 '<a href="%(repo)s">仓库</a> · '
+                 '<a href="https://www.jianruntech.com/geo-score">中文说明页</a><br><br>'
                  "整个榜单我们跑了两遍并逐站比对：<strong>96%% 的站落在 &plusmn;5 以内</strong>，45%% 完全一致。所以单个站的分数请按 &plusmn;5 读，不要当成精确值；中位数是稳的。不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了，那是那些站点的属性，不是测量的毛病。"
                  "这里测的是就绪度，不是结果：引擎<em>能不能</em>引用一个站。"
                  "它<em>会不会</em>引用，取决于竞争与提问意图，任何站外审计都观察不到。"
