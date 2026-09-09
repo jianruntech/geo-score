@@ -23,6 +23,11 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
 REPO = "https://github.com/jianruntech/geo-score"
 SITE = "https://jianruntech.github.io/geo-score"
 
+def _fmt(x):
+    """同理：中位数与上四分位数是整数时不要印小数点。"""
+    return int(x) if float(x).is_integer() else x
+
+
 def jsonld(lang, v):
     """The leaderboard is a dataset. Saying so is the single highest-leverage thing
     this page can do to be cited — engines treat a declared Dataset very differently
@@ -200,8 +205,13 @@ def data():
     cap = [r for r in ok if r.get("gate_capped")]
     blk = sorted(r["site"] for r in cap if r.get("gate_reason") == "blocks crawlers")
     js = sorted(r["site"] for r in cap if r.get("gate_reason") == "content needs JavaScript")
-    cn = st.median([r["normalised"] for r in ok if r["sector"].startswith("China")])
-    row = st.median([r["normalised"] for r in ok if not r["sector"].startswith("China")])
+    def _med(xs):
+        """statistics.median 在样本数为偶数时返回浮点，页面上会印成「60.0」。
+        整数就按整数印。"""
+        m = st.median(xs)
+        return int(m) if float(m).is_integer() else m
+    cn = _med([r["normalised"] for r in ok if r["sector"].startswith("China")])
+    row = _med([r["normalised"] for r in ok if not r["sector"].startswith("China")])
     sec = sorted(d["sectors"].items(), key=lambda kv: -kv[1]["median"])
     bins = [0] * 10
     for r in ok:
@@ -212,7 +222,7 @@ def data():
     rows += [dict(s=r["site"], n=None, b="Not scored", k=r["sector"], c=False,
                   w=r.get("error", ""), g=[], r=None, m=None) for r in err]
     return dict(
-        n=s["n"], med=s["median"], p75=s["p75"], mn=s["min"], mx=s["max"], cap=len(cap),
+        n=s["n"], med=_fmt(s["median"]), p75=_fmt(s["p75"]), mn=s["min"], mx=s["max"], cap=len(cap),
         cappct=int(round(100.0 * len(cap) / s["n"])),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"],
