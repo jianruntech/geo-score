@@ -2,6 +2,10 @@
   "note": "A fixed, public list so the benchmark is reproducible. Sites were picked for sector and language coverage and public prominence — not because they are customers or competitors of anyone. Adding a site is the easiest useful contribution to this repository: see CONTRIBUTING.md.",
   "sites": [
     {
+      "url": "aider.chat",
+      "sector": "AI"
+    },
+    {
       "url": "anthropic.com",
       "sector": "AI"
     },
@@ -14,11 +18,27 @@
       "sector": "AI"
     },
     {
+      "url": "codeium.com",
+      "sector": "AI"
+    },
+    {
       "url": "cohere.com",
       "sector": "AI"
     },
     {
+      "url": "continue.dev",
+      "sector": "AI"
+    },
+    {
       "url": "crewai.com",
+      "sector": "AI"
+    },
+    {
+      "url": "cursor.com",
+      "sector": "AI"
+    },
+    {
+      "url": "deepmind.google",
       "sector": "AI"
     },
     {
@@ -38,6 +58,10 @@
       "sector": "AI"
     },
     {
+      "url": "ideogram.ai",
+      "sector": "AI"
+    },
+    {
       "url": "langchain.com",
       "sector": "AI"
     },
@@ -47,6 +71,14 @@
     },
     {
       "url": "llamaindex.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "lumalabs.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "midjourney.com",
       "sector": "AI"
     },
     {
@@ -62,7 +94,15 @@
       "sector": "AI"
     },
     {
+      "url": "openrouter.ai",
+      "sector": "AI"
+    },
+    {
       "url": "perplexity.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "pika.art",
       "sector": "AI"
     },
     {
@@ -78,11 +118,19 @@
       "sector": "AI"
     },
     {
+      "url": "suno.com",
+      "sector": "AI"
+    },
+    {
       "url": "together.ai",
       "sector": "AI"
     },
     {
       "url": "weaviate.io",
+      "sector": "AI"
+    },
+    {
+      "url": "windsurf.com",
       "sector": "AI"
     },
     {
@@ -142,6 +190,14 @@
       "sector": "China / consumer"
     },
     {
+      "url": "aosom.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "bambulab.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "baseus.com",
       "sector": "China / consumer"
     },
@@ -154,7 +210,19 @@
       "sector": "China / consumer"
     },
     {
+      "url": "creality.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "cubiitek.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "dji.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "dreame.tech",
       "sector": "China / consumer"
     },
     {
@@ -162,11 +230,27 @@
       "sector": "China / consumer"
     },
     {
+      "url": "elegoo.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "govee.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "hisense.com",
       "sector": "China / consumer"
     },
     {
+      "url": "hiwonder.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "insta360.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "laifen.com",
       "sector": "China / consumer"
     },
     {
@@ -182,11 +266,23 @@
       "sector": "China / consumer"
     },
     {
+      "url": "narwal.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "oceanwing.com",
       "sector": "China / consumer"
     },
     {
+      "url": "oclean.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "shein.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "sonoff.tech",
       "sector": "China / consumer"
     },
     {
@@ -199,6 +295,10 @@
     },
     {
       "url": "ugreen.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "vevor.com",
       "sector": "China / consumer"
     },
     {
@@ -250,6 +350,10 @@
       "sector": "China / no-code"
     },
     {
+      "url": "roborock.com",
+      "sector": "China/ consumer"
+    },
+    {
       "url": "axiom.co",
       "sector": "Cloud & DevOps"
     },
@@ -258,7 +362,15 @@
       "sector": "Cloud & DevOps"
     },
     {
+      "url": "clickhouse.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
       "url": "cloudflare.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "dagster.io",
       "sector": "Cloud & DevOps"
     },
     {
@@ -267,6 +379,10 @@
     },
     {
       "url": "digitalocean.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "duckdb.org",
       "sector": "Cloud & DevOps"
     },
     {
@@ -282,11 +398,23 @@
       "sector": "Cloud & DevOps"
     },
     {
+      "url": "materialize.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "motherduck.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
       "url": "netlify.com",
       "sector": "Cloud & DevOps"
     },
     {
       "url": "porter.run",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "prefect.io",
       "sector": "Cloud & DevOps"
     },
     {
@@ -299,6 +427,18 @@
     },
     {
       "url": "sentry.io",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "temporal.io",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "tigerbeetle.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "timescale.com",
       "sector": "Cloud & DevOps"
     },
     {
@@ -318,6 +458,14 @@
       "sector": "Cross-border services"
     },
     {
+      "url": "datahawk.co",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "dianxiaomi.com",
+      "sector": "Cross-border services"
+    },
+    {
       "url": "helium10.com",
       "sector": "Cross-border services"
     },
@@ -326,11 +474,31 @@
       "sector": "Cross-border services"
     },
     {
+      "url": "jushuitan.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "keepa.com",
+      "sector": "Cross-border services"
+    },
+    {
       "url": "lianlianpay.com",
       "sector": "Cross-border services"
     },
     {
+      "url": "m19.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "mabangerp.com",
+      "sector": "Cross-border services"
+    },
+    {
       "url": "payoneer.cn",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "perpetua.io",
       "sector": "Cross-border services"
     },
     {
@@ -339,6 +507,18 @@
     },
     {
       "url": "sellersprite.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "tongtool.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "wiseasy.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "xtransfer.com",
       "sector": "Cross-border services"
     },
     {
@@ -366,6 +546,18 @@
       "sector": "Developer tools"
     },
     {
+      "url": "drizzle.team",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "effect.website",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "elysiajs.com",
+      "sector": "Developer tools"
+    },
+    {
       "url": "fly.io",
       "sector": "Developer tools"
     },
@@ -386,7 +578,19 @@
       "sector": "Developer tools"
     },
     {
+      "url": "nitro.build",
+      "sector": "Developer tools"
+    },
+    {
       "url": "nuxt.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "orm.drizzle.team",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "panda-css.com",
       "sector": "Developer tools"
     },
     {
@@ -402,6 +606,10 @@
       "sector": "Developer tools"
     },
     {
+      "url": "radix-ui.com",
+      "sector": "Developer tools"
+    },
+    {
       "url": "railway.com",
       "sector": "Developer tools"
     },
@@ -411,6 +619,10 @@
     },
     {
       "url": "resend.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "shadcn.com",
       "sector": "Developer tools"
     },
     {
@@ -430,11 +642,23 @@
       "sector": "Developer tools"
     },
     {
+      "url": "tanstack.com",
+      "sector": "Developer tools"
+    },
+    {
       "url": "trigger.dev",
       "sector": "Developer tools"
     },
     {
       "url": "turso.tech",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "unocss.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "valibot.dev",
       "sector": "Developer tools"
     },
     {
@@ -450,6 +674,10 @@
       "sector": "Developer tools"
     },
     {
+      "url": "zod.dev",
+      "sector": "Developer tools"
+    },
+    {
       "url": "allegro.pl",
       "sector": "Ecommerce"
     },
@@ -462,6 +690,10 @@
       "sector": "Ecommerce"
     },
     {
+      "url": "coupang.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "ebay.com",
       "sector": "Ecommerce"
     },
@@ -470,11 +702,27 @@
       "sector": "Ecommerce"
     },
     {
+      "url": "jumia.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "mercadolibre.com",
       "sector": "Ecommerce"
     },
     {
+      "url": "noon.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "ozon.ru",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "rakuten.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "shopee.com",
       "sector": "Ecommerce"
     },
     {
@@ -494,11 +742,19 @@
       "sector": "Ecommerce"
     },
     {
+      "url": "trendyol.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "walmart.com",
       "sector": "Ecommerce"
     },
     {
       "url": "webflow.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "wildberries.ru",
       "sector": "Ecommerce"
     },
     {
@@ -514,11 +770,27 @@
       "sector": "Education"
     },
     {
+      "url": "exercism.org",
+      "sector": "Education"
+    },
+    {
       "url": "freecodecamp.org",
       "sector": "Education"
     },
     {
       "url": "khanacademy.org",
+      "sector": "Education"
+    },
+    {
+      "url": "nostarch.com",
+      "sector": "Education"
+    },
+    {
+      "url": "pragprog.com",
+      "sector": "Education"
+    },
+    {
+      "url": "roadmap.sh",
       "sector": "Education"
     },
     {
@@ -546,11 +818,27 @@
       "sector": "Marketing / CRM"
     },
     {
+      "url": "beehiiv.com",
+      "sector": "Marketing / CRM"
+    },
+    {
       "url": "braze.com",
       "sector": "Marketing / CRM"
     },
     {
+      "url": "buttondown.com",
+      "sector": "Marketing / CRM"
+    },
+    {
       "url": "customer.io",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "fathom.video",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "ghost.org",
       "sector": "Marketing / CRM"
     },
     {
@@ -578,6 +866,10 @@
       "sector": "Marketing / CRM"
     },
     {
+      "url": "plausible.io",
+      "sector": "Marketing / CRM"
+    },
+    {
       "url": "posthog.com",
       "sector": "Marketing / CRM"
     },
@@ -591,6 +883,18 @@
     },
     {
       "url": "css-tricks.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "hackaday.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "lwn.net",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "phoronix.com",
       "sector": "Media / Publishing"
     },
     {
@@ -615,6 +919,10 @@
     },
     {
       "url": "theinformation.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "theregister.com",
       "sector": "Media / Publishing"
     },
     {
@@ -655,6 +963,10 @@
     },
     {
       "url": "airtable.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "arc.net",
       "sector": "SaaS / Productivity"
     },
     {
@@ -706,11 +1018,27 @@
       "sector": "SaaS / Productivity"
     },
     {
+      "url": "obsidian.md",
+      "sector": "SaaS / Productivity"
+    },
+    {
       "url": "productboard.com",
       "sector": "SaaS / Productivity"
     },
     {
+      "url": "raycast.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "readwise.io",
+      "sector": "SaaS / Productivity"
+    },
+    {
       "url": "slack.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "superhuman.com",
       "sector": "SaaS / Productivity"
     },
     {
