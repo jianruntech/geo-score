@@ -58,7 +58,11 @@ d=json.load(open(sys.argv[1]))
 for c in d["checks"]:
     if c["id"].startswith("b."): continue
     s = f'{c["points"]}/{c["max"]}' if c["state"]=="scored" else "—"
-    why = (c.get("evidence") or c.get("reason") or "").replace("|","\\|")[:150]
+    why = (c.get("evidence") or c.get("reason") or "").replace("|","\\|")
+    if len(why) > 150:
+        # cut on a word boundary — the CI summary is the most-read surface this action
+        # has, and a sentence ending mid-word reads like the tool broke
+        why = why[:150].rsplit(" ", 1)[0].rstrip(",.;:") + " …"
     print(f'| `{c["id"]}` | {s} | {why} |')
 PY
           echo
