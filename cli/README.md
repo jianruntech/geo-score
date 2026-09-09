@@ -18,6 +18,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
+| `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
 

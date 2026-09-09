@@ -163,6 +163,7 @@ python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
 python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
 python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
 python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
+python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
 ```
 
 **GitHub Action** —— 每次 push 都打分，退步就让构建失败。

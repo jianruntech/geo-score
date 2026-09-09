@@ -105,6 +105,18 @@ eq((den4, norm4), (98, 100), "an excluded check leaves the denominator and does 
 bon = mk(full); bon["bonus"] = {k: v for k, _, v in gs.BONUS}
 ok(gs.score(bon)[3] == gs.BONUS_CAP, "bonus is capped at +%d" % gs.BONUS_CAP)
 
+
+# ── share_line: 一行能贴出去的东西。空洞的分享文案没人会贴。 ──
+sl = gs.share_line(mk(full))
+ok("100/100" in sl and "Leading" in sl, "the share line carries the score and the band")
+ok("github.com/jianruntech/geo-score" in sl, "and a way back to the rubric")
+ok(len(sl) < 260, "it fits in a post, got %d chars" % len(sl))
+gapped = dict(full); gapped["p2.answer-passages"] = 0
+ok("biggest gap" in gs.share_line(mk(gapped)).lower(), "a site with a gap names its biggest one")
+capline = gs.share_line(mk(gate_zero))
+ok("cannot reach" in capline, "a gate-capped site says why, instead of naming a content gap")
+ok("Biggest gap" not in capline, "and does not also claim a content gap — the cap is the story")
+
 # ── as_json(): the published schema is a contract ──
 rep = gs.as_json(mk(full))
 for k in ("rubric_version", "audited_at", "target", "readiness", "observable_max",

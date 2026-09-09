@@ -928,6 +928,22 @@ def write_badge(res, path):
     io.open(path, "w", encoding="utf-8").write(svg)
     return path, norm, bd
 
+def share_line(res):
+    """One line someone can paste somewhere. Short enough for a post, specific enough
+    to mean something — the score, the band, and the single biggest gap."""
+    rows, total, den, b, norm, bd, capped = score(res)
+    host = urllib.parse.urlsplit(res["root"]).netloc.replace("www.", "") + \
+           urllib.parse.urlsplit(res["root"]).path
+    gaps = sorted([(mx - t, name) for _, _, name, t, mx, _ in rows
+                   if t is not None and t < mx], reverse=True)
+    top = gaps[0] if gaps else None
+    line = "%s scores %d/100 (%s) for AI answer-engine readiness." % (host, norm, bd)
+    if capped:
+        line += " Gate-capped — a retrieval crawler cannot reach the content at all."
+    elif top:
+        line += " Biggest gap: %s (+%d)." % (top[1].lower(), top[0])
+    return line + " Measured with the open AIV rubric — github.com/jianruntech/geo-score"
+
 def brief(res):
     """Pillar totals and the three biggest gaps. What fits in a screenshot."""
     rows, total, den, b, norm, bd, capped = score(res)
@@ -1091,6 +1107,8 @@ def main():
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
     ap.add_argument("--brief", action="store_true", help="pillar totals and the three biggest gaps only")
+    ap.add_argument("--share", action="store_true",
+                    help="print a one-line summary sized for a post, and the badge markdown")
     ap.add_argument("--badge", metavar="FILE", nargs="?", const="aiv-badge.svg",
                     help="also write an embeddable SVG badge (default aiv-badge.svg)")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
@@ -1121,6 +1139,16 @@ def main():
             brief(res)
         else:
             report(res, a)
+    if a.share:
+        line = share_line(res)
+        if not a.json:
+            print("  %sShare this%s" % (c.b, c.r))
+            print("  %s%s%s" % (c.dim, line, c.r))
+            print()
+            print("  %sBadge for your README:%s" % (c.grey, c.r))
+            print("  %s![AIV readiness](aiv-badge.svg)%s  "
+                  "%s(generate it with --badge)%s" % (c.dim, c.r, c.grey, c.r))
+            print()
     if a.badge:
         pth, nrm, bnd = write_badge(res, a.badge)
         if not a.json:

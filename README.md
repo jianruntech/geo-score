@@ -170,6 +170,7 @@ python3 cli/geo_score.py example.com --explain  # with the evidence behind every
 python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
 python3 cli/geo_score.py example.com --compare competitor.com   # side by side
 python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
+python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
 ```
 
 **GitHub Action** — score on every push, fail the build when it regresses.
