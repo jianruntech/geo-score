@@ -224,6 +224,7 @@ def data():
     return dict(
         n=s["n"], med=_fmt(s["median"]), p75=_fmt(s["p75"]), mn=s["min"], mx=s["max"], cap=len(cap),
         cappct=int(round(100.0 * len(cap) / s["n"])),
+        nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"],
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),
@@ -239,6 +240,68 @@ def data():
                        % (k, v["n"], v["median"], v["median"]) for k, v in sec),
         data=json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
 
+LLMS = """# geo-score
+
+> An open, versioned rubric for Generative Engine Optimization \u2014 score any site 0\u2013100
+> on whether AI answer engines can find, parse, trust and cite it. MIT licensed,
+> machine-readable, with a zero-dependency Python CLI and a public benchmark of %(n)d
+> well-known sites.
+
+The rubric it publishes is the AIV score: 21 tiered checks totalling 100 points, plus
+4 bonus checks worth up to +6 outside the denominator. Every tier states a count out of
+the 8 sampled pages, so two people scoring the same site agree on the arithmetic.
+Three checks are gates \u2014 score zero on crawler access, live reachability or
+server-rendered content and the result caps at 40.
+
+## The benchmark
+
+- [The state of AI visibility](https://jianruntech.github.io/geo-score/): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them cannot be cited at all \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
+- [\u7b80\u4f53\u4e2d\u6587\u7248](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
+- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
+
+## The rubric
+
+- [AIV rubric v1.1](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md): the full specification, tier by tier.
+- [\u7b80\u4f53\u4e2d\u6587](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.zh-CN.md): the same specification in Chinese.
+- [Machine-readable rubric](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.json): stable check ids, tier conditions, bands.
+- [Report schema](https://github.com/jianruntech/geo-score/blob/main/schema/report.v2.json): emit this and results from different implementations are comparable.
+- [Calibration record](https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md): how the thresholds were set, against four public benchmarks.
+
+## The tool
+
+- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`
+- [GitHub Action](https://github.com/jianruntech/geo-score/blob/main/action.yml): score on every push, fail the build on regression.
+- [Five hand-scored audits](https://github.com/jianruntech/geo-score/tree/main/examples/audits/v1.1): all 21 checks scored by hand with reproducible evidence.
+
+## Scope
+
+This measures readiness \u2014 whether an engine *can* cite a site. Whether one *does*
+depends on competition and query intent, which no site-side audit can observe.
+Remediation is deliberately out of scope: the rubric names the gap and what the next
+tier requires; it does not ship fix templates.
+
+Maintained by [Jianrun Tech](https://www.jianruntech.com) (\u89c1\u6f66\u79d1\u6280), Shenzhen. MIT.
+"""
+
+SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://jianruntech.github.io/geo-score/</loc>
+    <lastmod>%(date)s</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+  </url>
+  <url>
+    <loc>https://jianruntech.github.io/geo-score/zh.html</loc>
+    <lastmod>%(date)s</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+  </url>
+</urlset>
+"""
+
+
 if __name__ == "__main__":
     v = data()
     os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
@@ -251,3 +314,10 @@ if __name__ == "__main__":
         out = os.path.join(ROOT, "docs", name)
         io.open(out, "w", encoding="utf-8").write(TPL % vals)
         print("wrote docs/%s — %d sites, median %s" % (name, v["n"], v["med"]))
+    # llms.txt and sitemap.xml are generated for the same reason the pages are: the
+    # numbers in them went stale the moment the benchmark grew, and llms.txt is the
+    # one file an AI crawler actually reads — a stale number there is a wrong answer
+    # handed to every engine.
+    for name, tpl in (("llms.txt", LLMS), ("sitemap.xml", SITEMAP)):
+        io.open(os.path.join(ROOT, "docs", name), "w", encoding="utf-8").write(tpl % v)
+        print("wrote docs/%s" % name)

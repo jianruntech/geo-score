@@ -415,6 +415,19 @@ def tier_reason(cid, t, mx):
     return "%s — tier %d (+%d) needs: %s" % (here, idx + 2, nxt[0] - t, nxt[1])
 
 # ── sampling ───────────────────────────────────────────────────────────────
+def depth_in_scope(url, scope):
+    """How deep a URL sits inside the scope the user gave, not inside the origin.
+
+    For a site at example.com/docs, "docs/guide.html" is a top-level page of that site
+    and "docs/a/b.html" is one level down. Counting from the origin marks every page
+    nested and then penalises the site for missing breadcrumbs it does not need.
+    """
+    pth = urllib.parse.urlsplit(url).path
+    if scope and pth.startswith(scope):
+        pth = pth[len(scope):]
+    return pth.strip("/").count("/")
+
+
 def scope_of(base):
     """A site can live under a path — a project page, a docs subtree, a country folder.
     robots.txt and llms.txt are always at the origin by spec, but sampling has to stay
@@ -579,8 +592,15 @@ def run(base, sample=8, verbose=False):
     ev["g.ssr"] = "%d of %d sampled pages carry substantive body text in the HTML response with no JavaScript executed." % (ssr, n)
 
     # ── p1.sitemap ──
-    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"]
-    sm = next((r for r in pmap(fetch, sm_urls[:3]) if r.ok), None)
+    # A site can live under a path — a GitHub Pages project page, a docs subtree, a
+    # country folder. The spec puts sitemap.xml and llms.txt at the origin, but the
+    # owner of example.com/docs cannot place a file at example.com. Scoring them zero
+    # penalises them for something they do not control (open question #9), so fall
+    # back to the path they were given. Origin still wins when both exist.
+    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) \
+              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
+              + ([origin + scope + "/sitemap.xml"] if scope else [])
+    sm = next((r for r in pmap(fetch, sm_urls[:4]) if r.ok), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
@@ -591,13 +611,21 @@ def run(base, sample=8, verbose=False):
     else:
         locs = len(re.findall(r"<loc>", sm.text)); mods = len(re.findall(r"<lastmod>", sm.text))
         tier["p1.sitemap"] = 4 if locs and mods >= locs * .5 else 2
-        ev["p1.sitemap"] = "Sitemap %s: HTTP 200, %d <loc>, %d <lastmod>." % (
-            "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path", locs, mods)
+        ev["p1.sitemap"] = "Sitemap %s (%s): HTTP 200, %d <loc>, %d <lastmod>." % (
+            "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path",
+            sm.url if hasattr(sm, "url") else "—", locs, mods)
 
     # ── p1.llms-txt ──
     lt = fetch(origin + "/llms.txt")
+    lt_at = "/llms.txt"
+    if not lt.ok and scope:
+        alt = fetch(origin + scope + "/llms.txt")
+        if alt.ok:
+            lt, lt_at = alt, scope + "/llms.txt"
     if not lt.ok:
-        tier["p1.llms-txt"] = 0; ev["p1.llms-txt"] = "/llms.txt returned HTTP %d." % lt.status
+        tier["p1.llms-txt"] = 0
+        ev["p1.llms-txt"] = ("/llms.txt returned HTTP %d%s." %
+                             (lt.status, " (and none under %s either)" % scope if scope else ""))
     else:
         t = lt.text
         secs = re.findall(r"(?m)^##\s+(.+)$", t)
@@ -607,8 +635,10 @@ def run(base, sample=8, verbose=False):
             if re.search(r"\[[^\]]+\]\([^)]+\)", p): with_links += 1
         has_def = bool(re.search(r"(?m)^>\s+\S", t)) or (len(parts) and wc(parts[0]) > 15) or wc(t.split("##")[0]) > 25
         tier["p1.llms-txt"] = 5 if (has_def and with_links >= 2) else (4 if has_def else 2)
-        ev["p1.llms-txt"] = "/llms.txt: HTTP 200, %d bytes, %d '##' sections, %d of them containing links, site definition %s." % (
-            len(lt.body), len(secs), with_links, "present" if has_def else "absent")
+        ev["p1.llms-txt"] = "%s: HTTP 200, %d bytes, %d '##' sections, %d of them containing links, site definition %s.%s" % (
+            lt_at, len(lt.body), len(secs), with_links, "present" if has_def else "absent",
+            " Found under the given path, not at the origin — the spec puts it at the origin,"
+            " but a site living under a path cannot place a file there." if lt_at != "/llms.txt" else "")
 
     # ── p1.organization ──
     allld = {u: jsonld(r.text) for u, r in live.items()}
@@ -639,7 +669,11 @@ def run(base, sample=8, verbose=False):
             else ("no sameAs declared" if not same else "logo absent"))
 
     # ── p1.breadcrumb ──
-    nested = [u for u in live if urllib.parse.urlsplit(u).path.strip("/").count("/") >= 1]
+    # Nesting is relative to the scope the user gave, not to the origin. For a site at
+    # example.com/docs, "docs/guide.html" is a top-level page of that site, not a nested
+    # one — counting the prefix as hierarchy marks every page nested and then penalises
+    # the site for missing breadcrumbs it does not need (open question #9).
+    nested = [u for u in live if depth_in_scope(u, scope) >= 1]
     bc = [u for u in nested if "BreadcrumbList" in types_of(allld.get(u, []))]
     if not nested:
         tier["p1.breadcrumb"] = None; ev["p1.breadcrumb"] = "No nested pages in the sample — the check leaves the denominator."
@@ -648,7 +682,11 @@ def run(base, sample=8, verbose=False):
         ev["p1.breadcrumb"] = "BreadcrumbList on %d of %d nested pages." % (len(bc), len(nested))
 
     # ── p1.page-type ──
-    want_t = {"Product","Offer","FAQPage","HowTo","SoftwareApplication","Course","Recipe","Event","JobPosting"}
+    # Dataset belongs here: a page whose subject *is* a published dataset is stating its
+    # type as precisely as a Product page does. Leaving it out silently penalised an
+    # entire class of site — open data portals, research and government publishers.
+    want_t = {"Product","Offer","FAQPage","HowTo","SoftwareApplication","Course","Recipe",
+              "Event","JobPosting","Dataset"}
     hit = {u for u, o in allld.items() if types_of(o) & want_t}
     art = {u for u, o in allld.items() if types_of(o) & {"Article","BlogPosting","NewsArticle","TechArticle"}}
     tier["p1.page-type"] = 4 if len(hit | art) >= max(2, n * .5) else (2 if (hit or art) else 0)
@@ -860,9 +898,20 @@ def run(base, sample=8, verbose=False):
 
     # ── bonus ──
     bon = {}
-    lf = fetch(origin + "/llms-full.txt"); bon["b.llms-full"] = 2 if lf.ok else 0
-    at = fetch(origin + "/ai.txt")
-    at2 = fetch(origin + "/.well-known/ai.txt") if not at.ok else at
+    # Same subpath rule as p1.llms-txt: origin first, then the path the user gave.
+    # robots.txt deliberately stays origin-only — it genuinely is origin-scoped, and a
+    # site under a path has no robots.txt of its own to offer. That asymmetry is real
+    # and documented in rubric/open-questions.md #9.
+    def at_origin_or_scope(rel):
+        r = fetch(origin + rel)
+        if not r.ok and scope:
+            alt = fetch(origin + scope + rel)
+            if alt.ok:
+                return alt
+        return r
+    lf = at_origin_or_scope("/llms-full.txt"); bon["b.llms-full"] = 2 if lf.ok else 0
+    at = at_origin_or_scope("/ai.txt")
+    at2 = at_origin_or_scope("/.well-known/ai.txt") if not at.ok else at
     bon["b.ai-txt"] = 2 if at2.ok else 0
     home_html = home_html_early
     bon["b.geo-link"] = 1 if re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', home_html, re.I) else 0

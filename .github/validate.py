@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Structural checks. Keeps the repo honest about its own scope rules."""
-import io, struct, os, re, sys
+import io, struct, json, os, re, sys
 
 fail = []
 
@@ -371,9 +371,14 @@ for pth in _g3.glob("**/*.md", recursive=True):
 # 16 · 公开榜单页必须与 benchmark/results.json 同步 —— 页面是生成的，不该手改
 if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
     import subprocess, tempfile, shutil
-    before = {f: io.open(os.path.join("docs", f), encoding="utf-8").read()
-              for f in os.listdir("docs") if f.endswith(".html")}
-    check(bool(before), "docs/ 里没有 html —— 榜单页应由 benchmark/build_page.py 生成")
+    # llms.txt 和 sitemap.xml 也是生成的。llms.txt 是 AI 爬虫唯一真会读的那个文件，
+    # 上面的旧数字就是直接递给每个引擎的错答案 —— 它必须和 results.json 一起动。
+    GEN = tuple(f for f in os.listdir("docs")
+                if f.endswith(".html") or f in ("llms.txt", "sitemap.xml"))
+    before = {f: io.open(os.path.join("docs", f), encoding="utf-8").read() for f in GEN}
+    for need in ("llms.txt", "sitemap.xml"):
+        check(need in GEN, f"docs/{need} 不存在 —— 跑一遍 python3 benchmark/build_page.py 并提交")
+    check(bool(before), "docs/ 里没有生成物 —— 榜单页应由 benchmark/build_page.py 生成")
     r = subprocess.run([sys.executable, "benchmark/build_page.py"],
                        capture_output=True, text=True)
     check(r.returncode == 0, f"benchmark/build_page.py 跑不通：{(r.stderr or '')[-200:]}")
@@ -429,6 +434,21 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
                       f"docs/{card} 宽高比 {w/float(h):.2f}，社交卡需要接近 1.91:1，否则会被裁")
                 check(os.path.getsize(cpth) < 5 * 1024 * 1024,
                       f"docs/{card} 超过 5MB，多数平台不会抓取")
+
+    # ── 18. llms.txt 里的样本量必须等于 results.json 的 ──
+    # 这条和上面的字节比对重叠，但失败信息可读得多：
+    # 「llms.txt 写着 105 站，results.json 是 229」比「字节不一致」有用得多。
+    # 必须读 before 里那份「提交进仓库的」内容 —— 上面的字节比对已经把磁盘上的文件
+    # 重新生成成正确的了，再去读文件这条检查就永远不会响。
+    if before.get("llms.txt") and os.path.exists("benchmark/results.json"):
+        lt = before["llms.txt"]
+        n = json.load(io.open("benchmark/results.json", encoding="utf-8"))["stats"]["n"]
+        # llms.txt 是折行的 Markdown 引用块，数字和「well-known sites」之间可能隔着
+        # 换行和「> 」。只认单个空格会漏掉第一处，那条检查就成了摆设。
+        found = set(int(x) for x in re.findall(r"(\d{2,4})[\s>]+well-known sites", lt))
+        check(found == {n},
+              "docs/llms.txt 写着 %s 站，results.json 是 %d 站 —— 这是 AI 爬虫唯一会读的"
+              "文件，数字错了就是递给每个引擎一个错答案" % (sorted(found) or "没写", n))
 
 if fail:
     print("FAIL")

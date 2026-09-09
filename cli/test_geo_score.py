@@ -117,6 +117,21 @@ capline = gs.share_line(mk(gate_zero))
 ok("cannot reach" in capline, "a gate-capped site says why, instead of naming a content gap")
 ok("Biggest gap" not in capline, "and does not also claim a content gap — the cap is the story")
 
+
+# ── 路径型站点：前缀不是层级 ──
+# GitHub 项目页、文档子目录、国家目录都活在一个路径下面。按原点数斜杠，
+# 它们每一页都算「嵌套页」，然后因为没有面包屑被扣分——扣的是它们改不了的东西。
+ok(gs.depth_in_scope("https://x.io/geo-score/zh.html", "/geo-score") == 0,
+   "a sibling page under the given path is top-level, not nested")
+ok(gs.depth_in_scope("https://x.io/geo-score/a/b.html", "/geo-score") == 1,
+   "one real level below the given path counts as nested")
+ok(gs.depth_in_scope("https://x.io/a/b.html", "") == 1,
+   "with no path given, nesting is counted from the origin as before")
+ok(gs.depth_in_scope("https://x.io/geo-score/", "/geo-score") == 0,
+   "the scope root itself is depth 0")
+ok(gs.depth_in_scope("https://x.io/other/p.html", "/geo-score") == 1,
+   "a URL outside the scope falls back to origin-relative depth")
+
 # ── as_json(): the published schema is a contract ──
 rep = gs.as_json(mk(full))
 for k in ("rubric_version", "audited_at", "target", "readiness", "observable_max",

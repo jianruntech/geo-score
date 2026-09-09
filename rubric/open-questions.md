@@ -128,7 +128,7 @@ contribute right now.
 
 ## 9 · A site on a subpath is penalised for an origin it does not own
 
-*Found 2026-09-09, after v1.1 shipped. Open.*
+*Found 2026-09-09, after v1.1 shipped. **Resolved 2026-09-09.***
 
 `p1.llms-txt`, `p1.sitemap` and the `b.*` bonus checks all look at the **origin root** —
 `https://host/llms.txt`, `https://host/sitemap.xml`. That is correct by each convention's
@@ -146,8 +146,32 @@ scoring a site zero for a file it is not permitted to create measures ownership,
 readiness, and the resulting number is not comparable between a root-domain site and a
 subpath site.
 
-**Options:** accept a declared `<link rel="alternate">` as an alternative discovery path ·
-scale the check out of the denominator when the sampled base has a non-empty path ·
-leave it and document that subpath sites are not comparable with root-domain sites.
-**Not yet decided.** Whichever way it goes, the five published audits are unaffected —
-all five targets are root domains.
+**Resolved: fall back to the given path.** When the sampled base has a non-empty path
+and the origin file is absent, the check looks for the same file under that path.
+The origin still wins when both exist, and the evidence line says which one was read,
+so a reader can tell a root-domain result from a subpath one. This applies to
+`p1.llms-txt`, `p1.sitemap`, `b.llms-full` and `b.ai-txt`.
+
+Scoring this pass changed our own leaderboard page from 69 to 82.
+
+**Two things surfaced while implementing it that the question above had missed:**
+
+`p1.breadcrumb` was affected too. It counted path segments from the origin, so on a
+project page every URL looked nested and the site was marked down for missing
+breadcrumbs it does not need. Nesting is now counted relative to the given path, and
+a site with no genuinely nested pages leaves the denominator instead of scoring zero.
+
+`p1.page-type` did not accept `Dataset`. A page whose subject *is* a published dataset
+states its type as precisely as a Product page does; leaving it out silently marked
+down open-data portals, research and government publishers as a class. The benchmark
+was **not** re-run for this — a spot check of eight sites that list `p1.page-type`
+among their top gaps found none declaring `Dataset`, so the published medians hold,
+but the next full run may raise a few data-publishing sites.
+
+**`robots.txt` deliberately keeps the origin-only rule.** It genuinely is origin-scoped,
+and a site under a path has no robots.txt of its own to offer. A subpath site therefore
+still inherits its host's crawler policy — our own page scores 3/5 on `g.robots` because
+that file is GitHub's. That asymmetry is real, and it is the honest answer rather than a
+fixable bug.
+
+The five published audits are unaffected — all five targets are root domains.
