@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 748 441" width="748" height="441" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" role="img" aria-labelledby="dt dd">
+<title id="dt">geo-score scoring stripe.com from the command line</title>
+<desc id="dd">One command, about twenty seconds. stripe.com scores 71 out of 100, band Solid, 12 points below Leading. Its three biggest gaps are headings matching how people ask, named verifiable authorship, and a freshness signal.</desc>
+<rect width="748" height="441" rx="7" fill="#0B120E"/>
+<path d="M0 7a7 7 0 0 1 7-7h734 a7 7 0 0 1 7 7v35 H0Z" fill="#101913"/>
+<rect y="42" width="748" height="1" fill="#2C3B33"/>
+<circle cx="26" cy="21" r="5.5" fill="#C4705F"/>
+<circle cx="46" cy="21" r="5.5" fill="#C9A227"/>
+<circle cx="66" cy="21" r="5.5" fill="#4FAE80"/>
+<text x="374" y="26" fill="#5F6761" font-size="11.5" text-anchor="middle">geo-score</text>
+<text x="22" y="77" xml:space="preserve" fill="#4FAE80">$ <tspan fill="#A7B4AC">curl -sL .../cli/geo_score.py | python3 - stripe.com --brief</tspan> <tspan fill="#4FAE80">▊<animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;.45;.5;.95;1" dur="1.1s" repeatCount="indefinite"/></tspan></text>
+<text x="22" y="96.5" xml:space="preserve" fill="#5F6761" opacity="1">  scoring https://stripe.com …<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.6250;0.9583" dur="0.48s" begin="0s" fill="freeze"/></text>
+<text x="22" y="116.0" xml:space="preserve" fill="#E7ECE7" opacity="1"> <animate attributeName="opacity" values="0;0;1" keyTimes="0;0.6757;0.9640" dur="0.55s" begin="0s" fill="freeze"/></text>
+<text x="22" y="135.5" xml:space="preserve" fill="#E7ECE7" opacity="1"> <animate attributeName="opacity" values="0;0;1" keyTimes="0;0.7143;0.9683" dur="0.63s" begin="0s" fill="freeze"/></text>
+<text x="22" y="155.0" xml:space="preserve" fill="#A9854C" opacity="1">  AIV READINESS  https://stripe.com<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.7447;0.9716" dur="0.70s" begin="0s" fill="freeze"/></text>
+<text x="22" y="174.5" xml:space="preserve" fill="#2C3B33" opacity="1">──────────────────────────────────────────────────────────<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.7692;0.9744" dur="0.78s" begin="0s" fill="freeze"/></text>
+<text x="22" y="194.0" xml:space="preserve" fill="#4FAE80" opacity="1">  71 / 100   Solid          12 points to Leading<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.7895;0.9766" dur="0.85s" begin="0s" fill="freeze"/></text>
+<text x="22" y="213.5" xml:space="preserve" fill="#E7ECE7" opacity="1"> <animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8065;0.9785" dur="0.93s" begin="0s" fill="freeze"/></text>
+<text x="22" y="233.0" xml:space="preserve" fill="#E7ECE7" opacity="1">  Reachable             11/15   ◐✓◐<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8209;0.9801" dur="1.00s" begin="0s" fill="freeze"/></text>
+<text x="22" y="252.5" xml:space="preserve" fill="#E7ECE7" opacity="1">  Understandable        15/22   ◐✓✓✗◐<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8333;0.9815" dur="1.08s" begin="0s" fill="freeze"/></text>
+<text x="22" y="272.0" xml:space="preserve" fill="#E7ECE7" opacity="1">  Content Citability    25/35   ✓◐◐✓◐<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8442;0.9827" dur="1.15s" begin="0s" fill="freeze"/></text>
+<text x="22" y="291.5" xml:space="preserve" fill="#E7ECE7" opacity="1">  Brand Credibility      8/10   ⊘⊘✓◐◐<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8537;0.9837" dur="1.23s" begin="0s" fill="freeze"/></text>
+<text x="22" y="311.0" xml:space="preserve" fill="#C9A227" opacity="1">  Answer Fit              2/4   ◐⊘⊘<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8621;0.9847" dur="1.30s" begin="0s" fill="freeze"/></text>
+<text x="22" y="330.5" xml:space="preserve" fill="#E7ECE7" opacity="1"> <animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8696;0.9855" dur="1.38s" begin="0s" fill="freeze"/></text>
+<text x="22" y="350.0" xml:space="preserve" fill="#E7ECE7" opacity="1">  Biggest gaps<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8763;0.9863" dur="1.45s" begin="0s" fill="freeze"/></text>
+<text x="22" y="369.5" xml:space="preserve" fill="#A9854C" opacity="1">   +4   Headings match how people ask<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8824;0.9869" dur="1.53s" begin="0s" fill="freeze"/></text>
+<text x="22" y="389.0" xml:space="preserve" fill="#A9854C" opacity="1">   +3   Named, verifiable authorship<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8879;0.9875" dur="1.60s" begin="0s" fill="freeze"/></text>
+<text x="22" y="408.5" xml:space="preserve" fill="#A9854C" opacity="1">   +3   Freshness signal present<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.8929;0.9881" dur="1.68s" begin="0s" fill="freeze"/></text>
+</svg>

@@ -18,22 +18,10 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
   | python3 - stripe.com --brief
 ```
 
-```
-  AIV READINESS  https://stripe.com
-──────────────────────────────────────────────────────────
-  71 / 100   Solid          12 points to Leading
+<p align="center"><img src="assets/demo.svg" alt="geo-score scoring stripe.com from the command line — 71 out of 100, band Solid" width="100%"></p>
 
-  Reachable             11/15   ◐✓◐
-  Understandable        15/22   ◐✓✓✗◐
-  Content Citability    25/35   ✓◐◐✓◐
-  Brand Credibility      8/10   ⊘⊘✓◐◐
-  Answer Fit              2/4   ◐⊘⊘
+<sub>One command. About twenty seconds. Every check, and what the next tier needs.</sub>
 
-  Biggest gaps
-   +4   Headings match how people ask
-   +3   Named, verifiable authorship
-   +3   Freshness signal present
-```
 
 <details>
 <summary>Full output — every check, its evidence, and what the next tier asks for</summary>

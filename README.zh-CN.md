@@ -18,22 +18,10 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
   | python3 - stripe.com --brief
 ```
 
-```
-  AIV READINESS  https://stripe.com
-──────────────────────────────────────────────────────────
-  71 / 100   Solid          12 points to Leading
+<p align="center"><img src="assets/demo.svg" alt="geo-score 在命令行给 stripe.com 打分 —— 71/100，档位 Solid" width="100%"></p>
 
-  Reachable             11/15   ◐✓◐
-  Understandable        15/22   ◐✓✓✗◐
-  Content Citability    25/35   ✓◐◐✓◐
-  Brand Credibility      8/10   ⊘⊘✓◐◐
-  Answer Fit              2/4   ◐⊘⊘
+<sub>一行命令，约二十秒。每一项的分数，以及上一档要什么。</sub>
 
-  Biggest gaps
-   +4   Headings match how people ask
-   +3   Named, verifiable authorship
-   +3   Freshness signal present
-```
 
 <details>
 <summary>完整输出（每一项的分数、证据与下一档要求）</summary>
