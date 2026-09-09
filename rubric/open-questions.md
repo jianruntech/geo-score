@@ -123,3 +123,31 @@ five audits above stay meaningful and reproducible against the version they were
 
 If you have a view, especially on **1** and **6**, that is the most useful thing you can
 contribute right now.
+
+---
+
+## 9 · A site on a subpath is penalised for an origin it does not own
+
+*Found 2026-09-09, after v1.1 shipped. Open.*
+
+`p1.llms-txt`, `p1.sitemap` and the `b.*` bonus checks all look at the **origin root** —
+`https://host/llms.txt`, `https://host/sitemap.xml`. That is correct by each convention's
+own spec. But a project page on GitHub Pages, a docs subtree at `example.com/docs`, or a
+country folder at `brand.com/de/` cannot write to the origin root. Someone else owns it.
+
+This repository's own leaderboard is the example: it lives at
+`jianruntech.github.io/geo-score/` and publishes `llms.txt` at
+`/geo-score/llms.txt`, declared from the page with
+`<link rel="alternate" type="text/plain">`. The rubric scores it zero, because
+`github.io/llms.txt` belongs to GitHub.
+
+The check is not wrong about what retrieval engines do — most look at the origin. But
+scoring a site zero for a file it is not permitted to create measures ownership, not
+readiness, and the resulting number is not comparable between a root-domain site and a
+subpath site.
+
+**Options:** accept a declared `<link rel="alternate">` as an alternative discovery path ·
+scale the check out of the denominator when the sampled base has a non-empty path ·
+leave it and document that subpath sites are not comparable with root-domain sites.
+**Not yet decided.** Whichever way it goes, the five published audits are unaffected —
+all five targets are root domains.

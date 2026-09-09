@@ -30,6 +30,8 @@ jobs:
           python3 -m py_compile cli/geo_score.py
           python3 cli/geo_score.py --version
           python3 cli/geo_score.py --help > /dev/null
+      - name: offline unit tests
+        run: python3 cli/test_geo_score.py
       - name: scores a live site and emits valid JSON
         run: |
           python3 cli/geo_score.py example.com --json --quiet > out.json

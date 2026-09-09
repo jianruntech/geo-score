@@ -6,11 +6,31 @@
       "sector": "AI"
     },
     {
+      "url": "baseten.co",
+      "sector": "AI"
+    },
+    {
+      "url": "browserbase.com",
+      "sector": "AI"
+    },
+    {
       "url": "cohere.com",
       "sector": "AI"
     },
     {
+      "url": "crewai.com",
+      "sector": "AI"
+    },
+    {
       "url": "elevenlabs.io",
+      "sector": "AI"
+    },
+    {
+      "url": "fireworks.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "groq.com",
       "sector": "AI"
     },
     {
@@ -22,7 +42,19 @@
       "sector": "AI"
     },
     {
+      "url": "langfuse.com",
+      "sector": "AI"
+    },
+    {
+      "url": "llamaindex.ai",
+      "sector": "AI"
+    },
+    {
       "url": "mistral.ai",
+      "sector": "AI"
+    },
+    {
+      "url": "modal.com",
       "sector": "AI"
     },
     {
@@ -58,11 +90,31 @@
       "sector": "China / AI"
     },
     {
+      "url": "baichuan-ai.com",
+      "sector": "China / AI"
+    },
+    {
+      "url": "bigmodel.cn",
+      "sector": "China / AI"
+    },
+    {
       "url": "deepseek.com",
       "sector": "China / AI"
     },
     {
+      "url": "minimaxi.com",
+      "sector": "China / AI"
+    },
+    {
       "url": "moonshot.cn",
+      "sector": "China / AI"
+    },
+    {
+      "url": "siliconflow.cn",
+      "sector": "China / AI"
+    },
+    {
+      "url": "stepfun.com",
       "sector": "China / AI"
     },
     {
@@ -82,7 +134,23 @@
       "sector": "China / cloud"
     },
     {
+      "url": "aliexpress.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "anker.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "baseus.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "cider.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "clubfactory.com",
       "sector": "China / consumer"
     },
     {
@@ -90,7 +158,31 @@
       "sector": "China / consumer"
     },
     {
+      "url": "ecoflow.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "hisense.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "insta360.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "lazada.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "lenovo.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "miniso.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "oceanwing.com",
       "sector": "China / consumer"
     },
     {
@@ -98,7 +190,15 @@
       "sector": "China / consumer"
     },
     {
+      "url": "tcl.com",
+      "sector": "China / consumer"
+    },
+    {
       "url": "temu.com",
+      "sector": "China / consumer"
+    },
+    {
+      "url": "ugreen.com",
       "sector": "China / consumer"
     },
     {
@@ -150,6 +250,14 @@
       "sector": "China / no-code"
     },
     {
+      "url": "axiom.co",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "betterstack.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
       "url": "cloudflare.com",
       "sector": "Cloud & DevOps"
     },
@@ -170,7 +278,15 @@
       "sector": "Cloud & DevOps"
     },
     {
+      "url": "koyeb.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
       "url": "netlify.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "porter.run",
       "sector": "Cloud & DevOps"
     },
     {
@@ -190,15 +306,59 @@
       "sector": "Cloud & DevOps"
     },
     {
+      "url": "upstash.com",
+      "sector": "Cloud & DevOps"
+    },
+    {
       "url": "vercel.com",
       "sector": "Cloud & DevOps"
+    },
+    {
+      "url": "aftership.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "helium10.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "junglescout.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "lianlianpay.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "payoneer.cn",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "pingpongx.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "sellersprite.com",
+      "sector": "Cross-border services"
+    },
+    {
+      "url": "yuncang.com",
+      "sector": "Cross-border services"
     },
     {
       "url": "astro.build",
       "sector": "Developer tools"
     },
     {
+      "url": "biomejs.dev",
+      "sector": "Developer tools"
+    },
+    {
       "url": "bun.sh",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "clerk.com",
       "sector": "Developer tools"
     },
     {
@@ -210,11 +370,27 @@
       "sector": "Developer tools"
     },
     {
+      "url": "hono.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "inngest.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "neon.tech",
+      "sector": "Developer tools"
+    },
+    {
       "url": "nextjs.org",
       "sector": "Developer tools"
     },
     {
       "url": "nuxt.com",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "planetscale.com",
       "sector": "Developer tools"
     },
     {
@@ -234,6 +410,10 @@
       "sector": "Developer tools"
     },
     {
+      "url": "resend.com",
+      "sector": "Developer tools"
+    },
+    {
       "url": "solidjs.com",
       "sector": "Developer tools"
     },
@@ -250,7 +430,19 @@
       "sector": "Developer tools"
     },
     {
+      "url": "trigger.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "turso.tech",
+      "sector": "Developer tools"
+    },
+    {
       "url": "vitejs.dev",
+      "sector": "Developer tools"
+    },
+    {
+      "url": "vitest.dev",
       "sector": "Developer tools"
     },
     {
@@ -258,7 +450,19 @@
       "sector": "Developer tools"
     },
     {
+      "url": "allegro.pl",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "amazon.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "bigcommerce.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "ebay.com",
       "sector": "Ecommerce"
     },
     {
@@ -266,11 +470,31 @@
       "sector": "Ecommerce"
     },
     {
+      "url": "mercadolibre.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "ozon.ru",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "shopify.com",
       "sector": "Ecommerce"
     },
     {
+      "url": "shoplazza.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "shopline.com",
+      "sector": "Ecommerce"
+    },
+    {
       "url": "squarespace.com",
+      "sector": "Ecommerce"
+    },
+    {
+      "url": "walmart.com",
       "sector": "Ecommerce"
     },
     {
@@ -318,7 +542,15 @@
       "sector": "Marketing / CRM"
     },
     {
+      "url": "attio.com",
+      "sector": "Marketing / CRM"
+    },
+    {
       "url": "braze.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "customer.io",
       "sector": "Marketing / CRM"
     },
     {
@@ -327,6 +559,10 @@
     },
     {
       "url": "intercom.com",
+      "sector": "Marketing / CRM"
+    },
+    {
+      "url": "june.so",
       "sector": "Marketing / CRM"
     },
     {
@@ -342,6 +578,10 @@
       "sector": "Marketing / CRM"
     },
     {
+      "url": "posthog.com",
+      "sector": "Marketing / CRM"
+    },
+    {
       "url": "semrush.com",
       "sector": "Marketing / CRM"
     },
@@ -354,6 +594,10 @@
       "sector": "Media / Publishing"
     },
     {
+      "url": "simonwillison.net",
+      "sector": "Media / Publishing"
+    },
+    {
       "url": "smashingmagazine.com",
       "sector": "Media / Publishing"
     },
@@ -362,11 +606,23 @@
       "sector": "Media / Publishing"
     },
     {
+      "url": "stratechery.com",
+      "sector": "Media / Publishing"
+    },
+    {
       "url": "techcrunch.com",
       "sector": "Media / Publishing"
     },
     {
+      "url": "theinformation.com",
+      "sector": "Media / Publishing"
+    },
+    {
       "url": "theverge.com",
+      "sector": "Media / Publishing"
+    },
+    {
+      "url": "wired.com",
       "sector": "Media / Publishing"
     },
     {
@@ -406,6 +662,10 @@
       "sector": "SaaS / Productivity"
     },
     {
+      "url": "cal.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
       "url": "calendly.com",
       "sector": "SaaS / Productivity"
     },
@@ -414,7 +674,15 @@
       "sector": "SaaS / Productivity"
     },
     {
+      "url": "coda.io",
+      "sector": "SaaS / Productivity"
+    },
+    {
       "url": "figma.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "height.app",
       "sector": "SaaS / Productivity"
     },
     {
@@ -438,7 +706,19 @@
       "sector": "SaaS / Productivity"
     },
     {
+      "url": "productboard.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
       "url": "slack.com",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "tability.io",
+      "sector": "SaaS / Productivity"
+    },
+    {
+      "url": "typeform.com",
       "sector": "SaaS / Productivity"
     },
     {
