@@ -1,0 +1,1043 @@
+{
+ "note": "Two independent full runs of the same benchmark with the same code, so a reader can see how much of a single run's number is measurement and how much is noise. Run 1 is what benchmark/results.json publishes; run 2 was taken on the same day.",
+ "runs": [
+  {
+   "measured_at": "2026-09-09",
+   "n": 229,
+   "stats": {
+    "n": 229,
+    "mean": 56.6,
+    "median": 57,
+    "p25": 40.0,
+    "p75": 72.0,
+    "min": 7,
+    "max": 98
+   }
+  },
+  {
+   "measured_at": "2026-09-09",
+   "n": 230,
+   "stats": {
+    "n": 230,
+    "mean": 56.3,
+    "median": 57.5,
+    "p25": 40.0,
+    "p75": 72.0,
+    "min": 12,
+    "max": 95
+   }
+  }
+ ],
+ "compared": 229,
+ "identical": 103,
+ "within_2": 179,
+ "within_5": 219,
+ "within_2_pct": 78.2,
+ "within_5_pct": 95.6,
+ "moved_over_5": [
+  [
+   "together.ai",
+   74,
+   40
+  ],
+  [
+   "xtransfer.com",
+   66,
+   40
+  ],
+  [
+   "grafana.com",
+   72,
+   50
+  ],
+  [
+   "ecoflow.com",
+   40,
+   60
+  ],
+  [
+   "slack.com",
+   60,
+   40
+  ],
+  [
+   "booking.com",
+   18,
+   35
+  ],
+  [
+   "materialize.com",
+   58,
+   65
+  ],
+  [
+   "orm.drizzle.team",
+   49,
+   56
+  ],
+  [
+   "helium10.com",
+   79,
+   73
+  ],
+  [
+   "netlify.com",
+   85,
+   91
+  ]
+ ],
+ "gate_flips": [
+  {
+   "site": "booking.com",
+   "run1": "capped",
+   "run2": "not capped"
+  },
+  {
+   "site": "ecoflow.com",
+   "run1": "capped",
+   "run2": "not capped"
+  },
+  {
+   "site": "slack.com",
+   "run1": "not capped",
+   "run2": "capped"
+  },
+  {
+   "site": "together.ai",
+   "run1": "not capped",
+   "run2": "capped"
+  },
+  {
+   "site": "xtransfer.com",
+   "run1": "not capped",
+   "run2": "capped"
+  }
+ ],
+ "control": {
+  "site": "stripe.com",
+  "runs": [
+   69,
+   71,
+   71
+  ],
+  "note": "Same code, same site, three consecutive runs — the spread is inherent, not a consequence of any code change."
+ },
+ "per_site": {
+  "01.ai": [
+   40,
+   40
+  ],
+  "adyen.com": [
+   70,
+   70
+  ],
+  "ahrefs.com": [
+   58,
+   58
+  ],
+  "aider.chat": [
+   60,
+   58
+  ],
+  "airbnb.com": [
+   34,
+   34
+  ],
+  "airtable.com": [
+   40,
+   40
+  ],
+  "airwallex.com": [
+   65,
+   70
+  ],
+  "alibabagroup.com": [
+   61,
+   61
+  ],
+  "aliexpress.com": [
+   30,
+   27
+  ],
+  "aliyun.com": [
+   46,
+   46
+  ],
+  "amazon.com": [
+   12,
+   16
+  ],
+  "anker.com": [
+   74,
+   76
+  ],
+  "anthropic.com": [
+   57,
+   59
+  ],
+  "arc.net": [
+   52,
+   50
+  ],
+  "arstechnica.com": [
+   71,
+   72
+  ],
+  "asana.com": [
+   71,
+   72
+  ],
+  "astro.build": [
+   59,
+   59
+  ],
+  "attio.com": [
+   67,
+   67
+  ],
+  "axiom.co": [
+   83,
+   83
+  ],
+  "baichuan-ai.com": [
+   16,
+   16
+  ],
+  "baseten.co": [
+   51,
+   51
+  ],
+  "baseus.com": [
+   78,
+   80
+  ],
+  "beehiiv.com": [
+   74,
+   69
+  ],
+  "betterstack.com": [
+   56,
+   56
+  ],
+  "bigcommerce.com": [
+   67,
+   67
+  ],
+  "bigmodel.cn": [
+   26,
+   26
+  ],
+  "biomejs.dev": [
+   46,
+   46
+  ],
+  "booking.com": [
+   18,
+   35
+  ],
+  "braze.com": [
+   64,
+   64
+  ],
+  "browserbase.com": [
+   60,
+   60
+  ],
+  "bun.sh": [
+   88,
+   88
+  ],
+  "buttondown.com": [
+   79,
+   79
+  ],
+  "bytedance.com": [
+   47,
+   45
+  ],
+  "cal.com": [
+   71,
+   72
+  ],
+  "calendly.com": [
+   78,
+   79
+  ],
+  "checkout.com": [
+   77,
+   77
+  ],
+  "clerk.com": [
+   85,
+   87
+  ],
+  "clickhouse.com": [
+   78,
+   79
+  ],
+  "clickup.com": [
+   87,
+   87
+  ],
+  "cloudflare.com": [
+   81,
+   79
+  ],
+  "coda.io": [
+   46,
+   44
+  ],
+  "cohere.com": [
+   40,
+   40
+  ],
+  "continue.dev": [
+   40,
+   40
+  ],
+  "coursera.org": [
+   69,
+   66
+  ],
+  "creality.com": [
+   58,
+   58
+  ],
+  "crewai.com": [
+   73,
+   73
+  ],
+  "css-tricks.com": [
+   40,
+   40
+  ],
+  "cursor.com": [
+   79,
+   77
+  ],
+  "customer.io": [
+   56,
+   57
+  ],
+  "dagster.io": [
+   71,
+   69
+  ],
+  "datadoghq.com": [
+   61,
+   58
+  ],
+  "datahawk.co": [
+   40,
+   40
+  ],
+  "deepmind.google": [
+   76,
+   74
+  ],
+  "deepseek.com": [
+   54,
+   58
+  ],
+  "deno.com": [
+   70,
+   70
+  ],
+  "dianxiaomi.com": [
+   52,
+   52
+  ],
+  "digitalocean.com": [
+   52,
+   52
+  ],
+  "dji.com": [
+   38,
+   40
+  ],
+  "dreame.tech": [
+   29,
+   29
+  ],
+  "drizzle.team": [
+   25,
+   30
+  ],
+  "duckdb.org": [
+   66,
+   66
+  ],
+  "ebay.com": [
+   40,
+   40
+  ],
+  "ecoflow.com": [
+   40,
+   60
+  ],
+  "effect.website": [
+   52,
+   55
+  ],
+  "elevenlabs.io": [
+   79,
+   84
+  ],
+  "elysiajs.com": [
+   61,
+   63
+  ],
+  "fathom.video": [
+   55,
+   55
+  ],
+  "feishu.cn": [
+   20,
+   19
+  ],
+  "figma.com": [
+   40,
+   40
+  ],
+  "fireworks.ai": [
+   74,
+   77
+  ],
+  "fly.io": [
+   84,
+   83
+  ],
+  "freecodecamp.org": [
+   23,
+   20
+  ],
+  "ghost.org": [
+   73,
+   72
+  ],
+  "govee.com": [
+   59,
+   59
+  ],
+  "grafana.com": [
+   72,
+   50
+  ],
+  "groq.com": [
+   49,
+   51
+  ],
+  "hackaday.com": [
+   59,
+   60
+  ],
+  "healthline.com": [
+   40,
+   40
+  ],
+  "helium10.com": [
+   79,
+   73
+  ],
+  "hisense.com": [
+   34,
+   34
+  ],
+  "hono.dev": [
+   53,
+   56
+  ],
+  "huawei.com": [
+   46,
+   46
+  ],
+  "hubspot.com": [
+   70,
+   71
+  ],
+  "huggingface.co": [
+   40,
+   40
+  ],
+  "ideogram.ai": [
+   82,
+   84
+  ],
+  "inngest.com": [
+   74,
+   72
+  ],
+  "intercom.com": [
+   81,
+   84
+  ],
+  "jiandaoyun.com": [
+   44,
+   44
+  ],
+  "june.so": [
+   40,
+   40
+  ],
+  "junglescout.com": [
+   77,
+   78
+  ],
+  "jushuitan.com": [
+   27,
+   25
+  ],
+  "keepa.com": [
+   7,
+   12
+  ],
+  "khanacademy.org": [
+   26,
+   28
+  ],
+  "kingdee.com": [
+   71,
+   67
+  ],
+  "klaviyo.com": [
+   76,
+   76
+  ],
+  "koyeb.com": [
+   56,
+   56
+  ],
+  "langchain.com": [
+   59,
+   59
+  ],
+  "langfuse.com": [
+   70,
+   70
+  ],
+  "lazada.com": [
+   44,
+   44
+  ],
+  "lenovo.com": [
+   30,
+   30
+  ],
+  "lianlianpay.com": [
+   14,
+   13
+  ],
+  "linear.app": [
+   69,
+   67
+  ],
+  "llamaindex.ai": [
+   46,
+   49
+  ],
+  "loom.com": [
+   40,
+   40
+  ],
+  "lumalabs.ai": [
+   93,
+   90
+  ],
+  "m19.com": [
+   60,
+   59
+  ],
+  "mabangerp.com": [
+   38,
+   36
+  ],
+  "mailchimp.com": [
+   56,
+   56
+  ],
+  "materialize.com": [
+   58,
+   65
+  ],
+  "mercadolibre.com": [
+   12,
+   12
+  ],
+  "mingdao.com": [
+   57,
+   57
+  ],
+  "minimaxi.com": [
+   95,
+   95
+  ],
+  "miniso.com": [
+   30,
+   28
+  ],
+  "miro.com": [
+   60,
+   60
+  ],
+  "mistral.ai": [
+   81,
+   80
+  ],
+  "modal.com": [
+   74,
+   74
+  ],
+  "monday.com": [
+   73,
+   74
+  ],
+  "moonshot.cn": [
+   54,
+   54
+  ],
+  "motherduck.com": [
+   66,
+   71
+  ],
+  "moz.com": [
+   77,
+   77
+  ],
+  "narwal.com": [
+   27,
+   30
+  ],
+  "netlify.com": [
+   85,
+   91
+  ],
+  "nextjs.org": [
+   80,
+   80
+  ],
+  "nitro.build": [
+   56,
+   54
+  ],
+  "nostarch.com": [
+   40,
+   40
+  ],
+  "notion.com": [
+   59,
+   59
+  ],
+  "nuxt.com": [
+   84,
+   83
+  ],
+  "obsidian.md": [
+   36,
+   40
+  ],
+  "oceanwing.com": [
+   24,
+   23
+  ],
+  "oclean.com": [
+   64,
+   62
+  ],
+  "openrouter.ai": [
+   67,
+   71
+  ],
+  "orm.drizzle.team": [
+   49,
+   56
+  ],
+  "panda-css.com": [
+   63,
+   58
+  ],
+  "payoneer.cn": [
+   30,
+   30
+  ],
+  "payoneer.com": [
+   40,
+   40
+  ],
+  "perpetua.io": [
+   42,
+   44
+  ],
+  "pika.art": [
+   63,
+   64
+  ],
+  "pinecone.io": [
+   69,
+   67
+  ],
+  "pingpongx.com": [
+   24,
+   24
+  ],
+  "plaid.com": [
+   50,
+   55
+  ],
+  "planetscale.com": [
+   85,
+   85
+  ],
+  "plausible.io": [
+   74,
+   74
+  ],
+  "porter.run": [
+   64,
+   59
+  ],
+  "posthog.com": [
+   57,
+   59
+  ],
+  "pragprog.com": [
+   56,
+   53
+  ],
+  "prefect.io": [
+   71,
+   72
+  ],
+  "prisma.io": [
+   87,
+   87
+  ],
+  "productboard.com": [
+   72,
+   72
+  ],
+  "pulumi.com": [
+   98,
+   95
+  ],
+  "qcloud.com": [
+   22,
+   22
+  ],
+  "qwik.dev": [
+   52,
+   55
+  ],
+  "radix-ui.com": [
+   48,
+   48
+  ],
+  "railway.com": [
+   73,
+   73
+  ],
+  "rakuten.com": [
+   40,
+   40
+  ],
+  "raycast.com": [
+   57,
+   57
+  ],
+  "readwise.io": [
+   57,
+   55
+  ],
+  "remix.run": [
+   51,
+   53
+  ],
+  "render.com": [
+   81,
+   79
+  ],
+  "replicate.com": [
+   66,
+   63
+  ],
+  "resend.com": [
+   94,
+   90
+  ],
+  "roadmap.sh": [
+   44,
+   49
+  ],
+  "sellersprite.com": [
+   40,
+   40
+  ],
+  "semrush.com": [
+   67,
+   69
+  ],
+  "sentry.io": [
+   80,
+   76
+  ],
+  "shadcn.com": [
+   33,
+   31
+  ],
+  "shein.com": [
+   22,
+   26
+  ],
+  "shopee.com": [
+   39,
+   39
+  ],
+  "shopify.com": [
+   72,
+   73
+  ],
+  "shoplazza.com": [
+   69,
+   69
+  ],
+  "siliconflow.cn": [
+   53,
+   56
+  ],
+  "simonwillison.net": [
+   50,
+   50
+  ],
+  "slack.com": [
+   60,
+   40
+  ],
+  "smashingmagazine.com": [
+   57,
+   59
+  ],
+  "solidjs.com": [
+   28,
+   33
+  ],
+  "squarespace.com": [
+   74,
+   74
+  ],
+  "stackoverflow.blog": [
+   40,
+   40
+  ],
+  "stepfun.com": [
+   14,
+   14
+  ],
+  "stratechery.com": [
+   40,
+   40
+  ],
+  "stripe.com": [
+   71,
+   71
+  ],
+  "suno.com": [
+   79,
+   80
+  ],
+  "supabase.com": [
+   81,
+   82
+  ],
+  "superhuman.com": [
+   57,
+   59
+  ],
+  "svelte.dev": [
+   66,
+   65
+  ],
+  "tability.io": [
+   57,
+   55
+  ],
+  "tailwindcss.com": [
+   52,
+   50
+  ],
+  "tanstack.com": [
+   77,
+   77
+  ],
+  "tcl.com": [
+   76,
+   77
+  ],
+  "teambition.com": [
+   45,
+   47
+  ],
+  "techcrunch.com": [
+   40,
+   40
+  ],
+  "temporal.io": [
+   70,
+   71
+  ],
+  "temu.com": [
+   39,
+   40
+  ],
+  "tencent.com": [
+   71,
+   70
+  ],
+  "theregister.com": [
+   40,
+   40
+  ],
+  "theverge.com": [
+   40,
+   40
+  ],
+  "tigerbeetle.com": [
+   56,
+   58
+  ],
+  "timescale.com": [
+   60,
+   57
+  ],
+  "together.ai": [
+   74,
+   40
+  ],
+  "tongtool.com": [
+   36,
+   38
+  ],
+  "trigger.dev": [
+   87,
+   83
+  ],
+  "turso.tech": [
+   40,
+   40
+  ],
+  "twilio.com": [
+   85,
+   86
+  ],
+  "typeform.com": [
+   79,
+   79
+  ],
+  "unocss.dev": [
+   51,
+   51
+  ],
+  "upstash.com": [
+   83,
+   83
+  ],
+  "valibot.dev": [
+   60,
+   59
+  ],
+  "vercel.com": [
+   84,
+   84
+  ],
+  "vevor.com": [
+   50,
+   48
+  ],
+  "vitejs.dev": [
+   56,
+   56
+  ],
+  "vitest.dev": [
+   63,
+   60
+  ],
+  "volcengine.com": [
+   33,
+   33
+  ],
+  "vuejs.org": [
+   68,
+   68
+  ],
+  "walmart.com": [
+   40,
+   40
+  ],
+  "weaviate.io": [
+   40,
+   40
+  ],
+  "webflow.com": [
+   74,
+   74
+  ],
+  "webmd.com": [
+   40,
+   40
+  ],
+  "windsurf.com": [
+   39,
+   40
+  ],
+  "wired.com": [
+   70,
+   69
+  ],
+  "wise.com": [
+   55,
+   57
+  ],
+  "wiseasy.com": [
+   40,
+   38
+  ],
+  "wix.com": [
+   59,
+   59
+  ],
+  "woocommerce.com": [
+   79,
+   79
+  ],
+  "xiaomi.com": [
+   27,
+   30
+  ],
+  "xtransfer.com": [
+   66,
+   40
+  ],
+  "yonyou.com": [
+   38,
+   38
+  ],
+  "yuncang.com": [
+   30,
+   30
+  ],
+  "yuque.com": [
+   19,
+   18
+  ],
+  "zapier.com": [
+   92,
+   92
+  ],
+  "zhipuai.cn": [
+   48,
+   43
+  ],
+  "zod.dev": [
+   58,
+   56
+  ]
+ }
+}

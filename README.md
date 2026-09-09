@@ -156,9 +156,16 @@ points across four separate samples), and the same three cheap things — a date
 template, an opening paragraph that stands on its own, one JSON-LD block — are missing from
 more than half the field.
 
-Every number is reproducible with the command at the top of this page. For five reference
-sites we also publish **hand-scored audits** covering all 21 checks, with the evidence
-behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
+Every number here is reproducible with the command at the top of this page — and we
+measured how reproducible. Running the whole benchmark twice and comparing every site:
+**96% land within ±5, 45% land identically.** Read one site's score as ±5 rather than as
+exact; medians are stable. The unstable part is the gate checks, where five sites flipped
+between runs because their bot protection answered a crawler differently.
+The band, the control experiment and the per-site pairs are in
+[benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md).
+
+For five reference sites we also publish **hand-scored audits** covering all 21 checks,
+with the evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
 
 ## Three ways to run it
 

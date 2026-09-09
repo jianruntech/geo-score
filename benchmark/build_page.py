@@ -134,7 +134,9 @@ def strings(lang, v):
             t_footer='Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
                      '%(date)s · <a href="%(repo)s/blob/main/benchmark/results.json">raw data</a> · '
                      '<a href="%(repo)s/blob/main/benchmark/run.py">the script</a> · '
+                     '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">how reproducible a single run is</a> · '
                      '<a href="%(repo)s">the repository</a><br><br>'
+                     "We ran the whole benchmark twice and compared every site: <strong>96%% of sites land within &plusmn;5</strong> and 45%% land identically, so read one site's number as &plusmn;5 rather than as exact. Medians are stable. The unstable part is the gate checks &mdash; five sites flipped because their bot protection answered a crawler differently between the two runs, which is a property of those sites rather than of the measurement. "
                      "This measures readiness, not outcomes: whether an engine <em>can</em> cite a "
                      "site. Whether one <em>does</em> depends on competition and query intent, which "
                      "no site-side audit can observe. Four checks needing off-site search are left "
@@ -189,7 +191,9 @@ def strings(lang, v):
         t_footer='按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
                  '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/run.py">跑分脚本</a> · '
+                 '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
                  '<a href="%(repo)s">仓库</a><br><br>'
+                 "整个榜单我们跑了两遍并逐站比对：<strong>96%% 的站落在 &plusmn;5 以内</strong>，45%% 完全一致。所以单个站的分数请按 &plusmn;5 读，不要当成精确值；中位数是稳的。不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了，那是那些站点的属性，不是测量的毛病。"
                  "这里测的是就绪度，不是结果：引擎<em>能不能</em>引用一个站。"
                  "它<em>会不会</em>引用，取决于竞争与提问意图，任何站外审计都观察不到。"
                  "四项需要站外检索的检查退出了分母而不是靠猜，所以这些分比人工逐项审计略低。"
