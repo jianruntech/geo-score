@@ -27,6 +27,19 @@ eq(gs.scope_of("https://u.github.io/proj/"), ("https://u.github.io", "/proj"), "
 eq(gs.scope_of("https://x.com/docs/index.html"), ("https://x.com", "/docs"), "a file resolves to its directory")
 eq(gs.scope_of("http://x.com/a/b"), ("http://x.com", "/a/b"), "scheme preserved, nested path kept")
 
+
+# ── idna: 非 ASCII 域名此前在发出请求之前就崩了。深圳跨境客群里中文域名不罕见。 ──
+eq(gs.idna("https://中文.tw"), "https://xn--fiq228c.tw", "a Chinese host becomes punycode")
+eq(gs.idna("https://例.cn:8443/x"), "https://xn--fsq.cn:8443/x", "the port survives")
+eq(gs.idna("https://例え.テスト/パス"), "https://xn--r8jz45g.xn--zckzah/%E3%83%91%E3%82%B9",
+   "a non-ASCII path is percent-encoded as UTF-8")
+eq(gs.idna("https://example.com/a b"), "https://example.com/a%20b", "a space in the path is encoded")
+eq(gs.idna("https://x.com/ok"), "https://x.com/ok", "a plain ASCII URL is left untouched")
+ok(isinstance(gs.idna("::: not a url :::"), str), "a malformed URL returns a string, never raises")
+eq(gs.idna(gs.idna("https://中文.tw/パス")), gs.idna("https://中文.tw/パス"),
+   "encoding twice is the same as encoding once")
+eq(gs.scope_of("中文.tw"), ("https://xn--fiq228c.tw", ""), "scope_of hands back a wire-safe origin")
+
 # ── resolve_refs: @graph nodes point at each other. Not following cost 6 points. ──
 g = gs.resolve_refs([
     {"@id": "#p", "@type": "Person", "name": "Real Person", "url": "https://x.test/p"},

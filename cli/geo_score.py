@@ -58,7 +58,30 @@ class Resp:
     @property
     def ok(self): return 200 <= self.status < 300
 
+UNSAFE = ' <>"{}|\\^`'
+
+def idna(url):
+    """A non-ASCII host has to go on the wire as punycode, and a non-ASCII path as
+    percent-encoded UTF-8. urllib does neither, so a Chinese domain used to raise
+    UnicodeEncodeError before a single request went out."""
+    try:
+        u = urllib.parse.urlsplit(url)
+        host = u.hostname or ""
+        if any(ord(ch) > 127 for ch in host):
+            enc = host.encode("idna").decode("ascii")
+            netloc = enc + (":%d" % u.port if u.port else "")
+            if u.username:
+                netloc = "%s%s@%s" % (u.username, ":" + u.password if u.password else "", netloc)
+            u = u._replace(netloc=netloc)
+        if any(ord(ch) > 127 or ch in UNSAFE for ch in u.path + u.query):
+            u = u._replace(path=urllib.parse.quote(u.path, safe="/~:@!$&'()*+,;="),
+                           query=urllib.parse.quote(u.query, safe="=&/~:@!$'()*+,;"))
+        return urllib.parse.urlunsplit(u)
+    except Exception:
+        return url
+
 def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
+    url = idna(url)
     req = urllib.request.Request(url, method=method, headers={
         "User-Agent": ua, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
         "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
@@ -398,6 +421,7 @@ def scope_of(base):
     inside the path the user actually gave, or every page check scores the wrong site."""
     u = urllib.parse.urlsplit(base if "://" in base else "https://" + base)
     origin = "%s://%s" % (u.scheme or "https", u.netloc)
+    origin = idna(origin)
     path = re.sub(r"/+$", "", u.path or "")
     if re.search(r"\.[a-z0-9]{2,5}$", path, re.I):          # a file, not a directory
         path = path.rsplit("/", 1)[0]
