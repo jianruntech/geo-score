@@ -7,6 +7,18 @@ TPL = '''<!doctype html>
 <meta property="og:title" content="%(t_ogtitle)s">
 <meta property="og:description" content="%(t_ogdesc)s">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="geo-score">
+<meta property="og:url" content="%(canon)s">
+<meta property="og:locale" content="%(oglocale)s">
+<meta property="og:image" content="%(ogimg)s">
+<meta property="og:image:width" content="2400">
+<meta property="og:image:height" content="1260">
+<meta property="og:image:alt" content="%(ogalt)s">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="%(t_ogtitle)s">
+<meta name="twitter:description" content="%(t_ogdesc)s">
+<meta name="twitter:image" content="%(ogimg)s">
+<link rel="canonical" href="%(canon)s">
 <link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/">
 <link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

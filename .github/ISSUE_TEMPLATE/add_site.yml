@@ -1,0 +1,66 @@
+name: Add a site to the benchmark
+description: Nominate a site for the public leaderboard
+title: "[site] "
+labels: ["benchmark"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The leaderboard is a fixed, public list so the numbers stay reproducible — see
+        [`benchmark/sites.json`](../../blob/main/benchmark/sites.json). Sites are picked for
+        sector and language coverage and public prominence, never because they are anyone's
+        customer or competitor.
+
+        **Score it first.** One command, no install:
+
+        ```
+        curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+          | python3 - example.com --share
+        ```
+
+        Paste what `--share` prints. That single line is enough for us to sanity-check the
+        entry before it goes on the board.
+  - type: input
+    id: url
+    attributes:
+      label: Site
+      description: Apex domain, or the exact path if the site lives under one.
+      placeholder: "example.com  ·  example.com/docs"
+    validations: { required: true }
+  - type: input
+    id: sector
+    attributes:
+      label: Sector
+      description: >
+        Reuse an existing sector from sites.json where one fits — a new sector with a single
+        site in it does not give a meaningful median.
+      placeholder: "e.g. Cloud & DevOps, Jewellery, Cross-border retail"
+    validations: { required: true }
+  - type: textarea
+    id: share
+    attributes:
+      label: What --share printed
+      render: text
+      placeholder: "example.com scores 62/100 (Growing) for AI answer-engine readiness. Biggest gap: ..."
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this site belongs on the list
+      description: >
+        Coverage argument, not a favour. A sector or language the board is thin on, a site
+        people will recognise, or a case the rubric currently handles badly — that last one
+        is the most useful thing you can bring.
+    validations: { required: true }
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: Before you submit
+      options:
+        - label: >
+            I understand the score is published, including if it is low, and that a site
+            I do not own can be nominated — every check runs against public URLs only.
+          required: true
+        - label: >
+            This is a nomination, not a request for a fix. Remediation is out of scope here.
+          required: true

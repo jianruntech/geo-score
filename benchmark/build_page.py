@@ -75,6 +75,10 @@ def strings(lang, v):
     if lang == "en":
         return dict(
             htmllang="en", on_en="on", on_zh="",
+            canon="https://jianruntech.github.io/geo-score/", oglocale="en_US",
+            ogimg="https://jianruntech.github.io/geo-score/og.png",
+            ogalt="Share card: %(cappct)d%% of %(n)d well-known sites cannot be cited by an AI "
+                   "answer engine at all. Median %(med)s, range %(mn)d-%(mx)d." % v,
             t_title="The state of AI visibility — %(n)d sites scored" % v,
             t_desc="%(n)d well-known sites scored on whether AI answer engines can find, parse, "
                    "trust and cite them. Open rubric, reproducible, median %(med)s." % v,
@@ -135,6 +139,10 @@ def strings(lang, v):
                      % dict(v, repo=REPO))
     return dict(
         htmllang="zh-CN", on_en="", on_zh="on",
+        canon="https://jianruntech.github.io/geo-score/zh.html", oglocale="zh_CN",
+        ogimg="https://jianruntech.github.io/geo-score/og.zh.png",
+        ogalt="分享卡：%(n)d 个知名网站里 %(cappct)d%% 根本无法被 AI 回答引擎引用，"
+              "中位数 %(med)s，区间 %(mn)d-%(mx)d。" % v,
         t_title="AI 可见度现状 — %(n)d 个站点实测" % v,
         t_desc="%(n)d 个知名网站的实测评分，衡量 AI 回答引擎能不能找到、读懂、信任并引用它们。"
                "口径公开、结果可复现，中位数 %(med)s。" % v,
@@ -205,6 +213,7 @@ def data():
                   w=r.get("error", ""), g=[], r=None, m=None) for r in err]
     return dict(
         n=s["n"], med=s["median"], p75=s["p75"], mn=s["min"], mx=s["max"], cap=len(cap),
+        cappct=int(round(100.0 * len(cap) / s["n"])),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"],
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),

@@ -13,6 +13,18 @@ regenerated `results.json` and `README.md`:
 {"url": "example.com", "sector": "Ecommerce"}
 ```
 
+Six files are generated from `results.json` by three scripts, and all of them must be
+regenerated in the same PR — CI compares them against a fresh run and fails on any drift:
+
+```
+python3 benchmark/run.py            # results.json + benchmark/README.md
+python3 benchmark/build_page.py     # docs/index.html + docs/zh.html
+python3 benchmark/build_og.py       # docs/og.png + docs/og.zh.png  (needs Chrome)
+```
+
+If you have no Chrome, say so in the PR and leave the two cards alone — we will
+regenerate them. Do not hand-edit any of the six: the next generator run overwrites it.
+
 We especially want **sectors and languages the list is thin on** — non-English sites,
 regulated industries, marketplaces, media. Every site added makes the sector medians
 mean more, and the medians are what let a reader place their own score.

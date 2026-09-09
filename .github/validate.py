@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Structural checks. Keeps the repo honest about its own scope rules."""
-import io, os, re, sys
+import io, struct, os, re, sys
 
 fail = []
 
@@ -391,6 +391,44 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
             check('hreflang="en"' in t and 'hreflang="zh"' in t,
                   f"docs/{f}: 缺少 hreflang，另一种语言的读者与搜索引擎都找不到对应版本")
             check("%(" not in t, f"docs/{f}: 有未替换的模板占位符")
+
+    # ── 17. 分享卡：声明的尺寸必须等于 PNG 真实尺寸 ──
+    # 榜单页是这个仓库里最可能被转发的一页。og:image 少了、或者宽高写错，
+    # Slack / X / LinkedIn 要么不出图，要么裁成一条。这里直接读 PNG 头核对。
+    def png_size(path):
+        d = io.open(path, "rb").read(24)
+        if d[:8] != b"\x89PNG\r\n\x1a\n" or d[12:16] != b"IHDR":
+            return None
+        return struct.unpack(">II", d[16:24])
+    for f, card in (("index.html", "og.png"), ("zh.html", "og.zh.png")):
+        pth, cpth = os.path.join("docs", f), os.path.join("docs", card)
+        if not os.path.exists(pth):
+            continue
+        t = io.open(pth, encoding="utf-8").read()
+        check(os.path.exists(cpth),
+              f"docs/{card} 不存在 —— 跑一遍 python3 benchmark/build_og.py 并提交")
+        check('name="twitter:card" content="summary_large_image"' in t,
+              f"docs/{f}: 缺 twitter:card，X 上只会显示一条窄链接")
+        check(f'og:image" content="https://jianruntech.github.io/geo-score/{card}"' in t,
+              f"docs/{f}: og:image 没指向 {card}")
+        check("rel=\"canonical\"" in t, f"docs/{f}: 缺 canonical")
+        if os.path.exists(cpth):
+            wh = png_size(cpth)
+            check(wh is not None, f"docs/{card} 不是有效的 PNG")
+            if wh:
+                w, h = wh
+                dw = re.search(r'og:image:width" content="(\d+)"', t)
+                dh = re.search(r'og:image:height" content="(\d+)"', t)
+                check(dw and int(dw.group(1)) == w,
+                      f"docs/{f}: og:image:width 写的是 {dw and dw.group(1)}，"
+                      f"{card} 实际宽 {w}")
+                check(dh and int(dh.group(1)) == h,
+                      f"docs/{f}: og:image:height 写的是 {dh and dh.group(1)}，"
+                      f"{card} 实际高 {h}")
+                check(abs(w / float(h) - 1.91) < 0.06,
+                      f"docs/{card} 宽高比 {w/float(h):.2f}，社交卡需要接近 1.91:1，否则会被裁")
+                check(os.path.getsize(cpth) < 5 * 1024 * 1024,
+                      f"docs/{card} 超过 5MB，多数平台不会抓取")
 
 if fail:
     print("FAIL")
