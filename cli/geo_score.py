@@ -219,6 +219,9 @@ def host_stem(root):
     return parts[0].lower()
 
 def is_cjk(s):
+    """Does this page address a CJK audience? Judged on what a reader sees, not on raw markup —
+    a Chinese page whose HTML is mostly CSS/JS would otherwise fall under the 8% threshold."""
+    if "<" in s and ">" in s: s = visible_text(s)
     return len(re.findall(r"[一-鿿]", s)) > max(30, len(s) * 0.08)
 
 # ── the rubric ─────────────────────────────────────────────────────────────

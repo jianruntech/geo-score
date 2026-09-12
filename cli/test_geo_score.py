@@ -189,6 +189,11 @@ ok(not _intent("怎么买"), "a 3-char Chinese label is still treated as nav")
 ok(not _intent("Pricing"), "a single latin word is still a nav label")
 ok(not _intent("首页 · 价格"), "an a · b nav pattern does not count")
 
+# ── is_cjk judges the visible text, not the markup ──
+_zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>" + ("var a=1;" * 400) + "</script></head><body><p>" + ("见润科技面向跨境电商与出海企业提供人工智能落地服务。" * 6) + "</p></body></html>"
+ok(gs.is_cjk(_zh_page), "a Chinese page stays Chinese even when its HTML is mostly CSS/JS")
+ok(not gs.is_cjk("<html><body><p>" + ("An English page with a 中文 word. " * 20) + "</p></body></html>"), "a stray CJK word does not make a page Chinese")
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)
