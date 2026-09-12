@@ -179,8 +179,19 @@ eq(gs.visible_text("<p>a<script>junk()</script>b</p>"), "a b", "scripts are stri
 ok("h2" not in " ".join(gs.headings("<h2>Real heading</h2>")).lower(), "headings come back as text")
 ok("Real heading" in gs.headings("<h2>Real heading</h2>"), "and the text is intact")
 
+# ── p2.question-intent: \w matches CJK, so the nav-label filter must not swallow short Chinese headings ──
+def _intent(h): return bool(gs.QP_INTENT.search(h)) and not gs.NAV_LABEL.match(h)
+ok(_intent("怎么定价"), "a 4-char Chinese question heading counts as question intent")
+ok(_intent("为什么可以信这个分"), "a 9-char Chinese why-heading counts")
+ok(_intent("How pricing works"), "a latin how-heading counts")
+ok(not _intent("价格"), "a bare Chinese nav label does not count")
+ok(not _intent("怎么买"), "a 3-char Chinese label is still treated as nav")
+ok(not _intent("Pricing"), "a single latin word is still a nav label")
+ok(not _intent("首页 · 价格"), "an a · b nav pattern does not count")
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)
     sys.exit(1)
 print("OK — geo_score offline checks pass")
+

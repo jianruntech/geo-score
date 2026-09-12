@@ -32,6 +32,17 @@ CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www
           ("Sogou", "Sogou web spider/4.0"),
           ("PetalBot", "Mozilla/5.0 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)")]
 
+# A heading matches question intent if a person would phrase their question that way — a question,
+# a task or an explanation — not merely if it carries a question mark.
+QP_INTENT = re.compile(r"\b(how|what|why|when|where|which|who)\b|[?？]"
+                    r"|^(get|getting|set|setting|add|adding|build|building|create|creating|use|using|"
+                    r"install|installing|deploy|deploying|configure|connect|accept|send|manage|migrate|"
+                    r"write|writing|run|running|test|testing|choose|handle|customi[sz]e)\b"
+                    r"|怎么|如何|什么|为什么|是否|多少|入门|教程|指南", re.I)
+# Short nav-like labels are not headings. \w matches CJK in Python, so the short-label branch must not
+# swallow real CJK headings: "怎么定价" (4 chars) is a question heading, "价格" is a nav label.
+NAV_LABEL = re.compile(r"^\s*(\w+\s*[|｜·]\s*\w+|[A-Za-z0-9_]{1,12}|[\u4e00-\u9fff]{1,3})\s*$")
+
 # ── colour ─────────────────────────────────────────────────────────────────
 class C:
     on = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
@@ -734,12 +745,8 @@ def run(base, sample=8, verbose=False):
     # ── p2.question-intent ──
     # a heading matches question intent if a person would phrase their question that way:
     # a question, a task, or an explanation. Not whether it carries a question mark.
-    QP = re.compile(r"\b(how|what|why|when|where|which|who)\b|[?？]"
-                    r"|^(get|getting|set|setting|add|adding|build|building|create|creating|use|using|"
-                    r"install|installing|deploy|deploying|configure|connect|accept|send|manage|migrate|"
-                    r"write|writing|run|running|test|testing|choose|handle|customi[sz]e)\b"
-                    r"|怎么|如何|什么|为什么|是否|多少|入门|教程|指南", re.I)
-    NAV = re.compile(r"^\s*(\w+\s*[|｜·]\s*\w+|\w{1,12})\s*$")
+    QP, NAV = QP_INTENT, NAV_LABEL
+
     qi = 0
     for u, r in live.items():
         hs = [h for h in headings(r.text) if 3 <= len(h) <= 120]
