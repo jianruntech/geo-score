@@ -8,7 +8,7 @@ trust and cite it. Implements the open AIV rubric v1.1.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, gzip, html, io, json, os, re, sys, time
+import argparse, concurrent.futures as cf, html, io, json, os, re, sys, time, zlib
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
@@ -117,6 +117,23 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
 
 _OPENER = urllib.request.build_opener(_Redirects)
 
+MAX_BODY = 4_000_000       # bytes read off the wire
+MAX_INFLATED = 16_000_000  # bytes after gunzip
+
+
+def gunzip(raw, limit=MAX_INFLATED):
+    """Inflate a gzip body, but never past `limit` bytes.
+
+    The 4 MB read cap applies to the compressed stream. gzip.decompress has no
+    output limit, so a few MB of crafted gzip inflates to gigabytes and takes the
+    process down — on a GitHub Action runner that is an out-of-memory kill, not a
+    score. Truncated output is still parsed; a real page never gets near 16 MB."""
+    try:
+        d = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        return d.decompress(raw, limit)
+    except zlib.error:
+        return raw
+
 
 def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
     url = idna(url)
@@ -126,10 +143,9 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
     t0 = time.time()
     try:
         with _OPENER.open(req, timeout=timeout) as r:
-            raw = r.read(4_000_000)
+            raw = r.read(MAX_BODY)
             if r.headers.get("Content-Encoding") == "gzip":
-                try: raw = gzip.decompress(raw)
-                except Exception: pass
+                raw = gunzip(raw)
             h = {k.lower(): v for k, v in r.headers.items()}
             return Resp(r.geturl(), r.status, raw, h, elapsed=time.time() - t0)
     except urllib.error.HTTPError as e:

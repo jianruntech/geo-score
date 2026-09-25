@@ -73,6 +73,14 @@ ok("tier 1 of 4" in r and "needs" in r, "a bottom tier says what the next one ne
 ok("top tier" in gs.tier_reason("p1.llms-txt", 5, 5), "the top tier says so")
 ok(gs.tier_reason("nope.not-a-check", 1, 2) == "", "an unknown id yields nothing rather than crashing")
 
+# ── gzip bomb: the read cap is on the compressed stream, so inflation needs its own cap ──
+import gzip as _gz
+bomb = _gz.compress(b"\0" * 64_000_000)                      # ~62 KB on the wire
+out = gs.gunzip(bomb, limit=1_000_000)
+ok(len(bomb) < 200_000 and len(out) == 1_000_000, "a gzip bomb inflates to the cap, not to 64 MB")
+ok(gs.gunzip(_gz.compress(b"<html>ok</html>")) == b"<html>ok</html>", "a normal gzip body round-trips")
+ok(gs.gunzip(b"not gzip at all") == b"not gzip at all", "a mislabelled body is returned as-is")
+
 # ── bands and the gate cap ──
 eq(gs.band(100), "Leading", "100 is Leading");  eq(gs.band(83), "Leading", "the band edge is inclusive")
 eq(gs.band(82), "Solid", "just below the edge");  eq(gs.band(0), "Not started", "zero has a band")

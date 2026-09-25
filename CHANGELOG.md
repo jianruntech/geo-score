@@ -3,6 +3,14 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/). 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 The **rubric** is versioned separately from the repository — see `rubric/`.
 
+## [Unreleased]
+
+### Fixed
+- **gzip bomb.** The 4 MB read cap applied to the compressed stream, and `gzip.decompress`
+  has no output limit, so a few MB of crafted gzip could inflate to gigabytes and kill the
+  process — on a GitHub Action runner, an out-of-memory crash instead of a score. Inflation
+  is now capped at 16 MB; real pages never get near it. **No score changes.**
+
 ## [1.1.0] — 2026-09-08
 
 Rubric **v1.1**. v1.0 was tagged a few hours earlier but never announced: running it
