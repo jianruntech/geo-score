@@ -3,7 +3,7 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/). 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 The **rubric** is versioned separately from the repository — see `rubric/`.
 
-## [Unreleased]
+## [1.1.2] — 2026-09-25
 
 ### Changed — scores move
 
