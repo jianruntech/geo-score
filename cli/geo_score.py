@@ -156,6 +156,25 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
     except Exception as e:
         return Resp(url, 0, b"", err=str(e)[:120], elapsed=time.time() - t0)
 
+DEFINITE = (401, 403, 404, 410)   # answers that will not change on a retry
+
+def fetch_steady(url, tries=3, **kw):
+    """fetch() for the requests that decide which pages get sampled — the homepage,
+    robots.txt, the sitemap, section indexes, and the sampled pages themselves.
+
+    One dropped request there used to swap the whole sample: a sitemap that timed out
+    once sent discovery to homepage links instead, a different eight pages were scored,
+    and a site measured 71, 40 and 71 on three consecutive runs from one machine (the
+    middle sample fell under the g.ssr gate). Timeouts, resets, 429 and 5xx are retried
+    with a short backoff; a definite answer is returned at once."""
+    for i in range(tries):
+        r = fetch(url, **kw)
+        if r.ok or r.status in DEFINITE or (300 <= r.status < 400):
+            return r
+        if i < tries - 1:
+            time.sleep(1.5 * (i + 1))
+    return r
+
 def pmap(fn, items, workers=8):
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
         return list(ex.map(fn, items))
@@ -458,6 +477,25 @@ NEEDS_JUDGEMENT = {"p3.listings","p3.mentions","p4.question-coverage"}
 
 def band(p): return next(n for t, n in BANDS if p >= t)
 
+def sameas_tier(statuses):
+    """p3.sameas from the HTTP status of each fetched sameAs link (0 = no response).
+    Only 404 / 410 prove a profile is gone; everything else that is not a 2xx is
+    something this network could not see, and is left out rather than counted dead.
+    Returns (tier or None when nothing could be checked, good, dead, unseen)."""
+    good = sum(1 for s in statuses if 200 <= s < 300)
+    dead = sum(1 for s in statuses if s in (404, 410))
+    unseen = len(statuses) - good - dead
+    if good + dead == 0:
+        return None, good, dead, unseen
+    return (3 if not dead else (2 if good else 0)), good, dead, unseen
+
+def kg_tier(found, answered, asked):
+    """p3.knowledge-graph: 4 when an entity was found; 0 only when every lookup answered
+    and none matched; otherwise unobservable (None) — the unanswered lookup may be where it is."""
+    if found: return 4
+    if asked and answered == asked: return 0
+    return None
+
 def tier_reason(cid, t, mx):
     """The one line worth reading: which tier the evidence reached, and what the next
     one asks for. Generated from the rubric's own tier conditions."""
@@ -504,7 +542,7 @@ def discover(base, want=8, verbose=False):
     origin, scope = scope_of(base)
     root = origin + scope
     host = urllib.parse.urlsplit(origin).netloc
-    home = fetch(root + "/")
+    home = fetch_steady(root + "/")
     pool, seen = [], {root + "/", root}
 
     def harvest(text, origin):
@@ -523,13 +561,13 @@ def discover(base, want=8, verbose=False):
     pool += harvest(home.text, root + "/")
 
     # sitemap gives real content URLs, which a homepage nav often does not
-    rb = fetch(origin + "/robots.txt")
+    rb = fetch_steady(origin + "/robots.txt")
     sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "") \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"]
-    sm = next((r for r in pmap(fetch, sm_urls[:2]) if r.ok), None)
+    sm = next((r for r in pmap(fetch_steady, sm_urls[:2]) if r.ok), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         kids = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
-        got = [r for r in pmap(fetch, kids) if r.ok]
+        got = [r for r in pmap(fetch_steady, kids) if r.ok]
         sm = got[0] if got else None
     if sm:
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
@@ -541,7 +579,7 @@ def discover(base, want=8, verbose=False):
 
     # section indexes are where recent posts actually live
     idx = [root + p for p in ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")]
-    for r in pmap(fetch, idx):
+    for r in pmap(fetch_steady, idx):
         if r.ok and r.body: pool += harvest(r.text, r.url)
 
     depth = lambda u: urllib.parse.urlsplit(u).path.strip("/").count("/")
@@ -560,7 +598,9 @@ def discover(base, want=8, verbose=False):
         for u in rest:
             if len(urls) >= want: break
             if u not in urls: urls.append(u)
-    return urls[:want]
+    # say where the sample came from, so two runs with different pages can be explained
+    source = "sitemap" if sm else "homepage and section links (no sitemap reachable)"
+    return urls[:want], source
 
 # ── checks ─────────────────────────────────────────────────────────────────
 def run(base, sample=8, verbose=False):
@@ -571,9 +611,9 @@ def run(base, sample=8, verbose=False):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
     say("discovering sample pages…")
-    urls = discover(base, sample, verbose)
-    say("fetching %d pages…" % len(urls))
-    pages = dict(zip(urls, pmap(fetch, urls)))
+    urls, sample_source = discover(base, sample, verbose)
+    say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
+    pages = dict(zip(urls, pmap(fetch_steady, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
     if not live:
         why = next((r.err for r in pages.values() if r.err), None)
@@ -836,10 +876,23 @@ def run(base, sample=8, verbose=False):
     if not sa:
         tier["p3.sameas"] = 0; ev["p3.sameas"] = "No sameAs declared on the Organization entity."
     else:
+        # Only 404 / 410 prove a profile is gone. Timeouts, resets and 451 mean this
+        # network cannot see the host (LinkedIn, X, YouTube, GitHub and Wikipedia are all
+        # unreachable from mainland China); 401 / 403 / 429 / 999 and similar are bot walls
+        # in front of pages that exist (Crunchbase, Zhihu, Facebook, LinkedIn). Counting
+        # either as dead made the score depend on where and when the tool ran.
         res = pmap(lambda u: fetch(u, method="GET"), sa[:8])
-        good = sum(1 for r in res if r.ok)
-        tier["p3.sameas"] = 3 if good == len(res) else (2 if good else 0)
-        ev["p3.sameas"] = "%d sameAs declared, %d of the first %d resolve to HTTP 200." % (len(sa), good, len(res))
+        t, good, dead, unseen = sameas_tier([r.status for r in res])
+        if t is None:
+            tier["p3.sameas"] = None
+            ev["p3.sameas"] = ("%d sameAs declared; none of the first %d could be checked from this network "
+                               "(timeout, block or bot wall), so this check is unobservable rather than zero."
+                               % (len(sa), len(res)))
+        else:
+            tier["p3.sameas"] = t
+            ev["p3.sameas"] = ("%d sameAs declared; of the first %d, %d resolve, %d are gone (404/410)%s."
+                               % (len(sa), len(res), good, dead,
+                                  ", %d could not be checked from this network and are left out" % unseen if unseen else ""))
 
     # ── p3.video ──
     blob = " ".join(r.text for r in live.values())
@@ -930,14 +983,20 @@ def run(base, sample=8, verbose=False):
                 except Exception: pass
         if kg_where: brand = cand; break
     also = "" if len(brands) < 2 else " (also tried %s)" % ", ".join(repr(x) for x in brands if x != brand)
-    if kg_where:
+    kt = kg_tier(bool(kg_where), kg_ok, kg_queries)
+    if kt == 4:
         tier["p3.knowledge-graph"] = 4
         ev["p3.knowledge-graph"] = "Brand read as %r%s. Entity found — %s" % (brand, also, "; ".join(kg_where[:2]))
-    elif kg_ok == 0 and kg_queries:
-        # every lookup failed — that is our blind spot, not an absent entity
+    elif kt is None:
+        # Absence can only be concluded when every lookup answered. If some timed out
+        # (Wikidata and Wikipedia are unreachable from some networks, flaky from others),
+        # the entity may be exactly where we could not look — so this is our blind spot,
+        # not a zero. Scoring 0 on a partial answer made the same site score differently
+        # on consecutive runs from the same machine.
         tier["p3.knowledge-graph"] = None
-        ev["p3.knowledge-graph"] = ("Brand read as %r%s. All %d Wikidata and Wikipedia lookups failed to "
-                                    "respond, so this check is unobservable rather than zero." % (brand, also, kg_queries))
+        ev["p3.knowledge-graph"] = ("Brand read as %r%s. %d of %d Wikidata and Wikipedia lookups failed to "
+                                    "respond and none of the rest matched, so this check is unobservable "
+                                    "rather than zero." % (brand, also, kg_queries - kg_ok, kg_queries))
     else:
         tier["p3.knowledge-graph"] = 0
         ev["p3.knowledge-graph"] = ("Brand read as %r%s. No entity whose label matches exactly, in Wikidata "
@@ -976,7 +1035,7 @@ def run(base, sample=8, verbose=False):
     # Scoring the landing page under the requested label hides that; recording it makes
     # the substitution visible to anyone reading the result.
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
-    return dict(root=root, landed=landed, urls=list(live), tier=tier, ev=ev, bonus=bon,
+    return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
                 lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body))
 
 # ── scoring & output ───────────────────────────────────────────────────────
@@ -1151,7 +1210,7 @@ def as_json(res):
     rows, total, den, b, norm, bd, capped = score(res)
     return dict(rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
         audited_at=time.strftime("%Y-%m-%d"),
-        target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"],
+        target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"], sample_source=res.get("sample_source"),
         readiness=total, observable_max=den, normalised=norm, band=bd,
         gate_capped=capped, bonus_awarded=b,
         checks=[dict(id=cid, state="scored" if t is not None else "unobservable",

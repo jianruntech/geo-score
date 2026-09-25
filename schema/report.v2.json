@@ -50,6 +50,13 @@
       "minItems": 1,
       "description": "Exactly 8 unless the site has fewer pages; if fewer, say so in notes."
     },
+    "sample_source": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Where the sample came from: \"sitemap\", or homepage and section links when no sitemap was reachable. Two runs that sampled different pages usually differ here."
+    },
     "checks": {
       "type": "array",
       "minItems": 1,

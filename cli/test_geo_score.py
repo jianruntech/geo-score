@@ -81,6 +81,33 @@ ok(len(bomb) < 200_000 and len(out) == 1_000_000, "a gzip bomb inflates to the c
 ok(gs.gunzip(_gz.compress(b"<html>ok</html>")) == b"<html>ok</html>", "a normal gzip body round-trips")
 ok(gs.gunzip(b"not gzip at all") == b"not gzip at all", "a mislabelled body is returned as-is")
 
+# ── a network that cannot see a host is not evidence the host is gone ──
+eq(gs.sameas_tier([200, 200, 200])[0], 3, "all sameAs resolve → top tier")
+eq(gs.sameas_tier([200, 404])[0], 2, "one profile gone (404) → middle tier")
+eq(gs.sameas_tier([404, 410])[0], 0, "every profile gone → zero")
+eq(gs.sameas_tier([200, 0, 451, 999, 403, 429])[0], 3, "timeouts, 451 and bot walls are left out, not counted dead")
+eq(gs.sameas_tier([0, 0, 451, 403])[0], None, "nothing checkable from here → unobservable, not zero")
+eq(gs.kg_tier(True, 1, 6), 4, "an entity found on any lookup scores, even if others timed out")
+eq(gs.kg_tier(False, 6, 6), 0, "zero only when every lookup answered and none matched")
+eq(gs.kg_tier(False, 3, 6), None, "a partial answer with no match is unobservable — the missing lookup may be where it is")
+eq(gs.kg_tier(False, 0, 6), None, "no answers at all → unobservable")
+
+# ── the requests that decide the sample are retried, so one drop does not swap the sample ──
+_calls = []
+def _flaky(url, **kw):
+    _calls.append(url)
+    return gs.Resp(url, 200 if len(_calls) >= 3 else 0, b"<html></html>")
+_orig_fetch, _orig_sleep = gs.fetch, gs.time.sleep
+gs.fetch, gs.time.sleep = _flaky, (lambda s: None)
+try:
+    r = gs.fetch_steady("https://example.com/sitemap.xml")
+    ok(r.ok and len(_calls) == 3, "a sitemap that fails twice then answers is fetched on the third try")
+    _calls.clear(); gs.fetch = lambda url, **kw: (_calls.append(url), gs.Resp(url, 404, b""))[1]
+    r = gs.fetch_steady("https://example.com/nope")
+    ok(r.status == 404 and len(_calls) == 1, "a definite 404 is not retried")
+finally:
+    gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+
 # ── bands and the gate cap ──
 eq(gs.band(100), "Leading", "100 is Leading");  eq(gs.band(83), "Leading", "the band edge is inclusive")
 eq(gs.band(82), "Solid", "just below the edge");  eq(gs.band(0), "Not started", "zero has a band")

@@ -5,6 +5,33 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Changed — scores move
+
+A site scored 88 and then 95 on two consecutive runs from one machine, and another
+scored 71, 40, 71 — both outside the ±5 this repository promises. Three causes, one
+principle: **a network that cannot reach something is not evidence that it is missing.**
+
+- **p3.sameas** counted every non-200 as a dead profile. Timeouts, resets and 451 (LinkedIn,
+  X, YouTube, GitHub and Wikipedia are unreachable from mainland China) and bot walls
+  (401 / 403 / 429 / 999 from Crunchbase, Zhihu, Facebook, LinkedIn) are now left out;
+  only 404 / 410 count as gone. When no link can be checked, the check leaves the
+  denominator instead of scoring 0. The same 12 profiles resolved 1 of 12 from a
+  mainland network and 9 of 12 from overseas.
+- **p3.knowledge-graph** scored 0 when *some* Wikidata / Wikipedia lookups timed out and
+  the rest found nothing. Absence now needs every lookup to answer; a partial answer is
+  unobservable. (All lookups failing was already unobservable.)
+- **Sampling** fetched the sitemap once. One dropped request sent discovery to homepage
+  links, a different eight pages were scored, and the middle run fell under the g.ssr
+  gate (capped at 40). The homepage, robots.txt, sitemap, section indexes and sampled
+  pages are now retried on timeouts, 429 and 5xx. Reports carry `sample_source`.
+
+After the change, three runs each: jianruntech.com 95 / 95 / 95 (direct) and 93 / 93 / 95
+(overseas); stripe.com 75 / 75 / 75 (direct) and 70 / 72 / 70 (overseas, concurrent).
+**The published benchmark was measured on 2026-09-09 with the earlier logic and has not been
+re-run.** A site whose sameAs or knowledge-graph lookups hit an unreachable host can score a
+few points higher today than its leaderboard row. Reports now say `geo-score-cli/1.1.2`, so the
+two can be told apart.
+
 ### Fixed
 - **gzip bomb.** The 4 MB read cap applied to the compressed stream, and `gzip.decompress`
   has no output limit, so a few MB of crafted gzip could inflate to gigabytes and kill the
