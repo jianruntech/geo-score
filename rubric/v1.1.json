@@ -86,7 +86,19 @@
       ],
       "why": "The one check where failing makes every other change pointless. If a retrieval crawler is blocked, nothing you do on the page reaches an answer engine.",
       "why_zh": "唯一一条「没做到，后面全部白做」的检查。爬虫被挡住时，站内做得再好也进不了 AI 的答案。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.openai.com/api/docs/bots",
+          "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+          "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+          "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers",
+          "https://www.rfc-editor.org/rfc/rfc9309.html"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "OpenAI, Anthropic and Perplexity each document that disallowing their search crawler keeps a site out of, or reduces its visibility in, their answers, which supports the zero tier and the gate; RFC 9309 treats a crawler that matches no group as unrestricted, so the step from no rule (3) to an explicit Allow (5) is a rubric convention, not a vendor requirement."
+      }
     },
     {
       "id": "g.reachable",
@@ -115,7 +127,18 @@
       ],
       "why": "Allowing a crawler in robots.txt is not the same as serving it. CDNs and WAFs block by user-agent, and only a live request shows it.",
       "why_zh": "robots.txt 写了放行不等于真拿得到——CDN 与 WAF 常按 UA 拦截，这一层只有实测看得见。「内容一致」指正文文本一致，按去掉空白后的正文比对，不按原始字节——CSRF token、nonce、时间戳的差异不算不一致。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://blog.cloudflare.com/content-independence-day-no-ai-crawl-without-compensation/",
+          "https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/",
+          "https://docs.perplexity.ai/docs/resources/perplexity-crawlers",
+          "https://github.com/jianruntech/geo-score/blob/main/benchmark/README.md"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Cloudflare documents AI-bot blocking at the network edge and made blocking AI crawlers the default for new domains in July 2025 (with revised defaults from 15 September 2026), and Perplexity asks sites to allow its bots at the firewall as well as in robots.txt; in the 2026-09-09 benchmark 16 of 314 sites returned 403 to retrieval crawlers, while the fixed list of 10 user-agents is the rubric's own."
+      }
     },
     {
       "id": "g.ssr",
@@ -144,7 +167,17 @@
       ],
       "why": "Most retrieval crawlers do not execute JavaScript. Content that appears only in a browser does not exist as far as an answer engine is concerned.",
       "why_zh": "多数检索爬虫不执行 JS。正文只在浏览器里出现，等于对 AI 不存在。",
-      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。"
+      "gate_note_zh": "门槛项：计分，同时是封顶条件。任一门槛项**得 0 分**时，**归一化分**封顶 40%（封的是百分比，不是原始分），并在报告首屏置顶为 P0。封顶只在真的拿不到内容时触发——中间档意味着够用但不够好，那是扣分，不是封顶。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://vercel.com/blog/the-rise-of-the-ai-crawler",
+          "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+          "https://github.com/jianruntech/geo-score/blob/main/benchmark/README.md"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "A Vercel and MERJ traffic analysis (December 2024; an industry study, not peer-reviewed) found no JavaScript execution by OpenAI, Anthropic or Perplexity crawlers, while Google documents that Googlebot renders JavaScript and the same study found AppleBot does too, which is why the rationale says most rather than all; 45 of 314 benchmark sites served body copy only after JavaScript."
+      }
     },
     {
       "id": "p1.sitemap",
@@ -172,7 +205,17 @@
         }
       ],
       "why": "Retrieval side finds new pages through the sitemap; without lastmod it cannot tell which pages are worth fetching again. A path declared in robots.txt takes precedence over the conventional one.",
-      "why_zh": "检索侧靠 sitemap 发现新页；没有 lastmod 就无法判断哪些内容值得重抓。robots.txt 中声明的路径优先于约定路径。"
+      "why_zh": "检索侧靠 sitemap 发现新页；没有 lastmod 就无法判断哪些内容值得重抓。robots.txt 中声明的路径优先于约定路径。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+          "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/",
+          "https://www.sitemaps.org/protocol.html"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google uses lastmod when it is consistently accurate, Bing calls lastmod a key signal for recrawling in AI-powered search, and the sitemaps protocol defines the robots.txt Sitemap directive; OpenAI, Anthropic and Perplexity document no sitemap use."
+      }
     },
     {
       "id": "p1.llms-txt",
@@ -205,7 +248,18 @@
         }
       ],
       "why": "The only place you get to tell the retrieval side directly who you are and which pages matter. It costs almost nothing.",
-      "why_zh": "你唯一能直接告诉检索侧「我是谁、该看哪几页」的地方，成本极低。"
+      "why_zh": "你唯一能直接告诉检索侧「我是谁、该看哪几页」的地方，成本极低。",
+      "evidence": {
+        "basis": "convention",
+        "sources": [
+          "https://llmstxt.org/",
+          "https://almanac.httparchive.org/en/2025/seo",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "A proposal (Jeremy Howard, 2024; revised as v2 in August 2026) found on 2.13% of desktop sites in Web Almanac 2025, as the calibration record notes; as of 2026-09-27 no major answer engine has publicly confirmed using llms.txt to select or cite sources, and Google states that Google Search ignores it, so the 5 points reward adoption of a convention, not a demonstrated effect."
+      }
     },
     {
       "id": "p1.organization",
@@ -238,7 +292,18 @@
         }
       ],
       "why": "This is how an engine decides which company you are. Without it your brand name can be attributed to someone else who shares it.",
-      "why_zh": "AI 判断「你是哪家公司」的第一依据。缺了它，品牌名可能被归给同名的别人。"
+      "why_zh": "AI 判断「你是哪家公司」的第一依据。缺了它，品牌名可能被归给同名的别人。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/appearance/structured-data/organization",
+          "https://developers.google.com/search/docs/appearance/site-names",
+          "https://schema.org/Organization",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google documents Organization markup as helping it disambiguate an organization and pick its logo and knowledge-panel details, and WebSite markup as the main input for site names; its generative-AI guide says no special schema is needed for AI features, and no other answer engine documents using either type."
+      }
     },
     {
       "id": "p1.breadcrumb",
@@ -266,7 +331,17 @@
         }
       ],
       "why": "Tells the retrieval side where a page sits in the site — whether it is an overview or a detail. Excluded if the site has no hierarchy.",
-      "why_zh": "让检索侧理解这一页在站内的位置，判断它是概览还是细节。全站无层级则退出分母。"
+      "why_zh": "让检索侧理解这一页在站内的位置，判断它是概览还是细节。全站无层级则退出分母。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb",
+          "https://schema.org/BreadcrumbList",
+          "https://almanac.httparchive.org/en/2024/structured-data"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google documents breadcrumb markup as indicating a page's position in the site hierarchy and categorising it in search results; no answer engine documents using it, and it appeared on 5.66% of pages in the Web Almanac 2024 structured-data chapter."
+      }
     },
     {
       "id": "p1.page-type",
@@ -294,7 +369,18 @@
         }
       ],
       "why": "Product + Offer for commerce, HowTo for docs, FAQPage for Q&A. Excluded entirely if the site has no matching page type.",
-      "why_zh": "电商 Product+Offer、文档 HowTo、问答 FAQPage。站点无对应页型则整项退出分母。"
+      "why_zh": "电商 Product+Offer、文档 HowTo、问答 FAQPage。站点无对应页型则整项退出分母。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/appearance/structured-data/product",
+          "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+          "https://developers.google.com/search/updates",
+          "https://developers.google.com/search/docs/appearance/structured-data/dataset"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google still documents Product markup for product results, but it stopped showing HowTo rich results in 2023 and FAQ rich results in May 2026 and uses Dataset markup only in Dataset Search, so of the types the rubric names only Product still has a Google Search feature behind it, and no answer engine documents using any of them."
+      }
     },
     {
       "id": "p2.answer-passages",
@@ -327,7 +413,18 @@
         }
       ],
       "why": "An engine quotes a passage that stands on its own. Without one, good content still only gets summarised, never cited.",
-      "why_zh": "AI 引用的是「一段能独立成立的话」。没有这样的段落，再好的内容也只会被概括，不会被引用。"
+      "why_zh": "AI 引用的是「一段能独立成立的话」。没有这样的段落，再好的内容也只会被概括，不会被引用。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2510.11438",
+          "https://arxiv.org/abs/2604.25707",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#what-v11-changed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Two preprints point the same way, since preference rules extracted from simulated engines include presenting information as a self-contained unit (Wu et al. 2025) and cited pages with definitions showed 57% higher mean influence in an observational study (Zhang et al. 2026), but neither is peer-reviewed, Google says content need not be chunked for its AI features, and the 25–120-word window comes from the calibration audits: thin support for the heaviest check."
+      }
     },
     {
       "id": "p2.question-intent",
@@ -360,7 +457,17 @@
         }
       ],
       "why": "People ask assistants in natural language. Questions (What is X?), tasks (Accept a payment) and explanations (How Connect works) all count; only keyword strings and brand labels do not.",
-      "why_zh": "用户向助手提问用的是自然语言。问句、任务句（Accept a payment）、说明句（How X works）都算；纯关键词串不算。"
+      "why_zh": "用户向助手提问用的是自然语言。问句、任务句（Accept a payment）、说明句（How X works）都算；纯关键词串不算。",
+      "evidence": {
+        "basis": "field-observation",
+        "sources": [
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#what-v11-changed",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+          "https://arxiv.org/abs/2604.25707"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "No primary source we found ties heading phrasing to citation: Google says its AI features match meaning and synonyms without content being rewritten for them, and one observational preprint found Q&A-formatted pages 5.7% less influential; the substance-over-format criterion comes from the calibration audits and the 7-point weight is the authors' judgement."
+      }
     },
     {
       "id": "p2.freshness",
@@ -388,7 +495,17 @@
         }
       ],
       "why": "Engines prefer content whose currency they can confirm. A schema date or a date a reader can see — either one qualifies.",
-      "why_zh": "AI 倾向引用能确认时效的内容。schema 日期或页面可见日期，二者其一即可。"
+      "why_zh": "AI 倾向引用能确认时效的内容。schema 日期或页面可见日期，二者其一即可。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2509.11353",
+          "https://developers.google.com/search/docs/appearance/publication-dates",
+          "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Seven LLMs used as rerankers promoted passages given newer injected dates (Fang et al. 2025, preprint), Bing says freshness signals affect how quickly AI-generated answers reflect updates, and Google documents reading both visible and structured dates and asks that they match; the rule that either kind of date alone earns the middle tier is the rubric's."
+      }
     },
     {
       "id": "p2.sourced-stats",
@@ -421,7 +538,17 @@
         }
       ],
       "why": "An attributed number is quoted far more readily than a bare one — it gives the citing side something to stand on.",
-      "why_zh": "带出处的数字被引用概率显著高于裸数字——它让引用方有据可依。"
+      "why_zh": "带出处的数字被引用概率显著高于裸数字——它让引用方有据可依。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2311.09735",
+          "https://arxiv.org/abs/2510.11438",
+          "https://arxiv.org/abs/2604.25707"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "The strongest external evidence in the rubric: adding statistics, quotations or cited sources raised visibility by 30–40% on a position-adjusted word-count metric in a controlled experiment (Aggarwal et al., KDD 2024; a simulated engine plus a Perplexity subset), and two later preprints agree; the requirement that the source be clickable and checkable is the rubric's own."
+      }
     },
     {
       "id": "p2.named-author",
@@ -449,7 +576,16 @@
         }
       ],
       "why": "A byline that resolves to a person is the core of E-E-A-T. An on-site author page or the person's own homepage both qualify — an on-site bio is not required.",
-      "why_zh": "署名到人是 E-E-A-T 的核心。身份页在站内或本人主页均可，不强制站内 bio。"
+      "why_zh": "署名到人是 E-E-A-T 的核心。身份页在站内或本人主页均可，不强制站内 bio。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+          "https://developers.google.com/search/docs/appearance/structured-data/article"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google's helpful-content guidance asks whether pages carry bylines that lead to more about the author, and its Article markup names a social profile, about page or bio page as a valid author URL, which matches the top tier; this is guidance for Google Search in general, and no answer engine documents weighting authorship."
+      }
     },
     {
       "id": "p3.listings",
@@ -482,7 +618,17 @@
         }
       ],
       "why": "Directories, review platforms and app stores are where an engine cross-checks that you exist.",
-      "why_zh": "行业目录、评测平台、应用市场是 AI 交叉验证你存在的地方。"
+      "why_zh": "行业目录、评测平台、应用市场是 AI 交叉验证你存在的地方。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2509.08919",
+          "https://arxiv.org/abs/2606.20065",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "AI search engines drew far more of their citations than Google from earned sources, a class that includes review and comparison sites (Chen et al. 2025, preprint), but a vendor-run preprint put G2 and Capterra at 1.1% of citations, no study we found isolates directory or app-store presence, and all five calibration sites scored full marks: thin and mixed."
+      }
     },
     {
       "id": "p3.mentions",
@@ -515,7 +661,17 @@
         }
       ],
       "why": "Saying you are good on your own channels is not evidence. Someone else saying it is.",
-      "why_zh": "自有渠道说自己好不构成证据，独立提及才构成。"
+      "why_zh": "自有渠道说自己好不构成证据，独立提及才构成。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2509.08919",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "AI search engines favoured earned, third-party sources over brand-owned content far more than Google did (Chen et al. 2025, preprint), and Google says its AI features show what is said about products across the web while warning that inauthentic mentions do not help; the tier boundaries are the auditor's judgement."
+      }
     },
     {
       "id": "p3.knowledge-graph",
@@ -538,7 +694,16 @@
         }
       ],
       "why": "A knowledge-base entry is the single strongest signal an engine has for confirming an entity's identity.",
-      "why_zh": "知识库条目是 AI 确认实体身份最强的单一信号。"
+      "why_zh": "知识库条目是 AI 确认实体身份最强的单一信号。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://support.google.com/knowledgepanel/answer/9787176?hl=en",
+          "https://arxiv.org/abs/2604.25707"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google documents a Knowledge Graph built from public sources and licensed data without naming Wikidata or Wikipedia, and one observational preprint found encyclopedia pages the most influential cited domain type; nothing we found shows that an entry raises a brand's citations, so the rationale's 'strongest single signal' is not established."
+      }
     },
     {
       "id": "p3.sameas",
@@ -566,7 +731,16 @@
         }
       ],
       "why": "sameAs binds the site to its accounts as one entity. Declaring none scores 0 — it does not leave the denominator.",
-      "why_zh": "sameAs 把官网与各平台账号绑成同一实体。未声明记 0 分，不退出分母。"
+      "why_zh": "sameAs 把官网与各平台账号绑成同一实体。未声明记 0 分，不退出分母。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/appearance/structured-data/organization",
+          "https://schema.org/sameAs"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google documents sameAs as pointing to pages on other sites about the organization, and schema.org defines it as a reference page that unambiguously indicates the item's identity; the test that every declared link resolves and belongs to the brand is the rubric's own, and no answer engine documents using sameAs."
+      }
     },
     {
       "id": "p3.video",
@@ -594,7 +768,17 @@
         }
       ],
       "why": "Multimodal content reaches answers through a different path than text. It adds, it does not substitute.",
-      "why_zh": "多模态内容进入 AI 答案的通道与文本不同，是增量而非替代。"
+      "why_zh": "多模态内容进入 AI 答案的通道与文本不同，是增量而非替代。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+          "https://developers.google.com/search/docs/appearance/structured-data/video",
+          "https://arxiv.org/abs/2606.20065"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google says its generative AI features can bring in relevant videos alongside page links and documents VideoObject markup, and a vendor-run preprint found YouTube the most-cited non-corporate source at 4.2% of citations; the sustained-output tier is the auditor's judgement."
+      }
     },
     {
       "id": "p4.answer-shape",
@@ -622,7 +806,17 @@
         }
       ],
       "why": "The same content is cited more often when a block of it can be lifted out whole.",
-      "why_zh": "同样的内容，能被整块摘出来的形态被引用率更高。"
+      "why_zh": "同样的内容，能被整块摘出来的形态被引用率更高。",
+      "evidence": {
+        "basis": "research",
+        "sources": [
+          "https://arxiv.org/abs/2604.25707",
+          "https://arxiv.org/abs/2510.11438",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "In an observational preprint the most influential cited pages carried 12.5 times the headings and 8.9 times the list density of the least influential, confounded by being 11 times longer (Zhang et al. 2026), and simulated-engine preference rules include clear headings and lists (Wu et al. 2025); Google recommends sections and headings for readers rather than for AI, and the paragraph-length thresholds are the rubric's."
+      }
     },
     {
       "id": "p4.question-coverage",
@@ -655,7 +849,16 @@
         }
       ],
       "why": "Ten questions people in this industry actually ask, against pages that answer them head-on. The gaps are the editorial calendar.",
-      "why_zh": "针对该行业 10 个高频真实问题，站内是否有页面正面回答。缺口清单直接就是选题表。"
+      "why_zh": "针对该行业 10 个高频真实问题，站内是否有页面正面回答。缺口清单直接就是选题表。",
+      "evidence": {
+        "basis": "field-observation",
+        "sources": [
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#still-unresolved",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Rests on the premise that a site cannot be cited for a question it never answers; Google documents query fan-out but warns that creating content for every query variation mainly to influence AI responses violates its scaled-content policy, and the calibration record names the choice of ten questions as the rubric's largest remaining source of irreproducibility."
+      }
     },
     {
       "id": "p4.cn-engines",
@@ -683,7 +886,16 @@
         }
       ],
       "why": "Applies when the site addresses the Chinese market; excluded entirely when it does not.",
-      "why_zh": "面向中文市场时适用；不面向中文市场则整项退出分母。"
+      "why_zh": "面向中文市场时适用；不面向中文市场则整项退出分母。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://help.baidu.com/question?prod_id=99&class=0&id=3001",
+          "https://www.gov.cn/gongbao/content/2011/content_1860864.htm"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Baidu documents that Baiduspider follows robots.txt and that blocked pages leave its results, and mainland-China rules require a filing before operating a non-commercial internet information service (State Council measures, article 4); no Chinese answer engine documents using filing or entity information as a signal, so the second point is a rubric convention."
+      }
     },
     {
       "id": "b.llms-full",
@@ -695,7 +907,17 @@
       "points": 2,
       "pass": "A single aggregated full-text file. A non-root path is allowed as long as it is discoverable from llms.txt or robots.txt.",
       "pass_zh": "提供全文聚合文件；允许非根路径，但需可从 llms.txt 或 robots.txt 发现",
-      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。",
+      "evidence": {
+        "basis": "convention",
+        "sources": [
+          "https://www.mintlify.com/blog/what-is-llms-txt",
+          "https://llmstxt.org/",
+          "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "A single-file variant that Mintlify says it developed with Anthropic; the current llms.txt proposal text does not define it, no answer engine documents reading it, and Google says Google Search ignores AI text files."
+      }
     },
     {
       "id": "b.ai-txt",
@@ -707,7 +929,17 @@
       "points": 2,
       "pass": "Declares an AI usage policy.",
       "pass_zh": "声明 AI 使用政策",
-      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。",
+      "evidence": {
+        "basis": "convention",
+        "sources": [
+          "https://spawning.substack.com/p/aitxt-a-new-way-for-websites-to-set",
+          "https://www.ietf.org/archive/id/draft-car-ai-txt-wellknown-00.html",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Two unrelated proposals share the name, Spawning's 2023 root-level file and a 2026 individual IETF Internet-Draft at a well-known path, and both declare usage and training permissions rather than anything an answer engine is documented to read; it scored zero on all five calibration sites."
+      }
     },
     {
       "id": "b.geo-link",
@@ -719,7 +951,16 @@
       "points": 1,
       "pass": "Declares retrieval-facing link relations in the head.",
       "pass_zh": "在 head 声明面向 AI 检索的 link 关系",
-      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。",
+      "evidence": {
+        "basis": "convention",
+        "sources": [
+          "https://llmstxt.org/",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "The llms.txt proposal (v2, August 2026) recommends standard link relations pointing to a page's markdown version and to the llms.txt that covers it; no answer engine documents reading them, and they appeared on none of the five calibration sites."
+      }
     },
     {
       "id": "b.speakable",
@@ -731,7 +972,17 @@
       "points": 1,
       "pass": "Marks the region a voice assistant should read aloud.",
       "pass_zh": "为语音助手标注可朗读区域",
-      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。"
+      "note_zh": "不进分母，只加分。这些约定采纳率仍很低，做了是领先，没做不扣分。",
+      "evidence": {
+        "basis": "vendor-doc",
+        "sources": [
+          "https://developers.google.com/search/docs/appearance/structured-data/speakable",
+          "https://schema.org/speakable",
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+        ],
+        "last_verified": "2026-09-27",
+        "note": "Google documents speakable as a beta feature the Google Assistant uses to read topical news aloud on smart speakers; no generative answer engine documents using it, and it appeared on none of the five calibration sites."
+      }
     }
   ]
 }
