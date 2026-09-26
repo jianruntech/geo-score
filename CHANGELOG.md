@@ -45,6 +45,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - The Action passes its inputs to the script as environment variables. Before this, `url` and the
   other inputs were pasted into the shell script, so a crafted value could run commands in the
   workflow. `sample` and `fail-under` are now checked to be whole numbers.
+- **Site text in evidence is fenced as data.** Evidence that quotes the audited site (an answer
+  passage, the brand name read from the page, a Wikidata description) now carries it inside
+  `«site text: …»`, and control, zero-width and bidi characters are stripped from every evidence
+  string. The report reaches AI agents through the MCP server, so a page could otherwise address the
+  agent in the tool's own voice. Harvested links carrying such characters are dropped from the sample.
+- `SECURITY.md` now has a supported-versions table and a threat model; `SKILL.md` tells the agent
+  that fetched text is evidence, never instructions.
 
 ## [1.2.0] — 2026-09-27
 

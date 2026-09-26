@@ -527,6 +527,19 @@ def depth_in_scope(url, scope):
     return pth.strip("/").count("/")
 
 
+# C0/C1 controls, zero-width characters and bidi overrides: never legitimate in evidence, and the
+# tools of choice for hiding or reordering text an agent reads
+_UNSAFE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
+
+def site_text(s, n=90):
+    """Text quoted from the audited site, or from a page about it, is data and never instructions.
+    Evidence carries it inside «site text: …» so a reader, or an agent reading the report over MCP,
+    can tell the site's words from the tool's."""
+    s = " ".join(_UNSAFE.sub("", str(s)).split()).replace("«", "‹").replace("»", "›")
+    if len(s) > n:
+        s = s[:n].rstrip() + "…"
+    return "«site text: %s»" % s
+
 def scope_of(base):
     """A site can live under a path — a project page, a docs subtree, a country folder.
     robots.txt and llms.txt are always at the origin by spec, but sampling has to stay
@@ -558,7 +571,7 @@ def discover(base, want=8, verbose=False):
             if scope and not pu.path.startswith(scope): continue
             if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
             if re.search(r"/(login|signin|signup|register|cart|checkout|account|admin|search)(/|$)", u, re.I): continue
-            if u in seen: continue
+            if u in seen or _UNSAFE.search(u): continue
             seen.add(u); out.append(u)
         return out
 
@@ -623,6 +636,8 @@ def pin_urls(base, urls):
             continue
         if "://" not in u:
             u = origin + ("" if u.startswith("/") else "/") + u
+        if _UNSAFE.search(u):
+            raise RuntimeError("pinned URL %r contains control or bidi characters" % raw.strip()[:200])
         u = idna(u.split("#")[0])
         p = urllib.parse.urlsplit(u)
         if (p.scheme, p.netloc.lower()) != (want.scheme, want.netloc.lower()):
@@ -769,7 +784,7 @@ def run(base, sample=8, verbose=False, urls=None):
         tier["p1.sitemap"] = 4 if locs and mods >= locs * .5 else 2
         ev["p1.sitemap"] = "Sitemap %s (%s): HTTP 200, %d <loc>, %d <lastmod>." % (
             "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path",
-            sm.url if hasattr(sm, "url") else "—", locs, mods)
+            _UNSAFE.sub("", sm.url)[:200] if getattr(sm, "url", None) else "—", locs, mods)
 
     # ── p1.llms-txt ──
     lt = fetch(origin + "/llms.txt")
@@ -854,11 +869,11 @@ def run(base, sample=8, verbose=False, urls=None):
     for u, r in live.items():
         for p in paragraphs(r.text)[:6]:
             if lo <= wc(p) <= hi and re.search(r"[.。!?！？]", p):
-                passed += 1; examples.append((u, wc(p), p[:90])); break
+                passed += 1; examples.append((u, wc(p), p)); break
     tier["p2.answer-passages"] = 9 if passed >= n * .75 else (7 if passed >= n * .5 else (4 if passed else 0))
     ev["p2.answer-passages"] = "%d of %d pages open with a self-contained passage of %d–%d %s.%s" % (
         passed, n, lo, hi, "characters" if lo == 50 else "words",
-        (" e.g. “%s…”" % examples[0][2]) if examples else "")
+        (" e.g. %s" % site_text(examples[0][2], 90)) if examples else "")
 
     # ── p2.question-intent ──
     # a heading matches question intent if a person would phrase their question that way:
@@ -1028,7 +1043,8 @@ def run(base, sample=8, verbose=False, urls=None):
                 try:
                     for it in json.loads(wd.text).get("search", []):
                         if (it.get("label", "") or "").strip().lower() == cand.lower():
-                            kg_where.append("Wikidata %s (%s)" % (it.get("id"), it.get("description", "")[:40]))
+                            kg_where.append("Wikidata %s %s" % (_UNSAFE.sub("", str(it.get("id")))[:20],
+                                                                     site_text(it.get("description", ""), 40)))
                             break
                 except Exception: pass
             wp = fetch("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
@@ -1038,14 +1054,14 @@ def run(base, sample=8, verbose=False, urls=None):
                 try:
                     for it in json.loads(wp.text).get("query", {}).get("search", []):
                         if (it.get("title", "") or "").strip().lower() == cand.lower():
-                            kg_where.append("%s.wikipedia: %s" % (lg, it.get("title"))); break
+                            kg_where.append("%s.wikipedia: %s" % (lg, site_text(it.get("title"), 60))); break
                 except Exception: pass
         if kg_where: brand = cand; break
-    also = "" if len(brands) < 2 else " (also tried %s)" % ", ".join(repr(x) for x in brands if x != brand)
+    also = "" if len(brands) < 2 else " (also tried %s)" % ", ".join(site_text(x, 60) for x in brands if x != brand)
     kt = kg_tier(bool(kg_where), kg_ok, kg_queries)
     if kt == 4:
         tier["p3.knowledge-graph"] = 4
-        ev["p3.knowledge-graph"] = "Brand read as %r%s. Entity found — %s" % (brand, also, "; ".join(kg_where[:2]))
+        ev["p3.knowledge-graph"] = "Brand read as %s%s. Entity found — %s" % (site_text(brand, 60), also, "; ".join(kg_where[:2]))
     elif kt is None:
         # Absence can only be concluded when every lookup answered. If some timed out
         # (Wikidata and Wikipedia are unreachable from some networks, flaky from others),
@@ -1053,14 +1069,14 @@ def run(base, sample=8, verbose=False, urls=None):
         # not a zero. Scoring 0 on a partial answer made the same site score differently
         # on consecutive runs from the same machine.
         tier["p3.knowledge-graph"] = None
-        ev["p3.knowledge-graph"] = ("Brand read as %r%s. %d of %d Wikidata and Wikipedia lookups failed to "
+        ev["p3.knowledge-graph"] = ("Brand read as %s%s. %d of %d Wikidata and Wikipedia lookups failed to "
                                     "respond and none of the rest matched, so this check is unobservable "
-                                    "rather than zero." % (brand, also, kg_queries - kg_ok, kg_queries))
+                                    "rather than zero." % (site_text(brand, 60), also, kg_queries - kg_ok, kg_queries))
     else:
         tier["p3.knowledge-graph"] = 0
-        ev["p3.knowledge-graph"] = ("Brand read as %r%s. No entity whose label matches exactly, in Wikidata "
+        ev["p3.knowledge-graph"] = ("Brand read as %s%s. No entity whose label matches exactly, in Wikidata "
                                     "or Wikipedia (%s); %d of %d lookups answered."
-                                    % (brand, also, "/".join(langs), kg_ok, kg_queries))
+                                    % (site_text(brand, 60), also, "/".join(langs), kg_ok, kg_queries))
 
     # ── judgement-bound checks ──
     for k in NEEDS_JUDGEMENT:
@@ -1094,6 +1110,9 @@ def run(base, sample=8, verbose=False, urls=None):
     # Scoring the landing page under the requested label hides that; recording it makes
     # the substitution visible to anyone reading the result.
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
+    # one last pass: whatever a page managed to put into a string, no control or bidi character leaves here
+    ev = {k: _UNSAFE.sub("", v) if isinstance(v, str) else v for k, v in ev.items()}
+    landed = _UNSAFE.sub("", landed) if isinstance(landed, str) else landed
     return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
                 lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body))
 
