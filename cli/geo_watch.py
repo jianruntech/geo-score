@@ -18,8 +18,8 @@ competitors, or the third-party pages the engines lean on. Run it through geo_sc
 No dependencies. Python 3.8+. API keys are read from the environment and never written
 anywhere. https://github.com/jianruntech/geo-score
 """
-import argparse, contextlib, csv, datetime, http.client, importlib.util, io, ipaddress, json, math, os, re, socket
-import sys, threading, time, unicodedata
+import argparse, contextlib, csv, datetime, hashlib, http.client, importlib.util, io, ipaddress, json, math, os
+import random, re, socket, sys, threading, time, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
@@ -28,8 +28,9 @@ RUN_FORMAT = "geo-score/watch.v1"
 CONFIG_NAME = "geo-score-watch.json"
 STATE_DIR = os.path.join(".geo-score", "watch")
 QUERY_COLS = ["query_id", "query", "intent_tier", "target_url"]
+BRANDED_VALUES = ("auto", "yes", "no")   # the optional `branded` column of queries.csv
 CSV_COLS = ["week", "query_id", "query", "intent_tier", "engine", "cited", "quoted_url",
-            "rank", "other_domains_cited", "note"]
+            "rank", "other_domains_cited", "note", "branded"]
 UA = "geo-score-watch/%s (+https://github.com/jianruntech/geo-score)" % __version__
 HTTP_TIMEOUT = 120
 MAX_BODY = 8 << 20
@@ -39,6 +40,10 @@ MAX_QUERIES = 200
 MAX_RUNS = 10
 MAX_RESOLVE = 12
 DEFAULT_MAX_CALLS = 120
+BOOTSTRAP_REPS = 2000
+ALPHA = 0.05
+MIN_PAIRED = 6        # with 5 questions, all 5 flipping the same way gives exact p = 2/2^5 = 0.0625: no test can call it
+BRANDED_WARN = 0.3    # `watch check` warns above this share of questions that name the brand
 RETRY_STATUS = (429, 500, 502, 503, 504, 529)
 FATAL_STATUS = (400, 401, 403, 404)
 ENGINE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
@@ -72,8 +77,12 @@ DEFAULT_ENGINES = [
 NOTES = [
     "API channel. Answers come from each provider's search-enabled API, which is not the consumer app. "
     "Compare runs with runs; never pool them with answers sampled by hand in the apps.",
-    "The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, "
-    "and diff only calls a change a change when a two-proportion test says so (p < 0.05).",
+    "The same question gets different answers from one ask to the next, and answers to one question move "
+    "together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over "
+    "questions when a question has several answers. diff pairs the questions both runs answered and calls a "
+    "change a change only when an exact paired test (McNemar), Holm-corrected across engines, says so (p < 0.05).",
+    "A question that names the brand invites an answer that cites it. Those questions are kept out of the "
+    "headline rate and reported on a line of their own.",
     "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
     "This measures citations. It does not predict traffic, rankings or revenue.",
 ]
@@ -204,11 +213,8 @@ def clean_url(u):
 def wilson(k, n, z=1.96):
     if not n:
         return None
-    p = k / float(n)
-    d = 1 + z * z / n
-    c = (p + z * z / (2 * n)) / d
-    h = z * math.sqrt(p * (1 - p) / n + z * z / (4.0 * n * n)) / d
-    return [round(max(0.0, c - h), 4), round(min(1.0, c + h), 4)]
+    lo, hi = _wilson_raw(k, n, z)
+    return [round(lo, 4), round(hi, 4)]
 
 
 def two_prop_p(k1, n1, k2, n2):
@@ -225,6 +231,124 @@ def two_prop_p(k1, n1, k2, n2):
 
 def rate(k, n):
     return round(k / float(n), 4) if n else None
+
+
+# ── statistics: clustered intervals, paired tests ─────────────────────────
+def _seed(*parts):
+    """Resampling seed from run ids, so a run always reports the same intervals. The -N suffix save_run may
+    add is dropped: renaming a run does not move its numbers."""
+    key = "|".join(RUN_ID_RE.sub(r"\1", str(p)) for p in parts)
+    return int(hashlib.sha256(key.encode("utf-8")).hexdigest()[:16], 16)
+
+
+def _central(stats):
+    """2.5th and 97.5th percentiles of bootstrap replicates."""
+    stats.sort()
+    i = len(stats) * 25 // 1000
+    return stats[i], stats[len(stats) - 1 - i]
+
+
+def _wilson_raw(k, n, z=1.96):
+    p = k / float(n)
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4.0 * n * n)) / d
+    return max(0.0, c - h), min(1.0, c + h)
+
+
+def cluster_ci(groups, seed, reps=None):
+    """95% interval for a rate whose answers come in clusters, one per question. groups: (cited, answered) per
+    question. Questions are resampled with replacement; the interval is never narrower than Wilson over the
+    answers, which a bootstrap on a handful of questions can be (three questions each cited in half their
+    answers resample to a zero-width interval)."""
+    groups = [(k, n) for k, n in groups if n]
+    N = sum(n for _, n in groups)
+    if not N:
+        return None
+    w = wilson(sum(k for k, _ in groups), N)
+    if len(groups) < 2:
+        return w
+    rng, m, stats = random.Random(seed), len(groups), []
+    for _ in range(reps or BOOTSTRAP_REPS):
+        draw = rng.choices(groups, k=m)
+        stats.append(sum(g[0] for g in draw) / float(sum(g[1] for g in draw)))
+    lo, hi = _central(stats)
+    return [round(min(lo, w[0]), 4), round(max(hi, w[1]), 4)]
+
+
+def mcnemar_p(gained, lost):
+    """Exact two-sided McNemar test on the questions that flipped: is one direction more common than a fair
+    coin would make it?"""
+    b = gained + lost
+    if not b:
+        return 1.0
+    tail = sum(math.comb(b, i) for i in range(min(gained, lost) + 1))
+    return min(1.0, 2 * tail / 2 ** b)
+
+
+def signflip_p(changes):
+    """Exact two-sided sign-flip test on per-question net changes. With no change, each question's net change
+    is as likely to point up as down; the answers to one question move together. With one pair per question
+    every change is -1, 0 or +1 and this is McNemar's test."""
+    ds = [abs(d) for d in changes if d]
+    if not ds:
+        return 1.0
+    obs = abs(sum(changes))
+    dist = {0: 1}
+    for d in ds:
+        nxt = {}
+        for s, c in dist.items():
+            nxt[s + d] = nxt.get(s + d, 0) + c
+            nxt[s - d] = nxt.get(s - d, 0) + c
+        dist = nxt
+    return min(1.0, sum(c for s, c in dist.items() if abs(s) >= obs) / 2 ** len(ds))
+
+
+def holm(ps):
+    """Holm step-down adjusted p-values, in the order given."""
+    order = sorted(range(len(ps)), key=lambda i: ps[i])
+    out, top = [None] * len(ps), 0.0
+    for rank, i in enumerate(order):
+        top = max(top, min(1.0, (len(ps) - rank) * ps[i]))
+        out[i] = top
+    return out
+
+
+def newcombe_paired(both, lost, gained, neither):
+    """95% interval for after - before on paired yes/no data (Newcombe 1998, hybrid score): the two Wilson
+    intervals, combined through the correlation of the pairs. Treats the pairs as independent."""
+    n = both + lost + gained + neither
+    if not n:
+        return None
+    p1, p2 = (both + lost) / float(n), (both + gained) / float(n)
+    l1, u1 = _wilson_raw(both + lost, n)
+    l2, u2 = _wilson_raw(both + gained, n)
+    num = float(both * neither - lost * gained)
+    if num > 0:
+        num = max(num - n / 2.0, 0.0)
+    den = math.sqrt(float((both + lost) * (gained + neither) * (both + gained) * (lost + neither)))
+    phi = num / den if den else 0.0
+    d = p2 - p1
+    lo = d - math.sqrt(max(0.0, (p2 - l2) ** 2 - 2 * phi * (p2 - l2) * (u1 - p1) + (u1 - p1) ** 2))
+    hi = d + math.sqrt(max(0.0, (p1 - l1) ** 2 - 2 * phi * (p1 - l1) * (u2 - p2) + (u2 - p2) ** 2))
+    return max(-1.0, lo), min(1.0, hi)
+
+
+def paired_ci(by_question, table, seed, reps=None):
+    """95% interval, in points, for the paired change: questions resampled with replacement (each with all its
+    pairs), never narrower than Newcombe's interval, which counts every pair as independent."""
+    units = list(by_question)
+    if not units:
+        return None
+    lo, hi = newcombe_paired(*table)
+    if len(units) >= 2:
+        rng, m, stats = random.Random(seed), len(units), []
+        for _ in range(reps or BOOTSTRAP_REPS):
+            draw = rng.choices(units, k=m)
+            stats.append(sum(u[0] for u in draw) / float(sum(u[1] for u in draw)))
+        blo, bhi = _central(stats)
+        lo, hi = min(lo, blo), max(hi, bhi)
+    return [round(100 * lo, 1), round(100 * hi, 1)]
 
 
 # ── HTTP ──────────────────────────────────────────────────────────────────
@@ -532,15 +656,18 @@ def key_names(eng):
 
 
 # ── who owns a citation ───────────────────────────────────────────────────
-_CJK = re.compile("[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff]")
+_CJK_CHARS = "\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff"
+_CJK = re.compile("[%s]" % _CJK_CHARS)
+_WORD_NOT_CJK = "[^\\W%s]" % _CJK_CHARS
 
 
 def _mention_re(term):
     """Chinese, Japanese and Korean names match anywhere (no spaces between words); everything else, accented
-    Latin included, matches whole words only, so "Lumo" does not match "Lumos"."""
+    Latin included, matches whole words only, so "Lumo" does not match "Lumos". A CJK character beside a Latin
+    name is a word break: "Lumo" matches in "用Lumo做视频"."""
     if _CJK.search(term):
         return re.compile(re.escape(term), re.I)
-    return re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)", re.I)
+    return re.compile("(?<!%s)%s(?!%s)" % (_WORD_NOT_CJK, re.escape(term), _WORD_NOT_CJK), re.I)
 
 
 class Entity(object):
@@ -622,6 +749,25 @@ def evaluate(res, brand, rivals, resolve=True):
             "competitors": comps, "citations": cites,
             "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
             "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER}
+
+
+def flag_query(q, brand, rivals):
+    """Mark a question that names the brand or a competitor, with the matcher the answers get: name, aliases
+    and domains; whole words for Latin script, anywhere for Chinese, Japanese and Korean."""
+    text = q.get("query") or ""
+    return dict(q, branded=q.get("branded") or "auto", brand_in_query=brand.named_in(text),
+                competitor_in_query=any(r.named_in(text) for r in rivals))
+
+
+def is_branded(q, brand=None):
+    """The `branded` column decides when it says yes or no; auto follows brand_in_query, found from the
+    question text when the run predates the flag."""
+    v = str(q.get("branded") or "auto").strip().lower()
+    if v in ("yes", "no"):
+        return v == "yes"
+    if "brand_in_query" in q:
+        return bool(q["brand_in_query"])
+    return brand is not None and brand.named_in(q.get("query") or "")
 
 
 # ── config ────────────────────────────────────────────────────────────────
@@ -757,6 +903,11 @@ class Config(object):
                 problems.append("line %d: replace the <placeholder> with a real question" % n)
             elif len(q) > MAX_QUERY_LEN:
                 problems.append("line %d: query longer than %d characters" % (n, MAX_QUERY_LEN))
+            b = r.get("branded")
+            b = b.strip().lower() if isinstance(b, str) else ""
+            if b and b not in BRANDED_VALUES:
+                problems.append("line %d: branded must be auto, yes or no, not %r" % (n, b))
+            vals["branded"] = b or "auto"
             ids.add(qid)
             out.append(vals)
         if problems:
@@ -871,6 +1022,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
             budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True):
     prices = prices or {}
     started = NOW()
+    queries = [flag_query(q, brand, rivals) for q in queries]
     active, status = plan(engines, prices, budget, allow_unpriced)
     slots = [(r, q, e) for r in range(1, runs + 1) for q in queries for e, _ in active]
     samples = [None] * len(slots)
@@ -989,30 +1141,38 @@ def summarize(run):
     samples = run["samples"]
     ok = [s for s in samples if s["status"] == "ok"]
     qtext = dict((q["query_id"], q) for q in run["queries"])
+    rid = run.get("run_id") or ""
 
-    def block(rows):
-        k = sum(1 for s in rows if s["cited"])
-        m = sum(1 for s in rows if s["mentioned"])
+    def block(rows, label, hit=lambda s: s["cited"], named=lambda s: s["mentioned"]):
+        k = sum(1 for s in rows if hit(s))
+        m = sum(1 for s in rows if named(s))
+        per_q = {}
+        for s in rows:
+            c = per_q.setdefault(s["query_id"], [0, 0])
+            c[0] += 1 if hit(s) else 0
+            c[1] += 1
         return {"answered": len(rows), "cited": k, "cited_rate": rate(k, len(rows)), "cited_ci": wilson(k, len(rows)),
-                "mentioned": m, "mentioned_rate": rate(m, len(rows))}
+                "cited_ci_clustered": cluster_ci([tuple(per_q[q]) for q in sorted(per_q)], _seed(rid, label)),
+                "n_questions": len(per_q), "mentioned": m, "mentioned_rate": rate(m, len(rows))}
 
     engines = []
     for e in run["engines"]:
         es = [s for s in samples if s["engine"] == e["id"]]
         eo = [s for s in es if s["status"] == "ok"]
         ranks = [s["rank"] for s in eo if s["rank"]]
-        row = dict(block(eo), id=e["id"], model=e["model"], status=e["status"],
+        row = dict(block(eo, "engine:" + e["id"]), id=e["id"], model=e["model"], status=e["status"],
                    errors=sum(1 for s in es if s["status"] == "error"),
                    skipped=sum(1 for s in es if s["status"] == "skipped"),
                    avg_rank=round(sum(ranks) / float(len(ranks)), 1) if ranks else None)
         engines.append(row)
 
-    share = [dict(block(ok), name=brand.name, you=True)]
+    everything = block(ok, "overall")
+    share = [dict(everything, name=brand.name, you=True)]
     for r in rivals:
-        k = sum(1 for s in ok if s["competitors"].get(r.name, {}).get("cited"))
-        m = sum(1 for s in ok if s["competitors"].get(r.name, {}).get("mentioned"))
-        share.append({"name": r.name, "you": False, "answered": len(ok), "cited": k, "cited_rate": rate(k, len(ok)),
-                      "cited_ci": wilson(k, len(ok)), "mentioned": m, "mentioned_rate": rate(m, len(ok))})
+        share.append(dict(block(ok, "rival:" + r.name,
+                                hit=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("cited")),
+                                named=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("mentioned"))),
+                          name=r.name, you=False))
 
     counts, owners = Counter(), {}
     for s in ok:
@@ -1041,21 +1201,83 @@ def summarize(run):
     for s in ok:
         t = qtext.get(s["query_id"], {}).get("intent_tier") or ""
         tiers.setdefault(t, []).append(s)
-    by_tier = [dict(block(rows), tier=t) for t, rows in sorted(tiers.items()) if t]
+    by_tier = [dict(block(rows, "tier:" + t), tier=t) for t, rows in sorted(tiers.items()) if t]
+
+    # The headline leaves out questions that name the brand: "acme vs rival" all but guarantees an Acme citation.
+    stored = all("brand_in_query" in q for q in run["queries"])
+    named_ids = sorted(q["query_id"] for q in run["queries"] if is_branded(q, brand))
+    headline = block([s for s in ok if s["query_id"] not in named_ids], "headline") if named_ids else dict(everything)
+    branded = dict(block([s for s in ok if s["query_id"] in named_ids], "branded"), question_ids=named_ids)
+    notes = []
+    if not stored:
+        notes.append("This run was saved before questions were flagged at run time. Questions that name the brand "
+                      "were found when this report was made, from the saved question text and the run's brand "
+                      "name, aliases and domains.")
 
     exposed = [s for s in ok if s["search_queries"]]
     searched = Counter(re.sub(r"\s+", " ", q.lower()).strip() for s in exposed for q in s["search_queries"])
-    return {"overall": dict(block(ok), planned=len(samples),
+    return {"overall": dict(everything, planned=len(samples),
                             errors=sum(1 for s in samples if s["status"] == "error"),
                             skipped=sum(1 for s in samples if s["status"] == "skipped")),
+            "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
             "engines": engines, "share_of_voice": share, "top_sources": sources,
             "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps, "by_tier": by_tier,
             "searches": {"answers_exposing": len(exposed),
-                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]}}
+                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]},
+            "notes": notes}
+
+
+def summary_of(run):
+    """The stored summary, or a fresh one for a run saved before the clustered intervals and the branded
+    split existed. Summaries are derived from the samples, so recomputing one changes no measurement."""
+    sm = run.get("summary")
+    if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}):
+        return sm
+    return summarize(run)
+
+
+def _asks(run, common_q, engines):
+    """(query_id, engine) -> whether each answered ask cited the brand, in ask order."""
+    out = {}
+    rows = [s for s in run["samples"] if s["status"] == "ok" and s["engine"] in engines and s["query_id"] in common_q]
+    for s in sorted(rows, key=lambda s: s.get("run") or 1):
+        out.setdefault((s["query_id"], s["engine"]), []).append(bool(s["cited"]))
+    return out
+
+
+def _paired(pairs, seed):
+    """pairs: {(query_id, engine): (cited on each ask before, cited on each ask after)}, over the asks both runs
+    made. The paired comparison of one diff row."""
+    by_q = {}
+    for (q, _), (xs, ys) in pairs.items():
+        u = by_q.setdefault(q, [0, 0])
+        u[0] += sum(ys) - sum(xs)
+        u[1] += len(xs)
+    asks = [(x, y) for xs, ys in pairs.values() for x, y in zip(xs, ys)]
+    n = len(asks)
+    both = sum(1 for x, y in asks if x and y)
+    lost = sum(1 for x, y in asks if x and not y)
+    gained = sum(1 for x, y in asks if y and not x)
+    out = {"n_pairs": len(pairs), "n_questions": len(by_q), "n_asks": n, "before_paired": rate(both + lost, n),
+           "after_paired": rate(both + gained, n), "delta_pp": round(100.0 * (gained - lost) / n, 1) if n else None,
+           "delta_ci": None, "p_paired": None, "p_adjusted": None}
+    if not n:
+        return out
+    # One ask on one engine per question: McNemar. Otherwise the same exact test on each question's net change
+    # in cited answers, so repeated asks and several engines add evidence without being counted as independent.
+    p = mcnemar_p(gained, lost) if n == len(by_q) else signflip_p([u[0] for u in by_q.values()])
+    out["p_paired"] = round(p, 4)
+    out["_p"] = p
+    if len(by_q) >= MIN_PAIRED:
+        out["delta_ci"] = paired_ci([tuple(by_q[q]) for q in sorted(by_q)], (both, lost, gained, n - both - lost - gained),
+                                    seed)
+    return out
 
 
 def diff_runs(a, b):
-    """What changed from run a to run b, on the questions and engines both runs measured."""
+    """What changed from run a to run b, on the questions and engines both runs measured. Answers are paired
+    by question, engine and ask (the asks both runs made); the verdict comes from an exact paired test with
+    Holm's correction across the rows."""
     common_q = set(q["query_id"] for q in a["queries"]) & set(q["query_id"] for q in b["queries"])
     ea = dict((e["id"], e) for e in a["engines"])
     eb = dict((e["id"], e) for e in b["engines"])
@@ -1068,29 +1290,61 @@ def diff_runs(a, b):
     dropped = len(set(q["query_id"] for q in a["queries"]) ^ set(q["query_id"] for q in b["queries"]))
     if dropped:
         notes.append("%d questions appear in only one run and are left out" % dropped)
+    if a.get("runs") != b.get("runs"):
+        notes.append("the runs asked each question %s and %s times; the paired test uses the asks both made "
+                     "(the first %s)" % (a.get("runs"), b.get("runs"), min(a.get("runs") or 1, b.get("runs") or 1)))
+    common_e = [e for e in ea if e in eb]
+    asks_a, asks_b = _asks(a, common_q, set(common_e)), _asks(b, common_q, set(common_e))
+    pairs = {}
+    for u, xs in asks_a.items():
+        ys = asks_b.get(u)
+        if ys:
+            k = min(len(xs), len(ys))
+            pairs[u] = (xs[:k], ys[:k])
 
     def pick(run, eid):
         return [s for s in run["samples"] if s["status"] == "ok" and s["engine"] == eid and s["query_id"] in common_q]
 
-    def compare(label, sa, sb, model_note=None):
+    def compare(label, sa, sb, sub, model_note=None):
+        # before, after, delta and p_value are unpaired, every answer counted, as in 1.2.0; the verdict is not
         k1, n1 = sum(1 for s in sa if s["cited"]), len(sa)
         k2, n2 = sum(1 for s in sb if s["cited"]), len(sb)
         p = two_prop_p(k1, n1, k2, n2)
-        verdict = "not measured" if p is None else ("change" if p < 0.05 else "within noise")
-        return {"engine": label, "before": rate(k1, n1), "after": rate(k2, n2), "before_n": n1, "after_n": n2,
-                "delta": None if p is None else round(k2 / float(n2) - k1 / float(n1), 4),
-                "p_value": None if p is None else round(p, 4), "verdict": verdict, "note": model_note}
+        row = {"engine": label, "before": rate(k1, n1), "after": rate(k2, n2), "before_n": n1, "after_n": n2,
+               "delta": None if p is None else round(k2 / float(n2) - k1 / float(n1), 4),
+               "p_value": None if p is None else round(p, 4)}
+        row.update(_paired(sub, _seed(a["run_id"], b["run_id"], label)))
+        if p is None:
+            row["verdict"] = "not measured"
+        elif row["n_questions"] < MIN_PAIRED:
+            row["verdict"] = "too few questions to tell"
+        row["note"] = model_note
+        return row
 
     all_a, all_b = [], []
-    for eid in [e for e in ea if e in eb]:
+    for eid in common_e:
         note = None
         if ea[eid]["model"] != eb[eid]["model"]:
             note = "model changed: %s -> %s" % (ea[eid]["model"], eb[eid]["model"])
         sa, sb = pick(a, eid), pick(b, eid)
         all_a += sa
         all_b += sb
-        rows.append(compare(eid, sa, sb, note))
-    overall = compare("all engines", all_a, all_b)
+        rows.append(compare(eid, sa, sb, dict((u, v) for u, v in pairs.items() if u[1] == eid), note))
+    overall = compare("all engines", all_a, all_b, pairs)
+
+    # Holm over the engines plus the overall row. With one engine the overall row is that engine's test again.
+    with_pairs = [r for r in rows if r["n_pairs"]]
+    family = [r for r in rows + [overall] if "verdict" not in r]
+    if len(with_pairs) == 1 and overall in family:
+        family.remove(overall)
+    for r, pa in zip(family, holm([r["_p"] for r in family])):
+        r["p_adjusted"] = round(pa, 4)
+        r["verdict"] = "change" if pa < ALPHA else "within noise"
+    if "verdict" not in overall:
+        overall["p_adjusted"] = with_pairs[0]["p_adjusted"]
+        overall["verdict"] = with_pairs[0]["verdict"]
+    for r in rows + [overall]:
+        r.pop("_p", None)
 
     def cited_where(run):
         out = {}
@@ -1108,7 +1362,13 @@ def diff_runs(a, b):
     gained = [{"query_id": q, "engine": e, "query": qtext.get(q, ""), "now": cb[(q, e)][1]}
               for (q, e) in sorted(cb) if cb[(q, e)][0] and (q, e) in ca and not ca[(q, e)][0]]
     return {"from": a["run_id"], "to": b["run_id"], "overall": overall, "engines": rows,
-            "lost": lost, "gained": gained, "notes": notes}
+            "lost": lost, "gained": gained, "notes": notes, "alpha": ALPHA, "min_questions": MIN_PAIRED}
+
+
+def drops(d):
+    """Rows whose verdict is a change for the worse."""
+    return [r["engine"] for r in [d["overall"]] + d["engines"]
+            if r["verdict"] == "change" and (r.get("delta_pp") or 0) < 0]
 
 
 # ── rendering ─────────────────────────────────────────────────────────────
@@ -1145,6 +1405,17 @@ def ci_s(c):
     return "—" if not c else "%d–%d%%" % (round(c[0] * 100), round(c[1] * 100))
 
 
+def head_ci(b):
+    """The interval to quote: the bootstrap over questions when some question has several answers, else Wilson."""
+    if b.get("cited_ci_clustered") and b["answered"] > b.get("n_questions", b["answered"]):
+        return b["cited_ci_clustered"]
+    return b.get("cited_ci")
+
+
+def _n(k, word):
+    return "%d %s%s" % (k, word, "" if k == 1 else "s")
+
+
 def table(headers, rows, fmt):
     rows = [[str(c) for c in r] for r in rows]
     if fmt == "md":
@@ -1168,7 +1439,7 @@ def money(x):
 
 
 def render(run, fmt="text"):
-    sm = run.get("summary") or summarize(run)
+    sm = summary_of(run)
     o, L = sm["overall"], []
     engines_n = sum(1 for e in run["engines"] if e["status"] == "measured")
     head = "geo-score watch · %s · run %s · %s channel" % (run["brand"]["name"] or "(no brand)", run["run_id"], run["channel"])
@@ -1177,11 +1448,25 @@ def render(run, fmt="text"):
     L.append("%d questions × %d engines × %d = %d planned · %d answered · %d failed · %d skipped%s" % (
         len(run["queries"]), engines_n, run["runs"], o["planned"], o["answered"], o["errors"], o["skipped"],
         " · interrupted" if run.get("interrupted") else ""))
+    name = run["brand"]["name"] or "the brand"
+    h, br = sm["headline"], sm["branded"]
     if o["answered"]:
         L.append("")
-        line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
-            pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(o["cited_ci"]), pct(o["mentioned_rate"]))
+        if not br["question_ids"]:
+            line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
+                pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(head_ci(o)), pct(o["mentioned_rate"]))
+        elif h["answered"]:
+            line = "Cited in %s of answers to questions that do not name %s (%d of %d, %s, 95%% CI %s) · " \
+                   "mentioned in %s" % (pct(h["cited_rate"]), name, h["cited"], h["answered"],
+                                        _n(h["n_questions"], "question"), ci_s(head_ci(h)), pct(h["mentioned_rate"]))
+        else:
+            line = "No headline rate: no question that leaves out %s was answered" % name
         L.append("**%s**" % line if fmt == "md" else line)
+        if br["question_ids"]:
+            L.append("Questions that name %s (%d, kept out of the headline): %s" % (
+                name, len(br["question_ids"]), "no answers" if not br["answered"] else
+                "cited in %s (%d of %d, 95%% CI %s) · mentioned in %s" % (
+                    pct(br["cited_rate"]), br["cited"], br["answered"], ci_s(head_ci(br)), pct(br["mentioned_rate"]))))
         L.append("Your site was cited somewhere for %d of %d questions." % (
             sm["questions"]["cited_somewhere"], sm["questions"]["asked"]))
 
@@ -1201,13 +1486,17 @@ def render(run, fmt="text"):
         if stop:
             extra.append("stopped: " + _cut(stop.get("error", ""), 60))
         rows.append([e["id"], e["model"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])),
-                     ci_s(e["cited_ci"]), pct(e["mentioned_rate"]), e["avg_rank"] or "—", ", ".join(extra)])
+                     ci_s(head_ci(e)), pct(e["mentioned_rate"]), e["avg_rank"] or "—", ", ".join(extra)])
     L.append(table(["engine", "model", "cited", "95% CI", "mentioned", "avg rank", ""], rows, fmt))
+    if br["question_ids"]:
+        L.append("")   # a line right under a markdown table would be read as another row
+        L.append("These rows, and the tables below, count every question, the %d that name %s included." % (
+            len(br["question_ids"]), name))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
         L.append(table(["", "cited", "95% CI", "mentioned"],
-                       [[s["name"] + (" (you)" if s["you"] else ""), pct(s["cited_rate"]), ci_s(s["cited_ci"]),
+                       [[s["name"] + (" (you)" if s["you"] else ""), pct(s["cited_rate"]), ci_s(head_ci(s)),
                          pct(s["mentioned_rate"])] for s in sm["share_of_voice"]], fmt))
 
     if sm["top_sources"]:
@@ -1223,7 +1512,7 @@ def render(run, fmt="text"):
     if sm["by_tier"]:
         L.append(_h("By question type", fmt))
         L.append(table(["type", "cited", "95% CI", "mentioned"],
-                       [[t["tier"], "%d/%d %s" % (t["cited"], t["answered"], pct(t["cited_rate"])), ci_s(t["cited_ci"]),
+                       [[t["tier"], "%d/%d %s" % (t["cited"], t["answered"], pct(t["cited_rate"])), ci_s(head_ci(t)),
                          pct(t["mentioned_rate"])] for t in sm["by_tier"]], fmt))
 
     if sm["searches"]["top"]:
@@ -1242,7 +1531,7 @@ def render(run, fmt="text"):
     L.append("Caps: at most %d questions%s." % (caps["max_calls"],
                                                 "" if caps["budget_usd"] is None else ", budget " + money(caps["budget_usd"])))
     L.append(_h("Read this before quoting the numbers", fmt))
-    L.extend("- " + n for n in run["notes"])
+    L.extend("- " + n for n in NOTES + sm.get("notes", []))   # the numbers above are this release's arithmetic
     return "\n".join(L) + "\n"
 
 
@@ -1278,14 +1567,25 @@ def render_ask(run, fmt="text"):
 
 def render_diff(d, fmt="text"):
     L = ["# Changes %s → %s" % (d["from"], d["to"]) if fmt == "md" else "Changes %s -> %s" % (d["from"], d["to"])]
-    rows = []
+    rows, verdicts = [], set()
     for r in [d["overall"]] + d["engines"]:
-        delta = "—" if r["delta"] is None else "%+d pts" % round(r["delta"] * 100)
-        rows.append([r["engine"], "%s (n=%d)" % (pct(r["before"]), r["before_n"]),
-                     "%s (n=%d)" % (pct(r["after"]), r["after_n"]), delta,
-                     "—" if r["p_value"] is None else "%.3f" % r["p_value"], r["verdict"], r["note"] or ""])
+        ci, p = r["delta_ci"], r["p_adjusted"]
+        verdicts.add(r["verdict"])
+        rows.append([r["engine"], "%s (n=%d)" % (pct(r["before_paired"]), r["n_asks"]),
+                     "%s (n=%d)" % (pct(r["after_paired"]), r["n_asks"]),
+                     "—" if r["delta_pp"] is None else "%+d pts" % round(r["delta_pp"]),
+                     "%+d to %+d" % (round(ci[0]), round(ci[1])) if ci else "—",
+                     "—" if p is None else "%.3f" % p, r["verdict"], r["note"] or ""])
     L.append("")
-    L.append(table(["", "before", "after", "change", "p", "verdict", ""], rows, fmt))
+    L.append(table(["", "before", "after", "change", "95% CI", "p (Holm)", "verdict", ""], rows, fmt))
+    L.append("")
+    L.append("before / after: share of answers citing you, over the asks both runs made of the questions both "
+             "answered (n = answers per run). p: exact paired test (McNemar), Holm-adjusted across the rows; a change "
+             "needs p < %.2f." % d.get("alpha", ALPHA))
+    if "too few questions to tell" in verdicts:
+        L.append("too few questions to tell: fewer than %d questions were answered in both runs, so even if every "
+                 "one of them flipped the same way the change would still be within noise." % d.get("min_questions",
+                                                                                                  MIN_PAIRED))
     if d["lost"]:
         L.append(_h("Citations lost (%d)" % len(d["lost"]), fmt))
         L.append(table(["id", "engine", "question", "was citing"],
@@ -1294,6 +1594,7 @@ def render_diff(d, fmt="text"):
         L.append(_h("Citations gained (%d)" % len(d["gained"]), fmt))
         L.append(table(["id", "engine", "question", "now citing"],
                        [[x["query_id"], x["engine"], _cut(x["query"], 50), x["now"] or ""] for x in d["gained"]], fmt))
+    L.append("")
     for n in d["notes"]:
         L.append("note: " + n)
     L.append("A single question flipping is normal variation; read the verdict column, not the lists, for trends.")
@@ -1311,6 +1612,7 @@ def render_csv(run):
     brand = Entity(run["brand"], you=True)
     models = dict((e["id"], e["model"]) for e in run["engines"])
     qs = dict((q["query_id"], q) for q in run["queries"])
+    named = set(q["query_id"] for q in run["queries"] if is_branded(q, brand))
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(CSV_COLS)
@@ -1323,7 +1625,7 @@ def render_csv(run):
         else:
             row = ["", "", "", "", "%s: %s" % (s["status"], s.get("error") or s.get("skip_reason") or "")]
         w.writerow([_csv_safe(v) for v in [week, s["query_id"], q.get("query", ""), q.get("intent_tier", ""),
-                                            s["engine"]] + row])
+                                            s["engine"]] + row + ["Y" if s["query_id"] in named else "N"]])
     return buf.getvalue()
 
 
@@ -1470,6 +1772,10 @@ def citation_check(target_url, questions, brand=None, domains=None, landed_url=N
     failed = [e["id"] for e in sm["engines"] if e["status"] == "measured" and e["errors"]]
     if failed:
         notes.append("No answer from: %s." % ", ".join(failed))
+    named = [q["query_id"] for q in run["queries"] if q.get("brand_in_query")]
+    if named:
+        notes.append("%s %s the brand, which invites answers that cite it; read %s apart from the rest." % (
+            ", ".join(named), "names" if len(named) == 1 else "name", "it" if len(named) == 1 else "them"))
     notes.append(ASK_NOTE)
     if not answered:
         return run, dict(base, measured=False, engines=[], note="Not measured: every engine call failed. " + " ".join(notes))
@@ -1588,6 +1894,16 @@ def cmd_check(args):
     try:
         qs = cfg.load_queries()
         print("✓ %d questions in %s" % (len(qs), os.path.relpath(cfg.queries_path)))
+        named = [q["query_id"] for q in qs if is_branded(flag_query(q, cfg.brand, cfg.competitors))]
+        if named:
+            msg = "%d of %d questions (%d%%) name %s (%s): they are reported on their own line, not in the " \
+                  "headline rate" % (len(named), len(qs), round(100.0 * len(named) / len(qs)), cfg.brand.name or
+                                     "the brand", ", ".join(named[:8]) + (", …" if len(named) > 8 else ""))
+            if len(named) > BRANDED_WARN * len(qs):
+                print("! %s, which then rests on %s. Mark a false match with branded=no in the "
+                      "question file" % (msg, _n(len(qs) - len(named), "question")))
+            else:
+                print("· " + msg)
     except ConfigError as e:
         cfg.errors.append(str(e))
         print("✗ %s" % e)
@@ -1695,7 +2011,7 @@ def cmd_report(args):
     cfg = _load(args)
     run = load_run(cfg, args.run or "latest")
     if args.format == "json":
-        text = json.dumps(run, ensure_ascii=False, indent=1) + "\n"
+        text = json.dumps(dict(run, summary=summary_of(run)), ensure_ascii=False, indent=1) + "\n"
     elif args.format == "csv":
         text = render_csv(run)
     else:
@@ -1711,6 +2027,9 @@ def cmd_diff(args):
     d = diff_runs(a, b)
     _out(json.dumps(d, ensure_ascii=False, indent=1) + "\n" if args.format == "json" else render_diff(d, args.format),
          None)
+    if args.fail_on_drop and drops(d):
+        print("citation rate dropped beyond noise: %s" % ", ".join(drops(d)), file=sys.stderr)
+        return 4
     return 0
 
 
@@ -1723,10 +2042,11 @@ def cmd_runs(args):
         except ConfigError as e:
             rows.append([rid, "unreadable", "", "", str(e)[:40]])
             continue
-        o = r["summary"]["overall"]
-        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(o["cited_rate"]), ci_s(o["cited_ci"]),
+        sm = summary_of(r)
+        o, h = sm["overall"], sm["headline"]
+        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h)),
                      ",".join(e["id"] for e in r["engines"] if e["status"] == "measured")])
-    print(table(["run", "answered", "cited", "95% CI", "engines"], rows, "text") if rows else "no runs yet")
+    print(table(["run", "answered", "cited (headline)", "95% CI", "engines"], rows, "text") if rows else "no runs yet")
     return 0
 
 
@@ -1797,10 +2117,13 @@ class MCPServer(object):
                  "format": {"type": "string", "enum": ["md", "json"]}}},
              "annotations": {"readOnlyHint": True, "openWorldHint": False}},
             {"name": "diff", "title": "Compare two runs",
-             "description": "Citation rate before and after, per engine, with a two-proportion test; lists citations "
+             "description": "Citation rate before and after, per engine, on the questions both runs answered: the "
+                            "change in points with a 95% interval and an exact paired test (McNemar), Holm-adjusted "
+                            "across engines. The verdict is 'change' only when the adjusted p < 0.05. Lists citations "
                             "lost and gained. Defaults to the latest two runs.",
              "inputSchema": {"type": "object", "properties": {
-                 "from": {"type": "string"}, "to": {"type": "string"}}},
+                 "from": {"type": "string"}, "to": {"type": "string"},
+                 "format": {"type": "string", "enum": ["md", "json"]}}},
              "annotations": {"readOnlyHint": True, "openWorldHint": False}},
         ]
         if self.geo_score is not None:
@@ -1940,22 +2263,23 @@ class MCPServer(object):
         rows = []
         for rid in list_run_ids(cfg):
             try:
-                o = load_run(cfg, rid)["summary"]["overall"]
-                rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(o["cited_rate"]), ci_s(o["cited_ci"])])
+                sm = summary_of(load_run(cfg, rid))
+                o, h = sm["overall"], sm["headline"]
+                rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h))])
             except ConfigError:
                 rows.append([rid, "unreadable", "", ""])
-        return table(["run", "answered", "cited", "95% CI"], rows, "md") if rows else "no runs yet"
+        return table(["run", "answered", "cited (headline)", "95% CI"], rows, "md") if rows else "no runs yet"
 
     def tool_report(self, args, token):
         run = load_run(self._cfg(), args.get("run") or "latest")
         if args.get("format") == "json":
-            return json.dumps(run["summary"], ensure_ascii=False, indent=1)
+            return json.dumps(summary_of(run), ensure_ascii=False, indent=1)
         return render(run, "md")
 
     def tool_diff(self, args, token):
         cfg = self._cfg()
-        return render_diff(diff_runs(load_run(cfg, args.get("from") or "previous"),
-                                     load_run(cfg, args.get("to") or "latest")), "md")
+        d = diff_runs(load_run(cfg, args.get("from") or "previous"), load_run(cfg, args.get("to") or "latest"))
+        return json.dumps(d, ensure_ascii=False, indent=1) if args.get("format") == "json" else render_diff(d, "md")
 
     def tool_score_site(self, args, token):
         url = args.get("url")
@@ -2049,6 +2373,8 @@ def main(argv=None, prog="geo_score.py watch"):
     p.add_argument("a", nargs="?")
     p.add_argument("b", nargs="?")
     p.add_argument("--format", choices=["text", "md", "json"], default="text")
+    p.add_argument("--fail-on-drop", action="store_true", help="exit 4 when a verdict is a change for the worse "
+                   "(overall or any engine), for CI")
     with_config(sub.add_parser("runs", help="list saved runs"))
     with_config(sub.add_parser("mcp", help="serve score and watch over MCP (stdio); run it as `geo_score.py mcp`"))
 

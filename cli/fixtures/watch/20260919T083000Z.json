@@ -1,0 +1,1239 @@
+{
+ "format": "geo-score/watch.v1",
+ "tool": "geo-score-watch/1.2.0",
+ "channel": "api",
+ "run_id": "20260919T083000Z",
+ "started_at": "2026-09-19T08:30:00Z",
+ "finished_at": "2026-09-19T08:30:00Z",
+ "interrupted": false,
+ "brand": {
+  "name": "Lumo",
+  "domains": [
+   "lumo.example"
+  ],
+  "url_prefixes": [],
+  "aliases": [
+   "鹿末"
+  ]
+ },
+ "competitors": [
+  {
+   "name": "Pixa",
+   "domains": [
+    "pixa.example"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  }
+ ],
+ "country": "US",
+ "runs": 2,
+ "engines": [
+  {
+   "id": "chatgpt-api",
+   "provider": "openai",
+   "model": "gpt-6-luna",
+   "status": "measured"
+  },
+  {
+   "id": "perplexity-api",
+   "provider": "perplexity",
+   "model": "sonar",
+   "status": "measured"
+  },
+  {
+   "id": "gemini-api",
+   "provider": "gemini",
+   "model": "gemini-3.8-flash",
+   "status": "no_key",
+   "error": "set GEMINI_API_KEY or GOOGLE_API_KEY"
+  }
+ ],
+ "queries": [
+  {
+   "query_id": "q01",
+   "query": "best free ai video generator",
+   "intent_tier": "list",
+   "target_url": ""
+  },
+  {
+   "query_id": "q02",
+   "query": "ai video tool with no watermark",
+   "intent_tier": "list",
+   "target_url": ""
+  },
+  {
+   "query_id": "q03",
+   "query": "cheapest text to video app",
+   "intent_tier": "pricing",
+   "target_url": ""
+  },
+  {
+   "query_id": "q04",
+   "query": "lumo vs pixa",
+   "intent_tier": "vs",
+   "target_url": ""
+  },
+  {
+   "query_id": "q05",
+   "query": "pixa alternatives",
+   "intent_tier": "alternative",
+   "target_url": ""
+  },
+  {
+   "query_id": "q06",
+   "query": "鹿末视频免费吗",
+   "intent_tier": "pricing",
+   "target_url": ""
+  }
+ ],
+ "caps": {
+  "max_calls": 100,
+  "budget_usd": null
+ },
+ "ledger": {
+  "questions_asked": 24,
+  "api_requests": 24,
+  "http_attempts": 24,
+  "errors": 0,
+  "input_tokens": 14640,
+  "output_tokens": 5040,
+  "search_calls": 24,
+  "cost_usd": 0.072,
+  "unpriced_answers": 12,
+  "cost_complete": false
+ },
+ "samples": [
+  {
+   "query_id": "q01",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q01",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q01",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "best free ai video generator"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q01",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q01",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q02",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 1,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "ai video tool with no watermark"
+   ],
+   "answer": "Pixa is a common pick.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q02",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q02",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q03",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q03",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q03",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "cheapest text to video app"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q03",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q03",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q04",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q04",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q04",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "lumo vs pixa"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q04",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 2,
+   "quoted_url": "https://lumo.example/",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q04",
+     "domain": "reddit.com",
+     "title": "thread"
+    },
+    {
+     "url": "https://lumo.example/",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1] and Lumo [2].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q05",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 1,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "pixa alternatives"
+   ],
+   "answer": "Pixa is a common pick.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q05",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q05",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q06",
+   "engine": "chatgpt-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q06",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q06",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "鹿末视频免费吗"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q06",
+   "engine": "perplexity-api",
+   "run": 1,
+   "status": "ok",
+   "cited": true,
+   "rank": 2,
+   "quoted_url": "https://lumo.example/",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q06",
+     "domain": "reddit.com",
+     "title": "thread"
+    },
+    {
+     "url": "https://lumo.example/",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1] and Lumo [2].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q01",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q01",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q01",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "best free ai video generator"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q01",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q01",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q02",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 1,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "ai video tool with no watermark"
+   ],
+   "answer": "Pixa is a common pick.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q02",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q02",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q03",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 1,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "cheapest text to video app"
+   ],
+   "answer": "Pixa is a common pick.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q03",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q03",
+     "domain": "reddit.com",
+     "title": "thread"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q04",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q04",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q04",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "lumo vs pixa"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q04",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 2,
+   "quoted_url": "https://lumo.example/",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q04",
+     "domain": "reddit.com",
+     "title": "thread"
+    },
+    {
+     "url": "https://lumo.example/",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1] and Lumo [2].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q05",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 1,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "pixa alternatives"
+   ],
+   "answer": "Pixa is a common pick.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q05",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 2,
+   "quoted_url": "https://lumo.example/",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q05",
+     "domain": "reddit.com",
+     "title": "thread"
+    },
+    {
+     "url": "https://lumo.example/",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1] and Lumo [2].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q06",
+   "engine": "chatgpt-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 1,
+   "quoted_url": "https://lumo.example/q06",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": true,
+     "rank": 2,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://lumo.example/q06",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    },
+    {
+     "url": "https://pixa.example/pricing",
+     "domain": "pixa.example",
+     "title": "Pixa"
+    }
+   ],
+   "search_queries": [
+    "鹿末视频免费吗"
+   ],
+   "answer": "Lumo and Pixa both have free tiers.",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 240,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 0.0
+  },
+  {
+   "query_id": "q06",
+   "engine": "perplexity-api",
+   "run": 2,
+   "status": "ok",
+   "cited": true,
+   "rank": 2,
+   "quoted_url": "https://lumo.example/",
+   "mentioned": true,
+   "competitors": {
+    "Pixa": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true
+    }
+   },
+   "citations": [
+    {
+     "url": "https://www.reddit.com/r/aivideo/q06",
+     "domain": "reddit.com",
+     "title": "thread"
+    },
+    {
+     "url": "https://lumo.example/",
+     "domain": "lumo.example",
+     "title": "Lumo"
+    }
+   ],
+   "search_queries": [],
+   "answer": "Options include Pixa [1] and Lumo [2].",
+   "answer_truncated": false,
+   "usage": {
+    "input_tokens": 20,
+    "output_tokens": 180,
+    "search_calls": 1,
+    "api_calls": 1
+   },
+   "cost_usd": 0.006,
+   "seconds": 0.0
+  }
+ ],
+ "notes": [
+  "API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.",
+  "The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, and diff only calls a change a change when a two-proportion test says so (p < 0.05).",
+  "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
+  "This measures citations. It does not predict traffic, rankings or revenue."
+ ],
+ "summary": {
+  "overall": {
+   "answered": 24,
+   "cited": 12,
+   "cited_rate": 0.5,
+   "cited_ci": [
+    0.3143,
+    0.6857
+   ],
+   "mentioned": 12,
+   "mentioned_rate": 0.5,
+   "planned": 24,
+   "errors": 0,
+   "skipped": 0
+  },
+  "engines": [
+   {
+    "answered": 12,
+    "cited": 7,
+    "cited_rate": 0.5833,
+    "cited_ci": [
+     0.3195,
+     0.8067
+    ],
+    "mentioned": 7,
+    "mentioned_rate": 0.5833,
+    "id": "chatgpt-api",
+    "model": "gpt-6-luna",
+    "status": "measured",
+    "errors": 0,
+    "skipped": 0,
+    "avg_rank": 1.0
+   },
+   {
+    "answered": 12,
+    "cited": 5,
+    "cited_rate": 0.4167,
+    "cited_ci": [
+     0.1933,
+     0.6805
+    ],
+    "mentioned": 5,
+    "mentioned_rate": 0.4167,
+    "id": "perplexity-api",
+    "model": "sonar",
+    "status": "measured",
+    "errors": 0,
+    "skipped": 0,
+    "avg_rank": 2.0
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "id": "gemini-api",
+    "model": "gemini-3.8-flash",
+    "status": "no_key",
+    "errors": 0,
+    "skipped": 0,
+    "avg_rank": null
+   }
+  ],
+  "share_of_voice": [
+   {
+    "answered": 24,
+    "cited": 12,
+    "cited_rate": 0.5,
+    "cited_ci": [
+     0.3143,
+     0.6857
+    ],
+    "mentioned": 12,
+    "mentioned_rate": 0.5,
+    "name": "Lumo",
+    "you": true
+   },
+   {
+    "name": "Pixa",
+    "you": false,
+    "answered": 24,
+    "cited": 12,
+    "cited_rate": 0.5,
+    "cited_ci": [
+     0.3143,
+     0.6857
+    ],
+    "mentioned": 24,
+    "mentioned_rate": 1.0
+   }
+  ],
+  "top_sources": [
+   {
+    "domain": "pixa.example",
+    "answers": 12,
+    "share": 0.5,
+    "owner": "Pixa"
+   },
+   {
+    "domain": "reddit.com",
+    "answers": 12,
+    "share": 0.5,
+    "owner": null
+   }
+  ],
+  "questions": {
+   "asked": 6,
+   "cited_somewhere": 5
+  },
+  "gaps": [
+   {
+    "query_id": "q02",
+    "query": "ai video tool with no watermark",
+    "competitors": [
+     "Pixa"
+    ],
+    "answered": 4
+   }
+  ],
+  "by_tier": [
+   {
+    "answered": 4,
+    "cited": 1,
+    "cited_rate": 0.25,
+    "cited_ci": [
+     0.0456,
+     0.6994
+    ],
+    "mentioned": 1,
+    "mentioned_rate": 0.25,
+    "tier": "alternative"
+   },
+   {
+    "answered": 8,
+    "cited": 2,
+    "cited_rate": 0.25,
+    "cited_ci": [
+     0.0715,
+     0.5907
+    ],
+    "mentioned": 2,
+    "mentioned_rate": 0.25,
+    "tier": "list"
+   },
+   {
+    "answered": 8,
+    "cited": 5,
+    "cited_rate": 0.625,
+    "cited_ci": [
+     0.3057,
+     0.8632
+    ],
+    "mentioned": 5,
+    "mentioned_rate": 0.625,
+    "tier": "pricing"
+   },
+   {
+    "answered": 4,
+    "cited": 4,
+    "cited_rate": 1.0,
+    "cited_ci": [
+     0.5101,
+     1.0
+    ],
+    "mentioned": 4,
+    "mentioned_rate": 1.0,
+    "tier": "vs"
+   }
+  ],
+  "searches": {
+   "answers_exposing": 12,
+   "top": [
+    {
+     "query": "best free ai video generator",
+     "count": 2
+    },
+    {
+     "query": "ai video tool with no watermark",
+     "count": 2
+    },
+    {
+     "query": "cheapest text to video app",
+     "count": 2
+    },
+    {
+     "query": "lumo vs pixa",
+     "count": 2
+    },
+    {
+     "query": "pixa alternatives",
+     "count": 2
+    },
+    {
+     "query": "鹿末视频免费吗",
+     "count": 2
+    }
+   ]
+  }
+ }
+}

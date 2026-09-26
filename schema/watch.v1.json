@@ -33,7 +33,12 @@
       "type": "object", "additionalProperties": false, "required": ["query_id", "query"],
       "properties": {
         "query_id": {"type": "string"}, "query": {"type": "string"},
-        "intent_tier": {"type": "string"}, "target_url": {"type": "string"}
+        "intent_tier": {"type": "string"}, "target_url": {"type": "string"},
+        "branded": {"enum": ["auto", "yes", "no"],
+                    "description": "The optional branded column of the question file. yes or no decides whether the question counts as naming the brand; auto (the default) follows brand_in_query."},
+        "brand_in_query": {"type": "boolean",
+                           "description": "The question names the brand, an alias or a brand domain, by the matcher used on answers (whole words for Latin script, anywhere for Chinese, Japanese and Korean). Set at run time; for runs saved without it, reports compute it from the question text and the run's brand."},
+        "competitor_in_query": {"type": "boolean", "description": "The question names a tracked competitor."}
       }}},
     "caps": {"type": "object", "additionalProperties": false, "required": ["max_calls", "budget_usd"],
       "properties": {"max_calls": {"type": "integer", "minimum": 1}, "budget_usd": {"type": ["number", "null"]}}},
@@ -49,9 +54,73 @@
       }},
     "samples": {"type": "array", "items": {"$ref": "#/$defs/sample"}},
     "notes": {"type": "array", "items": {"type": "string"}},
-    "summary": {"type": "object"}
+    "summary": {"type": "object",
+      "description": "Derived from the samples. Runs saved before the clustered intervals and the branded split lack those fields; reports recompute the summary for them.",
+      "properties": {
+        "overall": {"$ref": "#/$defs/rate"},
+        "headline": {"$ref": "#/$defs/rate",
+                     "description": "The headline rate: answers to questions that do not name the brand. Equal to overall when no question names it."},
+        "branded": {"$ref": "#/$defs/rate",
+                    "description": "Answers to questions that name the brand, with their question_ids. Kept out of the headline."},
+        "brand_flags": {"enum": ["run", "computed"],
+                        "description": "run: brand_in_query was set when the run was made. computed: the run predates the flag and it was found from the saved question text when the summary was made."},
+        "engines": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
+        "share_of_voice": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
+        "by_tier": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      }}
   },
   "$defs": {
+    "rate": {"type": "object",
+      "description": "A citation rate. Blocks from runs saved by 1.2.0 carry only the Wilson interval.",
+      "properties": {
+        "answered": {"type": "integer"},
+        "cited": {"type": "integer"},
+        "cited_rate": {"type": ["number", "null"]},
+        "cited_ci": {"type": ["array", "null"], "items": {"type": "number"},
+                     "description": "95% Wilson interval, every answer counted as independent."},
+        "cited_ci_clustered": {"type": ["array", "null"], "items": {"type": "number"},
+                               "description": "95% interval from a bootstrap over questions (2,000 resamples, seeded from the run id), never narrower than cited_ci. The one to quote when answered > n_questions."},
+        "n_questions": {"type": "integer", "description": "Distinct questions behind the answers."},
+        "mentioned": {"type": "integer"},
+        "mentioned_rate": {"type": ["number", "null"]},
+        "question_ids": {"type": "array", "items": {"type": "string"}}
+      }},
+    "diff": {"type": "object", "additionalProperties": false,
+      "description": "What `watch diff --format json` prints (and the MCP diff tool with format json). Not stored in run files.",
+      "required": ["from", "to", "overall", "engines", "lost", "gained", "notes"],
+      "properties": {
+        "from": {"type": "string"}, "to": {"type": "string"},
+        "overall": {"$ref": "#/$defs/diff_row"},
+        "engines": {"type": "array", "items": {"$ref": "#/$defs/diff_row"}},
+        "lost": {"type": "array", "items": {"type": "object"}},
+        "gained": {"type": "array", "items": {"type": "object"}},
+        "notes": {"type": "array", "items": {"type": "string"}},
+        "alpha": {"type": "number", "description": "Threshold on p_adjusted for a change."},
+        "min_questions": {"type": "integer", "description": "Fewer questions answered in both runs than this gives the verdict 'too few questions to tell'."}
+      }},
+    "diff_row": {"type": "object", "additionalProperties": false,
+      "required": ["engine", "before", "after", "before_n", "after_n", "delta", "p_value", "verdict", "note"],
+      "properties": {
+        "engine": {"type": "string", "description": "An engine id, or 'all engines'."},
+        "before": {"type": ["number", "null"], "description": "Share of answers citing the brand in the earlier run, every answer counted (unpaired)."},
+        "after": {"type": ["number", "null"]},
+        "before_n": {"type": "integer"}, "after_n": {"type": "integer"},
+        "delta": {"type": ["number", "null"], "description": "after - before as a fraction (unpaired)."},
+        "p_value": {"type": ["number", "null"], "description": "Unpaired two-proportion z-test, as in 1.2.0. Kept for compatibility; the verdict does not use it."},
+        "n_pairs": {"type": "integer", "description": "Question x engine pairs answered in both runs."},
+        "n_questions": {"type": "integer", "description": "Distinct questions among the pairs."},
+        "n_asks": {"type": "integer", "description": "Answers per run that enter the paired comparison: for each pair, the asks both runs made."},
+        "before_paired": {"type": ["number", "null"], "description": "Share of those answers citing the brand in the earlier run."},
+        "after_paired": {"type": ["number", "null"]},
+        "delta_pp": {"type": ["number", "null"], "description": "after_paired - before_paired, in percentage points."},
+        "delta_ci": {"type": ["array", "null"], "items": {"type": "number"},
+                     "description": "95% interval for delta_pp, in points: a paired bootstrap over questions, never narrower than Newcombe's interval. Null below min_questions."},
+        "p_paired": {"type": ["number", "null"], "description": "Exact two-sided paired test: McNemar when each question has one answer per run, otherwise the exact sign-flip test on each question's net change in cited answers (McNemar's test with each question's answers kept together)."},
+        "p_adjusted": {"type": ["number", "null"], "description": "p_paired after Holm's correction across the engine rows and the overall row."},
+        "verdict": {"enum": ["change", "within noise", "too few questions to tell", "not measured"]},
+        "note": {"type": ["string", "null"]}
+      }},
     "entity": {"type": "object", "additionalProperties": false, "required": ["name", "domains", "url_prefixes", "aliases"],
       "properties": {
         "name": {"type": "string"},
