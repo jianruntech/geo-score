@@ -3,6 +3,34 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/). 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 The **rubric** is versioned separately from the repository — see `rubric/`.
 
+## [Unreleased]
+
+### Added
+- **One run, several outputs:** `--json-out FILE`, `--sarif FILE` (SARIF 2.1.0: one rule per check,
+  one result per check below full marks) and `--junit FILE` (one test per check; a check at zero
+  fails, an unobservable one is skipped). All are written from the same fetch as the report on
+  screen, so they cannot disagree with it. Single site only.
+- **Install as a command:** `pyproject.toml`, so `pipx install git+https://github.com/jianruntech/geo-score`
+  and `uvx --from git+… geo-score` work. Installs `geo-score` and `geo-score-mcp` (the MCP server over
+  stdio). Still no dependencies.
+- `STABILITY.md`: what is a public contract (check ids, score arithmetic, the JSON schemas, CLI
+  flags, exit codes, Action inputs and outputs, MCP tool names, SARIF rule ids), what semver means
+  here, and that nothing is sent anywhere (no telemetry).
+- Action inputs `sarif`, `junit` and `annotations`; outputs `gate-capped` and `report-path`.
+
+### Changed
+- **The Action scores the site once.** It used to fetch and score twice (once for JSON, once for
+  the log), which doubled the time and could print two different scores. The job summary, the
+  annotations and every file now come from one run.
+- The Action annotates checks at zero: gates as errors, other checks as warnings (GitHub shows up
+  to 10 of each; the rest are in the job summary).
+- `geo-score watch --help` names the command you typed (`geo-score` after an install).
+
+### Security
+- The Action passes its inputs to the script as environment variables. Before this, `url` and the
+  other inputs were pasted into the shell script, so a crafted value could run commands in the
+  workflow. `sample` and `fail-under` are now checked to be whole numbers.
+
 ## [1.2.0] — 2026-09-27
 
 ### Added — levels 2 and 3: does AI actually cite you?

@@ -2,6 +2,28 @@
 
 英文版：[CHANGELOG.md](CHANGELOG.md)。**量表**的版本号与仓库版本号分开，见 `rubric/`。
 
+## [Unreleased]
+
+### 新增
+- **一次运行，多种输出**：`--json-out FILE`、`--sarif FILE`（SARIF 2.1.0：每个检查项一条规则，没拿满分的项各一条结果）、
+  `--junit FILE`（每个检查项一个测试；0 分为失败，测不到的项跳过）。都和屏幕上的报告来自同一次抓取，不会互相对不上。
+  只支持单站。
+- **可以装成命令**：新增 `pyproject.toml`，`pipx install git+https://github.com/jianruntech/geo-score` 和
+  `uvx --from git+… geo-score` 都能用。装好后有 `geo-score` 和 `geo-score-mcp`（stdio MCP 服务）两个命令。仍然零依赖。
+- `STABILITY.md`：写明哪些是公开约定（检查项 id、计分算法、两份 JSON schema、命令行参数、退出码、Action 输入输出、
+  MCP 工具名、SARIF 规则 id）、这里的语义化版本指什么，以及不向任何地方发送数据（无遥测）。
+- Action 新增输入 `sarif`、`junit`、`annotations`，新增输出 `gate-capped`、`report-path`。
+
+### 变更
+- **Action 只评一次分。** 以前要抓取并评分两遍（一遍出 JSON，一遍出日志），耗时翻倍，两遍的分数还可能不同。
+  现在任务摘要、代码注释和所有文件都来自同一次运行。
+- Action 会给 0 分的检查项加注释：门槛项标为 error，其他项标为 warning（GitHub 每种最多显示 10 条，其余见任务摘要）。
+- `geo-score watch --help` 显示的命令名跟随你实际输入的命令（pip 安装后是 `geo-score`）。
+
+### 安全
+- Action 改为通过环境变量把输入传给脚本。之前 `url` 等输入是直接拼进 shell 脚本的，精心构造的值可以在工作流里执行命令。
+  `sample` 和 `fail-under` 现在会校验必须是整数。
+
 ## [1.2.0] — 2026-09-27
 
 ### 新增 · 第二、三级：AI 到底有没有引用你

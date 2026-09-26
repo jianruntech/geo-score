@@ -450,6 +450,18 @@ Deliberately naming what this is *not*, so you can pick correctly:
 If you need remediation and not just a score, those projects overlap with the part
 this repo deliberately excludes.
 
+## Stability, privacy and install options
+
+- **Install:** nothing to install for level 1 (the `curl` line above), or
+  `pipx install git+https://github.com/jianruntech/geo-score` for a `geo-score` command with all
+  three levels. Standard library only either way.
+- **Stability:** the rubric and the tool are versioned separately, and the report schema, check
+  ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts. What may change in
+  which release: [STABILITY.md](STABILITY.md).
+- **No telemetry.** geo-score sends nothing to us or anyone else. Level 1 fetches the site you
+  name, the profile links it lists in `sameAs`, and Wikidata and Wikipedia search; levels 2 and 3
+  call only the AI providers whose keys you set.
+
 ## Who maintains this
 
 Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen —
