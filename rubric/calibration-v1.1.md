@@ -21,9 +21,10 @@ site. It is a fact about the rubric. v1.1 is the correction.
 Laying out all 29 checks across all five sites:
 
 **13 points sat in no-man's-land.** `ai.txt`, GEO `<link>` tags, `speakable`,
-`HowTo`/`BreadcrumbList` and `Product`/`Offer` scored **zero on all five sites**. Web
-Almanac 2025 explains why: `llms.txt` appears on 2.13% of desktop sites, and among
-JSON-LD types `BreadcrumbList` is 5.66%, `Product` 0.77%, `FAQPage` about 0.34%. Those
+`HowTo`/`BreadcrumbList` and `Product`/`Offer` scored **zero on all five sites**. The Web
+Almanac explains why: `llms.txt` appears on 2.13% of desktop sites (2025 edition), and among
+JSON-LD types `BreadcrumbList` is 5.66%, `Product` 0.77%, `FAQPage` about 0.34% (2024 edition;
+an earlier version of this record credited these to 2025). Those
 points were not measuring a difference. They were penalising everyone equally.
 
 **16 points had no discrimination.** Crawler access, live reachability, server-rendered

@@ -20,8 +20,9 @@ v1.0 用真实站点跑出来的结果是这样的：
 把 29 项检查在 5 个站上的得分摊开看：
 
 **13 分落在无人区。** `ai.txt`、`GEO link 标签`、`speakable`、`HowTo/BreadcrumbList`、
-`Product/Offer` 五项**五个站全部 0 分**。Web Almanac 2025 的采纳率数据解释了原因：
-llms.txt 桌面端 2.13%，JSON-LD 里 BreadcrumbList 5.66%、Product 0.77%、FAQPage 约 0.34%。
+`Product/Offer` 五项**五个站全部 0 分**。Web Almanac 的采纳率数据解释了原因：
+llms.txt 桌面端 2.13%（2025 年版），JSON-LD 里 BreadcrumbList 5.66%、Product 0.77%、FAQPage 约 0.34%
+（2024 年版；本记录早先的版本误写为 2025）。
 这些分数不是在测量差异，是在惩罚所有人。
 
 **16 分没有区分度。** `robots 放行`、`检索可达`、`服务端渲染`、`第三方收录`、`独立提及`

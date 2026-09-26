@@ -1,0 +1,409 @@
+{
+ "measured_at": "2026-09-27",
+ "tool": "geo-score-cli/1.2.0",
+ "rubric": "v1.1",
+ "n_sites": 5,
+ "n_check_pairs": 85,
+ "exact_tier_agreement": 0.73,
+ "normalised_difference": {
+  "mean": -4.8,
+  "min": -10,
+  "max": 6
+ },
+ "caveats": [
+  "n=5 sites, each hand-scored once by one auditor; this is a first measurement, not a validation study",
+  "the hand audits are dated; the CLI re-scored the live pages later, so site changes are inside every difference",
+  "the CLI samples only the audited host; hand-sampled pages on other hosts were dropped",
+  "the four judgement checks (p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines where not applicable) are never scored by the CLI and are not compared"
+ ],
+ "by_method": {
+  "rule": {
+   "checks": 9,
+   "n_pairs": 40,
+   "exact_agreement": 0.9
+  },
+  "heuristic": {
+   "checks": 9,
+   "n_pairs": 45,
+   "exact_agreement": 0.58
+  },
+  "judgement": {
+   "checks": 3,
+   "n_pairs": 0,
+   "exact_agreement": null
+  }
+ },
+ "sites": [
+  {
+   "site": "anthropic.com",
+   "audited_at": "2026-09-08",
+   "human_normalised": 70,
+   "cli_normalised": 64,
+   "difference": -6,
+   "pages_compared": 8,
+   "pages_dropped_other_host": 0,
+   "checks_compared": 17,
+   "common_checks_human_pct": 67,
+   "common_checks_cli_pct": 64,
+   "tiers_equal": 14
+  },
+  {
+   "site": "mingdao.com",
+   "audited_at": "2026-09-08",
+   "human_normalised": 69,
+   "cli_normalised": 64,
+   "difference": -5,
+   "pages_compared": 8,
+   "pages_dropped_other_host": 0,
+   "checks_compared": 17,
+   "common_checks_human_pct": 70,
+   "common_checks_cli_pct": 64,
+   "tiers_equal": 11
+  },
+  {
+   "site": "nextjs.org",
+   "audited_at": "2026-09-08",
+   "human_normalised": 87,
+   "cli_normalised": 77,
+   "difference": -10,
+   "pages_compared": 8,
+   "pages_dropped_other_host": 0,
+   "checks_compared": 17,
+   "common_checks_human_pct": 81,
+   "common_checks_cli_pct": 76,
+   "tiers_equal": 10
+  },
+  {
+   "site": "stripe.com",
+   "audited_at": "2026-09-08",
+   "human_normalised": 77,
+   "cli_normalised": 83,
+   "difference": 6,
+   "pages_compared": 6,
+   "pages_dropped_other_host": 2,
+   "checks_compared": 17,
+   "common_checks_human_pct": 74,
+   "common_checks_cli_pct": 83,
+   "tiers_equal": 12
+  },
+  {
+   "site": "svelte.dev",
+   "audited_at": "2026-09-08",
+   "human_normalised": 78,
+   "cli_normalised": 69,
+   "difference": -9,
+   "pages_compared": 8,
+   "pages_dropped_other_host": 0,
+   "checks_compared": 17,
+   "common_checks_human_pct": 72,
+   "common_checks_cli_pct": 66,
+   "tiers_equal": 15
+  }
+ ],
+ "per_check": [
+  {
+   "id": "g.robots",
+   "n": 5,
+   "max": 5,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": -0.4,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "mingdao.com",
+     "human": 5,
+     "cli": 3
+    }
+   ]
+  },
+  {
+   "id": "g.reachable",
+   "n": 5,
+   "max": 5,
+   "exact_agreement": 0.4,
+   "mean_signed_diff": -0.4,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "anthropic.com",
+     "human": 5,
+     "cli": 3
+    },
+    {
+     "site": "nextjs.org",
+     "human": 5,
+     "cli": 3
+    },
+    {
+     "site": "stripe.com",
+     "human": 3,
+     "cli": 5
+    }
+   ]
+  },
+  {
+   "id": "g.ssr",
+   "n": 5,
+   "max": 5,
+   "exact_agreement": 0.6,
+   "mean_signed_diff": -0.8,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "nextjs.org",
+     "human": 5,
+     "cli": 3
+    },
+    {
+     "site": "stripe.com",
+     "human": 5,
+     "cli": 3
+    }
+   ]
+  },
+  {
+   "id": "p1.sitemap",
+   "n": 5,
+   "max": 4,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  },
+  {
+   "id": "p1.llms-txt",
+   "n": 5,
+   "max": 5,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  },
+  {
+   "id": "p1.organization",
+   "n": 5,
+   "max": 6,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": 0.4,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "nextjs.org",
+     "human": 3,
+     "cli": 5
+    }
+   ]
+  },
+  {
+   "id": "p1.breadcrumb",
+   "n": 5,
+   "max": 3,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  },
+  {
+   "id": "p1.page-type",
+   "n": 5,
+   "max": 4,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": 0.4,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "stripe.com",
+     "human": 2,
+     "cli": 4
+    }
+   ]
+  },
+  {
+   "id": "p2.answer-passages",
+   "n": 5,
+   "max": 9,
+   "exact_agreement": 0.6,
+   "mean_signed_diff": -1,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "mingdao.com",
+     "human": 7,
+     "cli": 4
+    },
+    {
+     "site": "nextjs.org",
+     "human": 9,
+     "cli": 7
+    }
+   ]
+  },
+  {
+   "id": "p2.question-intent",
+   "n": 5,
+   "max": 7,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": -0.8,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "mingdao.com",
+     "human": 7,
+     "cli": 3
+    }
+   ]
+  },
+  {
+   "id": "p2.freshness",
+   "n": 5,
+   "max": 6,
+   "exact_agreement": 0.6,
+   "mean_signed_diff": -1.2,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "anthropic.com",
+     "human": 3,
+     "cli": 0
+    },
+    {
+     "site": "mingdao.com",
+     "human": 3,
+     "cli": 0
+    }
+   ]
+  },
+  {
+   "id": "p2.sourced-stats",
+   "n": 5,
+   "max": 7,
+   "exact_agreement": 0.2,
+   "mean_signed_diff": 2.8,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "anthropic.com",
+     "human": 5,
+     "cli": 7
+    },
+    {
+     "site": "mingdao.com",
+     "human": 3,
+     "cli": 7
+    },
+    {
+     "site": "nextjs.org",
+     "human": 3,
+     "cli": 7
+    },
+    {
+     "site": "stripe.com",
+     "human": 3,
+     "cli": 7
+    }
+   ]
+  },
+  {
+   "id": "p2.named-author",
+   "n": 5,
+   "max": 6,
+   "exact_agreement": 0.4,
+   "mean_signed_diff": -0.6,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "mingdao.com",
+     "human": 0,
+     "cli": 3
+    },
+    {
+     "site": "nextjs.org",
+     "human": 6,
+     "cli": 3
+    },
+    {
+     "site": "svelte.dev",
+     "human": 6,
+     "cli": 3
+    }
+   ]
+  },
+  {
+   "id": "p3.listings",
+   "n": 0,
+   "note": "not compared: the CLI does not score it"
+  },
+  {
+   "id": "p3.mentions",
+   "n": 0,
+   "note": "not compared: the CLI does not score it"
+  },
+  {
+   "id": "p3.knowledge-graph",
+   "n": 4,
+   "max": 4,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  },
+  {
+   "id": "p3.sameas",
+   "n": 5,
+   "max": 3,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": 0.2,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "stripe.com",
+     "human": 2,
+     "cli": 3
+    }
+   ]
+  },
+  {
+   "id": "p3.video",
+   "n": 5,
+   "max": 3,
+   "exact_agreement": 0.6,
+   "mean_signed_diff": -0.8,
+   "kappa": "n too small",
+   "disagreements": [
+    {
+     "site": "nextjs.org",
+     "human": 2,
+     "cli": 0
+    },
+    {
+     "site": "svelte.dev",
+     "human": 2,
+     "cli": 0
+    }
+   ]
+  },
+  {
+   "id": "p4.answer-shape",
+   "n": 5,
+   "max": 4,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  },
+  {
+   "id": "p4.question-coverage",
+   "n": 0,
+   "note": "not compared: the CLI does not score it"
+  },
+  {
+   "id": "p4.cn-engines",
+   "n": 1,
+   "max": 2,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
+   "kappa": "n too small",
+   "disagreements": []
+  }
+ ]
+}

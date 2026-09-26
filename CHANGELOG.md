@@ -28,6 +28,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - [Troubleshooting](guide/troubleshooting.md), in English and Chinese: score movement, checks shown
   as `—`, the gate cap, exit code 2, proxies, redirects, the leaderboard's tool version, `watch`
   exit 3, Action annotation limits, CJK thresholds. The terminal report links to it.
+- **How far to trust the CLI, measured.** `benchmark/validity.py` re-scores the five published hand
+  audits on the same pages and compares every check tier for tier: 73% of 85 check pairs agree (90%
+  for checks read by rule, 58% for heuristics), and the CLI reads 4.8 points lower on average, from
+  10 lower to 6 higher. Results, caveats and every disagreement: `benchmark/VALIDITY.md` (EN + zh).
+  This replaces the unmeasured "typically 5 to 15 points lower", which was wrong for one site in five.
+- **Evidence basis for every check.** `rubric/v1.1.json` gains an `evidence` object per check
+  (basis, sources, last verified), published as `rubric/evidence-v1.1.md` (EN + zh). Metadata only:
+  no weight, tier or score changed.
 - Tests that the CLI's embedded rubric (check ids, points, every tier's points and wording, bands,
   caps, bonus) equals `rubric/v1.1.json`.
 
@@ -45,6 +53,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   calibration record, `SKILL.md` and the sample report said a gate short of full marks caps the score.
   The rule since v1.1 is that only a gate at **zero** caps it. The scores were always computed with the
   correct rule; `validate.py` now fails on any sentence that states the cap without the zero condition.
+- The calibration record credited the structured-data adoption figures (BreadcrumbList 5.66%,
+  Product 0.77%, FAQPage 0.34%) to the 2025 Web Almanac; they are from the 2024 edition. Only the
+  llms.txt figure (2.13%) is from 2025.
 - The Chinese calibration record was missing two facts the English one has (the 60 KB of
   server-rendered prose, Foglift's upper quartile); a new check compares the numbers in both.
 

@@ -86,10 +86,23 @@ Four checks are **left out of the denominator** rather than guessed:
 | `p4.question-coverage` | Needs the ten questions people actually ask in your market |
 | `p4.cn-engines` | Skipped unless the site addresses the Chinese market |
 
-Because those four are excluded, the CLI reads **lower than a full audit on an
-established brand** — typically by 5 to 15 points, since listings and mentions are
-usually the checks such a brand already passes. The
-[Claude Code skill](../SKILL.md) scores all 21.
+The [Claude Code skill](../SKILL.md) scores all 21.
+
+### How far to trust each check
+
+Measured by re-scoring the five published hand audits on the same pages
+([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 73% of 85 check
+pairs and read 4.8 points lower on average.
+
+| How the CLI reads it | Checks | Same tier as the hand audit |
+|---|---|--:|
+| **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 90% of 40 pairs |
+| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 58% of 45 pairs |
+| **Not at all**: needs off-site search or human judgement | `p3.listings`, `p3.mentions`, `p4.question-coverage` | left out of the denominator |
+
+The weakest agreement is `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5
+sites), then `g.reachable` and `p2.named-author`. Read those three with `--explain` before acting
+on them.
 
 ## Heuristics, stated plainly
 
@@ -104,6 +117,9 @@ Some checks are judgements the rubric describes in prose, and the CLI approximat
   phrases and outbound references near them.
 - **Named authorship** — reads the `author` field from JSON-LD, then falls back to
   `rel="author"` and byline patterns, and rejects team and brand names.
+- **Page-type schema** — besides the types the rubric names (Product + Offer, HowTo, FAQPage),
+  the CLI also counts SoftwareApplication, Course, Recipe, Event, JobPosting, Dataset, and
+  Article with its subtypes as page-type markup.
 
 Where the CLI and a careful human disagree, the human is right and the rubric is the
 arbiter. Run `--explain` to see exactly what the CLI observed, and

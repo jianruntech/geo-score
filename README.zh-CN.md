@@ -211,8 +211,9 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 # 然后：/geo-score audit https://example.com
 ```
 
-CLI 会把那四项**退出分母**而不是猜，所以它给出的分比完整审计略低——
-对一个已经有品牌积累的站，通常低 5 到 15 分，因为收录和第三方提及是 CLI 看不见的。
+CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，85 对检查项里有 73% 与审计者档位一致
+（按规则读取的项 90%，靠启发式近似判断的项 58%），归一化分平均低 4.8 分，范围从低 10 分到高 6 分。
+样本只有 5 个站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
 **MCP 服务**（三级都有）—— `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见[下文](#第二三级--ai-到底有没有引用你)。
 
@@ -403,7 +404,9 @@ claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp
   这正是本口径给结构和出处打分、而不给语气打分的原因。
 - **[llms.txt 提案，Answer.AI](https://llmstxt.org/)** —— 可被理解支柱里 `p1.llms-txt` 检查的就是它。
 
-凡是依据我们自己的观察而非公开研究的检查项，口径里都会注明。
+每一项检查都注明了权重建立在什么依据上——公开研究、厂商自己的文档、我们自己的实地观察，还是一项没有引擎确认使用过的约定——
+并附来源与最后核实日期：[rubric/evidence-v1.1.zh-CN.md](rubric/evidence-v1.1.zh-CN.md)。证据单薄的几项
+（`p2.answer-passages`、`p2.question-intent`、`p1.llms-txt`）表里直接写明，它们是 v1.2 重新定权的首批候选。
 如果你有证据表明某个权重不对，
 [提一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)——这是我们最希望收到的贡献。
 

@@ -222,9 +222,11 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 # then: /geo-score audit https://example.com
 ```
 
-The CLI leaves those four checks out of the denominator rather than guessing, so it
-reads a little lower than a full audit — typically by 5 to 15 points on an established
-brand, which has listings and mentions the CLI cannot see.
+The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
+the five published hand audits on the same pages, it matched the auditor's tier on 73% of
+85 check pairs (90% where it reads a rule, 58% where it approximates a judgement) and read
+4.8 points lower on average, from 10 lower to 6 higher. n=5 is small:
+[VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
 
 **MCP server** (all three levels) — `python3 cli/geo_score.py mcp`, for Claude Code, Cursor and
 other agents; see [below](#levels-2-and-3--does-ai-actually-cite-you).
@@ -434,8 +436,11 @@ The weights are opinionated but not invented. The two findings that most shaped 
 - **[llms.txt proposal, Answer.AI](https://llmstxt.org/)** — the convention this rubric
   checks for in the Understandable pillar (`p1.llms-txt`).
 
-Where a check rests on our own field observation rather than published research, the
-rubric says so. If you have evidence that a weight is wrong,
+Every check declares what its weight rests on (published research, a vendor's own
+documentation, our field observation, or a convention no engine has confirmed using), with
+sources and the date they were last verified: [rubric/evidence-v1.1.md](rubric/evidence-v1.1.md).
+Where the evidence is thin (`p2.answer-passages`, `p2.question-intent`, `p1.llms-txt`), the table
+says so. If you have evidence that a weight is wrong,
 [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml) — that is the
 main thing we want contributions on.
 

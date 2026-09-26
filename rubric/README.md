@@ -101,6 +101,16 @@ wrong thing.
 The Princeton GEO study found an authoritative tone produced *no significant improvement*.
 So the rubric scores structure, sourcing and attribution, and stays out of style.
 
+## Evidence basis
+
+Every check declares what its weight rests on: published research, a vendor's own documentation,
+our own field observation, or a convention no engine has confirmed using. Sources and the date
+they were last verified are in [evidence-v1.1.md](evidence-v1.1.md) · [简体中文](evidence-v1.1.zh-CN.md),
+and the same data is the `evidence` object on every check in [v1.1.json](v1.1.json). It is
+metadata only; no weight, tier or score changed. Where the evidence is thin
+(`p2.answer-passages`, `p2.question-intent`, `p1.llms-txt`), the table says so, and those are the
+first candidates for re-weighting in v1.2.
+
 ## Machine-readable
 
 | File | What it is |

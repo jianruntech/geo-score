@@ -345,7 +345,8 @@ EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECUR
               "reference/platform-source-selection.md"]
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
-                   "rubric/open-questions.md"]
+                   "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
+EN_PRIMARY += ["STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
@@ -505,6 +506,77 @@ for base in ("rubric/calibration-v1.1",):
     check(se == sz, "%s 中英章节数不同：%d vs %d" % (base, se, sz))
     check(ne == nz, "%s 中英数字不一致 —— 只在英文：%s；只在中文：%s"
           % (base, sorted(ne - nz), sorted(nz - ne)))
+
+# ── 21. 每项检查都要声明证据依据，且 JSON 与中英两份证据表逐行一致 ──
+# README 承诺「凡是依据我们自己的观察而非公开研究的检查项，口径里都会注明」。这条让承诺可验证。
+EVIDENCE_BASES = ("research", "vendor-doc", "field-observation", "convention")
+REPO_URL = "https://github.com/jianruntech/geo-score/blob/main/"
+for r in MODERN:
+    stem = r[:-3]
+    jp = f"rubric/{stem}.json"
+    if not os.path.exists(jp): continue
+    j = json.load(io.open(jp, encoding="utf-8"))
+    tables = {}
+    for tp in (f"rubric/evidence-{stem}.md", f"rubric/evidence-{stem}.zh-CN.md"):
+        check(os.path.exists(tp), f"{tp} missing — every check's evidence basis must be published in both languages")
+        if not os.path.exists(tp): continue
+        rows = {}
+        for line in io.open(tp, encoding="utf-8").read().splitlines():
+            m = re.match(r'^\| `((?:g|p[1-4]|b)\.[a-z0-9-]+)` \|', line)
+            if m:
+                check(m.group(1) not in rows, f"{tp}: {m.group(1)} has more than one row")
+                rows[m.group(1)] = line
+        tables[tp] = rows
+    ids = [c["id"] for c in j["checks"]]
+    for tp, rows in tables.items():
+        extra = sorted(set(rows) - set(ids))
+        check(not extra, f"{tp}: rows for checks that are not in {jp}: {extra}")
+    for c in j["checks"]:
+        e = c.get("evidence")
+        check(isinstance(e, dict), f"{jp}: {c['id']} has no evidence object")
+        if not isinstance(e, dict): continue
+        basis, src = e.get("basis"), e.get("sources") or []
+        check(basis in EVIDENCE_BASES, f"{jp}: {c['id']} evidence basis {basis!r} is not one of {EVIDENCE_BASES}")
+        if basis in ("research", "vendor-doc"):
+            check(len(src) >= 1, f"{jp}: {c['id']} claims {basis} but lists no source")
+        check(all(isinstance(u, str) and u.startswith("https://") for u in src),
+              f"{jp}: {c['id']} has a source that is not an https URL")
+        check(bool(re.match(r'^\d{4}-\d{2}-\d{2}$', str(e.get("last_verified", "")))),
+              f"{jp}: {c['id']} evidence has no last_verified date (YYYY-MM-DD)")
+        for tp, rows in tables.items():
+            row = rows.get(c["id"])
+            check(row is not None, f"{tp}: no row for {c['id']}")
+            if row is None: continue
+            check(f"| `{basis}` |" in row, f"{tp}: {c['id']} basis differs from {jp} ({basis})")
+            check(f"| {c['points']} |" in row, f"{tp}: {c['id']} points differ from {jp} ({c['points']})")
+            check(f"| {e.get('last_verified')} |" in row, f"{tp}: {c['id']} verified date differs from {jp}")
+            for u in src:
+                if u.startswith(REPO_URL):
+                    # 仓库内文件在表里用相对链接；中文表可以指向对应的 .zh-CN.md
+                    rel = os.path.relpath(u[len(REPO_URL):].split("#")[0], "rubric")
+                    ok_link = any(f"]({x}" in row for x in (rel, rel.replace(".md", ".zh-CN.md")))
+                else:
+                    ok_link = f"]({u})" in row
+                check(ok_link, f"{tp}: {c['id']} row does not link source {u}")
+
+# ── 22. README 引用的 CLI 与人工审计一致度，必须等于 benchmark/validity.json ──
+# 「通常低 5 到 15 分」曾是一句没有数据的话；换成实测数字之后，不能让它再悄悄过期。
+if os.path.exists("benchmark/validity.json"):
+    vj = json.load(io.open("benchmark/validity.json", encoding="utf-8"))
+    want = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
+            "%d check pairs" % vj["n_check_pairs"]}
+    for f in ("README.md", "cli/README.md"):
+        t = " ".join(io.open(f, encoding="utf-8").read().split())
+        missing = [w for w in want if w not in t]
+        check(not missing, f"{f}: CLI-vs-hand-audit figures must match benchmark/validity.json; missing {missing}")
+    tz = " ".join(io.open("README.zh-CN.md", encoding="utf-8").read().split())
+    wz = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
+          "%d 对" % vj["n_check_pairs"]}
+    check(all(w in tz for w in wz), f"README.zh-CN.md: 与人工审计一致度的数字必须等于 benchmark/validity.json：{sorted(wz)}")
+    for f in (f for f in ("README.md", "README.zh-CN.md", "cli/README.md") if os.path.exists(f)):
+        t = io.open(f, encoding="utf-8").read()
+        check("5 to 15 points" not in t and "低 5 到 15 分" not in t,
+              f"{f}: the unmeasured '5 to 15 points' claim is back; quote benchmark/validity.json instead")
 
 if fail:
     print("FAIL")
