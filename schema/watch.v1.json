@@ -33,7 +33,12 @@
       "type": "object", "additionalProperties": false, "required": ["query_id", "query"],
       "properties": {
         "query_id": {"type": "string"}, "query": {"type": "string"},
-        "intent_tier": {"type": "string"}, "target_url": {"type": "string"}
+        "intent_tier": {"type": "string"}, "target_url": {"type": "string"},
+        "branded": {"enum": ["auto", "yes", "no"],
+                    "description": "The optional branded column of the question file. yes or no decides whether the question counts as naming the brand; auto (the default) follows brand_in_query."},
+        "brand_in_query": {"type": "boolean",
+                           "description": "The question names the brand, an alias or a brand domain, by the matcher used on answers (whole words for Latin script, anywhere for Chinese, Japanese and Korean). Set at run time; for runs saved without it, reports compute it from the question text and the run's brand."},
+        "competitor_in_query": {"type": "boolean", "description": "The question names a tracked competitor."}
       }}},
     "caps": {"type": "object", "additionalProperties": false, "required": ["max_calls", "budget_usd"],
       "properties": {"max_calls": {"type": "integer", "minimum": 1}, "budget_usd": {"type": ["number", "null"]}}},
@@ -50,12 +55,19 @@
     "samples": {"type": "array", "items": {"$ref": "#/$defs/sample"}},
     "notes": {"type": "array", "items": {"type": "string"}},
     "summary": {"type": "object",
-      "description": "Derived from the samples. Runs saved before the clustered intervals lack those fields; reports recompute the summary for them.",
+      "description": "Derived from the samples. Runs saved before the clustered intervals and the branded split lack those fields; reports recompute the summary for them.",
       "properties": {
         "overall": {"$ref": "#/$defs/rate"},
+        "headline": {"$ref": "#/$defs/rate",
+                     "description": "The headline rate: answers to questions that do not name the brand. Equal to overall when no question names it."},
+        "branded": {"$ref": "#/$defs/rate",
+                    "description": "Answers to questions that name the brand, with their question_ids. Kept out of the headline."},
+        "brand_flags": {"enum": ["run", "computed"],
+                        "description": "run: brand_in_query was set when the run was made. computed: the run predates the flag and it was found from the saved question text when the summary was made."},
         "engines": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
         "share_of_voice": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
-        "by_tier": {"type": "array", "items": {"$ref": "#/$defs/rate"}}
+        "by_tier": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
+        "notes": {"type": "array", "items": {"type": "string"}}
       }}
   },
   "$defs": {
@@ -71,7 +83,8 @@
                                "description": "95% interval from a bootstrap over questions (2,000 resamples, seeded from the run id), never narrower than cited_ci. The one to quote when answered > n_questions."},
         "n_questions": {"type": "integer", "description": "Distinct questions behind the answers."},
         "mentioned": {"type": "integer"},
-        "mentioned_rate": {"type": ["number", "null"]}
+        "mentioned_rate": {"type": ["number", "null"]},
+        "question_ids": {"type": "array", "items": {"type": "string"}}
       }},
     "diff": {"type": "object", "additionalProperties": false,
       "description": "What `watch diff --format json` prints (and the MCP diff tool with format json). Not stored in run files.",

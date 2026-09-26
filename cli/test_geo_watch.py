@@ -1182,7 +1182,7 @@ def synth(run_id, cited, runs=1, qs=None, who=None):
            "started_at": at, "finished_at": at, "interrupted": False, "brand": who.as_json(), "competitors": [],
            "country": None, "runs": runs,
            "engines": [dict(e, status="measured") for e in engines(*sorted(set(e for _, e in cited)))],
-           "queries": qs, "caps": {"max_calls": 1000, "budget_usd": None},
+           "queries": [gw.flag_query(q, who, []) for q in qs], "caps": {"max_calls": 1000, "budget_usd": None},
            "ledger": {"questions_asked": len(samples), "api_requests": len(samples), "http_attempts": len(samples),
                       "errors": 0, "input_tokens": 0, "output_tokens": 0, "search_calls": 0, "cost_usd": 0.0,
                       "unpriced_answers": len(samples), "cost_complete": False},
@@ -1317,6 +1317,105 @@ class Statistics(Base):
         self.assertIn("p (Holm)", srv.call({"name": "diff", "arguments": {}})["content"][0]["text"])
 
 
+# ── questions that name the brand ────────────────────────────────────────
+class Branded(Base):
+    def test_questions_naming_the_brand_are_flagged(self):
+        f = lambda text: gw.flag_query({"query_id": "q", "query": text}, brand(), rivals())
+        self.assertTrue(f("鹿末视频免费吗")["brand_in_query"])            # CJK alias, no word boundaries
+        self.assertTrue(f("哪个比较好：鹿末还是Pixa")["competitor_in_query"])  # a Latin name beside CJK text
+        self.assertTrue(f("用Lumo做视频要多少钱")["brand_in_query"])
+        self.assertFalse(f("is Lumos a good app")["brand_in_query"])    # whole words for Latin names
+        self.assertTrue(f("is lumo.example legit")["brand_in_query"])   # a brand domain counts
+        q = f("Lumo vs Pixa")
+        self.assertEqual((q["brand_in_query"], q["competitor_in_query"], q["branded"]), (True, True, "auto"))
+        q = f("pixa alternatives")
+        self.assertEqual((q["brand_in_query"], q["competitor_in_query"]), (False, True))
+
+    def test_the_branded_column_overrides_the_matcher(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        qp = os.path.join(self.tmp, "queries.csv")
+        with io.open(qp, "w", encoding="utf-8") as f:
+            f.write("query_id,query,intent_tier,target_url,branded\n"
+                    "q1,lumo vs pixa,vs,,\nq2,is lumo worth it,,,No\nq3,the app with the fox logo,,,yes\n"
+                    "q4,best ai video tool,,,auto\n")
+        cfg = gw.Config(cfgp)
+        qs = [gw.flag_query(q, cfg.brand, cfg.competitors) for q in cfg.load_queries()]
+        self.assertEqual([q["branded"] for q in qs], ["auto", "no", "yes", "auto"])
+        self.assertEqual([gw.is_branded(q) for q in qs], [True, False, True, False])
+        with io.open(qp, "w", encoding="utf-8") as f:
+            f.write("query_id,query,branded\nq1,lumo vs pixa,maybe\n")
+        with self.assertRaises(gw.ConfigError) as cm:
+            cfg.load_queries()
+        self.assertIn("branded must be auto, yes or no", str(cm.exception))
+        with io.open(qp, "w", encoding="utf-8") as f:
+            f.write("query_id,query\nq1,lumo vs pixa\n")                # no column: auto
+        self.assertEqual(cfg.load_queries()[0]["branded"], "auto")
+
+    def test_the_headline_leaves_out_questions_that_name_the_brand(self):
+        def handler(u, h, b):
+            q = b["input"]
+            cite = "lumo" in q.lower() or "鹿末" in q
+            return openai_resp("Lumo is fine." if cite else "Pixa.",
+                               [("https://lumo.example/", "")] if cite else [("https://pixa.example/", "")])
+        self.fake({"api.openai.com": handler})
+        qs = [{"query_id": "q1", "query": "best ai video tool", "intent_tier": "", "target_url": ""},
+              {"query_id": "q2", "query": "cheap text to video", "intent_tier": "", "target_url": ""},
+              {"query_id": "q3", "query": "lumo vs pixa", "intent_tier": "", "target_url": ""},
+              {"query_id": "q4", "query": "鹿末怎么样", "intent_tier": "", "target_url": ""},
+              {"query_id": "q5", "query": "is lumo free", "intent_tier": "", "target_url": "", "branded": "no"}]
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), qs)
+        sm = run["summary"]
+        self.assertEqual((sm["overall"]["cited"], sm["overall"]["answered"]), (3, 5))
+        self.assertEqual((sm["headline"]["cited"], sm["headline"]["answered"], sm["headline"]["n_questions"]), (1, 3, 3))
+        self.assertEqual(sm["branded"]["question_ids"], ["q3", "q4"])
+        self.assertEqual((sm["branded"]["cited"], sm["branded"]["answered"]), (2, 2))
+        self.assertEqual(sm["brand_flags"], "run")
+        self.assertEqual([q["brand_in_query"] for q in run["queries"]], [False, False, True, True, True])
+        text = gw.render(run)
+        self.assertIn("Cited in 33% of answers to questions that do not name Lumo (1 of 3, 3 questions", text)
+        self.assertIn("Questions that name Lumo (2, kept out of the headline): cited in 100% (2 of 2", text)
+        self.assertIn("the 2 that name Lumo included", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        rows = list(__import__("csv").DictReader(io.StringIO(gw.render_csv(run))))
+        self.assertEqual([r["branded"] for r in rows], ["N", "N", "Y", "Y", "N"])
+
+    def test_every_question_naming_the_brand_leaves_no_headline(self):
+        run = synth("20260926T083000Z", {("q1", "chatgpt-api"): [True]},
+                    qs=[{"query_id": "q1", "query": "lumo pricing", "intent_tier": "", "target_url": ""}])
+        text = gw.render(run)
+        self.assertIn("No headline rate", text)
+        self.assertNotIn("Cited in 100%", text)
+
+    def test_check_warns_when_many_questions_name_the_brand(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"], "aliases": ["鹿末"]}}, f)
+
+        def check(body):
+            with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+                f.write("query_id,query\n" + body)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = gw.main(["check", "-c", cfgp])
+            return code, out.getvalue()
+        code, out = check("q1,lumo vs pixa\nq2,鹿末好用吗\nq3,best ai video tool\n")
+        self.assertEqual(code, 0)
+        self.assertIn("! 2 of 3 questions (67%) name Lumo (q1, q2)", out)
+        code, out = check("q1,lumo vs pixa\nq2,a\nq3,b\nq4,c\nq5,d\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· 1 of 5 questions (20%) name Lumo (q1)", out)
+        self.assertNotIn("! ", out)
+
+    def test_level2_says_when_a_question_names_the_brand(self):
+        del os.environ["GEMINI_API_KEY"]
+        del os.environ["ANTHROPIC_API_KEY"]
+        self.fake(self.standard_routes())
+        run, cit = gw.citation_check("https://www.lumo.example/", ["best free ai video generator", "lumo vs pixa"])
+        self.assertIn("q2 names the brand", cit["note"])
+
+
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
 class OldRuns(Base):
     def setUp(self):
@@ -1344,15 +1443,21 @@ class OldRuns(Base):
         for rid in self.ids:
             run = gw.load_run(self.cfg, rid)
             self.assertEqual(run["tool"], "geo-score-watch/1.2.0")
-            self.assertNotIn("n_questions", run["summary"]["overall"])
+            self.assertNotIn("brand_in_query", run["queries"][0])
+            self.assertNotIn("headline", run["summary"])
             self.assertEqual(validate(run, sc), [])
         run = gw.load_run(self.cfg, self.ids[0])
         sm = gw.summary_of(run)
-        self.assertEqual((sm["overall"]["answered"], sm["overall"]["n_questions"]), (24, 6))
+        self.assertEqual(sm["brand_flags"], "computed")
+        self.assertEqual(sm["branded"]["question_ids"], ["q04", "q06"])     # "lumo vs pixa" and the 鹿末 question
+        self.assertEqual((sm["headline"]["answered"], sm["headline"]["n_questions"]), (16, 4))
         self.assertEqual(sm["overall"]["cited_ci"], run["summary"]["overall"]["cited_ci"])   # Wilson unchanged
         self.assertTrue(sm["overall"]["cited_ci_clustered"])
+        self.assertTrue(any("saved before questions were flagged" in n for n in sm["notes"]))
         self.assertEqual(validate(json.loads(json.dumps(dict(run, summary=sm))), sc), [])
-        self.assertIn("95%% CI %s" % gw.ci_s(sm["overall"]["cited_ci_clustered"]), gw.render(run))
+        text = gw.render(run)
+        self.assertIn("do not name Lumo", text)
+        self.assertIn("saved before questions were flagged", text)
         d = gw.diff_runs(*[gw.load_run(self.cfg, rid) for rid in self.ids])
         self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
         self.assertEqual(d["overall"]["n_questions"], 6)
@@ -1360,13 +1465,14 @@ class OldRuns(Base):
         for fmt in ("text", "md", "csv", "json"):
             self.assertEqual(self.main("report", "-c", self.cfgp, "--format", fmt)[0], 0)
         code, out = self.main("report", "-c", self.cfgp, "--format", "json")
-        self.assertIn("cited_ci_clustered", json.loads(out)["summary"]["overall"])
+        self.assertEqual(json.loads(out)["summary"]["brand_flags"], "computed")
         code, out = self.main("diff", "-c", self.cfgp, "--fail-on-drop")
         self.assertEqual(code, 0)
         self.assertIn("within noise", out)
-        self.assertEqual(self.main("runs", "-c", self.cfgp)[0], 0)
+        code, out = self.main("runs", "-c", self.cfgp)
+        self.assertIn("cited (headline)", out)
         with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:
-            self.assertNotIn("n_questions", f.read())                    # reports never rewrite a run file
+            self.assertNotIn("brand_in_query", f.read())                 # reports never rewrite a run file
 
 
 class PipedDecoy(unittest.TestCase):

@@ -28,8 +28,9 @@ RUN_FORMAT = "geo-score/watch.v1"
 CONFIG_NAME = "geo-score-watch.json"
 STATE_DIR = os.path.join(".geo-score", "watch")
 QUERY_COLS = ["query_id", "query", "intent_tier", "target_url"]
+BRANDED_VALUES = ("auto", "yes", "no")   # the optional `branded` column of queries.csv
 CSV_COLS = ["week", "query_id", "query", "intent_tier", "engine", "cited", "quoted_url",
-            "rank", "other_domains_cited", "note"]
+            "rank", "other_domains_cited", "note", "branded"]
 UA = "geo-score-watch/%s (+https://github.com/jianruntech/geo-score)" % __version__
 HTTP_TIMEOUT = 120
 MAX_BODY = 8 << 20
@@ -42,6 +43,7 @@ DEFAULT_MAX_CALLS = 120
 BOOTSTRAP_REPS = 2000
 ALPHA = 0.05
 MIN_PAIRED = 6        # with 5 questions, all 5 flipping the same way gives exact p = 2/2^5 = 0.0625: no test can call it
+BRANDED_WARN = 0.3    # `watch check` warns above this share of questions that name the brand
 RETRY_STATUS = (429, 500, 502, 503, 504, 529)
 FATAL_STATUS = (400, 401, 403, 404)
 ENGINE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
@@ -79,6 +81,8 @@ NOTES = [
     "together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over "
     "questions when a question has several answers. diff pairs the questions both runs answered and calls a "
     "change a change only when an exact paired test (McNemar), Holm-corrected across engines, says so (p < 0.05).",
+    "A question that names the brand invites an answer that cites it. Those questions are kept out of the "
+    "headline rate and reported on a line of their own.",
     "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
     "This measures citations. It does not predict traffic, rankings or revenue.",
 ]
@@ -652,15 +656,18 @@ def key_names(eng):
 
 
 # ── who owns a citation ───────────────────────────────────────────────────
-_CJK = re.compile("[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff]")
+_CJK_CHARS = "\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff"
+_CJK = re.compile("[%s]" % _CJK_CHARS)
+_WORD_NOT_CJK = "[^\\W%s]" % _CJK_CHARS
 
 
 def _mention_re(term):
     """Chinese, Japanese and Korean names match anywhere (no spaces between words); everything else, accented
-    Latin included, matches whole words only, so "Lumo" does not match "Lumos"."""
+    Latin included, matches whole words only, so "Lumo" does not match "Lumos". A CJK character beside a Latin
+    name is a word break: "Lumo" matches in "用Lumo做视频"."""
     if _CJK.search(term):
         return re.compile(re.escape(term), re.I)
-    return re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)", re.I)
+    return re.compile("(?<!%s)%s(?!%s)" % (_WORD_NOT_CJK, re.escape(term), _WORD_NOT_CJK), re.I)
 
 
 class Entity(object):
@@ -743,6 +750,24 @@ def evaluate(res, brand, rivals, resolve=True):
             "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
             "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER}
 
+
+def flag_query(q, brand, rivals):
+    """Mark a question that names the brand or a competitor, with the matcher the answers get: name, aliases
+    and domains; whole words for Latin script, anywhere for Chinese, Japanese and Korean."""
+    text = q.get("query") or ""
+    return dict(q, branded=q.get("branded") or "auto", brand_in_query=brand.named_in(text),
+                competitor_in_query=any(r.named_in(text) for r in rivals))
+
+
+def is_branded(q, brand=None):
+    """The `branded` column decides when it says yes or no; auto follows brand_in_query, found from the
+    question text when the run predates the flag."""
+    v = str(q.get("branded") or "auto").strip().lower()
+    if v in ("yes", "no"):
+        return v == "yes"
+    if "brand_in_query" in q:
+        return bool(q["brand_in_query"])
+    return brand is not None and brand.named_in(q.get("query") or "")
 
 
 # ── config ────────────────────────────────────────────────────────────────
@@ -878,6 +903,11 @@ class Config(object):
                 problems.append("line %d: replace the <placeholder> with a real question" % n)
             elif len(q) > MAX_QUERY_LEN:
                 problems.append("line %d: query longer than %d characters" % (n, MAX_QUERY_LEN))
+            b = r.get("branded")
+            b = b.strip().lower() if isinstance(b, str) else ""
+            if b and b not in BRANDED_VALUES:
+                problems.append("line %d: branded must be auto, yes or no, not %r" % (n, b))
+            vals["branded"] = b or "auto"
             ids.add(qid)
             out.append(vals)
         if problems:
@@ -992,6 +1022,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
             budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True):
     prices = prices or {}
     started = NOW()
+    queries = [flag_query(q, brand, rivals) for q in queries]
     active, status = plan(engines, prices, budget, allow_unpriced)
     slots = [(r, q, e) for r in range(1, runs + 1) for q in queries for e, _ in active]
     samples = [None] * len(slots)
@@ -1172,22 +1203,35 @@ def summarize(run):
         tiers.setdefault(t, []).append(s)
     by_tier = [dict(block(rows, "tier:" + t), tier=t) for t, rows in sorted(tiers.items()) if t]
 
+    # The headline leaves out questions that name the brand: "acme vs rival" all but guarantees an Acme citation.
+    stored = all("brand_in_query" in q for q in run["queries"])
+    named_ids = sorted(q["query_id"] for q in run["queries"] if is_branded(q, brand))
+    headline = block([s for s in ok if s["query_id"] not in named_ids], "headline") if named_ids else dict(everything)
+    branded = dict(block([s for s in ok if s["query_id"] in named_ids], "branded"), question_ids=named_ids)
+    notes = []
+    if not stored:
+        notes.append("This run was saved before questions were flagged at run time. Questions that name the brand "
+                      "were found when this report was made, from the saved question text and the run's brand "
+                      "name, aliases and domains.")
+
     exposed = [s for s in ok if s["search_queries"]]
     searched = Counter(re.sub(r"\s+", " ", q.lower()).strip() for s in exposed for q in s["search_queries"])
     return {"overall": dict(everything, planned=len(samples),
                             errors=sum(1 for s in samples if s["status"] == "error"),
                             skipped=sum(1 for s in samples if s["status"] == "skipped")),
+            "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
             "engines": engines, "share_of_voice": share, "top_sources": sources,
             "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps, "by_tier": by_tier,
             "searches": {"answers_exposing": len(exposed),
-                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]}}
+                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]},
+            "notes": notes}
 
 
 def summary_of(run):
-    """The stored summary, or a fresh one for a run saved before the clustered intervals existed. Summaries
-    are derived from the samples, so recomputing one changes no measurement."""
+    """The stored summary, or a fresh one for a run saved before the clustered intervals and the branded
+    split existed. Summaries are derived from the samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
-    if isinstance(sm, dict) and "n_questions" in (sm.get("overall") or {}):
+    if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}):
         return sm
     return summarize(run)
 
@@ -1368,6 +1412,10 @@ def head_ci(b):
     return b.get("cited_ci")
 
 
+def _n(k, word):
+    return "%d %s%s" % (k, word, "" if k == 1 else "s")
+
+
 def table(headers, rows, fmt):
     rows = [[str(c) for c in r] for r in rows]
     if fmt == "md":
@@ -1400,11 +1448,25 @@ def render(run, fmt="text"):
     L.append("%d questions × %d engines × %d = %d planned · %d answered · %d failed · %d skipped%s" % (
         len(run["queries"]), engines_n, run["runs"], o["planned"], o["answered"], o["errors"], o["skipped"],
         " · interrupted" if run.get("interrupted") else ""))
+    name = run["brand"]["name"] or "the brand"
+    h, br = sm["headline"], sm["branded"]
     if o["answered"]:
         L.append("")
-        line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
-            pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(head_ci(o)), pct(o["mentioned_rate"]))
+        if not br["question_ids"]:
+            line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
+                pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(head_ci(o)), pct(o["mentioned_rate"]))
+        elif h["answered"]:
+            line = "Cited in %s of answers to questions that do not name %s (%d of %d, %s, 95%% CI %s) · " \
+                   "mentioned in %s" % (pct(h["cited_rate"]), name, h["cited"], h["answered"],
+                                        _n(h["n_questions"], "question"), ci_s(head_ci(h)), pct(h["mentioned_rate"]))
+        else:
+            line = "No headline rate: no question that leaves out %s was answered" % name
         L.append("**%s**" % line if fmt == "md" else line)
+        if br["question_ids"]:
+            L.append("Questions that name %s (%d, kept out of the headline): %s" % (
+                name, len(br["question_ids"]), "no answers" if not br["answered"] else
+                "cited in %s (%d of %d, 95%% CI %s) · mentioned in %s" % (
+                    pct(br["cited_rate"]), br["cited"], br["answered"], ci_s(head_ci(br)), pct(br["mentioned_rate"]))))
         L.append("Your site was cited somewhere for %d of %d questions." % (
             sm["questions"]["cited_somewhere"], sm["questions"]["asked"]))
 
@@ -1426,6 +1488,10 @@ def render(run, fmt="text"):
         rows.append([e["id"], e["model"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])),
                      ci_s(head_ci(e)), pct(e["mentioned_rate"]), e["avg_rank"] or "—", ", ".join(extra)])
     L.append(table(["engine", "model", "cited", "95% CI", "mentioned", "avg rank", ""], rows, fmt))
+    if br["question_ids"]:
+        L.append("")   # a line right under a markdown table would be read as another row
+        L.append("These rows, and the tables below, count every question, the %d that name %s included." % (
+            len(br["question_ids"]), name))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
@@ -1465,7 +1531,7 @@ def render(run, fmt="text"):
     L.append("Caps: at most %d questions%s." % (caps["max_calls"],
                                                 "" if caps["budget_usd"] is None else ", budget " + money(caps["budget_usd"])))
     L.append(_h("Read this before quoting the numbers", fmt))
-    L.extend("- " + n for n in NOTES)   # the numbers above are this release's arithmetic
+    L.extend("- " + n for n in NOTES + sm.get("notes", []))   # the numbers above are this release's arithmetic
     return "\n".join(L) + "\n"
 
 
@@ -1546,6 +1612,7 @@ def render_csv(run):
     brand = Entity(run["brand"], you=True)
     models = dict((e["id"], e["model"]) for e in run["engines"])
     qs = dict((q["query_id"], q) for q in run["queries"])
+    named = set(q["query_id"] for q in run["queries"] if is_branded(q, brand))
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(CSV_COLS)
@@ -1558,7 +1625,7 @@ def render_csv(run):
         else:
             row = ["", "", "", "", "%s: %s" % (s["status"], s.get("error") or s.get("skip_reason") or "")]
         w.writerow([_csv_safe(v) for v in [week, s["query_id"], q.get("query", ""), q.get("intent_tier", ""),
-                                            s["engine"]] + row])
+                                            s["engine"]] + row + ["Y" if s["query_id"] in named else "N"]])
     return buf.getvalue()
 
 
@@ -1705,6 +1772,10 @@ def citation_check(target_url, questions, brand=None, domains=None, landed_url=N
     failed = [e["id"] for e in sm["engines"] if e["status"] == "measured" and e["errors"]]
     if failed:
         notes.append("No answer from: %s." % ", ".join(failed))
+    named = [q["query_id"] for q in run["queries"] if q.get("brand_in_query")]
+    if named:
+        notes.append("%s %s the brand, which invites answers that cite it; read %s apart from the rest." % (
+            ", ".join(named), "names" if len(named) == 1 else "name", "it" if len(named) == 1 else "them"))
     notes.append(ASK_NOTE)
     if not answered:
         return run, dict(base, measured=False, engines=[], note="Not measured: every engine call failed. " + " ".join(notes))
@@ -1823,6 +1894,16 @@ def cmd_check(args):
     try:
         qs = cfg.load_queries()
         print("✓ %d questions in %s" % (len(qs), os.path.relpath(cfg.queries_path)))
+        named = [q["query_id"] for q in qs if is_branded(flag_query(q, cfg.brand, cfg.competitors))]
+        if named:
+            msg = "%d of %d questions (%d%%) name %s (%s): they are reported on their own line, not in the " \
+                  "headline rate" % (len(named), len(qs), round(100.0 * len(named) / len(qs)), cfg.brand.name or
+                                     "the brand", ", ".join(named[:8]) + (", …" if len(named) > 8 else ""))
+            if len(named) > BRANDED_WARN * len(qs):
+                print("! %s, which then rests on %s. Mark a false match with branded=no in the "
+                      "question file" % (msg, _n(len(qs) - len(named), "question")))
+            else:
+                print("· " + msg)
     except ConfigError as e:
         cfg.errors.append(str(e))
         print("✗ %s" % e)
@@ -1961,10 +2042,11 @@ def cmd_runs(args):
         except ConfigError as e:
             rows.append([rid, "unreadable", "", "", str(e)[:40]])
             continue
-        o = summary_of(r)["overall"]
-        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(o["cited_rate"]), ci_s(head_ci(o)),
+        sm = summary_of(r)
+        o, h = sm["overall"], sm["headline"]
+        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h)),
                      ",".join(e["id"] for e in r["engines"] if e["status"] == "measured")])
-    print(table(["run", "answered", "cited", "95% CI", "engines"], rows, "text") if rows else "no runs yet")
+    print(table(["run", "answered", "cited (headline)", "95% CI", "engines"], rows, "text") if rows else "no runs yet")
     return 0
 
 
@@ -2181,11 +2263,12 @@ class MCPServer(object):
         rows = []
         for rid in list_run_ids(cfg):
             try:
-                o = summary_of(load_run(cfg, rid))["overall"]
-                rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(o["cited_rate"]), ci_s(head_ci(o))])
+                sm = summary_of(load_run(cfg, rid))
+                o, h = sm["overall"], sm["headline"]
+                rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h))])
             except ConfigError:
                 rows.append([rid, "unreadable", "", ""])
-        return table(["run", "answered", "cited", "95% CI"], rows, "md") if rows else "no runs yet"
+        return table(["run", "answered", "cited (headline)", "95% CI"], rows, "md") if rows else "no runs yet"
 
     def tool_report(self, args, token):
         run = load_run(self._cfg(), args.get("run") or "latest")
