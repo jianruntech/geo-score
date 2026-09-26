@@ -1153,6 +1153,222 @@ class MergeSeam(Base):
         self.assertIn("q1 cited #1", text)
 
 
+# ── statistics: clustered intervals, paired diff, Holm ───────────────────
+FIXTURES = os.path.join(HERE, "fixtures", "watch")
+
+
+def watch_schema():
+    with io.open(os.path.join(HERE, "..", "schema", "watch.v1.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def synth(run_id, cited, runs=1, qs=None, who=None):
+    """A saved run built straight from {(query_id, engine): [cited on each ask]}: no transport, no threads."""
+    who = who or brand()
+    qids = sorted(set(q for q, _ in cited))
+    qs = qs or [{"query_id": q, "query": "question " + q, "intent_tier": "", "target_url": ""} for q in qids]
+    samples = []
+    for (q, e), asks in sorted(cited.items()):
+        for i, c in enumerate(asks, 1):
+            url = "https://lumo.example/" + q
+            samples.append({"query_id": q, "engine": e, "run": i, "status": "ok", "cited": bool(c),
+                            "rank": 1 if c else None, "quoted_url": url if c else None, "mentioned": bool(c),
+                            "competitors": {}, "citations": [{"url": url, "domain": "lumo.example", "title": ""}] if c else [],
+                            "search_queries": [], "answer": "", "answer_truncated": False,
+                            "usage": {"input_tokens": 0, "output_tokens": 0, "search_calls": 0, "api_calls": 1},
+                            "cost_usd": None, "seconds": 0.0})
+    at = datetime.datetime.strptime(run_id[:16], "%Y%m%dT%H%M%SZ").strftime("%Y-%m-%dT%H:%M:%SZ")
+    run = {"format": gw.RUN_FORMAT, "tool": "geo-score-watch/" + gw.__version__, "channel": "api", "run_id": run_id,
+           "started_at": at, "finished_at": at, "interrupted": False, "brand": who.as_json(), "competitors": [],
+           "country": None, "runs": runs,
+           "engines": [dict(e, status="measured") for e in engines(*sorted(set(e for _, e in cited)))],
+           "queries": qs, "caps": {"max_calls": 1000, "budget_usd": None},
+           "ledger": {"questions_asked": len(samples), "api_requests": len(samples), "http_attempts": len(samples),
+                      "errors": 0, "input_tokens": 0, "output_tokens": 0, "search_calls": 0, "cost_usd": 0.0,
+                      "unpriced_answers": len(samples), "cost_complete": False},
+           "samples": samples, "notes": gw.NOTES}
+    run["summary"] = gw.summarize(run)
+    return run
+
+
+def draw(rng, probs, runs=1):
+    """One run's answers: each (question, engine) cited on each ask with its own probability."""
+    return dict((u, [rng.random() < p for _ in range(runs)]) for u, p in sorted(probs.items()))
+
+
+class Statistics(Base):
+    def test_clustered_interval_is_wider_than_wilson_when_answers_cluster(self):
+        # 20 questions asked 10 times each: half are always cited, half never. 200 answers, but only 20 questions.
+        cited = dict((("q%02d" % i, "chatgpt-api"), [i < 10] * 10) for i in range(20))
+        run = synth("20260926T083000Z", cited, runs=10)
+        o = run["summary"]["overall"]
+        self.assertEqual((o["answered"], o["n_questions"], o["cited_rate"]), (200, 20, 0.5))
+        w, c = o["cited_ci"], o["cited_ci_clustered"]
+        self.assertGreater(c[1] - c[0], 2 * (w[1] - w[0]))
+        self.assertLess(c[0], w[0])
+        self.assertEqual(gw.head_ci(o), c)
+        self.assertIn("95%% CI %s" % gw.ci_s(c), gw.render(run))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        # deterministic, and a -2 suffix from save_run does not move it
+        self.assertEqual(synth("20260926T083000Z-2", cited, runs=10)["summary"]["overall"]["cited_ci_clustered"], c)
+        # asked once each, the Wilson interval is the one quoted, as in 1.2.0
+        once = synth("20260926T083000Z", dict((u, a[:1]) for u, a in cited.items()))
+        self.assertEqual(gw.head_ci(once["summary"]["overall"]), once["summary"]["overall"]["cited_ci"])
+
+    def test_clustered_interval_is_never_narrower_than_wilson(self):
+        # three questions each cited in half their answers: every bootstrap resample says exactly 50%
+        self.assertEqual(gw.cluster_ci([(2, 4)] * 3, 1), gw.wilson(6, 12))
+        self.assertEqual(gw.cluster_ci([(1, 2)], 1), gw.wilson(1, 2))
+        self.assertIsNone(gw.cluster_ci([], 1))
+
+    def test_exact_tests_and_holm(self):
+        self.assertEqual(gw.mcnemar_p(0, 5), 0.0625)          # why fewer than 6 questions is "too few to tell"
+        self.assertEqual(gw.mcnemar_p(6, 0), 2 / 64.0)
+        self.assertEqual(gw.mcnemar_p(3, 3), 1.0)
+        self.assertEqual(gw.mcnemar_p(0, 0), 1.0)
+        self.assertAlmostEqual(gw.mcnemar_p(1, 19), 42 / 2.0 ** 20)
+        for up, down in ((0, 5), (2, 9), (7, 7), (1, 30), (12, 3)):
+            self.assertAlmostEqual(gw.signflip_p([1] * up + [-1] * down + [0] * 4), gw.mcnemar_p(up, down))
+        self.assertEqual(gw.signflip_p([3, 3, 3]), 0.25)
+        self.assertEqual([round(p, 4) for p in gw.holm([0.01, 0.04, 0.03])], [0.03, 0.06, 0.06])
+        lo, hi = gw.newcombe_paired(20, 0, 0, 20)             # nothing flipped: still an interval, not a point
+        self.assertTrue(lo < -0.02 and hi > 0.02)
+
+    def test_a_null_diff_rarely_calls_a_change(self):
+        # Two runs drawn from the same generator: any "change" is a false alarm. Holm keeps them near 5% or below.
+        gw.BOOTSTRAP_REPS, saved = 200, gw.BOOTSTRAP_REPS    # intervals do not enter the verdict; keep it quick
+        try:
+            alarms = 0
+            for seed in range(200):
+                rng = __import__("random").Random(seed)
+                probs = {}
+                for i in range(30):
+                    base = rng.choice([0.02, 0.1, 0.3, 0.5, 0.7, 0.9, 0.98])
+                    probs[("q%02d" % i, "chatgpt-api")] = base
+                    probs[("q%02d" % i, "perplexity-api")] = min(0.99, max(0.01, base + rng.choice([-0.1, 0.1])))
+                d = gw.diff_runs(synth("20260919T083000Z", draw(rng, probs, 2), runs=2),
+                                 synth("20260926T083000Z", draw(rng, probs, 2), runs=2))
+                alarms += any(r["verdict"] == "change" for r in [d["overall"]] + d["engines"])
+        finally:
+            gw.BOOTSTRAP_REPS = saved
+        self.assertLessEqual(alarms, 16, "%d of 200 null diffs called a change" % alarms)
+
+    def test_too_few_questions_to_tell(self):
+        def flip(n):
+            a = synth("20260919T083000Z", dict((("q%d" % i, "chatgpt-api"), [True]) for i in range(n)))
+            b = synth("20260926T083000Z", dict((("q%d" % i, "chatgpt-api"), [False]) for i in range(n)))
+            return gw.diff_runs(a, b)
+        d = flip(5)                                           # all five lost: p = 0.0625, it could be chance
+        self.assertEqual(d["overall"]["verdict"], "too few questions to tell")
+        self.assertEqual((d["overall"]["p_paired"], d["overall"]["p_adjusted"], d["overall"]["delta_ci"]),
+                         (0.0625, None, None))
+        self.assertIn("still be within noise", gw.render_diff(d))
+        d = flip(6)                                           # one engine: overall and engine are one test
+        self.assertEqual(d["overall"]["p_adjusted"], 0.0312)
+        self.assertEqual(d["engines"][0]["p_adjusted"], 0.0312)
+        self.assertEqual((d["overall"]["verdict"], d["overall"]["delta_pp"]), ("change", -100.0))
+        self.assertEqual(gw.drops(d), ["all engines", "chatgpt-api"])
+
+    def test_diff_pairs_the_asks_both_runs_made(self):
+        a = synth("20260919T083000Z", dict((("q%d" % i, "chatgpt-api"), [False]) for i in range(8)))
+        b = synth("20260926T083000Z", dict((("q%d" % i, "chatgpt-api"), [False, False, True]) for i in range(8)),
+                  runs=3)
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["delta_pp"], 0.0)       # the third ask has nothing to pair with
+        self.assertEqual(d["overall"]["verdict"], "within noise")
+        self.assertTrue(any("asked each question 1 and 3 times" in n for n in d["notes"]))
+
+    def test_a_planted_drop_is_found_and_fails_the_build(self):
+        rng = __import__("random").Random(7)
+        units = [("q%02d" % i, e) for i in range(30) for e in ("chatgpt-api", "perplexity-api")]
+        a = synth("20260919T083000Z", draw(rng, dict((u, 0.8) for u in units)))
+        b = synth("20260926T083000Z", draw(rng, dict((u, 0.2) for u in units)))
+        d = gw.diff_runs(a, b)
+        for r in [d["overall"]] + d["engines"]:
+            self.assertEqual(r["verdict"], "change", r)
+            self.assertLess(r["delta_pp"], 0)
+            self.assertLess(r["delta_ci"][1], 0)
+            self.assertLessEqual(r["p_paired"], r["p_adjusted"])
+        self.assertEqual(d["overall"]["n_pairs"], 60)
+        self.assertEqual(d["overall"]["n_questions"], 30)
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        cfg = gw.Config(cfgp)
+        for r in (a, b):
+            gw.save_run(cfg, r)
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(gw.main(["diff", "-c", cfgp]), 0)
+            self.assertEqual(gw.main(["diff", "-c", cfgp, "--fail-on-drop"]), 4)
+            self.assertEqual(gw.main(["diff", "-c", cfgp, "--fail-on-drop", "--format", "json"]), 4)
+            self.assertEqual(gw.main(["diff", "-c", cfgp, b["run_id"], a["run_id"], "--fail-on-drop"]), 0)  # a gain
+        self.assertIn("dropped beyond noise: all engines, chatgpt-api, perplexity-api", err.getvalue())
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "diff", "arguments": {"format": "json"}})
+        self.assertFalse(r["isError"], r)
+        mj = json.loads(r["content"][0]["text"])
+        self.assertEqual(mj["overall"]["verdict"], "change")
+        for k in ("p_value", "p_paired", "p_adjusted", "n_pairs", "delta_pp", "delta_ci"):
+            self.assertIn(k, mj["overall"])
+        self.assertIn("p (Holm)", srv.call({"name": "diff", "arguments": {}})["content"][0]["text"])
+
+
+# ── run files saved by 1.2.0 ─────────────────────────────────────────────
+class OldRuns(Base):
+    def setUp(self):
+        Base.setUp(self)
+        self.cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(self.cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"], "aliases": ["鹿末"]},
+                       "competitors": [{"name": "Pixa", "domains": ["pixa.example"]}]}, f)
+        self.cfg = gw.Config(self.cfgp)
+        os.makedirs(self.cfg.runs_dir())
+        self.ids = []
+        for name in sorted(os.listdir(FIXTURES)):
+            shutil.copy(os.path.join(FIXTURES, name), self.cfg.runs_dir())
+            self.ids.append(name[:-5])
+
+    def main(self, *argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = gw.main(list(argv))
+        return code, out.getvalue()
+
+    def test_a_1_2_0_run_file_loads_summarizes_and_diffs(self):
+        self.assertEqual(self.ids, ["20260919T083000Z", "20260926T083000Z"])
+        sc = watch_schema()
+        for rid in self.ids:
+            run = gw.load_run(self.cfg, rid)
+            self.assertEqual(run["tool"], "geo-score-watch/1.2.0")
+            self.assertNotIn("n_questions", run["summary"]["overall"])
+            self.assertEqual(validate(run, sc), [])
+        run = gw.load_run(self.cfg, self.ids[0])
+        sm = gw.summary_of(run)
+        self.assertEqual((sm["overall"]["answered"], sm["overall"]["n_questions"]), (24, 6))
+        self.assertEqual(sm["overall"]["cited_ci"], run["summary"]["overall"]["cited_ci"])   # Wilson unchanged
+        self.assertTrue(sm["overall"]["cited_ci_clustered"])
+        self.assertEqual(validate(json.loads(json.dumps(dict(run, summary=sm))), sc), [])
+        self.assertIn("95%% CI %s" % gw.ci_s(sm["overall"]["cited_ci_clustered"]), gw.render(run))
+        d = gw.diff_runs(*[gw.load_run(self.cfg, rid) for rid in self.ids])
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+        self.assertEqual(d["overall"]["n_questions"], 6)
+        self.assertNotEqual(d["overall"]["verdict"], "change")
+        for fmt in ("text", "md", "csv", "json"):
+            self.assertEqual(self.main("report", "-c", self.cfgp, "--format", fmt)[0], 0)
+        code, out = self.main("report", "-c", self.cfgp, "--format", "json")
+        self.assertIn("cited_ci_clustered", json.loads(out)["summary"]["overall"])
+        code, out = self.main("diff", "-c", self.cfgp, "--fail-on-drop")
+        self.assertEqual(code, 0)
+        self.assertIn("within noise", out)
+        self.assertEqual(self.main("runs", "-c", self.cfgp)[0], 0)
+        with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:
+            self.assertNotIn("n_questions", f.read())                    # reports never rewrite a run file
+
+
 class PipedDecoy(unittest.TestCase):
     def test_a_geo_watch_py_in_the_current_directory_is_never_loaded(self):
         d = tempfile.mkdtemp(prefix="geo-score-decoy-")
