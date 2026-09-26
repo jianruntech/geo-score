@@ -109,7 +109,7 @@ def write_readme(p):
     from collections import Counter
     gap = Counter(g for x in ok for g in x["top_gaps"])
     capped = [x for x in ok if x.get("gate_capped")]
-    A("## A quarter of the field cannot be cited at all\n")
+    A("## A quarter of the field is unreadable to AI crawlers\n")
     A("**%d of %d sites have a gate check at zero** — a crawler cannot get the content, so"
       % (len(capped), len(ok)))
     A("nothing else on the page matters. These are two very different problems, and reporting")

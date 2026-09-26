@@ -13,7 +13,7 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 314 well-known sites scored. Median 56, range 12–98. 25% of them cannot be cited at all — 19 block AI crawlers by name, 45 serve a page whose body only exists after JavaScript runs, 16 hand a crawler an outright error.
+- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 314 well-known sites scored. Median 56, range 12–98. 25% of them are unreadable to AI crawlers — 19 block AI crawlers by name, 45 serve a page whose body only exists after JavaScript runs, 16 hand a crawler an outright error.
 - [简体中文版](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 
@@ -27,7 +27,7 @@ server-rendered content and the result caps at 40.
 
 ## The tool
 
-- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`
+- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): level 1 is one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`. Levels 2 and 3 (`--ask`, `watch`, and an MCP server) check whether AI engines actually cite a site, through their APIs with your own keys, and never add that to the score.
 - [GitHub Action](https://github.com/jianruntech/geo-score/blob/main/action.yml): score on every push, fail the build on regression.
 - [Five hand-scored audits](https://github.com/jianruntech/geo-score/tree/main/examples/audits/v1.1): all 21 checks scored by hand with reproducible evidence.
 

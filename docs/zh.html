@@ -5,7 +5,7 @@
 <title>AI 可见度现状 — 314 个站点实测</title>
 <meta name="description" content="314 个知名网站的实测评分，衡量 AI 回答引擎能不能找到、读懂、信任并引用它们。口径公开、结果可复现，中位数 56。">
 <meta property="og:title" content="AI 可见度现状">
-<meta property="og:description" content="314 个知名网站里，四分之一根本无法被 AI 回答引擎引用。口径公开，一行命令，结果可复现。">
+<meta property="og:description" content="314 个知名网站里，四分之一 AI 回答引擎的爬虫读不到。口径公开，一行命令，结果可复现。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="geo-score">
 <meta property="og:url" content="https://jianruntech.github.io/geo-score/zh.html">
@@ -16,7 +16,7 @@
 <meta property="og:image:alt" content="分享卡：314 个知名网站里 25% 根本无法被 AI 回答引擎引用，中位数 56，区间 12-98。">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="AI 可见度现状">
-<meta name="twitter:description" content="314 个知名网站里，四分之一根本无法被 AI 回答引擎引用。口径公开，一行命令，结果可复现。">
+<meta name="twitter:description" content="314 个知名网站里，四分之一 AI 回答引擎的爬虫读不到。口径公开，一行命令，结果可复现。">
 <meta name="twitter:image" content="https://jianruntech.github.io/geo-score/og.zh.png">
 <link rel="canonical" href="https://jianruntech.github.io/geo-score/zh.html">
 <link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/">
@@ -125,11 +125,11 @@ body{position:relative}
 <div class="stat"><b>56</b><span>中位数</span></div>
 <div class="stat"><b>72</b><span>上四分位</span></div>
 <div class="stat"><b>12&ndash;98</b><span>区间</span></div>
-<div class="stat"><b>80</b><span>无法被引用</span></div>
+<div class="stat"><b>80</b><span>AI 读不到</span></div>
 </div>
 </header>
 
-<h2>四分之一的站根本无法被引用</h2>
+<h2>四分之一的站，AI 爬虫读不到</h2>
 <p>80 个站有门槛项得 0 分——检索爬虫压根拿不到内容，页面上其余的事都不再重要。而这个数字里装着两件性质完全不同的事。</p>
 
 <div class="two">
@@ -155,7 +155,7 @@ body{position:relative}
 <div class="toolbar">
 <input id="q" type="search" placeholder="搜站点或行业…" autocomplete="off">
 <select id="sec"><option value="">全部行业</option><option>Marketing / CRM</option><option>Cloud & DevOps</option><option>Professional services</option><option>AI</option><option>Payments / Fintech</option><option>Developer tools</option><option>SaaS / Productivity</option><option>Education</option><option>Healthcare</option><option>Ecommerce</option><option>China / enterprise</option><option>China / AI</option><option>Logistics / Freight</option><option>Media / Publishing</option><option>Travel</option><option>Manufacturing / Industrial</option><option>China / consumer</option><option>China / cloud</option><option>Cross-border services</option><option>China / no-code</option></select>
-<select id="fil"><option value="">全部站点</option><option value="cap">无法被引用</option><option value="top">基础扎实及以上</option><option value="low">低于 50 分</option></select>
+<select id="fil"><option value="">全部站点</option><option value="cap">AI 读不到</option><option value="top">基础扎实及以上</option><option value="low">低于 50 分</option></select>
 </div>
 <div class="tw"><table id="t"><thead><tr>
 <th data-k="s">站点</th><th data-k="n" class="num">分数</th><th></th>
@@ -189,7 +189,7 @@ function draw(){
   const r=rows();
   tb.innerHTML=r.map(d=>{
     const w=d.n===null?0:d.n, cls=w>=66?"hi":w<40?"lo":"";
-    return `<tr><td>${d.s}${d.c?' <span class="pill">无法引用</span>':''}</td>`+
+    return `<tr><td>${d.s}${d.c?' <span class="pill">读不到</span>':''}</td>`+
       `<td class="num" style="color:${bandCol[d.b]}">${d.n===null?"\u2014":d.n}</td>`+
       `<td class="bar"><i class="${cls}" style="width:${w}%"></i></td>`+
       `<td class="band" style="color:${bandCol[d.b]}">${BAND[d.b]||d.b}</td>`+

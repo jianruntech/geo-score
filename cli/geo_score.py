@@ -3,7 +3,12 @@
 geo-score — score a site 0-100 on whether AI answer engines can find, parse,
 trust and cite it. Implements the open AIV rubric v1.1.
 
-    python3 geo_score.py https://example.com
+    python3 geo_score.py https://example.com                  # level 1: readiness, free
+    python3 geo_score.py example.com --ask "best X for Y"     # level 2: + a live citation check (your API keys)
+    python3 geo_score.py watch run                            # level 3: track a question set weekly
+    python3 geo_score.py mcp                                  # all three levels over MCP (stdio)
+
+Levels 2 and 3 live in geo_watch.py next to this file.
 
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
@@ -12,7 +17,7 @@ import argparse, concurrent.futures as cf, html, io, json, os, re, sys, time, zl
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 RUBRIC = "v1.1"
 UA_BROWSER = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
@@ -1208,7 +1213,8 @@ def report(res, args):
 
 def as_json(res):
     rows, total, den, b, norm, bd, capped = score(res)
-    return dict(rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
+    extra = {"citation": res["citation"]} if res.get("citation") else {}
+    return dict(extra, rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
         audited_at=time.strftime("%Y-%m-%d"),
         target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"], sample_source=res.get("sample_source"),
         readiness=total, observable_max=den, normalised=norm, band=bd,
@@ -1223,6 +1229,35 @@ def as_json(res):
                   for bid, bname, bpts in BONUS],
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
                "Checks needing off-site search or human judgement left the denominator."])
+
+def _watch_module():
+    """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside."""
+    import importlib.util
+    need = ("watch and --ask need geo_watch.py %s next to geo_score.py: clone https://github.com/jianruntech/geo-score, "
+            "or download cli/geo_score.py and cli/geo_watch.py from the same release" % __version__)
+    f = globals().get("__file__")
+    # piped through `python3 -`, __file__ is "<stdin>": never go looking in the current directory
+    here = os.path.dirname(os.path.abspath(f)) if f and os.path.isfile(f) else ""
+    p = os.path.join(here, "geo_watch.py") if here else ""
+    if not p or not os.path.isfile(p):
+        raise RuntimeError(need)
+    spec = importlib.util.spec_from_file_location("geo_watch", p)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    if getattr(mod, "__version__", None) != __version__ or not callable(getattr(mod, "citation_check", None)):
+        raise RuntimeError(need + " (found geo_watch.py %s)" % getattr(mod, "__version__", "of another version"))
+    mod.GEO_SCORE = sys.modules[__name__]
+    return mod
+
+def citation_report(run, cit, watch):
+    """Level 2 section under the readiness report. An outcome: printed apart, never summed into the score."""
+    print("  %s%sAI CITATION CHECK%s  %s(API channel · not scored)%s" % (c.b, c.brass, c.r, c.grey, c.r))
+    print(c.grey + "─" * 74 + c.r)
+    lines = watch.citation_lines(run, cit)
+    for ln in lines[:-1]:
+        print("  " + ln)
+    print("  %s%s%s" % (c.grey, lines[-1], c.r))
+    print()
 
 def _try(u, sample):
     try: return run(u, sample)
@@ -1284,8 +1319,16 @@ def compare(pairs, args):
     print()
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
+        w = _watch_module()
+        if sys.argv[1] == "watch":
+            sys.exit(w.main(sys.argv[2:]))
+        sys.exit(w.main(["mcp"] + sys.argv[2:], prog="geo_score.py"))
     ap = argparse.ArgumentParser(prog="geo-score",
-        description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.")
+        description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.",
+        epilog="Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
+               "`geo_score.py watch {init,check,run,report,diff,runs,ask}` tracks a question set week over week; "
+               "`geo_score.py mcp` serves all three levels over MCP.")
     ap.add_argument("url")
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
@@ -1298,13 +1341,28 @@ def main():
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
+    ap.add_argument("--ask", metavar="QUESTION", action="append",
+                    help="level 2: also ask ChatGPT, Perplexity, Gemini and Claude this question through their APIs "
+                         "(your keys) and report who they cite. Repeatable, up to 5. Never part of the score.")
+    ap.add_argument("--brand", metavar="NAME", help="with --ask: the brand name to look for (default: from the domain)")
+    ap.add_argument("--domain", metavar="DOMAIN", action="append",
+                    help="with --ask: another domain that counts as yours (the scored site always does). Repeatable.")
     ap.add_argument("--quiet", "-q", action="store_true")
     ap.add_argument("--version", action="version", version="geo-score %s (rubric %s)" % (__version__, RUBRIC))
     a = ap.parse_args()
+    if (a.brand or a.domain) and not a.ask:
+        ap.error("--brand and --domain only apply with --ask")
+    if a.ask:
+        qs = [q.strip() for q in a.ask if q.strip()]
+        if not 1 <= len(qs) <= 5 or len(qs) != len(a.ask) or any(len(q) > 500 for q in qs):
+            ap.error("--ask takes 1 to 5 non-empty questions of up to 500 characters")
     url = a.url if "://" in a.url else "https://" + a.url
     if not a.json and not a.quiet:
         print("%s  scoring %s …%s" % (c.dim, url, c.r), file=sys.stderr)
     targets = [url] + [(u if "://" in u else "https://" + u) for u in (a.compare or [])]
+    if a.ask and len(targets) > 1:
+        raise RuntimeError("--ask works with one site at a time; drop --compare")
+    watch = _watch_module() if a.ask else None
     if len(targets) > 1:
         done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
         ok = [(u, r) for u, r in done if r is not None]
@@ -1316,12 +1374,22 @@ def main():
         res = ok[0][1]
     else:
         res = run(url, a.sample, verbose=not a.quiet and not a.json)
+        crun = None
+        if watch:
+            if not a.json and not a.quiet:
+                print("%s  asking the AI engines %d question(s) …%s" % (c.dim, len(a.ask), c.r), file=sys.stderr)
+            try:
+                crun, res["citation"] = watch.citation_check(res["root"], a.ask, a.brand, a.domain, res.get("landed"))
+            except watch.ConfigError as e:
+                raise RuntimeError(str(e))
         if a.json:
             print(json.dumps(as_json(res), ensure_ascii=False, indent=2))
         elif a.brief:
             brief(res)
         else:
             report(res, a)
+        if watch and not a.json:
+            citation_report(crun, res["citation"], watch)
     if a.share:
         line = share_line(res)
         if not a.json:

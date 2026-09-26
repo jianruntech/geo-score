@@ -1,7 +1,9 @@
 # geo-score CLI
 
-Score a site against the [AIV rubric v1.1](../rubric/v1.1.md). Python 3.8+, standard
-library only, nothing to install.
+Score a site against the [AIV rubric v1.1](../rubric/v1.1.md), and, with your own API keys,
+check and track whether AI engines cite it. Python 3.8+, standard library only, nothing to
+install. Level 1 is `geo_score.py` alone; levels 2 and 3 need `geo_watch.py` from the same
+release beside it.
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
@@ -21,8 +23,15 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
+| `--ask QUESTION` | Level 2: also ask the AI engines this question through their APIs (your keys) and report who they cite, beside the score. Repeatable, up to 5 |
+| `--brand NAME` | With `--ask`: the brand name to look for in answers. Default: the site's domain name, e.g. `stripe` for `docs.stripe.com` |
+| `--domain DOMAIN` | With `--ask`: another domain that counts as yours. Repeatable. The scored site, its registrable domain and a redirect's landing domain always count |
 
 `NO_COLOR=1` turns off colour, as does piping to a file.
+
+Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched or
+a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
+`geo_watch.py` missing, `3` nothing could be measured (no key worked).
 
 ## Comparing against a competitor
 
@@ -94,6 +103,90 @@ Where the CLI and a careful human disagree, the human is right and the rubric is
 arbiter. Run `--explain` to see exactly what the CLI observed, and
 [open an issue](https://github.com/jianruntech/geo-score/issues) if a heuristic is wrong
 on your site — those reports are how these get better.
+
+## Watch
+
+Levels 2 and 3 live in `geo_watch.py`, which must sit next to `geo_score.py`. They ask the AI
+engines your questions through their search-enabled APIs with your own keys (read from the
+environment, never written to disk) and report who the answers cite. Nothing they measure is
+summed into the readiness score.
+
+### Level 2: `--ask`
+
+```bash
+python3 geo_score.py acme.com --ask "best invoicing app for freelancers" --ask "acme vs rival"
+python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # result in the report's citation object
+```
+
+Up to 5 questions, one ask per engine that has a key. The brand defaults to the first label of the
+domain; pass `--brand` when the name differs. Without any key the citation block says "not
+measured" and the readiness report is unchanged.
+
+### Level 3: `watch`
+
+| Command | |
+|---|---|
+| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv` |
+| `watch check` | Validate the config and the questions, and show which engines have keys and prices |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and exits 0, with or without keys |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note` |
+| `watch diff [A] [B] [--format text\|md\|json]` | Before and after, per engine, with p-values; citations lost and gained |
+| `watch runs` | Saved runs and their headline rate |
+| `watch ask "question" [--brand NAME] [--domain D]` | Level 2 without the score: one question to every engine, now, not saved |
+| `mcp` | Score and watch over MCP (stdio) |
+
+Every `watch` command takes `-c PATH` for the config (default `./geo-score-watch.json`, or
+`$GEO_SCORE_WATCH_CONFIG`).
+
+`geo-score-watch.json` (the prices below are an example; copy current ones from your provider):
+
+```json
+{
+  "brand": {"name": "Acme", "domains": ["acme.com"], "aliases": ["Acme Inc"],
+            "url_prefixes": ["amazon.com/stores/Acme"]},
+  "competitors": [{"name": "Rival", "domains": ["rival.com"]}],
+  "queries": "queries.csv",
+  "engines": [{"id": "chatgpt-api", "provider": "openai", "model": "gpt-6-luna"},
+              {"id": "perplexity-api", "provider": "perplexity"},
+              {"id": "deepseek-api", "provider": "openrouter", "model": "deepseek/deepseek-chat"}],
+  "country": "US",
+  "runs": 1,
+  "max_calls": 120,
+  "budget_usd": 2.0,
+  "prices": {"chatgpt-api": {"input_per_mtok": 0.1, "output_per_mtok": 0.5, "per_search": 0.01}}
+}
+```
+
+| Key | |
+|---|---|
+| `brand.domains` / `url_prefixes` | What counts as yours. Subdomains count; a prefix covers a store or profile on someone else's site |
+| `brand.aliases` | Other names the answer may use. Chinese, Japanese and Korean names match anywhere; all others match whole words |
+| `country` | Two-letter code passed to the engines that accept a location (OpenAI, Claude, Perplexity) |
+| `runs` | Asks per question per engine. `3` gives steadier rates at three times the cost |
+| `max_calls` | Exact cap on questions asked in one run |
+| `budget_usd` | Spend cap, checked before every call; it can be exceeded by at most one call per engine. With a budget, unpriced engines are left out unless `--allow-unpriced` |
+| `prices` | Per engine, USD: `input_per_mtok`, `output_per_mtok`, optional `per_search`, `per_call`. Perplexity and OpenRouter report their own cost |
+| `engines[].api` | Gemini only: `interactions` (default) or `generate_content` |
+| `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
+| `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
+
+`queries.csv` has four columns, `query_id,query,intent_tier,target_url`. Write the questions the
+way a buyer would type them into ChatGPT, and keep the set fixed from week to week.
+
+MCP clients configured in JSON (Cursor, Windsurf and others). The server reads keys from its
+environment; most clients pass their own environment through, so exporting keys in your shell is
+enough. If you add an `env` block instead, note that the client's config file then holds the keys
+in plain text:
+
+```json
+{"mcpServers": {"geo-score": {
+  "command": "python3",
+  "args": ["/abs/path/geo-score/cli/geo_score.py", "mcp", "-c", "/abs/path/geo-score-watch.json"]
+}}}
+```
+
+Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
+`python3 cli/test_geo_watch.py` (offline; every provider is faked).
 
 ## As a GitHub Action
 

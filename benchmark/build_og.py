@@ -4,7 +4,7 @@
 Without an og:image and a twitter:card, the leaderboard renders in Slack, X and
 LinkedIn as a bare link — which is the one page in this repository people are
 most likely to pass around. The card carries the measurement itself, not a logo:
-the share of sites that cannot be cited at all, the median, and the real
+the share of sites unreadable to AI crawlers, the median, and the real
 distribution across the five bands. Regenerate it whenever results.json changes.
 
     python3 benchmark/build_og.py            # writes docs/og.png, docs/og.zh.png
@@ -84,7 +84,7 @@ def render(lang, n, capped, counts, stats):
             '<span><u style="background:%s"></u>%s <b>%d</b></span>' % (COL[i], BANDS[i][0], counts[i])
             for i in range(5))
         v = dict(serif='"Fraunces"', hsize=54,
-                 head="%d%% of these sites <em>cannot be cited</em> at all." % pct,
+                 head="%d%% of these sites are <em>unreadable</em> to AI crawlers." % pct,
                  sub="%d well-known sites scored on whether an AI answer engine can find, parse, "
                      "trust and cite them. Open rubric, every check reproducible." % n,
                  median="Median %s &nbsp;·&nbsp; range %d&ndash;%d"
@@ -95,7 +95,7 @@ def render(lang, n, capped, counts, stats):
             '<span><u style="background:%s"></u>%s <b>%d</b></span>' % (COL[i], BANDS[i][1], counts[i])
             for i in range(5))
         v = dict(serif='"Noto Serif SC"', hsize=50,
-                 head="这些站点里 %d%% <em>根本无法被引用</em>" % pct,
+                 head="这些站点里 %d%% <em>AI 爬虫读不到</em>" % pct,
                  sub="%d 个知名网站的实测评分，衡量 AI 回答引擎能不能找到、读懂、信任并引用它们。"
                      "口径公开，每一项都可复算。" % n,
                  median="中位数 %s &nbsp;·&nbsp; 区间 %d&ndash;%d"

@@ -291,6 +291,68 @@
         },
         "note": {
           "type": "string"
+        },
+        "channel": {
+          "enum": [
+            "api",
+            "app"
+          ],
+          "description": "api = provider APIs with web search (geo-score --ask / watch); app = sampled by hand in the consumer apps. Never pool the two."
+        },
+        "answered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mentioned_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "per_engine": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "engine",
+              "model",
+              "answered",
+              "cited",
+              "mentioned"
+            ],
+            "properties": {
+              "engine": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              },
+              "answered": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cited": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mentioned": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "top_sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
         }
       },
       "required": [

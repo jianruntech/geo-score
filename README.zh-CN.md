@@ -4,14 +4,18 @@
 
 # geo-score
 
-**ChatGPT 会不会引用你的网站？20 秒跑出分数。**
+**AI 能不能引用你的网站？免费打分，20 秒出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
+[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#第二三级--ai-到底有没有引用你)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![AIV readiness](docs/aiv-badge.svg)](https://jianruntech.github.io/geo-score/zh.html)
+
+> **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
+> [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
@@ -75,12 +79,25 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
-**[看 314 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一根本无法被引用。
+**[看 314 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一，AI 爬虫读不到。
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。
 
 ---
+
+## 一个工具，三级用法
+
+| 级 | 回答什么 | 需要什么 | 命令 |
+|---|---|---|---|
+| **1 · 打分** | AI 引擎能不能抓到、读懂、信任并引用这个站？按公开量表打 0–100 分（就绪度） | 什么都不要：不要 Key，不用安装 | `geo_score.py stripe.com` |
+| **2 · 实测** | 就你关心的那个问题，AI 现在引不引用它？ | OpenAI、Perplexity、Gemini、Anthropic、OpenRouter 任意一家的 API Key | `geo_score.py stripe.com --ask "best payments API for marketplaces"` |
+| **3 · 追踪** | 你被引用的频率、输给了哪些竞品和来源、每周怎么变？ | 你的 API Key 和一组固定问题 | `geo_score.py watch run` |
+
+第一级就是这 100 分。第二、三级测的是量表有意不计分的那部分结果（[两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)）：
+单独报告，从不加进 100 分。就绪度 90 分的站，照样可能每条回答都输给第三方报道更多的竞品；反过来也会发生，所以两样都要看。
+
+第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起：克隆仓库，或者两个文件都下载。上面那行 `curl | python3` 只跑第一级。
 
 ## 这和 SEO 问的不是同一个问题
 
@@ -124,7 +141,7 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 
 ## 314 个站点，公开打分
 
-**其中四分之一根本无法被引用。** 80 个站有门槛项得 0 分——检索爬虫压根拿不到内容。
+**其中四分之一，AI 爬虫读不到。** 80 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
 19 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
 amazon.com 只有 12 分正是这个原因。**另有 45 个站的正文只在 JavaScript 跑完之后才存在**，
 内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
@@ -152,7 +169,7 @@ amazon.com 只有 12 分正是这个原因。**另有 45 个站的正文只在 J
 
 **中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
 
-每个数字都能用页首那条命令复现——而且我们把「能复现到什么程度」也测了。
+每个数字都能用页首那条命令复现（榜单是 2026-09-09 用 1.1.0 跑的；从 1.1.2 起，`sameAs` 或知识图谱查询连不上的站会高几分）——而且我们把「能复现到什么程度」也测了。
 整个榜单跑两遍逐站比对：**96% 的站落在 ±5 以内，45% 完全一致。**
 所以单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
 不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了。
@@ -162,9 +179,9 @@ amazon.com 只有 12 分正是这个原因。**另有 45 个站的正文只在 J
 对其中五个参照站，我们另外发布了**人工逐项审计**，
 覆盖全部 21 项检查、每一项都附证据：[examples/audits/v1.1/](examples/audits/v1.1/)。
 
-## 三种跑法
+## 几种跑法
 
-**CLI** —— 不用装、无依赖、20 秒。
+**CLI** —— 第一级只要一个文件、无依赖、20 秒；第二、三级再加上同一版本的 `cli/geo_watch.py`。
 
 ```bash
 python3 cli/geo_score.py example.com            # 人读
@@ -175,7 +192,7 @@ python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌�
 python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
 ```
 
-**GitHub Action** —— 每次 push 都打分，退步就让构建失败。
+**GitHub Action**（第一级）—— 每次 push 都打分，退步就让构建失败。第三级按周定时跑见 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml)。
 
 ```yaml
 - uses: jianruntech/geo-score@v1
@@ -194,6 +211,143 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 
 CLI 会把那四项**退出分母**而不是猜，所以它给出的分比完整审计略低——
 对一个已经有品牌积累的站，通常低 5 到 15 分，因为收录和第三方提及是 CLI 看不见的。
+
+**MCP 服务**（三级都有）—— `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见[下文](#第二三级--ai-到底有没有引用你)。
+
+## 第二、三级 · AI 到底有没有引用你
+
+`--ask` 和 `watch` 用你自己的 Key，通过各家带联网搜索的 API，把买家会问的问题拿去问 ChatGPT、Perplexity、
+Gemini 和 Claude，记下每条回答引用了谁：是你、是竞品，还是 AI 更愿意引用的第三方页面（论坛、测评站）。
+Key 只从环境变量读，geo-score 不会把它写到任何地方。
+
+```bash
+git clone https://github.com/jianruntech/geo-score && cd geo-score/cli
+export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # 有几个 Key 就测几个引擎
+python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # 第二级
+python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
+# 把买家会问 AI 的问题写进 queries.csv，然后：
+python3 geo_score.py watch run --dry-run            # 只看计划和上限，不调用、不花钱
+python3 geo_score.py watch run                      # 第三级：每个问题问每个引擎，并保存
+python3 geo_score.py watch diff                     # 和上一次比，带显著性检验
+```
+
+<details>
+<summary>watch 跑一次的输出（示意：虚构的品牌和预设的回答，不是真实测量）</summary>
+
+```
+geo-score watch · Lumo · run 20260926T083000Z · api channel
+
+3 questions × 3 engines × 1 = 9 planned · 9 answered · 0 failed · 0 skipped
+
+Cited in 67% of answers (6 of 9, 95% CI 35–88%) · mentioned in 67%
+Your site was cited somewhere for 3 of 3 questions.
+
+By engine
+  engine          model             cited         95% CI   mentioned  avg rank
+  chatgpt-api     gpt-6-luna        3/3 100%      44–100%  100%       1.0
+  perplexity-api  sonar             0/3 0%        0–56%    0%         —
+  gemini-api      gemini-3.8-flash  3/3 100%      44–100%  100%       1.0
+  claude-api      claude-sonnet-5   not measured                                no_key: set ANTHROPIC_API_KEY
+
+Share of voice
+              cited  95% CI  mentioned
+  Lumo (you)  67%    35–88%  67%
+  Pixa        67%    35–88%  67%
+  Reelcraft   33%    12–65%  33%
+
+Sources the engines cite most (not yours)
+  domain             answers  share  owner
+  pixa.example       6        67%    Pixa
+  reddit.com         6        67%
+  reelcraft.example  3        33%    Reelcraft
+  g2.com             3        33%
+
+By question type
+  type         cited    95% CI  mentioned
+  alternative  2/3 67%  21–94%  67%
+  list         2/3 67%  21–94%  67%
+  pricing      2/3 67%  21–94%  67%
+
+What the engines searched for (from 6 answers that show it)
+  times  search
+  3      免费 ai 视频工具
+  1      best free ai video generator 2026
+  1      哪个 ai 视频生成器有免费额度 2026
+  1      pixa alternatives 2026
+
+Ledger
+9 questions asked · 9 API requests · 3,180 in / 2,400 out tokens · 9 searches · $0.05 + 3 answers with no price (add prices to geo-score-watch.json)
+Caps: at most 120 questions.
+
+Read this before quoting the numbers
+- API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.
+- The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, and diff only calls a change a change when a two-proportion test says so (p < 0.05).
+- Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
+- This measures citations. It does not predict traffic, rankings or revenue.
+```
+</details>
+
+**第二级**每个问题在每个引擎上问一次，结果印在就绪度报告下面（加 `--json` 时写进报告的 `citation` 字段）。
+一次问答只是个例：用来看 AI 今天怎么说，不是用来算比率的。
+
+**第三级**固定一组问题，每条回答都存进 `.geo-score/watch/runs/`（[schema](schema/watch.v1.json)），报告里有：
+
+| | 含义 |
+|---|---|
+| **被引用（cited）** | 回答链接到你的网址：`domains` 里的域名（含子域名），或 `url_prefixes` 里的前缀，比如你的亚马逊店铺页、GitHub 组织页 |
+| **位次（rank）** | 在这条回答引用的不同域名里，你排第几。1 = 第一个来源 |
+| **被提及（mentioned）** | 回答正文里出现了你的名字、`aliases` 里的别名或域名。中文、日文、韩文名按包含匹配，其他名字（包括带重音的拉丁字母）按整词匹配 |
+| **声量份额** | 同一批回答里，每个竞品的被引用率和被提及率 |
+| **来源** | 被引用最多的第三方域名，也就是 AI 在你这个品类里信得过的那些页面 |
+| **缺口** | 竞品被引用、你一次都没被引用的问题 |
+| **实际搜索词** | 引擎回答前真正搜了什么（OpenAI、Gemini、Claude 的 API 会给出）。这就是 query fan-out，是实际记下来的，不是猜的 |
+| **账本** | 问了几个问题、发了几次请求、用了多少 token 和搜索、花了多少钱。每次运行一本 |
+
+**它不告诉你什么。**
+
+- **这不是 ChatGPT App 里的回答。** 数据来自各家 API（开了联网搜索）。App 用的模型、系统提示
+  和个性化都不一样。API 渠道只和 API 渠道比，别和人工在 App 里采的样本混着算。
+- **一条回答只是个例。** 同一个问题问两次，引用的来源可能不同。所有比率都带 95% Wilson 区间；
+  `diff` 只有在双比例检验 p < 0.05 时才说「有变化」。20 个问题 × 1 个引擎，区间就是很宽，
+  数据只能说到这个份上。
+- **没测不等于 0。** 没有 Key 的引擎、失败的调用、被上限跳过的调用，都记为「未测」，
+  不会拉低你的比率。
+- **被引用不等于流量。** 这里不预测访问量、排名，也不预测收入。
+
+**引擎。** 在配置里写死要测的模型，每周保持不变；换了模型的那次，`diff` 会标出来。OpenRouter 一个 Key 能调几百个模型。
+
+| 默认引擎 id | 服务商 | Key | 默认模型 | 怎样算被引用 | 能看到搜索词 | 自报费用 |
+|---|---|---|---|---|---|---|
+| `chatgpt-api` | OpenAI Responses API + `web_search` | `OPENAI_API_KEY` | `gpt-6-luna` | `url_citation` 标注 | 能 | 否，需配价格 |
+| `perplexity-api` | Perplexity Sonar | `PERPLEXITY_API_KEY` | `sonar` | 正文用到的编号来源 | 否 | 是 |
+| `gemini-api` | Gemini Interactions API + `google_search` | `GEMINI_API_KEY` 或 `GOOGLE_API_KEY` | `gemini-3.8-flash` | `url_citation` 标注 | 能 | 否，需配价格 |
+| `claude-api` | Anthropic Messages + `web_search` 工具 | `ANTHROPIC_API_KEY` | `claude-sonnet-5` | 正文上的 citations | 能 | 否，需配价格 |
+| 自定 id | OpenRouter + `web` 插件 | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` 标注 | 否 | 是 |
+
+**上限与费用。** `max_calls` 是单次运行问题数的硬上限，计划超了就不开始；`budget_usd` 每次调用前核一次：
+已花的钱加上这个引擎目前最贵的一次调用，所以最多超出每个引擎一次调用的费用。设了 `budget_usd` 时，算不出费用的引擎不跑，除非加 `--allow-unpriced`。每次运行都有账本：
+请求数、token、搜索次数、花费。配置、价格和全部命令见 [cli/README.md](cli/README.md#watch)。
+
+**在 Agent 里用。** `geo_score.py mcp` 是零依赖的 stdio MCP 服务：`score_site`（第一级，免费），以及
+`ask`、`run`、`list_runs`、`report`、`diff`（第二、三级）。Agent 只能把上限调得更紧，不能放宽。
+
+```bash
+claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp -c /绝对路径/geo-score-watch.json
+```
+
+**每周跑一次。** 引用率变得慢、噪声也大：固定星期几、固定问题、固定模型，看 `diff`，别盯单次结果。
+[examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml) 按时自动跑，Key 放在仓库 Secrets，每次运行都提交回仓库，历史都在 git 里。运行文件里有你的问题和 AI 的完整回答，问题集要保密就用私有仓库。
+
+**自己跑免费；想省事，可以交给我们。** 这里的一切都是 MIT，工具本身没有付费版。API 费用你直接付给
+各家服务商，每次花了多少账本里都有。需要人来做的部分，[见润科技](https://www.jianruntech.com/)作为服务来做：
+
+| | 自己跑（免费） | 交给见润（GEO 落地系统） |
+|---|---|---|
+| 渠道 | 带搜索的 API | API，加上每周在 App 里人工采样 |
+| 引擎 | OpenAI、Perplexity、Gemini、Anthropic，以及 OpenRouter 上的模型 | ChatGPT（联网）、Perplexity、Gemini、Google AI Overviews、Copilot；做国内市场再加国内引擎 |
+| 报告 | 文本、Markdown、CSV、JSON | 周报和 AIV 看板：引用率趋势、分引擎结果、AI 说错你的事实、就绪度历史 |
+| 引用掉了怎么办 | 不在工具范围内 | 我们来改 |
+| 价格 | 你的 API 账单 | GEO 落地系统，¥38,888 起 / 3 个月，含 AIV 看板。[看价格](https://www.jianruntech.com/#pricing) |
 
 ## 为什么发布口径，而不只发工具
 
@@ -225,7 +379,7 @@ CLI 会把那四项**退出分母**而不是猜，所以它给出的分比完整
 - **它测的是输入侧的就绪度，不是结果。** 分高只说明引擎**能**引用你，
   至于**会不会**引用，取决于竞争和提问意图，这些外部审计观察不到。
   引用表现单独测、单独报，**不进这 100 分**——见
-  [两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)。
+  [两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)。用上面的第二、三级来测它。
 - **品牌可信与具名作者这一项需要人的判断。**「这个作者是不是真实可查的人」
   「这条提及是不是独立的」没法完全自动化。这 24 分左右应当视为辅助判定。
 - **阶梯降低分歧，但消不掉分歧。** 每一档都写成 8 个抽样页里的具体页数，

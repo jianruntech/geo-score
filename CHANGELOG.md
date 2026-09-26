@@ -3,6 +3,40 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/). 中文版：[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 The **rubric** is versioned separately from the repository — see `rubric/`.
 
+## [1.2.0] — 2026-09-27
+
+### Added — levels 2 and 3: does AI actually cite you?
+
+geo-watch 0.1.0 is merged into this repository. One tool now measures both halves of AI
+visibility: whether engines **can** cite a site (the score, free) and whether they **do**
+(with the user's own API keys). The citation half is never summed into the score, as the
+rubric has always required.
+
+- **Level 2, `--ask "question"`** (repeatable, up to 5): after the readiness report, asks
+  ChatGPT, Perplexity, Gemini and Claude the question through their search-enabled APIs,
+  one ask per engine that has a key, and fills the report's `citation` object. Without a key
+  the block says not measured and the score is unchanged.
+- **Level 3, `geo_score.py watch`**: a fixed question list asked every week; citation rate per
+  engine with 95% Wilson intervals, share of voice against competitors, the third-party
+  sources the engines cite, the searches they ran, a cost ledger with caps (`max_calls`
+  is exact; `budget_usd` can be exceeded by at most one call per engine), and `diff` with a
+  two-proportion test. Runs follow `schema/watch.v1.json`.
+- **`geo_score.py mcp`**: a dependency-free stdio MCP server with `score_site` (level 1) and
+  `ask`, `run`, `list_runs`, `report`, `diff` (levels 2 and 3).
+- `schema/report.v2.json`: the reserved `citation` object gains optional `channel`,
+  `answered`, `mentioned_count`, `per_engine`, `top_sources` and `cost_usd`. Additive; every
+  1.1.x report still validates.
+- `examples/ci/watch-weekly.yml`: the weekly schedule.
+
+Levels 2 and 3 need `cli/geo_watch.py` from the same release next to `cli/geo_score.py`. The
+one-line `curl | python3` install still runs level 1 on its own. Scores are unchanged from 1.1.2.
+
+**For geo-watch 0.1.0 users:** rename `geo-watch.json` to `geo-score-watch.json` and run
+`python3 cli/geo_score.py watch …` instead of `geo_watch.py …`. Runs now live in
+`.geo-score/watch/runs/` with format `geo-score/watch.v1`; 0.1.0 run files are not read. The CSV
+export renames `competitors_cited` to `other_domains_cited` and drops the always-empty
+`wrong_fact` column.
+
 ## [1.1.2] — 2026-09-25
 
 ### Changed — scores move

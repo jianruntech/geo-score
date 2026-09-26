@@ -5,7 +5,7 @@
 <title>The state of AI visibility — 314 sites scored</title>
 <meta name="description" content="314 well-known sites scored on whether AI answer engines can find, parse, trust and cite them. Open rubric, reproducible, median 56.">
 <meta property="og:title" content="The state of AI visibility">
-<meta property="og:description" content="A quarter of 314 well-known sites cannot be cited by an AI answer engine at all. Open rubric, one command, reproducible.">
+<meta property="og:description" content="A quarter of 314 well-known sites are unreadable to AI answer engines' crawlers. Open rubric, one command, reproducible.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="geo-score">
 <meta property="og:url" content="https://jianruntech.github.io/geo-score/">
@@ -13,10 +13,10 @@
 <meta property="og:image" content="https://jianruntech.github.io/geo-score/og.png">
 <meta property="og:image:width" content="2400">
 <meta property="og:image:height" content="1260">
-<meta property="og:image:alt" content="Share card: 25% of 314 well-known sites cannot be cited by an AI answer engine at all. Median 56, range 12-98.">
+<meta property="og:image:alt" content="Share card: 25% of 314 well-known sites are unreadable to AI answer engines' crawlers. Median 56, range 12-98.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The state of AI visibility">
-<meta name="twitter:description" content="A quarter of 314 well-known sites cannot be cited by an AI answer engine at all. Open rubric, one command, reproducible.">
+<meta name="twitter:description" content="A quarter of 314 well-known sites are unreadable to AI answer engines' crawlers. Open rubric, one command, reproducible.">
 <meta name="twitter:image" content="https://jianruntech.github.io/geo-score/og.png">
 <link rel="canonical" href="https://jianruntech.github.io/geo-score/">
 <link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/">
@@ -125,11 +125,11 @@ body{position:relative}
 <div class="stat"><b>56</b><span>MEDIAN</span></div>
 <div class="stat"><b>72</b><span>UPPER QUARTILE</span></div>
 <div class="stat"><b>12&ndash;98</b><span>RANGE</span></div>
-<div class="stat"><b>80</b><span>CANNOT BE CITED</span></div>
+<div class="stat"><b>80</b><span>UNREADABLE TO AI</span></div>
 </div>
 </header>
 
-<h2>A quarter of the field cannot be cited at all</h2>
+<h2>A quarter of the field is unreadable to AI crawlers</h2>
 <p>80 sites have a gate check at zero — a retrieval crawler cannot get the content, so nothing else on the page matters. Two very different problems live inside that number.</p>
 
 <div class="two">
@@ -155,7 +155,7 @@ body{position:relative}
 <div class="toolbar">
 <input id="q" type="search" placeholder="Find a site or sector…" autocomplete="off">
 <select id="sec"><option value="">All sectors</option><option>Marketing / CRM</option><option>Cloud & DevOps</option><option>Professional services</option><option>AI</option><option>Payments / Fintech</option><option>Developer tools</option><option>SaaS / Productivity</option><option>Education</option><option>Healthcare</option><option>Ecommerce</option><option>China / enterprise</option><option>China / AI</option><option>Logistics / Freight</option><option>Media / Publishing</option><option>Travel</option><option>Manufacturing / Industrial</option><option>China / consumer</option><option>China / cloud</option><option>Cross-border services</option><option>China / no-code</option></select>
-<select id="fil"><option value="">All sites</option><option value="cap">Cannot be cited</option><option value="top">Solid or better</option><option value="low">Below 50</option></select>
+<select id="fil"><option value="">All sites</option><option value="cap">Unreadable to AI</option><option value="top">Solid or better</option><option value="low">Below 50</option></select>
 </div>
 <div class="tw"><table id="t"><thead><tr>
 <th data-k="s">SITE</th><th data-k="n" class="num">SCORE</th><th></th>
@@ -189,7 +189,7 @@ function draw(){
   const r=rows();
   tb.innerHTML=r.map(d=>{
     const w=d.n===null?0:d.n, cls=w>=66?"hi":w<40?"lo":"";
-    return `<tr><td>${d.s}${d.c?' <span class="pill">NOT CITABLE</span>':''}</td>`+
+    return `<tr><td>${d.s}${d.c?' <span class="pill">UNREADABLE</span>':''}</td>`+
       `<td class="num" style="color:${bandCol[d.b]}">${d.n===null?"\u2014":d.n}</td>`+
       `<td class="bar"><i class="${cls}" style="width:${w}%"></i></td>`+
       `<td class="band" style="color:${bandCol[d.b]}">${BAND[d.b]||d.b}</td>`+

@@ -5,7 +5,7 @@ eight-page sample. No private data, no vendor dashboards — [re-run it yourself
 
 **314 sites · median 56.0 · mean 54.9 · upper quartile 71.8 · range 12–98** · rubric v1.1 · measured 2026-09-09
 
-## A quarter of the field cannot be cited at all
+## A quarter of the field is unreadable to AI crawlers
 
 **80 of 314 sites have a gate check at zero** — a crawler cannot get the content, so
 nothing else on the page matters. These are two very different problems, and reporting

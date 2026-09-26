@@ -1,0 +1,46 @@
+# Weekly geo-score watch (level 3). Copy to .github/workflows/geo-score-watch.yml in the repo that
+# holds geo-score/geo-score-watch.json and geo-score/queries.csv (create them with
+# `python3 geo_score.py watch init --dir geo-score …`), and add your keys as repository secrets.
+# Engines whose secret is missing are reported as not measured; with no key at all the job exits 3.
+# If the config names other variables with key_env, export them below too.
+# The commit step stores your questions and the full AI answers in git: use a private repository.
+name: geo-score watch
+on:
+  schedule:
+    - cron: "0 1 * * 1"          # Mondays 01:00 UTC. Same weekday every week keeps runs comparable.
+  workflow_dispatch:
+permissions:
+  contents: write                # to commit the run file back
+concurrency: geo-score-watch
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Fetch geo-score (pinned to a release)
+        run: |
+          base=https://raw.githubusercontent.com/jianruntech/geo-score/v1.2.0/cli
+          curl -sSfL -o geo_score.py "$base/geo_score.py"
+          curl -sSfL -o geo_watch.py "$base/geo_watch.py"
+      - name: Run
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python3 geo_score.py watch run -c geo-score/geo-score-watch.json -q --format md >> "$GITHUB_STEP_SUMMARY"
+      - name: Compare with last week
+        if: always()
+        run: python3 geo_score.py watch diff -c geo-score/geo-score-watch.json --format md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Commit the run
+        run: |
+          git config user.name "geo-score"
+          git config user.email "geo-score@users.noreply.github.com"
+          git add -f geo-score/.geo-score/watch/runs
+          git diff --cached --quiet || git commit -m "chore(geo-score): weekly watch run"
+          git push

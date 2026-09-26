@@ -9,9 +9,19 @@ job summary, and uploads the JSON report as an artifact.
 `fail-under` is optional. Leave it out while you are establishing a baseline; add it
 once you know your number, so a regression fails the build instead of going unnoticed.
 
+## Weekly citation tracking (level 3)
+
+[`watch-weekly.yml`](watch-weekly.yml) runs `geo_score.py watch` every Monday with API keys from
+repository secrets, writes the Markdown report and the comparison with last week to the job
+summary, and commits each run file back, so the history lives in git. Set up the config and the
+question list first with `python3 geo_score.py watch init --dir geo-score --brand … --domain …`
+(see [cli/README.md](../../cli/README.md#watch)), and set at least one API key secret; with no key
+the job exits 3 and records nothing. **Run files contain your questions and the full AI answers:
+use a private repository, or replace the commit step with `actions/upload-artifact`.**
+
 ## Anything else
 
-The CLI is a single file with no dependencies and a machine-readable mode, so any CI
+Level 1 is a single file with no dependencies and a machine-readable mode, so any CI
 works:
 
 ```bash

@@ -80,3 +80,13 @@ There is no build step. The skill is Markdown. CI validates structure only:
 ```bash
 python3 .github/validate.py
 ```
+
+## Adding an engine to watch (levels 2 and 3)
+
+`cli/geo_watch.py` keeps one small function per provider: `call_<provider>(eng, key, question, country)`
+returns `_result(...)` with the answer text, the cited sources as `(url, title)` pairs in the order the
+engine lists them, any searches the API exposes, and token and search counts. Register it in `PROVIDERS`
+and `CALLERS`, add a row to the engine tables in both READMEs, and add a parsing test with a response
+fixture taken from the provider's documentation. `python3 cli/test_geo_watch.py` must pass with no
+network access. Anything that could not be observed (a missing key, a failed call, a hidden field) is
+reported as not measured, never as zero.

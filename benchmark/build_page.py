@@ -86,22 +86,22 @@ def strings(lang, v):
             htmllang="en", on_en="on", on_zh="",
             canon="https://jianruntech.github.io/geo-score/", oglocale="en_US",
             ogimg="https://jianruntech.github.io/geo-score/og.png",
-            ogalt="Share card: %(cappct)d%% of %(n)d well-known sites cannot be cited by an AI "
-                   "answer engine at all. Median %(med)s, range %(mn)d-%(mx)d." % v,
+            ogalt="Share card: %(cappct)d%% of %(n)d well-known sites are unreadable to AI answer "
+                   "engines' crawlers. Median %(med)s, range %(mn)d-%(mx)d." % v,
             t_title="The state of AI visibility — %(n)d sites scored" % v,
             t_desc="%(n)d well-known sites scored on whether AI answer engines can find, parse, "
                    "trust and cite them. Open rubric, reproducible, median %(med)s." % v,
             t_ogtitle="The state of AI visibility",
-            t_ogdesc="A quarter of %(n)d well-known sites cannot be cited by an AI answer engine "
-                     "at all. Open rubric, one command, reproducible." % v,
+            t_ogdesc="A quarter of %(n)d well-known sites are unreadable to AI answer engines' "
+                     "crawlers. Open rubric, one command, reproducible." % v,
             t_h1="The state of<br>AI visibility",
             t_sub="%(n)d well-known sites, scored on whether an AI answer engine can find, parse, "
                   "trust and cite them. One open rubric, one public tool, the same eight-page "
                   'sample for every site. Nothing here is a black box — <a href="%(repo)s">'
                   "re-run it yourself</a>." % dict(v, repo=REPO),
             l_sites="SITES", l_median="MEDIAN", l_uq="UPPER QUARTILE", l_range="RANGE",
-            l_cap="CANNOT BE CITED",
-            t_h2gate="A quarter of the field cannot be cited at all",
+            l_cap="UNREADABLE TO AI",
+            t_h2gate="A quarter of the field is unreadable to AI crawlers",
             t_pgate="%(cap)d sites have a gate check at zero — a retrieval crawler cannot get the "
                     "content, so nothing else on the page matters. Two very different problems "
                     "live inside that number." % v,
@@ -130,9 +130,9 @@ def strings(lang, v):
             t_pall="Click a column to sort. The score is <em>readiness</em> — whether an engine "
                    "<em>can</em> cite the site, not whether one does.",
             l_search="Find a site or sector…", l_allsec="All sectors", l_allsites="All sites",
-            l_fcap="Cannot be cited", l_ftop="Solid or better", l_flow="Below 50",
+            l_fcap="Unreadable to AI", l_ftop="Solid or better", l_flow="Below 50",
             l_site="SITE", l_score="SCORE", l_band="BAND", l_sector="SECTOR",
-            l_gaps="BIGGEST GAPS", l_pill="NOT CITABLE",
+            l_gaps="BIGGEST GAPS", l_pill="UNREADABLE",
             l_count='"{a} of {b} sites"',
             t_h2sec="By sector",
             t_footer='Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
@@ -158,15 +158,15 @@ def strings(lang, v):
         t_desc="%(n)d 个知名网站的实测评分，衡量 AI 回答引擎能不能找到、读懂、信任并引用它们。"
                "口径公开、结果可复现，中位数 %(med)s。" % v,
         t_ogtitle="AI 可见度现状",
-        t_ogdesc="%(n)d 个知名网站里，四分之一根本无法被 AI 回答引擎引用。"
+        t_ogdesc="%(n)d 个知名网站里，四分之一 AI 回答引擎的爬虫读不到。"
                  "口径公开，一行命令，结果可复现。" % v,
         t_h1="AI 可见度<br>现状",
         t_sub="%(n)d 个知名网站，实测 AI 回答引擎能不能找到、读懂、信任并引用它们。"
               "同一套公开口径、同一个公开工具、每个站同样抽 8 个页面。"
               '这里没有黑箱——<a href="%(repo)s">你可以自己重跑</a>。' % dict(v, repo=REPO),
         l_sites="站点数", l_median="中位数", l_uq="上四分位", l_range="区间",
-        l_cap="无法被引用",
-        t_h2gate="四分之一的站根本无法被引用",
+        l_cap="AI 读不到",
+        t_h2gate="四分之一的站，AI 爬虫读不到",
         t_pgate="%(cap)d 个站有门槛项得 0 分——检索爬虫压根拿不到内容，"
                 "页面上其余的事都不再重要。而这个数字里装着两件性质完全不同的事。" % v,
         l_delib="主动屏蔽", l_accid="无意失效",
@@ -187,9 +187,9 @@ def strings(lang, v):
         t_h2all="全部站点",
         t_pall="点列头排序。分数是<em>就绪度</em>——引擎<em>能不能</em>引用你，不是它有没有引用你。",
         l_search="搜站点或行业…", l_allsec="全部行业", l_allsites="全部站点",
-        l_fcap="无法被引用", l_ftop="基础扎实及以上", l_flow="低于 50 分",
+        l_fcap="AI 读不到", l_ftop="基础扎实及以上", l_flow="低于 50 分",
         l_site="站点", l_score="分数", l_band="档", l_sector="行业",
-        l_gaps="最大缺口", l_pill="无法引用",
+        l_gaps="最大缺口", l_pill="读不到",
         l_count='"共 {b} 个，当前显示 {a} 个"',
         t_h2sec="分行业",
         t_footer='按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
@@ -264,7 +264,7 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](https://jianruntech.github.io/geo-score/): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them cannot be cited at all \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
+- [The state of AI visibility](https://jianruntech.github.io/geo-score/): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
 - [\u7b80\u4f53\u4e2d\u6587\u7248](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 
@@ -278,7 +278,7 @@ server-rendered content and the result caps at 40.
 
 ## The tool
 
-- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`
+- [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): level 1 is one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`. Levels 2 and 3 (`--ask`, `watch`, and an MCP server) check whether AI engines actually cite a site, through their APIs with your own keys, and never add that to the score.
 - [GitHub Action](https://github.com/jianruntech/geo-score/blob/main/action.yml): score on every push, fail the build on regression.
 - [Five hand-scored audits](https://github.com/jianruntech/geo-score/tree/main/examples/audits/v1.1): all 21 checks scored by hand with reproducible evidence.
 

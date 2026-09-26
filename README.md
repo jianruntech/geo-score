@@ -4,14 +4,18 @@
 
 # geo-score
 
-**Will ChatGPT cite your site? Score it in 20 seconds.**
+**Can AI engines cite your site? A free 0–100 score in 20 seconds. Do they? Check through their APIs with your own keys.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
+[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#levels-2-and-3--does-ai-actually-cite-you)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![AIV readiness](docs/aiv-badge.svg)](https://jianruntech.github.io/geo-score/)
+
+> **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
+> [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
@@ -75,12 +79,28 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
 a score against a **published, versioned rubric** — not a black box.
 
-**[See how 314 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them cannot be cited at all.
+**[See how 314 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them are unreadable to AI crawlers.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
 
 ---
+
+## Three levels, one tool
+
+| Level | What it answers | Needs | Command |
+|---|---|---|---|
+| **1 · Score** | Can AI engines reach, parse, trust and cite the site? 0–100 against the open rubric | Nothing: no key, no install | `geo_score.py stripe.com` |
+| **2 · Ask** | Right now, for a question you care about, do they cite it? | An API key for any of OpenAI, Perplexity, Gemini, Anthropic, OpenRouter | `geo_score.py stripe.com --ask "best payments API for marketplaces"` |
+| **3 · Watch** | How often are you cited, against which competitors and sources, week over week? | Your API keys and a fixed question list | `geo_score.py watch run` |
+
+Level 1 is the score. Levels 2 and 3 measure the outcome the rubric keeps out of the score on
+purpose ([two scores, never one](rubric/v1.1.md#two-scores-never-one)): they are reported next to
+the 100 and never summed into it. A site can score 90 and still lose every answer to a competitor
+with more third-party coverage, and the reverse also happens, which is why you want both.
+
+Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.py`: clone the repo or download both
+files. The one-line `curl | python3` above runs level 1.
 
 ## Why this is a different question from SEO
 
@@ -127,8 +147,8 @@ sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
 ## 314 sites, scored in public
 
-**A quarter of them cannot be cited at all.** 80 sites have a gate check at zero — a
-retrieval crawler simply cannot get the content. 19 block AI crawlers by name in
+**A quarter of them are unreadable to AI crawlers.** 80 sites have a gate check at zero — an
+AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 19 block AI crawlers by name in
 `robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 12
 for exactly this reason. **45 serve a page whose body only exists after JavaScript runs.**
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
@@ -156,8 +176,9 @@ points across five separate samples, from 38 sites up to 314), and the same thre
 things — a date in the page template, an opening paragraph that stands on its own, one
 JSON-LD block — are missing from more than half the field.
 
-Every number here is reproducible with the command at the top of this page — and we
-measured how reproducible. Running the whole benchmark twice and comparing every site:
+Every number here is reproducible with the command at the top of this page (the benchmark
+was run with 1.1.0 on 2026-09-09; since 1.1.2 a site can read a few points higher where
+`sameAs` or knowledge-graph lookups were unreachable) — and we measured how reproducible. Running the whole benchmark twice and comparing every site:
 **96% land within ±5, 45% land identically.** Read one site's score as ±5 rather than as
 exact; medians are stable. The unstable part is the gate checks, where five sites flipped
 between runs because their bot protection answered a crawler differently.
@@ -167,9 +188,10 @@ The band, the control experiment and the per-site pairs are in
 For five reference sites we also publish **hand-scored audits** covering all 21 checks,
 with the evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
 
-## Three ways to run it
+## Ways to run it
 
-**CLI** — no install, no dependencies, 20 seconds.
+**CLI** — level 1 is one file with no dependencies, 20 seconds. Levels 2 and 3 add
+`cli/geo_watch.py` from the same release.
 
 ```bash
 python3 cli/geo_score.py example.com            # human-readable
@@ -180,7 +202,8 @@ python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
 python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
 ```
 
-**GitHub Action** — score on every push, fail the build when it regresses.
+**GitHub Action** (level 1) — score on every push, fail the build when it regresses. For level 3 on a
+schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
 
 ```yaml
 - uses: jianruntech/geo-score@v1
@@ -200,6 +223,156 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 The CLI leaves those four checks out of the denominator rather than guessing, so it
 reads a little lower than a full audit — typically by 5 to 15 points on an established
 brand, which has listings and mentions the CLI cannot see.
+
+**MCP server** (all three levels) — `python3 cli/geo_score.py mcp`, for Claude Code, Cursor and
+other agents; see [below](#levels-2-and-3--does-ai-actually-cite-you).
+
+## Levels 2 and 3 · does AI actually cite you?
+
+`--ask` and `watch` put the questions your buyers ask to ChatGPT, Perplexity, Gemini and Claude,
+through each provider's search-enabled API with your own keys, and record who the answers cite:
+you, your competitors, or the third-party pages (forums, review sites) the engines lean on
+instead. Keys are read from the environment; geo-score never writes them anywhere.
+
+```bash
+git clone https://github.com/jianruntech/geo-score && cd geo-score/cli
+export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # any subset of engines works
+python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # level 2
+python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
+# put the questions your buyers ask an AI assistant into queries.csv, then:
+python3 geo_score.py watch run --dry-run            # the plan and the caps; no calls, no cost
+python3 geo_score.py watch run                      # level 3: every question on every engine, saved
+python3 geo_score.py watch diff                     # this run against the last, with a significance test
+```
+
+<details>
+<summary>What a watch run prints (illustrative: made-up brands and canned answers, not a real measurement)</summary>
+
+```
+geo-score watch · Lumo · run 20260926T083000Z · api channel
+
+3 questions × 3 engines × 1 = 9 planned · 9 answered · 0 failed · 0 skipped
+
+Cited in 67% of answers (6 of 9, 95% CI 35–88%) · mentioned in 67%
+Your site was cited somewhere for 3 of 3 questions.
+
+By engine
+  engine          model             cited         95% CI   mentioned  avg rank
+  chatgpt-api     gpt-6-luna        3/3 100%      44–100%  100%       1.0
+  perplexity-api  sonar             0/3 0%        0–56%    0%         —
+  gemini-api      gemini-3.8-flash  3/3 100%      44–100%  100%       1.0
+  claude-api      claude-sonnet-5   not measured                                no_key: set ANTHROPIC_API_KEY
+
+Share of voice
+              cited  95% CI  mentioned
+  Lumo (you)  67%    35–88%  67%
+  Pixa        67%    35–88%  67%
+  Reelcraft   33%    12–65%  33%
+
+Sources the engines cite most (not yours)
+  domain             answers  share  owner
+  pixa.example       6        67%    Pixa
+  reddit.com         6        67%
+  reelcraft.example  3        33%    Reelcraft
+  g2.com             3        33%
+
+By question type
+  type         cited    95% CI  mentioned
+  alternative  2/3 67%  21–94%  67%
+  list         2/3 67%  21–94%  67%
+  pricing      2/3 67%  21–94%  67%
+
+What the engines searched for (from 6 answers that show it)
+  times  search
+  3      免费 ai 视频工具
+  1      best free ai video generator 2026
+  1      哪个 ai 视频生成器有免费额度 2026
+  1      pixa alternatives 2026
+
+Ledger
+9 questions asked · 9 API requests · 3,180 in / 2,400 out tokens · 9 searches · $0.05 + 3 answers with no price (add prices to geo-score-watch.json)
+Caps: at most 120 questions.
+
+Read this before quoting the numbers
+- API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.
+- The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, and diff only calls a change a change when a two-proportion test says so (p < 0.05).
+- Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
+- This measures citations. It does not predict traffic, rankings or revenue.
+```
+</details>
+
+**Level 2** asks each engine each question once and prints the result under the readiness
+report (and into the report's `citation` object with `--json`). One ask is an anecdote: use it to
+see what the engines say today, not to measure a rate.
+
+**Level 3** keeps a fixed question list, saves every answer under `.geo-score/watch/runs/`
+([schema](schema/watch.v1.json)), and reports:
+
+| | Meaning |
+|---|---|
+| **cited** | The answer links to a URL you own: one of your `domains` (subdomains included), or a `url_prefixes` entry such as your Amazon store or GitHub org |
+| **rank** | Your position among the distinct domains the answer cites. Rank 1 means you were the first source |
+| **mentioned** | The answer names you, one of your `aliases` or your domain. Chinese, Japanese and Korean names match anywhere; all other names match whole words only |
+| **share of voice** | The same two rates for each competitor, over the same answers |
+| **sources** | The third-party domains cited most often: the pages the engines trust in your category |
+| **gaps** | Questions where a competitor is cited and you are not, in any answer |
+| **searches** | The searches the engine actually ran before answering, where the API exposes them (OpenAI, Gemini, Claude). This is the query fan-out, observed rather than guessed |
+| **ledger** | Questions asked, API requests, tokens, searches and cost. Every run keeps its own ledger |
+
+**What it will not tell you.**
+
+- **It is not the ChatGPT app.** Answers come from each provider's API with web search switched
+  on. The consumer apps use other models, prompts and personalisation. Compare API runs with API
+  runs; never pool them with answers sampled by hand in the apps.
+- **One answer is an anecdote.** Every rate carries a 95% Wilson interval, and `diff` calls
+  something a change only when a two-proportion test says so (p < 0.05).
+- **Not measured is not zero.** An engine without a key, a failed call and a capped call are all
+  reported as not measured, and none of them lowers your rate.
+- **Citations are not traffic.** Nothing here predicts visits, rankings or revenue.
+
+**Engines.** Pin the model you mean in the config and keep it fixed between runs; `diff` flags a
+run where the model changed. OpenRouter covers hundreds of models with one key.
+
+| Engine id (default) | Provider | Key | Default model | What counts as cited | Searches shown | Cost reported |
+|---|---|---|---|---|---|---|
+| `chatgpt-api` | OpenAI Responses API + `web_search` | `OPENAI_API_KEY` | `gpt-6-luna` | `url_citation` annotations | yes | no, set prices |
+| `perplexity-api` | Perplexity Sonar | `PERPLEXITY_API_KEY` | `sonar` | numbered sources the answer uses | no | yes |
+| `gemini-api` | Gemini Interactions API + `google_search` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini-3.8-flash` | `url_citation` annotations | yes | no, set prices |
+| `claude-api` | Anthropic Messages + `web_search` tool | `ANTHROPIC_API_KEY` | `claude-sonnet-5` | citations on the answer text | yes | no, set prices |
+| any id you choose | OpenRouter + `web` plugin | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` annotations | no | yes |
+
+**Caps and cost.** `max_calls` is an exact cap on questions asked in a run, and a plan that
+exceeds it refuses to start. `budget_usd` is checked before every call against the spend so far
+plus the most expensive call seen on that engine, so it can be exceeded by at most one call per
+engine; with a budget set, engines whose cost cannot be known are left out unless you pass
+`--allow-unpriced`. Every run keeps a ledger of requests, tokens, searches
+and cost. Configuration, prices and all commands: [cli/README.md](cli/README.md#watch).
+
+**From an agent.** `geo_score.py mcp` is a stdio MCP server with no dependencies. It serves
+`score_site` (level 1, free) and `ask`, `run`, `list_runs`, `report`, `diff` (levels 2 and 3). An
+agent can only tighten your caps, never loosen them.
+
+```bash
+claude mcp add geo-score -- python3 /abs/path/geo-score/cli/geo_score.py mcp -c /abs/path/geo-score-watch.json
+```
+
+**Every week.** Citation rates move slowly and noisily: run on the same weekday with the same
+questions and models, and read `diff`, not single runs.
+[examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml) does it on a schedule with keys from
+repository secrets and commits each run, so the history lives in git. Run files contain your
+questions and the full answers: use a private repository if they are confidential.
+
+**Run it yourself, or have it run for you.** Everything here is MIT; the tool has no paid edition.
+You pay your model providers directly and the ledger shows what each run used. What needs people
+rather than an API, [Jianrun](https://www.jianruntech.com/en/) does as a service:
+
+| | Run it yourself (free) | Run by Jianrun |
+|---|---|---|
+| Channel | Provider APIs with search | APIs and the consumer apps, sampled by hand each week |
+| Engines | OpenAI, Perplexity, Gemini, Anthropic, anything on OpenRouter | ChatGPT with search, Perplexity, Gemini, Google AI Overviews, Copilot; Chinese engines when you sell into China |
+| Report | Text, Markdown, CSV, JSON | A weekly report with the AIV dashboard: citation trend, per-engine rates, facts AI gets wrong about you, readiness history |
+| When citations drop | Out of scope | We do the fixing |
+| Price | Your API bill | AEO delivery system, from US$5,780 per 3 months, AIV dashboard included. [See pricing](https://www.jianruntech.com/en/#pricing) |
 
 ## Why a rubric, not just a tool
 
@@ -233,7 +406,7 @@ This is the part most tools leave out, so it's stated plainly.
   engines *can* cite you. Whether they *do* depends on competition, query intent and
   factors no external audit can observe. Citation performance is reported as a separate,
   unscored block and never folded into the 100 — see
-  [Two scores](rubric/v1.1.md#two-scores-never-one).
+  [Two scores](rubric/v1.1.md#two-scores-never-one). Measure it with levels 2 and 3 above.
 - **Brand Credibility and the named-author check need human judgement.** "Is this a real
   identifiable person" and "is this mention independent" are not fully automatable.
   Treat those ~24 points as assisted, not automatic.

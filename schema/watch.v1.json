@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jianruntech/geo-score/blob/main/schema/watch.v1.json",
+  "title": "geo-score watch run",
+  "description": "One saved run: every question asked to every engine, what each answer cited, and what it cost. The summary is derived from the samples and can be recomputed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "tool", "channel", "run_id", "started_at", "finished_at", "interrupted", "brand",
+               "competitors", "country", "runs", "engines", "queries", "caps", "ledger", "samples", "notes", "summary"],
+  "properties": {
+    "format": {"const": "geo-score/watch.v1"},
+    "tool": {"type": "string"},
+    "channel": {"enum": ["api"], "description": "Answers came from the providers' APIs, not the consumer apps."},
+    "run_id": {"type": "string", "pattern": "^\\d{8}T\\d{6}Z(-\\d{1,3})?$"},
+    "started_at": {"type": "string"},
+    "finished_at": {"type": "string"},
+    "interrupted": {"type": "boolean"},
+    "brand": {"$ref": "#/$defs/entity"},
+    "competitors": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "country": {"type": ["string", "null"]},
+    "runs": {"type": "integer", "minimum": 1},
+    "engines": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "provider", "model", "status"],
+      "properties": {
+        "id": {"type": "string"},
+        "provider": {"enum": ["openai", "perplexity", "gemini", "anthropic", "openrouter"]},
+        "model": {"type": "string"},
+        "status": {"enum": ["measured", "no_key", "no_price"]},
+        "stopped": {"enum": ["engine_failed", "unpriced"]},
+        "error": {"type": "string"}
+      }}},
+    "queries": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["query_id", "query"],
+      "properties": {
+        "query_id": {"type": "string"}, "query": {"type": "string"},
+        "intent_tier": {"type": "string"}, "target_url": {"type": "string"}
+      }}},
+    "caps": {"type": "object", "additionalProperties": false, "required": ["max_calls", "budget_usd"],
+      "properties": {"max_calls": {"type": "integer", "minimum": 1}, "budget_usd": {"type": ["number", "null"]}}},
+    "ledger": {"type": "object", "additionalProperties": false,
+      "required": ["questions_asked", "api_requests", "http_attempts", "errors", "input_tokens", "output_tokens",
+                   "search_calls", "cost_usd", "unpriced_answers", "cost_complete"],
+      "properties": {
+        "questions_asked": {"type": "integer"}, "api_requests": {"type": "integer"},
+        "http_attempts": {"type": "integer"}, "errors": {"type": "integer"},
+        "input_tokens": {"type": "integer"}, "output_tokens": {"type": "integer"},
+        "search_calls": {"type": "integer"}, "cost_usd": {"type": "number", "minimum": 0},
+        "unpriced_answers": {"type": "integer"}, "cost_complete": {"type": "boolean"}
+      }},
+    "samples": {"type": "array", "items": {"$ref": "#/$defs/sample"}},
+    "notes": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "object"}
+  },
+  "$defs": {
+    "entity": {"type": "object", "additionalProperties": false, "required": ["name", "domains", "url_prefixes", "aliases"],
+      "properties": {
+        "name": {"type": "string"},
+        "domains": {"type": "array", "items": {"type": "string"}},
+        "url_prefixes": {"type": "array", "items": {"type": "string"}},
+        "aliases": {"type": "array", "items": {"type": "string"}}
+      }},
+    "sample": {"type": "object", "additionalProperties": false, "required": ["query_id", "engine", "run", "status"],
+      "properties": {
+        "query_id": {"type": "string"},
+        "engine": {"type": "string"},
+        "run": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["ok", "error", "skipped"]},
+        "skip_reason": {"enum": ["max_calls", "budget", "interrupted", "engine_failed", "unpriced"]},
+        "error": {"type": "string"},
+        "cited": {"type": "boolean", "description": "The answer cites a URL the brand owns."},
+        "rank": {"type": ["integer", "null"], "minimum": 1,
+                 "description": "Position of the brand among the distinct domains the answer cites."},
+        "quoted_url": {"type": ["string", "null"]},
+        "mentioned": {"type": "boolean", "description": "The answer text names the brand, an alias or its domain."},
+        "competitors": {"type": "object", "additionalProperties": {
+          "type": "object", "additionalProperties": false, "required": ["cited", "rank", "mentioned"],
+          "properties": {"cited": {"type": "boolean"}, "rank": {"type": ["integer", "null"]},
+                         "mentioned": {"type": "boolean"}}}},
+        "citations": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["url", "domain", "title"],
+          "properties": {"url": {"type": "string"}, "domain": {"type": "string"}, "title": {"type": "string"}}}},
+        "search_queries": {"type": "array", "items": {"type": "string"},
+                           "description": "What the engine searched for, when the provider exposes it."},
+        "answer": {"type": "string"},
+        "answer_truncated": {"type": "boolean"},
+        "usage": {"type": "object", "additionalProperties": false,
+          "required": ["input_tokens", "output_tokens", "search_calls", "api_calls"],
+          "properties": {"input_tokens": {"type": "integer"}, "output_tokens": {"type": "integer"},
+                         "search_calls": {"type": "integer"}, "api_calls": {"type": "integer"}}},
+        "cost_usd": {"type": ["number", "null"]},
+        "seconds": {"type": "number"}
+      }}
+  }
+}
