@@ -229,6 +229,51 @@ _zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>"
 ok(gs.is_cjk(_zh_page), "a Chinese page stays Chinese even when its HTML is mostly CSS/JS")
 ok(not gs.is_cjk("<html><body><p>" + ("An English page with a 中文 word. " * 20) + "</p></body></html>"), "a stray CJK word does not make a page Chinese")
 
+# ── CI outputs: SARIF 2.1.0 and JUnit from the same run as the report ──
+# 一次抓取、多种输出。分数单跑本来就有 ±5 的波动，跑两遍再拼出来的摘要和日志可能对不上。
+mixed = dict(full); mixed["g.ssr"] = 0; mixed["p2.freshness"] = 0; mixed["p2.answer-passages"] = 2
+mixed["p4.cn-engines"] = None
+sar = gs.as_sarif(mk(mixed))
+json.loads(json.dumps(sar))
+eq(sar["version"], "2.1.0", "SARIF declares 2.1.0")
+drv = sar["runs"][0]["tool"]["driver"]
+eq(len(drv["rules"]), len(gs.SPEC), "one SARIF rule per rubric check")
+eq(drv["version"], gs.__version__, "the SARIF driver carries the tool version")
+by = {r["ruleId"]: r for r in sar["runs"][0]["results"]}
+eq(by["g.ssr"]["level"], "error", "a gate at zero is a SARIF error")
+eq(by["p2.freshness"]["level"], "warning", "a non-gate check at zero is a warning")
+eq(by["p2.answer-passages"]["level"], "note", "partial credit is a note")
+ok("p4.cn-engines" not in by, "an unobservable check is not reported as a problem")
+ok("p1.robots-ai" not in by and "g.robots" not in by, "a check at full marks produces no result")
+ok(all(r["ruleId"] in {x["id"] for x in drv["rules"]} for r in sar["runs"][0]["results"]),
+   "every result points at a declared rule")
+ok(all(r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "https://x.test"
+       for r in sar["runs"][0]["results"]), "results are located at the scored URL")
+eq(sar["runs"][0]["properties"]["normalised"], gs.score(mk(mixed))[4], "SARIF carries the same score as the report")
+eq(len({r["partialFingerprints"]["geoScoreCheck/v1"] for r in sar["runs"][0]["results"]}),
+   len(sar["runs"][0]["results"]), "fingerprints are unique, so code scanning can track a check across runs")
+
+jx = gs.as_junit(mk(mixed))
+jd = xml.dom.minidom.parseString(jx.encode("utf-8"))
+suites = jd.getElementsByTagName("testsuites")[0]
+eq(int(suites.getAttribute("tests")), len(gs.SPEC), "one JUnit test per rubric check")
+eq(int(suites.getAttribute("failures")), 2, "only checks at zero fail")
+eq(int(suites.getAttribute("skipped")), 1, "an unobservable check is skipped, never failed")
+eq(len(jd.getElementsByTagName("failure")), 2, "the failure count matches the failure elements")
+fl = [f.getAttribute("type") for f in jd.getElementsByTagName("failure")]
+ok("gate" in fl and "check" in fl, "a failing gate is typed apart from a failing check")
+nasty = mk(full); nasty["tier"] = dict(full, **{"p2.freshness": 0}); nasty["ev"]["p2.freshness"] = 'dates <none> & "quotes" ]]>'
+xml.dom.minidom.parseString(gs.as_junit(nasty).encode("utf-8"))
+ok(True, "evidence with markup characters still yields well-formed JUnit")
+
+# 三个输出参数只接单站，和 --compare 一起用要报错而不是只写第一个站
+import subprocess
+_cli = os.path.join(os.path.dirname(os.path.abspath(__file__)), "geo_score.py")
+for flag in ("--json-out", "--sarif", "--junit"):
+    pr = subprocess.run([sys.executable, _cli, "a.invalid", "--compare", "b.invalid", flag, os.devnull, "--quiet"],
+                        capture_output=True, text=True, timeout=60)
+    ok(pr.returncode == 2 and "one site at a time" in pr.stderr, "%s with --compare is refused, got %s" % (flag, pr.returncode))
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

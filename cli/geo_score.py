@@ -1230,6 +1230,77 @@ def as_json(res):
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
                "Checks needing off-site search or human judgement left the denominator."])
 
+RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md" % RUBRIC
+
+def _level(cid, t, mx):
+    """How loudly a CI system should show a check: a gate at zero blocks citation outright."""
+    if t == 0:
+        return "error" if cid.startswith("g.") else "warning"
+    return "note"
+
+def as_sarif(res):
+    """SARIF 2.1.0: one rule per rubric check, one result per check below full marks.
+    Readable by any SARIF viewer and by GitHub code scanning (upload-sarif)."""
+    rows, total, den, b, norm, bd, capped = score(res)
+    target = res["root"]
+    rules = [{"id": cid, "name": re.sub(r"[^A-Za-z0-9]+", " ", name).title().replace(" ", ""),
+              "shortDescription": {"text": name},
+              "helpUri": RUBRIC_URL,
+              "properties": {"pillar": pil, "points": pts, "tags": ["geo", "ai-visibility", pil.lower().replace(" ", "-")]}}
+             for cid, pil, name, pts, _ in SPEC]
+    results = []
+    for cid, pil, name, t, mx, e in rows:
+        if t is None or t >= mx:
+            continue
+        tr = tier_reason(cid, t, mx)
+        results.append({
+            "ruleId": cid, "level": _level(cid, t, mx),
+            "message": {"text": "%s: %d/%d. %s%s" % (name, t, mx, e, (" " + tr) if tr else "")},
+            "locations": [{"physicalLocation": {"artifactLocation": {"uri": target}}}],
+            "partialFingerprints": {"geoScoreCheck/v1": "%s|%s" % (cid, target)},
+            "properties": {"points": t, "max": mx, "pillar": pil}})
+    return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0",
+            "runs": [{"tool": {"driver": {"name": "geo-score", "version": __version__, "semanticVersion": __version__,
+                                          "informationUri": "https://github.com/jianruntech/geo-score", "rules": rules}},
+                      "automationDetails": {"id": "geo-score/%s/" % urllib.parse.urlsplit(target).netloc},
+                      "results": results,
+                      "properties": {"rubric": RUBRIC, "readiness": total, "observable_max": den,
+                                     "normalised": norm, "band": bd, "gate_capped": capped}}]}
+
+def as_junit(res):
+    """JUnit XML: one test per rubric check. A check at zero fails; partial credit passes with its points
+    in the name; a check the CLI cannot observe is skipped, never failed."""
+    from xml.sax.saxutils import escape, quoteattr
+    rows, total, den, b, norm, bd, capped = score(res)
+    fails = sum(1 for r in rows if r[3] == 0)
+    skips = sum(1 for r in rows if r[3] is None)
+    out = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<testsuites name="geo-score" tests="%d" failures="%d" skipped="%d">' % (len(rows), fails, skips),
+           '  <testsuite name=%s tests="%d" failures="%d" skipped="%d" timestamp="%s">'
+           % (quoteattr("AIV readiness %s" % res["root"]), len(rows), fails, skips, time.strftime("%Y-%m-%dT%H:%M:%S")),
+           '    <properties>']
+    for k, v in (("normalised", norm), ("band", bd), ("rubric", RUBRIC), ("tool", __version__), ("gate_capped", capped)):
+        out.append('      <property name=%s value=%s/>' % (quoteattr(k), quoteattr(str(v))))
+    out.append('    </properties>')
+    for cid, pil, name, t, mx, e in rows:
+        label = "%s %s (%s)" % (cid, name, "—" if t is None else "%d/%d" % (t, mx))
+        out.append('    <testcase classname=%s name=%s>' % (quoteattr("geo-score." + pil.replace(" ", "")), quoteattr(label)))
+        if t is None:
+            out.append('      <skipped message=%s/>' % quoteattr("not observable by the CLI: " + e[:300]))
+        elif t == 0:
+            out.append('      <failure message=%s type=%s>%s</failure>'
+                       % (quoteattr("%s scored 0/%d" % (name, mx)), quoteattr("gate" if cid.startswith("g.") else "check"),
+                          escape(e + " " + tier_reason(cid, t, mx))))
+        out.append('    </testcase>')
+    out += ['  </testsuite>', '</testsuites>']
+    return "\n".join(out) + "\n"
+
+def _write(path, text):
+    d = os.path.dirname(os.path.abspath(path))
+    os.makedirs(d, exist_ok=True)
+    with io.open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
 def _watch_module():
     """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside."""
     import importlib.util
@@ -1321,9 +1392,11 @@ def compare(pairs, args):
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
         w = _watch_module()
+        # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
+        me = "geo-score" if os.path.basename(sys.argv[0]).startswith("geo-score") else "geo_score.py"
         if sys.argv[1] == "watch":
-            sys.exit(w.main(sys.argv[2:]))
-        sys.exit(w.main(["mcp"] + sys.argv[2:], prog="geo_score.py"))
+            sys.exit(w.main(sys.argv[2:], prog=me + " watch"))
+        sys.exit(w.main(["mcp"] + sys.argv[2:], prog=me))
     ap = argparse.ArgumentParser(prog="geo-score",
         description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.",
         epilog="Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
@@ -1331,6 +1404,9 @@ def main():
                "`geo_score.py mcp` serves all three levels over MCP.")
     ap.add_argument("url")
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
+    ap.add_argument("--json-out", metavar="FILE", help="also write the JSON report to FILE (one run, several outputs)")
+    ap.add_argument("--sarif", metavar="FILE", help="also write SARIF 2.1.0 (code scanning, SARIF viewers) to FILE")
+    ap.add_argument("--junit", metavar="FILE", help="also write JUnit XML (CI test reports) to FILE")
     ap.add_argument("--explain", "-e", action="store_true", help="show the evidence behind every check")
     ap.add_argument("--brief", action="store_true", help="pillar totals and the three biggest gaps only")
     ap.add_argument("--share", action="store_true",
@@ -1362,6 +1438,8 @@ def main():
     targets = [url] + [(u if "://" in u else "https://" + u) for u in (a.compare or [])]
     if a.ask and len(targets) > 1:
         raise RuntimeError("--ask works with one site at a time; drop --compare")
+    if (a.json_out or a.sarif or a.junit) and len(targets) > 1:
+        raise RuntimeError("--json-out, --sarif and --junit work with one site at a time; drop --compare")
     watch = _watch_module() if a.ask else None
     if len(targets) > 1:
         done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
@@ -1390,6 +1468,12 @@ def main():
             report(res, a)
         if watch and not a.json:
             citation_report(crun, res["citation"], watch)
+        if a.json_out:
+            _write(a.json_out, json.dumps(as_json(res), ensure_ascii=False, indent=2) + "\n")
+        if a.sarif:
+            _write(a.sarif, json.dumps(as_sarif(res), ensure_ascii=False, indent=2) + "\n")
+        if a.junit:
+            _write(a.junit, as_junit(res))
     if a.share:
         line = share_line(res)
         if not a.json:
@@ -1412,7 +1496,8 @@ def main():
             print("%sgeo-score %d is below --fail-under %d%s" % (c.red, norm, a.fail_under, c.r), file=sys.stderr)
             sys.exit(1)
 
-if __name__ == "__main__":
+def cli():
+    """Console entry point (`geo-score` after `pipx install`); the same exits as running the file."""
     try:
         main()
     except KeyboardInterrupt:
@@ -1420,3 +1505,11 @@ if __name__ == "__main__":
     except RuntimeError as e:
         print("%s%s%s" % (c.red, e, c.r), file=sys.stderr)
         sys.exit(2)
+
+def mcp_main():
+    """Console entry point `geo-score-mcp`: the MCP server over stdio, for MCP client configs."""
+    sys.argv = [sys.argv[0], "mcp"] + sys.argv[1:]
+    cli()
+
+if __name__ == "__main__":
+    cli()

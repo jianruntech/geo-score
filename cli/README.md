@@ -17,8 +17,11 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--brief` | Pillar totals and the three biggest gaps only — what fits in a screenshot |
 | `--explain`, `-e` | Print the evidence behind every check, not just the score |
 | `--json` | Machine-readable output conforming to [`schema/report.v2.json`](../schema/report.v2.json) |
+| `--json-out FILE` | Also write that JSON to FILE, from the same run as the report on screen |
+| `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). For GitHub code scanning or any SARIF viewer |
+| `--junit FILE` | Also write JUnit XML: one test per check. A check at zero fails, a check the CLI cannot observe is skipped, partial credit passes |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
-| `--compare URL` | Score another site too and print them side by side. Repeatable. |
+| `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
@@ -196,6 +199,16 @@ Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
     url: https://example.com
     fail-under: 40
     json-out: geo-score.json
+    sarif: geo-score.sarif      # optional
+    junit: geo-score.xml        # optional
 ```
 
-Outputs `score`, `band` and `report`, and writes a scored table to the job summary.
+The action scores the site once. That one run prints the evidence to the log, writes the scored
+table to the job summary, annotates checks at zero (gates as errors, other checks as warnings;
+`annotations: false` turns this off) and writes whichever files you asked for. Outputs: `score`,
+`band`, `gate-capped`, `report` and `report-path`. Inputs reach the script as environment
+variables, never pasted into it, so a URL cannot run shell code.
+
+To see the results in the repository's Security tab, upload the SARIF file
+([example](../examples/ci/github-actions.yml)). Every result is located at the scored URL rather than
+a file in the repository.

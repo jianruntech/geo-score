@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geo-score"
+dynamic = ["version"]
+description = "Can AI engines cite your site, and do they? A free 0-100 readiness score against an open GEO rubric, plus citation checks through the AI engines' APIs with your own keys."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Jianrun Tech", email = "hello@jianruntech.com" }]
+requires-python = ">=3.8"
+dependencies = []          # standard library only, by design
+keywords = ["geo", "aeo", "generative-engine-optimization", "ai-visibility", "llm-citations", "seo", "rubric", "mcp"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Internet :: WWW/HTTP :: Site Management",
+]
+
+[project.urls]
+Homepage = "https://github.com/jianruntech/geo-score"
+Changelog = "https://github.com/jianruntech/geo-score/blob/main/CHANGELOG.md"
+Rubric = "https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md"
+Issues = "https://github.com/jianruntech/geo-score/issues"
+
+[project.scripts]
+geo-score = "geo_score:cli"
+geo-score-mcp = "geo_score:mcp_main"
+
+[tool.setuptools]
+package-dir = { "" = "cli" }
+py-modules = ["geo_score", "geo_watch"]
+
+[tool.setuptools.dynamic]
+version = { attr = "geo_score.__version__" }
