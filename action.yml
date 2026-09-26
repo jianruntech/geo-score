@@ -15,60 +15,71 @@ inputs:
     required: false
     default: "8"
   json-out:
-    description: "Write the machine-readable report to this path."
+    description: "Write the machine-readable report (schema/report.v2.json) to this path."
     required: false
+  sarif:
+    description: "Write SARIF 2.1.0 to this path, for github/codeql-action/upload-sarif or any SARIF viewer."
+    required: false
+  junit:
+    description: "Write JUnit XML to this path, for CI test-report tools."
+    required: false
+  annotations:
+    description: "Annotate the run with checks at zero (gates as errors, others as warnings). Set to false to turn off."
+    required: false
+    default: "true"
 outputs:
   score:
     description: "Normalised score, 0-100."
     value: ${{ steps.run.outputs.score }}
   band:
-    description: "Band name — Not started / Early / Growing / Solid / Leading."
+    description: "Band name: Not started / Early / Growing / Solid / Leading."
     value: ${{ steps.run.outputs.band }}
+  gate-capped:
+    description: "true when a gate check is at zero and the score is capped."
+    value: ${{ steps.run.outputs.gate-capped }}
   report:
     description: "The full report as JSON."
     value: ${{ steps.run.outputs.report }}
+  report-path:
+    description: "Where the JSON report was written."
+    value: ${{ steps.run.outputs.report-path }}
 runs:
   using: "composite"
   steps:
     - id: run
       shell: bash
+      # inputs arrive as environment variables, never pasted into the script: a url or path
+      # containing $(...) or a quote must stay data
+      env:
+        GEO_URL: ${{ inputs.url }}
+        GEO_FAIL_UNDER: ${{ inputs.fail-under }}
+        GEO_SAMPLE: ${{ inputs.sample }}
+        GEO_JSON_OUT: ${{ inputs.json-out }}
+        GEO_SARIF: ${{ inputs.sarif }}
+        GEO_JUNIT: ${{ inputs.junit }}
+        GEO_ANNOTATIONS: ${{ inputs.annotations }}
+        GEO_ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail
-        OUT="${{ inputs.json-out }}"
-        [ -n "$OUT" ] || OUT="$(mktemp)"
-        python3 "${{ github.action_path }}/cli/geo_score.py" "${{ inputs.url }}" \
-          --sample "${{ inputs.sample }}" --json --quiet > "$OUT"
+        GEO_URL="${GEO_URL:-}" GEO_FAIL_UNDER="${GEO_FAIL_UNDER:-}" GEO_SAMPLE="${GEO_SAMPLE:-8}"
+        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
+        [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
+        [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
+        if [ -n "$GEO_FAIL_UNDER" ] && ! [[ "$GEO_FAIL_UNDER" =~ ^[0-9]+$ ]]; then
+          echo "::error title=geo-score::fail-under must be a whole number from 0 to 100, got '$GEO_FAIL_UNDER'"; exit 2
+        fi
+        OUT="${GEO_JSON_OUT:-${RUNNER_TEMP:-/tmp}/geo-score-report.json}"
+        ARGS=(--sample "$GEO_SAMPLE" --explain --json-out "$OUT")
+        [ -z "$GEO_SARIF" ] || ARGS+=(--sarif "$GEO_SARIF")
+        [ -z "$GEO_JUNIT" ] || ARGS+=(--junit "$GEO_JUNIT")
+        # one run: the log, the summary, the annotations and every file describe the same fetch
+        if ! python3 "$GEO_ACTION_PATH/cli/geo_score.py" "$GEO_URL" "${ARGS[@]}"; then
+          echo "::error title=geo-score::could not score $GEO_URL (see the log above)"; exit 2
+        fi
+        echo "report-path=$OUT" >> "$GITHUB_OUTPUT"
+        python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS"
         SCORE=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['normalised'])" "$OUT")
-        BAND=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['band'])" "$OUT")
-        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
-        echo "band=$BAND"   >> "$GITHUB_OUTPUT"
-        { echo "report<<GEOEOF"; cat "$OUT"; echo; echo "GEOEOF"; } >> "$GITHUB_OUTPUT"
-        python3 "${{ github.action_path }}/cli/geo_score.py" "${{ inputs.url }}" \
-          --sample "${{ inputs.sample }}" --explain || true
-        {
-          echo "## AI visibility — ${{ inputs.url }}"
-          echo
-          echo "**$SCORE / 100 · $BAND**"
-          echo
-          echo '| Check | Score | Why |'
-          echo '|---|:-:|---|'
-          python3 - "$OUT" <<'PY'
-import json,sys
-d=json.load(open(sys.argv[1]))
-for c in d["checks"]:
-    if c["id"].startswith("b."): continue
-    s = f'{c["points"]}/{c["max"]}' if c["state"]=="scored" else "—"
-    why = (c.get("evidence") or c.get("reason") or "").replace("|","\\|")
-    if len(why) > 150:
-        # cut on a word boundary — the CI summary is the most-read surface this action
-        # has, and a sentence ending mid-word reads like the tool broke
-        why = why[:150].rsplit(" ", 1)[0].rstrip(",.;:") + " …"
-    print(f'| `{c["id"]}` | {s} | {why} |')
-PY
-          echo
-          echo "Scored against the open [AIV rubric v1.1](https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md)."
-        } >> "$GITHUB_STEP_SUMMARY"
-        if [ -n "${{ inputs.fail-under }}" ] && [ "$SCORE" -lt "${{ inputs.fail-under }}" ]; then
-          echo "::error::geo-score $SCORE is below the ${{ inputs.fail-under }} threshold"
+        if [ -n "$GEO_FAIL_UNDER" ] && [ "$SCORE" -lt "$GEO_FAIL_UNDER" ]; then
+          echo "::error title=geo-score::$SCORE is below the $GEO_FAIL_UNDER threshold"
           exit 1
         fi

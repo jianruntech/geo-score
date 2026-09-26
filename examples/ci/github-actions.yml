@@ -8,6 +8,9 @@ on:
 jobs:
   score:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write     # only needed for the SARIF upload step
     steps:
       - uses: actions/checkout@v4
       - uses: jianruntech/geo-score@v1
@@ -16,6 +19,12 @@ jobs:
           url: https://example.com
           fail-under: 40           # remove this to report without failing the build
           json-out: geo-score.json
-      - run: echo "Scored ${{ steps.geo.outputs.score }} — ${{ steps.geo.outputs.band }}"
+          sarif: geo-score.sarif   # optional: drop this and the upload-sarif step if you do not use code scanning
+      - run: echo "Scored ${{ steps.geo.outputs.score }} (${{ steps.geo.outputs.band }})"
+      # report-path is set once the site was scored, so these also run when fail-under fails the job
       - uses: actions/upload-artifact@v4
+        if: always() && steps.geo.outputs.report-path != ''
         with: {name: geo-score-report, path: geo-score.json}
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.geo.outputs.report-path != ''
+        with: {sarif_file: geo-score.sarif, category: geo-score}

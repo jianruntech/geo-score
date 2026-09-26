@@ -4,7 +4,10 @@
 
 Copy [`github-actions.yml`](github-actions.yml) into `.github/workflows/` and change the
 `url`. It scores on every push to `main` and once a week, writes a scored table to the
-job summary, and uploads the JSON report as an artifact.
+job summary, annotates the checks at zero, uploads the JSON report as an artifact, and sends
+the SARIF file to code scanning, so each check at zero shows up as an alert in the Security tab
+and closes by itself once the check passes. Drop the `sarif` input and the `upload-sarif` step if
+you do not use code scanning; for a test-report tool, use the `junit` input instead.
 
 `fail-under` is optional. Leave it out while you are establishing a baseline; add it
 once you know your number, so a regression fails the build instead of going unnoticed.
