@@ -15,7 +15,6 @@ Rubric: https://github.com/jianruntech/geo-score
 """
 import argparse, concurrent.futures as cf, html, io, json, os, re, sys, time, zlib
 import urllib.error, urllib.parse, urllib.request
-from collections import Counter
 
 __version__ = "1.2.0"
 RUBRIC = "v1.1"
@@ -611,7 +610,7 @@ def discover(base, want=8, verbose=False):
 def run(base, sample=8, verbose=False):
     origin, scope = scope_of(base)
     root = origin + scope
-    ev, tier, notes = {}, {}, []
+    ev, tier = {}, {}
     def say(msg):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
@@ -640,7 +639,6 @@ def run(base, sample=8, verbose=False):
         k, v = k.strip().lower(), v.strip()
         if k == "user-agent": cur = v.lower(); groups.setdefault(cur, [])
         elif cur is not None and k in ("allow", "disallow"): groups[cur].append((k, v))
-    names = [u.lower() for u, _ in RETRIEVAL_UAS]
     named = [u for u, _ in RETRIEVAL_UAS if u.lower() in groups]
     def blocked(g):
         return any(k == "disallow" and v in ("/", "/*") for k, v in groups.get(g, []))
@@ -678,7 +676,7 @@ def run(base, sample=8, verbose=False):
     okc = sum(1 for name, rs in per.items() if all(x.ok for x in rs))
     base_len = {u: len(visible_text(live[u].text)) for u in probe}
     consistent = 0
-    for name, rs in per.items():
+    for _name, rs in per.items():
         if not all(x.ok for x in rs): continue
         good = all(abs(len(visible_text(r.text)) - base_len[u]) <= max(400, base_len[u] * .25)
                    for u, r in zip(probe, rs))
@@ -812,7 +810,7 @@ def run(base, sample=8, verbose=False):
     QP, NAV = QP_INTENT, NAV_LABEL
 
     qi = 0
-    for u, r in live.items():
+    for _u, r in live.items():
         hs = [h for h in headings(r.text) if 3 <= len(h) <= 120]
         if any(QP.search(h) and not NAV.match(h) for h in hs): qi += 1
     tier["p2.question-intent"] = 7 if qi >= n * .75 else (5 if qi >= n * .5 else (3 if qi else 0))
@@ -833,7 +831,7 @@ def run(base, sample=8, verbose=False):
 
     # ── p2.sourced-stats ──
     pages_with_nums = pages_sourced = tot_num = cited = 0
-    for u, r in live.items():
+    for _u, r in live.items():
         body = main_html(r.text)
         vis = visible_text(body)
         nums = re.findall(r"(?<![\w-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![\w-])", vis)
@@ -911,7 +909,7 @@ def run(base, sample=8, verbose=False):
 
     # ── p4.answer-shape ──
     shaped = 0
-    for u, r in live.items():
+    for _u, r in live.items():
         b = main_html(r.text)
         hs = len(re.findall(r"<h[23]\b", b, re.I)); li = len(re.findall(r"<li\b", b, re.I))
         tb = len(re.findall(r"<table\b", b, re.I))
@@ -1047,7 +1045,7 @@ def run(base, sample=8, verbose=False):
 def score(res):
     got = den = 0; gate_zero = False
     rows = []
-    for cid, pil, name, pts, tiers in SPEC:
+    for cid, pil, name, pts, _tiers in SPEC:
         t = res["tier"].get(cid)
         if t is None:
             rows.append((cid, pil, name, None, pts, res["ev"].get(cid, ""))); continue
@@ -1196,7 +1194,7 @@ def report(res, args):
                   reverse=True)[:3]
     if gaps:
         print("  %sBiggest gaps%s" % (c.b, c.r))
-        for d, cid, name, tr in gaps:
+        for d, _cid, name, tr in gaps:
             need = tr.split("needs: ", 1)[-1] if "needs: " in tr else ""
             print("   %s+%-2d%s  %-32s %s%s%s" % (c.brass, d, c.r, name, c.grey, need[:60], c.r))
         print()
@@ -1370,13 +1368,10 @@ def compare(pairs, args):
         mark = " " if (not gap or max(gap) == min(gap)) else c.brass + "›" + c.r
         print("   %s %-33s%s" % (mark, name[:32], cells))
     print()
-    lead, trail = cols[0], None
+    trail = None
     for x in cols[1:]:
         if trail is None or x["norm"] > trail["norm"]: trail = x
     if trail:
-        wins = [(cols[0]["rows"][k][4] - (cols[0]["rows"][k][3] or 0)) - (trail["rows"][k][4] - (trail["rows"][k][3] or 0))
-                for k in cols[0]["rows"]
-                if cols[0]["rows"][k][3] is not None and trail["rows"].get(k, (None,)*6)[3] is not None]
         behind = sorted([(trail["rows"][k][3] - cols[0]["rows"][k][3], cols[0]["rows"][k][2])
                          for k in cols[0]["rows"]
                          if cols[0]["rows"][k][3] is not None and trail["rows"].get(k, (None,)*6)[3] is not None
@@ -1386,7 +1381,8 @@ def compare(pairs, args):
             for d, nm in behind:
                 print("   %s+%-2d%s  %s" % (c.brass, d, c.r, nm))
             print()
-    print("  %sBoth scored with rubric %s · https://github.com/jianruntech/geo-score%s" % (c.grey, RUBRIC, c.r))
+    print("  %s%s scored with rubric %s · https://github.com/jianruntech/geo-score%s"
+          % (c.grey, "Both" if len(cols) == 2 else "All", RUBRIC, c.r))
     print()
 
 def main():
@@ -1459,7 +1455,7 @@ def main():
             try:
                 crun, res["citation"] = watch.citation_check(res["root"], a.ask, a.brand, a.domain, res.get("landed"))
             except watch.ConfigError as e:
-                raise RuntimeError(str(e))
+                raise RuntimeError(str(e)) from None
         if a.json:
             print(json.dumps(as_json(res), ensure_ascii=False, indent=2))
         elif a.brief:

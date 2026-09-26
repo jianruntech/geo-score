@@ -229,6 +229,27 @@ _zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>"
 ok(gs.is_cjk(_zh_page), "a Chinese page stays Chinese even when its HTML is mostly CSS/JS")
 ok(not gs.is_cjk("<html><body><p>" + ("An English page with a 中文 word. " * 20) + "</p></body></html>"), "a stray CJK word does not make a page Chinese")
 
+# ── the CLI's embedded rubric must equal the published rubric/v1.1.json ──
+# 「CLI 实现的就是公开量表」这句话以前只是口头承诺：两份表今天一致，但没有任何东西保证明天也一致。
+_rub = json.load(io.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rubric", "v1.1.json"), encoding="utf-8"))
+eq(gs.RUBRIC, "v%s" % _rub["rubric_version"], "the CLI names the rubric version it implements")
+_scored = [c for c in _rub["checks"] if c["kind"] in ("gate", "scored")]
+eq([c[0] for c in gs.SPEC], [c["id"] for c in _scored], "SPEC lists the rubric's scored checks, in order")
+for c in _scored:
+    sp = next((x for x in gs.SPEC if x[0] == c["id"]), None)
+    if sp is None:
+        continue
+    eq((sp[1], sp[3]), (c["pillar"], c["points"]), "%s pillar and max points match the rubric" % c["id"])
+    eq(sp[4], [t["points"] for t in c["tiers"]], "%s tier points in SPEC match the rubric" % c["id"])
+    eq([[t[0], t[1]] for t in gs.TIERS[c["id"]]], [[t["points"], t["condition"]] for t in c["tiers"]],
+       "%s tier points and conditions in TIERS match the rubric" % c["id"])
+eq(set(gs.TIERS), {c["id"] for c in _scored}, "TIERS covers exactly the scored checks")
+eq([(b[0], b[2]) for b in gs.BONUS], [(c["id"], c["points"]) for c in _rub["checks"] if c["kind"] == "bonus"],
+   "bonus ids and points match the rubric")
+eq([list(b) for b in gs.BANDS], [[b["min_pct"], b["name"]] for b in _rub["bands"]], "band thresholds and names match")
+eq((gs.GATE_CAP, gs.BONUS_CAP), (_rub["gate_cap"], _rub["bonus_cap"]), "gate cap and bonus cap match")
+eq(sum(c["points"] for c in _scored), 100, "scored checks sum to 100")
+
 # ── CI outputs: SARIF 2.1.0 and JUnit from the same run as the report ──
 # 一次抓取、多种输出。分数单跑本来就有 ±5 的波动，跑两遍再拼出来的摘要和日志可能对不上。
 mixed = dict(full); mixed["g.ssr"] = 0; mixed["p2.freshness"] = 0; mixed["p2.answer-passages"] = 2

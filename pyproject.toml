@@ -37,3 +37,10 @@ py-modules = ["geo_score", "geo_watch"]
 
 [tool.setuptools.dynamic]
 version = { attr = "geo_score.__version__" }
+
+[tool.ruff]
+target-version = "py38"
+line-length = 130
+
+[tool.ruff.lint]
+select = ["E9", "F", "B"]

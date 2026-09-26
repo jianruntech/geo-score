@@ -9,7 +9,7 @@ distribution across the five bands. Regenerate it whenever results.json changes.
 
     python3 benchmark/build_og.py            # writes docs/og.png, docs/og.zh.png
 """
-import io, json, os, re, subprocess, sys, tempfile
+import io, json, os, subprocess, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)

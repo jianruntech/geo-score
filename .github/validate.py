@@ -206,8 +206,16 @@ for r in MODERN:
         zmd = io.open(zp, encoding="utf-8").read()
         for c in ck:
             check(f"`{c['id']}`" in zmd, f"{zp}: 缺少检查项 {c['id']}，与英文版不一致")
+        # 逐项比对：每个检查项在中英两份规范的标题里写的分值，必须等于 JSON 的 points。
+        # （这里以前是一条带 `or True` 的检查，永远不会失败。）
         for c in ck:
-            check(f"· {c['points']}" in zmd or f" {c['points']} 分" in zmd or True, "")
+            for lang, text in (("英文", md), ("中文", zmd)):
+                if not re.search(r'^### .+? · \d+', text, re.M):
+                    continue            # v1.0 的规范没有逐项标题
+                m = re.search(r'^### .+? · (\d+)(?: pts?)?\s+`%s`' % re.escape(c["id"]), text, re.M)
+                check(m and int(m.group(1)) == c["points"],
+                      f"rubric/{r} {lang}版：{c['id']} 的标题分值 {m.group(1) if m else '缺失'} "
+                      f"与 JSON 的 {c['points']} 不一致")
         import re as _r
         en_pts = sorted(int(x) for x in _r.findall(r'^### .+? · (\d+)', md, _r.M))
         zh_pts = sorted(int(x) for x in _r.findall(r'^### .+? · (\d+)', zmd, _r.M))
@@ -370,7 +378,7 @@ for pth in _g3.glob("**/*.md", recursive=True):
 
 # 16 · 公开榜单页必须与 benchmark/results.json 同步 —— 页面是生成的，不该手改
 if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
-    import subprocess, tempfile, shutil
+    import subprocess
     # llms.txt 和 sitemap.xml 也是生成的。llms.txt 是 AI 爬虫唯一真会读的那个文件，
     # 上面的旧数字就是直接递给每个引擎的错答案 —— 它必须和 results.json 一起动。
     GEN = tuple(f for f in os.listdir("docs")
