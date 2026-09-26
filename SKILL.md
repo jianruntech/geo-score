@@ -62,8 +62,9 @@ See [`rubric/calibration-v1.1.md`](rubric/calibration-v1.1.md).
 evidence satisfies. Binary judgement is what collapsed v1.0's discrimination.
 
 **Three gate checks** (`g.robots`, `g.reachable`, `g.ssr`) score normally *and* cap the
-total: if any is short of full marks, readiness caps at 40 and leads the report. Until a
-crawler can reach the content, nothing else you change has any effect.
+total: if any scores zero, the normalised score caps at 40 and leads the report. A middle
+tier is a deduction, not a cap. Until a crawler can reach the content, nothing else you
+change has any effect.
 
 **Judge substance, not format.** A heading matches question intent if a person would
 phrase their question that way — "Accept a payment" and "How Connect works" count; only

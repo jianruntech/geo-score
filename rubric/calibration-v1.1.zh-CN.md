@@ -12,7 +12,7 @@ v1.0 用真实站点跑出来的结果是这样的：
 | anthropic.com | 32/88 | 36% | **Critical** |
 | mingdao.com | 29/85 | 34% | **Critical** |
 
-一个对十个检索爬虫全部返回 200、正文服务端渲染完好的站被判为 *Critical*，
+一个对十个检索爬虫全部返回 200、与浏览器拿到的字节完全一致、服务端渲染正文 60 KB 的站被判为 *Critical*，
 这不是站点的问题，是量表的问题。v1.1 是对此的修正。
 
 ## 逐项表现暴露的四个结构问题
@@ -41,7 +41,7 @@ llms.txt 桌面端 2.13%，JSON-LD 里 BreadcrumbList 5.66%、Product 0.77%、FA
 |---|---|
 | [GeoReady](https://geoready.dev/state-of-geo/)（Auriti 团队托管版） | 282 个域名均分 **56.4**；更早 750+ 站样本均分 54.3、中位数 56 |
 | [GW Content](https://www.gwcontent.com/pages/aeo-readiness-score) | 官方口径「多数商业网站得分在 **30–55** 之间」 |
-| [Foglift](https://foglift.io/blog/ai-visibility-benchmarks-2026) 2026Q1 | 分行业中位数：SaaS/B2B **62**、教育 58、医疗 55、代理 51、电商 48 |
+| [Foglift](https://foglift.io/blog/ai-visibility-benchmarks-2026) 2026 Q1 | 分行业中位数：SaaS/B2B **62**、教育 58、医疗 55、代理 51、电商 48；上四分位 73–84 |
 | [Seomator](https://seomator.com/geo-audit-tool) | 2026 年 1–7 月评过的站中 **54.6%** 未达其 56 分就绪线 |
 
 两个结论同时成立，方向相反，都要接受：
@@ -79,7 +79,7 @@ llms.txt 桌面端 2.13%，JSON-LD 里 BreadcrumbList 5.66%、Product 0.77%、FA
 参照 Auriti 对整个新约定家族只给 6/100，并把更前瞻的 WebMCP 完全移出计分。
 
 **⑥ 门槛项既计分又封顶。** `robots 放行`、`检索可达`、`服务端渲染` 三项保留计分，
-同时任一未拿满则总分封顶 40 并置顶为 P0。
+同时任一门槛项得 0 分时归一化分封顶 40，并置顶为 P0。
 
 > 关于第 ⑥ 条我们与同类工具取了不同做法。aeo-lite 的 hard-fail 设计是「准入项不占分」，
 > 这对 CI/fail-the-build 场景是对的。但我们实测发现：移除人人满分的项**必然拉低所有人的百分比**

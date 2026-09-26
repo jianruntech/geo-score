@@ -466,6 +466,38 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
               "docs/llms.txt 写着 %s 站，results.json 是 %d 站 —— 这是 AI 爬虫唯一会读的"
               "文件，数字错了就是递给每个引擎一个错答案" % (sorted(found) or "没写", n))
 
+# ── 19. 门槛封顶只在得 0 分时触发 —— 每一处文档都得这么说 ──
+# v1.1 初稿写的是「门槛项没拿满就封顶」，这个 bug 修了，但 rubric/README、中文校准记录、
+# SKILL.md、示例报告里还留着旧说法。规格里写着已修掉的 bug，是挑刺的读者最先会抓的矛盾。
+# 提到「封顶 40」的句子必须同时说明是得 0 分时；讲历史的句子（当时 / at the time）放行。
+CAP_RE = re.compile(r"\bcap(?:s|ped)?\b[^.。;；]{0,40}?\bat 40|封顶 ?40", re.I)
+ZERO_MARK = ("zero", " 0 ", "得 0 分", "0 分", "为零", "零分", "at the time", "当时", "first draft", "初稿")
+def cap_sentences(text):
+    flat = re.sub(r"\*\*|`", "", re.sub(r"\s+", " ", text))
+    return [x for x in re.split(r"(?<=[.。!?！？；;])\s*", flat) if CAP_RE.search(x)]
+_cap_files = (["README.md", "README.zh-CN.md", "SKILL.md", "cli/README.md", "CONTRIBUTING.md"]
+              + [os.path.join("rubric", f) for f in sorted(os.listdir("rubric"))
+                 if f.endswith(".md") and not f.startswith("v1.0")]
+              + [os.path.join("examples", f) for f in sorted(os.listdir("examples")) if f.endswith(".md")])
+for f in _cap_files:
+    if not os.path.exists(f): continue
+    for x in cap_sentences(io.open(f, encoding="utf-8").read()):
+        check(any(m in x.lower() for m in ZERO_MARK),
+              "%s 说门槛封顶 40，但没说只在得 0 分时触发（v1.1 修掉的规则）：%s" % (f, x[:160]))
+
+# ── 20. 校准记录中英两份：同样多的章节，同一组数字 ──
+# 中文版曾漏掉「60 KB 服务端渲染正文」和 Foglift 的上四分位。比集合不比次数：
+# 同一个数字中文多提一遍是行文习惯，少了一个数字才是少了一条事实。
+def _cal_facts(p):
+    t = re.sub(r"\]\([^)]*\)", "]", io.open(p, encoding="utf-8").read())
+    return (len(re.findall(r"^## ", t, re.M)),
+            {int(x) for x in re.findall(r"(?<![\w.])(\d{2,})(?![\w])", t) if int(x) >= 10})
+for base in ("rubric/calibration-v1.1",):
+    (se, ne), (sz, nz) = _cal_facts(base + ".md"), _cal_facts(base + ".zh-CN.md")
+    check(se == sz, "%s 中英章节数不同：%d vs %d" % (base, se, sz))
+    check(ne == nz, "%s 中英数字不一致 —— 只在英文：%s；只在中文：%s"
+          % (base, sorted(ne - nz), sorted(nz - ne)))
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

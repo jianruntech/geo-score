@@ -23,6 +23,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 ```
 
 <p align="center"><img src="assets/demo.svg" alt="geo-score scoring stripe.com from the command line — 71 out of 100, band Solid" width="100%"></p>
+<p align="center"><sub>Recorded with geo-score 1.1.0 on 2026-09-09. A run with 1.2.0 on 2026-09-27 read 72.</sub></p>
 
 <sub>One command. About twenty seconds. Every check, and what the next tier needs.</sub>
 
@@ -80,6 +81,7 @@ Python 3.8+, standard library only, nothing to install. It reads public URLs and
 a score against a **published, versioned rubric** — not a black box.
 
 **[See how 314 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them are unreadable to AI crawlers.
+<sub>The hosted page still shows an earlier 229-site build while its hosting moves; the 314-site data is in [benchmark/results.json](benchmark/results.json).</sub>
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.

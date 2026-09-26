@@ -23,6 +23,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 ```
 
 <p align="center"><img src="assets/demo.svg" alt="geo-score 在命令行给 stripe.com 打分 —— 71/100，档位 Solid" width="100%"></p>
+<p align="center"><sub>2026-09-09 用 geo-score 1.1.0 录制；2026-09-27 用 1.2.0 重跑为 72 分。</sub></p>
 
 <sub>一行命令，约二十秒。每一项的分数，以及上一档要什么。</sub>
 
@@ -80,6 +81,7 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
 **[看 314 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一，AI 爬虫读不到。
+<sub>托管页面迁移期间仍显示早先 229 站的版本；314 站的数据见 [benchmark/results.json](benchmark/results.json)。</sub>
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。

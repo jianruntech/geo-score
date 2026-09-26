@@ -91,6 +91,6 @@ for missing `Product` schema; the check is removed and the maximum drops. This i
 the header reads `45 / 98` rather than `45 / 100`, and why two sites' raw scores are only
 comparable after normalising.
 
-**Gate checks come first.** If `g.robots`, `g.reachable` or `g.ssr` is short of full
-marks, readiness caps at 40 and the report leads with it. Until a crawler can reach the
+**Gate checks come first.** If `g.robots`, `g.reachable` or `g.ssr` scores zero, the
+normalised score caps at 40 and the report leads with it; a middle tier is a deduction. Until a crawler can reach the
 content, nothing else you change has any effect.

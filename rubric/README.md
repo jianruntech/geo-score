@@ -15,7 +15,7 @@ That is a failed calibration check, so v1.1 shipped instead.
 
 Both stay published. The [five v1.0 audits](../examples/audits/) are the evidence that
 found the problem, [eight ambiguities](open-questions.md) were settled by the correction,
-and [the calibration record](calibration-v1.1.md) shows the reasoning against three
+and [the calibration record](calibration-v1.1.md) shows the reasoning against four
 external benchmarks. A rubric that quietly rewrites its own history is not one you can
 compare against.
 
@@ -90,8 +90,8 @@ in is exactly what made v1.0 label a technically sound site *Critical*. A score 
 reproduce and a number you cannot belong in separate columns.
 
 **Three checks are gates, and they cap the result.**
-Miss full marks on crawler access, live reachability or server-rendered content and the
-normalised score caps at 40.
+Score zero on crawler access, live reachability or server-rendered content and the
+normalised score caps at 40. A middle tier is a deduction, not a cap.
 *Argument against:* a cap discards real work — a site could have excellent content and
 still show 40. That is the intent. Until a crawler can reach the content, the excellent
 content is invisible, and a score that averaged it away would tell the owner to fix the
