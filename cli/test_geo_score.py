@@ -295,6 +295,32 @@ for flag in ("--json-out", "--sarif", "--junit"):
                         capture_output=True, text=True, timeout=60)
     ok(pr.returncode == 2 and "one site at a time" in pr.stderr, "%s with --compare is refused, got %s" % (flag, pr.returncode))
 
+# ── --urls / --urls-from: a pinned re-score reads exactly the given pages ──
+# 抽样是分数波动的主要来源；固定页面重跑才能把「站变了」和「抽到的页不同」分开。
+def _raises(fn, *a):
+    try: fn(*a)
+    except RuntimeError as e: return str(e)
+    return None
+eq(gs.pin_urls("https://x.test", ["https://x.test/a", "/b", "c", "https://x.test/a#frag"]),
+   ["https://x.test/a", "https://x.test/b", "https://x.test/c"], "relative paths resolve, duplicates and fragments collapse")
+ok("not on" in (_raises(gs.pin_urls, "https://x.test", ["https://evil.test/a"]) or ""), "an off-site URL is refused")
+ok("not on" in (_raises(gs.pin_urls, "https://x.test", ["http://x.test/a"]) or ""), "a different scheme is refused")
+ok("outside" in (_raises(gs.pin_urls, "https://x.test/docs", ["https://x.test/blog/a"]) or ""), "a URL outside the scored path is refused")
+ok(_raises(gs.pin_urls, "https://x.test/docs", ["https://x.test/docs", "https://x.test/docs/a"]) is None, "the scope root and pages under it are accepted")
+ok("at most 8" in (_raises(gs.pin_urls, "https://x.test", ["/p%d" % i for i in range(9)]) or ""), "nine pages are refused")
+ok("empty" in (_raises(gs.pin_urls, "https://x.test", ["", "  "]) or ""), "an empty list is refused")
+_d = tempfile.mkdtemp()
+io.open(os.path.join(_d, "u.txt"), "w", encoding="utf-8").write("https://x.test/a  # home\n\n# comment\n/b\n")
+eq(gs.read_url_list(os.path.join(_d, "u.txt")), ["https://x.test/a", "/b"], "the URL file skips blanks and comments")
+_rep = gs.as_json(mk(full)); _rep["sampled_urls"] = ["https://x.test/", "https://x.test/p"]
+io.open(os.path.join(_d, "r.json"), "w", encoding="utf-8").write(json.dumps(_rep))
+eq(gs.read_report_urls(os.path.join(_d, "r.json")), ["https://x.test/", "https://x.test/p"], "--urls-from reads sampled_urls back")
+ok("not JSON" in (_raises(gs.read_report_urls, os.path.join(_d, "u.txt")) or ""), "a non-JSON file is refused with a hint")
+ok("cannot read" in (_raises(gs.read_report_urls, os.path.join(_d, "nope.json")) or ""), "a missing file is a clear error")
+pr = subprocess.run([sys.executable, _cli, "a.invalid", "--compare", "b.invalid", "--urls-from", os.path.join(_d, "r.json")],
+                    capture_output=True, text=True, timeout=60)
+ok(pr.returncode == 2 and "one site at a time" in pr.stderr, "--urls-from with --compare is refused")
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

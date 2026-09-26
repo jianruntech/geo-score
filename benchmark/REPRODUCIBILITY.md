@@ -102,6 +102,10 @@ Read a China-sector score with that field in view.
   the capped count moved only 54 → 56 between these two runs.
 - **`--fail-under` in CI**: leave headroom. A threshold set 1 point below today's score
   will fail on noise. Five points of margin is the smallest that makes sense.
+- **Before and after a change to your own site**: pin the sample. Save the first run with
+  `--json-out before.json`, then re-score with `--urls-from before.json`. The second run
+  reads exactly the same pages, so a difference comes from the site, not from the sample.
+  (A page that has since gone away drops out, and the report lists what was read.)
 
 ## Reproducing this
 

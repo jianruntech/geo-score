@@ -55,7 +55,7 @@
         "string",
         "null"
       ],
-      "description": "Where the sample came from: \"sitemap\", or homepage and section links when no sitemap was reachable. Two runs that sampled different pages usually differ here."
+      "description": "Where the sample came from: \"sitemap\", homepage and section links when no sitemap was reachable, or \"pinned\" when the pages were given with --urls or --urls-from. Two runs that sampled different pages usually differ here."
     },
     "checks": {
       "type": "array",

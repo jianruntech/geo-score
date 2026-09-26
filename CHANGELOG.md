@@ -17,6 +17,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   flags, exit codes, Action inputs and outputs, MCP tool names, SARIF rule ids), what semver means
   here, and that nothing is sent anywhere (no telemetry).
 - Action inputs `sarif`, `junit` and `annotations`; outputs `gate-capped` and `report-path`.
+- **Pin the sample:** `--urls FILE` scores exactly the given pages (up to 8, all on the scored site);
+  `--urls-from REPORT.json` re-reads the pages an earlier report sampled. Sampling is the main source
+  of run-to-run variance, so a before/after comparison on pinned pages shows what changed on the
+  site. The report says `sample_source: "pinned"`. Action input `urls-from`.
+- Tests that the CLI's embedded rubric (check ids, points, every tier's points and wording, bands,
+  caps, bonus) equals `rubric/v1.1.json`.
 
 ### Changed
 - **The Action scores the site once.** It used to fetch and score twice (once for JSON, once for
@@ -25,6 +31,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - The Action annotates checks at zero: gates as errors, other checks as warnings (GitHub shows up
   to 10 of each; the rest are in the job summary).
 - `geo-score watch --help` names the command you typed (`geo-score` after an install).
+- `--compare` with three or more sites no longer says "Both scored".
+
+### Fixed
+- Documentation that still described the superseded gate rule: `rubric/README.md`, the Chinese
+  calibration record, `SKILL.md` and the sample report said a gate short of full marks caps the score.
+  The rule since v1.1 is that only a gate at **zero** caps it. The scores were always computed with the
+  correct rule; `validate.py` now fails on any sentence that states the cap without the zero condition.
+- The Chinese calibration record was missing two facts the English one has (the 60 KB of
+  server-rendered prose, Foglift's upper quartile); a new check compares the numbers in both.
 
 ### Security
 - The Action passes its inputs to the script as environment variables. Before this, `url` and the

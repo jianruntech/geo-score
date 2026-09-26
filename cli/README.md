@@ -21,6 +21,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). For GitHub code scanning or any SARIF viewer |
 | `--junit FILE` | Also write JUnit XML: one test per check. A check at zero fails, a check the CLI cannot observe is skipped, partial credit passes |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
+| `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
+| `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
@@ -32,8 +34,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 
 `NO_COLOR=1` turns off colour, as does piping to a file.
 
-Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched or
-a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
+Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched, a
+pinned URL list was refused, or a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
 `geo_watch.py` missing, `3` nothing could be measured (no key worked).
 
 ## Comparing against a competitor

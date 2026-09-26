@@ -607,15 +607,71 @@ def discover(base, want=8, verbose=False):
     return urls[:want], source
 
 # ── checks ─────────────────────────────────────────────────────────────────
-def run(base, sample=8, verbose=False):
+MAX_PINNED = 8
+
+def pin_urls(base, urls):
+    """--urls / --urls-from: score exactly these pages instead of drawing a sample.
+    Sampling is the main source of run-to-run variance; a pinned re-score removes it.
+    Every page must be on the scheme, host and path being scored, or the checks
+    would describe a different site under this one's name."""
+    origin, scope = scope_of(base)
+    want = urllib.parse.urlsplit(origin)
+    out = []
+    for raw in urls:
+        u = raw.strip()
+        if not u:
+            continue
+        if "://" not in u:
+            u = origin + ("" if u.startswith("/") else "/") + u
+        u = idna(u.split("#")[0])
+        p = urllib.parse.urlsplit(u)
+        if (p.scheme, p.netloc.lower()) != (want.scheme, want.netloc.lower()):
+            raise RuntimeError("pinned URL %s is not on %s; every pinned page must be on the site being scored"
+                               % (raw.strip()[:200], origin))
+        if scope and not (p.path == scope or p.path.startswith(scope + "/")):
+            raise RuntimeError("pinned URL %s is outside %s%s" % (raw.strip()[:200], origin, scope))
+        if u not in out:
+            out.append(u)
+    if not out:
+        raise RuntimeError("no URLs to pin: the list is empty")
+    if len(out) > MAX_PINNED:
+        raise RuntimeError("%d URLs to pin; the rubric samples at most %d pages" % (len(out), MAX_PINNED))
+    return out
+
+def read_url_list(path):
+    """--urls FILE: one URL per line; blank lines and # comments are ignored."""
+    try:
+        with io.open(path, encoding="utf-8") as f:
+            return [ln.split("#", 1)[0].strip() for ln in f if ln.split("#", 1)[0].strip()]
+    except OSError as e:
+        raise RuntimeError("cannot read --urls %s: %s" % (path, e.strerror or e)) from None
+
+def read_report_urls(path):
+    """--urls-from REPORT.json: the sampled_urls of an earlier report, so a re-score reads the same pages."""
+    try:
+        with io.open(path, encoding="utf-8") as f:
+            d = json.load(f)
+    except OSError as e:
+        raise RuntimeError("cannot read --urls-from %s: %s" % (path, e.strerror or e)) from None
+    except ValueError:
+        raise RuntimeError("--urls-from %s is not JSON; pass a report written by --json or --json-out" % path) from None
+    urls = d.get("sampled_urls") if isinstance(d, dict) else None
+    if not isinstance(urls, list) or not all(isinstance(u, str) for u in urls):
+        raise RuntimeError("--urls-from %s has no sampled_urls list; pass a report written by --json or --json-out" % path)
+    return urls
+
+def run(base, sample=8, verbose=False, urls=None):
     origin, scope = scope_of(base)
     root = origin + scope
     ev, tier = {}, {}
     def say(msg):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
-    say("discovering sample pages…")
-    urls, sample_source = discover(base, sample, verbose)
+    if urls:
+        urls, sample_source = pin_urls(base, urls), "pinned"
+    else:
+        say("discovering sample pages…")
+        urls, sample_source = discover(base, sample, verbose)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
     pages = dict(zip(urls, pmap(fetch_steady, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
@@ -1410,6 +1466,11 @@ def main():
     ap.add_argument("--badge", metavar="FILE", nargs="?", const="aiv-badge.svg",
                     help="also write an embeddable SVG badge (default aiv-badge.svg)")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
+    pin = ap.add_mutually_exclusive_group()
+    pin.add_argument("--urls", metavar="FILE",
+                     help="score exactly these pages (one URL per line, up to 8) instead of drawing a sample")
+    pin.add_argument("--urls-from", metavar="REPORT",
+                     help="score the pages an earlier JSON report sampled, so the re-score reads the same pages")
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
@@ -1436,6 +1497,11 @@ def main():
         raise RuntimeError("--ask works with one site at a time; drop --compare")
     if (a.json_out or a.sarif or a.junit) and len(targets) > 1:
         raise RuntimeError("--json-out, --sarif and --junit work with one site at a time; drop --compare")
+    pinned = None
+    if a.urls or a.urls_from:
+        if len(targets) > 1:
+            raise RuntimeError("--urls and --urls-from work with one site at a time; drop --compare")
+        pinned = pin_urls(url, read_url_list(a.urls) if a.urls else read_report_urls(a.urls_from))
     watch = _watch_module() if a.ask else None
     if len(targets) > 1:
         done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
@@ -1447,7 +1513,7 @@ def main():
             compare(ok, a)
         res = ok[0][1]
     else:
-        res = run(url, a.sample, verbose=not a.quiet and not a.json)
+        res = run(url, a.sample, verbose=not a.quiet and not a.json, urls=pinned)
         crun = None
         if watch:
             if not a.json and not a.quiet:

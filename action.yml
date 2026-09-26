@@ -17,6 +17,9 @@ inputs:
   json-out:
     description: "Write the machine-readable report (schema/report.v2.json) to this path."
     required: false
+  urls-from:
+    description: "Score the pages an earlier JSON report sampled instead of drawing a new sample, so two runs compare the same pages."
+    required: false
   sarif:
     description: "Write SARIF 2.1.0 to this path, for github/codeql-action/upload-sarif or any SARIF viewer."
     required: false
@@ -55,6 +58,7 @@ runs:
         GEO_FAIL_UNDER: ${{ inputs.fail-under }}
         GEO_SAMPLE: ${{ inputs.sample }}
         GEO_JSON_OUT: ${{ inputs.json-out }}
+        GEO_URLS_FROM: ${{ inputs.urls-from }}
         GEO_SARIF: ${{ inputs.sarif }}
         GEO_JUNIT: ${{ inputs.junit }}
         GEO_ANNOTATIONS: ${{ inputs.annotations }}
@@ -62,7 +66,7 @@ runs:
       run: |
         set -euo pipefail
         GEO_URL="${GEO_URL:-}" GEO_FAIL_UNDER="${GEO_FAIL_UNDER:-}" GEO_SAMPLE="${GEO_SAMPLE:-8}"
-        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
+        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
         [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
         [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
         if [ -n "$GEO_FAIL_UNDER" ] && ! [[ "$GEO_FAIL_UNDER" =~ ^[0-9]+$ ]]; then
@@ -70,6 +74,7 @@ runs:
         fi
         OUT="${GEO_JSON_OUT:-${RUNNER_TEMP:-/tmp}/geo-score-report.json}"
         ARGS=(--sample "$GEO_SAMPLE" --explain --json-out "$OUT")
+        [ -z "$GEO_URLS_FROM" ] || ARGS+=(--urls-from "$GEO_URLS_FROM")
         [ -z "$GEO_SARIF" ] || ARGS+=(--sarif "$GEO_SARIF")
         [ -z "$GEO_JUNIT" ] || ARGS+=(--junit "$GEO_JUNIT")
         # one run: the log, the summary, the annotations and every file describe the same fetch
