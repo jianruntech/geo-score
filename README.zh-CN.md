@@ -427,6 +427,12 @@ claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站、它在 `sameAs` 里列出的主页链接（检查是否有效），以及
   Wikidata 和维基百科的搜索接口；第二、三级只调用你配了 Key 的 AI 服务商。
+- **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务只访问公网地址，Key 从不写进任何文件。
+  威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
+
+**为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，实测波动 ±5
+（[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--urls-from last.json` 重评同一批页面。
+**为什么某项显示 `—`？** 它没有被测到，所以移出了分母，而不是记 0 分。更多问题见[排查指南](guide/troubleshooting.zh-CN.md)。
 
 ### 能不能拿来商用
 

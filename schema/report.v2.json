@@ -121,6 +121,11 @@
             "minLength": 1,
             "description": "Why this tier and not the next one up. This is the line a reader acts on."
           },
+          "doc_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where this check is defined in the rubric, pinned to the tool's release tag. Optional; added in 1.3.0."
+          },
           "evidence": {
             "type": "string",
             "minLength": 1,

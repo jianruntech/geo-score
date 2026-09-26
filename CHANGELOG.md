@@ -21,6 +21,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `--urls-from REPORT.json` re-reads the pages an earlier report sampled. Sampling is the main source
   of run-to-run variance, so a before/after comparison on pinned pages shows what changed on the
   site. The report says `sample_source: "pinned"`. Action input `urls-from`.
+- **Per-check documentation links:** every check in the JSON report carries `doc_url`, its definition
+  in the rubric pinned to the release tag, so the link never drifts from the scorer. SARIF rules link
+  there too, and `--explain` prints it under each check below full marks. Optional field in
+  `schema/report.v2.json`.
+- [Troubleshooting](guide/troubleshooting.md), in English and Chinese: score movement, checks shown
+  as `—`, the gate cap, exit code 2, proxies, redirects, the leaderboard's tool version, `watch`
+  exit 3, Action annotation limits, CJK thresholds. The terminal report links to it.
 - Tests that the CLI's embedded rubric (check ids, points, every tier's points and wording, bands,
   caps, bonus) equals `rubric/v1.1.json`.
 

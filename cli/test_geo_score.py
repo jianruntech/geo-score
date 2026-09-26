@@ -330,6 +330,19 @@ eq(_h.count("»"), 1, "the site cannot close the fence early with its own »")
 ok(gs.site_text("x" * 500, 90).endswith("…»") and len(gs.site_text("x" * 500, 90)) < 110, "long text is cut")
 ok("control or bidi" in (_raises(gs.pin_urls, "https://x.test", ["https://x.test/a‮b"]) or ""), "a pinned URL with a bidi override is refused")
 
+# ── per-check doc links point at headings that exist ──
+import re as _re
+_md = io.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rubric", "v1.1.md"), encoding="utf-8").read()
+_slugs = {_re.sub(r"[^\w\- ]", "", h.strip().lower()).replace(" ", "-") for h in _re.findall(r"^#{1,6} (.+?)\s*$", _md, _re.M)}
+eq(set(gs.DOC_ANCHOR), {c[0] for c in gs.SPEC} | {b[0] for b in gs.BONUS}, "every check has a doc anchor")
+for _cid, _a in gs.DOC_ANCHOR.items():
+    ok(_a in _slugs, "%s links to #%s, a heading that exists in rubric/v1.1.md" % (_cid, _a))
+_j = gs.as_json(mk(full))
+ok(all(c.get("doc_url", "").startswith("https://github.com/jianruntech/geo-score/blob/v%s/" % gs.__version__) for c in _j["checks"]),
+   "every check in the JSON carries a doc_url pinned to this release's tag")
+eq({r["id"]: r["helpUri"] for r in gs.as_sarif(mk(full))["runs"][0]["tool"]["driver"]["rules"]}["g.ssr"], gs.doc_url("g.ssr"),
+   "SARIF rules link to the same place")
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

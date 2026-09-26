@@ -463,6 +463,15 @@ this repo deliberately excludes.
 - **No telemetry.** geo-score sends nothing to us or anyone else. Level 1 fetches the site you
   name, the profile links it lists in `sameAs`, and Wikidata and Wikipedia search; levels 2 and 3
   call only the AI providers whose keys you set.
+- **Security:** text quoted from the audited site is fenced as data in every report, the MCP
+  server fetches only public hosts, and keys never reach a file. Threat model and reporting:
+  [SECURITY.md](SECURITY.md).
+
+**Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the
+measured spread is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
+after a change, re-score the same pages with `--urls-from last.json`.
+**Why does a check show `—`?** It was not measured, so it left the denominator instead of scoring 0.
+More answers: [troubleshooting](guide/troubleshooting.md).
 
 ## Who maintains this
 

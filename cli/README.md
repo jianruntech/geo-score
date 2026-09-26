@@ -32,7 +32,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_sc
 | `--brand NAME` | With `--ask`: the brand name to look for in answers. Default: the site's domain name, e.g. `stripe` for `docs.stripe.com` |
 | `--domain DOMAIN` | With `--ask`: another domain that counts as yours. Repeatable. The scored site, its registrable domain and a redirect's landing domain always count |
 
-`NO_COLOR=1` turns off colour, as does piping to a file.
+`NO_COLOR=1` turns off colour, as does piping to a file. `HTTPS_PROXY` and `NO_PROXY` are honoured.
+When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched, a
 pinned URL list was refused, or a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or

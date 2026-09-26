@@ -1264,6 +1264,7 @@ def report(res, args):
                 tr = tier_reason(cid, t, mx)
                 if tr: print("      %s%s%s" % (c.brass, tr[:112], c.r))
             if e: print("      %s%s%s" % (c.dim, e[:112], c.r))
+            if t is not None and t < mx: print("      %s%s%s" % (c.grey, doc_url(cid), c.r))
     gaps = sorted([(mx - t, cid, name, tier_reason(cid, t, mx))
                    for cid, pil, name, t, mx, e in rows if t is not None and t < mx],
                   reverse=True)[:3]
@@ -1282,7 +1283,10 @@ def report(res, args):
     print()
     print("  %sFull rubric and what each tier means:%s" % (c.grey, c.r))
     print("  %shttps://github.com/jianruntech/geo-score%s" % (c.brass, c.r))
+    print("  %sScore moved, or a check shows —? %s%s" % (c.grey, TROUBLESHOOTING_URL, c.r))
     print()
+
+TROUBLESHOOTING_URL = "https://github.com/jianruntech/geo-score/blob/main/guide/troubleshooting.md"
 
 def as_json(res):
     rows, total, den, b, norm, bd, capped = score(res)
@@ -1295,15 +1299,47 @@ def as_json(res):
         checks=[dict(id=cid, state="scored" if t is not None else "unobservable",
                      **({"points": t, "max": mx, "evidence": e,
                          "tier_reason": tier_reason(cid, t, mx)}
-                        if t is not None else {"reason": e}))
+                        if t is not None else {"reason": e}), doc_url=doc_url(cid))
                 for cid, pil, name, t, mx, e in rows]
                + [dict(id=bid, state="scored", points=res["bonus"].get(bid, 0), max=bpts,
-                       evidence="Bonus check, outside the denominator.")
+                       evidence="Bonus check, outside the denominator.", doc_url=doc_url(bid))
                   for bid, bname, bpts in BONUS],
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
                "Checks needing off-site search or human judgement left the denominator."])
 
 RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md" % RUBRIC
+# GitHub heading anchors in rubric/v1.1.md; test_geo_score.py checks every one still exists
+DOC_ANCHOR = {
+    "g.robots": "retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots",
+    "g.reachable": "reachable-to-retrieval-user-agents--5-pts--greachable",
+    "g.ssr": "main-content-server-rendered--5-pts--gssr",
+    "p1.sitemap": "sitemap-discoverable-and-fresh--4-pts--p1sitemap",
+    "p1.llms-txt": "llmstxt-present-and-structured--5-pts--p1llms-txt",
+    "p1.organization": "organization--website-sitewide--6-pts--p1organization",
+    "p1.breadcrumb": "breadcrumblist-on-nested-pages--3-pts--p1breadcrumb",
+    "p1.page-type": "page-type-schema-where-applicable--4-pts--p1page-type",
+    "p2.answer-passages": "self-contained-answer-passages--9-pts--p2answer-passages",
+    "p2.question-intent": "headings-match-how-people-ask--7-pts--p2question-intent",
+    "p2.freshness": "freshness-signal-present--6-pts--p2freshness",
+    "p2.sourced-stats": "statistics-carry-a-source--7-pts--p2sourced-stats",
+    "p2.named-author": "named-verifiable-authorship--6-pts--p2named-author",
+    "p3.listings": "third-party-listings--4-pts--p3listings",
+    "p3.mentions": "independent-mentions--4-pts--p3mentions",
+    "p3.knowledge-graph": "knowledge-graph-entity--4-pts--p3knowledge-graph",
+    "p3.sameas": "sameas-complete-and-resolving--3-pts--p3sameas",
+    "p3.video": "video-and-multimodal-presence--3-pts--p3video",
+    "p4.answer-shape": "content-shaped-for-extraction--4-pts--p4answer-shape",
+    "p4.question-coverage": "coverage-of-the-questions-people-ask--4-pts--p4question-coverage",
+    "p4.cn-engines": "chinese-engine-readiness--2-pts--p4cn-engines",
+    "b.llms-full": "llms-fulltxt--2-pts--bllms-full",
+    "b.ai-txt": "aitxt--2-pts--bai-txt",
+    "b.geo-link": "geo-link-tags--1-pts--bgeo-link",
+    "b.speakable": "speakable-markup--1-pts--bspeakable",
+}
+
+def doc_url(cid):
+    """Where a check is defined, pinned to this release's tag so the link never drifts from the scorer."""
+    return "https://github.com/jianruntech/geo-score/blob/v%s/rubric/%s.md#%s" % (__version__, RUBRIC, DOC_ANCHOR[cid])
 
 def _level(cid, t, mx):
     """How loudly a CI system should show a check: a gate at zero blocks citation outright."""
@@ -1318,7 +1354,7 @@ def as_sarif(res):
     target = res["root"]
     rules = [{"id": cid, "name": re.sub(r"[^A-Za-z0-9]+", " ", name).title().replace(" ", ""),
               "shortDescription": {"text": name},
-              "helpUri": RUBRIC_URL,
+              "helpUri": doc_url(cid),
               "properties": {"pillar": pil, "points": pts, "tags": ["geo", "ai-visibility", pil.lower().replace(" ", "-")]}}
              for cid, pil, name, pts, _ in SPEC]
     results = []
