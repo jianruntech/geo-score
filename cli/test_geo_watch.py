@@ -792,6 +792,50 @@ class CLI(Base):
 
 
 # ── MCP ───────────────────────────────────────────────────────────────────
+def schema_errors(o, sch, path="$"):
+    """The part of JSON Schema the MCP output schemas use: type, enum, required, properties, items and anyOf.
+    The fallback when jsonschema is not installed, so the suite stays stdlib-only."""
+    types = {"object": dict, "array": list, "string": str, "integer": int, "number": (int, float),
+             "boolean": bool, "null": type(None)}
+    if "anyOf" in sch:
+        if not any(not schema_errors(o, branch, path) for branch in sch["anyOf"]):
+            return ["%s: %r matches no branch of anyOf" % (path, o)]
+    t = sch.get("type")
+    if t:
+        allowed = tuple(types[x] for x in (t if isinstance(t, list) else [t]))
+        if not isinstance(o, allowed) or (isinstance(o, bool) and "boolean" not in (t if isinstance(t, list) else [t])):
+            return ["%s: expected %s, got %r" % (path, t, o)]
+    if "enum" in sch and o not in sch["enum"]:
+        return ["%s: %r not in %r" % (path, o, sch["enum"])]
+    errs = []
+    if isinstance(o, dict):
+        errs += ["%s: missing %s" % (path, k) for k in sch.get("required", []) if k not in o]
+        for k, sub in sch.get("properties", {}).items():
+            if k in o:
+                errs += schema_errors(o[k], sub, path + "." + k)
+    if isinstance(o, list) and "items" in sch:
+        for i, x in enumerate(o):
+            errs += schema_errors(x, sch["items"], "%s[%d]" % (path, i))
+    return errs
+
+
+def schema_nodes(sch):
+    """Every subschema, for rules that hold everywhere (no type lists)."""
+    yield sch
+    for k, v in sch.items():
+        if k in ("properties",) and isinstance(v, dict):
+            for sub in v.values():
+                for x in schema_nodes(sub):
+                    yield x
+        elif k in ("items",) and isinstance(v, dict):
+            for x in schema_nodes(v):
+                yield x
+        elif k in ("anyOf",):
+            for sub in v:
+                for x in schema_nodes(sub):
+                    yield x
+
+
 class MCP(Base):
     def server(self, with_config=True):
         cfgp = os.path.join(self.tmp, "geo-score-watch.json")
@@ -823,7 +867,7 @@ class MCP(Base):
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"})["result"], {})
         names = [t["name"] for t in srv.handle({"jsonrpc": "2.0", "id": 4, "method": "tools/list"})["result"]["tools"]]
-        self.assertEqual(names[:5], ["ask", "run", "list_runs", "report", "diff"])
+        self.assertEqual(names[:6], ["score_site", "ask", "run", "list_runs", "report", "diff"])   # the free one first
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"})["error"]["code"], -32601)
         self.assertEqual(srv.handle({"id": 6, "method": "ping"})["error"]["code"], -32600)
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "id": 9, "result": {}}))
@@ -866,24 +910,7 @@ class MCP(Base):
         if jsonschema is not None:
             jsonschema.validate(obj, schema)
             return
-        types = {"object": dict, "array": list, "string": str, "integer": int, "number": (int, float),
-                 "boolean": bool, "null": type(None)}
-
-        def walk(o, sch, path):
-            t = sch.get("type")
-            if t:
-                allowed = tuple(types[x] for x in (t if isinstance(t, list) else [t]))
-                self.assertIsInstance(o, allowed, "%s %s: %r" % (where, path, o))
-            if isinstance(o, dict):
-                for k in sch.get("required", []):
-                    self.assertIn(k, o, "%s %s: missing %s" % (where, path, k))
-                for k, sub in sch.get("properties", {}).items():
-                    if k in o:
-                        walk(o[k], sub, path + "." + k)
-            if isinstance(o, list) and "items" in sch:
-                for i, x in enumerate(o):
-                    walk(x, sch["items"], "%s[%d]" % (path, i))
-        walk(obj, schema, "$")
+        self.assertEqual(schema_errors(obj, schema), [], where)
 
     def test_structured_content_matches_the_declared_output_schema(self):
         srv = self.server()
@@ -900,7 +927,29 @@ class MCP(Base):
             self.check_schema(r["structuredContent"], schemas[name], name)
             self.assertTrue(r["content"][0]["text"], name)       # people still get the text
         self.assertEqual(len(self.call(srv, "list_runs")["structuredContent"]["runs"]), 2)
-        self.assertIsNone(schemas["ask"])                         # no schema promised where none is kept
+        # ask and run: the answers and the plan as data, a dry run included
+        del os.environ["PERPLEXITY_API_KEY"]
+        for name, args in (("ask", {"question": "best free ai video generator"}), ("run", {"dry_run": True}),
+                           ("run", {"limit": 1})):
+            r = self.call(srv, name, args)
+            self.assertFalse(r["isError"], r)
+            self.check_schema(r["structuredContent"], schemas[name], name)
+            self.assertTrue(r["content"][0]["text"], name)
+        a = self.call(srv, "ask", {"question": "q"})["structuredContent"]
+        chat, pplx = a["engines"]
+        self.assertEqual((chat["engine"], chat["status"], chat["cited"], chat["rank"]), ("chatgpt-api", "ok", True, 1))
+        self.assertIn("https://pixa.example/pricing", chat["cited_urls"])
+        self.assertEqual(chat["searches"], ["best free ai video generator"])
+        self.assertEqual((pplx["status"], pplx["cited"]), ("no_key", None))       # not measured, never a zero
+        dry = self.call(srv, "run", {"dry_run": True, "max_calls": 999})["structuredContent"]
+        self.assertEqual((dry["dry_run"], dry["run_id"], dry["summary"]), (True, None, None))
+        self.assertEqual(dry["plan"]["engines_active"], ["chatgpt-api"])
+        self.assertEqual((dry["plan"]["planned_calls"], dry["plan"]["max_calls"]), (2, 10))
+        self.assertEqual(dry["plan"]["not_measured"], [{"engine": "perplexity-api", "reason": "no_key"}])
+        gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=14)
+        real = self.call(srv, "run", {"limit": 1})["structuredContent"]
+        self.assertEqual((real["dry_run"], real["run_id"]), (False, "20261010T083000Z"))
+        self.assertEqual(real["summary"]["overall"]["answered"], 1)
 
     def test_rubric_resource_and_site_text_notice(self):
         srv = self.server()
@@ -988,6 +1037,92 @@ class MCP(Base):
         self.assertIn("score_site", [t["name"] for t in lines[1]["result"]["tools"]])
         self.assertTrue(lines[2]["result"]["isError"])                              # no keys in this environment
         self.assertEqual(lines[3]["error"]["code"], -32700)
+
+
+MCP_FIXTURES = os.path.join(HERE, "fixtures", "mcp")
+
+
+class MCPSurface(Base):
+    """What a client sees before it calls anything: the tool list is a contract (STABILITY.md) and a snapshot."""
+    def server(self):
+        return gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+
+    def listing(self, srv):
+        return srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})["result"]
+
+    def test_tools_list_matches_the_snapshot(self):
+        # UPDATE_SNAPSHOTS=1 python3 cli/test_geo_watch.py rewrites it; say why in the commit
+        got = json.dumps(self.listing(self.server()), ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+        path = os.path.join(MCP_FIXTURES, "tools.snapshot.json")
+        if os.environ.get("UPDATE_SNAPSHOTS") == "1":
+            with io.open(path, "w", encoding="utf-8") as f:
+                f.write(got)
+        with io.open(path, encoding="utf-8") as f:
+            self.assertEqual(got, f.read(), "tools/list changed: check it, then UPDATE_SNAPSHOTS=1")
+
+    def test_no_released_tool_or_argument_disappears_and_none_becomes_required(self):
+        with io.open(os.path.join(MCP_FIXTURES, "contract-1.3.0.json"), encoding="utf-8") as f:
+            base = json.load(f)["tools"]
+        now = dict((t["name"], t["inputSchema"]) for t in self.listing(self.server())["tools"])
+        for name, was in sorted(base.items()):
+            self.assertIn(name, now, "tool %s was removed or renamed" % name)
+            args = now[name].get("properties", {})
+            for a in was["arguments"]:
+                self.assertIn(a, args, "%s.%s was removed or renamed" % (name, a))
+            self.assertEqual(sorted(set(now[name].get("required", [])) - set(was["required"])), [],
+                             "%s gained a required argument" % name)
+
+    def test_every_tool_has_a_title_and_all_four_hints(self):
+        tools = self.listing(self.server())["tools"]
+        for t in tools:
+            self.assertTrue(t.get("title"), t["name"])
+            ann = t["annotations"]
+            self.assertEqual(ann["title"], t["title"], t["name"])
+            for h in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"):
+                self.assertIsInstance(ann.get(h), bool, "%s.%s" % (t["name"], h))
+            self.assertFalse(ann["destructiveHint"], t["name"])
+        hints = dict((t["name"], tuple(t["annotations"][h] for h in ("readOnlyHint", "idempotentHint", "openWorldHint")))
+                     for t in tools)
+        self.assertEqual(hints["score_site"], (True, False, True))      # the live site can change between calls
+        for name in ("ask", "run"):
+            self.assertEqual(hints[name], (False, False, True), name)     # paid: never marked read-only
+        for name in ("list_runs", "report", "diff"):
+            self.assertEqual(hints[name], (True, True, False), name)
+
+    def test_schemas_are_portable_and_closed(self):
+        for t in self.listing(self.server())["tools"]:
+            self.assertEqual(t["inputSchema"]["type"], "object", t["name"])
+            self.assertIs(t["inputSchema"].get("additionalProperties"), False, t["name"])
+            if "outputSchema" in t:
+                self.assertEqual(t["outputSchema"]["type"], "object", t["name"])      # legacy clients need an object root
+            for sch in (t["inputSchema"], t.get("outputSchema") or {}):
+                for node in schema_nodes(sch):
+                    self.assertNotIsInstance(node.get("type"), list, "%s: a type list; use anyOf" % t["name"])
+        # the schema is closed, the server stays lenient: an extra key is ignored, not an error
+        srv = gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+        r = srv.call({"name": "ask", "arguments": {"question": "", "unexpected": 1}})
+        self.assertIn("question must be", r["content"][0]["text"])
+
+    def test_descriptions_open_with_the_cost(self):
+        d = dict((t["name"], t["description"]) for t in self.listing(self.server())["tools"])
+        self.assertTrue(d["score_site"].startswith("Free, no API key."))
+        self.assertTrue(d["ask"].startswith("Paid: one API call per configured engine, billed to your keys."))
+        self.assertTrue(d["run"].startswith("Paid: up to max_calls calls; call with dry_run:true first."))
+        for name in ("list_runs", "report", "diff"):
+            self.assertTrue(d[name].startswith("Free, local:"), name)
+
+    def test_the_first_512_characters_of_the_instructions_stand_alone(self):
+        init = self.server().handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2025-06-18"}})["result"]
+        head = init["instructions"][:512]
+        self.assertIn("«site text", head)                    # Codex keeps only this much
+        self.assertIn("dry_run", head)
+        self.assertTrue(head.rstrip().endswith("."), head[-40:])   # no sentence cut in half at 512
+        info = init["serverInfo"]
+        self.assertEqual((info["name"], info["version"]), ("geo-score", gw.__version__))
+        self.assertEqual(info["websiteUrl"], "https://github.com/jianruntech/geo-score")
+        self.assertLessEqual(len(info["description"]), 100)
+        self.assertNotIn("icons", info)
 
 
 # ── level 2 and the geo_score.py entry point ─────────────────────────────

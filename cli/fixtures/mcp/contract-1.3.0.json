@@ -1,0 +1,56 @@
+{
+ "_notes": "MCP tool names and arguments as released in geo-score 1.3.0, built from its tools/list. STABILITY.md makes them a contract: a later 1.x may add tools and optional arguments, but may not remove or rename a tool or an argument, or make an argument required. test_geo_watch.py checks it.",
+ "tools": {
+  "ask": {
+   "arguments": [
+    "brand",
+    "domains",
+    "engines",
+    "question"
+   ],
+   "required": [
+    "question"
+   ]
+  },
+  "diff": {
+   "arguments": [
+    "format",
+    "from",
+    "to"
+   ],
+   "required": []
+  },
+  "list_runs": {
+   "arguments": [],
+   "required": []
+  },
+  "report": {
+   "arguments": [
+    "format",
+    "run"
+   ],
+   "required": []
+  },
+  "run": {
+   "arguments": [
+    "budget_usd",
+    "dry_run",
+    "engines",
+    "limit",
+    "max_calls"
+   ],
+   "required": []
+  },
+  "score_site": {
+   "arguments": [
+    "sample",
+    "url",
+    "urls"
+   ],
+   "required": [
+    "url"
+   ]
+  }
+ },
+ "version": "1.3.0"
+}
