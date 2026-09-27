@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The gate every change passes before it merges.
 #
-#   bash scripts/check.sh           # offline: structure, lint, unit + end-to-end tests, the Action
+#   bash scripts/check.sh           # offline: structure, generated MCP docs, lint, unit + end-to-end tests,
+#                                   # the Action, the packaging manifests and the .mcpb
 #   bash scripts/check.sh --live    # also score example.com and check the JSON and --fail-under
 #
 # Hosted Actions have never run on this organisation, so this script is the CI: maintainers run it
@@ -16,6 +17,9 @@ step() { printf '\n== %s\n' "$*"; }
 
 step "structure: rubric, docs, schemas, generated pages (validate.py)"
 python3 .github/validate.py
+
+step "generated MCP docs: tool table and install links in README*/guide/mcp* (mcp_docs.py --check)"
+python3 scripts/mcp_docs.py --check
 
 step "lint: ruff (E9, F, B)"
 if command -v ruff >/dev/null 2>&1; then ruff check cli benchmark .github action scripts
@@ -51,6 +55,9 @@ fi
 
 step "the GitHub Action, run as a runner would (scripts/test_action.py)"
 python3 scripts/test_action.py
+
+step "packaging: the manifests against the code; the .mcpb builds, starts and serves its tools (test_packaging.py)"
+python3 scripts/test_packaging.py
 
 if [ "$LIVE" = 1 ]; then
   step "live: example.com, JSON against the schema"

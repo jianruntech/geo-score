@@ -1,0 +1,26 @@
+{
+  "name": "jianruntech",
+  "owner": {
+    "name": "Jianrun Tech",
+    "email": "hello@jianruntech.com"
+  },
+  "metadata": {
+    "description": "Jianrun Tech's open tools for AI-search visibility."
+  },
+  "plugins": [
+    {
+      "name": "geo-score",
+      "source": "./",
+      "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
+      "homepage": "https://github.com/jianruntech/geo-score",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "geo",
+        "ai-visibility",
+        "seo",
+        "mcp"
+      ]
+    }
+  ]
+}

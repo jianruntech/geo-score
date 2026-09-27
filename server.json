@@ -1,0 +1,66 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jianruntech/geo-score",
+  "title": "geo-score",
+  "description": "Free 0-100 score: can AI engines cite a site? Plus citation checks with your own API keys.",
+  "websiteUrl": "https://github.com/jianruntech/geo-score",
+  "repository": {
+    "url": "https://github.com/jianruntech/geo-score",
+    "source": "github"
+  },
+  "version": "1.3.0",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/jianruntech/geo-score/releases/download/v1.3.0/geo-score-1.3.0.mcpb",
+      "fileSha256": "${MCPB_SHA256}",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "Optional. OpenAI key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "PERPLEXITY_API_KEY",
+          "description": "Optional. Perplexity key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Optional. Gemini (Google AI Studio) key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "description": "Optional. Anthropic key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "OPENROUTER_API_KEY",
+          "description": "Optional. OpenRouter key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "GEO_SCORE_WATCH_CONFIG",
+          "description": "Optional. Path to geo-score-watch.json for run, list_runs, report and diff.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "filepath"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""Check the packaging manifests against the code they package.
+
+    python3 scripts/test_packaging.py
+
+mcpb/manifest.json (Claude Desktop), server.json (the MCP Registry), .claude-plugin/ (Claude Code),
+gemini-extension.json (Gemini CLI) and the Dockerfile each restate something the code already says: the
+version, the tool names, the key variables, the entry point. Nothing else would notice when one of them
+falls behind, so this compares each with the code, then builds the .mcpb the way release.py does, starts the
+bundled server and asks it for its tools.
+"""
+import importlib.util, io, json, os, re, subprocess, sys, tempfile, zipfile
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+import release  # noqa: E402  (MANIFESTS, version_fields, pack: the same code a release runs)
+
+SERVER_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
+NAME_RE = re.compile(r"^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$")     # server.json schema 2025-12-11, `name`
+WATCH_ENV = "GEO_SCORE_WATCH_CONFIG"
+JSON_FILES = release.MANIFESTS + [".claude-plugin/marketplace.json"]
+
+fails = []
+
+
+def ok(cond, msg):
+    print(("  ok    " if cond else "  FAIL  ") + msg)
+    if not cond:
+        fails.append(msg)
+
+
+def rd(p):
+    return io.open(os.path.join(ROOT, p), encoding="utf-8").read()
+
+
+def load_watch():
+    spec = importlib.util.spec_from_file_location("geo_watch_under_test", os.path.join(ROOT, "cli", "geo_watch.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def mcp_session(cmd, cwd, env):
+    """initialize then tools/list over stdio; returns (serverInfo, tool names)."""
+    lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize",
+              "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test", "version": "0"}}},
+             {"jsonrpc": "2.0", "method": "notifications/initialized"},
+             {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}]
+    r = subprocess.run(cmd, cwd=cwd, env=env, input="".join(json.dumps(m) + "\n" for m in lines),
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=60)
+    by_id = {m.get("id"): m for m in (json.loads(x) for x in r.stdout.splitlines() if x.strip())}
+    info = by_id.get(1, {}).get("result", {}).get("serverInfo", {})
+    return info, [t["name"] for t in by_id.get(2, {}).get("result", {}).get("tools", [])]
+
+
+def main():
+    version = re.search(r'^__version__ = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
+    watch = load_watch()
+    ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
+
+    print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
+    m = {}
+    for p in JSON_FILES:
+        try:
+            text = rd(p)
+            m[p] = json.loads(text)
+        except (IOError, OSError, ValueError) as e:
+            ok(False, "%s parses (%s)" % (p, e))
+            continue
+        # bump() rewrites these with json.dumps(indent=2): any other layout would turn a version bump into a reformat
+        ok(text == json.dumps(m[p], indent=2, ensure_ascii=False) + "\n", "%s is in release.py's JSON layout" % p)
+    if len(m) != len(JSON_FILES):
+        return
+    for p in release.MANIFESTS:
+        for field, now, want in release.version_fields(m[p], version):
+            ok(now == want, "%s %s is %s" % (p, field, want))
+    for e in m[".claude-plugin/marketplace.json"]["plugins"]:
+        ok(e.get("version") in (None, version), "marketplace.json names no other version for %s" % e.get("name"))
+
+    print("\n  server.json (MCP Registry, schema 2025-12-11)")
+    s = m["server.json"]
+    ok(s.get("$schema") == SERVER_SCHEMA, "$schema is the 2025-12-11 server schema")
+    ok(s.get("name") == "io.github.jianruntech/geo-score" and bool(NAME_RE.match(s.get("name", ""))),
+       "name is io.github.jianruntech/geo-score and matches the schema's pattern")
+    ok(0 < len(s.get("description", "")) <= 100, "description is 1-100 characters (%d)" % len(s.get("description", "")))
+    ok(len(s.get("title", "")) <= 100, "title is at most 100 characters")
+    pk = [x for x in s.get("packages", []) if x.get("registryType") == "mcpb"]
+    ok(len(pk) == 1, "one mcpb package")
+    ok(bool(pk) and pk[0].get("fileSha256") == "${MCPB_SHA256}",
+       "the template's fileSha256 is the ${MCPB_SHA256} placeholder (release.py fills it in dist/server.json)")
+    ok(bool(pk) and pk[0].get("transport") == {"type": "stdio"}, "the mcpb package speaks stdio")
+
+    print("\n  tools: the MCPB manifest lists exactly what tools/list serves")
+    served = [t["name"] for t in watch.MCPServer("/nonexistent/geo-score-watch.json").handle(
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})["result"]["tools"]]
+    listed = [t["name"] for t in m["mcpb/manifest.json"].get("tools", [])]
+    ok(sorted(listed) == sorted(served), "mcpb/manifest.json tools %s == tools/list %s" % (sorted(listed), sorted(served)))
+
+    print("\n  key variables: every manifest asks for the provider keys in PROVIDERS, and only those")
+    # the first variable of each provider; an alias such as GOOGLE_API_KEY still works from the environment,
+    # but a form that asked for it too would ask for the same key twice
+    keys = {p["env"][0] for p in watch.PROVIDERS.values()}
+    every = {e for p in watch.PROVIDERS.values() for e in p["env"]}
+    man = m["mcpb/manifest.json"]
+    env, uc = man["server"]["mcp_config"].get("env", {}), man.get("user_config", {})
+    ok(set(env) == keys | {WATCH_ENV}, "mcpb env maps %s plus %s" % (sorted(keys), WATCH_ENV))
+    for var, val in sorted(env.items()):
+        opt = re.match(r"^\$\{user_config\.([a-z_]+)\}$", val)
+        o = uc.get(opt.group(1)) if opt else None
+        ok(o is not None, "mcpb %s comes from a declared user_config option" % var)
+        if o is None:
+            continue
+        # an optional field left empty must reach the server as "" (no key), never as the literal ${user_config...}
+        ok(o.get("required") is False and o.get("default") == "", "mcpb %s is optional with default \"\"" % var)
+        ok(bool(o.get("sensitive")) == (var in keys), "mcpb %s is %s" % (var, "sensitive" if var in keys else "not sensitive"))
+    reg = {e["name"]: e for e in pk[0].get("environmentVariables", [])} if pk else {}
+    ok(set(reg) == keys | {WATCH_ENV}, "server.json environmentVariables are the keys plus %s" % WATCH_ENV)
+    ok(all(reg[n].get("isSecret") is (n in keys) and reg[n].get("isRequired") is False for n in reg),
+       "server.json: keys are secret, nothing is required")
+    gem = m["gemini-extension.json"].get("settings", [])
+    ok({x.get("envVar") for x in gem} == keys and all(x.get("sensitive") is True for x in gem),
+       "gemini-extension.json has one sensitive setting per key")
+    plug = m[".claude-plugin/plugin.json"]
+    penv = {v for srv in plug.get("mcpServers", {}).values() for v in srv.get("env", {})}
+    # Claude Code substitutes "" for an optional userConfig value left empty, which would blank an exported key
+    ok(not (penv & every) and not plug.get("userConfig"),
+       "plugin.json leaves the keys to the environment Claude Code runs in (no env or userConfig mapping)")
+
+    print("\n  entry points name files that exist")
+    srv = man["server"]
+    ok(srv["entry_point"] in [a for a, _ in release.MCPB_FILES], "mcpb entry_point %s is in the bundle" % srv["entry_point"])
+    ok(srv["mcp_config"]["args"][0] == "${__dirname}/" + srv["entry_point"], "mcpb runs its entry_point")
+    for p, prefix, sep in ((".claude-plugin/plugin.json", "${CLAUDE_PLUGIN_ROOT}/", "/"),
+                           ("gemini-extension.json", "${extensionPath}${/}", "${/}")):
+        for cfg in m[p].get("mcpServers", {}).values():
+            a0 = cfg.get("args", [""])[0]
+            rel = a0[len(prefix):].replace(sep, "/") if a0.startswith(prefix) else None
+            ok(rel == "cli/geo_score.py" and cfg.get("args", [])[1:] == ["mcp"], "%s runs cli/geo_score.py mcp" % p)
+            ok("cwd" not in cfg, "%s sets no cwd, so ./geo-score-watch.json is the user's project" % p)
+    mk = m[".claude-plugin/marketplace.json"]
+    ok([(e.get("name"), e.get("source")) for e in mk.get("plugins", [])] == [(plug["name"], "./")],
+       "marketplace.json offers this repository's plugin")
+    dock = rd("Dockerfile")
+    ok(re.search(r'io\.modelcontextprotocol\.server\.name="%s"' % re.escape(s["name"]), dock) is not None,
+       "the Dockerfile's server-name label is server.json's name")
+    ok(re.search(r"^COPY cli/geo_score\.py cli/geo_watch\.py /app/$", dock, re.M) is not None,
+       "the image copies the two CLI files")
+    ok([x for x in rd(".dockerignore").splitlines() if x and not x.startswith("#")]
+       == ["*", "!cli/geo_score.py", "!cli/geo_watch.py"], ".dockerignore lets in the two CLI files only")
+
+    print("\n  the .mcpb release.py builds")
+    with tempfile.TemporaryDirectory() as tmp:
+        mcpb, sj = release.pack(version, os.path.join(tmp, "a"))
+        again, _ = release.pack(version, os.path.join(tmp, "b"))
+        digest = release.sha256(mcpb)
+        ok(digest == release.sha256(again), "two builds give one SHA-256 (%s…)" % digest[:12])
+        with zipfile.ZipFile(mcpb) as z:
+            ok(z.namelist() == ["manifest.json"] + [a for a, _ in release.MCPB_FILES],
+               "the bundle holds manifest.json, %s" % ", ".join(a for a, _ in release.MCPB_FILES))
+            inner = json.loads(z.read("manifest.json").decode("utf-8"))
+            z.extractall(os.path.join(tmp, "x"))
+        ok(inner == dict(man, version=version), "the bundled manifest is mcpb/manifest.json at %s" % version)
+        built = json.loads(io.open(sj, encoding="utf-8").read())
+        bp = [x for x in built.get("packages", []) if x.get("registryType") == "mcpb"]
+        ok(bool(bp) and bp[0].get("fileSha256") == digest and bp[0].get("identifier") == release.mcpb_url(version),
+           "dist/server.json names the bundle's URL and SHA-256")
+        ok("${" not in io.open(sj, encoding="utf-8").read(), "dist/server.json has no placeholder left")
+        env = {k: v for k, v in os.environ.items() if k not in every and not k.startswith("GEO_SCORE")}
+        info, names = mcp_session([sys.executable, os.path.join(tmp, "x", "server", "geo_score.py"), "mcp"], tmp, env)
+        ok(info.get("name") == "geo-score" and info.get("version") == version,
+           "the bundled server starts and says geo-score %s" % version)
+        ok(sorted(names) == sorted(listed), "the bundled server serves the manifest's tools")
+
+    if fails:
+        print("\nFAIL: %d packaging check(s)" % len(fails))
+        sys.exit(1)
+    print("\nOK: the manifests match the code, and the .mcpb builds, starts and serves its tools")
+
+
+if __name__ == "__main__":
+    main()

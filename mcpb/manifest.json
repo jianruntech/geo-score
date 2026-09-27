@@ -1,0 +1,156 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/schemas/mcpb-manifest-v0.3.schema.json",
+  "manifest_version": "0.3",
+  "name": "geo-score",
+  "display_name": "geo-score",
+  "version": "1.3.0",
+  "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
+  "long_description": "geo-score measures AI visibility at three levels.\n\n- **score_site** (level 1) scores a URL 0-100 against an open rubric: can AI engines reach, parse, trust and cite it. Free, no key, reads public pages only.\n- **ask** (level 2) asks one question to each AI engine you have a key for, through its search-enabled API, and reports who the answer cites.\n- **run**, **list_runs**, **report** and **diff** (level 3) track a question set over time, with intervals and a paired significance test.\n- **status** says what can run right now, without spending anything.\n\nEvery key is optional and stays in your keychain; each is sent only to its own provider. No telemetry. Standard library Python 3.8+, no dependencies.",
+  "author": {
+    "name": "Jianrun Tech",
+    "email": "hello@jianruntech.com",
+    "url": "https://github.com/jianruntech"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jianruntech/geo-score"
+  },
+  "homepage": "https://github.com/jianruntech/geo-score",
+  "documentation": "https://github.com/jianruntech/geo-score/blob/main/guide/mcp.md",
+  "support": "https://github.com/jianruntech/geo-score/issues",
+  "server": {
+    "type": "python",
+    "entry_point": "server/geo_score.py",
+    "mcp_config": {
+      "command": "python3",
+      "args": [
+        "${__dirname}/server/geo_score.py",
+        "mcp"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${user_config.openai_api_key}",
+        "PERPLEXITY_API_KEY": "${user_config.perplexity_api_key}",
+        "GEMINI_API_KEY": "${user_config.gemini_api_key}",
+        "ANTHROPIC_API_KEY": "${user_config.anthropic_api_key}",
+        "OPENROUTER_API_KEY": "${user_config.openrouter_api_key}",
+        "GEO_SCORE_WATCH_CONFIG": "${user_config.watch_config}"
+      },
+      "platform_overrides": {
+        "win32": {
+          "command": "python"
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "score_site",
+      "description": "Score a URL 0-100 for AI-search readiness: can AI engines reach, parse, trust and cite it. Free, no key."
+    },
+    {
+      "name": "ask",
+      "description": "Ask one question to each configured AI engine and report whether the brand is cited. One paid call per engine."
+    },
+    {
+      "name": "run",
+      "description": "Run the tracked question set and save it. Spends API credits; dry_run shows the plan first."
+    },
+    {
+      "name": "list_runs",
+      "description": "Saved runs with their headline citation rate."
+    },
+    {
+      "name": "report",
+      "description": "Citation rate per engine with 95% intervals, share of voice and cited sources for a saved run."
+    },
+    {
+      "name": "diff",
+      "description": "Compare two runs with a paired significance test; 'change' only when the adjusted p < 0.05."
+    },
+    {
+      "name": "status",
+      "description": "What can run right now: config, engines with a key, questions and caps. Never shows a key."
+    }
+  ],
+  "tools_generated": false,
+  "keywords": [
+    "geo",
+    "aeo",
+    "ai-visibility",
+    "llm-citations",
+    "seo",
+    "rubric",
+    "chatgpt",
+    "perplexity",
+    "gemini",
+    "claude"
+  ],
+  "license": "MIT",
+  "privacy_policies": [
+    "https://openai.com/policies/privacy-policy/",
+    "https://www.perplexity.ai/hub/legal/privacy-policy",
+    "https://policies.google.com/privacy",
+    "https://www.anthropic.com/legal/privacy",
+    "https://openrouter.ai/privacy",
+    "https://foundation.wikimedia.org/wiki/Policy:Privacy_policy"
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "python": ">=3.8"
+    }
+  },
+  "user_config": {
+    "openai_api_key": {
+      "type": "string",
+      "title": "OpenAI API key",
+      "description": "Optional. Enables ask and run on ChatGPT (openai); sent only to that provider. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "perplexity_api_key": {
+      "type": "string",
+      "title": "Perplexity API key",
+      "description": "Optional. Enables ask and run on Perplexity; sent only to that provider. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "gemini_api_key": {
+      "type": "string",
+      "title": "Gemini API key",
+      "description": "Optional. Enables ask and run on Gemini (Google AI Studio); sent only to that provider. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "anthropic_api_key": {
+      "type": "string",
+      "title": "Anthropic API key",
+      "description": "Optional. Enables ask and run on Claude (Anthropic); sent only to that provider. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "openrouter_api_key": {
+      "type": "string",
+      "title": "OpenRouter API key",
+      "description": "Optional. Enables ask and run on OpenRouter; sent only to that provider. Stored in the OS keychain.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "watch_config": {
+      "type": "file",
+      "title": "geo-score-watch.json",
+      "description": "Optional. The config that run, list_runs, report and diff read; create it with `geo-score watch init`. Runs are saved next to it.",
+      "required": false,
+      "default": ""
+    }
+  }
+}

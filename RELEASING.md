@@ -11,20 +11,51 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    minor release; a fix is a patch; removing or renaming a contract is a major release.
 3. **Bump:** `python3 scripts/release.py X.Y.Z --bump`. It rewrites `__version__` in both CLI files,
    `SKILL.md`, every install line and download pinned to a tag (README, cli/README, SECURITY,
-   STABILITY, the troubleshooting guides, examples, the issue form, the leaderboard template), and turns `[Unreleased]` into
-   `[X.Y.Z]` with a compare link.
+   STABILITY, the troubleshooting and MCP guides, examples, the issue form, the leaderboard template),
+   and the version in the packaging manifests (`server.json` and its `.mcpb` URL, `mcpb/manifest.json`,
+   `.claude-plugin/plugin.json`, `gemini-extension.json`). Then it runs `scripts/mcp_docs.py`, which
+   regenerates the MCP tool table and install buttons in the READMEs and the MCP guides (a button carries
+   the version base64- or URL-encoded, where no pin pattern can see it), and last turns `[Unreleased]`
+   into `[X.Y.Z]` with a compare link. If `mcp_docs.py` fails, the changelog is left alone and `--bump`
+   can simply be rerun.
 4. **By hand:** update the supported-versions table in `SECURITY.md` for a minor or major release,
    rebuild the pages (`python3 benchmark/build_page.py`), run `bash scripts/check.sh`, and commit as
    `chore(release): X.Y.Z`.
 5. **Preflight:** `python3 scripts/release.py X.Y.Z` must print `ready`. It refuses while any version,
-   pin, changelog section or compare link is out of step, the tree is dirty, or the tag exists.
-6. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live`, builds the
-   wheel and sdist, writes `SHA256SUMS` over them and the two CLI files, pushes main, creates the tag
-   `vX.Y.Z` and pushes it, moves `v1` to it and pushes that, and creates the GitHub release with the
-   changelog section and the files attached. Main goes first, so a rejected push leaves no local tag
-   and the step can simply be rerun.
-7. **Check it:** `uvx --from git+https://github.com/jianruntech/geo-score@vX.Y.Z geo-score --version`,
-   and the one-line `curl` from the README.
+   pin, manifest, changelog section or compare link is out of step, `scripts/mcp_docs.py --check`
+   finds a generated MCP block out of date, the tree is dirty, or the tag exists.
+6. **Try the bundle (minor and major releases):** `python3 scripts/release.py X.Y.Z --pack` builds only
+   `dist/geo-score-X.Y.Z.mcpb` and `dist/server.json`. Double-click the `.mcpb` in Claude Desktop on
+   macOS and on Windows, fill in one key, and run `score_site` and `status`. The bundle runs the user's
+   own `python3` (`python` on Windows).
+7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live`, builds the
+   wheel and sdist, the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` (a zip of `mcpb/manifest.json`,
+   both CLI files under `server/` and the licence, byte-for-byte reproducible) and `dist/server.json`
+   (the template with the bundle's real SHA-256 in `fileSha256`), writes `SHA256SUMS` over all of them
+   and the two CLI files, pushes main, creates the tag `vX.Y.Z` and pushes it, moves `v1` to it and
+   pushes that, and creates the GitHub release with the changelog section and the files attached. Main
+   goes first, so a rejected push leaves no local tag and the step can simply be rerun.
+8. **Check it:** `uvx --from git+https://github.com/jianruntech/geo-score@vX.Y.Z geo-score --version`,
+   the one-line `curl` from the README, and the bundle as [SECURITY.md](SECURITY.md#verifying-a-download)
+   describes.
+9. **MCP Registry:** an Owner of the jianruntech GitHub organisation runs `mcp-publisher login github`
+   once, then `cd dist && mcp-publisher validate && mcp-publisher publish`. The listing points clients at
+   the `.mcpb` URL on the release and its `fileSha256`, so this comes after step 7. A published
+   version is immutable: to correct only the listing, publish a prerelease version such as `X.Y.Z-1`.
+
+## The packaging files
+
+Each client that installs geo-score reads its own manifest. `release.py` keeps their versions in step,
+and `scripts/test_packaging.py` (part of `check.sh`) checks each one against the code: the version, the
+tool names, the key variables and the entry point.
+
+| File | Read by |
+|---|---|
+| `mcpb/manifest.json` | Claude Desktop, inside the `.mcpb` bundle; keys go to its keychain fields |
+| `server.json` | The MCP Registry; the release attaches it with the real checksum filled in |
+| `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | Claude Code (`/plugin marketplace add jianruntech/geo-score`); keys come from the user's exported environment |
+| `gemini-extension.json` | Gemini CLI (`gemini extensions install`); one sensitive setting per key, since Gemini CLI does not pass `*KEY*` variables to servers |
+| `Dockerfile` | `docker build`; nothing publishes an image yet |
 
 ## Who may move `v1`
 

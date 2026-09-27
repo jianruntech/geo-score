@@ -1,0 +1,30 @@
+{
+  "name": "geo-score",
+  "version": "1.3.0",
+  "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
+  "author": {
+    "name": "Jianrun Tech",
+    "email": "hello@jianruntech.com",
+    "url": "https://github.com/jianruntech"
+  },
+  "homepage": "https://github.com/jianruntech/geo-score",
+  "repository": "https://github.com/jianruntech/geo-score",
+  "license": "MIT",
+  "keywords": [
+    "geo",
+    "aeo",
+    "ai-visibility",
+    "llm-citations",
+    "seo",
+    "mcp"
+  ],
+  "mcpServers": {
+    "geo-score": {
+      "command": "python3",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/cli/geo_score.py",
+        "mcp"
+      ]
+    }
+  }
+}

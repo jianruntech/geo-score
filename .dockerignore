@@ -1,0 +1,4 @@
+# The image needs the two CLI files and nothing else: no fixtures, no benchmark, no .git, no .env.
+*
+!cli/geo_score.py
+!cli/geo_watch.py
