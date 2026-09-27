@@ -4,8 +4,8 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, re, shutil, subprocess, sys, tempfile, threading
-import unittest, urllib.request
+import contextlib, datetime, http.server, io, json, os, queue, re, shutil, subprocess, sys, tempfile, threading
+import time, unittest, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1032,11 +1032,15 @@ class MCP(Base):
                             os.path.join(self.tmp, "none.json")], input=stdin.encode(), capture_output=True,
                            env=env, timeout=60)
         lines = [json.loads(l) for l in p.stdout.decode().splitlines()]
-        self.assertEqual([l.get("id") for l in lines], [1, 2, 3, None])
-        self.assertEqual(lines[0]["result"]["serverInfo"]["name"], "geo-score")
-        self.assertIn("score_site", [t["name"] for t in lines[1]["result"]["tools"]])
-        self.assertTrue(lines[2]["result"]["isError"])                              # no keys in this environment
-        self.assertEqual(lines[3]["error"]["code"], -32700)
+        # tools/call answers from a worker thread, so it may come after later lines; it still comes before exit
+        by_id = dict((l.get("id"), l) for l in lines)
+        self.assertEqual(len(lines), 4)
+        self.assertEqual([l.get("id") for l in lines if l.get("id") != 3], [1, 2, None])
+        self.assertEqual(by_id[1]["result"]["serverInfo"]["name"], "geo-score")
+        self.assertIn("score_site", [t["name"] for t in by_id[2]["result"]["tools"]])
+        self.assertTrue(by_id[3]["result"]["isError"])                              # no keys in this environment
+        self.assertEqual(by_id[None]["error"]["code"], -32700)
+        self.assertEqual(p.returncode, 0)
 
 
 MCP_FIXTURES = os.path.join(HERE, "fixtures", "mcp")
@@ -1123,6 +1127,155 @@ class MCPSurface(Base):
         self.assertEqual(info["websiteUrl"], "https://github.com/jianruntech/geo-score")
         self.assertLessEqual(len(info["description"]), 100)
         self.assertNotIn("icons", info)
+
+
+class Feed(object):
+    """stdin for a server under test: lines go in when the test says, and close() is the end of file."""
+    def __init__(self):
+        self.q = queue.Queue()
+
+    def send(self, obj):
+        self.q.put(json.dumps(obj) + "\n")
+
+    def close(self):
+        self.q.put(None)
+
+    def __iter__(self):
+        while True:
+            line = self.q.get()
+            if line is None:
+                return
+            yield line
+
+
+class Lines(object):
+    """stdout for a server under test: every line must be JSON, and a test can wait for the one it expects."""
+    def __init__(self):
+        self.cond, self.buf = threading.Condition(), ""
+
+    def write(self, s):
+        with self.cond:
+            self.buf += s
+            self.cond.notify_all()
+
+    def flush(self):
+        pass
+
+    def lines(self):
+        with self.cond:
+            return [json.loads(l) for l in self.buf.splitlines()]
+
+    def wait_until(self, done, timeout=10):
+        deadline = time.time() + timeout
+        with self.cond:
+            while True:
+                got = [json.loads(l) for l in self.buf.splitlines()]
+                if done(got):
+                    return got
+                if time.time() >= deadline:
+                    raise AssertionError("timed out waiting; stdout so far: %r" % got)
+                self.cond.wait(0.1)
+
+    def wait_for(self, pred, timeout=10):
+        return self.wait_until(lambda got: any(pred(l) for l in got), timeout)
+
+
+class MCPConcurrency(Base):
+    """tools/call runs on worker threads: the loop keeps answering, and notifications/cancelled stops the spend."""
+    server = MCP.server
+
+    def start(self, gate):
+        routes = self.standard_routes()
+        slow = routes["api.openai.com"]
+        routes["api.openai.com"] = lambda u, h, b: (gate.wait(10), slow(u, h, b))[1]
+        api = self.fake(routes)
+        srv = self.server()
+        srv.out = out = Lines()
+        feed, ret = Feed(), []
+        t = threading.Thread(target=lambda: ret.append(srv.serve(feed)), daemon=True)
+        t.start()
+        return srv, feed, out, t, ret, api
+
+    def settle(self, srv):
+        deadline = time.time() + 10
+        while srv.inflight and time.time() < deadline:
+            time.sleep(0.02)
+        self.assertEqual(srv.inflight, {})
+
+    def runs_saved(self):
+        d = os.path.join(self.tmp, ".geo-score", "watch", "runs")
+        return os.listdir(d) if os.path.isdir(d) else []
+
+    def test_ping_is_answered_during_a_run_and_a_cancelled_run_falls_silent(self):
+        gate, err = threading.Event(), io.StringIO()
+        with contextlib.redirect_stderr(err):
+            srv, feed, out, t, ret, _ = self.start(gate)
+            feed.send({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                       "params": {"name": "run", "arguments": {}, "_meta": {"progressToken": "p7"}}})
+            out.wait_for(lambda l: l.get("method") == "notifications/progress")   # perplexity answered at once
+            feed.send({"jsonrpc": "2.0", "id": 8, "method": "ping"})
+            out.wait_for(lambda l: l.get("id") == 8)                             # while chatgpt is still asking
+            self.assertFalse(any(l.get("id") == 7 for l in out.lines()))
+            feed.send({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {"requestId": 7, "reason": "user"}})
+            feed.send({"jsonrpc": "2.0", "id": 9, "method": "ping"})
+            n = len(out.wait_for(lambda l: l.get("id") == 9))                      # the cancel has been read
+            gate.set()
+            self.settle(srv)
+            feed.close()
+            t.join(5)
+        self.assertEqual(ret, [0])
+        after = out.lines()[n:]
+        self.assertEqual(after, [])                                  # no progress and no answer after the cancel
+        self.assertFalse(any(l.get("id") == 7 for l in out.lines()))
+        self.assertEqual(self.runs_saved(), [])                      # a cancelled run is not saved
+        self.assertIn("geo-score mcp: run stopped before it finished", err.getvalue())
+        self.assertIn("not saved", err.getvalue())
+
+    def test_cancelling_an_unknown_or_finished_request_is_ignored(self):
+        srv = self.server()
+        self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {"requestId": 99}}))
+        self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {}}))
+        self.assertEqual(srv.inflight, {})
+
+    def test_end_of_file_stops_the_calls_in_flight_and_returns_promptly(self):
+        gate = threading.Event()
+        with contextlib.redirect_stderr(io.StringIO()):
+            srv, feed, out, t, ret, api = self.start(gate)
+            feed.send({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                       "params": {"name": "run", "arguments": {}, "_meta": {"progressToken": 1}}})
+            out.wait_for(lambda l: l.get("method") == "notifications/progress")
+            t0 = time.time()
+            feed.close()
+            t.join(5)
+            self.assertLess(time.time() - t0, gw.EOF_GRACE + 1)
+            self.assertEqual(ret, [0])
+            asked = len(api.calls)
+            gate.set()                                               # the one call already on the wire comes back
+            self.settle(srv)
+        self.assertEqual(len(api.calls), asked)                      # and nothing new was asked after the end of file
+        self.assertEqual(self.runs_saved(), [])
+
+    def test_at_most_four_calls_run_at_once_and_the_loop_stays_responsive(self):
+        gate = threading.Event()
+        srv, feed, out, t, ret, api = self.start(gate)
+        for i in range(5):
+            feed.send({"jsonrpc": "2.0", "id": "a%d" % i, "method": "tools/call",
+                       "params": {"name": "ask", "arguments": {"question": "q%d" % i, "engines": ["chatgpt-api"]}}})
+        deadline = time.time() + 10
+        while len(api.calls) < gw.MCP_WORKERS and time.time() < deadline:
+            time.sleep(0.02)
+        feed.send({"jsonrpc": "2.0", "id": "p", "method": "ping"})
+        out.wait_for(lambda l: l.get("id") == "p")
+        time.sleep(0.3)
+        self.assertEqual(len(api.calls), gw.MCP_WORKERS)             # the fifth waits for a free worker
+        gate.set()
+        answers = lambda got: [l for l in got if str(l.get("id")).startswith("a")]
+        got = answers(out.wait_until(lambda got: len(answers(got)) == 5))
+        self.assertEqual(sorted(l["id"] for l in got), ["a%d" % i for i in range(5)])
+        self.assertTrue(all(not l["result"]["isError"] for l in got), got)
+        feed.close()
+        t.join(5)
+        self.assertEqual(ret, [0])
 
 
 # ── level 2 and the geo_score.py entry point ─────────────────────────────

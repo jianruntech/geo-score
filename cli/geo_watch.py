@@ -2206,11 +2206,34 @@ def rubric_resource(gs):
             "source": "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.json" % getattr(gs, "RUBRIC", "")}
 
 
+MCP_WORKERS = 4          # tools/call requests served at once; more wait their turn
+PROGRESS_EVERY = 0.2     # seconds between two progress notifications (the last one always goes out)
+EOF_GRACE = 2.0          # seconds the calls in flight get to answer once stdin closes
+
+
+class _Call(object):
+    """One tools/call in flight. `stop` ends the work (the client cancelled it, or stdin closed); `cancelled`
+    also silences it: after notifications/cancelled nothing more is written for that request."""
+    __slots__ = ("stop", "cancelled")
+
+    def __init__(self):
+        self.stop = threading.Event()
+        self.cancelled = False
+
+
+def _rid(v):
+    """A request id as a map key: a string or an integer, never a bool (1 and "1" are different requests)."""
+    return (type(v).__name__, v) if isinstance(v, (str, int)) and not isinstance(v, bool) else None
+
+
 class MCPServer(object):
     def __init__(self, config_path, out=None):
         self.config_path = config_path
         self.out = out or sys.stdout
-        self.lock = threading.Lock()
+        self.lock = threading.Lock()          # one line at a time on stdout, and guards inflight
+        self.inflight = {}                    # _rid(request id) -> _Call
+        self.workers = []
+        self.slots = threading.BoundedSemaphore(MCP_WORKERS)
         self.geo_score = load_geo_score()
         if self.geo_score is not None and not hasattr(self.geo_score, "ADDRESS_GUARD"):
             # a scorer older than the address guard would let an agent reach private hosts: do not offer it
@@ -2220,10 +2243,24 @@ class MCPServer(object):
             # this process makes for score_site must go to a public address
             self.geo_score.ADDRESS_GUARD = True
 
-    def send(self, obj):
+    def send(self, obj, call=None):
         with self.lock:
-            self.out.write(json.dumps(obj, ensure_ascii=False) + "\n")
-            self.out.flush()
+            if call is not None and call.cancelled:
+                return          # the client cancelled this request: no progress, no answer
+            try:
+                self.out.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                self.out.flush()
+            except (OSError, ValueError):
+                pass            # the client has gone; stdin's end of file stops the loop
+
+    def cancel(self, params):
+        """notifications/cancelled: stop that call and write nothing more for it. Unknown ids are ignored."""
+        with self.lock:
+            call = self.inflight.get(_rid(params.get("requestId")))
+            if call is not None:
+                call.cancelled = True
+        if call is not None:
+            call.stop.set()
 
     @staticmethod
     def _hints(read_only, idempotent, open_world):
@@ -2308,7 +2345,7 @@ class MCPServer(object):
             x["annotations"] = dict({"title": x["title"]}, **x["annotations"])
         return t
 
-    def handle(self, msg):
+    def handle(self, msg, ctx=None):
         if not isinstance(msg, dict) or msg.get("jsonrpc") != "2.0" or not isinstance(msg.get("method"), str):
             if isinstance(msg, dict) and "method" not in msg and ("result" in msg or "error" in msg):
                 return None   # a reply to a request we never send
@@ -2317,6 +2354,8 @@ class MCPServer(object):
         method, mid, note = msg["method"], msg.get("id"), "id" not in msg
         params = msg.get("params") if isinstance(msg.get("params"), dict) else {}
         if note:
+            if method == "notifications/cancelled":
+                self.cancel(params)
             return None
         if method == "initialize":
             want = params.get("protocolVersion")
@@ -2334,7 +2373,7 @@ class MCPServer(object):
                 # an unknown tool is a protocol error, not a tool result (MCP 2025-06-18, tools: error handling)
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": "unknown tool: %s"
                                                                % (name if isinstance(name, str) else type(name).__name__)[:80]}}
-            result = self.call(params)
+            result = self.call(params, ctx)
         elif method == "resources/list":
             result = {"resources": self.resources()}
         elif method == "resources/templates/list":
@@ -2359,15 +2398,18 @@ class MCPServer(object):
                  "description": "Every check, its points and tiers, the bands and the caps, as the scorer applies them.",
                  "mimeType": "application/json"}]
 
-    def call(self, params):
+    def call(self, params, ctx=None):
+        ctx = ctx or _Call()
         name, args = params.get("name"), params.get("arguments")
         args = args if isinstance(args, dict) else {}
         token = (params.get("_meta") or {}).get("progressToken") if isinstance(params.get("_meta"), dict) else None
         fn = getattr(self, "tool_" + name, None) if isinstance(name, str) and re.match(r"^[a-z_]+$", name) else None
         if fn is None or name not in [t["name"] for t in self.tools()]:
             return {"content": [{"type": "text", "text": "unknown tool: %s" % name}], "isError": True}
+        if ctx.stop.is_set():
+            return {"content": [{"type": "text", "text": "cancelled before it started"}], "isError": True}
         try:
-            out = fn(args, token)
+            out = fn(args, token, ctx)
             if isinstance(out, tuple):          # (text for people, structuredContent for agents)
                 return {"content": [{"type": "text", "text": out[0]}], "structuredContent": out[1], "isError": False}
             return {"content": [{"type": "text", "text": out}], "isError": False}
@@ -2384,14 +2426,19 @@ class MCPServer(object):
             raise ConfigError("%s:\n  %s" % (self.config_path, "\n  ".join(cfg.errors)))
         return cfg
 
-    def _progress(self, token):
+    def _progress(self, token, ctx=None):
         if token is None or not isinstance(token, (str, int)) or isinstance(token, bool):
             return None
+        last = [None]
 
         def show(n, total, s):
+            now = time.monotonic()
+            if n < total and last[0] is not None and now - last[0] < PROGRESS_EVERY:
+                return
+            last[0] = now
             self.send({"jsonrpc": "2.0", "method": "notifications/progress",
                        "params": {"progressToken": token, "progress": n, "total": total,
-                                  "message": "%s %s %s" % (s["engine"], s["query_id"], s["status"])}})
+                                  "message": "%s %s %s" % (s["engine"], s["query_id"], s["status"])}}, ctx)
         return show
 
     @staticmethod
@@ -2403,7 +2450,7 @@ class MCPServer(object):
             raise ConfigError("engines must be a list of engine ids")
         return v
 
-    def tool_ask(self, args, token):
+    def tool_ask(self, args, token, ctx=None):
         q = args.get("question")
         if not isinstance(q, str) or not q.strip() or len(q) > MAX_QUERY_LEN:
             raise ConfigError("question must be 1-%d characters" % MAX_QUERY_LEN)
@@ -2421,10 +2468,11 @@ class MCPServer(object):
             raise ConfigError("no engine can run — the MCP server's environment has no API keys")
         run = execute(brand, rivals, engines,
                       [{"query_id": "ask", "query": q.strip(), "intent_tier": "", "target_url": ""}],
-                      1, country, {}, len(active), progress=self._progress(token))
+                      1, country, {}, len(active), progress=self._progress(token, ctx),
+                      stop=ctx.stop if ctx else None)
         return render_ask(run, "md"), ask_structured(run)
 
-    def tool_run(self, args, token):
+    def tool_run(self, args, token, ctx=None):
         cfg = self._cfg()
         queries = cfg.load_queries()
         lim = args.get("limit")
@@ -2457,12 +2505,21 @@ class MCPServer(object):
         if planned > max_calls:
             raise ConfigError("\n".join(lines + ["the plan exceeds the cap; pass limit or engines to ask fewer"]))
         run = execute(cfg.brand, cfg.competitors, engines, queries, cfg.runs, cfg.country, cfg.prices, max_calls,
-                      budget, False, progress=self._progress(token))
+                      budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None)
+        if ctx is not None and ctx.stop.is_set():
+            # cancelled, or stdin closed: a partial run would read as a full one in report and diff, so it is
+            # not saved; what it cost goes to stderr, where the client's log keeps it
+            lg = run["ledger"]
+            why = "run stopped before it finished: %d questions asked (%d API requests), cost %s%s; not saved" % (
+                lg["questions_asked"], lg["api_requests"], money(lg["cost_usd"]),
+                "" if lg["cost_complete"] else " plus unpriced answers")
+            print("geo-score mcp: " + why, file=sys.stderr)
+            raise ConfigError(why)
         path = save_run(cfg, run)
         out.update(run_id=run["run_id"], summary=summary_of(run))
         return render(run, "md") + "\nsaved `%s`\n" % os.path.relpath(path, cfg.dir), out
 
-    def tool_list_runs(self, args, token):
+    def tool_list_runs(self, args, token, ctx=None):
         cfg = self._cfg()
         rows, runs = [], []
         for rid in list_run_ids(cfg):
@@ -2479,19 +2536,19 @@ class MCPServer(object):
         text = table(["run", "answered", "cited (headline)", "95% CI"], rows, "md") if rows else "no runs yet"
         return text, {"runs": runs}
 
-    def tool_report(self, args, token):
+    def tool_report(self, args, token, ctx=None):
         run = load_run(self._cfg(), args.get("run") or "latest")
         sm = summary_of(run)
         if args.get("format") == "json":
             return json.dumps(sm, ensure_ascii=False, indent=1), sm
         return render(run, "md"), sm
 
-    def tool_diff(self, args, token):
+    def tool_diff(self, args, token, ctx=None):
         cfg = self._cfg()
         d = diff_runs(load_run(cfg, args.get("from") or "previous"), load_run(cfg, args.get("to") or "latest"))
         return (json.dumps(d, ensure_ascii=False, indent=1) if args.get("format") == "json" else render_diff(d, "md")), d
 
-    def tool_score_site(self, args, token):
+    def tool_score_site(self, args, token, ctx=None):
         url = args.get("url")
         m = re.match(r"^(?:https?://)?([^/\s:?#@]+)(?::(\d{1,5}))?(?:[/?#]\S*)?$", url.strip()) if isinstance(url, str) else None
         url = (url.strip() if "://" in url else "https://" + url.strip()) if m else ""
@@ -2527,6 +2584,48 @@ class MCPServer(object):
         L.append("\nReadiness says whether AI *can* cite the site; `run` measures whether it *does*.")
         return "\n".join(L) + "\n", j
 
+    def _spawn(self, msg):
+        """A tools/call runs on a worker thread, so the loop keeps reading: ping, cancellation, other calls."""
+        key, call = _rid(msg["id"]), _Call()
+        with self.lock:
+            self.inflight[key] = call
+            self.workers = [t for t in self.workers if t.is_alive()]
+        t = threading.Thread(target=self._work, args=(msg, key, call), daemon=True)
+        self.workers.append(t)
+        t.start()
+
+    def _work(self, msg, key, call):
+        try:
+            got = False
+            while not got and not call.stop.is_set():
+                got = self.slots.acquire(timeout=0.1)
+            try:
+                r = self.handle(msg, call)          # stopped while waiting: call() answers without starting
+            except Exception as e:
+                r = {"jsonrpc": "2.0", "id": msg.get("id"),
+                     "error": {"code": -32603, "message": "internal error: %s" % _cut(e.__class__.__name__, 80)}}
+            finally:
+                if got:
+                    self.slots.release()
+            if r is not None:
+                self.send(r, call)                  # still in flight here, so a cancel that came first silences it
+        finally:
+            with self.lock:
+                if self.inflight.get(key) is call:
+                    del self.inflight[key]
+
+    def close(self, grace=EOF_GRACE):
+        """stdin closed: stop every call in flight (no new paid calls), let them answer for `grace` seconds."""
+        with self.lock:
+            calls = list(self.inflight.values())
+            workers = list(self.workers)
+        for c in calls:
+            c.stop.set()
+        deadline = time.time() + grace
+        for t in workers:
+            t.join(max(0.0, deadline - time.time()))
+        return 0
+
     def serve(self, inp=None):
         inp = inp or sys.stdin
         for line in inp:
@@ -2543,14 +2642,23 @@ class MCPServer(object):
                 if out:
                     self.send(out)
                 continue
+            if (isinstance(msg, dict) and msg.get("jsonrpc") == "2.0" and msg.get("method") == "tools/call"
+                    and _rid(msg.get("id")) is not None):
+                self._spawn(msg)
+                continue
             r = self.handle(msg)
             if r is not None:
                 self.send(r)
-        return 0
+        return self.close()
 
 
 def cmd_mcp(args):
-    return MCPServer(args.config).serve()
+    out = sys.stdout
+    sys.stdout = sys.stderr        # stdout carries MCP messages only: anything printed along the way goes to stderr
+    try:
+        return MCPServer(args.config, out=out).serve()
+    finally:
+        sys.stdout = out
 
 
 def main(argv=None, prog="geo_score.py watch"):
