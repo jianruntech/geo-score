@@ -8,11 +8,17 @@ Runs the CLI in-process. Live sites change, so re-running gives slightly differe
 numbers; every result records the date it was measured.
 """
 import urllib.parse
-import argparse, concurrent.futures as cf, importlib.util, io, json, os, statistics, sys, time
+import argparse, concurrent.futures as cf, importlib.util, io, json, os, re, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
 gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
 gs.c.on = False
+
+RAW = os.path.join(HERE, "raw")
+
+def raw_name(site_url):
+    """benchmark/raw/<site>.json; a site given with a path keeps it, with / as __."""
+    return re.sub(r"[^A-Za-z0-9.\-]+", "__", site_url.strip("/")) + ".json"
 
 def one(site):
     base = site["url"] if "://" in site["url"] else "https://" + site["url"]
@@ -44,7 +50,12 @@ def one(site):
             return h[4:] if h.startswith("www.") else h
         landed = res.get("landed") or ""
         resolved = _apex(landed) if landed and _apex(landed) != _apex(site["url"]) else None
-        return dict(site=site["url"], sector=site["sector"], readiness=total,
+        # the full report, so the benchmark can be re-analysed check by check without re-scoring
+        os.makedirs(RAW, exist_ok=True)
+        with io.open(os.path.join(RAW, raw_name(site["url"])), "w", encoding="utf-8") as f:
+            json.dump(gs.as_json(res), f, ensure_ascii=False, indent=1)
+            f.write("\n")
+        return dict(site=site["url"], sector=site["sector"], tool_version=gs.__version__, readiness=total,
                     observable_max=den, normalised=norm, band=bd, gate_capped=capped,
                     resolved_to=resolved,
                     gates=gates, gate_reason=reason,
@@ -109,6 +120,45 @@ def _uncertainty(p):
     io.open(os.path.join(HERE, "stats.json"), "w", encoding="utf-8").write(json.dumps(u, ensure_ascii=False, indent=1) + "\n")
     return u
 
+def _gap_drivers(ok):
+    """Checks that separate the China-market sites from the rest: mean points, rest minus China, from the
+    per-site reports in raw/. Empty when those are missing."""
+    groups = {True: {}, False: {}}
+    for r in ok:
+        fp = os.path.join(RAW, raw_name(r["site"]))
+        if not os.path.exists(fp):
+            return []
+        rep = json.load(io.open(fp, encoding="utf-8"))
+        g = groups[r["sector"].startswith("China")]
+        for c in rep["checks"]:
+            if c["state"] == "scored" and not c["id"].startswith("b."):
+                g.setdefault(c["id"], []).append(c["points"])
+    diffs = [(cid, statistics.mean(groups[False][cid]) - statistics.mean(groups[True][cid]))
+             for cid in groups[True] if cid in groups[False] and len(groups[True][cid]) >= 10]
+    return sorted([d for d in diffs if d[1] > 0], key=lambda d: -d[1])
+
+def _cjk_caveat(check_ids):
+    """Where a check that drives the China gap is one the CLI read lower than a human on a Chinese site in
+    the hand-audit comparison (validity.json), say so: part of the gap may be the heuristic, not the sites."""
+    vp = os.path.join(HERE, "validity.json")
+    if not os.path.exists(vp):
+        return ""
+    v = json.load(io.open(vp, encoding="utf-8"))
+    hits = []
+    for c in v["per_check"]:
+        if c["id"] not in check_ids:
+            continue
+        for d in c.get("disagreements", []):
+            ap = os.path.join(HERE, "..", "examples", "audits", "v1.1", d["site"] + ".json")
+            if os.path.exists(ap) and str(json.load(io.open(ap, encoding="utf-8")).get("audience_language", "")).startswith("zh") \
+                    and d["cli"] < d["human"]:
+                hits.append("`%s` on %s (%d by hand, %d by the CLI)" % (c["id"], d["site"], d["human"], d["cli"]))
+    if not hits:
+        return ""
+    return ("Read the first two with care: they are heuristics, and on the Chinese site in the CLI-vs-hand-audit "
+            "comparison the CLI scored %s ([VALIDITY.md](VALIDITY.md)). Part of this gap may be the heuristics "
+            "reading Chinese pages conservatively rather than the sites." % "; ".join(hits))
+
 def write_readme(p):
     s, L = p["stats"], []
     A = L.append
@@ -125,7 +175,9 @@ def write_readme(p):
     from collections import Counter
     gap = Counter(g for x in ok for g in x["top_gaps"])
     capped = [x for x in ok if x.get("gate_capped")]
-    A("## A quarter of the field is unreadable to AI crawlers\n")
+    sys.path.insert(0, HERE)
+    from build_page import share_words
+    A("## %s of the field is unreadable to AI crawlers\n" % share_words(int(round(100.0 * len(capped) / len(ok))), "en"))
     A("**%d of %d sites have a gate check at zero** — a crawler cannot get the content, so"
       % (len(capped), len(ok)))
     A("nothing else on the page matters. These are two very different problems, and reporting")
@@ -154,18 +206,25 @@ def write_readme(p):
         g = u["china_gap"]
         A("**Sites built for the Chinese market score %d points lower** (95%% CI %d–%d) — median %s against %s"
           % (round(_st.median(row) - _st.median(cn)), g["ci"][0], g["ci"][1], _st.median(cn), _st.median(row)))
-        A("for everyone else. The gap is not content quality. It is `llms.txt`, `Organization`")
-        A("schema, visible dates and bylines — conventions that spread through the English web")
-        A("first and have not yet crossed over.\n")
+        A("for everyone else.")
+        drivers = _gap_drivers(ok)
+        if drivers:
+            A("Check by check, the largest differences are %s (average points behind, from the"
+              % ", ".join("`%s` (%.1f)" % d for d in drivers[:4]))
+            A("[per-site reports](raw/)).")
+            caveat = _cjk_caveat([d[0] for d in drivers[:2]])
+            A((caveat + "\n") if caveat else "")
+        else:
+            A("")
     A("**The same few things are missing almost everywhere.** Counting only each site's three")
     A("largest gaps:\n")
     A("| Missing | Sites | What it costs |"); A("|---|:-:|:-:|")
     RBP = {c["id"]: c["points"] for c in _rubric()["checks"]}
     for k, v in gap.most_common(6):
         A("| `%s` | %d of %d | %d pts |" % (k, v, len(ok), RBP.get(k, 0)))
-    A("\nNone of the top three is expensive. A date in a page template, an opening paragraph")
-    A("that stands on its own, and one JSON-LD block are between them worth more than any")
-    A("single pillar on this list.\n")
+    top3 = [k for k, _ in gap.most_common(3)]
+    A("\nThe top three, %s, are worth %d points between them.\n"
+      % (", ".join("`%s`" % k for k in top3), sum(RBP.get(k, 0) for k in top3)))
     A("## By sector\n")
     A("Each median carries a 95%% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than %d"
       % u["min_n"])

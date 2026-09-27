@@ -5,6 +5,21 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Changed
+- **The leaderboard is re-run with 1.3.0** (2026-09-27): 317 of 370 sites scored, median 56 (95% CI
+  52–58), range 11–99; 83 sites (26%) have a gate at zero (47 need JavaScript, 23 block AI crawlers,
+  13 serve an error). Across the 312 sites scored in both runs the mean change is −0.4 points; 72% move
+  by 5 points or less, which mixes the 1.3.0 scoring fixes with 18 days of site changes and is not a
+  reproducibility figure (that study is `benchmark/REPRODUCIBILITY.md`, same tool, two runs).
+- Every site's full report from the run is in `benchmark/raw/`, and `validate.py` checks it against
+  `results.json` (rule 29).
+- The benchmark README's findings are computed rather than written by hand: the headline share,
+  the top gaps, and which checks drive the Chinese-market gap. That gap is 20 points (95% CI 16–28),
+  and its two largest per-check drivers are heuristics the CLI also read lower than a human on the
+  Chinese site in the hand-audit comparison; the README says so.
+- The READMEs link the leaderboard on www.jianruntech.com/leaderboard, which is kept current; the
+  GitHub Pages copy cannot be rebuilt while Actions and Pages are disabled for the organisation.
+
 ## [1.3.0] — 2026-09-27
 
 A release about trust in the measurement: outputs CI systems read natively, a pinned sample for

@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#第二三级--ai-到底有没有引用你)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![AIV readiness](docs/aiv-badge.svg)](https://jianruntech.github.io/geo-score/zh.html)
+[![AIV readiness](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
@@ -80,8 +80,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
-**[看 314 个知名站点的公开榜单 →](https://jianruntech.github.io/geo-score/zh.html)**  ·  其中四分之一，AI 爬虫读不到。
-<sub>托管页面迁移期间仍显示早先 229 站的版本；314 站的数据见 [benchmark/results.json](benchmark/results.json)。</sub>
+**[看 317 个知名站点的公开榜单 →](https://www.jianruntech.com/leaderboard/zh)**  ·  其中四分之一，AI 爬虫读不到。
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。
@@ -141,38 +140,39 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
 所以四十几分是常态，不是警报。
 
-## 314 个站点，公开打分
+## 317 个站点，公开打分
 
-**其中四分之一，AI 爬虫读不到。** 80 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
-19 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
-amazon.com 只有 12 分正是这个原因。**另有 45 个站的正文只在 JavaScript 跑完之后才存在**，
+**其中四分之一，AI 爬虫读不到。** 83 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
+23 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
+amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 JavaScript 跑完之后才存在**，
 内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
-还有 16 个直接给爬虫报错。
+还有 13 个直接给爬虫报错。
 
-中位数 **56**（95% 置信区间 53–58，见 [stats.py](benchmark/stats.py)），最低 12、最高 98。
+中位数 **56**（95% 置信区间 52–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 99。
 
 | 站点 | 分数 | 档 |
 |---|:-:|---|
-| pulumi.com | **98** | 领先 |
-| minimaxi.com | **95** | 领先 |
-| lumalabs.ai | **93** | 领先 |
-| resend.com | **93** | 领先 |
-| ironcladapp.com | **91** | 领先 |
+| pulumi.com | **99** | 领先 |
+| resend.com | **99** | 领先 |
+| lumalabs.ai | **94** | 领先 |
+| kayak.com | **92** | 领先 |
+| openrouter.ai | **90** | 领先 |
 | … | | |
 | amazon.com | 12 | 未起步 |
-| keepa.com | 12 | 未起步 |
 | mercadolibre.com | 12 | 未起步 |
+| keepa.com | 11 | 未起步 |
 
-**[完整榜单与分行业中位数 →](https://jianruntech.github.io/geo-score/zh.html)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [自己重跑](benchmark/run.py)
+**[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
 
-另外两个值得点进去看的发现：面向中文市场的站比其余站**低 19 分**（95% 置信区间 12–26；中位 40 对 59——
-这个差距在五次独立取样里落在 16 到 23 分之间，样本从 38 站到 314 站）；以及同样三件很便宜的事——
-模板里的一个日期、一段能独立成立的开头、一个 JSON-LD 块——在超过一半的站上都缺。
+另外两个值得点进去看的发现。面向中文市场的站比其余站**低 20 分**（95% 置信区间 16–28；中位 39 对 59；此前用 1.1.0
+的几次取样测得的差距在 16 到 23 分之间）。逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
+而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
+另外，「具名、可核实的作者署名」和「一段能独立成立的开头」在超过一半的站上都排进了最大的三个缺口。
 
 **中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
 
-每个数字都能用页首那条命令复现（榜单是 2026-09-09 用 1.1.0 跑的；从 1.1.2 起，`sameAs` 或知识图谱查询连不上的站会高几分）——而且我们把「能复现到什么程度」也测了。
-整个榜单跑两遍逐站比对：**96% 的站落在 ±5 以内，45% 完全一致。**
+每个数字都能用页首那条命令复现（榜单是 2026-09-27 用 1.3.0 跑的）——而且我们把「能复现到什么程度」也测了。
+用同一版本的工具把整个榜单跑两遍、逐站比对：**96% 的站落在 ±5 以内，45% 完全一致。**
 所以单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
 不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了。
 精度区间、对照实验和逐站配对都在

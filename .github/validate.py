@@ -21,8 +21,10 @@ for r in sorted(LEGACY & set(rub)):
     check("**Status:**" in s, f"rubric/{r}: missing status line")
 
 # 2 · scope rule — no fix templates anywhere in the public repo
+# build output (dist/, build/) is gitignored and not part of the repository's documents
+SKIP_DIRS = (".git", "node_modules", "dist", "build", "__pycache__", ".venv")
 for root, dirs, files in os.walk("."):
-    dirs[:] = [d for d in dirs if d not in (".git", ".github")]
+    dirs[:] = [d for d in dirs if d not in SKIP_DIRS + (".github",)]
     for f in files:
         if not f.endswith(".md"): continue
         p = os.path.join(root, f)
@@ -266,7 +268,7 @@ STALE_NAMES = ("Infrastructure", "Structured Data", "Platform Visibility", "Bran
 EXEMPT = ("CHANGELOG", "rubric/v1.0", "rubric/calibration", "rubric/open-questions",
           "examples/audits", "examples/README", "rubric/README")
 for root, dirs, files in os.walk("."):
-    dirs[:] = [d for d in dirs if d not in (".git",)]
+    dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
     for f in files:
         if not f.endswith((".md", ".svg", ".yml")): continue
         pth = os.path.join(root, f)[2:]
@@ -367,7 +369,7 @@ for pth in dict.fromkeys(EN_PRIMARY):
 import glob as _g3
 _seen_links = 0
 for pth in _g3.glob("**/*.md", recursive=True):
-    if pth.startswith(".git"): continue
+    if pth.startswith(".git") or pth.split(os.sep)[0] in SKIP_DIRS: continue
     body = io.open(pth, encoding="utf-8").read()
     body = re.sub(r'```.*?```', '', body, flags=re.S)          # 代码块里的路径是示例
     body = re.sub(r'`[^`\n]*`', '', body)                      # 行内代码同理
@@ -641,7 +643,7 @@ if os.path.exists("benchmark/stats.json"):
 # ── 27. 一行安装从发布的 tag 下载，不从 main ──
 # main 上的代码随时在变：README 教的那行命令，今天和明天可能跑的不是同一个 CLI。schema 的 $id 是标识符，不算下载。
 for root_, dirs_, files_ in os.walk("."):
-    dirs_[:] = [d for d in dirs_ if d not in (".git", "node_modules", "dist", "__pycache__")]
+    dirs_[:] = [d for d in dirs_ if d not in SKIP_DIRS]
     for f in files_:
         if not f.endswith((".md", ".yml", ".yaml", ".py", ".html", ".txt")) or f == "validate.py":
             continue
@@ -668,6 +670,22 @@ for c in ("CHANGELOG.md", "CHANGELOG.zh-CN.md"):
         check(re.search(r"^\[%s\]: https://github\.com/jianruntech/geo-score/" % re.escape(v), t, re.M),
               f"{c}: no compare link for [{v}]")
     check(len(re.findall(r"^## \[Unreleased\]", t, re.M)) <= 1, f"{c}: more than one [Unreleased] section")
+
+# ── 29. 榜单每个有分的站，都要有它的完整报告，分数一致 ──
+# results.json 只存汇总；benchmark/raw/ 让别人能逐项复核。两边对不上，就是有一边不是这一轮的。
+if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json"):
+    rj2 = json.load(io.open("benchmark/results.json", encoding="utf-8"))
+    names = set(os.listdir("benchmark/raw"))
+    scored = [r for r in rj2["results"] if r.get("normalised") is not None]
+    for r in scored:
+        fn = re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json"
+        if fn not in names:
+            check(False, f"benchmark/raw/{fn} missing for {r['site']}")
+            continue
+        raw = json.load(io.open(os.path.join("benchmark/raw", fn), encoding="utf-8"))
+        check(raw.get("normalised") == r["normalised"],
+              f"benchmark/raw/{fn} scores {raw.get('normalised')}, results.json says {r['normalised']}")
+    check(len(names) == len(scored), f"benchmark/raw has {len(names)} files for {len(scored)} scored sites")
 
 if fail:
     print("FAIL")

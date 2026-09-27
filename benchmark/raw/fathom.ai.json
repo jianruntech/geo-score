@@ -1,0 +1,235 @@
+{
+ "rubric_version": "v1.1",
+ "tool": "geo-score-cli/1.3.0",
+ "audited_at": "2026-09-27",
+ "target": "https://fathom.ai",
+ "audience_language": "en",
+ "sampled_urls": [
+  "https://fathom.ai/",
+  "https://fathom.ai/solutions/sales",
+  "https://fathom.ai/solutions/teams",
+  "https://fathom.ai/vs/gong",
+  "https://fathom.ai/vs/zoom",
+  "https://fathom.ai/vs/otter",
+  "https://fathom.ai/vs/others",
+  "https://fathom.ai/vs/granola"
+ ],
+ "sample_source": "sitemap",
+ "readiness": 54,
+ "observable_max": 82,
+ "normalised": 66,
+ "band": "Solid",
+ "gate_capped": false,
+ "bonus_awarded": 0,
+ "checks": [
+  {
+   "id": "g.robots",
+   "state": "scored",
+   "points": 5,
+   "max": 5,
+   "evidence": "robots.txt (412 bytes): 7 retrieval UAs named with an explicit permission. No Disallow applies to retrieval crawlers.",
+   "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+  },
+  {
+   "id": "g.reachable",
+   "state": "scored",
+   "points": 5,
+   "max": 5,
+   "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+   "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+  },
+  {
+   "id": "g.ssr",
+   "state": "scored",
+   "points": 5,
+   "max": 5,
+   "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+   "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+  },
+  {
+   "id": "p1.sitemap",
+   "state": "scored",
+   "points": 4,
+   "max": 4,
+   "evidence": "Sitemap declared in robots.txt («site text: https://www.fathom.ai/sitemap.xml»): HTTP 200, 73 <loc>, 73 <lastmod>.",
+   "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+  },
+  {
+   "id": "p1.llms-txt",
+   "state": "scored",
+   "points": 5,
+   "max": 5,
+   "evidence": "/llms.txt: HTTP 200, 5962 bytes, 10 '##' sections, 9 of them containing links, site definition present.",
+   "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+  },
+  {
+   "id": "p1.organization",
+   "state": "scored",
+   "points": 0,
+   "max": 6,
+   "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+   "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+  },
+  {
+   "id": "p1.breadcrumb",
+   "state": "scored",
+   "points": 3,
+   "max": 3,
+   "evidence": "BreadcrumbList on 6 of 7 nested pages.",
+   "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+  },
+  {
+   "id": "p1.page-type",
+   "state": "scored",
+   "points": 4,
+   "max": 4,
+   "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 7 of 8 sampled pages; 7 of them with real field values.",
+   "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+  },
+  {
+   "id": "p2.answer-passages",
+   "state": "scored",
+   "points": 9,
+   "max": 9,
+   "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Fathom is the AI meeting partner that turns every sales call into deal momentum. Reps stay…»",
+   "tier_reason": "tier 4 of 4 — top tier: on most pages",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+  },
+  {
+   "id": "p2.question-intent",
+   "state": "scored",
+   "points": 7,
+   "max": 7,
+   "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+   "tier_reason": "tier 4 of 4 — top tier: most do",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+  },
+  {
+   "id": "p2.freshness",
+   "state": "scored",
+   "points": 0,
+   "max": 6,
+   "evidence": "0 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+   "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+  },
+  {
+   "id": "p2.sourced-stats",
+   "state": "scored",
+   "points": 5,
+   "max": 7,
+   "evidence": "79 figures across the sample; of the 6 pages carrying several, 4 place a source, citation or outbound reference beside them.",
+   "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most are attributed and the source is clickable and checkable",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+  },
+  {
+   "id": "p2.named-author",
+   "state": "scored",
+   "points": 0,
+   "max": 6,
+   "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+   "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+  },
+  {
+   "id": "p3.listings",
+   "state": "unobservable",
+   "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+  },
+  {
+   "id": "p3.mentions",
+   "state": "unobservable",
+   "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+  },
+  {
+   "id": "p3.knowledge-graph",
+   "state": "unobservable",
+   "reason": "Brand read as «site text: Fathom AI Notetaker» (also tried «site text: Never Take Notes Again», «site text: Fathom»). 4 of 6 Wikidata and Wikipedia lookups failed to respond and none of the rest matched, so this check is unobservable rather than zero.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+  },
+  {
+   "id": "p3.sameas",
+   "state": "scored",
+   "points": 0,
+   "max": 3,
+   "evidence": "No sameAs declared on the Organization entity.",
+   "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+  },
+  {
+   "id": "p3.video",
+   "state": "scored",
+   "points": 0,
+   "max": 3,
+   "evidence": "0 pages declare VideoObject; 0 official channel links and 0 embedded players in the sample.",
+   "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+  },
+  {
+   "id": "p4.answer-shape",
+   "state": "scored",
+   "points": 2,
+   "max": 4,
+   "evidence": "4 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+   "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: subheadings, lists and tables with paragraphs of workable length",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+  },
+  {
+   "id": "p4.question-coverage",
+   "state": "unobservable",
+   "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+  },
+  {
+   "id": "p4.cn-engines",
+   "state": "unobservable",
+   "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+  },
+  {
+   "id": "b.llms-full",
+   "state": "scored",
+   "points": 0,
+   "max": 2,
+   "evidence": "Bonus check, outside the denominator.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+  },
+  {
+   "id": "b.ai-txt",
+   "state": "scored",
+   "points": 0,
+   "max": 2,
+   "evidence": "Bonus check, outside the denominator.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+  },
+  {
+   "id": "b.geo-link",
+   "state": "scored",
+   "points": 0,
+   "max": 1,
+   "evidence": "Bonus check, outside the denominator.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+  },
+  {
+   "id": "b.speakable",
+   "state": "scored",
+   "points": 0,
+   "max": 1,
+   "evidence": "Bonus check, outside the denominator.",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+  }
+ ],
+ "notes": [
+  "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+ ]
+}

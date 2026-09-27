@@ -2,7 +2,7 @@
 
 > An open, versioned rubric for Generative Engine Optimization — score any site 0–100
 > on whether AI answer engines can find, parse, trust and cite it. MIT licensed,
-> machine-readable, with a zero-dependency Python CLI and a public benchmark of 314
+> machine-readable, with a zero-dependency Python CLI and a public benchmark of 317
 > well-known sites.
 
 The rubric it publishes is the AIV score: 21 tiered checks totalling 100 points, plus
@@ -13,7 +13,7 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 314 well-known sites scored. Median 56, range 12–98. 25% of them are unreadable to AI crawlers — 19 block AI crawlers by name, 45 serve a page whose body only exists after JavaScript runs, 16 hand a crawler an outright error.
+- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 317 well-known sites scored. Median 56, range 11–99. 26% of them are unreadable to AI crawlers — 23 block AI crawlers by name, 47 serve a page whose body only exists after JavaScript runs, 13 hand a crawler an outright error.
 - [简体中文版](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 

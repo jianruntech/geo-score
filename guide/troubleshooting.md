@@ -65,11 +65,14 @@ are read at the origin because that is where the specifications put them.
 
 ## My score differs from the public leaderboard
 
-**Cause.** The leaderboard is a dated measurement: the 314-site run was made on 2026-09-09 with
-tool 1.1.0. Since 1.1.2, a third-party site that cannot be reached counts as not measured instead
-of zero, which raises some scores by a few points. Every report states the tool version (`tool`).
+**Cause.** The leaderboard is a dated measurement: the current run scored 317 sites on 2026-09-27
+with tool 1.3.0. A site's page can change after that date, the sample differs between runs, and
+reports made with an older tool read some checks differently (see the changelog). Every report
+states the tool version (`tool`), and each site's full report from the run is in `benchmark/raw/`.
 
-**What to do.** Compare scores made with the same tool version, and remember the ±5 band.
+**What to do.** Compare scores made with the same tool version, and remember the ±5 band. To see
+exactly what the leaderboard read, open the site's file in `benchmark/raw/` and re-score the same
+pages with `--urls-from` on it.
 
 ## `watch` or `--ask` says it needs `geo_watch.py`
 

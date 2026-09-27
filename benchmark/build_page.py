@@ -28,6 +28,15 @@ SITE = os.environ.get("GEO_SITE_BASE", DEFAULT_SITE).rstrip("/")
 def _hosted(text):
     return text.replace(DEFAULT_SITE, SITE)
 
+def share_words(pct, lang):
+    """A share as words when it is close to a simple fraction, else as a percentage: the headline has to
+    stay true when the benchmark is re-run, so it is derived from the data, never written by hand."""
+    for frac, en, zh in ((1 / 5.0, "A fifth", "五分之一"), (1 / 4.0, "A quarter", "四分之一"),
+                         (1 / 3.0, "A third", "三分之一"), (1 / 2.0, "Half", "一半")):
+        if abs(pct / 100.0 - frac) <= 0.02:
+            return en if lang == "en" else zh
+    return ("%d%%" % pct) if lang == "en" else ("%d%%" % pct)
+
 def _fmt(x):
     """中位数与四分位数取整。
 
@@ -97,8 +106,8 @@ def strings(lang, v):
             t_desc="%(n)d well-known sites scored on whether AI answer engines can find, parse, "
                    "trust and cite them. Open rubric, reproducible, median %(med)s." % v,
             t_ogtitle="The state of AI visibility",
-            t_ogdesc="A quarter of %(n)d well-known sites are unreadable to AI answer engines' "
-                     "crawlers. Open rubric, one command, reproducible." % v,
+            t_ogdesc=share_words(v["cappct"], "en") + (" of %(n)d well-known sites are unreadable to AI answer engines' "
+                     "crawlers. Open rubric, one command, reproducible." % v),
             t_h1="The state of<br>AI visibility",
             t_sub="%(n)d well-known sites, scored on whether an AI answer engine can find, parse, "
                   "trust and cite them. One open rubric, one public tool, the same eight-page "
@@ -106,7 +115,7 @@ def strings(lang, v):
                   "re-run it yourself</a>." % dict(v, repo=REPO),
             l_sites="SITES", l_median="MEDIAN", l_uq="UPPER QUARTILE", l_range="RANGE",
             l_cap="UNREADABLE TO AI",
-            t_h2gate="A quarter of the field is unreadable to AI crawlers",
+            t_h2gate=share_words(v["cappct"], "en") + " of the field is unreadable to AI crawlers",
             t_pgate="%(cap)d sites have a gate check at zero — a retrieval crawler cannot get the "
                     "content, so nothing else on the page matters. Two very different problems "
                     "live inside that number." % v,
@@ -157,21 +166,21 @@ def strings(lang, v):
         htmllang="zh-CN", on_en="", on_zh="on",
         canon="https://jianruntech.github.io/geo-score/zh.html", oglocale="zh_CN",
         ogimg="https://jianruntech.github.io/geo-score/og.zh.png",
-        ogalt="分享卡：%(n)d 个知名网站里 %(cappct)d%% 根本无法被 AI 回答引擎引用，"
+        ogalt="分享卡：%(n)d 个知名网站里 %(cappct)d%% 的内容 AI 回答引擎的爬虫读不到，"
               "中位数 %(med)s，区间 %(mn)d-%(mx)d。" % v,
         t_title="AI 可见度现状 — %(n)d 个站点实测" % v,
         t_desc="%(n)d 个知名网站的实测评分，衡量 AI 回答引擎能不能找到、读懂、信任并引用它们。"
                "口径公开、结果可复现，中位数 %(med)s。" % v,
         t_ogtitle="AI 可见度现状",
-        t_ogdesc="%(n)d 个知名网站里，四分之一 AI 回答引擎的爬虫读不到。"
-                 "口径公开，一行命令，结果可复现。" % v,
+        t_ogdesc=("%(n)d 个知名网站里，" % v) + share_words(v["cappct"], "zh") + (" AI 回答引擎的爬虫读不到。"
+                 "口径公开，一行命令，结果可复现。" % v),
         t_h1="AI 可见度<br>现状",
         t_sub="%(n)d 个知名网站，实测 AI 回答引擎能不能找到、读懂、信任并引用它们。"
               "同一套公开口径、同一个公开工具、每个站同样抽 8 个页面。"
               '这里没有黑箱——<a href="%(repo)s">你可以自己重跑</a>。' % dict(v, repo=REPO),
         l_sites="站点数", l_median="中位数", l_uq="上四分位", l_range="区间",
         l_cap="AI 读不到",
-        t_h2gate="四分之一的站，AI 爬虫读不到",
+        t_h2gate=share_words(v["cappct"], "zh") + "的站，AI 爬虫读不到",
         t_pgate="%(cap)d 个站有门槛项得 0 分——检索爬虫压根拿不到内容，"
                 "页面上其余的事都不再重要。而这个数字里装着两件性质完全不同的事。" % v,
         l_delib="主动屏蔽", l_accid="无意失效",

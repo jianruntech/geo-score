@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#levels-2-and-3--does-ai-actually-cite-you)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![AIV readiness](docs/aiv-badge.svg)](https://jianruntech.github.io/geo-score/)
+[![AIV readiness](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
@@ -80,8 +80,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
 a score against a **published, versioned rubric** — not a black box.
 
-**[See how 314 well-known sites score →](https://jianruntech.github.io/geo-score/)**  ·  a quarter of them are unreadable to AI crawlers.
-<sub>The hosted page still shows an earlier 229-site build while its hosting moves; the 314-site data is in [benchmark/results.json](benchmark/results.json).</sub>
+**[See how 317 well-known sites score →](https://www.jianruntech.com/leaderboard)**  ·  a quarter of them are unreadable to AI crawlers.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
@@ -147,40 +146,42 @@ change has any effect.
 Band names describe a **stage, not a verdict**. External benchmarks put most business
 sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
 
-## 314 sites, scored in public
+## 317 sites, scored in public
 
-**A quarter of them are unreadable to AI crawlers.** 80 sites have a gate check at zero — an
-AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 19 block AI crawlers by name in
+**A quarter of them are unreadable to AI crawlers.** 83 sites have a gate check at zero — an
+AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 23 block AI crawlers by name in
 `robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 12
-for exactly this reason. **45 serve a page whose body only exists after JavaScript runs.**
+for exactly this reason. **47 serve a page whose body only exists after JavaScript runs.**
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
-almost certainly did not choose it. A further 16 hand a crawler an outright error.
+almost certainly did not choose it. A further 13 hand a crawler an outright error.
 
-Median **56** (95% CI 53–58, [stats.py](benchmark/stats.py)). Range 12 to 98.
+Median **56** (95% CI 52–58, [stats.py](benchmark/stats.py)). Range 11 to 99.
 
 | Site | Score | Band |
 |---|:-:|---|
-| pulumi.com | **98** | Leading |
-| minimaxi.com | **95** | Leading |
-| lumalabs.ai | **93** | Leading |
-| resend.com | **93** | Leading |
-| ironcladapp.com | **91** | Leading |
+| pulumi.com | **99** | Leading |
+| resend.com | **99** | Leading |
+| lumalabs.ai | **94** | Leading |
+| kayak.com | **92** | Leading |
+| openrouter.ai | **90** | Leading |
 | … | | |
 | amazon.com | 12 | Not started |
-| keepa.com | 12 | Not started |
 | mercadolibre.com | 12 | Not started |
+| keepa.com | 11 | Not started |
 
-**[The full table, by sector →](https://jianruntech.github.io/geo-score/)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [re-run it](benchmark/run.py)
+**[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
 
-Two more findings worth the click: sites built for the Chinese market score **19 points
-lower** than everyone else (95% CI 12–26; median 40 against 59 — a gap that has held between 16 and 23
-points across five separate samples, from 38 sites up to 314), and the same three cheap
-things — a date in the page template, an opening paragraph that stands on its own, one
-JSON-LD block — are missing from more than half the field.
+Two more findings worth the click. Sites built for the Chinese market score **20 points
+lower** than everyone else (95% CI 16–28; median 39 against 59; earlier samples measured with 1.1.0
+put the gap between 16 and 23 points). The largest per-check differences are two heuristics,
+question-shaped headings and self-contained answer passages, which the CLI also read lower than a
+human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md), so part of the
+gap may be the tool reading Chinese pages conservatively. And a named, verifiable byline and an
+opening paragraph that stands on its own are among the three largest gaps on more than half the sites.
 
 Every number here is reproducible with the command at the top of this page (the benchmark
-was run with 1.1.0 on 2026-09-09; since 1.1.2 a site can read a few points higher where
-`sameAs` or knowledge-graph lookups were unreachable) — and we measured how reproducible. Running the whole benchmark twice and comparing every site:
+was run with 1.3.0 on 2026-09-27) — and we measured how reproducible. Running the whole benchmark
+twice with the same tool and comparing every site:
 **96% land within ±5, 45% land identically.** Read one site's score as ±5 rather than as
 exact; medians are stable. The unstable part is the gate checks, where five sites flipped
 between runs because their bot protection answered a crawler differently.
