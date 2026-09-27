@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc></url>
+  <url><loc>{{ORIGIN}}/blog/launch-notes</loc></url>
+  <url><loc>{{ORIGIN}}/blog/pricing-changes</loc></url>
+  <url><loc>{{ORIGIN}}/blog/roadmap-2026</loc></url>
+  <url><loc>{{ORIGIN}}/docs/install</loc></url>
+  <url><loc>{{ORIGIN}}/docs/api-keys</loc></url>
+  <url><loc>{{ORIGIN}}/pricing</loc></url>
+  <url><loc>{{ORIGIN}}/features/webhooks</loc></url>
+</urlset>

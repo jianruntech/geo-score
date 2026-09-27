@@ -1,0 +1,18 @@
+# Fernhollow: retrieval crawlers are welcome
+User-agent: *
+Allow: /
+Disallow: /login
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml

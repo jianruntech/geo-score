@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Write your first report | Tidemark docs</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Write your first report",
+  "dateModified": "2026-08-18",
+  "author": {
+    "@type": "Person",
+    "name": "Ines Carvalho",
+    "url": "https://github.com/inescarvalho"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Docs",
+      "item": "{{ORIGIN}}/docs/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "First report",
+      "item": "{{ORIGIN}}/docs/guides/first-report.html"
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header>
+<nav>
+<a href="/docs/">Tidemark</a>
+<a href="/docs/install.html">Install</a>
+<a href="/docs/configure.html">Configure</a>
+<a href="/docs/quickstart.html">Quickstart</a>
+<a href="/docs/guides/first-report.html">First report</a>
+<a href="/docs/guides/share-results.html">Share results</a>
+</nav>
+</header>
+<main>
+<h1>Write your first report</h1>
+<p>A Tidemark report is a plain file that lists every finding with the page it was found on, the link that failed and the status code the server returned. Writing it to a file lets you attach it to a pull request or compare two runs.</p>
+<h2>Which formats are available</h2>
+<ul>
+<li>Plain text for people.</li>
+<li>JSON for scripts.</li>
+<li>JUnit XML for CI dashboards.</li>
+</ul>
+<h2>How to compare two runs</h2>
+<p>Keep the JSON report from the main branch and pass it to the next run. Tidemark then reports only the findings that are new, which keeps a large legacy site reviewable.</p>
+<div class="fixture-note">This block is part of a test fixture. It exists so that the page carries enough server-rendered prose for the rendering check to treat it as a real content page rather than a stub. It describes nothing and promises nothing, and it names no person and carries no figure or timestamp, so that it cannot change how the freshness, byline or statistics checks read the page. Readers of the fixture can skip it; the scorer counts its words and nothing more, which is exactly what this block is for, and why it sits in a plain division rather than a paragraph, a list or a heading.</div>
+</main>
+<footer>
+<p>Tidemark is open-licensed. <a href="https://github.com/tidemark-cli">Code on GitHub</a>. Looking for version 1? <a href="/docs-legacy/old-install.html">Legacy docs</a>.</p>
+</footer>
+</body>
+</html>

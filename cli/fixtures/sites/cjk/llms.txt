@@ -1,0 +1,13 @@
+# 青梧记账
+
+> 青梧记账是为小微工作室、手作品牌和独立设计师准备的记账工具，每天自动同步银行流水、配对发票并准备增值税申报数据。
+
+## 帮助文档
+
+- [怎么连接银行账户](/docs/kuaisu-rumen/lianjie-yinhang.html)
+- [如何导入发票](/docs/kuaisu-rumen/daoru-fapiao.html)
+
+## 文章
+
+- [如何在一天内完成月末结账](/blog/ruhe-yitian-jiezhang.html)
+- [为什么小工作室总是漏记账](/blog/weishenme-louzhang.html)

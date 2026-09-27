@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc><lastmod>2026-06-11</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/</loc><lastmod>2026-06-11</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/how-to-choose-sandpaper-grit.html</loc></url>
+  <url><loc>{{ORIGIN}}/blog/what-glue-for-oak.html</loc></url>
+  <url><loc>{{ORIGIN}}/blog/why-chisels-go-blunt.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/setup/first-order.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/setup/trade-account.html</loc></url>
+  <url><loc>{{ORIGIN}}/pricing.html</loc></url>
+  <url><loc>{{ORIGIN}}/features/bulk-orders.html</loc></url>
+  <url><loc>{{ORIGIN}}/cart</loc></url>
+</urlset>

@@ -1,0 +1,13 @@
+# Tidemark
+
+> Tidemark is a command-line tool that checks a static site for broken links, missing anchors and redirect chains before it is deployed.
+
+## Docs
+
+- [Install Tidemark](/docs/install.html)
+- [Get started in five minutes](/docs/quickstart.html)
+- [Write your first report](/docs/guides/first-report.html)
+
+## Licence
+
+Open-licensed; see the repository for details.

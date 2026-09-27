@@ -1,0 +1,11 @@
+# Fernhollow (full text)
+
+Fernhollow is bookkeeping software for small workshops, studios and makers in the UK.
+
+## Connect your bank account
+
+Connecting a bank account gives Fernhollow a read-only feed of your transactions, refreshed every morning.
+
+## Import invoices from a spreadsheet
+
+If you kept invoices in a spreadsheet before Fernhollow, you can bring them across in one upload.
