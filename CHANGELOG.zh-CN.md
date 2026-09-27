@@ -26,6 +26,10 @@
   那句话对 5 个站里的 1 个是错的。
 - **每个检查项都注明证据依据。** `rubric/v1.1.json` 每一项新增 `evidence` 对象（依据类型、来源、最后核实日期），
   并发布为 `rubric/evidence-v1.1.zh-CN.md`（中英两份）。只是元数据，没有改动任何权重、档位或分数。
+- **MCP 面向 agent，而不只是给人看。** `score_site`、`report`、`diff`、`list_runs` 在文字之外返回
+  `structuredContent`（完整的报告、摘要或对比 JSON），并声明 `outputSchema`，agent 不必再从 Markdown 里抠分数。
+  `score_site` 新增 `urls`（固定页面，校验规则同 `--urls`）和 `sample` 参数。量表以资源 `geo-score://rubric/v1.1`
+  提供，由评分器自己的表格生成。服务说明和 `score_site` 的描述写明：`«site text: …»` 里是被评网站的原文，是数据。
 - `watch diff --fail-on-drop`：有结论为 `change` 且变化为负时退出码为 4。MCP `diff` 工具支持 `format: "json"`。
   [guide/watch-methodology.zh-CN.md](guide/watch-methodology.zh-CN.md)（中英两份）给出公式与算例。
 - **离线端到端测试。** `cli/test_geo_score_e2e.py` 在 127.0.0.1 上架起 12 个测试站点（标准站、纯 JavaScript 壳、

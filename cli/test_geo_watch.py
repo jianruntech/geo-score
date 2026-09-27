@@ -856,6 +856,79 @@ class MCP(Base):
         self.assertTrue(self.call(srv, "nope")["isError"])
         self.assertTrue(self.call(srv, "__init__")["isError"])
 
+    def check_schema(self, obj, schema, where):
+        """jsonschema when it is installed; otherwise the required keys and types, so the suite stays stdlib-only."""
+        try:
+            import jsonschema
+        except ImportError:
+            jsonschema = None
+        if jsonschema is not None:
+            jsonschema.validate(obj, schema)
+            return
+        types = {"object": dict, "array": list, "string": str, "integer": int, "number": (int, float),
+                 "boolean": bool, "null": type(None)}
+
+        def walk(o, sch, path):
+            t = sch.get("type")
+            if t:
+                allowed = tuple(types[x] for x in (t if isinstance(t, list) else [t]))
+                self.assertIsInstance(o, allowed, "%s %s: %r" % (where, path, o))
+            if isinstance(o, dict):
+                for k in sch.get("required", []):
+                    self.assertIn(k, o, "%s %s: missing %s" % (where, path, k))
+                for k, sub in sch.get("properties", {}).items():
+                    if k in o:
+                        walk(o[k], sub, path + "." + k)
+            if isinstance(o, list) and "items" in sch:
+                for i, x in enumerate(o):
+                    walk(x, sch["items"], "%s[%d]" % (path, i))
+        walk(obj, schema, "$")
+
+    def test_structured_content_matches_the_declared_output_schema(self):
+        srv = self.server()
+        self.fake(self.standard_routes())
+        self.assertFalse(self.call(srv, "run", {})["isError"])
+        gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=7)
+        self.assertFalse(self.call(srv, "run", {})["isError"])
+        schemas = {t["name"]: t.get("outputSchema") for t in srv.tools()}
+        for name, args in (("list_runs", {}), ("report", {}), ("report", {"format": "json"}), ("diff", {})):
+            r = self.call(srv, name, args)
+            self.assertFalse(r["isError"], r)
+            self.assertIn("structuredContent", r, name)
+            self.assertIsInstance(r["structuredContent"], dict, name)
+            self.check_schema(r["structuredContent"], schemas[name], name)
+            self.assertTrue(r["content"][0]["text"], name)       # people still get the text
+        self.assertEqual(len(self.call(srv, "list_runs")["structuredContent"]["runs"]), 2)
+        self.assertIsNone(schemas["ask"])                         # no schema promised where none is kept
+
+    def test_rubric_resource_and_site_text_notice(self):
+        srv = self.server()
+        init = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}})
+        self.assertIn("resources", init["result"]["capabilities"])
+        self.assertIn("«site text: …»", init["result"]["instructions"])
+        score = next(t for t in srv.tools() if t["name"] == "score_site")
+        self.assertIn("«site text: …»", score["description"])
+        res = srv.handle({"jsonrpc": "2.0", "id": 2, "method": "resources/list"})["result"]["resources"]
+        self.assertEqual([r["uri"] for r in res], ["geo-score://rubric/v1.1"])
+        body = srv.handle({"jsonrpc": "2.0", "id": 3, "method": "resources/read",
+                           "params": {"uri": "geo-score://rubric/v1.1"}})["result"]["contents"][0]
+        served = json.loads(body["text"])
+        with io.open(os.path.join(HERE, "..", "rubric", "v1.1.json"), encoding="utf-8") as f:
+            published = json.load(f)
+        self.assertEqual([(c["id"], c["points"]) for c in served["checks"]],
+                         [(c["id"], c["points"]) for c in published["checks"]])
+        self.assertEqual((served["gate_cap"], served["bonus_cap"]), (published["gate_cap"], published["bonus_cap"]))
+        err = srv.handle({"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "file:///etc/passwd"}})
+        self.assertEqual(err["error"]["code"], -32002)
+
+    def test_score_site_arguments_are_checked(self):
+        srv = self.server()
+        self.assertIn("urls", next(t for t in srv.tools() if t["name"] == "score_site")["inputSchema"]["properties"])
+        for args in ({"url": "stripe.com", "sample": 0}, {"url": "stripe.com", "sample": 9},
+                     {"url": "stripe.com", "sample": True}, {"url": "stripe.com", "urls": "https://stripe.com/a"},
+                     {"url": "stripe.com", "urls": ["https://evil.example/a"]}):
+            self.assertTrue(self.call(srv, "score_site", args)["isError"], args)
+
     def test_ask_without_a_config(self):
         srv = self.server(with_config=False)
         self.fake(self.standard_routes())

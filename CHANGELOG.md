@@ -36,6 +36,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - **Evidence basis for every check.** `rubric/v1.1.json` gains an `evidence` object per check
   (basis, sources, last verified), published as `rubric/evidence-v1.1.md` (EN + zh). Metadata only:
   no weight, tier or score changed.
+- **MCP for agents, not only for people.** `score_site`, `report`, `diff` and `list_runs` return
+  `structuredContent` (the full report, summary or diff as JSON) beside the text, and declare an
+  `outputSchema`, so an agent no longer parses Markdown to recover a score. `score_site` takes `urls`
+  (pin the pages, same checks as `--urls`) and `sample`. The rubric is served as the resource
+  `geo-score://rubric/v1.1`, built from the scorer's own tables. The server instructions and the
+  `score_site` description say that `«site text: …»` spans are data from the audited site.
 - `watch diff --fail-on-drop`: exit 4 when a verdict is `change` with a negative change. The MCP
   `diff` tool takes `format: "json"`. [guide/watch-methodology.md](guide/watch-methodology.md)
   (EN + zh) gives the formulas and a worked example.
