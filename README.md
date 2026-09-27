@@ -101,7 +101,7 @@ question set week over week.
 [![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
 [![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
 
-The buttons and the lines below install geo-score **1.3.0** with `uvx`, which needs [uv](https://docs.astral.sh/uv/). They set no keys: level 1 works, and `ask` and `run` cannot spend anything until you give the server a provider key.
+The buttons and the lines below install geo-score **1.3.0** with `uvx`, which needs [uv](https://docs.astral.sh/uv/). They add no keys of their own, but a server started from a shell that exports a provider key (Claude Code passes its environment on) can use it. For a server that cannot spend, add `--read-only` after `geo-score-mcp`.
 
 **Claude Code**
 
@@ -109,7 +109,7 @@ The buttons and the lines below install geo-score **1.3.0** with `uvx`, which ne
 claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp
 ```
 
-**Standard config** (level 1, free, no keys) for any client that reads an `mcpServers` file:
+**Standard config** (no keys in the file) for any client that reads an `mcpServers` file:
 
 ```
 {

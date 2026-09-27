@@ -148,7 +148,7 @@
     "watch_config": {
       "type": "file",
       "title": "geo-score-watch.json",
-      "description": "Optional. The config that run, list_runs, report and diff read; create it with `geo-score watch init`. Runs are saved next to it.",
+      "description": "Optional. The config that run, list_runs, report and diff read; create it with `uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score watch init`. Runs are saved next to it.",
       "required": false,
       "default": ""
     }

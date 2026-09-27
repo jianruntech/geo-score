@@ -28,7 +28,7 @@ is the same code as the CLI: standard library only, Python 3.8 or later. It serv
 [![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
 [![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
 
-The buttons and the lines below install geo-score **1.3.0** with `uvx`, which needs [uv](https://docs.astral.sh/uv/). They set no keys: level 1 works, and `ask` and `run` cannot spend anything until you give the server a provider key.
+The buttons and the lines below install geo-score **1.3.0** with `uvx`, which needs [uv](https://docs.astral.sh/uv/). They add no keys of their own, but a server started from a shell that exports a provider key (Claude Code passes its environment on) can use it. For a server that cannot spend, add `--read-only` after `geo-score-mcp`.
 
 **Claude Code**
 
@@ -36,7 +36,7 @@ The buttons and the lines below install geo-score **1.3.0** with `uvx`, which ne
 claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp
 ```
 
-**Standard config** (level 1, free, no keys) for any client that reads an `mcpServers` file:
+**Standard config** (no keys in the file) for any client that reads an `mcpServers` file:
 
 ```
 {
@@ -283,7 +283,8 @@ claude plugin install geo-score@jianruntech
 Inside a session, `/plugin marketplace add jianruntech/geo-score` and
 `/plugin install geo-score@jianruntech` do the same. The plugin runs the repository's
 `cli/geo_score.py mcp` with `python3`, so it needs Python 3.8 or later on `PATH` but no uv. It sets
-no keys: for `ask` and `run`, export them in the shell that starts `claude`. The marketplace follows
+no keys: for `ask` and `run`, export them in the shell that starts `claude`. It also installs the
+repository's `SKILL.md` as the `geo-score` skill, which tells Claude how to read a report. The marketplace follows
 the repository, not a release tag; for a fixed version, use the `uvx` line in [Install](#install).
 
 ### Gemini CLI extension
@@ -428,7 +429,9 @@ Code (`/mcp__geo-score__audit_site https://acme.com`).
 | `explain_check` | `check_id` (required) | Explains one rubric check, with the rubric resource attached |
 
 Clients that support completion can complete `explain_check`'s check ids and, when the config can be
-read, `compare_runs`'s run ids. The prompts measure and explain. None of them suggests fixes: this
+read, `compare_runs`'s run ids. A prompt is offered only when the tools it calls are on: `--read-only`
+drops `check_citations` and `weekly_watch`. With `report` on, the server also offers a resource
+template, `geo-score://runs/{run_id}`, that reads a saved run's summary. The prompts measure and explain. None of them suggests fixes: this
 repository measures, and remediation is outside it.
 
 ## Config and keys
@@ -445,7 +448,8 @@ Codex, Gemini CLI) usually start it in the directory you launched them from. Des
 start it somewhere else, often your home directory or `/`, which is not your project. When in doubt,
 use an absolute `-c`. The question list named in the config is read relative to the config file, and
 runs are saved next to it under `.geo-score/watch/runs/`. Create both files with
-`geo-score watch init` (or `python3 cli/geo_score.py watch init` from a clone); the
+`uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score watch init` (`geo-score watch init`
+after a pip install, `python3 cli/geo_score.py watch init` from a clone); the
 [CLI reference](../cli/README.md#watch) lists every setting.
 
 **Keys.** The server reads keys from its own environment and nowhere else: `OPENAI_API_KEY`,
@@ -478,8 +482,9 @@ several minutes, longer than many clients wait for a tool call by default:
 To stay inside a short timeout, run with `dry_run` first and ask fewer with `limit` and `engines`.
 
 From 1.4.0, cancelling a call is honoured. The server stops `run` or `ask` before the next provider
-call, sends nothing more for that request, and does not save a cancelled run. It prints the calls
-already made and their cost to stderr, because those calls were billed. While a `run` is in flight the server
+call, sends nothing more for that request, and does not save a cancelled `run`. For a `run` it prints
+the calls already made and their cost to stderr, because those calls were billed; a cancelled `ask`
+has made at most one call per engine. While a `run` is in flight the server
 still answers `ping` and other requests.
 
 ## Protocol versions

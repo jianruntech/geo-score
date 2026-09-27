@@ -24,7 +24,7 @@
 [![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
 [![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
 
-按钮和下面几行用 `uvx` 安装 geo-score **1.3.0**，需要先装 [uv](https://docs.astral.sh/uv/)。不带任何 Key：第一级可用；在你把服务商 Key 交给服务之前，`ask` 和 `run` 花不了任何钱。
+按钮和下面几行用 `uvx` 安装 geo-score **1.3.0**，需要先装 [uv](https://docs.astral.sh/uv/)。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `geo-score-mcp` 后面加 `--read-only`。
 
 **Claude Code**
 
@@ -32,7 +32,7 @@
 claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp
 ```
 
-**标准配置**（第一级，免费，不要 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
+**标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
 
 ```
 {
@@ -268,7 +268,8 @@ claude plugin install geo-score@jianruntech
 
 在会话里用 `/plugin marketplace add jianruntech/geo-score` 和 `/plugin install geo-score@jianruntech` 效果一样。
 插件用 `python3` 运行仓库里的 `cli/geo_score.py mcp`，所以 `PATH` 上要有 Python 3.8 及以上，但不需要 uv。
-插件不设置任何 Key：要用 `ask` 和 `run`，在启动 `claude` 的 shell 里 export。插件市场跟随仓库，而不是某个发布 tag；
+插件不设置任何 Key：要用 `ask` 和 `run`，在启动 `claude` 的 shell 里 export。它还会把仓库的 `SKILL.md` 装成
+`geo-score` 技能，告诉 Claude 怎么读报告。插件市场跟随仓库，而不是某个发布 tag；
 要固定版本，用[安装](#安装)里那行 `uvx`。
 
 ### Gemini CLI 扩展
@@ -401,6 +402,8 @@ claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianr
 | `explain_check` | `check_id`（必填） | 解释量表里的一项检查，附带量表资源 |
 
 支持补全的客户端可以补全 `explain_check` 的检查项 id，以及在能读到配置时补全 `compare_runs` 的运行 id。
+提示词只在它要调用的工具开着时才提供：`--read-only` 会去掉 `check_citations` 和 `weekly_watch`。开着 `report` 时，
+服务还提供一个资源模板 `geo-score://runs/{run_id}`，用来读取已保存运行的摘要。
 这些提示词只做测量和解释，不给修改建议：这个仓库只负责测量，整改不在范围内。
 
 ## 配置与 Key
@@ -414,7 +417,8 @@ claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianr
 工作目录就是客户端启动服务时所在的目录。终端客户端（Claude Code、Codex、Gemini CLI）通常在你启动它们的目录里
 启动服务；桌面应用和编辑器会在别处启动，常常是你的主目录或 `/`，而不是你的项目。拿不准就用绝对路径的 `-c`。
 配置里写的问题列表按配置文件所在目录解析，运行结果也存在它旁边的 `.geo-score/watch/runs/` 下。这两个文件用
-`geo-score watch init` 创建（在克隆的仓库里是 `python3 cli/geo_score.py watch init`）；全部配置项见
+`uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score watch init` 创建（pip 安装后是 `geo-score watch init`，
+在克隆的仓库里是 `python3 cli/geo_score.py watch init`）；全部配置项见
 [命令行说明](../cli/README.md#watch)。
 
 **Key。** 服务只从自己的环境变量里读 Key：`OPENAI_API_KEY`、`PERPLEXITY_API_KEY`、`GEMINI_API_KEY`
@@ -442,7 +446,7 @@ OpenRouter 引擎只能在配置文件里定义。没有 Key 的引擎记为未�
 超时很短时，先用 `dry_run` 看计划，再用 `limit` 和 `engines` 少问一些。
 
 从 1.4.0 起，取消调用会生效：服务在下一次调用服务商之前停下 `run` 或 `ask`，不再为这个请求发送任何消息，
-被取消的运行不保存。它会在 stderr 打印已经发出的调用次数和费用，因为这些调用已经计费。`run` 进行中，服务照样响应
+被取消的 `run` 不保存。对 `run`，它会在 stderr 打印已经发出的调用次数和费用，因为这些调用已经计费；被取消的 `ask` 每个引擎最多已经调用过一次。`run` 进行中，服务照样响应
 `ping` 和其他请求。
 
 ## 协议版本

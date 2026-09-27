@@ -30,7 +30,7 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    own `python3` (`python` on Windows).
 7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live`, builds the
    wheel and sdist, the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` (a zip of `mcpb/manifest.json`,
-   both CLI files under `server/` and the licence, byte-for-byte reproducible) and `dist/server.json`
+   both CLI files under `server/` and the licence, byte-for-byte reproducible on the same platform) and `dist/server.json`
    (the template with the bundle's real SHA-256 in `fileSha256`), writes `SHA256SUMS` over all of them
    and the two CLI files, pushes main, creates the tag `vX.Y.Z` and pushes it, moves `v1` to it and
    pushes that, and creates the GitHub release with the changelog section and the files attached. Main

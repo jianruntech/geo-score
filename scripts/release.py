@@ -25,7 +25,8 @@ PINS = [re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+
         re.compile(r"(jianruntech/geo-score/releases/download/)v\d+\.\d+\.\d+"),
         re.compile(r"(jianruntech/geo-score@)v\d+\.\d+\.\d+"),
         re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"),
-        re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+")]
+        re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+"),
+        re.compile(r"(jianruntech/geo-score --ref )v\d+\.\d+\.\d+")]
 # rewrites the generated MCP blocks (tool table, install buttons) in README*/guide/mcp*; --check exits 1 on drift.
 # PINS cannot see the version inside a URL-encoded or base64 install link, so bump() regenerates them instead.
 MCP_DOCS = "scripts/mcp_docs.py"
@@ -120,6 +121,9 @@ def preflight(v):
         problems.append("%s is missing: the generated MCP docs cannot be checked" % MCP_DOCS)
     elif subprocess.run([sys.executable, MCP_DOCS, "--check"], cwd=ROOT, capture_output=True, text=True).returncode:
         problems.append("the generated MCP blocks in README*/guide/mcp* are stale: run python3 %s" % MCP_DOCS)
+    minor = ".".join(v.split(".")[:2])
+    if "| %s.x (latest) | Yes |" % minor not in rd("SECURITY.md"):
+        problems.append("SECURITY.md: the supported-versions table does not say '| %s.x (latest) | Yes |'" % minor)
     rub = re.search(r'^RUBRIC = "v([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     cff = re.search(r'^version: "([^"]+)"', rd("CITATION.cff"), re.M)
     if not cff or cff.group(1) != rub:

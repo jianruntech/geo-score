@@ -311,7 +311,7 @@ depends on competition and query intent, which no site-side audit can observe.
 Remediation is deliberately out of scope: the rubric names the gap and what the next
 tier requires; it does not ship fix templates.
 
-Maintained by [Jianrun Tech](https://www.jianruntech.com) (\u89c1\u6f66\u79d1\u6280), Shenzhen. MIT.
+Maintained by [Jianrun Tech](https://www.jianruntech.com) (\u89c1\u6da6\u79d1\u6280), Shenzhen. MIT.
 """
 
 SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>

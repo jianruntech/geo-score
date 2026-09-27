@@ -70,7 +70,7 @@ opens no port. stdout carries MCP messages only; diagnostics go to stderr. What 
 |---|---|---|---|---|
 | `score_site` | The named public site, the URLs its markup and robots.txt point to, Wikidata and Wikipedia search | Nothing | Nothing | Nothing |
 | `ask` | The AI providers whose keys the server has | `geo-score-watch.json`, if there is one | Nothing | One call per engine |
-| `run` | The AI providers in `geo-score-watch.json` | The config and `queries.csv` | A run file in `.geo-score/watch/runs/`, never for a cancelled run | Up to `max_calls` and `budget_usd` |
+| `run` | The AI providers in `geo-score-watch.json` | The config and `queries.csv` | A run file in `.geo-score/watch/runs/`, never for a cancelled run | Up to `max_calls`; `budget_usd` plus at most one call per engine |
 | `list_runs`, `report`, `diff` | None | The config and saved runs | Nothing | Nothing |
 | `status` | None | The config, `queries.csv`, the run directory, and whether each key variable is set (never its value) | Nothing | Nothing |
 
