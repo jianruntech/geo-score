@@ -4,25 +4,34 @@
     python3 scripts/release.py 1.3.0            # preflight only: prints what is out of step and the plan
     python3 scripts/release.py 1.3.0 --bump     # rewrite versions, install pins and changelog headings
     python3 scripts/release.py 1.3.0 --execute  # after the bump is committed: build, checksum, tag, push, release
+    python3 scripts/release.py 1.3.0 --pack     # only build dist/geo-score-1.3.0.mcpb and dist/server.json, to try them
 
 Hosted Actions have never run on this organisation, so nothing here happens automatically, and the
 moving `v1` tag in particular has fallen behind main before. The steps are in RELEASING.md.
 """
-import argparse, datetime, hashlib, io, json, os, re, shutil, subprocess, sys
+import argparse, datetime, hashlib, io, json, os, re, shutil, subprocess, sys, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 REPO = "https://github.com/jianruntech/geo-score"
 RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
+# packaging manifests whose "version" is the release: bump() rewrites them, preflight() checks them
+MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", "gemini-extension.json"]
 # files whose one-line install or download is pinned to a release tag
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
           ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md", "STABILITY.md",
-          "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md"]
+          "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md", "guide/mcp.zh-CN.md"] + MANIFESTS
 # every way a document pins a release; group 1 is kept, the version after it is rewritten
 PINS = [re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"),
         re.compile(r"(jianruntech/geo-score/releases/download/)v\d+\.\d+\.\d+"),
         re.compile(r"(jianruntech/geo-score@)v\d+\.\d+\.\d+"),
         re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"),
         re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+")]
+# rewrites the generated MCP blocks (tool table, install buttons) in README*/guide/mcp*; --check exits 1 on drift.
+# PINS cannot see the version inside a URL-encoded or base64 install link, so bump() regenerates them instead.
+MCP_DOCS = "scripts/mcp_docs.py"
+# what the Claude Desktop bundle holds besides its manifest: (path in the .mcpb, path in the repository)
+MCPB_FILES = [("server/geo_score.py", "cli/geo_score.py"), ("server/geo_watch.py", "cli/geo_watch.py"),
+              ("LICENSE", "LICENSE")]
 
 
 def rd(p):
@@ -31,6 +40,44 @@ def rd(p):
 
 def wr(p, text):
     io.open(os.path.join(ROOT, p), "w", encoding="utf-8").write(text)
+
+
+def rdj(p):
+    return json.loads(rd(p))
+
+
+def wrj(p, obj):
+    # the manifests are kept in exactly this layout (scripts/test_packaging.py checks it), so a bump is a one-line diff
+    wr(p, json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+
+
+def sha256(path):
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
+def mcpb_url(v):
+    return "%s/releases/download/v%s/geo-score-%s.mcpb" % (REPO, v, v)
+
+
+def version_fields(obj, v):
+    """Every field of a packaging manifest that names the release, as (field, what it says, what it should say)."""
+    out = [("version", obj.get("version"), v)]
+    for i, pkg in enumerate(obj.get("packages") or []):
+        if pkg.get("registryType") == "mcpb":
+            out.append(("packages[%d].identifier" % i, pkg.get("identifier"), mcpb_url(v)))
+        elif "version" in pkg:      # a pypi package; an oci one leaves version out so clients do not add the tag twice
+            out.append(("packages[%d].version" % i, pkg.get("version"), v))
+    return out
+
+
+def set_version_fields(obj, v):
+    obj["version"] = v
+    for pkg in obj.get("packages") or []:
+        if pkg.get("registryType") == "mcpb":
+            pkg["identifier"] = mcpb_url(v)
+        elif "version" in pkg:
+            pkg["version"] = v
+    return obj
 
 
 def git(*args, capture=True):
@@ -60,6 +107,19 @@ def preflight(v):
         bad = sorted({m.group(0) for rx in PINS for m in rx.finditer(t) if not m.group(0).endswith("v" + v)})
         if bad:
             problems.append("%s: %s, not v%s" % (p, ", ".join(bad), v))
+    for p in MANIFESTS:
+        try:
+            obj = rdj(p)
+        except (IOError, OSError, ValueError) as e:
+            problems.append("%s: %s" % (p, e))
+            continue
+        for field, now, want in version_fields(obj, v):
+            if now != want:
+                problems.append("%s: %s is %s, not %s" % (p, field, now, want))
+    if not os.path.exists(os.path.join(ROOT, MCP_DOCS)):
+        problems.append("%s is missing: the generated MCP docs cannot be checked" % MCP_DOCS)
+    elif subprocess.run([sys.executable, MCP_DOCS, "--check"], cwd=ROOT, capture_output=True, text=True).returncode:
+        problems.append("the generated MCP blocks in README*/guide/mcp* are stale: run python3 %s" % MCP_DOCS)
     rub = re.search(r'^RUBRIC = "v([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     cff = re.search(r'^version: "([^"]+)"', rd("CITATION.cff"), re.M)
     if not cff or cff.group(1) != rub:
@@ -94,6 +154,13 @@ def bump(v):
             for rx in PINS:
                 t = rx.sub(lambda m: m.group(1) + "v" + v, t)
             wr(p, t)
+    for p in MANIFESTS:
+        wrj(p, set_version_fields(rdj(p), v))
+    # before the changelog, which a second --bump would rewrite twice: a failure here can simply be rerun
+    print("$ python3 " + MCP_DOCS)
+    if not os.path.exists(os.path.join(ROOT, MCP_DOCS)) or subprocess.run([sys.executable, MCP_DOCS], cwd=ROOT).returncode:
+        sys.exit("stopped: %s failed or is missing. Versions, pins and manifests are rewritten, the changelog is not; "
+                 "fix it and run --bump again" % MCP_DOCS)
     for c in ("CHANGELOG.md", "CHANGELOG.zh-CN.md"):
         t = rd(c)
         prev = re.search(r"^## \[(\d+\.\d+\.\d+)\]", t, re.M).group(1)
@@ -104,6 +171,50 @@ def bump(v):
         wr(c, t)
     print("bumped to %s; now run bash scripts/check.sh, rebuild the pages (python3 benchmark/build_page.py),\n"
           "commit as 'chore(release): %s', then python3 scripts/release.py %s --execute" % (v, v, v))
+
+
+def build_mcpb(v, out_dir):
+    """geo-score-X.Y.Z.mcpb, the Claude Desktop bundle: a zip of the MCPB manifest with the version filled in, the two
+    CLI files under server/ and the licence. Fixed timestamps, modes and order, so one tree always gives one SHA-256."""
+    for _, src in MCPB_FILES[:2]:
+        m = re.search(r'^__version__ = "([^"]+)"', rd(src), re.M)
+        if not m or m.group(1) != v:
+            sys.exit("stopped: %s is %s, not %s; a bundle must serve the version its manifest names"
+                     % (src, m.group(1) if m else "unversioned", v))
+    man = rdj("mcpb/manifest.json")
+    man["version"] = v
+    entries = [("manifest.json", (json.dumps(man, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))]
+    entries += [(arc, open(os.path.join(ROOT, src), "rb").read()) for arc, src in MCPB_FILES]
+    path = os.path.join(out_dir, "geo-score-%s.mcpb" % v)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for arc, data in entries:
+            info = zipfile.ZipInfo(arc, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            z.writestr(info, data)
+    return path
+
+
+def write_server_json(v, out_dir, mcpb_sha256):
+    """server.json for the MCP Registry: the template pointed at release v, with the bundle's real SHA-256."""
+    s = set_version_fields(rdj("server.json"), v)
+    for pkg in s.get("packages") or []:
+        if pkg.get("registryType") == "mcpb":
+            pkg["fileSha256"] = mcpb_sha256
+    text = json.dumps(s, indent=2, ensure_ascii=False) + "\n"
+    if "${" in text:
+        sys.exit("stopped: server.json still has a ${...} placeholder after filling it in")
+    path = os.path.join(out_dir, "server.json")
+    io.open(path, "w", encoding="utf-8").write(text)
+    return path
+
+
+def pack(v, out_dir):
+    """The .mcpb and the server.json that names its checksum. Returns both paths."""
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    mcpb = build_mcpb(v, out_dir)
+    return mcpb, write_server_json(v, out_dir, sha256(mcpb))
 
 
 def execute(v):
@@ -117,11 +228,14 @@ def execute(v):
             sys.exit("stopped: %s failed" % step[0])
     for f in ("geo_score.py", "geo_watch.py"):
         shutil.copy(os.path.join(ROOT, "cli", f), os.path.join(dist, f))
+    for p in pack(v, dist):
+        print("built " + os.path.relpath(p, ROOT))
     # an explicit list: build tools leave other files in dist/ (uv writes a .gitignore)
-    names = sorted(n for n in os.listdir(dist) if n.endswith((".whl", ".tar.gz")) or n in ("geo_score.py", "geo_watch.py"))
+    names = sorted(n for n in os.listdir(dist) if n.endswith((".whl", ".tar.gz", ".mcpb"))
+                   or n in ("geo_score.py", "geo_watch.py", "server.json"))
     with io.open(os.path.join(dist, "SHA256SUMS"), "w", encoding="utf-8") as f:
         for n in names:
-            f.write("%s  %s\n" % (hashlib.sha256(open(os.path.join(dist, n), "rb").read()).hexdigest(), n))
+            f.write("%s  %s\n" % (sha256(os.path.join(dist, n)), n))
     notes = os.path.join(dist, "NOTES.md")
     io.open(notes, "w", encoding="utf-8").write(
         section("CHANGELOG.md", v) + "\n\n---\n\nVerify downloads: `shasum -a 256 -c SHA256SUMS`.\n"
@@ -141,6 +255,7 @@ def execute(v):
     if r.returncode:
         sys.exit("stopped: gh release create failed (tag and push are done; rerun that step by hand)")
     print("released v%s: %s/releases/tag/v%s" % (v, REPO, v))
+    print("MCP Registry (an Owner of the jianruntech org): cd dist && mcp-publisher validate && mcp-publisher publish")
 
 
 def main():
@@ -149,11 +264,17 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--bump", action="store_true", help="rewrite versions, pins and changelog headings")
     g.add_argument("--execute", action="store_true", help="build, checksum, tag, push and publish")
+    g.add_argument("--pack", action="store_true", help="only build dist/geo-score-X.Y.Z.mcpb and dist/server.json "
+                   "(no checks, no git), e.g. to install the bundle in Claude Desktop before a release")
     a = ap.parse_args()
     if not re.match(r"^\d+\.\d+\.\d+$", a.version):
         sys.exit("version must look like 1.3.0")
     if a.bump:
         return bump(a.version)
+    if a.pack:
+        for p in pack(a.version, os.path.join(ROOT, "dist")):
+            print("built " + os.path.relpath(p, ROOT))
+        return
     problems, notes = preflight(a.version)
     for n in notes:
         print("note: " + n)
@@ -163,9 +284,9 @@ def main():
             print("  - " + p)
         sys.exit(1)
     if not a.execute:
-        print("\nready for %s. Plan: check.sh --live, build sdist + wheel, SHA256SUMS over them and the two CLI "
-              "files, push main, tag v%s and push it, move v1 and push it, gh release create with the changelog "
-              "section.\nRun again with --execute." % (a.version, a.version))
+        print("\nready for %s. Plan: check.sh --live, build sdist + wheel, the .mcpb and dist/server.json, "
+              "SHA256SUMS over them and the two CLI files, push main, tag v%s and push it, move v1 and push it, "
+              "gh release create with the changelog section.\nRun again with --execute." % (a.version, a.version))
         return
     execute(a.version)
 
