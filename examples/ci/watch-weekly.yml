@@ -22,7 +22,7 @@ jobs:
         with: {python-version: "3.12"}
       - name: Fetch geo-score (pinned to a release, checksums verified)
         run: |
-          rel=https://github.com/jianruntech/geo-score/releases/download/v1.3.0
+          rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
           curl -sSfL -o geo_score.py "$rel/geo_score.py"
           curl -sSfL -o geo_watch.py "$rel/geo_watch.py"
           curl -sSfL -o SHA256SUMS "$rel/SHA256SUMS"

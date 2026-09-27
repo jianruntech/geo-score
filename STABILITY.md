@@ -49,7 +49,7 @@ of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
 
 ## The `v1` tag
 
-`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`jianruntech/geo-score@v1.3.0`)
+`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`jianruntech/geo-score@v1.4.0`)
 when you need a score to stay put between runs.
 
 ## Deprecation

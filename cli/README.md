@@ -6,7 +6,7 @@ install. Level 1 is `geo_score.py` alone; levels 2 and 3 need `geo_watch.py` fro
 release beside it.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_score.py \
   | python3 - yoursite.com
 ```
 

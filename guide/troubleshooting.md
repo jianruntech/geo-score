@@ -79,7 +79,7 @@ pages with `--urls-from` on it.
 **Cause.** Levels 2 and 3 live in `cli/geo_watch.py`. The one-line `curl … | python3 -` install runs
 level 1 only, and never loads a `geo_watch.py` from the current directory.
 
-**What to do.** Install the tool (`pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`), or
+**What to do.** Install the tool (`pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`), or
 clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release
 into one folder. The two files must carry the same version.
 

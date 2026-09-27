@@ -64,7 +64,7 @@ CLI 使用 Python 的标准代理设置：`HTTPS_PROXY`、`HTTP_PROXY` 和 `NO_P
 **原因。** 第二、三级在 `cli/geo_watch.py` 里。一行命令 `curl … | python3 -` 只运行第一级，
 而且从不加载当前目录下的 `geo_watch.py`。
 
-**怎么办。** 安装工具（`pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`），或者克隆仓库，
+**怎么办。** 安装工具（`pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`），或者克隆仓库，
 或者从同一个版本下载 `cli/geo_score.py` 和 `cli/geo_watch.py` 放在同一个文件夹。两个文件的版本必须一致。
 
 ## `watch run` 退出码 3

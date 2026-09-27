@@ -16,7 +16,7 @@ Rubric: https://github.com/jianruntech/geo-score
 import argparse, concurrent.futures as cf, datetime, html, io, json, os, re, sys, time, zlib
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 RUBRIC = "v1.1"
 UA_BROWSER = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")

@@ -18,7 +18,7 @@
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
 
@@ -93,19 +93,19 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 免费给网站打分、拿一个问题去问各家 AI、每周追踪一组问题。
 
 <!-- BEGIN MCP:install -->
-<!-- 由 scripts/mcp_docs.py 按版本 1.3.0 生成；要改请改脚本，不要改这一段。 -->
+<!-- 由 scripts/mcp_docs.py 按版本 1.4.0 生成；要改请改脚本，不要改这一段。 -->
 
-[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
-[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
+[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS40LjAiLCJnZW8tc2NvcmUtbWNwIl19)
+[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.4.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
+[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.4.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
+[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS40LjAiLCJnZW8tc2NvcmUtbWNwIl19)
 
-按钮和下面几行用 `uvx` 安装 geo-score **1.3.0**，需要先装 [uv](https://docs.astral.sh/uv/)。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `geo-score-mcp` 后面加 `--read-only`。
+按钮和下面几行用 `uvx` 安装 geo-score **1.4.0**，需要先装 [uv](https://docs.astral.sh/uv/)。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `geo-score-mcp` 后面加 `--read-only`。
 
 **Claude Code**
 
 ```bash
-claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp
+claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.4.0 geo-score-mcp
 ```
 
 **标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
@@ -115,7 +115,7 @@ claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianr
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jianruntech/geo-score@v1.3.0", "geo-score-mcp"]
+      "args": ["--from", "git+https://github.com/jianruntech/geo-score@v1.4.0", "geo-score-mcp"]
     }
   }
 }
@@ -505,8 +505,8 @@ Read this before quoting the numbers
 ## 稳定性、隐私与安装
 
 - **安装：** 第一级什么都不用装（上面那行 `curl`，锁定到某个发布版本）；想要一个包含三级的 `geo-score` 命令，用
-  `pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`，或者不安装直接运行：
-  `uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score example.com`。两种方式都只用 Python 标准库。
+  `pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`，或者不安装直接运行：
+  `uvx --from git+https://github.com/jianruntech/geo-score@v1.4.0 geo-score example.com`。两种方式都只用 Python 标准库。
   发布的下载文件附带 `SHA256SUMS`（[如何校验](SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
