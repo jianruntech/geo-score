@@ -2243,6 +2243,36 @@ def tool_filter(toolsets=None, tools=None, exclude=None, read_only=False):
     return on - set(drop)
 
 
+# Prompts are the user's own slash commands. They make the careful workflow the easy one: a dry run before
+# spending, a diff rather than one run. None of them writes a fix: measurement is public, remediation is private.
+# "needs" names the tools (and "rubric", the resource) a prompt uses; it is offered only when they are.
+MCP_PROMPTS = [
+    {"name": "audit_site", "title": "Audit a site's AI readiness", "needs": ("score_site",),
+     "description": "Free: score a site with score_site, then walk through its band and the checks with the most "
+                    "points to gain.",
+     "arguments": [{"name": "url", "description": "The site or page to score, e.g. example.com", "required": True}]},
+    {"name": "check_citations", "title": "Check whether AI engines cite a brand", "needs": ("ask",),
+     "description": "Paid (one API call per engine, on your keys): ask the AI engines one question and report who "
+                    "they cite.",
+     "arguments": [{"name": "question", "description": "The question a buyer would ask", "required": True},
+                   {"name": "brand", "description": "The brand to look for, if not the configured one",
+                    "required": False}]},
+    {"name": "weekly_watch", "title": "This week's citation run", "needs": ("status", "run", "diff"),
+     "description": "Paid, after your go-ahead: status, a dry run to show the plan, then the run and the diff "
+                    "against the previous one.",
+     "arguments": []},
+    {"name": "compare_runs", "title": "Compare two saved runs", "needs": ("diff",),
+     "description": "Free: what changed between two saved runs, with only significant changes called changes.",
+     "arguments": [{"name": "from", "description": "Earlier run id (default: the previous run)", "required": False},
+                   {"name": "to", "description": "Later run id (default: the latest run)", "required": False}]},
+    {"name": "explain_check", "title": "Explain a rubric check", "needs": ("rubric",),
+     "description": "Free: what one check of the AIV rubric measures, its points and tiers, from the rubric itself.",
+     "arguments": [{"name": "check_id", "description": "A check id such as p1.sitemap", "required": True}]},
+]
+RUNS_TEMPLATE = "geo-score://runs/{run_id}"
+MAX_COMPLETIONS = 100
+
+
 def ask_structured(run):
     """One ask as data for agents (OUT_ASK). Without a brand there is nothing to be cited or mentioned: null."""
     has_brand = bool(run["brand"].get("name") or run["brand"].get("domains") or run["brand"].get("url_prefixes"))
@@ -2431,8 +2461,12 @@ class MCPServer(object):
 
     def capabilities(self):
         caps = {"tools": {"listChanged": False}}
-        if self.resources():
+        if self.resources() or self.templates():
             caps["resources"] = {"listChanged": False}
+        if self.prompts():
+            caps["prompts"] = {"listChanged": False}
+        if self.prompts() or self.templates():
+            caps["completions"] = {}
         return caps
 
     def handle(self, msg, ctx=None):
@@ -2504,18 +2538,150 @@ class MCPServer(object):
         if method == "resources/list":
             return {"resources": self.resources()}, (TTL_STATIC, "public")
         if method == "resources/templates/list":
-            return {"resourceTemplates": []}, (TTL_STATIC, "public")
+            return {"resourceTemplates": self.templates()}, (TTL_STATIC, "public")
         if method == "resources/read":
             uri = params.get("uri")
-            res = next((r for r in self.resources() if r["uri"] == uri), None)
-            if res is None:
-                # -32002 until 2025-11-25; 2026-07-28 moved resource-not-found to -32602
-                raise RPCError(-32602 if modern else -32002, "Resource not found" if modern else "resource not found",
-                               {"uri": uri if isinstance(uri, str) else None})
-            return {"contents": [{"uri": uri, "mimeType": "application/json",
-                                  "text": json.dumps(rubric_resource(self.geo_score), ensure_ascii=False, indent=1)}]}, \
-                (TTL_STATIC, "public")
+            m = re.match(r"^geo-score://runs/(\S+)$", uri) if isinstance(uri, str) and self.templates() else None
+            if m and RUN_ID_RE.match(m.group(1)):
+                try:
+                    sm = summary_of(load_run(self._cfg(), m.group(1)))
+                except ConfigError:
+                    sm = None
+                if sm is not None:
+                    # a saved run is the user's own data: never shared by a cache, and read afresh
+                    return {"contents": [{"uri": uri, "mimeType": "application/json",
+                                          "text": json.dumps(sm, ensure_ascii=False, indent=1)}]}, (0, "private")
+            elif next((r for r in self.resources() if r["uri"] == uri), None) is not None:
+                return {"contents": [{"uri": uri, "mimeType": "application/json",
+                                      "text": json.dumps(rubric_resource(self.geo_score), ensure_ascii=False, indent=1)}]}, \
+                    (TTL_STATIC, "public")
+            # -32002 until 2025-11-25; 2026-07-28 moved resource-not-found to -32602
+            raise RPCError(-32602 if modern else -32002, "Resource not found" if modern else "resource not found",
+                           {"uri": uri if isinstance(uri, str) else None})
+        if method == "prompts/list":
+            return {"prompts": self.prompts()}, (TTL_LIST, "public")
+        if method == "prompts/get":
+            return self.get_prompt(params), None
+        if method == "completion/complete":
+            return {"completion": self.complete(params)}, None
         raise RPCError(-32601, "method not found: " + method)
+
+    def templates(self):
+        if "report" not in self.enabled:
+            return []
+        return [{"uriTemplate": RUNS_TEMPLATE, "name": "run", "title": "A saved watch run",
+                 "description": "The summary of a saved run (schema/watch.v1.json, summary), by run id.",
+                 "mimeType": "application/json"}]
+
+    def prompts(self):
+        have = set(t["name"] for t in self.tools()) | ({"rubric"} if self.resources() else set())
+        return [dict((k, v) for k, v in p.items() if k != "needs") for p in MCP_PROMPTS if set(p["needs"]) <= have]
+
+    def get_prompt(self, params):
+        """prompts/get: the arguments are strings; an unknown prompt or a missing required argument is -32602."""
+        name, args = params.get("name"), params.get("arguments")
+        p = next((x for x in self.prompts() if x["name"] == name), None)
+        if p is None:
+            raise RPCError(-32602, "unknown prompt: %s" % (name if isinstance(name, str) else type(name).__name__)[:80])
+        if args is None:
+            args = {}
+        if not isinstance(args, dict) or not all(isinstance(v, str) for v in args.values()):
+            raise RPCError(-32602, "prompt arguments must map names to strings")
+        args = dict((k, v.strip()) for k, v in args.items() if v.strip())
+        for a in p["arguments"]:
+            if a["required"] and a["name"] not in args:
+                raise RPCError(-32602, "missing required argument: %s" % a["name"])
+        call = lambda tool, a: "call %s with %s" % (tool, json.dumps(a, ensure_ascii=False))
+        msgs = []
+        if name == "audit_site":
+            if len(args["url"]) > 2048:
+                raise RPCError(-32602, "url is too long")
+            text = ("Score this site's AI readiness: %s. score_site is free and needs no API key.\n\n"
+                    "Then report:\n"
+                    "1. The score out of 100, the band, and whether a gate capped it.\n"
+                    "2. The checks with the most points to gain (max minus points), largest first, each with its id, "
+                    "points and evidence. " + SITE_TEXT_NOTE + "\n"
+                    "3. What the score means: readiness says whether AI engines can cite the site, not whether they "
+                    "do; check_citations and weekly_watch measure that. It predicts no traffic, rankings or "
+                    "timeline.\n\nWhat a check measures is in the geo-score://rubric resource (or explain_check).") % (
+                call("score_site", {"url": args["url"]}))
+        elif name == "check_citations":
+            if len(args["question"]) > MAX_QUERY_LEN:
+                raise RPCError(-32602, "question must be at most %d characters" % MAX_QUERY_LEN)
+            a = {"question": args["question"]}
+            if args.get("brand"):
+                a["brand"] = args["brand"][:200]
+            text = ("Check whether AI engines cite the brand for one question. This is paid: ask makes one API "
+                    "call per configured engine, billed to my own API keys. Say so in one line, then %s.%s\n\n"
+                    "Report per engine: cited or not (and at which rank), mentioned or not, the sources it cited and "
+                    "what it searched for. An engine without a key is not measured, which is not a zero. One answer per "
+                    "engine is an anecdote, not a rate: to measure a rate, track the question with weekly_watch. These "
+                    "are the engines' APIs, not their consumer apps." % (
+                        call("ask", a), " If you know the brand's own domains, add them as domains, so that a citation "
+                                        "of its site counts." if "brand" in a else ""))
+        elif name == "weekly_watch":
+            text = ("Run this week's citation check, in this order:\n"
+                    "1. Call status. If run is not ready, say why (no config, no questions or no API keys) and stop.\n"
+                    "2. %s and show me the plan: questions x engines x runs, the call cap and budget, and the "
+                    "engines that will not be measured, with the reason.\n"
+                    "3. Stop and wait for me to confirm. Nothing is spent until I do.\n"
+                    "4. When I confirm, call run without dry_run.\n"
+                    "5. Call diff (the latest two runs). Only a verdict of 'change' is a change; everything else is "
+                    "within noise. Give rates with their 95%% intervals.\n\n"
+                    "This measures the engines' APIs, not their consumer apps." % call("run", {"dry_run": True}))
+        elif name == "compare_runs":
+            a = {}
+            for k in ("from", "to"):
+                if k in args:
+                    if not (args[k] in ("latest", "previous") or RUN_ID_RE.match(args[k])):
+                        raise RPCError(-32602, "%s must be a run id such as 20260926T083000Z, latest or previous" % k)
+                    a[k] = args[k]
+            text = ("Compare two saved runs: %s%s.\n\n"
+                    "For each engine and overall, give the citation rate before and after, the change in points with "
+                    "its 95%% interval and the verdict. Only a verdict of 'change' is a change: say 'no detectable "
+                    "change' for the rest, never up or down. Then list the citations lost and gained." % (
+                        call("diff", a), "" if a else " (the previous and the latest run)"))
+        else:   # explain_check
+            ids = [c["id"] for c in rubric_resource(self.geo_score)["checks"]]
+            if args["check_id"] not in ids:
+                raise RPCError(-32602, "unknown check id: %s" % _cut(args["check_id"], 40))
+            res = self.resources()[0]
+            msgs.append({"role": "user", "content": {"type": "resource", "resource": {
+                "uri": res["uri"], "mimeType": "application/json",
+                "text": json.dumps(rubric_resource(self.geo_score), ensure_ascii=False, indent=1)}}})
+            text = ("Using the geo-score rubric above, explain check %s: what it measures, its pillar, its points, "
+                    "each tier's condition and points, and whether it is a gate (a gate that scores zero caps the "
+                    "whole score at gate_cap) or a bonus. Keep to what the rubric says." % args["check_id"])
+        msgs.append({"role": "user", "content": {"type": "text", "text": text}})
+        return {"description": p["description"], "messages": msgs}
+
+    def complete(self, params):
+        """completion/complete: check ids for explain_check, saved run ids for compare_runs and the runs template."""
+        ref, arg = params.get("ref"), params.get("argument")
+        if not isinstance(ref, dict) or not isinstance(arg, dict) or not isinstance(arg.get("name"), str):
+            raise RPCError(-32602, "completion needs ref and argument.name")
+        value = arg.get("value") if isinstance(arg.get("value"), str) else ""
+        pool = []
+        if ref.get("type") == "ref/prompt":
+            if ref.get("name") not in [p["name"] for p in self.prompts()]:
+                raise RPCError(-32602, "unknown prompt: %s" % str(ref.get("name"))[:80])
+            if (ref["name"], arg["name"]) == ("explain_check", "check_id"):
+                pool = [c["id"] for c in rubric_resource(self.geo_score)["checks"]]
+            elif ref["name"] == "compare_runs" and arg["name"] in ("from", "to"):
+                pool = list(reversed(self._run_ids())) + ["latest", "previous"]
+        elif ref.get("type") == "ref/resource":
+            if ref.get("uri") == RUNS_TEMPLATE and self.templates() and arg["name"] == "run_id":
+                pool = list(reversed(self._run_ids()))
+        else:
+            raise RPCError(-32602, "ref.type must be ref/prompt or ref/resource")
+        hits = [x for x in pool if x.lower().startswith(value.lower())]
+        return {"values": hits[:MAX_COMPLETIONS], "total": len(hits), "hasMore": len(hits) > MAX_COMPLETIONS}
+
+    def _run_ids(self):
+        try:
+            return list_run_ids(self._cfg()) if os.path.isfile(self.config_path) else []
+        except ConfigError:
+            return []
 
     def resources(self):
         if self.geo_score is None or not getattr(self.geo_score, "SPEC", None) or "score_site" not in self.enabled:

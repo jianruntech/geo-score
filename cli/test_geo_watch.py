@@ -1530,6 +1530,150 @@ class MCPProtocol(Base):
         self.assertTrue(by_id[3]["result"]["isError"])                               # no keys in this environment
 
 
+class MCPPrompts(Base):
+    """Prompts (the user's slash commands), completions, and the saved-run resource template."""
+    server = MCP.server
+    PROMPTS = ["audit_site", "check_citations", "weekly_watch", "compare_runs", "explain_check"]
+
+    def rpc(self, srv, method, params=None, meta=None):
+        p = dict(params or {})
+        if meta is not None:
+            p["_meta"] = meta
+        return srv.handle({"jsonrpc": "2.0", "id": 1, "method": method, "params": p})
+
+    def get(self, srv, name, args=None):
+        return self.rpc(srv, "prompts/get", {"name": name, "arguments": args or {}})
+
+    def with_two_runs(self):
+        srv = self.server()
+        self.fake(self.standard_routes())
+        self.assertFalse(srv.call({"name": "run", "arguments": {}})["isError"])
+        gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=7)
+        self.assertFalse(srv.call({"name": "run", "arguments": {}})["isError"])
+        return srv
+
+    def test_listed_with_their_capabilities(self):
+        srv = self.server()
+        caps = self.rpc(srv, "initialize", {"protocolVersion": "2025-11-25"})["result"]["capabilities"]
+        self.assertEqual((caps["prompts"], caps["completions"]), ({"listChanged": False}, {}))
+        prompts = self.rpc(srv, "prompts/list")["result"]["prompts"]
+        self.assertEqual([p["name"] for p in prompts], self.PROMPTS)
+        for p in prompts:
+            self.assertTrue(p["title"] and p["description"], p)
+            self.assertNotIn("needs", p)
+            for a in p["arguments"]:
+                self.assertIsInstance(a["required"], bool)
+        req = dict((p["name"], [a["name"] for a in p["arguments"] if a["required"]]) for p in prompts)
+        self.assertEqual(req, {"audit_site": ["url"], "check_citations": ["question"], "weekly_watch": [],
+                               "compare_runs": [], "explain_check": ["check_id"]})
+        modern = self.rpc(srv, "prompts/list", meta=MODERN)["result"]
+        self.assertEqual((modern["resultType"], modern["ttlMs"], modern["cacheScope"]), ("complete", 3600000, "public"))
+        self.assertEqual(self.rpc(srv, "prompts/list", {"cursor": "x"})["error"]["code"], -32602)
+
+    def test_prompts_follow_the_tool_filter(self):
+        cfgp = os.path.join(self.tmp, "none.json")
+        names = lambda srv: [p["name"] for p in srv.prompts()]
+        ro = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter(read_only=True))
+        self.assertEqual(names(ro), ["audit_site", "compare_runs", "explain_check"])     # nothing that spends
+        self.assertEqual(self.get(ro, "weekly_watch")["error"]["code"], -32602)
+        ask = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("ask"))
+        self.assertEqual(names(ask), ["check_citations"])
+        bare = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("status"))
+        self.assertEqual(names(bare), [])
+        caps = self.rpc(bare, "initialize", {"protocolVersion": "2025-11-25"})["result"]["capabilities"]
+        self.assertEqual(sorted(caps), ["tools"])                     # no prompts, completions or resources
+
+    def test_prompts_get(self):
+        srv = self.server()
+        r = self.get(srv, "audit_site", {"url": "example.com"})["result"]
+        text = r["messages"][-1]["content"]["text"]
+        self.assertEqual(r["messages"][-1]["role"], "user")
+        self.assertIn('call score_site with {"url": "example.com"}', text)
+        self.assertIn("«site text", text)
+        self.assertIn("not whether they do", text)
+        t = self.get(srv, "check_citations", {"question": "best free ai video generator", "brand": "Lumo"})["result"]
+        t = t["messages"][0]["content"]["text"]
+        self.assertIn("paid", t)
+        self.assertIn('call ask with {"question": "best free ai video generator", "brand": "Lumo"}', t)
+        self.assertIn("domains", t)
+        self.assertNotIn("domains", self.get(srv, "check_citations", {"question": "q"})["result"]["messages"][0]
+                         ["content"]["text"])
+        w = self.get(srv, "weekly_watch")["result"]["messages"][0]["content"]["text"]
+        self.assertLess(w.index("status"), w.index('{"dry_run": true}'))
+        self.assertLess(w.index('{"dry_run": true}'), w.index("wait for me to confirm"))
+        self.assertLess(w.index("wait for me to confirm"), w.index("Call diff"))
+        c = self.get(srv, "compare_runs", {"from": "20260926T083000Z"})["result"]["messages"][0]["content"]["text"]
+        self.assertIn('call diff with {"from": "20260926T083000Z"}', c)
+        self.assertIn("(the previous and the latest run)", self.get(srv, "compare_runs")["result"]["messages"][0]
+                      ["content"]["text"])
+        e = self.get(srv, "explain_check", {"check_id": "p1.sitemap"})["result"]["messages"]
+        self.assertEqual(e[0]["content"]["type"], "resource")
+        self.assertEqual(e[0]["content"]["resource"]["uri"], "geo-score://rubric/v1.1")
+        self.assertIn("p1.sitemap", [c["id"] for c in json.loads(e[0]["content"]["resource"]["text"])["checks"]])
+        self.assertIn("explain check p1.sitemap", e[1]["content"]["text"])
+        modern = self.rpc(srv, "prompts/get", {"name": "weekly_watch"}, meta=MODERN)["result"]
+        self.assertEqual(modern["resultType"], "complete")
+        self.assertNotIn("ttlMs", modern)
+
+    def test_bad_prompt_requests_are_invalid_params(self):
+        srv = self.server()
+        for name, args in (("nope", {}), (None, {}), ("audit_site", {}), ("audit_site", {"url": "  "}),
+                           ("audit_site", {"url": 5}), ("audit_site", {"url": "x" * 3000}),
+                           ("check_citations", {"question": "q" * 501}), ("compare_runs", {"from": "../x"}),
+                           ("explain_check", {"check_id": "p9.nope"})):
+            self.assertEqual(self.get(srv, name, args)["error"]["code"], -32602, (name, args))
+        self.assertEqual(self.rpc(srv, "prompts/get", {"name": "audit_site", "arguments": ["x"]})["error"]["code"], -32602)
+
+    def test_no_prompt_writes_a_fix(self):
+        # measurement is public, remediation is private (AGENTS.md): prompts measure and explain, never prescribe
+        srv = self.server()
+        args = {"audit_site": {"url": "example.com"}, "check_citations": {"question": "q", "brand": "b"},
+                "explain_check": {"check_id": "p1.sitemap"}}
+        for name in self.PROMPTS:
+            r = self.get(srv, name, args.get(name))["result"]
+            text = " ".join([r["description"]] + [m["content"]["text"] for m in r["messages"]
+                                                  if m["content"]["type"] == "text"]).lower()
+            for word in ("fix", "remediat", "improve", "```", "markup", "json-ld"):
+                self.assertNotIn(word, text, name)
+
+    def test_completions(self):
+        srv = self.with_two_runs()
+        comp = lambda ref, name, value, meta=None: self.rpc(
+            srv, "completion/complete", {"ref": ref, "argument": {"name": name, "value": value}}, meta)
+        prompt = lambda n: {"type": "ref/prompt", "name": n}
+        ids = [c["id"] for c in gw.rubric_resource(srv.geo_score)["checks"]]
+        c = comp(prompt("explain_check"), "check_id", "")["result"]["completion"]
+        self.assertEqual((c["values"], c["total"], c["hasMore"]), (ids[:100], len(ids), len(ids) > 100))
+        c = comp(prompt("explain_check"), "check_id", "P1.")["result"]["completion"]
+        self.assertTrue(c["values"] and all(v.startswith("p1.") for v in c["values"]), c)
+        runs = ["20261003T083000Z", "20260926T083000Z"]                                     # newest first
+        self.assertEqual(comp(prompt("compare_runs"), "from", "")["result"]["completion"]["values"],
+                         runs + ["latest", "previous"])
+        self.assertEqual(comp(prompt("compare_runs"), "to", "202609")["result"]["completion"]["values"], runs[1:])
+        self.assertEqual(comp({"type": "ref/resource", "uri": "geo-score://runs/{run_id}"}, "run_id", "")["result"]
+                         ["completion"]["values"], runs)
+        self.assertEqual(comp(prompt("audit_site"), "url", "exa")["result"]["completion"]["values"], [])
+        modern = comp(prompt("explain_check"), "check_id", "g.", MODERN)["result"]
+        self.assertEqual(modern["resultType"], "complete")
+        for ref, name in ((prompt("nope"), "x"), ({"type": "ref/other"}, "x"), ("explain_check", "check_id")):
+            self.assertEqual(comp(ref, name, "")["error"]["code"], -32602, ref)
+
+    def test_saved_runs_as_a_resource_template(self):
+        srv = self.with_two_runs()
+        tpl = self.rpc(srv, "resources/templates/list")["result"]["resourceTemplates"]
+        self.assertEqual([t["uriTemplate"] for t in tpl], ["geo-score://runs/{run_id}"])
+        r = self.rpc(srv, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"})["result"]
+        self.assertEqual(json.loads(r["contents"][0]["text"])["overall"]["answered"], 4)
+        m = self.rpc(srv, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"}, meta=MODERN)["result"]
+        self.assertEqual((m["ttlMs"], m["cacheScope"]), (0, "private"))                # the user's own data
+        for uri in ("geo-score://runs/20990101T000000Z", "geo-score://runs/../../etc/passwd", "geo-score://runs/latest"):
+            self.assertEqual(self.rpc(srv, "resources/read", {"uri": uri})["error"]["code"], -32002, uri)
+        score_only = gw.MCPServer(srv.config_path, out=io.StringIO(), enabled=gw.tool_filter("score"))
+        self.assertEqual(self.rpc(score_only, "resources/templates/list")["result"]["resourceTemplates"], [])
+        self.assertEqual(self.rpc(score_only, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"})
+                         ["error"]["code"], -32002)
+
+
 # ── level 2 and the geo_score.py entry point ─────────────────────────────
 class Level2(Base):
     def schema_citation(self):
