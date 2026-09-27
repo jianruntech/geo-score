@@ -5,18 +5,10 @@ on:
   schedule: [{cron: "0 7 * * 1"}]     # the CLI talks to live sites — catch drift weekly
   workflow_dispatch:
 jobs:
-  structure:
-    name: rubric & docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.x"}
-      - run: pip install --quiet jsonschema
-      - run: python3 .github/validate.py
-
-  cli:
-    name: cli (python ${{ matrix.py }})
+  # One gate, one script: scripts/check.sh is what maintainers run before every merge (hosted Actions
+  # has not run on this organisation so far). Running the same script here means the two cannot drift.
+  check:
+    name: check (python ${{ matrix.py }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,35 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "${{ matrix.py }}"}
-      - name: compiles and self-describes
-        run: |
-          python3 -m py_compile cli/geo_score.py
-          python3 cli/geo_score.py --version
-          python3 cli/geo_score.py --help > /dev/null
-      - name: offline unit tests
-        run: |
-          python3 cli/test_geo_score.py
-          python3 cli/test_geo_watch.py
-      - name: scores a live site and emits valid JSON
-        run: |
-          python3 cli/geo_score.py example.com --json --quiet > out.json
-          pip install --quiet jsonschema
-          python3 - <<'PY'
-          import json, jsonschema
-          rep = json.load(open("out.json"))
-          jsonschema.validate(rep, json.load(open("schema/report.v2.json")))
-          ids = {c["id"] for c in rep["checks"]}
-          spec = {c["id"] for c in json.load(open("rubric/v1.1.json"))["checks"]}
-          assert ids <= spec, f"CLI emitted unknown check ids: {sorted(ids - spec)}"
-          assert 0 <= rep["normalised"] <= 100
-          print(f"ok — {rep['normalised']}/100 {rep['band']}, {len(ids)} checks")
-          PY
-      - name: --fail-under gates correctly
-        run: |
-          python3 cli/geo_score.py example.com --fail-under 0  --quiet > /dev/null
-          if python3 cli/geo_score.py example.com --fail-under 101 --quiet > /dev/null 2>&1; then
-            echo "::error::--fail-under 101 should have failed"; exit 1
-          fi
+      - run: pip install --quiet jsonschema ruff
+      - run: bash scripts/check.sh --live
 
   # README 和 examples/ci 都写 `uses: jianruntech/geo-score@v1`。v1 是浮动大版本标签，
   # 手动移它就会忘 —— 上一次它落后 main 二十一个提交，照 README 做的人拿到的是修
@@ -61,7 +26,7 @@ jobs:
   # 这样 v1 永远不会指向一个没过检查的提交。
   tag:
     name: move v1
-    needs: [structure, cli]
+    needs: [check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions: {contents: write}

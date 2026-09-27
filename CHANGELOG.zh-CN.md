@@ -32,6 +32,12 @@
   提供，由评分器自己的表格生成。服务说明和 `score_site` 的描述写明：`«site text: …»` 里是被评网站的原文，是数据。
 - `watch diff --fail-on-drop`：有结论为 `change` 且变化为负时退出码为 4。MCP `diff` 工具支持 `format: "json"`。
   [guide/watch-methodology.zh-CN.md](guide/watch-methodology.zh-CN.md)（中英两份）给出公式与算例。
+- **统一的检查入口：`scripts/check.sh`。** 依次跑结构校验、ruff、三套测试（Python 3.8 与可用的最新版本），并在测试站点上模拟一次
+  GitHub Action（`scripts/test_action.py`）；加 `--live` 再跑 example.com。`.githooks/pre-push` 推送前自动运行它，
+  `.github/workflows/validate.yml` 跑的也是同一个脚本。托管的 Actions 在这个组织下至今没有运行过，所以 `CONTRIBUTING.md`
+  不再说「CI 会检查」：维护者每次合并前手动运行这个脚本。
+- `AGENTS.md`：仓库的各条约定，每条都对应到执行它的检查，给贡献者和写代码的 agent 看（`CLAUDE.md` 指向它）。
+- issue 表单要求填写工具版本和 JSON 报告；新增第二、三级引擎问题的表单，并提醒绝不要贴 Key；安全问题引导到 `SECURITY.md`。
 - **离线端到端测试。** `cli/test_geo_score_e2e.py` 在 127.0.0.1 上架起 12 个测试站点（标准站、纯 JavaScript 壳、
   robots 屏蔽、拦截 AI 爬虫的防火墙、中文站、路径下的站点、试图对 agent 下指令的恶意站点等），逐项核对每个检查项的档位
   与各站的 `expected.json`，并比对一份基准报告。有任何请求离开本机即判失败；整套不到一秒。
@@ -55,6 +61,9 @@
 - `--compare` 对比三个及以上站点时，不再写「Both scored」。
 
 ### 修复
+- **分数可能超过 100。** 加分项不进分母，满分或接近满分的站加上加分项最高会读到 106，连报告 schema（`normalised` ≤ 100）都不满足。
+  现在百分比封顶 100，量表第 5 条也写明了。已发布的分数都不受影响：榜单最高 98，人工审计最高 87。这个问题是离线测试站点发现的。
+- `--json-out`、`--sarif`、`--junit` 写不进去时给出明确的报错（退出码 2），不再抛出回溯。
 - 拉丁字母品牌名紧贴中日韩文字时（「用Lumo做视频」）现在算作提及，此前从未匹配。因此新运行在这类回答上的 `mentioned`
   比率可能高于之前的运行。
 - 1.2.0 保存的运行文件仍可读取；报告会重算摘要，并根据保存的问题文本计算品牌标记，同时加注说明。

@@ -1,25 +1,44 @@
 name: Wrong score
-description: A site scores in a way that is clearly wrong
+description: A site scores in a way that is clearly wrong, or the CLI misbehaves
 title: "[score] "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: "False positives and negatives are the highest-signal reports we get."
+      value: |
+        False positives and negatives are the highest-signal reports we get. A score moving by a few
+        points between two runs is expected (see
+        [troubleshooting](https://github.com/jianruntech/geo-score/blob/main/guide/troubleshooting.md)); re-score with
+        `--urls-from` first to rule out a different sample.
   - type: input
     id: url
     attributes:
-      label: URL audited
+      label: URL scored
     validations: { required: true }
   - type: input
-    id: version
+    id: tool_version
     attributes:
-      label: Rubric version
-      placeholder: "v1.1"
+      label: Tool version
+      description: The output of `geo-score --version` (or `python3 geo_score.py --version`).
+      placeholder: "geo-score 1.3.0 (rubric v1.1)"
+    validations: { required: true }
+  - type: input
+    id: check
+    attributes:
+      label: Which check
+      description: The check id, not just the total.
+      placeholder: "p2.answer-passages"
     validations: { required: true }
   - type: textarea
     id: expected
     attributes:
       label: What was scored, and what you expected instead
-      description: Name the specific check, not just the total.
+      description: Which tier the CLI gave, which tier the rubric says, and why.
+    validations: { required: true }
+  - type: textarea
+    id: report
+    attributes:
+      label: The JSON report
+      description: Run with `--json` (or `--json-out report.json`) and paste it. It carries the sampled pages and the evidence for every check.
+      render: json
     validations: { required: true }

@@ -1,0 +1,40 @@
+name: Citation check problem (levels 2 and 3)
+description: An engine fails, a citation is missed or miscounted, or a watch number looks wrong
+title: "[engine] "
+labels: ["engine"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste an API key.** geo-score redacts keys from what it stores and prints, but check
+        everything you paste here. Remove the answers' text if your questions are confidential.
+  - type: input
+    id: tool_version
+    attributes:
+      label: Tool version
+      description: The output of `geo-score --version`.
+    validations: { required: true }
+  - type: input
+    id: engine
+    attributes:
+      label: Engine id and model
+      placeholder: "perplexity-api · sonar"
+    validations: { required: true }
+  - type: textarea
+    id: check_output
+    attributes:
+      label: Output of `geo-score watch check`
+      render: text
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: For a missed citation, the URL the engine cited and the domain or alias you expected to match.
+    validations: { required: true }
+  - type: textarea
+    id: sample
+    attributes:
+      label: The relevant sample from the run file
+      description: One entry from `samples` in `.geo-score/watch/runs/<run>.json`, with the answer text shortened or removed if it is confidential.
+      render: json

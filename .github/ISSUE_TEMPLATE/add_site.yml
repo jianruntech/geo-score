@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         The leaderboard is a fixed, public list so the numbers stay reproducible — see
-        [`benchmark/sites.json`](../../blob/main/benchmark/sites.json). Sites are picked for
+        [`benchmark/sites.json`](https://github.com/jianruntech/geo-score/blob/main/benchmark/sites.json). Sites are picked for
         sector and language coverage and public prominence, never because they are anyone's
         customer or competitor.
 

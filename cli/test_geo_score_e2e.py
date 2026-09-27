@@ -470,6 +470,21 @@ class EndToEnd(unittest.TestCase):
             self.fail("the good fixture's report drifted from the golden file "
                       "(UPDATE_GOLDEN=1 rewrites it if the change is intended):\n" + diff)
 
+    def test_every_report_conforms_to_the_published_schema(self):
+        # the good fixture once scored 107 of 100 and nothing noticed: check the contract, not only the tiers
+        with open(os.path.join(HERE, "..", "schema", "report.v2.json"), encoding="utf-8") as f:
+            schema = json.load(f)
+        try:
+            import jsonschema
+        except ImportError:
+            jsonschema = None
+        for name in sorted(EXPECTED):
+            with self.subTest(fixture=name):
+                rep = report_for(name, masked=False)
+                self.assertTrue(0 <= rep["normalised"] <= 100, "%s: normalised %s" % (name, rep["normalised"]))
+                if jsonschema is not None:
+                    jsonschema.validate(rep, schema)
+
     def test_hostile_report_is_produced(self):
         rep = hostile_report()
         self.assertEqual({c["id"] for c in rep["checks"]}, set(ALL_IDS))

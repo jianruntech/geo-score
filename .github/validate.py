@@ -90,7 +90,7 @@ for f in ["examples/sample-report.md", "README.md"]:
         check(omax == int(hm.group(2)), f"{f}: header max {hm.group(2)} but pillars sum to {omax}")
         pm = _re.search(r'normalised (\d+)%', rep)
         if pm and omax:
-            exp = round(tot / omax * 100)
+            exp = min(100, round(tot / omax * 100))
             check(int(pm.group(1)) == exp, f"{f}: normalised {pm.group(1)}% but {tot}/{omax} = {exp}%")
 
 # 7 · 每个检查项必须标注 credit 类型
@@ -318,7 +318,8 @@ for r in MODERN:
                 got += c["points"]; den += rr["points"]
                 if rr["kind"] == "gate" and c["points"] == 0: gate_zero = True
         tot = got + min(bon, j["bonus_cap"])
-        norm = min(round(100 * tot / den), j["gate_cap"]) if gate_zero else round(100 * tot / den)
+        norm = min(100, round(100 * tot / den))            # bonus never takes the percentage past 100
+        norm = min(norm, j["gate_cap"]) if gate_zero else norm
         band = next(b["name"] for b in j["bands"] if norm >= b["min_pct"])
         check(a["readiness"] == tot, f"{fp}: readiness {a['readiness']} 但逐项之和是 {tot}")
         check(a["observable_max"] == den, f"{fp}: observable_max {a['observable_max']} 但分母之和是 {den}")
@@ -346,7 +347,7 @@ EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECUR
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
-EN_PRIMARY += ["STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md"]
+EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
@@ -475,7 +476,7 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
               "docs/llms.txt 写着 %s 站，results.json 是 %d 站 —— 这是 AI 爬虫唯一会读的"
               "文件，数字错了就是递给每个引擎一个错答案" % (sorted(found) or "没写", n))
 
-# ── 19. 门槛封顶只在得 0 分时触发 —— 每一处文档都得这么说 ──
+# ── 20. 门槛封顶只在得 0 分时触发 —— 每一处文档都得这么说 ──
 # v1.1 初稿写的是「门槛项没拿满就封顶」，这个 bug 修了，但 rubric/README、中文校准记录、
 # SKILL.md、示例报告里还留着旧说法。规格里写着已修掉的 bug，是挑刺的读者最先会抓的矛盾。
 # 提到「封顶 40」的句子必须同时说明是得 0 分时；讲历史的句子（当时 / at the time）放行。
@@ -494,7 +495,7 @@ for f in _cap_files:
         check(any(m in x.lower() for m in ZERO_MARK),
               "%s 说门槛封顶 40，但没说只在得 0 分时触发（v1.1 修掉的规则）：%s" % (f, x[:160]))
 
-# ── 20. 校准记录中英两份：同样多的章节，同一组数字 ──
+# ── 21. 校准记录中英两份：同样多的章节，同一组数字 ──
 # 中文版曾漏掉「60 KB 服务端渲染正文」和 Foglift 的上四分位。比集合不比次数：
 # 同一个数字中文多提一遍是行文习惯，少了一个数字才是少了一条事实。
 def _cal_facts(p):
@@ -507,7 +508,7 @@ for base in ("rubric/calibration-v1.1",):
     check(ne == nz, "%s 中英数字不一致 —— 只在英文：%s；只在中文：%s"
           % (base, sorted(ne - nz), sorted(nz - ne)))
 
-# ── 21. 每项检查都要声明证据依据，且 JSON 与中英两份证据表逐行一致 ──
+# ── 22. 每项检查都要声明证据依据，且 JSON 与中英两份证据表逐行一致 ──
 # README 承诺「凡是依据我们自己的观察而非公开研究的检查项，口径里都会注明」。这条让承诺可验证。
 EVIDENCE_BASES = ("research", "vendor-doc", "field-observation", "convention")
 REPO_URL = "https://github.com/jianruntech/geo-score/blob/main/"
@@ -559,7 +560,7 @@ for r in MODERN:
                     ok_link = f"]({u})" in row
                 check(ok_link, f"{tp}: {c['id']} row does not link source {u}")
 
-# ── 22. README 引用的 CLI 与人工审计一致度，必须等于 benchmark/validity.json ──
+# ── 23. README 引用的 CLI 与人工审计一致度，必须等于 benchmark/validity.json ──
 # 「通常低 5 到 15 分」曾是一句没有数据的话；换成实测数字之后，不能让它再悄悄过期。
 if os.path.exists("benchmark/validity.json"):
     vj = json.load(io.open("benchmark/validity.json", encoding="utf-8"))
@@ -577,6 +578,34 @@ if os.path.exists("benchmark/validity.json"):
         t = io.open(f, encoding="utf-8").read()
         check("5 to 15 points" not in t and "低 5 到 15 分" not in t,
               f"{f}: the unmeasured '5 to 15 points' claim is back; quote benchmark/validity.json instead")
+
+# ── 24. AGENTS.md 必须指向真正在执行的检查 ──
+# 贡献者和写代码的 agent 从这里读规矩；它提到的入口一旦改名或删掉，这份说明就会悄悄失效。
+if os.path.exists("AGENTS.md"):
+    ag = io.open("AGENTS.md", encoding="utf-8").read()
+    for need in ("scripts/check.sh", "rubric/v1.1.json", "schema/report.v2.json", "schema/watch.v1.json", "STABILITY.md"):
+        check(need in ag, f"AGENTS.md must mention {need}")
+        check(os.path.exists(need), f"AGENTS.md points at {need}, which does not exist")
+    vsrc = io.open(".github/validate.py", encoding="utf-8").read()
+    cited = {int(n) for grp in re.findall(r"rules? ([\d, and]+)", ag) for n in re.findall(r"\d+", grp)}
+    have = {int(n) for n in re.findall(r"^\s*# (?:── )?(\d+)[ .·]", vsrc, re.M)}
+    check(cited <= have, f"AGENTS.md cites validate.py rules that do not exist: {sorted(cited - have)}")
+else:
+    check(False, "AGENTS.md missing: contributors and coding agents need the invariants and the gate")
+
+# ── 25. issue 表单：每份都要有名字、说明和 body，报错类的必须要工具版本 ──
+# 不带版本号和 JSON 的报错没法复现；表单是唯一能强制要这两样东西的地方。不引入 yaml 依赖，只做形状检查。
+for f in sorted(os.listdir(".github/ISSUE_TEMPLATE")) if os.path.isdir(".github/ISSUE_TEMPLATE") else []:
+    if not f.endswith(".yml") or f == "config.yml":
+        continue
+    t = io.open(os.path.join(".github/ISSUE_TEMPLATE", f), encoding="utf-8").read()
+    for key in ("name:", "description:", "body:"):
+        check(re.search(r"^" + key, t, re.M), f".github/ISSUE_TEMPLATE/{f}: missing top-level {key}")
+    ids = re.findall(r"^\s+id: ([a-z_]+)\s*$", t, re.M)
+    check(len(ids) == len(set(ids)), f".github/ISSUE_TEMPLATE/{f}: duplicate field ids {ids}")
+    check("\t" not in t, f".github/ISSUE_TEMPLATE/{f}: tabs are not valid YAML indentation")
+    if f in ("bug_report.yml", "engine_bug.yml"):
+        check("id: tool_version" in t, f".github/ISSUE_TEMPLATE/{f}: must ask for the tool version")
 
 if fail:
     print("FAIL")

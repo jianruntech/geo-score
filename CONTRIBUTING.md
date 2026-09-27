@@ -14,7 +14,7 @@ regenerated `results.json` and `README.md`:
 ```
 
 Six files are generated from `results.json` by three scripts, and all of them must be
-regenerated in the same PR — CI compares them against a fresh run and fails on any drift:
+regenerated in the same PR — `validate.py` regenerates them and fails on any drift:
 
 ```
 python3 benchmark/run.py            # results.json + benchmark/README.md
@@ -75,11 +75,27 @@ version superseded.
 
 ## Development
 
-There is no build step. The skill is Markdown. CI validates structure only:
+There is no build step. One script is the gate for every change:
 
 ```bash
-python3 .github/validate.py
+bash scripts/check.sh           # structure, lint, unit and end-to-end tests, the Action; offline, under a minute
+bash scripts/check.sh --live    # also scores example.com (run before a release)
+git config core.hooksPath .githooks   # once per clone: run the gate before every push
 ```
+
+Hosted GitHub Actions have not run on this organisation so far, so maintainers run `scripts/check.sh`
+before every merge and `--live` before every release; `.github/workflows/validate.yml` runs the same
+script and will take over if Actions is enabled. The suites need nothing beyond the standard library;
+`ruff` and `jsonschema` are used when installed.
+
+- `cli/test_geo_score.py` and `cli/test_geo_watch.py`: unit tests, offline, every provider faked.
+- `cli/test_geo_score_e2e.py`: twelve fixture sites in `cli/fixtures/sites/`, each with an
+  `expected.json` naming every check's tier. A change to a heuristic that moves a tier fails here with
+  a per-check diff; if the move is intended, update `expected.json` and say why in its `_notes`.
+  `UPDATE_GOLDEN=1` rewrites the golden report.
+- `scripts/test_action.py`: runs `action.yml` as a runner would, against a fixture site.
+
+See [AGENTS.md](AGENTS.md) for the invariants each check enforces.
 
 ## Adding an engine to watch (levels 2 and 3)
 

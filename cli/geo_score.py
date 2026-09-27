@@ -1129,7 +1129,9 @@ def score(res):
         rows.append((cid, pil, name, t, pts, res["ev"].get(cid, "")))
     b = min(sum(res["bonus"].values()), BONUS_CAP)
     total = got + b
-    norm = round(100 * total / den) if den else 0
+    # bonus sits outside the denominator, so a near-perfect site plus bonus would pass 100; the
+    # percentage is 0-100 by definition (schema/report.v2.json), and the bonus never takes it past that
+    norm = min(100, round(100 * total / den)) if den else 0
     if gate_zero: norm = min(norm, GATE_CAP)
     return rows, total, den, b, norm, band(norm), gate_zero
 
@@ -1405,10 +1407,12 @@ def as_junit(res):
     return "\n".join(out) + "\n"
 
 def _write(path, text):
-    d = os.path.dirname(os.path.abspath(path))
-    os.makedirs(d, exist_ok=True)
-    with io.open(path, "w", encoding="utf-8") as f:
-        f.write(text)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with io.open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+    except OSError as e:
+        raise RuntimeError("cannot write %s: %s" % (path, e.strerror or e)) from None
 
 def _watch_module():
     """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside."""

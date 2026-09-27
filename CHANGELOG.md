@@ -45,6 +45,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - `watch diff --fail-on-drop`: exit 4 when a verdict is `change` with a negative change. The MCP
   `diff` tool takes `format: "json"`. [guide/watch-methodology.md](guide/watch-methodology.md)
   (EN + zh) gives the formulas and a worked example.
+- **One gate: `scripts/check.sh`.** Structure, ruff, the three test suites on Python 3.8 and the newest
+  available, and an emulation of the GitHub Action against a fixture site (`scripts/test_action.py`);
+  `--live` adds example.com. `.githooks/pre-push` runs it; `.github/workflows/validate.yml` runs the same
+  script. Hosted Actions have not run on this organisation so far, so `CONTRIBUTING.md` no longer says
+  CI checks anything: maintainers run the script before every merge.
+- `AGENTS.md`: the repository's invariants, each mapped to the check that enforces it, for
+  contributors and coding agents (`CLAUDE.md` points to it).
+- Issue forms ask for the tool version and the JSON report; a new form covers level 2 and 3 engine
+  problems and warns never to paste a key; security reports are routed to `SECURITY.md`.
 - **Offline end-to-end tests.** `cli/test_geo_score_e2e.py` serves twelve fixture sites from
   127.0.0.1 (a good site, a JavaScript shell, robots blocks, a firewall that refuses AI crawlers, a
   Chinese site, a site under a path, a hostile site that tries to address an agent, and more) and
@@ -80,6 +89,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - `--compare` with three or more sites no longer says "Both scored".
 
 ### Fixed
+- **A score could exceed 100.** Bonus points sit outside the denominator, so a site at or near full
+  marks plus bonus read up to 106, which also broke the report schema (`normalised` ≤ 100). The
+  percentage is now capped at 100, and rubric rule 5 says so. No published score changes: the
+  benchmark's highest is 98 and the hand audits' 87. The offline fixtures found it.
+- `--json-out`, `--sarif` and `--junit` report a path that cannot be written as a clear error (exit
+  2) instead of a traceback.
 - A Latin brand name written directly next to Chinese, Japanese or Korean text ("用Lumo做视频") now
   counts as a mention; it never matched before. New runs can therefore show a higher `mentioned` rate
   on such answers than earlier runs.

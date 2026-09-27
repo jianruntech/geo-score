@@ -139,6 +139,9 @@ eq((den4, norm4), (98, 100), "an excluded check leaves the denominator and does 
 
 bon = mk(full); bon["bonus"] = {k: v for k, _, v in gs.BONUS}
 ok(gs.score(bon)[3] == gs.BONUS_CAP, "bonus is capped at +%d" % gs.BONUS_CAP)
+eq(gs.score(bon)[4], 100, "full marks plus the full bonus is 100, not 106: the percentage never passes 100")
+near = dict(full); near["p2.freshness"] = 3; nb = mk(near); nb["bonus"] = {k: v for k, _, v in gs.BONUS}
+eq(gs.score(nb)[4], 100, "a near-perfect site with bonus is capped at 100 too")
 
 
 # ── share_line: 一行能贴出去的东西。空洞的分享文案没人会贴。 ──

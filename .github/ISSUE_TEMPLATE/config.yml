@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Security vulnerability
+    url: https://github.com/jianruntech/geo-score/blob/main/SECURITY.md#reporting-a-vulnerability
+    about: Please report security problems by email, not in a public issue.
   - name: Remediation / how do I fix this
     url: https://github.com/jianruntech/geo-score#scope--what-this-does-not-do
     about: This repository scopes to measurement. Fixes are deliberately out of scope.

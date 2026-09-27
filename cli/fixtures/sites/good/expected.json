@@ -1,5 +1,5 @@
 {
-  "_normalised": 107,
+  "_normalised": 100,
   "_band": "Leading",
   "_gate_capped": false,
   "_lang": "en",
@@ -15,7 +15,7 @@
     "/pricing.html"
   ],
   "_notes": {
-    "_normalised": "SUSPECTED BUG: bonus is added to the numerator and normalised is never clamped, so a site at full marks plus +6 bonus reports 107/100. schema/report.v2.json caps normalised at 100."
+    "_normalised": "Full marks on the observable checks plus bonus: 100, the ceiling. Before 1.3.0 this read 107."
   },
   "g.robots": 5,
   "g.reachable": 5,

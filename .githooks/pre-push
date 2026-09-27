@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Enable once per clone: git config core.hooksPath .githooks
+# Runs the same gate as CI before anything leaves your machine. Skip in an emergency with --no-verify.
+exec bash "$(git rev-parse --show-toplevel)/scripts/check.sh"
