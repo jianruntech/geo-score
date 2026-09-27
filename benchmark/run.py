@@ -58,7 +58,13 @@ def one(site):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--readme-only", action="store_true",
+                    help="rewrite README.md and stats.json from the committed results.json; no scoring, no network")
     a = ap.parse_args()
+    if a.readme_only:
+        write_readme(json.load(io.open(os.path.join(HERE, "results.json"), encoding="utf-8")))
+        print("wrote benchmark/README.md and benchmark/stats.json from results.json", file=sys.stderr)
+        return
     cfg = json.load(io.open(os.path.join(HERE, "sites.json"), encoding="utf-8"))
     sites = cfg["sites"][:a.limit] if a.limit else cfg["sites"]
     print("scoring %d sites…" % len(sites), file=sys.stderr)
@@ -95,14 +101,24 @@ def _q(xs, q):
     lo, hi = int(i), min(int(i) + 1, len(xs) - 1)
     return round(xs[lo] + (xs[hi] - xs[lo]) * (i - lo), 1)
 
+def _uncertainty(p):
+    """95% intervals for the medians this README quotes (benchmark/stats.py), written alongside it."""
+    sys.path.insert(0, HERE)
+    import stats as bstats
+    u = bstats.compute(p)
+    io.open(os.path.join(HERE, "stats.json"), "w", encoding="utf-8").write(json.dumps(u, ensure_ascii=False, indent=1) + "\n")
+    return u
+
 def write_readme(p):
     s, L = p["stats"], []
     A = L.append
+    u = _uncertainty(p)
     A("# The state of AI visibility\n")
     A("Every site below scored with the same open rubric, the same public tool and the same")
     A("eight-page sample. No private data, no vendor dashboards — [re-run it yourself](run.py).\n")
-    A("**%d sites · median %s · mean %s · upper quartile %s · range %d–%d** · rubric %s · measured %s\n"
-      % (s["n"], s["median"], s["mean"], s["p75"], s["min"], s["max"], p["rubric_version"], p["measured_at"]))
+    A("**%d sites · median %s (95%% CI %d–%d) · mean %s · upper quartile %s · range %d–%d** · rubric %s · measured %s\n"
+      % (s["n"], s["median"], u["overall"]["ci"][0], u["overall"]["ci"][1], s["mean"], s["p75"], s["min"], s["max"],
+         p["rubric_version"], p["measured_at"]))
     ok = [x for x in p["results"] if "error" not in x]
     cn = [x["normalised"] for x in ok if x["sector"].startswith("China")]
     row = [x["normalised"] for x in ok if not x["sector"].startswith("China")]
@@ -135,8 +151,9 @@ def write_readme(p):
     A("it was [calibrated against](../rubric/calibration-v1.1.md).\n")
     if cn and row:
         import statistics as _st
-        A("**Sites built for the Chinese market score %d points lower** — median %s against %s"
-          % (round(_st.median(row) - _st.median(cn)), _st.median(cn), _st.median(row)))
+        g = u["china_gap"]
+        A("**Sites built for the Chinese market score %d points lower** (95%% CI %d–%d) — median %s against %s"
+          % (round(_st.median(row) - _st.median(cn)), g["ci"][0], g["ci"][1], _st.median(cn), _st.median(row)))
         A("for everyone else. The gap is not content quality. It is `llms.txt`, `Organization`")
         A("schema, visible dates and bylines — conventions that spread through the English web")
         A("first and have not yet crossed over.\n")
@@ -150,9 +167,16 @@ def write_readme(p):
     A("that stands on its own, and one JSON-LD block are between them worth more than any")
     A("single pillar on this list.\n")
     A("## By sector\n")
-    A("| Sector | Sites | Median |"); A("|---|:-:|:-:|")
-    for k, v in sorted(p["sectors"].items(), key=lambda kv: -kv[1]["median"]):
-        A("| %s | %d | **%s** |" % (k, v["n"], v["median"]))
+    A("Each median carries a 95%% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than %d"
+      % u["min_n"])
+    A("scored sites gets no median: the number would print like a real one and mean much less.\n")
+    A("| Sector | Sites | Median | 95% CI |"); A("|---|:-:|:-:|:-:|")
+    us = u["sectors"]
+    for k, v in sorted(p["sectors"].items(), key=lambda kv: (us[kv[0]]["median"] is None, -kv[1]["median"])):
+        if us[k]["median"] is None:
+            A("| %s | %d | — | fewer than %d sites |" % (k, v["n"], u["min_n"]))
+        else:
+            A("| %s | %d | **%s** | %d–%d |" % (k, v["n"], v["median"], us[k]["ci"][0], us[k]["ci"][1]))
     A("\n## Every site\n")
     A("| # | Site | Score | Band | Sector | Biggest gaps |")
     A("|:-:|---|:-:|---|---|---|")

@@ -28,6 +28,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - [Troubleshooting](guide/troubleshooting.md), in English and Chinese: score movement, checks shown
   as `—`, the gate cap, exit code 2, proxies, redirects, the leaderboard's tool version, `watch`
   exit 3, Action annotation limits, CJK thresholds. The terminal report links to it.
+- **Intervals on the leaderboard's medians.** `benchmark/stats.py` puts a seeded bootstrap 95% interval
+  on every median the README and the page quote: overall 56 (53–58), and the Chinese-market gap 19
+  points (12–26). Sectors with fewer than 10 scored sites (China / cloud and Professional services, 9
+  each) no longer print a median; `validate.py` counts scored sites, not listed ones.
+  `benchmark/run.py --readme-only` regenerates the README without re-scoring.
+- The leaderboard can move host: `GEO_SITE_BASE` sets the base URL for canonical links, `og:image`,
+  hreflang, `llms.txt` and the sitemap, and `scripts/check_live.py` compares a hosted page with the
+  committed data (today's Pages build still shows 229 sites against 314).
 - **How far to trust the CLI, measured.** `benchmark/validity.py` re-scores the five published hand
   audits on the same pages and compares every check tier for tier: 73% of 85 check pairs agree (90%
   for checks read by rule, 58% for heuristics), and the CLI reads 4.8 points lower on average, from

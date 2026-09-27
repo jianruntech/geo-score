@@ -20,6 +20,11 @@
   链接不会和评分代码脱节。SARIF 规则也指向这里，`--explain` 会在每个未拿满分的检查项下打印它。已作为可选字段写入 `schema/report.v2.json`。
 - 新增[排查指南](guide/troubleshooting.zh-CN.md)（中英两份）：分数波动、显示 `—` 的检查项、门槛封顶、退出码 2、代理、跳转、
   榜单的工具版本、`watch` 退出码 3、Action 注释上限、中文阈值。终端报告里有链接。
+- **榜单中位数加上置信区间。** `benchmark/stats.py` 用固定种子的自助法，为 README 和网页引用的每个中位数给出 95% 区间：
+  总体 56（53–58），中国市场差距 19 分（12–26）。评上分不足 10 个站的行业（China / cloud、Professional services，各 9 个）
+  不再印中位数；`validate.py` 按评上分的站数而不是名单站数来数。`benchmark/run.py --readme-only` 可以不重新评分、只重新生成 README。
+- 榜单可以换托管地址：`GEO_SITE_BASE` 统一设置 canonical、`og:image`、hreflang、`llms.txt` 和 sitemap 里的地址；
+  `scripts/check_live.py` 比对线上页面与提交的数据（目前 Pages 上仍是 229 站，数据是 314 站）。
 - **CLI 可信到什么程度，有了实测。** `benchmark/validity.py` 在相同页面上重评公开的 5 份人工审计并逐档比较：
   85 对检查项里 73% 一致（按规则读取的项 90%，启发式的项 58%），CLI 平均低 4.8 分，范围从低 10 分到高 6 分。
   结果、注意事项和每一处分歧见 `benchmark/VALIDITY.zh-CN.md`。这取代了没有数据支撑的「通常低 5 到 15 分」，

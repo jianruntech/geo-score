@@ -21,7 +21,12 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
            "Early": "起步期", "Not started": "未起步", "Not scored": "未打分"}
 
 REPO = "https://github.com/jianruntech/geo-score"
-SITE = "https://jianruntech.github.io/geo-score"
+DEFAULT_SITE = "https://jianruntech.github.io/geo-score"
+# where the pages will be served; canonical, og:image, hreflang, llms.txt and the sitemap all follow it
+SITE = os.environ.get("GEO_SITE_BASE", DEFAULT_SITE).rstrip("/")
+
+def _hosted(text):
+    return text.replace(DEFAULT_SITE, SITE)
 
 def _fmt(x):
     """中位数与四分位数取整。
@@ -221,7 +226,11 @@ def data():
         return int(m) if float(m).is_integer() else m
     cn = _med([r["normalised"] for r in ok if r["sector"].startswith("China")])
     row = _med([r["normalised"] for r in ok if not r["sector"].startswith("China")])
-    sec = sorted(d["sectors"].items(), key=lambda kv: -kv[1]["median"])
+    # a sector with too few scored sites gets no median: it would print like a real one (stats.py)
+    sys.path.insert(0, HERE)
+    import stats as bstats
+    thin = {k for k, v in bstats.compute(d)["sectors"].items() if v["median"] is None}
+    sec = sorted(d["sectors"].items(), key=lambda kv: (kv[0] in thin, -kv[1]["median"]))
     bins = [0] * 10
     for r in ok:
         bins[min(9, r["normalised"] // 10)] += 1
@@ -243,10 +252,13 @@ def data():
                      for v in bins),
         histx="".join("<div>%d</div>" % (i * 10) for i in range(10)),
         secopts="".join("<option>%s</option>" % k for k, _ in sec),
-        sectbl="".join('<tr><td>%s</td><td class="num">%d</td>'
-                       '<td class="num" style="color:var(--green)">%s</td>'
-                       '<td class="bar"><i style="width:%d%%"></i></td></tr>'
-                       % (k, v["n"], v["median"], v["median"]) for k, v in sec),
+        sectbl="".join(('<tr><td>%s</td><td class="num">%d</td><td class="num">—</td>'
+                        '<td class="bar"><small>n &lt; %d</small></td></tr>' % (k, v["n"], bstats.MIN_N))
+                       if k in thin else
+                       ('<tr><td>%s</td><td class="num">%d</td>'
+                        '<td class="num" style="color:var(--green)">%s</td>'
+                        '<td class="bar"><i style="width:%d%%"></i></td></tr>'
+                        % (k, v["n"], v["median"], v["median"])) for k, v in sec),
         data=json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
 
 LLMS = """# geo-score
@@ -321,12 +333,12 @@ if __name__ == "__main__":
         if lang == "en":
             vals["bandmap"] = "{}"
         out = os.path.join(ROOT, "docs", name)
-        io.open(out, "w", encoding="utf-8").write(TPL % vals)
+        io.open(out, "w", encoding="utf-8").write(_hosted(TPL % vals))
         print("wrote docs/%s — %d sites, median %s" % (name, v["n"], v["med"]))
     # llms.txt and sitemap.xml are generated for the same reason the pages are: the
     # numbers in them went stale the moment the benchmark grew, and llms.txt is the
     # one file an AI crawler actually reads — a stale number there is a wrong answer
     # handed to every engine.
     for name, tpl in (("llms.txt", LLMS), ("sitemap.xml", SITEMAP)):
-        io.open(os.path.join(ROOT, "docs", name), "w", encoding="utf-8").write(tpl % v)
+        io.open(os.path.join(ROOT, "docs", name), "w", encoding="utf-8").write(_hosted(tpl % v))
         print("wrote docs/%s" % name)

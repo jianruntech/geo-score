@@ -156,7 +156,7 @@ for exactly this reason. **45 serve a page whose body only exists after JavaScri
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
 almost certainly did not choose it. A further 16 hand a crawler an outright error.
 
-Median **56**. Range 12 to 98.
+Median **56** (95% CI 53–58, [stats.py](benchmark/stats.py)). Range 12 to 98.
 
 | Site | Score | Band |
 |---|:-:|---|

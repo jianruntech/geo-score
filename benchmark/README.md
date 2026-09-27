@@ -3,7 +3,7 @@
 Every site below scored with the same open rubric, the same public tool and the same
 eight-page sample. No private data, no vendor dashboards — [re-run it yourself](run.py).
 
-**314 sites · median 56.0 · mean 54.9 · upper quartile 71.8 · range 12–98** · rubric v1.1 · measured 2026-09-09
+**314 sites · median 56.0 (95% CI 53–58) · mean 54.9 · upper quartile 71.8 · range 12–98** · rubric v1.1 · measured 2026-09-09
 
 ## A quarter of the field is unreadable to AI crawlers
 
@@ -28,7 +28,7 @@ there, a browser can see it, and a retrieval crawler gets an empty shell.
 are the scores that fall out of it, and they are consistent with the public benchmarks
 it was [calibrated against](../rubric/calibration-v1.1.md).
 
-**Sites built for the Chinese market score 19 points lower** — median 40.0 against 59.0
+**Sites built for the Chinese market score 19 points lower** (95% CI 12–26) — median 40.0 against 59.0
 for everyone else. The gap is not content quality. It is `llms.txt`, `Organization`
 schema, visible dates and bylines — conventions that spread through the English web
 first and have not yet crossed over.
@@ -51,28 +51,31 @@ single pillar on this list.
 
 ## By sector
 
-| Sector | Sites | Median |
-|---|:-:|:-:|
-| Marketing / CRM | 17 | **73** |
-| Cloud & DevOps | 24 | **72.5** |
-| Professional services | 9 | **70** |
-| AI | 29 | **66** |
-| Payments / Fintech | 12 | **63.0** |
-| Developer tools | 38 | **62.0** |
-| SaaS / Productivity | 22 | **59.5** |
-| Education | 12 | **55.0** |
-| Healthcare | 12 | **51.0** |
-| Ecommerce | 14 | **49.5** |
-| China / enterprise | 10 | **46.0** |
-| China / AI | 13 | **45** |
-| Logistics / Freight | 10 | **42.0** |
-| Media / Publishing | 10 | **40.0** |
-| Travel | 10 | **40.0** |
-| Manufacturing / Industrial | 11 | **39** |
-| China / consumer | 21 | **38** |
-| China / cloud | 9 | **37** |
-| Cross-border services | 20 | **37.0** |
-| China / no-code | 11 | **36** |
+Each median carries a 95% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than 10
+scored sites gets no median: the number would print like a real one and mean much less.
+
+| Sector | Sites | Median | 95% CI |
+|---|:-:|:-:|:-:|
+| Marketing / CRM | 17 | **73** | 58–77 |
+| Cloud & DevOps | 24 | **72.5** | 65–80 |
+| AI | 29 | **66** | 60–76 |
+| Payments / Fintech | 12 | **63.0** | 56–70 |
+| Developer tools | 38 | **62.0** | 56–70 |
+| SaaS / Productivity | 22 | **59.5** | 52–70 |
+| Education | 12 | **55.0** | 35–64 |
+| Healthcare | 12 | **51.0** | 40–64 |
+| Ecommerce | 14 | **49.5** | 39–69 |
+| China / enterprise | 10 | **46.0** | 36–61 |
+| China / AI | 13 | **45** | 27–53 |
+| Logistics / Freight | 10 | **42.0** | 27–59 |
+| Media / Publishing | 10 | **40.0** | 40–60 |
+| Travel | 10 | **40.0** | 30–59 |
+| Manufacturing / Industrial | 11 | **39** | 33–53 |
+| China / consumer | 21 | **38** | 30–54 |
+| Cross-border services | 20 | **37.0** | 32–46 |
+| China / no-code | 11 | **36** | 20–46 |
+| Professional services | 9 | — | fewer than 10 sites |
+| China / cloud | 9 | — | fewer than 10 sites |
 
 ## Every site
 

@@ -1,0 +1,182 @@
+{
+ "source": "benchmark/results.json",
+ "measured_at": "2026-09-09",
+ "tool": "geo-score-cli/1.1.0",
+ "method": "percentile bootstrap, 10000 resamples, seed 20260909; sectors below 10 scored sites get no median",
+ "min_n": 10,
+ "overall": {
+  "n": 314,
+  "median": 56,
+  "ci": [
+   53,
+   58
+  ]
+ },
+ "sectors": {
+  "AI": {
+   "n": 29,
+   "median": 66,
+   "ci": [
+    60,
+    76
+   ]
+  },
+  "China / AI": {
+   "n": 13,
+   "median": 45,
+   "ci": [
+    27,
+    53
+   ]
+  },
+  "China / cloud": {
+   "n": 9,
+   "median": null,
+   "ci": null
+  },
+  "China / consumer": {
+   "n": 21,
+   "median": 38,
+   "ci": [
+    30,
+    54
+   ]
+  },
+  "China / enterprise": {
+   "n": 10,
+   "median": 46,
+   "ci": [
+    36,
+    61
+   ]
+  },
+  "China / no-code": {
+   "n": 11,
+   "median": 36,
+   "ci": [
+    20,
+    46
+   ]
+  },
+  "Cloud & DevOps": {
+   "n": 24,
+   "median": 72,
+   "ci": [
+    65,
+    80
+   ]
+  },
+  "Cross-border services": {
+   "n": 20,
+   "median": 37,
+   "ci": [
+    32,
+    46
+   ]
+  },
+  "Developer tools": {
+   "n": 38,
+   "median": 62,
+   "ci": [
+    56,
+    70
+   ]
+  },
+  "Ecommerce": {
+   "n": 14,
+   "median": 50,
+   "ci": [
+    39,
+    69
+   ]
+  },
+  "Education": {
+   "n": 12,
+   "median": 55,
+   "ci": [
+    35,
+    64
+   ]
+  },
+  "Healthcare": {
+   "n": 12,
+   "median": 51,
+   "ci": [
+    40,
+    64
+   ]
+  },
+  "Logistics / Freight": {
+   "n": 10,
+   "median": 42,
+   "ci": [
+    27,
+    59
+   ]
+  },
+  "Manufacturing / Industrial": {
+   "n": 11,
+   "median": 39,
+   "ci": [
+    33,
+    53
+   ]
+  },
+  "Marketing / CRM": {
+   "n": 17,
+   "median": 73,
+   "ci": [
+    58,
+    77
+   ]
+  },
+  "Media / Publishing": {
+   "n": 10,
+   "median": 40,
+   "ci": [
+    40,
+    60
+   ]
+  },
+  "Payments / Fintech": {
+   "n": 12,
+   "median": 63,
+   "ci": [
+    56,
+    70
+   ]
+  },
+  "Professional services": {
+   "n": 9,
+   "median": null,
+   "ci": null
+  },
+  "SaaS / Productivity": {
+   "n": 22,
+   "median": 60,
+   "ci": [
+    52,
+    70
+   ]
+  },
+  "Travel": {
+   "n": 10,
+   "median": 40,
+   "ci": [
+    30,
+    59
+   ]
+  }
+ },
+ "china_gap": {
+  "n_china": 64,
+  "n_rest": 250,
+  "median_china": 40,
+  "median_rest": 59,
+  "gap": 19,
+  "ci": [
+   12,
+   26
+  ]
+ }
+}

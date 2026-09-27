@@ -424,7 +424,8 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
               f"docs/{card} 不存在 —— 跑一遍 python3 benchmark/build_og.py 并提交")
         check('name="twitter:card" content="summary_large_image"' in t,
               f"docs/{f}: 缺 twitter:card，X 上只会显示一条窄链接")
-        check(f'og:image" content="https://jianruntech.github.io/geo-score/{card}"' in t,
+        _base = os.environ.get("GEO_SITE_BASE", "https://jianruntech.github.io/geo-score").rstrip("/")
+        check(f'og:image" content="{_base}/{card}"' in t,
               f"docs/{f}: og:image 没指向 {card}")
         check("rel=\"canonical\"" in t, f"docs/{f}: 缺 canonical")
         if os.path.exists(cpth):
@@ -456,6 +457,17 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
         check(not thin,
               "sites.json 里这些行业不足 10 站，中位数印出去没有意义：%s"
               % ", ".join("%s(%d)" % t for t in thin))
+        # 名单上有 10 个不够：抓不到的站不进中位数。按真正评上分的站数算，不足的行业不许印中位数。
+        if os.path.exists("benchmark/results.json"):
+            rj = json.load(io.open("benchmark/results.json", encoding="utf-8"))
+            scored = collections.Counter(r["sector"] for r in rj["results"] if r.get("normalised") is not None)
+            brd = io.open("benchmark/README.md", encoding="utf-8").read()
+            for k, n in sorted(scored.items()):
+                if n < 10:
+                    row = next((ln for ln in brd.splitlines() if ln.startswith("| %s |" % k)), "")
+                    check(row and "| — |" in row,
+                          f"benchmark/README.md prints a median for {k}, which has only {n} scored sites "
+                          f"(python3 benchmark/run.py --readme-only)")
         near = [k for k in cnt if k.replace(" ", "") in
                 {x.replace(" ", "") for x in cnt if x != k}]
         check(not near,
@@ -606,6 +618,14 @@ for f in sorted(os.listdir(".github/ISSUE_TEMPLATE")) if os.path.isdir(".github/
     check("\t" not in t, f".github/ISSUE_TEMPLATE/{f}: tabs are not valid YAML indentation")
     if f in ("bug_report.yml", "engine_bug.yml"):
         check("id: tool_version" in t, f".github/ISSUE_TEMPLATE/{f}: must ask for the tool version")
+
+# ── 26. README 引用的榜单中位数区间必须等于 benchmark/stats.json ──
+if os.path.exists("benchmark/stats.json"):
+    sj2 = json.load(io.open("benchmark/stats.json", encoding="utf-8"))
+    lo, hi = sj2["overall"]["ci"]
+    for f in ("README.md", "README.zh-CN.md", "benchmark/README.md"):
+        t = io.open(f, encoding="utf-8").read()
+        check("%d–%d" % (lo, hi) in t, f"{f}: the median's 95% interval must read {lo}–{hi} (benchmark/stats.json)")
 
 if fail:
     print("FAIL")
