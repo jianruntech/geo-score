@@ -156,10 +156,12 @@ engine's row and takes its result instead of being counted twice.
 - `too few questions to tell`: fewer than 6 questions were answered in both runs. With 5, even
   all five flipping the same way gives p = 2 / 2^5 = 0.0625, so no outcome could be called a
   change; saying "within noise" would suggest a test was run that could have said otherwise.
-  The same holds after Holm's correction: with m rows in the family, the best adjusted p is
-  m × 2 / 2^n, so a row whose n cannot bring that below 0.05 is also `too few questions to tell`
-  (six questions on two engines plus the all-engines row: 3 × 2 / 2^6 = 0.094). Those rows leave the
-  family and the rest are corrected again.
+  A second screen applies before Holm's correction (Tarone's screen for discrete tests): with m rows
+  in the family, a row with m × 2 / 2^n ≥ 0.05 is `too few questions to tell` and leaves the family,
+  and the screen repeats on the rows left. For six questions on two engines plus the all-engines row,
+  3 × 2 / 2^6 = 0.094. When every row has the same n, such a row could not pass even if every question
+  moved the same way; when the rows differ, a screened row might have passed as the last in Holm's
+  order, so the screen is conservative: it can call a real change too few to tell, never the reverse.
 - `change`: `p_adjusted` < 0.05.
 - `within noise`: otherwise.
 

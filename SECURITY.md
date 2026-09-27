@@ -43,8 +43,10 @@ What the code does about it:
   loopback, private, link-local, carrier-grade NAT (where cloud metadata services such as 100.100.100.200
   live) and reserved ranges are refused. A direct connection goes to the address that was checked, so a
   name cannot resolve to something else a moment later. Through an HTTP proxy the proxy resolves names,
-  and that last step is the proxy's. The command-line tool applies none of this: it scores whatever its
-  user names, intranet sites included.
+  and that last step is the proxy's. NAT64 and 6to4 prefixes, which carry an IPv4 address inside, are
+  refused too. This covers `score_site`; `ask` and `run` call only the AI providers configured in
+  `geo-score-watch.json`, whose `base_url` is the user's choice. The command-line tool applies none of
+  this: it scores whatever its user names, intranet sites included.
 - **Keys stay out of reach.** Keys are read from environment variables only. They are never written
   to the config, run files or reports; a key that appears in a provider's error message is replaced
   with `[redacted]` (including escaped and split forms) before it is stored or printed; a malformed

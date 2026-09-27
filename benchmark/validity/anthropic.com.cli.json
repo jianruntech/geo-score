@@ -135,7 +135,7 @@
    "state": "scored",
    "points": 3,
    "max": 6,
-   "evidence": "6 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+   "evidence": "5 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
    "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
    "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
   },

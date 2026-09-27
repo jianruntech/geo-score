@@ -1392,7 +1392,10 @@ def _pad(s, w):
     return s + " " * max(0, w - _w(s))
 
 
-_CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
+# the same set geo_score strips from evidence: controls, soft hyphen, zero-width and bidi characters, line
+# separators, annotation marks, XML non-characters and Unicode tag characters (invisible, read by models)
+_CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e"
+                   "\u2060-\u2064\u2066-\u2069\ufeff\ufff9-\ufffb\ufffe\uffff\U000e0000-\U000e007f]")
 
 
 def _cut(s, n):
@@ -1597,8 +1600,8 @@ def render_diff(d, fmt="text"):
              "needs p < %.2f." % d.get("alpha", ALPHA))
     if "too few questions to tell" in verdicts:
         L.append("too few questions to tell: fewer than %d questions were answered in both runs, or too few for the "
-                 "number of rows compared, so even if every one of them moved the same way the test could not reach "
-                 "p < %.2f after correction. Add questions to tell a change from noise."
+                 "number of rows compared (m rows need m x 2/2^n < %.2f; Tarone's screen). Such a row is left out of "
+                 "the correction rather than called within noise. Add questions to tell a change from noise."
                  % (d.get("min_questions", MIN_PAIRED), d.get("alpha", ALPHA)))
     if d["lost"]:
         L.append(_h("Citations lost (%d)" % len(d["lost"]), fmt))
@@ -2144,7 +2147,10 @@ class MCPServer(object):
         self.out = out or sys.stdout
         self.lock = threading.Lock()
         self.geo_score = load_geo_score()
-        if self.geo_score is not None and hasattr(self.geo_score, "ADDRESS_GUARD"):
+        if self.geo_score is not None and not hasattr(self.geo_score, "ADDRESS_GUARD"):
+            # a scorer older than the address guard would let an agent reach private hosts: do not offer it
+            self.geo_score = None
+        if self.geo_score is not None:
             # an agent picks the URL and the audited site picks every URL after it: every connection
             # this process makes for score_site must go to a public address
             self.geo_score.ADDRESS_GUARD = True
@@ -2289,7 +2295,9 @@ class MCPServer(object):
         except ConfigError as e:
             return {"content": [{"type": "text", "text": str(e)}], "isError": True}
         except Exception as e:
-            return {"content": [{"type": "text", "text": "geo-score watch failed: %r" % e}], "isError": True}
+            # an exception can carry text from a fetched page or an API answer: one clean, short line
+            return {"content": [{"type": "text", "text": "geo-score watch failed: %s" % _cut("%s: %s" % (e.__class__.__name__, e), 200)}],
+                    "isError": True}
 
     def _cfg(self):
         cfg = Config(self.config_path)

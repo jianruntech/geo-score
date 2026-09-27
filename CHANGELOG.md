@@ -55,10 +55,10 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
   hreflang, `llms.txt` and the sitemap, and `scripts/check_live.py` compares a hosted page with the
   committed data (today's Pages build still shows 229 sites against 314).
 - **How far to trust the CLI, measured.** `benchmark/validity.py` re-scores the five published hand
-  audits on the same pages and compares every check tier for tier: 78% of 86 check pairs agree (95%
-  for checks read by rule, 62% for heuristics), and the CLI reads 4.2 points lower on average, from
-  13 lower to 6 higher. Results, caveats and every disagreement: `benchmark/VALIDITY.md` (EN + zh).
-  This replaces the unmeasured "typically 5 to 15 points lower", which was wrong for one site in five.
+  audits on the same pages and compares every check tier for tier: 79% of 86 check pairs agree (95%
+  for checks read by rule, 64% for heuristics), and the CLI reads 3.6 points lower on average, from
+  10 lower to 6 higher. Results, caveats and every disagreement: `benchmark/VALIDITY.md` (EN + zh).
+  This replaces the unmeasured "typically 5 to 15 points lower", which was wrong for two sites in five.
 - **Evidence basis for every check.** `rubric/v1.1.json` gains an `evidence` object per check
   (basis, sources, last verified), published as `rubric/evidence-v1.1.md` (EN + zh). Metadata only:
   no weight, tier or score changed.
@@ -113,21 +113,30 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
   to 10 of each; the rest are in the job summary).
 - `geo-score watch --help` names the command you typed (`geo-score` after an install).
 - `--compare` with three or more sites no longer says "Both scored".
+- When a site redirects to another domain, the full report says so and the JSON carries `landed`
+  (optional), the URL that was scored.
 
 ### Fixed
 - **Scoring fixes the offline fixtures found.** Each moves a score only where the old reading
   contradicted the rubric:
   - `g.robots`: several `User-agent` lines share the rules that follow them (RFC 9309 2.1). The rules
-    were attached to the last line only, so a file blocking GPTBot, ClaudeBot and PerplexityBot in one
-    group read as blocking none. Down, to 0 and the gate cap, for sites that block that way.
-  - `p1.llms-txt`, `b.llms-full`, `b.ai-txt`: a single-page app that answers every path with its HTML
-    shell no longer counts as serving these files. Down.
+    were attached to the last line only, so a group listing GPTBot, ClaudeBot and CCBot over
+    `Disallow: /` read as blocking only CCBot. Down, to 0 and the gate cap, where grouped rules block
+    retrieval crawlers; up (3 to 5) where a grouped `Allow` now counts as an explicit permission.
+  - `p1.llms-txt`, `b.llms-full`, `b.ai-txt`, `p1.sitemap`: a single-page app that answers every path
+    with its HTML shell no longer counts as serving these files; a sitemap must be XML with a
+    `<urlset>` or `<sitemapindex>`. Down. A relative `Sitemap:` line in robots.txt is resolved against the
+    origin (up where it now loads).
   - `p1.organization`: Organization and WebSite without name, url and logo score 3, as the rubric
-    says, not 5 (down); a relative logo resolves against the page it sits on (up where it now loads).
+    says, not 5 (down); a relative logo resolves against the page it sits on (up where it now loads);
+    Organization subtypes (EducationalOrganization, NewsMediaOrganization, LocalBusiness and others) are
+    read for logo and sameAs, which lifts `p1.organization` and `p3.sameas` for sites typed that way (up).
+    `sameAs` values that are not http(s) URLs are no longer fetched.
   - `p1.page-type`: the top tier needs real field values; a bare `{"@type": "Product"}` scores 2. Down.
   - `p2.freshness`: dates flush against Chinese text and dates with English month names are read
-    (up); the top tier requires `dateModified` not to be older than the date the page shows (down
-    where it is).
+    (up); the top tier requires `dateModified` not to be older than the page's own date (its
+    datePublished, article time or the first date in its content) on at least three quarters of the
+    pages that declare it (down where it is).
   - `p2.sourced-stats`: "resources" no longer counts as "source" (down); figures flush against Chinese
     text count as figures (either way).
   - `p2.named-author`: "Editor", the organisation's own name and "Powered by Hugo" in a footer are not
@@ -138,8 +147,8 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
   scanning rejects; each now points at its check's line in the JSON report (the Action writes one into
   the workspace when `sarif` is set) and names the site in its message.
 - `watch diff` no longer says `within noise` when the question set is too small for the number of
-  rows compared: with Holm's correction, a row whose best possible adjusted p is 0.05 or more is
-  `too few questions to tell`. An unknown MCP tool is a JSON-RPC error (-32602), as the protocol says.
+  rows compared: before Holm's correction, a row with m × 2 / 2^n ≥ 0.05 (m rows, n questions;
+  Tarone's screen) is `too few questions to tell` and leaves the family. The screen is conservative. An unknown MCP tool is a JSON-RPC error (-32602), as the protocol says.
 - **A score could exceed 100.** Bonus points sit outside the denominator, so a site at or near full
   marks plus bonus read above 100 (the good fixture read 107), which also broke the report schema (`normalised` ≤ 100). The
   percentage is now capped at 100, and rubric rule 5 says so. No published score changes: the

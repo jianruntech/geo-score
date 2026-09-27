@@ -61,7 +61,19 @@ c = C()
 def text_file(r):
     """A file answer, not a site's catch-all page. Single-page apps answer every path with 200 and their
     HTML shell, which read as an llms.txt, an llms-full.txt and an ai.txt that do not exist."""
-    return r.ok and bool(r.body.strip()) and not re.match(rb"\s*(<!doctype\s+html|<html|<head|<body)", r.body[:1024].lower())
+    head = r.body[:2048].lower()
+    if re.match(rb"\s*(<!doctype\s+html|<html|<head|<body)", head):
+        return False
+    # an error or firewall page served as HTML without the usual opening still is not a text file
+    if "html" in r.headers.get("content-type", "").lower() and re.search(rb"<(html|head|body|div|script|meta|title)\b", head):
+        return False
+    return r.ok and bool(r.body.strip())
+
+
+def is_sitemap(r):
+    """A sitemap answer is XML with a <urlset> or <sitemapindex>. A single-page app's catch-all answers
+    /sitemap.xml with 200 and its HTML shell, which is not a sitemap."""
+    return r.ok and bool(re.search(r"<(urlset|sitemapindex)\b", r.text[:200000], re.I))
 
 
 class Resp:
@@ -120,37 +132,51 @@ def public_ip(addr):
     """Globally routable unicast only: this refuses loopback, private, link-local, CGNAT (100.64/10,
     where cloud metadata services such as 100.100.100.200 live), reserved and multicast addresses."""
     ip = ipaddress.ip_address(str(addr).split("%")[0])
-    if ip.version == 6 and ip.ipv4_mapped:
-        ip = ip.ipv4_mapped
+    if ip.version == 6:
+        if ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        # NAT64 and 6to4 prefixes carry an IPv4 address inside; on a DNS64 network they reach it
+        elif any(ip in n for n in _EMBEDS_V4):
+            return False
     return ip.is_global and not ip.is_multicast
 
 
+_EMBEDS_V4 = [ipaddress.ip_network(n) for n in ("64:ff9b::/96", "64:ff9b:1::/48", "2002::/16")]
+
+
 def resolve_public(host, port):
-    """Resolve once; every answer must be public. Returns the first address to connect to."""
+    """Resolve once; every answer must be public. Returns the addresses to connect to, in order."""
     try:
         infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except (socket.gaierror, UnicodeError) as e:
         raise OSError("cannot resolve %s: %s" % (host, e)) from None
     if not infos or not all(public_ip(i[4][0]) for i in infos):
         raise OSError("refused: %s does not resolve to a public address" % host)
-    return infos[0][4][:2]
+    return [i[4][:2] for i in infos]
 
 
-def _guarded(conn_class):
-    """An http.client connection factory whose TCP connect is checked. A direct connection goes to the
+def _guarded(conn_class, proxied=False):
+    """An http.client connection factory whose TCP connect is checked. A direct connection goes to an
     address that passed the check, so a name cannot resolve to something else a moment later. Through
-    a proxy the proxy resolves the name; the target is checked, the proxy itself is the user's own."""
+    a proxy the proxy resolves the name: the target was checked before the request (check_url, and on
+    every redirect hop), and the proxy itself is the user's own, so its address is not refused."""
     def make(host, **kw):
         c = conn_class(host, **kw)
         orig = c._create_connection
 
         def create(address, *a, **k):
-            if not ADDRESS_GUARD:
+            if not ADDRESS_GUARD or proxied:
                 return orig(address, *a, **k)
-            if getattr(c, "_tunnel_host", None):
+            if getattr(c, "_tunnel_host", None):            # HTTPS through a proxy: CONNECT to the target
                 resolve_public(c._tunnel_host, c._tunnel_port or 443)
                 return orig(address, *a, **k)
-            return orig(resolve_public(*address), *a, **k)
+            err = None
+            for addr in resolve_public(*address):           # every answer was checked; try them in order
+                try:
+                    return orig(addr, *a, **k)
+                except OSError as e:
+                    err = e
+            raise err
         c._create_connection = create
         return c
     return make
@@ -158,7 +184,8 @@ def _guarded(conn_class):
 
 class _GuardedHTTP(urllib.request.HTTPHandler):
     def http_open(self, req):
-        return self.do_open(_guarded(http.client.HTTPConnection), req)
+        # plain http through a proxy sends the absolute URL to the proxy, with no CONNECT tunnel
+        return self.do_open(_guarded(http.client.HTTPConnection, proxied=req.has_proxy()), req)
 
 
 class _GuardedHTTPS(urllib.request.HTTPSHandler):
@@ -225,12 +252,14 @@ def gunzip(raw, limit=MAX_INFLATED):
 
 
 def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
-    url = idna(url)
-    req = urllib.request.Request(url, method=method, headers={
-        "User-Agent": ua, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-        "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
     t0 = time.time()
     try:
+        # inside the try: a URL the site wrote badly (relative, schemeless, empty) is a failed fetch,
+        # never an exception that ends the run
+        url = idna(str(url))
+        req = urllib.request.Request(url, method=method, headers={
+            "User-Agent": ua, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+            "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
         check_url(url)
         with _OPENER.open(req, timeout=timeout) as r:
             raw = r.read(MAX_BODY)
@@ -373,6 +402,50 @@ def visible_dates(page_html):
     out += [_date(m.group(3), _MONTHS[m.group(2).lower()[:3]], m.group(1)) for m in _DMY.finditer(text)]
     out += [_date(m.group(3), _MONTHS[m.group(1).lower()[:3]], m.group(2)) for m in _MDY.finditer(text)]
     return [d for d in out if d]
+
+
+def own_dates(page_html, objs):
+    """The page's own dates, the ones a dateModified has to agree with: datePublished in its JSON-LD,
+    article:published_time / modified_time, and the first date in the main content (a byline or a
+    header). Not every date on the page: related-story rails, listings and comments carry dates of
+    other content."""
+    out = [iso_date(x.get("datePublished")) for x in objs]
+    out += [iso_date(m.group(2)) for m in re.finditer(
+        r'property=["\']article:(published|modified)_time["\'][^>]*content=["\']([^"\']+)', page_html, re.I)]
+    first = first_date(main_html(page_html)[:20000])
+    return [d for d in out + [first] if d]
+
+
+def first_date(html_part):
+    """The first date in document order: a <time> element stands in for its datetime, then the earliest
+    written date wins."""
+    text = visible_text(re.sub(r'<time[^>]+datetime=["\']([^"\']+)["\'][^>]*>.*?</time>',
+                               lambda m: " %s " % (m.group(1)[:10]), html_part, flags=re.S | re.I))
+    found = [(m.start(), _date(*m.groups())) for m in _NUM_DATE.finditer(text)]
+    found += [(m.start(), _date(m.group(3), _MONTHS[m.group(2).lower()[:3]], m.group(1))) for m in _DMY.finditer(text)]
+    found += [(m.start(), _date(m.group(3), _MONTHS[m.group(1).lower()[:3]], m.group(2))) for m in _MDY.finditer(text)]
+    found = [f for f in found if f[1]]
+    return min(found)[1] if found else None
+
+
+# a word before "by" that makes it a credit, a sort order or a filter, not a byline
+_CREDIT = re.compile(r"(?:powered|built|made|hosted|designed|developed|sponsored|presented|backed|trusted|used|loved|"
+                     r"created|brought to you|followed|group|grouped|sort|sorted|filter|filtered|curated|operated|"
+                     r"owned|published|translated|funded|supported|inspired)\s*$", re.I)
+_BYLINE = re.compile(r"(?<![A-Za-z])[Bb][Yy]\s+((?:(?:Dr|Prof|Mr|Ms|Mrs)\.\s+)?(?:[A-Z]\.|[A-Z][A-Za-z'\u2019\-]+)"
+                     r"(?:\s+(?:[A-Z]\.|[A-Z][A-Za-z'\u2019\-]+|van|von|de|da|del|der|den|bin|al|le|la|di|du)){1,3})")
+
+
+def byline_name(text):
+    """The first "By Jane Doe" in `text` that is a byline: two to four name words, not a credit such as
+    "Powered by Hugo" or "Sorted by Date", cut before any trailing punctuation."""
+    for m in _BYLINE.finditer(text):
+        if _CREDIT.search(text[max(0, m.start() - 40):m.start()]):
+            continue
+        name = m.group(1).rstrip(".,;:!?)'\u2019 ")
+        if len(name.split()) >= 2:
+            return name
+    return None
 
 
 def headings(h):
@@ -755,13 +828,14 @@ def discover(base, want=8, verbose=False):
     rb = fetch_steady(origin + "/robots.txt")
     # the same places run() looks for p1.sitemap, including the given path, so a sitemap that is scored
     # is also the one the sample comes from
-    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "") \
+    # a relative Sitemap: line is invalid but common; resolve it against the origin
+    sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "")] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
-    sm = next((r for r in pmap(fetch_steady, sm_urls[:3]) if r.ok), None)
+    sm = next((r for r in pmap(fetch_steady, sm_urls[:3]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
-        kids = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
-        got = [r for r in pmap(fetch_steady, kids) if r.ok]
+        kids = [urllib.parse.urljoin(sm.url, x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
+        got = [r for r in pmap(fetch_steady, kids) if is_sitemap(r)]
         sm = got[0] if got else None
     if sm:
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
@@ -863,7 +937,8 @@ def run(base, sample=8, verbose=False, urls=None):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
     if urls:
-        urls, sample_source = pin_urls(base, urls), "pinned"
+        # the caller validated the list and its length (--urls caps at 8, --urls-from at the report's own count)
+        urls, sample_source = pin_urls(base, urls, limit=len(urls)), "pinned"
     else:
         say("discovering sample pages…")
         urls, sample_source = discover(base, sample, verbose)
@@ -941,15 +1016,15 @@ def run(base, sample=8, verbose=False, urls=None):
     # owner of example.com/docs cannot place a file at example.com. Scoring them zero
     # penalises them for something they do not control (open question #9), so fall
     # back to the path they were given. Origin still wins when both exist.
-    sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) \
+    sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
-    sm = next((r for r in pmap(fetch, sm_urls[:4]) if r.ok), None)
+    sm = next((r for r in pmap(fetch, sm_urls[:4]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
-            sub = fetch(child[0].strip())
-            if sub.ok: sm = sub
+            sub = fetch(urllib.parse.urljoin(sm.url, child[0].strip()))
+            if is_sitemap(sub): sm = sub
     if not sm:
         tier["p1.sitemap"] = 0; ev["p1.sitemap"] = "No sitemap found via robots.txt or the conventional paths."
     else:
@@ -1088,11 +1163,13 @@ def run(base, sample=8, verbose=False, urls=None):
         mods = [d for d in (iso_date(x.get("dateModified")) for x in o) if d]
         if any(x.get("dateModified") for x in o):
             dm += 1
-            # the top tier asks that dateModified agree with the visible date: a page that shows a later
-            # date than the one it declares as its last modification contradicts itself
-            if mods and shown and max(shown) > max(mods) + datetime.timedelta(days=1):
+            # the top tier asks that dateModified agree with the visible date: a page whose own date
+            # (its publication date, its byline) is later than its declared last modification contradicts itself
+            own = own_dates(r.text, o)
+            if mods and own and max(own) > max(mods) + datetime.timedelta(days=1):
                 stale += 1
-    tier["p2.freshness"] = 6 if (fr >= n * .75 and dm and not stale) else (3 if fr else 0)
+    # "most pages do, and dateModified agrees": a quarter of the declaring pages may disagree
+    tier["p2.freshness"] = 6 if (fr >= n * .75 and dm and stale <= dm * .25) else (3 if fr else 0)
     ev["p2.freshness"] = "%d of %d pages carry a date a reader or a crawler can see; %d declare dateModified%s." % (
         fr, n, dm, (", %d of them earlier than the date the page shows" % stale) if stale else "")
 
@@ -1140,10 +1217,11 @@ def run(base, sample=8, verbose=False, urls=None):
             if isinstance(a, str) and a.strip(): auth = {"name": a}; break
         if not auth:
             m = re.search(r'rel=["\']author["\'][^>]*>\s*([A-Z][\w.\-]+(?:\s+[A-Z][\w.\-]+){0,2})', r.text)
-            # a "By Jane Doe" byline in the main content, not "Powered by Hugo" in a footer
-            m = m or re.search(r'(?<![A-Za-z])(?<!powered )(?<!built )(?<!made )(?<!hosted )(?<!designed )(?<!sponsored )'
-                               r'[Bb]y\s+([A-Z][a-z][\w.\-]*(?:\s+[A-Z][\w.\-]+){1,2})', visible_text(main_html(r.text)))
-            if m: auth = {"name": m.group(1)}
+            # a byline in the main content, else near the top of the page (an article header outside
+            # <main>); never in a footer, where "Powered by …" credits live
+            name = m.group(1) if m else (byline_name(visible_text(main_html(r.text)))
+                                         or byline_name(visible_text(r.text)[:4000]))
+            if name: auth = {"name": name}
         name = str(auth.get("name") or "").strip() if auth else ""
         if name and not BRANDY.match(name) and name.lower() not in org_names:
             named += 1
@@ -1152,9 +1230,14 @@ def run(base, sample=8, verbose=False, urls=None):
     ev["p2.named-author"] = "%d of %d pages carry a personal byline; %d link that name to a verifiable identity page." % (named, n, linked)
 
     # ── p3.sameas ──
-    sa = same if isinstance(same, list) else ([same] if same else [])
-    if not sa:
+    declared = same if isinstance(same, list) else ([same] if same else [])
+    # only http(s) URLs can be checked; a bare "www.x.com/acme", an empty string or null is not one
+    sa = [x.strip() for x in declared if isinstance(x, str) and re.match(r"https?://", x.strip(), re.I)]
+    if not declared:
         tier["p3.sameas"] = 0; ev["p3.sameas"] = "No sameAs declared on the Organization entity."
+    elif not sa:
+        tier["p3.sameas"] = 0
+        ev["p3.sameas"] = "%d sameAs declared, none of them an http(s) URL that can be checked." % len(declared)
     else:
         # Only 404 / 410 prove a profile is gone. Timeouts, resets and 451 mean this
         # network cannot see the host (LinkedIn, X, YouTube, GitHub and Wikipedia are all

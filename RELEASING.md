@@ -11,7 +11,7 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    minor release; a fix is a patch; removing or renaming a contract is a major release.
 3. **Bump:** `python3 scripts/release.py X.Y.Z --bump`. It rewrites `__version__` in both CLI files,
    `SKILL.md`, every install line and download pinned to a tag (README, cli/README, SECURITY,
-   STABILITY, examples, the issue form, the leaderboard template), and turns `[Unreleased]` into
+   STABILITY, the troubleshooting guides, examples, the issue form, the leaderboard template), and turns `[Unreleased]` into
    `[X.Y.Z]` with a compare link.
 4. **By hand:** update the supported-versions table in `SECURITY.md` for a minor or major release,
    rebuild the pages (`python3 benchmark/build_page.py`), run `bash scripts/check.sh`, and commit as
@@ -19,8 +19,10 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 5. **Preflight:** `python3 scripts/release.py X.Y.Z` must print `ready`. It refuses while any version,
    pin, changelog section or compare link is out of step, the tree is dirty, or the tag exists.
 6. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live`, builds the
-   wheel and sdist, writes `SHA256SUMS` over them and the two CLI files, tags `vX.Y.Z`, moves `v1` to
-   it, pushes, and creates the GitHub release with the changelog section and the files attached.
+   wheel and sdist, writes `SHA256SUMS` over them and the two CLI files, pushes main, creates the tag
+   `vX.Y.Z` and pushes it, moves `v1` to it and pushes that, and creates the GitHub release with the
+   changelog section and the files attached. Main goes first, so a rejected push leaves no local tag
+   and the step can simply be rerun.
 7. **Check it:** `uvx --from git+https://github.com/jianruntech/geo-score@vX.Y.Z geo-score --version`,
    and the one-line `curl` from the README.
 

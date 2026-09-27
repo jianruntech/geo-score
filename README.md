@@ -223,9 +223,9 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 ```
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
-the five published hand audits on the same pages, it matched the auditor's tier on 78% of
-86 check pairs (95% where it reads a rule, 62% where it approximates a judgement) and read
-4.2 points lower on average, from 13 lower to 6 higher. n=5 is small:
+the five published hand audits on the same pages, it matched the auditor's tier on 79% of
+86 check pairs (95% where it reads a rule, 64% where it approximates a judgement) and read
+3.6 points lower on average, from 10 lower to 6 higher. n=5 is small:
 [VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
 
 **MCP server** (all three levels) — `python3 cli/geo_score.py mcp`, for Claude Code, Cursor and
@@ -338,8 +338,8 @@ see what the engines say today, not to measure a rate.
 - **One answer is an anecdote.** Every rate carries a 95% interval (a bootstrap over questions
   when a question has several answers, since those answers move together), and `diff` calls
   something a change only when an exact paired test on the questions both runs answered,
-  Holm-corrected across engines, says so (p < 0.05). Fewer than 6 shared questions is reported as
-  too few to tell. The method: [guide/watch-methodology.md](guide/watch-methodology.md).
+  Holm-corrected across engines, says so (p < 0.05). Too few shared questions (under 6, or too few
+  for the number of engines compared) is reported as too few to tell. The method: [guide/watch-methodology.md](guide/watch-methodology.md).
 - **Questions that name you are kept apart.** "acme vs rival" or "is acme worth it" put your name
   in the engine's search and are cited almost every time. `watch` flags them when it runs, keeps
   them out of the headline rate, and reports them on their own line with their own count. An
@@ -487,7 +487,7 @@ this repo deliberately excludes.
   sitemap), and Wikidata and Wikipedia search; levels 2 and 3
   call only the AI providers whose keys you set.
 - **Security:** text quoted from the audited site is fenced as data in every report, the MCP
-  server connects only to public addresses, and keys never reach a file. Threat model and reporting:
+  server's `score_site` connects only to public addresses, and keys never reach a file. Threat model and reporting:
   [SECURITY.md](SECURITY.md).
 
 **Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the

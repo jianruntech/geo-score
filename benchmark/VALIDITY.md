@@ -9,8 +9,8 @@ Each of the 5 published hand audits in [examples/audits/v1.1](../examples/audits
 
 ## Result
 
-- **Same tier on 78% of check pairs.** Checks read by rule agreed on 95% (41 pairs); checks the CLI approximates with a heuristic agreed on 62% (45 pairs). The 3 judgement checks are never scored by the CLI.
-- **The CLI's normalised score was 4.2 points lower on average**, ranging from 13 lower to 6 higher.
+- **Same tier on 79% of check pairs.** Checks read by rule agreed on 95% (41 pairs); checks the CLI approximates with a heuristic agreed on 64% (45 pairs). The 3 judgement checks are never scored by the CLI.
+- **The CLI's normalised score was 3.6 points lower on average**, ranging from 10 lower to 6 higher.
 
 ## Read this before quoting it
 
@@ -25,7 +25,7 @@ Each of the 5 published hand audits in [examples/audits/v1.1](../examples/audits
 |---|---|--:|--:|--:|--:|--:|
 | anthropic.com | 2026-09-08 | 70 | 70 | +0 | 16/17 | 8 |
 | mingdao.com | 2026-09-08 | 69 | 64 | -5 | 13/18 | 8 |
-| nextjs.org | 2026-09-08 | 87 | 74 | -13 | 11/17 | 8 |
+| nextjs.org | 2026-09-08 | 87 | 77 | -10 | 12/17 | 8 |
 | stripe.com | 2026-09-08 | 77 | 83 | +6 | 12/17 | 6 |
 | svelte.dev | 2026-09-08 | 78 | 69 | -9 | 15/17 | 8 |
 
@@ -34,7 +34,7 @@ Each of the 5 published hand audits in [examples/audits/v1.1](../examples/audits
 | Check | Name | Pairs | Same tier | Mean CLI − hand | Disagreements (hand→CLI) |
 |---|---|--:|--:|--:|---|
 | `g.robots` | Crawlers allowed in robots.txt | 5 | 100% | +0.0 | none |
-| `g.reachable` | Reachable to retrieval agents | 5 | 60% | +0.0 | nextjs.org 5→3, stripe.com 3→5 |
+| `g.reachable` | Reachable to retrieval agents | 5 | 80% | +0.4 | stripe.com 3→5 |
 | `g.ssr` | Main content server-rendered | 5 | 60% | -0.8 | nextjs.org 5→3, stripe.com 5→3 |
 | `p1.sitemap` | Sitemap discoverable and fresh | 5 | 100% | +0.0 | none |
 | `p1.llms-txt` | llms.txt present and structured | 5 | 100% | +0.0 | none |

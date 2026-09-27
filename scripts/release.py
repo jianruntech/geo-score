@@ -164,8 +164,8 @@ def main():
         sys.exit(1)
     if not a.execute:
         print("\nready for %s. Plan: check.sh --live, build sdist + wheel, SHA256SUMS over them and the two CLI "
-              "files, tag v%s, move v1, push main and tags, gh release create with the changelog section.\n"
-              "Run again with --execute." % (a.version, a.version))
+              "files, push main, tag v%s and push it, move v1 and push it, gh release create with the changelog "
+              "section.\nRun again with --execute." % (a.version, a.version))
         return
     execute(a.version)
 

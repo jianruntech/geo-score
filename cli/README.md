@@ -92,13 +92,13 @@ The [Claude Code skill](../SKILL.md) scores all 21.
 ### How far to trust each check
 
 Measured by re-scoring the five published hand audits on the same pages
-([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 78% of 86 check
-pairs and read 4.2 points lower on average.
+([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 79% of 86 check
+pairs and read 3.6 points lower on average.
 
 | How the CLI reads it | Checks | Same tier as the hand audit |
 |---|---|--:|
 | **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 95% of 41 pairs |
-| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 62% of 45 pairs |
+| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 64% of 45 pairs |
 | **Not at all**: needs off-site search or human judgement | `p3.listings`, `p3.mentions`, `p4.question-coverage` | left out of the denominator |
 
 The weakest agreement is `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5

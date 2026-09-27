@@ -395,6 +395,8 @@ ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <htm
 ok(gs.text_file(gs.Resp("u", 200, b"# Acme\n\n> What Acme does.\n\n## Docs\n- [Start](/start)\n")), "a Markdown llms.txt is a text file")
 ok(not gs.text_file(gs.Resp("u", 404, b"# Acme")), "a 404 is not a file")
 ok(not gs.text_file(gs.Resp("u", 200, b"   ")), "an empty body is not a file")
+ok(not gs.text_file(gs.Resp("u", 200, b"\n<title>Access denied</title><div>blocked</div>", {"content-type": "text/html"})),
+   "an HTML firewall page without a doctype is not a file")
 
 # ── dates a reader can see, including ones flush against Chinese text ──
 import datetime as _dt
@@ -410,6 +412,47 @@ _ATT = r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|resear
 ok(gs.re.search(_ATT, "Free resources for teams") is None, "'resources' is not a source")
 ok(gs.re.search(_ATT, "The price index reports a national average") is not None, "'reports' is an attribution")
 ok("sourced|stud(?:y|ies)|reports?" in io.open(gs.__file__, encoding="utf-8").read(), "the test pattern is the scorer's pattern")
+
+# ── dateModified is compared with the page's own date, not every date on the page ──
+_page = ('<main><p>By Jane Doe · 5 January 2026</p><p>Body.</p>'
+         '<aside><time datetime="2026-09-01">Newer post</time></aside></main>')
+eq(gs.own_dates(_page, [{"dateModified": "2026-01-06"}]), [_dt.date(2026, 1, 5)], "the first date in the main content is the page's own")
+ok(max(gs.own_dates(_page, [])) <= _dt.date(2026, 1, 6), "a newer date in a related-posts rail does not make dateModified stale")
+eq(gs.own_dates("<main><p>x</p></main>", [{"datePublished": "2026-03-01T00:00:00Z"}]), [_dt.date(2026, 3, 1)], "datePublished counts")
+ok(len(gs.pin_urls("https://x.test", ["/p%d" % i for i in range(12)], limit=12)) == 12, "a caller-set limit admits a longer pinned list")
+
+# ── bylines: people, not credits, sort orders or the organisation ──
+eq(gs.byline_name("Posted by Jane Doe. Read more"), "Jane Doe", "a byline, cut at the sentence end")
+eq(gs.byline_name("By Dr. Maria de la Cruz"), "Dr. Maria de la Cruz", "titles and particles are part of a name")
+eq(gs.byline_name("By J. R. Tolkien, 2026"), "J. R. Tolkien", "initials")
+eq(gs.byline_name("Powered by Hugo Theme"), None, "a 'Powered by' credit is not a byline")
+eq(gs.byline_name("POWERED BY Acme Cloud"), None, "in any case")
+eq(gs.byline_name("Sorted by Date Added"), None, "a sort order is not a byline")
+eq(gs.byline_name("By Editor"), None, "one word is not a personal name")
+
+# ── under the guard, plain http through the user's own proxy works; the target is what gets checked ──
+import threading as _th
+from http.server import BaseHTTPRequestHandler as _BH, HTTPServer as _HS
+_seen = []
+class _Proxy(_BH):
+    def do_GET(self):
+        _seen.append(self.path); self.send_response(200); self.send_header("Content-Length", "2"); self.end_headers(); self.wfile.write(b"ok")
+    def log_message(self, *a): pass
+_px = _HS(("127.0.0.1", 0), _Proxy); _th.Thread(target=_px.serve_forever, daemon=True).start()
+_saved = (gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public)
+try:
+    gs._OPENER = gs.urllib.request.build_opener(
+        gs.urllib.request.ProxyHandler({"http": "http://127.0.0.1:%d" % _px.server_port}), gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    gs.ADDRESS_GUARD = True
+    _real = _saved[2]
+    gs.resolve_public = lambda h, p: [("93.184.216.34", p)] if h == "public.example" else _real(h, p)
+    _r = gs.fetch("http://public.example/page")
+    ok(_r.status == 200 and _seen == ["http://public.example/page"], "a proxied plain-http request reaches the proxy: %r %r" % (_r.status, _r.err))
+    _r = gs.fetch("http://127.0.0.1:9/")
+    ok(_r.status == 0 and "public address" in (_r.err or ""), "a private target is still refused before the proxy is asked")
+finally:
+    gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public = _saved
+    _px.shutdown()
 
 if fails:
     print("FAIL — %d" % len(fails))

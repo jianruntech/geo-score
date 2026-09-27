@@ -124,7 +124,7 @@
    "state": "scored",
    "points": 7,
    "max": 7,
-   "evidence": "304 figures across the sample; of the 5 pages carrying several, 5 place a source, citation or outbound reference beside them.",
+   "evidence": "306 figures across the sample; of the 5 pages carrying several, 5 place a source, citation or outbound reference beside them.",
    "tier_reason": "tier 4 of 4 — top tier: most are attributed and the source is clickable and checkable",
    "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
   },
@@ -133,7 +133,7 @@
    "state": "scored",
    "points": 6,
    "max": 6,
-   "evidence": "5 of 6 pages carry a personal byline; 3 link that name to a verifiable identity page.",
+   "evidence": "4 of 6 pages carry a personal byline; 3 link that name to a verifiable identity page.",
    "tier_reason": "tier 3 of 3 — top tier: and the name links to a verifiable identity page",
    "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
   },
@@ -154,7 +154,7 @@
    "state": "scored",
    "points": 4,
    "max": 4,
-   "evidence": "Brand read as «site text: Stripe» (also tried «site text: Stripe, LLC», «site text: Financial Infrastructure to Grow Your Revenue»). Entity found — Wikidata Q7624104 «site text: Irish-American payment technology compan…»",
+   "evidence": "Brand read as «site text: Stripe» (also tried «site text: Stripe, LLC», «site text: Financial Infrastructure to Grow Your Revenue»). Entity found — Wikidata Q7624104 «site text: Irish-American payment technology compan…»; en.wikipedia: «site text: Stripe»",
    "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
    "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
   },

@@ -15,9 +15,9 @@
   "https://nextjs.org/blog/august-2026-security-release"
  ],
  "sample_source": "pinned",
- "readiness": 64,
+ "readiness": 66,
  "observable_max": 86,
- "normalised": 74,
+ "normalised": 77,
  "band": "Solid",
  "gate_capped": false,
  "bonus_awarded": 1,
@@ -34,10 +34,10 @@
   {
    "id": "g.reachable",
    "state": "scored",
-   "points": 3,
+   "points": 5,
    "max": 5,
-   "evidence": "9 of 10 retrieval user-agents returned 200 on 3 sampled pages; 9 of those served content matching what a browser receives.",
-   "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: all 10 retrieval user-agents return 200 with matching content",
+   "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+   "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
    "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
   },
   {

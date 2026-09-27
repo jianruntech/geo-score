@@ -4,10 +4,10 @@
  "rubric": "v1.1",
  "n_sites": 5,
  "n_check_pairs": 86,
- "exact_tier_agreement": 0.78,
+ "exact_tier_agreement": 0.79,
  "normalised_difference": {
-  "mean": -4.2,
-  "min": -13,
+  "mean": -3.6,
+  "min": -10,
   "max": 6
  },
  "caveats": [
@@ -25,7 +25,7 @@
   "heuristic": {
    "checks": 9,
    "n_pairs": 45,
-   "exact_agreement": 0.62
+   "exact_agreement": 0.64
   },
   "judgement": {
    "checks": 3,
@@ -64,14 +64,14 @@
    "site": "nextjs.org",
    "audited_at": "2026-09-08",
    "human_normalised": 87,
-   "cli_normalised": 74,
-   "difference": -13,
+   "cli_normalised": 77,
+   "difference": -10,
    "pages_compared": 8,
    "pages_dropped_other_host": 0,
    "checks_compared": 17,
    "common_checks_human_pct": 81,
-   "common_checks_cli_pct": 73,
-   "tiers_equal": 11
+   "common_checks_cli_pct": 76,
+   "tiers_equal": 12
   },
   {
    "site": "stripe.com",
@@ -114,15 +114,10 @@
    "id": "g.reachable",
    "n": 5,
    "max": 5,
-   "exact_agreement": 0.6,
-   "mean_signed_diff": 0,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": 0.4,
    "kappa": "n too small",
    "disagreements": [
-    {
-     "site": "nextjs.org",
-     "human": 5,
-     "cli": 3
-    },
     {
      "site": "stripe.com",
      "human": 3,

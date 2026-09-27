@@ -36,9 +36,9 @@
 - 榜单可以换托管地址：`GEO_SITE_BASE` 统一设置 canonical、`og:image`、hreflang、`llms.txt` 和 sitemap 里的地址；
   `scripts/check_live.py` 比对线上页面与提交的数据（目前 Pages 上仍是 229 站，数据是 314 站）。
 - **CLI 可信到什么程度，有了实测。** `benchmark/validity.py` 在相同页面上重评公开的 5 份人工审计并逐档比较：
-  86 对检查项里 78% 一致（按规则读取的项 95%，启发式的项 62%），CLI 平均低 4.2 分，范围从低 13 分到高 6 分。
+  86 对检查项里 79% 一致（按规则读取的项 95%，启发式的项 64%），CLI 平均低 3.6 分，范围从低 10 分到高 6 分。
   结果、注意事项和每一处分歧见 `benchmark/VALIDITY.zh-CN.md`。这取代了没有数据支撑的「通常低 5 到 15 分」，
-  那句话对 5 个站里的 1 个是错的。
+  那句话对 5 个站里的 2 个是错的。
 - **每个检查项都注明证据依据。** `rubric/v1.1.json` 每一项新增 `evidence` 对象（依据类型、来源、最后核实日期），
   并发布为 `rubric/evidence-v1.1.zh-CN.md`（中英两份）。只是元数据，没有改动任何权重、档位或分数。
 - **MCP 面向 agent，而不只是给人看。** `score_site`、`report`、`diff`、`list_runs` 在文字之外返回
@@ -74,23 +74,29 @@
 - Action 会给 0 分的检查项加注释：门槛项标为 error，其他项标为 warning（GitHub 每种最多显示 10 条，其余见任务摘要）。
 - `geo-score watch --help` 显示的命令名跟随你实际输入的命令（pip 安装后是 `geo-score`）。
 - `--compare` 对比三个及以上站点时，不再写「Both scored」。
+- 网站跳转到另一个域名时，完整报告会写明，JSON 里带 `landed`（可选），即实际评分的地址。
 
 ### 修复
 - **离线测试站点发现的计分修正。** 每一处都只在旧读数违背量表时改变分数：
-  - `g.robots`：多行 `User-agent` 共享其后的规则（RFC 9309 2.1）。此前规则只挂在最后一行上，一个在同一组里屏蔽
-    GPTBot、ClaudeBot、PerplexityBot 的文件会被读成什么都没屏蔽。以这种方式屏蔽的站会下降，降到 0 分并触发门槛封顶。
-  - `p1.llms-txt`、`b.llms-full`、`b.ai-txt`：对所有路径都返回 HTML 外壳的单页应用，不再算作提供了这些文件。下降。
+  - `g.robots`：多行 `User-agent` 共享其后的规则（RFC 9309 2.1）。此前规则只挂在最后一行上，同一组里列出 GPTBot、ClaudeBot、
+    CCBot 并写 `Disallow: /` 的文件，会被读成只屏蔽了 CCBot。分组规则屏蔽了检索爬虫的站下降，降到 0 分并触发门槛封顶；
+    分组里的 `Allow` 现在算作明确许可的站上升（3 到 5）。
+  - `p1.llms-txt`、`b.llms-full`、`b.ai-txt`、`p1.sitemap`：对所有路径都返回 HTML 外壳的单页应用，不再算作提供了这些文件；
+    sitemap 必须是带 `<urlset>` 或 `<sitemapindex>` 的 XML。下降。robots.txt 里写成相对路径的 `Sitemap:` 按域名补全（现在能加载到的上升）。
   - `p1.organization`：Organization 和 WebSite 都有但缺 name、url、logo 时按量表给 3 分，不再给 5 分（下降）；
-    相对路径的 logo 按它所在的页面解析（现在能加载到的上升）。
+    相对路径的 logo 按它所在的页面解析（现在能加载到的上升）；Organization 的子类型（EducationalOrganization、
+    NewsMediaOrganization、LocalBusiness 等）也读取 logo 和 sameAs，这样标注的站 `p1.organization` 和 `p3.sameas` 上升。
+    不是 http(s) 地址的 `sameAs` 值不再去请求。
   - `p1.page-type`：最高档要求真实的字段值；只有 `{"@type": "Product"}` 的空壳给 2 分。下降。
-  - `p2.freshness`：紧贴中文的日期、英文月份写法的日期都能读到（上升）；最高档要求 `dateModified` 不早于页面显示的日期（早于的下降）。
+  - `p2.freshness`：紧贴中文的日期、英文月份写法的日期都能读到（上升）；最高档要求在声明了 `dateModified` 的页面里，
+    至少四分之三的 `dateModified` 不早于页面自己的日期（datePublished、article 时间或正文中的第一个日期），否则下降。
   - `p2.sourced-stats`：「resources」不再算作「source」（下降）；紧贴中文的数字算作数字（可升可降）。
   - `p2.named-author`：「Editor」、机构自己的名字、页脚的「Powered by Hugo」都不算个人署名。下降。
   - 抽样：对位于某个路径下的站点，不再抽到同级的兄弟目录（`/docs` 之于 `/docs-legacy`）；站点根目录没有 sitemap 时使用路径下的 sitemap。
 - **SARIF 可以上传到 GitHub 代码扫描了。** 此前结果定位在被评网站的 URL 上，代码扫描会拒收；现在每条结果指向 JSON 报告里该检查项所在的行
   （设置 `sarif` 时 Action 会把报告写进工作区），网站名写在 message 里。
-- `watch diff` 在问题数相对比较行数太少时不再写 `within noise`：经 Holm 校正后最好的 p 也不低于 0.05 的行，判为
-  `too few questions to tell`。调用不存在的 MCP 工具返回 JSON-RPC 错误（-32602），符合协议规定。
+- `watch diff` 在问题数相对比较行数太少时不再写 `within noise`：Holm 校正之前，m × 2 / 2^n ≥ 0.05 的行（m 行、n 个问题；
+  Tarone 筛选）判为 `too few questions to tell` 并退出比较组。这道筛选是保守的。调用不存在的 MCP 工具返回 JSON-RPC 错误（-32602），符合协议规定。
 - **分数可能超过 100。** 加分项不进分母，满分或接近满分的站加上加分项会读到 100 以上（good 测试站读到 107），连报告 schema（`normalised` ≤ 100）都不满足。
   现在百分比封顶 100，量表第 5 条也写明了。已发布的分数都不受影响：榜单最高 98，人工审计最高 87。这个问题是离线测试站点发现的。
 - `--json-out`、`--sarif`、`--junit` 写不进去时给出明确的报错（退出码 2），不再抛出回溯。

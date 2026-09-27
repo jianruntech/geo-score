@@ -4,7 +4,7 @@ geo-score has two version numbers, and they move for different reasons.
 
 - **The rubric** (`rubric/v1.1.md`, `rubric/v1.1.json`) decides what a score means. A score is only
   comparable with scores from the same rubric version, so every report states it.
-- **The tool** (`cli/`, currently 1.2.x) follows [Semantic Versioning](https://semver.org/). Its
+- **The tool** (`cli/`) follows [Semantic Versioning](https://semver.org/). Its
   version is in every JSON report (`tool`) and in `--version`.
 
 ## Public contracts
@@ -32,7 +32,7 @@ of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
 
 ## What a minor or patch release may do
 
-- **Patch (1.2.x):** fix a bug, harden input handling, improve an error message. A patch can move
+- **Patch (the third number):** fix a bug, harden input handling, improve an error message. A patch can move
   a site's score only when the earlier result was wrong, and the changelog then names the check
   and the direction (see 1.1.2).
 - **Minor (1.x):** add a flag, a subcommand, an output format, an optional JSON field, an engine,
@@ -45,7 +45,7 @@ of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
 
 ## The `v1` tag
 
-`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`@v1.2.0`)
+`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`jianruntech/geo-score@v1.3.0`)
 when you need a score to stay put between runs.
 
 ## Deprecation

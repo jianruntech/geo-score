@@ -211,8 +211,8 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 # 然后：/geo-score audit https://example.com
 ```
 
-CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，86 对检查项里有 78% 与审计者档位一致
-（按规则读取的项 95%，靠启发式近似判断的项 62%），归一化分平均低 4.2 分，范围从低 13 分到高 6 分。
+CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，86 对检查项里有 79% 与审计者档位一致
+（按规则读取的项 95%，靠启发式近似判断的项 64%），归一化分平均低 3.6 分，范围从低 10 分到高 6 分。
 样本只有 5 个站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
 **MCP 服务**（三级都有）—— `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见[下文](#第二三级--ai-到底有没有引用你)。
@@ -319,7 +319,7 @@ Read this before quoting the numbers
   和个性化都不一样。API 渠道只和 API 渠道比，别和人工在 App 里采的样本混着算。
 - **一条回答只是个例。** 同一个问题问两次，引用的来源可能不同。所有比率都带 95% 区间（同一问题有多条回答时，
   这些回答会一起变动，区间按问题做自助法重抽样）；`diff` 只比较两次都回答了的问题，用精确配对检验并对各引擎做
-  Holm 校正，p < 0.05 才说「有变化」，共同问题少于 6 个时直接说「问题太少，无法判断」。20 个问题 × 1 个引擎，
+  Holm 校正，p < 0.05 才说「有变化」，共同问题太少（少于 6 个，或相对比较的引擎数太少）时直接说「问题太少，无法判断」。20 个问题 × 1 个引擎，
   区间就是很宽，数据只能说到这个份上。方法见 [guide/watch-methodology.zh-CN.md](guide/watch-methodology.zh-CN.md)。
 - **提到你品牌的问题单独统计。** 「acme vs rival」「acme 值不值」这类问题会把品牌名带进引擎的搜索，几乎每次都会被引用。
   `watch` 在运行时标出这类问题，把它们排除在标题引用率之外，单列一行并给出各自的样本数。`queries.csv` 可选的
@@ -444,7 +444,7 @@ claude mcp add geo-score -- uvx --from git+https://github.com/jianruntech/geo-sc
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站（包括它的跳转）、它的标记和 robots.txt 指向的地址
   （`sameAs` 主页链接、logo、声明的 sitemap，检查是否有效），以及 Wikidata 和维基百科的搜索接口；第二、三级只调用你配了 Key 的 AI 服务商。
-- **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务只访问公网地址，Key 从不写进任何文件。
+- **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务的 `score_site` 只连接公网地址，Key 从不写进任何文件。
   威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
 **为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，实测波动 ±5

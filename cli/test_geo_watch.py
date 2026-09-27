@@ -949,7 +949,7 @@ class MCP(Base):
         self.assertIn("score_site", [t["name"] for t in self.server().tools()])   # the geo_score.py beside it
         fake = os.path.join(self.tmp, "geo_score.py")
         with io.open(fake, "w", encoding="utf-8") as f:
-            f.write("print('stdout noise at import')\n"
+            f.write("print('stdout noise at import')\nADDRESS_GUARD = False\n"
                     "def run(url, sample=8):\n    print('noise'); return {'u': url}\n"
                     "def as_json(res):\n    return {'target': res['u'], 'normalised': 71, 'band': 'Solid', "
                     "'gate_capped': False, 'tool': 'geo-score-cli/1.1.2', 'rubric_version': 'v1.1', "
@@ -964,6 +964,11 @@ class MCP(Base):
         self.assertIn("https://stripe.com", r["content"][0]["text"])
         self.assertEqual(self.out.getvalue(), "")                                 # noise went to stderr
         self.assertTrue(self.call(srv, "score_site", {"url": "file:///etc/passwd"})["isError"])
+        # a scorer that predates the address guard is not offered: it would let an agent reach private hosts
+        with io.open(fake, "w", encoding="utf-8") as f:
+            f.write("def run(url, sample=8):\n    return {}\ndef as_json(res):\n    return {}\n")
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertNotIn("score_site", [t["name"] for t in self.server().tools()])
 
     def test_stdio_stays_pure_json(self):
         env = dict(os.environ)
@@ -1353,7 +1358,7 @@ class Statistics(Base):
         self.assertEqual(d["overall"]["verdict"], "too few questions to tell")
         self.assertEqual((d["overall"]["p_paired"], d["overall"]["p_adjusted"], d["overall"]["delta_ci"]),
                          (0.0625, None, None))
-        self.assertIn("could not reach p < 0.05", gw.render_diff(d))
+        self.assertIn("Tarone's screen", gw.render_diff(d))
         d = flip(6)                                           # one engine: overall and engine are one test
         self.assertEqual(d["overall"]["p_adjusted"], 0.0312)
         self.assertEqual(d["engines"][0]["p_adjusted"], 0.0312)
@@ -1561,7 +1566,7 @@ class OldRuns(Base):
         self.assertEqual(code, 0)
         # six questions over two engines and the overall row: even a unanimous move could not pass Holm
         self.assertIn("too few questions to tell", out)
-        self.assertNotIn("within noise", out)
+        self.assertNotRegex(out, r"(?m)within noise\s*$")          # no row's verdict is "within noise"
         code, out = self.main("runs", "-c", self.cfgp)
         self.assertIn("cited (headline)", out)
         with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:
