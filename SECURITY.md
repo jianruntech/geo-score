@@ -63,7 +63,8 @@ What the code does about it:
 
 ## Verifying a download
 
-Every release attaches `SHA256SUMS` covering `geo_score.py`, `geo_watch.py`, the wheel and the sdist.
+Every release attaches `SHA256SUMS` covering `geo_score.py`, `geo_watch.py`, the wheel and the sdist,
+and from 1.4.0 the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` and the MCP Registry's `server.json`.
 Download it with the files and check them before running anything:
 
 ```bash
@@ -71,6 +72,19 @@ v=v1.3.0
 base=https://github.com/jianruntech/geo-score/releases/download/$v
 curl -sSfLO "$base/geo_score.py" -O "$base/geo_watch.py" -O "$base/SHA256SUMS"
 grep -E ' geo_(score|watch)\.py$' SHA256SUMS | shasum -a 256 -c
+```
+
+The `.mcpb` is a zip of the same two files (under `server/`), its manifest and the licence, built
+reproducibly by `scripts/release.py`. Check it before you open it in Claude Desktop, check that
+`server.json` names the same checksum (the registry and the clients that install from it rely on
+`fileSha256`), and check that its `server/` files are the released ones byte for byte:
+
+```bash
+mcpb="geo-score-${v#v}.mcpb"
+curl -sSfLO "$base/$mcpb" -O "$base/server.json"
+grep -E " ($mcpb|server\.json)\$" SHA256SUMS | shasum -a 256 -c
+grep -F "\"fileSha256\": \"$(shasum -a 256 "$mcpb" | cut -d' ' -f1)\"" server.json
+for f in geo_score.py geo_watch.py; do unzip -p "$mcpb" "server/$f" | cmp - "$f" && echo "server/$f: same"; done
 ```
 
 The one-line install in the README downloads from a release tag, never from `main`, so the code you
