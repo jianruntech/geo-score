@@ -4,6 +4,31 @@
 
 ## [Unreleased]
 
+MCP 服务成为使用 geo-score 的正式方式：README 里有独立章节和一键安装按钮，每个客户端都有配置说明，有一键安装包，
+同时支持新旧两代协议，而且每个工具都说清楚花不花钱、可以一键关掉花钱的部分。
+
+### 新增
+- **MCP 服务同时支持两代协议。** 2026-07-28（`server/discover`、每个请求自带 `_meta`、缓存提示）与经 `initialize` 协商的
+  2025-11-25、2025-06-18、2025-03-26、2024-11-05 并存。旧版里不认识的版本号按 2025-11-25 回答；新版里不支持的版本返回
+  `-32022` 并列出支持的版本。批量请求只在 2025-03-26 下接受；服务从不发 cursor，所以传 cursor 视为参数错误。
+- **MCP 工具先说花不花钱。** `score_site` 排第一；每个工具都有标题和全部四个标注提示，描述第一句就是费用（「免费，无需 Key」/「付费：……」），
+  输入 schema 拒收未知参数，可为空的字段改用 `anyOf`，严格的客户端也能接受。`ask` 和 `run` 返回结构化结果，`run` 的 dry run 也以数据形式返回计划。
+- **取消即停止花费。** 收到 `notifications/cancelled` 后，`ask` 和 `run` 不再发出下一次调用；被取消的 run 不保存，已发出的调用和费用写到 stderr。
+  工具调用在工作线程里执行（最多 4 个），长时间运行时仍会响应 `ping`，读到 EOF 会及时退出。
+- **可以选择开放哪些工具。** `--toolsets score,ask,watch`、`--tools`、`--exclude-tools`、`--read-only`，各有 `GEO_SCORE_MCP_*`
+  环境变量对应。`--read-only` 启动的服务不可能花钱。新增只读工具 `status`：报告版本、找到的配置、哪些引擎有 Key（从不返回 Key 本身）和上限。
+- **提示与补全。** `audit_site`、`check_citations`、`weekly_watch`、`compare_runs`、`explain_check`，检查项 id 和 run id 可以补全，
+  另有 `geo-score://runs/{run_id}` 资源。它们都不含改法：测量公开，改法不公开。
+- **安装包。** 每次发版附带 Claude Desktop 安装包（`geo-score-X.Y.Z.mcpb`）和 MCP Registry 用的 `server.json`，都在 `SHA256SUMS` 里。
+  仓库本身也是 Claude Code 插件市场（`/plugin marketplace add jianruntech/geo-score`）和 Gemini CLI 扩展，并提供运行 stdio 服务的 Dockerfile。
+  目前还没有发布到任何 registry、PyPI 或容器仓库。
+- **文档。** 两份 README 都新增「MCP 服务」一节：一键安装按钮（Cursor、VS Code、VS Code Insiders、LM Studio）、标准配置、工具表和示例提问；
+  `guide/mcp.zh-CN.md` 给出 Claude Code、Claude Desktop、Codex、Cursor、VS Code、Gemini CLI、Devin Desktop、Zed 的确切配置，
+  以及超时、安全和排查。`scripts/mcp_docs.py` 从服务本身生成工具表和按钮，内容过期时 `check.sh` 报错。
+- **检查。** `scripts/check_mcp.py` 在每个被测的 Python 版本上，用原始 stdio 按两代协议驱动服务；`check.sh --live` 再用官方 MCP Inspector
+  （2.8.0，`--strict`）跑一遍并实际调用 `score_site`。`scripts/test_packaging.py` 逐个核对清单和代码。快照和 1.3.0 契约基线防止工具或必填参数被无意改动。
+- SECURITY.md 新增 MCP 服务的逐工具表：联网、读写文件和花费。
+
 ### 变更
 - **榜单用 1.3.0 重跑**（2026-09-27）：370 站中 317 站有分，中位数 56（95% 置信区间 52–58），最低 11、最高 99；
   83 个站（26%）有门槛项得 0 分（47 个要靠 JavaScript、23 个屏蔽 AI 爬虫、13 个报错）。两轮都有分的 312 个站平均变化 −0.4 分，

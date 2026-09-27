@@ -5,6 +5,45 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+The MCP server becomes a first-class way to use geo-score: its own README section with install
+buttons, a guide for every client, one-click packages, both protocol eras, and a surface that says
+what costs money and lets you turn that off.
+
+### Added
+- **MCP server, both protocol eras.** 2026-07-28 (`server/discover`, per-request `_meta`, cache hints)
+  alongside 2025-11-25, 2025-06-18, 2025-03-26 and 2024-11-05 over `initialize`. An unknown legacy
+  version gets 2025-11-25; an unsupported modern one gets `-32022` with the supported list. Batches are
+  accepted only on 2025-03-26, and a `cursor` is an error because the server never issues one.
+- **MCP tools say what they cost.** `score_site` is listed first. Every tool has a title and all four
+  annotation hints, descriptions open with the cost ("Free, no API key." / "Paid: …"), input schemas
+  reject unknown keys, and nullable fields use `anyOf`, which strict clients accept. `ask` and `run`
+  now return structured results, and a `run` dry run returns its plan as data.
+- **Cancelling stops spending.** `notifications/cancelled` stops `ask` and `run` before their next
+  call; a cancelled run is not saved, and its calls and cost go to stderr. Tool calls run on worker
+  threads (up to 4), so the server still answers `ping` during a long run and exits promptly on EOF.
+- **Choose the tools.** `--toolsets score,ask,watch`, `--tools`, `--exclude-tools` and `--read-only`,
+  each with a `GEO_SCORE_MCP_*` environment twin. `--read-only` gives a server that cannot spend. A new
+  read-only `status` tool reports the version, the config it found, which engines have keys (never the
+  keys) and the caps.
+- **Prompts and completions.** `audit_site`, `check_citations`, `weekly_watch`, `compare_runs` and
+  `explain_check`, with completion for check ids and run ids, and a `geo-score://runs/{run_id}` resource.
+  None of them contains fix instructions: measurement is public, remediation is not.
+- **Packages.** Every release attaches a Claude Desktop bundle (`geo-score-X.Y.Z.mcpb`) and a
+  `server.json` for the MCP Registry, both covered by `SHA256SUMS`. The repository is also a Claude Code
+  plugin marketplace (`/plugin marketplace add jianruntech/geo-score`) and a Gemini CLI extension, and
+  has a Dockerfile for the stdio server. Nothing is published to a registry, PyPI or a container
+  registry yet.
+- **Docs.** A `## MCP server` section in both READMEs with install buttons (Cursor, VS Code, VS Code
+  Insiders, LM Studio), a standard config, the tool table and example prompts; `guide/mcp.md` with the
+  exact setup for Claude Code, Claude Desktop, Codex, Cursor, VS Code, Gemini CLI, Devin Desktop and
+  Zed, plus timeouts, security and troubleshooting. `scripts/mcp_docs.py` generates the tables and
+  buttons from the server, and `check.sh` fails when they are stale.
+- **Checks.** `scripts/check_mcp.py` drives the server over raw stdio in both eras on every tested
+  Python; `check.sh --live` repeats it through the official MCP Inspector (2.8.0, `--strict`) and calls
+  `score_site`. `scripts/test_packaging.py` checks every manifest against the code. A snapshot and a
+  1.3.0 contract baseline stop a tool or a required argument from changing by accident.
+- SECURITY.md has a per-tool table of network access, files and spending for the MCP server.
+
 ### Changed
 - **The leaderboard is re-run with 1.3.0** (2026-09-27): 317 of 370 sites scored, median 56 (95% CI
   52–58), range 11–99; 83 sites (26%) have a gate at zero (47 need JavaScript, 23 block AI crawlers,

@@ -351,14 +351,17 @@ Here `501` stands for what `id -u` prints for you.
 
 | Tool | Level | Cost | Writes | Hints | Args |
 |---|:-:|---|---|---|---|
+| `score_site` | 1 | Free | No | read-only, open-world | **`url`**, `urls`, `sample` |
 | `ask` | 2 | Paid (your keys) | No | non-destructive, open-world | **`question`**, `engines`, `brand`, `domains` |
 | `run` | 3 | Paid (your keys); `dry_run` is free | A run file under `.geo-score/watch/runs/`, next to the config | non-destructive, open-world | `dry_run`, `engines`, `limit`, `max_calls`, `budget_usd` |
-| `list_runs` | 3 | Free | No | read-only | — |
-| `report` | 3 | Free | No | read-only | `run`, `format` |
-| `diff` | 3 | Free | No | read-only | `from`, `to`, `format` |
-| `score_site` | 1 | Free | No | read-only, open-world | **`url`**, `urls`, `sample` |
+| `list_runs` | 3 | Free | No | read-only, idempotent | — |
+| `report` | 3 | Free | No | read-only, idempotent | `run`, `format` |
+| `diff` | 3 | Free | No | read-only, idempotent | `from`, `to`, `format` |
+| `status` | — | Free | No | read-only, idempotent | — |
 
 Resources: `geo-score://rubric/v1.1`.
+
+Prompts: `audit_site` (**`url`**), `check_citations` (**`question`**, `brand`), `weekly_watch`, `compare_runs` (`from`, `to`), `explain_check` (**`check_id`**).
 
 Bold arguments are required. Hints are the tools' MCP annotations: clients may use them to decide what to confirm, and they are hints, not guarantees. **Only `ask` and `run` can spend money**, and only with the provider keys you give the server.
 <!-- END MCP:tools -->
@@ -547,6 +550,11 @@ the path the server tried.
 **`no engine can run — the MCP server's environment has no API keys`.** The keys did not reach the
 server. Desktop apps do not see variables exported in a shell, and Gemini CLI removes them unless they
 are listed in `env`. See [Keys](#config-and-keys).
+
+**`score_site` hangs or times out behind a proxy.** Some clients, the MCP Inspector among them, start
+the server with only a few variables (`PATH`, `HOME` and the like), so the `HTTPS_PROXY` you exported
+never reaches it. Put the proxy in the server's `env` block, or with the Inspector pass
+`-e HTTPS_PROXY=http://host:port` after the `--`.
 
 **A `run` is cut off.** The client stopped waiting: raise its tool timeout, or ask fewer with
 `limit` and `engines`. See [Timeouts](#timeouts-and-cancelling).

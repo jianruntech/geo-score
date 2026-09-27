@@ -61,6 +61,36 @@ What the code does about it:
 - **Piped installs load nothing extra.** `curl … | python3 -` runs level 1 only and never imports a
   `geo_watch.py` from the current directory.
 
+## The MCP server
+
+`geo_score.py mcp` (installed as `geo-score-mcp`) talks MCP over stdio to the client that started it and
+opens no port. stdout carries MCP messages only; diagnostics go to stderr. What each tool touches:
+
+| Tool | Network | Reads | Writes | Spends |
+|---|---|---|---|---|
+| `score_site` | The named public site, the URLs its markup and robots.txt point to, Wikidata and Wikipedia search | Nothing | Nothing | Nothing |
+| `ask` | The AI providers whose keys the server has | `geo-score-watch.json`, if there is one | Nothing | One call per engine |
+| `run` | The AI providers in `geo-score-watch.json` | The config and `queries.csv` | A run file in `.geo-score/watch/runs/`, never for a cancelled run | Up to `max_calls` and `budget_usd` |
+| `list_runs`, `report`, `diff` | None | The config and saved runs | Nothing | Nothing |
+| `status` | None | The config, `queries.csv`, the run directory, and whether each key variable is set (never its value) | Nothing | Nothing |
+
+- **Annotations are hints, not guarantees.** Every tool declares `readOnlyHint`, `destructiveHint`,
+  `idempotentHint` and `openWorldHint`, and some clients approve read-only tools without asking. `ask`
+  and `run` are marked as not read-only so that clients ask before they spend: keep that confirmation on.
+- **A server that cannot spend.** Start it with `--read-only` (or `GEO_SCORE_MCP_READ_ONLY=1`) to drop
+  `ask` and `run`, or with `--toolsets score` to serve scoring only. Neither can be undone by an agent.
+- **Cancelling stops spending.** On `notifications/cancelled`, `ask` and `run` make no further calls.
+  A call already sent completes and is billed (at most one per engine); a cancelled run is not saved,
+  and its calls and cost are printed to stderr. Nothing more is sent for a cancelled request.
+- **Where the keys live.** The server reads keys from its environment only. A key written into a
+  client's config file (an `env` block) sits there in plain text. The Claude Desktop bundle declares
+  its key fields as sensitive, so the host masks them and keeps them as secrets; the Claude Code plugin
+  maps no keys and uses the variables exported in your shell.
+- **User agents.** `score_site` fetches with a desktop browser's user agent and repeats the
+  reachability check with the named AI crawlers' agents (GPTBot, ClaudeBot, PerplexityBot and the others
+  listed in `cli/geo_score.py`). Provider calls send `geo-score-watch/<version>`.
+- The address guard, the fencing of site text and the spending caps above apply to every MCP call.
+
 ## Verifying a download
 
 Every release attaches `SHA256SUMS` covering `geo_score.py`, `geo_watch.py`, the wheel and the sdist,

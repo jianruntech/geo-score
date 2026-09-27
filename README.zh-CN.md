@@ -129,14 +129,17 @@ Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输�
 
 | 工具 | 级别 | 费用 | 写入 | 提示 | 参数 |
 |---|:-:|---|---|---|---|
+| `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
 | `ask` | 2 | 付费（你的 Key） | 否 | 非破坏性、访问外部 | **`question`**、`engines`、`brand`、`domains` |
 | `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd` |
-| `list_runs` | 3 | 免费 | 否 | 只读 | — |
-| `report` | 3 | 免费 | 否 | 只读 | `run`、`format` |
-| `diff` | 3 | 免费 | 否 | 只读 | `from`、`to`、`format` |
-| `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
+| `list_runs` | 3 | 免费 | 否 | 只读、幂等 | — |
+| `report` | 3 | 免费 | 否 | 只读、幂等 | `run`、`format` |
+| `diff` | 3 | 免费 | 否 | 只读、幂等 | `from`、`to`、`format` |
+| `status` | — | 免费 | 否 | 只读、幂等 | — |
 
 资源：`geo-score://rubric/v1.1`。
+
+提示词：`audit_site`（**`url`**）、`check_citations`（**`question`**、`brand`）、`weekly_watch`、`compare_runs`（`from`、`to`）、`explain_check`（**`check_id`**）。
 
 加粗的参数必填。「提示」是工具的 MCP 标注（annotations）：客户端可以据此决定哪些调用要你确认；它们只是提示，不是保证。**只有 `ask` 和 `run` 会花钱**，而且只用你交给服务的服务商 Key。
 <!-- END MCP:tools -->

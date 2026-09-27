@@ -333,14 +333,17 @@ docker run -i --rm --user "$(id -u)" -v "$PWD:/work" -e OPENAI_API_KEY geo-score
 
 | 工具 | 级别 | 费用 | 写入 | 提示 | 参数 |
 |---|:-:|---|---|---|---|
+| `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
 | `ask` | 2 | 付费（你的 Key） | 否 | 非破坏性、访问外部 | **`question`**、`engines`、`brand`、`domains` |
 | `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd` |
-| `list_runs` | 3 | 免费 | 否 | 只读 | — |
-| `report` | 3 | 免费 | 否 | 只读 | `run`、`format` |
-| `diff` | 3 | 免费 | 否 | 只读 | `from`、`to`、`format` |
-| `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
+| `list_runs` | 3 | 免费 | 否 | 只读、幂等 | — |
+| `report` | 3 | 免费 | 否 | 只读、幂等 | `run`、`format` |
+| `diff` | 3 | 免费 | 否 | 只读、幂等 | `from`、`to`、`format` |
+| `status` | — | 免费 | 否 | 只读、幂等 | — |
 
 资源：`geo-score://rubric/v1.1`。
+
+提示词：`audit_site`（**`url`**）、`check_citations`（**`question`**、`brand`）、`weekly_watch`、`compare_runs`（`from`、`to`）、`explain_check`（**`check_id`**）。
 
 加粗的参数必填。「提示」是工具的 MCP 标注（annotations）：客户端可以据此决定哪些调用要你确认；它们只是提示，不是保证。**只有 `ask` 和 `run` 会花钱**，而且只用你交给服务的服务商 Key。
 <!-- END MCP:tools -->
@@ -497,6 +500,9 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
 
 **`no engine can run — the MCP server's environment has no API keys`。** Key 没传到服务里。桌面应用看不到 shell 里 export
 的变量，Gemini CLI 会去掉没在 `env` 里列出的 Key。见[配置与 Key](#配置与-key)。
+
+**在代理后面 `score_site` 一直卡住或超时。** 有些客户端（MCP Inspector 就是一个）启动服务时只传少数几个变量（`PATH`、`HOME` 等），
+你 export 的 `HTTPS_PROXY` 到不了服务里。把代理写进服务配置的 `env`；用 Inspector 时在 `--` 之后加 `-e HTTPS_PROXY=http://主机:端口`。
 
 **`run` 被中途切断。** 客户端不等了：调大它的工具超时，或者用 `limit` 和 `engines` 少问一些。见[超时与取消](#超时与取消)。
 

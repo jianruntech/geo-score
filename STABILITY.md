@@ -22,11 +22,15 @@ tool, or a new rubric version, and a changelog entry that says what to change.
 | Exit codes | [cli/README.md](cli/README.md#options) | Any change |
 | GitHub Action inputs and outputs | `action.yml` | Removing or renaming one |
 | SARIF and JUnit output | `--sarif` (SARIF 2.1.0, one rule per check id), `--junit` (one test per check id) | Changing rule or test ids, or which states fail |
-| MCP tool names and arguments | `geo_score.py mcp` (`tools/list`) | Removing or renaming one, or making an argument required |
+| MCP tool names and arguments | `geo_score.py mcp` (`tools/list`); the 1.3.0 baseline is `cli/fixtures/mcp/contract-1.3.0.json`, checked by `test_geo_watch.py` | Removing or renaming one, or making an argument required |
+| MCP prompt names and arguments | `prompts/list`: `audit_site`, `check_citations`, `weekly_watch`, `compare_runs`, `explain_check` | Removing or renaming one, or making an argument required |
+| MCP protocol versions | `server/discover` and `initialize`: 2026-07-28, 2025-11-25, 2025-06-18, 2025-03-26, 2024-11-05 | Dropping one |
+| MCP server flags and environment | `--toolsets`, `--tools`, `--exclude-tools`, `--read-only`; `GEO_SCORE_MCP_TOOLSETS`, `GEO_SCORE_MCP_TOOLS`, `GEO_SCORE_MCP_EXCLUDE_TOOLS`, `GEO_SCORE_MCP_READ_ONLY` | Removing or renaming one, or changing its default (all tools, read-write) |
 
 Not contracts: the Python functions inside `geo_score.py` and `geo_watch.py` (`run`, `score`,
 `as_json` and the rest are importable, but they can change in any release; build on the CLI, the
-JSON and the MCP tools instead), the text layout of the terminal report, colours, the order of evidence strings,
+JSON and the MCP tools instead), the text layout of the terminal report, colours, the order of evidence strings, the order of MCP tools and the
+wording of their descriptions,
 the benchmark numbers (they are a dated measurement, see `benchmark/`), and the default model
 of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
 
@@ -36,7 +40,7 @@ of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
   a site's score only when the earlier result was wrong, and the changelog then names the check
   and the direction (see 1.1.2).
 - **Minor (1.x):** add a flag, a subcommand, an output format, an optional JSON field, an engine,
-  or an MCP tool; add an exit code that only an opt-in flag can produce (`watch diff --fail-on-drop`
+  an MCP tool, prompt or protocol version; add an exit code that only an opt-in flag can produce (`watch diff --fail-on-drop`
   exits 4), leaving the codes of existing invocations unchanged. A minor release may also correct a
   statistical method when the old one overstated certainty (1.3.0 made `watch diff` paired and
   corrected for multiple comparisons); the changelog then says which verdicts can change.

@@ -300,6 +300,7 @@ server-rendered content and the result caps at 40.
 ## The tool
 
 - [CLI](https://github.com/jianruntech/geo-score/tree/main/cli): level 1 is one file, standard library only, Python 3.8+. `curl -sL .../cli/geo_score.py | python3 - yoursite.com`. Levels 2 and 3 (`--ask`, `watch`, and an MCP server) check whether AI engines actually cite a site, through their APIs with your own keys, and never add that to the score.
+- [MCP server](https://github.com/jianruntech/geo-score/blob/main/guide/mcp.md): `geo-score-mcp` (stdio) gives an agent the same three levels. `score_site` is free and needs no key; `ask` and `run` spend the user's own API credits, and `--read-only` removes them. Setup for Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and Zed is in the guide.
 - [GitHub Action](https://github.com/jianruntech/geo-score/blob/main/action.yml): score on every push, fail the build on regression.
 - [Five hand-scored audits](https://github.com/jianruntech/geo-score/tree/main/examples/audits/v1.1): all 21 checks scored by hand with reproducible evidence.
 

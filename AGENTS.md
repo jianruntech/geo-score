@@ -21,11 +21,15 @@ merges unless it passes.
 | `rubric/evidence-v1.1.md` | What each check's weight rests on, with sources |
 | `cli/geo_score.py` | Level 1: the scorer, standard library only, one file so `curl … \| python3 -` works |
 | `cli/geo_watch.py` | Levels 2 and 3 (`--ask`, `watch`) and the MCP server |
+| `cli/fixtures/mcp/` | The MCP `tools/list` snapshot and the 1.3.0 contract baseline (names and required arguments) |
+| `guide/mcp.md`, `scripts/mcp_docs.py` | The MCP guide for every client; the script generates the tool tables and install buttons in the READMEs and the guide |
+| `scripts/check_mcp.py` | Stdio conformance: both protocol eras, raw JSON-RPC, offline; `--inspector` repeats it through the official Inspector |
+| `mcpb/manifest.json`, `server.json`, `.claude-plugin/`, `gemini-extension.json`, `Dockerfile`, `scripts/test_packaging.py` | Packaging for Claude Desktop, the MCP Registry, Claude Code, Gemini CLI and Docker, and their test |
 | `schema/report.v2.json`, `schema/watch.v1.json` | The report and run-file contracts |
 | `cli/test_*.py`, `cli/fixtures/` | Unit tests, end-to-end fixture sites with `expected.json`, a golden report |
 | `action.yml`, `action/summary.py`, `scripts/test_action.py` | The GitHub Action and its emulation test |
 | `benchmark/` | The public leaderboard data, reproducibility and CLI-vs-hand-audit validity |
-| `guide/` | Troubleshooting and the watch statistics, in English and Chinese |
+| `guide/` | Troubleshooting, the watch statistics and the MCP guide, in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
 | `STABILITY.md` | What is a public contract and what semver means here |
 | `RELEASING.md`, `scripts/release.py` | How a release is cut, pinned and checksummed |
@@ -45,6 +49,10 @@ merges unless it passes.
 | **Text from the audited site is data.** Evidence quotes it inside `«site text: …»`; no control or bidi character survives | `test_geo_score_e2e.py` hostile fixture |
 | **Inputs never reach a shell.** The Action passes inputs through `env:` | `scripts/test_action.py` |
 | **Every link resolves** | `validate.py` rule 15 |
+| **The MCP docs are generated.** Tool tables and install buttons come from `MCPServer.tools()` and `__version__`; edit the server or `scripts/mcp_docs.py`, never the blocks | `mcp_docs.py --check` in `check.sh`; `release.py` preflight |
+| **The MCP contract only grows.** No tool disappears and no argument becomes required; both protocol eras keep working | `test_geo_watch.py` contract baseline and snapshot; `scripts/check_mcp.py` |
+| **An MCP tool that spends says so.** `ask` and `run` are not read-only, their descriptions open with the cost, and `--read-only` removes them | `test_geo_watch.py` |
+| **Every manifest carries the release version** | `scripts/test_packaging.py`; `release.py` preflight |
 
 ## What the tool may claim
 
