@@ -81,7 +81,8 @@ opens no port. stdout carries MCP messages only; diagnostics go to stderr. What 
   `ask` and `run`, or with `--toolsets score` to serve scoring only. Neither can be undone by an agent.
 - **Cancelling stops spending.** On `notifications/cancelled`, `ask` and `run` make no further calls.
   A call already sent completes and is billed (at most one per engine); a cancelled run is not saved,
-  and its calls and cost are printed to stderr. Nothing more is sent for a cancelled request.
+  and its calls and cost are printed to stderr. Nothing more is sent for a cancelled request. At end of
+  input the paid calls stop the same way. One `run` at a time: a second is refused while one is in progress.
 - **Where the keys live.** The server reads keys from its environment only. A key written into a
   client's config file (an `env` block) sits there in plain text. The Claude Desktop bundle declares
   its key fields as sensitive, so the host masks them and keeps them as secrets; the Claude Code plugin

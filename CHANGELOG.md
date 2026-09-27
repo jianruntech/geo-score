@@ -20,7 +20,14 @@ what costs money and lets you turn that off.
   now return structured results, and a `run` dry run returns its plan as data.
 - **Cancelling stops spending.** `notifications/cancelled` stops `ask` and `run` before their next
   call; a cancelled run is not saved, and its calls and cost go to stderr. Tool calls run on worker
-  threads (up to 4), so the server still answers `ping` during a long run and exits promptly on EOF.
+  threads (up to 4), so the server still answers `ping` during a long run. At end of input it stops the
+  paid calls at once and lets free ones answer. One `run` at a time: a second is refused while one is in
+  progress, so parallel calls cannot double the spend of one approval.
+- **Robustness.** A malformed run file or config is an error answer, never the end of the server;
+  arguments that are not an object are refused rather than read as `{}`; stdio is UTF-8 on every
+  platform, and a stream that cannot carry a character gets it escaped instead of losing the answer;
+  `status` never shows a value pasted into `key_env` and reports `run` as ready only when it could start;
+  `GEO_SCORE_MCP_EXCLUDE_TOOLS` and `--exclude-tools` add up.
 - **Choose the tools.** `--toolsets score,ask,watch`, `--tools`, `--exclude-tools` and `--read-only`,
   each with a `GEO_SCORE_MCP_*` environment twin. `--read-only` gives a server that cannot spend. A new
   read-only `status` tool reports the version, the config it found, which engines have keys (never the

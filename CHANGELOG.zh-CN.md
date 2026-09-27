@@ -14,7 +14,11 @@ MCP 服务成为使用 geo-score 的正式方式：README 里有独立章节和�
 - **MCP 工具先说花不花钱。** `score_site` 排第一；每个工具都有标题和全部四个标注提示，描述第一句就是费用（"Free, no API key." / "Paid: …"），
   输入 schema 拒收未知参数，可为空的字段改用 `anyOf`，严格的客户端也能接受。`ask` 和 `run` 返回结构化结果，`run` 的 dry run 也以数据形式返回计划。
 - **取消即停止花费。** 收到 `notifications/cancelled` 后，`ask` 和 `run` 不再发出下一次调用；被取消的 run 不保存，已发出的调用和费用写到 stderr。
-  工具调用在工作线程里执行（最多 4 个），长时间运行时仍会响应 `ping`，读到 EOF 会及时退出。
+  工具调用在工作线程里执行（最多 4 个），长时间运行时仍会响应 `ping`。读到输入结束时立即停下付费调用，免费调用照常返回结果。
+  同一时间只跑一个 `run`：进行中时第二个会被拒绝，并行调用不会让一次授权花两倍的钱。
+- **健壮性。** 损坏的运行文件或配置只会得到一条错误回复，不会让服务退出；不是对象的 arguments 直接拒绝，不再当作 `{}`；
+  各平台上 stdio 都用 UTF-8，输出流表示不了的字符改为转义，不会丢掉整条回复；`status` 从不显示误填进 `key_env` 的值，
+  只有真能开跑时才报告 `run` 就绪；`GEO_SCORE_MCP_EXCLUDE_TOOLS` 与 `--exclude-tools` 取并集。
 - **可以选择开放哪些工具。** `--toolsets score,ask,watch`、`--tools`、`--exclude-tools`、`--read-only`，各有 `GEO_SCORE_MCP_*`
   环境变量对应。`--read-only` 启动的服务不可能花钱。新增只读工具 `status`：报告版本、找到的配置、哪些引擎有 Key（从不返回 Key 本身）和上限。
 - **提示与补全。** `audit_site`、`check_citations`、`weekly_watch`、`compare_runs`、`explain_check`，检查项 id 和 run id 可以补全，

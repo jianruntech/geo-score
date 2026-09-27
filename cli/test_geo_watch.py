@@ -1391,6 +1391,141 @@ class MCPToolsets(Base):
                 self.assertEqual(p.stdout, b"")
 
 
+class MCPRobustness(Base):
+    """What the 1.4.0 pre-release review found: nothing a file or a request carries ends the server, a pasted key
+    is never shown, a non-UTF-8 stream loses no answer, and one approval cannot start two paid runs."""
+    server = MCP.server
+    call = MCP.call
+    start = MCPConcurrency.start
+    settle = MCPConcurrency.settle
+    runs_saved = MCPConcurrency.runs_saved
+    mcp = MCPToolsets.mcp
+    listed = MCPToolsets.listed
+
+    def write_config(self, **extra):
+        cfg = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
+               "max_calls": 10}
+        cfg.update(extra)
+        with io.open(os.path.join(self.tmp, "geo-score-watch.json"), "w", encoding="utf-8") as f:
+            json.dump(cfg, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query\nq01,best free ai video generator\nq02,lumo pricing\n")
+        self.out = io.StringIO()
+        return gw.MCPServer(os.path.join(self.tmp, "geo-score-watch.json"), out=self.out)
+
+    def serve_lines(self, srv, msgs):
+        srv.out = out = Lines()
+        feed, ret = Feed(), []
+        t = threading.Thread(target=lambda: ret.append(srv.serve(feed)), daemon=True)
+        t.start()
+        for m in msgs:
+            feed.send(m)
+        out.wait_for(lambda l: l.get("id") == "last")
+        feed.close()
+        t.join(10)
+        self.assertEqual(ret, [0])
+        return dict((l.get("id"), l) for l in out.lines())
+
+    def test_a_malformed_run_file_or_config_is_an_error_answer_not_the_end(self):
+        srv = self.server()
+        d = os.path.join(self.tmp, ".geo-score", "watch", "runs")
+        os.makedirs(d)
+        with io.open(os.path.join(d, "20260926T083000Z.json"), "w", encoding="utf-8") as f:
+            json.dump({"format": "geo-score/watch.v1"}, f)
+        got = self.serve_lines(srv, [
+            {"jsonrpc": "2.0", "id": 1, "method": "resources/read", "params": {"uri": "geo-score://runs/20260926T083000Z"}},
+            {"jsonrpc": "2.0", "id": "last", "method": "ping"}])
+        self.assertEqual(got[1]["error"]["code"], -32603)
+        self.assertIn("result", got["last"])
+        self.assertEqual(self.call(srv, "list_runs")["structuredContent"]["runs"][0]["readable"], False)
+        srv = self.write_config(competitors=5)
+        got = self.serve_lines(srv, [
+            {"jsonrpc": "2.0", "id": 1, "method": "completion/complete",
+             "params": {"ref": {"type": "ref/prompt", "name": "compare_runs"}, "argument": {"name": "from", "value": ""}}},
+            {"jsonrpc": "2.0", "id": "last", "method": "ping"}])
+        self.assertIn("result", got[1])
+        self.assertIn("result", got["last"])
+
+    def test_status_never_shows_a_key_pasted_into_key_env_and_survives_a_broken_one(self):
+        for bad in ("sk-proj-SECRETabc123", 5):
+            eng = engines("chatgpt-api")
+            eng[0]["key_env"] = bad
+            srv = self.write_config(engines=eng)
+            r = self.call(srv, "status")
+            self.assertFalse(r["isError"], r)
+            blob = r["content"][0]["text"] + json.dumps(r["structuredContent"])
+            self.assertNotIn("SECRET", blob)
+            self.assertIn("key_env is invalid", blob)
+
+    def test_status_says_run_is_ready_only_when_it_could_start(self):
+        # a budget, and an engine that neither reports its cost nor has prices: nothing can run
+        srv = self.write_config(budget_usd=5, engines=engines("chatgpt-api"))
+        self.assertFalse(self.call(srv, "status")["structuredContent"]["ready"]["run"])
+        srv = self.write_config(max_calls=3)                      # 2 questions x 2 engines = 4 > 3
+        self.assertFalse(self.call(srv, "status")["structuredContent"]["ready"]["run"])
+        srv = self.write_config()
+        self.assertTrue(self.call(srv, "status")["structuredContent"]["ready"]["run"])
+
+    def test_a_stream_that_cannot_carry_the_text_still_gets_every_answer(self):
+        srv = self.server()
+        buf = io.BytesIO()
+        srv.out = io.TextIOWrapper(buf, encoding="ascii", newline="\n")
+        srv.send(srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}))
+        srv.send({"jsonrpc": "2.0", "id": 2, "result": {"text": "\ud800 lone surrogate"}})
+        srv.out.flush()
+        lines = [json.loads(x) for x in buf.getvalue().decode("ascii").splitlines()]
+        self.assertEqual([l["id"] for l in lines], [1, 2])
+        self.assertIn("«site text", json.dumps(lines[0], ensure_ascii=False))
+
+    def test_arguments_that_are_not_an_object_start_nothing(self):
+        api = self.fake(self.standard_routes())
+        srv = self.server()
+        r = srv.handle({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                        "params": {"name": "run", "arguments": json.dumps({"dry_run": True})}})["result"]
+        self.assertTrue(r["isError"])
+        self.assertIn("arguments must be an object", r["content"][0]["text"])
+        self.assertEqual((len(api.calls), self.runs_saved()), (0, []))
+
+    def test_a_second_run_during_a_run_is_refused(self):
+        gate = threading.Event()
+        with contextlib.redirect_stderr(io.StringIO()):
+            srv, feed, out, t, ret, api = self.start(gate)
+            feed.send({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "run", "arguments": {}}})
+            deadline = time.time() + 10
+            while not api.calls and time.time() < deadline:
+                time.sleep(0.02)
+            feed.send({"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": "run", "arguments": {}}})
+            second = [l for l in out.wait_for(lambda l: l.get("id") == 8) if l.get("id") == 8][0]
+            self.assertTrue(second["result"]["isError"])
+            self.assertIn("already in progress", second["result"]["content"][0]["text"])
+            gate.set()
+            out.wait_for(lambda l: l.get("id") == 7)
+            feed.close()
+            t.join(5)
+        self.assertEqual(len(self.runs_saved()), 1)
+        self.assertEqual(len(api.calls), 4)                       # one run's worth: 2 questions x 2 engines
+
+    def test_end_of_file_lets_a_free_call_answer(self):
+        srv = self.server()
+        srv.out = out = Lines()
+        feed, ret = Feed(), []
+        t = threading.Thread(target=lambda: ret.append(srv.serve(feed)), daemon=True)
+        t.start()
+        feed.send({"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "status", "arguments": {}}})
+        feed.close()
+        t.join(10)
+        self.assertEqual(ret, [0])
+        got = [l for l in out.lines() if l.get("id") == 5]
+        self.assertEqual(len(got), 1)
+        self.assertFalse(got[0]["result"]["isError"], got)          # answered for real, not "cancelled"
+
+    def test_exclusions_from_the_environment_and_the_command_line_add_up(self):
+        ls = [{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
+        self.assertEqual(self.listed(self.mcp("--exclude-tools", "diff", lines=ls,
+                                              env={"GEO_SCORE_MCP_EXCLUDE_TOOLS": "ask,run"})),
+                         ["score_site", "list_runs", "report", "status"])
+
+
 MODERN = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
           "io.modelcontextprotocol/clientInfo": {"name": "t", "version": "0"},
           "io.modelcontextprotocol/clientCapabilities": {}}

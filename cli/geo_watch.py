@@ -2314,16 +2314,18 @@ def rubric_resource(gs):
 MCP_WORKERS = 4          # tools/call requests served at once; more wait their turn
 PROGRESS_EVERY = 0.2     # seconds between two progress notifications (the last one always goes out)
 EOF_GRACE = 2.0          # seconds the calls in flight get to answer once stdin closes
+FREE_EOF_GRACE = 120.0   # free calls (score_site, reports) are not stopped: `printf … | geo_score.py mcp` gets its answer
 
 
 class _Call(object):
     """One tools/call in flight. `stop` ends the work (the client cancelled it, or stdin closed); `cancelled`
     also silences it: after notifications/cancelled nothing more is written for that request."""
-    __slots__ = ("stop", "cancelled")
+    __slots__ = ("stop", "cancelled", "paid")
 
-    def __init__(self):
+    def __init__(self, paid=False):
         self.stop = threading.Event()
         self.cancelled = False
+        self.paid = paid          # ask and run: stopped at end of input, so no new call is billed
 
 
 def _rid(v):
@@ -2340,6 +2342,7 @@ class MCPServer(object):
         self.inflight = {}                    # _rid(request id) -> _Call
         self.workers = []
         self.slots = threading.BoundedSemaphore(MCP_WORKERS)
+        self.run_lock = threading.Lock()      # one `run` at a time: each run has its own cap and ledger
         self.session_version = None           # the legacy revision initialize settled on; batches need it
         self.geo_score = load_geo_score()
         if self.geo_score is not None and not hasattr(self.geo_score, "ADDRESS_GUARD"):
@@ -2355,7 +2358,12 @@ class MCPServer(object):
             if call is not None and call.cancelled:
                 return          # the client cancelled this request: no progress, no answer
             try:
-                self.out.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                try:
+                    self.out.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                except UnicodeEncodeError:
+                    # a stream that cannot carry the text (a non-UTF-8 code page, a lone surrogate from the
+                    # client): the same message, escaped, rather than a silently lost answer
+                    self.out.write(json.dumps(obj) + "\n")
                 self.out.flush()
             except (OSError, ValueError):
                 pass            # the client has gone; stdin's end of file stops the loop
@@ -2547,6 +2555,9 @@ class MCPServer(object):
                     sm = summary_of(load_run(self._cfg(), m.group(1)))
                 except ConfigError:
                     sm = None
+                except Exception as e:
+                    # a run file edited by hand or cut short: say so, and keep serving
+                    raise RPCError(-32603, "run %s cannot be read: %s" % (m.group(1), _cut(e.__class__.__name__, 60))) from None
                 if sm is not None:
                     # a saved run is the user's own data: never shared by a cache, and read afresh
                     return {"contents": [{"uri": uri, "mimeType": "application/json",
@@ -2680,7 +2691,7 @@ class MCPServer(object):
     def _run_ids(self):
         try:
             return list_run_ids(self._cfg()) if os.path.isfile(self.config_path) else []
-        except ConfigError:
+        except Exception:          # completion is a convenience: a broken config completes nothing
             return []
 
     def resources(self):
@@ -2694,7 +2705,10 @@ class MCPServer(object):
     def call(self, params, ctx=None):
         ctx = ctx or _Call()
         name, args = params.get("name"), params.get("arguments")
-        args = args if isinstance(args, dict) else {}
+        if args is not None and not isinstance(args, dict):
+            # never read as {}: a JSON string holding {"dry_run": true} would otherwise start a real, paid run
+            return {"content": [{"type": "text", "text": "arguments must be an object"}], "isError": True}
+        args = args or {}
         token = (params.get("_meta") or {}).get("progressToken") if isinstance(params.get("_meta"), dict) else None
         fn = getattr(self, "tool_" + name, None) if isinstance(name, str) and re.match(r"^[a-z_]+$", name) else None
         if fn is None or name not in [t["name"] for t in self.tools()]:
@@ -2797,8 +2811,14 @@ class MCPServer(object):
             raise ConfigError("\n".join(lines + ["no engine can run"]))
         if planned > max_calls:
             raise ConfigError("\n".join(lines + ["the plan exceeds the cap; pass limit or engines to ask fewer"]))
-        run = execute(cfg.brand, cfg.competitors, engines, queries, cfg.runs, cfg.country, cfg.prices, max_calls,
-                      budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None)
+        # one run at a time: two parallel calls would each get the full cap, doubling the spend of one approval
+        if not self.run_lock.acquire(False):
+            raise ConfigError("a run is already in progress; wait for it to finish or cancel it")
+        try:
+            run = execute(cfg.brand, cfg.competitors, engines, queries, cfg.runs, cfg.country, cfg.prices, max_calls,
+                          budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None)
+        finally:
+            self.run_lock.release()
         if ctx is not None and ctx.stop.is_set():
             # cancelled, or stdin closed: a partial run would read as a full one in report and diff, so it is
             # not saved; what it cost goes to stderr, where the client's log keeps it
@@ -2822,7 +2842,7 @@ class MCPServer(object):
                 rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h))])
                 runs.append({"run_id": rid, "answered": o["answered"], "planned": o["planned"],
                              "cited_rate": h["cited_rate"], "cited_ci": head_ci(h), "readable": True})
-            except ConfigError:
+            except Exception:          # a malformed run file is listed as unreadable, not fatal to the list
                 rows.append([rid, "unreadable", "", ""])
                 runs.append({"run_id": rid, "answered": None, "planned": None, "cited_rate": None,
                              "cited_ci": None, "readable": False})
@@ -2860,12 +2880,28 @@ class MCPServer(object):
                 runs = len(list_run_ids(cfg))
         if not engines:          # what ask uses without a config
             engines = [dict(e, model=PROVIDERS[e["provider"]]["model"]) for e in DEFAULT_ENGINES]
-        rows = [{"id": e["id"], "provider": e["provider"], "model": e["model"], "key_present": bool(key_for(e)),
-                 "key_env": key_names(e), "priced": has_price(prices, e)} for e in engines]
+        rows = []
+        for e in engines:
+            kv = e.get("key_env")
+            # key_env names a variable; anything else may be a key pasted in by mistake, so it is never shown
+            label = key_names(e) if not kv or (isinstance(kv, str) and ENV_RE.match(kv)) else "(key_env is invalid: see the config errors)"
+            try:
+                present = bool(key_for(e))
+            except Exception:
+                present = False
+            rows.append({"id": e["id"], "provider": e["provider"], "model": e["model"], "key_present": present,
+                         "key_env": label, "priced": has_price(prices, e)})
         keyed = any(r["key_present"] for r in rows)
         usable = cfg is not None and not cfg.errors          # what every level-3 tool needs; ask can do without
+        runnable = False
+        if usable and questions:
+            try:          # the same test run applies before it spends: an engine that can run, a plan under the cap
+                active, _ = plan(engines, prices, caps["budget_usd"], False)
+                runnable = bool(active) and questions * len(active) * cfg.runs <= caps["max_calls"]
+            except Exception:
+                runnable = False
         can = {"score_site": self.geo_score is not None, "ask": keyed and (usable or not conf["found"]),
-               "run": usable and keyed and bool(questions), "list_runs": usable, "report": usable and bool(runs),
+               "run": runnable, "list_runs": usable, "report": usable and bool(runs),
                "diff": usable and (runs or 0) >= 2, "status": True}
         st = {"version": __version__, "tools": offered, "ready": dict((n, can[n]) for n in offered),
               "toolsets": [k for k in sorted(MCP_TOOLSETS) if any(n in offered for n in MCP_TOOLSETS[k])],
@@ -2919,7 +2955,8 @@ class MCPServer(object):
 
     def _spawn(self, msg):
         """A tools/call runs on a worker thread, so the loop keeps reading: ping, cancellation, other calls."""
-        key, call = _rid(msg["id"]), _Call()
+        name = msg.get("params", {}).get("name") if isinstance(msg.get("params"), dict) else None
+        key, call = _rid(msg["id"]), _Call(paid=name in PAID_TOOLS)
         with self.lock:
             self.inflight[key] = call
             self.workers = [t for t in self.workers if t.is_alive()]
@@ -2947,14 +2984,16 @@ class MCPServer(object):
                 if self.inflight.get(key) is call:
                     del self.inflight[key]
 
-    def close(self, grace=EOF_GRACE):
-        """stdin closed: stop every call in flight (no new paid calls), let them answer for `grace` seconds."""
+    def close(self, grace=EOF_GRACE, free_grace=FREE_EOF_GRACE):
+        """stdin closed: stop the paid calls in flight (no new call is billed) and give them `grace` seconds to
+        answer; free calls run on to their end, for at most `free_grace` seconds."""
         with self.lock:
             calls = list(self.inflight.values())
             workers = list(self.workers)
         for c in calls:
-            c.stop.set()
-        deadline = time.time() + grace
+            if c.paid:
+                c.stop.set()
+        deadline = time.time() + (free_grace if any(not c.paid for c in calls) else grace)
         for t in workers:
             t.join(max(0.0, deadline - time.time()))
         return 0
@@ -2976,7 +3015,7 @@ class MCPServer(object):
                     self.send({"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": (
                         "batches are not supported in this protocol version" if msg else "empty batch")}})
                     continue
-                out = [r for r in (self.handle(m) for m in msg) if r is not None]
+                out = [r for r in (self._handle_safely(m) for m in msg) if r is not None]
                 if out:
                     self.send(out)
                 continue
@@ -2984,10 +3023,20 @@ class MCPServer(object):
                     and _rid(msg.get("id")) is not None):
                 self._spawn(msg)
                 continue
-            r = self.handle(msg)
+            r = self._handle_safely(msg)
             if r is not None:
                 self.send(r)
         return self.close()
+
+    def _handle_safely(self, msg):
+        """handle() on the loop's own thread: an exception becomes an error answer, never the end of the server."""
+        try:
+            return self.handle(msg)
+        except Exception as e:
+            if not isinstance(msg, dict) or "id" not in msg:
+                return None          # a notification gets no answer, even an error
+            return {"jsonrpc": "2.0", "id": msg.get("id"),
+                    "error": {"code": -32603, "message": "internal error: %s" % _cut(e.__class__.__name__, 80)}}
 
 
 def _flag(env):
@@ -3005,11 +3054,18 @@ def cmd_mcp(args):
         env = lambda name: os.environ.get(name) or None
         enabled = tool_filter(args.toolsets if args.toolsets is not None else env("GEO_SCORE_MCP_TOOLSETS"),
                               args.tools if args.tools is not None else env("GEO_SCORE_MCP_TOOLS"),
-                              args.exclude_tools if args.exclude_tools is not None else env("GEO_SCORE_MCP_EXCLUDE_TOOLS"),
+                              # exclusions add up: a command line cannot switch back on what the environment took off
+                              _names(env("GEO_SCORE_MCP_EXCLUDE_TOOLS")) + _names(args.exclude_tools),
                               args.read_only or _flag("GEO_SCORE_MCP_READ_ONLY"))
     except ValueError as e:
         print("geo-score mcp: %s" % e, file=sys.stderr)
         return 2
+    for stream in (sys.stdin, sys.stdout):
+        try:
+            # MCP's stdio transport is UTF-8; Windows pipes default to the ANSI code page (GBK on Chinese Windows)
+            stream.reconfigure(encoding="utf-8", errors="replace" if stream is sys.stdin else "strict", newline="\n")
+        except (AttributeError, ValueError, OSError):
+            pass
     out = sys.stdout
     sys.stdout = sys.stderr        # stdout carries MCP messages only: anything printed along the way goes to stderr
     try:
