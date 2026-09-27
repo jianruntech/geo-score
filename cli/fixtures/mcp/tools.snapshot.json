@@ -982,6 +982,164 @@
     "type": "object"
    },
    "title": "Compare two runs"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "What can run now"
+   },
+   "description": "Free, local: reads the config and which API keys are set, never their values. Which tools this server offers and which can run now, the engines with their models, whether each has a key and prices, the number of questions and saved runs, and the caps.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "type": "object"
+   },
+   "name": "status",
+   "outputSchema": {
+    "description": "What this server can do right now, and why not. Never holds a key.",
+    "properties": {
+     "caps": {
+      "properties": {
+       "budget_usd": {
+        "anyOf": [
+         {
+          "type": "number"
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "max_calls": {
+        "type": "integer"
+       }
+      },
+      "required": [
+       "max_calls",
+       "budget_usd"
+      ],
+      "type": "object"
+     },
+     "config": {
+      "properties": {
+       "errors": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "found": {
+        "type": "boolean"
+       },
+       "path": {
+        "type": "string"
+       },
+       "warnings": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "path",
+       "found",
+       "errors"
+      ],
+      "type": "object"
+     },
+     "engines": {
+      "items": {
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "key_env": {
+         "description": "the variable's name, never its value",
+         "type": "string"
+        },
+        "key_present": {
+         "type": "boolean"
+        },
+        "model": {
+         "type": "string"
+        },
+        "priced": {
+         "type": "boolean"
+        },
+        "provider": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "id",
+        "provider",
+        "model",
+        "key_present",
+        "priced"
+       ],
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "questions": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "ready": {
+      "additionalProperties": {
+       "type": "boolean"
+      },
+      "description": "per offered tool: can it run with this config and these keys",
+      "type": "object"
+     },
+     "runs": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "tools": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "toolsets": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "version": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "version",
+     "toolsets",
+     "tools",
+     "ready",
+     "config",
+     "engines",
+     "questions",
+     "caps"
+    ],
+    "type": "object"
+   },
+   "title": "What can run now"
   }
  ]
 }

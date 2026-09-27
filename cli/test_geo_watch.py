@@ -867,7 +867,7 @@ class MCP(Base):
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"})["result"], {})
         names = [t["name"] for t in srv.handle({"jsonrpc": "2.0", "id": 4, "method": "tools/list"})["result"]["tools"]]
-        self.assertEqual(names[:6], ["score_site", "ask", "run", "list_runs", "report", "diff"])   # the free one first
+        self.assertEqual(names, ["score_site", "ask", "run", "list_runs", "report", "diff", "status"])   # free first
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"})["error"]["code"], -32601)
         self.assertEqual(srv.handle({"id": 6, "method": "ping"})["error"]["code"], -32600)
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "id": 9, "result": {}}))
@@ -1090,7 +1090,7 @@ class MCPSurface(Base):
         self.assertEqual(hints["score_site"], (True, False, True))      # the live site can change between calls
         for name in ("ask", "run"):
             self.assertEqual(hints[name], (False, False, True), name)     # paid: never marked read-only
-        for name in ("list_runs", "report", "diff"):
+        for name in ("list_runs", "report", "diff", "status"):
             self.assertEqual(hints[name], (True, True, False), name)
 
     def test_schemas_are_portable_and_closed(self):
@@ -1112,16 +1112,18 @@ class MCPSurface(Base):
         self.assertTrue(d["score_site"].startswith("Free, no API key."))
         self.assertTrue(d["ask"].startswith("Paid: one API call per configured engine, billed to your keys."))
         self.assertTrue(d["run"].startswith("Paid: up to max_calls calls; call with dry_run:true first."))
-        for name in ("list_runs", "report", "diff"):
+        for name in ("list_runs", "report", "diff", "status"):
             self.assertTrue(d[name].startswith("Free, local:"), name)
 
     def test_the_first_512_characters_of_the_instructions_stand_alone(self):
         init = self.server().handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                                      "params": {"protocolVersion": "2025-06-18"}})["result"]
-        head = init["instructions"][:512]
+        text = init["instructions"]
+        head = text[:512]
         self.assertIn("«site text", head)                    # Codex keeps only this much
         self.assertIn("dry_run", head)
-        self.assertTrue(head.rstrip().endswith("."), head[-40:])   # no sentence cut in half at 512
+        end = text.index("not a trend.") + len("not a trend.")
+        self.assertLessEqual(end, 512)                       # the self-contained part ends before the cut
         info = init["serverInfo"]
         self.assertEqual((info["name"], info["version"]), ("geo-score", gw.__version__))
         self.assertEqual(info["websiteUrl"], "https://github.com/jianruntech/geo-score")
@@ -1276,6 +1278,117 @@ class MCPConcurrency(Base):
         feed.close()
         t.join(5)
         self.assertEqual(ret, [0])
+
+
+class MCPToolsets(Base):
+    """--toolsets, --tools, --exclude-tools and --read-only, their environment twins, and the status tool."""
+    server = MCP.server
+
+    def test_the_filter(self):
+        f = gw.tool_filter
+        self.assertEqual(f(), set(gw.MCP_TOOLS))
+        self.assertEqual(f("all"), set(gw.MCP_TOOLS))
+        self.assertEqual(f("score"), {"score_site", "status"})
+        self.assertEqual(f("score,ask"), {"score_site", "ask", "status"})
+        self.assertEqual(f(["watch"], ["ask"]), {"run", "list_runs", "report", "diff", "ask", "status"})
+        self.assertEqual(f(None, "score_site"), {"score_site", "status"})            # --tools alone: only those
+        self.assertEqual(f(read_only=True), set(gw.MCP_TOOLS) - {"ask", "run"})
+        self.assertEqual(f("ask,watch", read_only=True), {"list_runs", "report", "diff", "status"})
+        self.assertEqual(f(None, "ask,run", "run"), {"ask", "status"})              # exclusion always wins
+        self.assertEqual(f(exclude="status"), set(gw.MCP_TOOLS) - {"status"})
+        for bad, word in (({"toolsets": "nope"}, "toolset"), ({"tools": "score"}, "tool"),
+                          ({"exclude": "scor_site"}, "tool")):
+            with self.assertRaises(ValueError) as cm:
+                f(**bad)
+            self.assertIn("unknown %s" % word, str(cm.exception))
+            self.assertIn("known: ", str(cm.exception))
+
+    def test_capabilities_resources_and_calls_follow_the_filter(self):
+        cfgp = os.path.join(self.tmp, "none.json")
+        srv = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("ask"))
+        self.assertEqual([t["name"] for t in srv.tools()], ["ask", "status"])
+        init = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-11-25"}})
+        self.assertNotIn("resources", init["result"]["capabilities"])                 # the rubric is in the score set
+        self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 2, "method": "resources/list"})["result"]["resources"], [])
+        r = srv.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "score_site",
+                                                                                      "arguments": {"url": "a.example"}}})
+        self.assertEqual(r["error"]["code"], -32602)                                  # not offered, so unknown
+        ro = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter(read_only=True))
+        self.assertEqual([t["name"] for t in ro.tools()], ["score_site", "list_runs", "report", "diff", "status"])
+        self.assertTrue(all(t["annotations"]["readOnlyHint"] for t in ro.tools()))
+
+    def test_status_says_what_can_run_and_never_shows_a_key(self):
+        os.environ["OPENAI_API_KEY"] = "sk-test-SECRET"
+        os.environ["PERPLEXITY_API_KEY"] = "pplx-test-SECRET with a space"            # malformed: named, never echoed
+        for with_config in (False, True):
+            srv = self.server(with_config)
+            r = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "status"}})
+            wire = json.dumps(r)
+            self.assertNotIn("SECRET", wire)
+            res = r["result"]
+            self.assertFalse(res["isError"], res)
+            st = res["structuredContent"]
+            self.assertEqual(schema_errors(st, gw.OUT_STATUS), [])
+            self.assertEqual(st["version"], gw.__version__)
+            self.assertEqual(st["tools"], list(gw.MCP_TOOLS))
+            self.assertEqual(st["toolsets"], ["ask", "score", "status", "watch"])
+            self.assertEqual(st["config"]["found"], with_config)
+            keys = dict((e["id"], e["key_present"]) for e in st["engines"])
+            self.assertTrue(keys["chatgpt-api"])
+            self.assertFalse(keys["perplexity-api"])
+            self.assertTrue(st["ready"]["ask"])
+            self.assertTrue(st["ready"]["score_site"])
+        self.assertEqual((st["questions"], st["runs"], st["caps"]), (2, 0, {"max_calls": 10, "budget_usd": None}))
+        self.assertEqual((st["ready"]["run"], st["ready"]["report"], st["ready"]["diff"]), (True, False, False))
+        self.assertIn("OPENAI_API_KEY", [e["key_env"] for e in st["engines"]])
+        broken = self.server(with_config=False)
+        with io.open(broken.config_path, "w", encoding="utf-8") as f:
+            f.write("{not json")
+        st = broken.call({"name": "status"})["structuredContent"]
+        self.assertTrue(st["config"]["found"])
+        self.assertIn("not valid JSON", st["config"]["errors"][0])
+        self.assertEqual((st["ready"]["ask"], st["ready"]["run"], st["ready"]["list_runs"]), (False, False, False))
+
+    def mcp(self, *args, env=None, entry=None, lines=()):
+        e = dict(os.environ)
+        for k in ALL_KEY_ENVS + ["GEO_SCORE_MCP_TOOLSETS", "GEO_SCORE_MCP_TOOLS", "GEO_SCORE_MCP_EXCLUDE_TOOLS",
+                                 "GEO_SCORE_MCP_READ_ONLY"]:
+            e.pop(k, None)
+        e.update(env or {})
+        cmd = [sys.executable, os.path.join(HERE, "geo_score.py"), "mcp"] if entry is None else entry
+        return subprocess.run(cmd + ["-c", os.path.join(self.tmp, "none.json")] + list(args), capture_output=True,
+                              env=e, timeout=60, input="".join(json.dumps(m) + "\n" for m in lines).encode())
+
+    def listed(self, p):
+        self.assertEqual(p.returncode, 0, p.stderr)
+        return [t["name"] for t in json.loads(p.stdout.decode().splitlines()[0])["result"]["tools"]]
+
+    def test_flags_and_environment_on_both_entry_points(self):
+        ls = [{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
+        free = ["score_site", "list_runs", "report", "diff", "status"]
+        self.assertEqual(self.listed(self.mcp("--read-only", lines=ls)), free)
+        self.assertEqual(self.listed(self.mcp(lines=ls, env={"GEO_SCORE_MCP_READ_ONLY": "1"})), free)
+        self.assertEqual(self.listed(self.mcp("--toolsets", "score", lines=ls)), ["score_site", "status"])
+        self.assertEqual(self.listed(self.mcp(lines=ls, env={"GEO_SCORE_MCP_TOOLSETS": "watch",
+                                                             "GEO_SCORE_MCP_EXCLUDE_TOOLS": "diff,status"})),
+                         ["run", "list_runs", "report"])
+        self.assertEqual(self.listed(self.mcp("--tools", "ask", "--tools", "diff", lines=ls,
+                                              env={"GEO_SCORE_MCP_TOOLS": "run"})),        # a flag beats its twin
+                         ["ask", "diff", "status"])
+        # the console script geo-score-mcp goes through geo_score.mcp_main with the same flags
+        entry = [sys.executable, "-c", "import sys; sys.path.insert(0, %r); import geo_score; "
+                                       "sys.argv[0] = 'geo-score-mcp'; geo_score.mcp_main()" % HERE]
+        self.assertEqual(self.listed(self.mcp("--read-only", "--exclude-tools", "status", entry=entry, lines=ls)),
+                         ["score_site", "list_runs", "report", "diff"])
+        for args, env, word in ((["--toolsets", "nope"], {}, "unknown toolset 'nope' (known: all, ask, score, status, watch)"),
+                                (["--tools", "score"], {}, "unknown tool 'score' (known: score_site, ask, run,"),
+                                ([], {"GEO_SCORE_MCP_EXCLUDE_TOOLS": "asks"}, "unknown tool 'asks'"),
+                                ([], {"GEO_SCORE_MCP_READ_ONLY": "maybe"}, "GEO_SCORE_MCP_READ_ONLY must be 1 or 0")):
+            for e in (None, entry):
+                p = self.mcp(*args, env=env, entry=e)
+                self.assertEqual(p.returncode, 2, (args, env, p.stderr))
+                self.assertIn(word, p.stderr.decode())
+                self.assertEqual(p.stdout, b"")
 
 
 MODERN = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
