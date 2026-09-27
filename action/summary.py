@@ -3,7 +3,7 @@
 Used by action.yml, which runs the CLI once and hands the report here, so the summary, the
 annotations and the uploaded files all describe the same fetch. Not part of the CLI contract.
 """
-import json, os, sys
+import html, json, os, re, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cli"))
 import geo_score as gs  # noqa: E402  (names and the rubric version come from the same release)
@@ -27,7 +27,16 @@ def _cut(s, n):
     if len(s) <= n:
         return s
     # cut on a word boundary: a summary line ending mid-word reads like the tool broke
-    return s[:n].rsplit(" ", 1)[0].rstrip(",.;:") + " …"
+    out = s[:n].rsplit(" ", 1)[0].rstrip(",.;:") + " …"
+    # and never leave a «site text: …» fence open
+    return out + "»" if out.rfind("«") > out.rfind("»") else out
+
+
+def _md(s):
+    """Evidence quotes the audited site. In a job summary, GitHub renders Markdown and some HTML, so a
+    page could add links, images or an entity such as &raquo; that closes the fence early: escape it."""
+    s = html.escape(s, quote=False)
+    return re.sub(r"([\\`*_\[\]()!|<>#~])", r"\\\1", s)
 
 
 def main(path, annotate):
@@ -67,7 +76,7 @@ def main(path, annotate):
              "| Check | Score | Why |", "|---|:-:|---|"]
     for c in checks:
         s = "%d/%d" % (c["points"], c["max"]) if c["state"] == "scored" else "—"
-        why = _cut(c.get("evidence") or c.get("reason") or "", 150).replace("|", "\\|")
+        why = _md(_cut(c.get("evidence") or c.get("reason") or "", 150))
         lines.append("| %s `%s` | %s | %s |" % (NAMES.get(c["id"], ""), c["id"], s, why))
     lines += ["", "— means the CLI cannot observe the check; it leaves the denominator instead of scoring 0.",
               "Scored against the open [AIV rubric %s](https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md)."

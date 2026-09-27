@@ -1,7 +1,7 @@
 {
-  "_normalised": 77,
-  "_band": "Solid",
-  "_gate_capped": false,
+  "_normalised": 40,
+  "_band": "Early",
+  "_gate_capped": true,
   "_lang": "en",
   "_sample_source": "sitemap",
   "_sampled": [
@@ -15,9 +15,9 @@
     "/pricing.html"
   ],
   "_notes": {
-    "g.robots": "SUSPECTED BUG: rubric says 0. RFC 9309 lets one group list several user-agent lines; the parser attaches the Disallow only to the last one (CCBot, not a retrieval UA), so GPTBot, ClaudeBot and PerplexityBot read as unblocked and the wildcard Allow scores 5."
+    "g.robots": "One group lists GPTBot, ClaudeBot, PerplexityBot and CCBot over one Disallow: / (RFC 9309 2.1), so retrieval crawlers are blocked: 0 and the gate cap. Before 1.3.0 the rule was attached to CCBot only and this scored 5."
   },
-  "g.robots": 5,
+  "g.robots": 0,
   "g.reachable": 5,
   "g.ssr": 5,
   "p1.sitemap": 4,

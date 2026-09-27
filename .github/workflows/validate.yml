@@ -5,6 +5,7 @@ on:
   schedule: [{cron: "0 7 * * 1"}]     # the CLI talks to live sites — catch drift weekly
   workflow_dispatch:
 jobs:
+  # v1 moves only when scripts/release.py publishes a release (RELEASING.md), never on a push.
   # One gate, one script: scripts/check.sh is what maintainers run before every merge (hosted Actions
   # has not run on this organisation so far). Running the same script here means the two cannot drift.
   check:
@@ -15,27 +16,8 @@ jobs:
       matrix: {py: ["3.8", "3.12"]}
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}      # validate.py rule 28 reads the release tags
       - uses: actions/setup-python@v5
         with: {python-version: "${{ matrix.py }}"}
       - run: pip install --quiet jsonschema ruff
       - run: bash scripts/check.sh --live
-
-  # README 和 examples/ci 都写 `uses: jianruntech/geo-score@v1`。v1 是浮动大版本标签，
-  # 手动移它就会忘 —— 上一次它落后 main 二十一个提交，照 README 做的人拿到的是修
-  # 三个静默测错站的 bug 之前的 CLI。让它跟着走，而且只在 CI 全绿之后才跟，
-  # 这样 v1 永远不会指向一个没过检查的提交。
-  tag:
-    name: move v1
-    needs: [check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions: {contents: write}
-    steps:
-      - uses: actions/checkout@v4
-      - name: point v1 at this commit
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f v1 "$GITHUB_SHA"
-          git push --force origin v1
-          echo "v1 → $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

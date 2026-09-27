@@ -40,6 +40,15 @@ for py in "${PYS[@]}"; do
   "$py" cli/test_geo_score_e2e.py
 done
 
+# the end-to-end suite validates every report against schema/report.v2.json when jsonschema is importable
+if python3 -c "import jsonschema" >/dev/null 2>&1; then
+  step "reports against the published schema (jsonschema)"; python3 cli/test_geo_score_e2e.py
+elif command -v uv >/dev/null 2>&1 && uv run --no-project --with jsonschema python -c "import jsonschema" >/dev/null 2>&1; then
+  step "reports against the published schema (jsonschema via uv)"; uv run --no-project --with jsonschema python cli/test_geo_score_e2e.py
+else
+  echo "jsonschema unavailable: the full schema check was skipped (pip install jsonschema)"
+fi
+
 step "the GitHub Action, run as a runner would (scripts/test_action.py)"
 python3 scripts/test_action.py
 

@@ -18,7 +18,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_
 | `--explain`, `-e` | Print the evidence behind every check, not just the score |
 | `--json` | Machine-readable output conforming to [`schema/report.v2.json`](../schema/report.v2.json) |
 | `--json-out FILE` | Also write that JSON to FILE, from the same run as the report on screen |
-| `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). For GitHub code scanning or any SARIF viewer |
+| `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). Each result points at the line of its check in the `--json-out` report (or at the SARIF file when there is none), with the site named in the message, which is what GitHub code scanning requires |
 | `--junit FILE` | Also write JUnit XML: one test per check. A check at zero fails, a check the CLI cannot observe is skipped, partial credit passes |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
 | `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
@@ -92,18 +92,18 @@ The [Claude Code skill](../SKILL.md) scores all 21.
 ### How far to trust each check
 
 Measured by re-scoring the five published hand audits on the same pages
-([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 73% of 85 check
-pairs and read 4.8 points lower on average.
+([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 78% of 86 check
+pairs and read 4.2 points lower on average.
 
 | How the CLI reads it | Checks | Same tier as the hand audit |
 |---|---|--:|
-| **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 90% of 40 pairs |
-| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 58% of 45 pairs |
+| **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 95% of 41 pairs |
+| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 62% of 45 pairs |
 | **Not at all**: needs off-site search or human judgement | `p3.listings`, `p3.mentions`, `p4.question-coverage` | left out of the denominator |
 
 The weakest agreement is `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5
-sites), then `g.reachable` and `p2.named-author`. Read those three with `--explain` before acting
-on them.
+sites), then `p2.named-author` (2 of 5 agree). Read those two with `--explain` before acting on
+them.
 
 ## Heuristics, stated plainly
 
@@ -244,5 +244,6 @@ table to the job summary, annotates checks at zero (gates as errors, other check
 variables, never pasted into it, so a URL cannot run shell code.
 
 To see the results in the repository's Security tab, upload the SARIF file
-([example](../examples/ci/github-actions.yml)). Every result is located at the scored URL rather than
-a file in the repository.
+([example](../examples/ci/github-actions.yml)). Code scanning needs every result in a file of the
+checkout, so each one points at its check's line in the JSON report (the action writes it into the
+workspace when `sarif` is set), and names the scored site in its message.

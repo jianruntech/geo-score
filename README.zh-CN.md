@@ -165,7 +165,7 @@ amazon.com 只有 12 分正是这个原因。**另有 45 个站的正文只在 J
 
 **[完整榜单与分行业中位数 →](https://jianruntech.github.io/geo-score/zh.html)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [自己重跑](benchmark/run.py)
 
-另外两个值得点进去看的发现：面向中文市场的站比其余站**低 19 分**（中位 40 对 59——
+另外两个值得点进去看的发现：面向中文市场的站比其余站**低 19 分**（95% 置信区间 12–26；中位 40 对 59——
 这个差距在五次独立取样里落在 16 到 23 分之间，样本从 38 站到 314 站）；以及同样三件很便宜的事——
 模板里的一个日期、一段能独立成立的开头、一个 JSON-LD 块——在超过一半的站上都缺。
 
@@ -211,8 +211,8 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 # 然后：/geo-score audit https://example.com
 ```
 
-CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，85 对检查项里有 73% 与审计者档位一致
-（按规则读取的项 90%，靠启发式近似判断的项 58%），归一化分平均低 4.8 分，范围从低 10 分到高 6 分。
+CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，86 对检查项里有 78% 与审计者档位一致
+（按规则读取的项 95%，靠启发式近似判断的项 62%），归一化分平均低 4.2 分，范围从低 13 分到高 6 分。
 样本只有 5 个站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
 **MCP 服务**（三级都有）—— `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见[下文](#第二三级--ai-到底有没有引用你)。
@@ -442,8 +442,8 @@ claude mcp add geo-score -- uvx --from git+https://github.com/jianruntech/geo-sc
   发布的下载文件附带 `SHA256SUMS`（[如何校验](SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
-- **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站、它在 `sameAs` 里列出的主页链接（检查是否有效），以及
-  Wikidata 和维基百科的搜索接口；第二、三级只调用你配了 Key 的 AI 服务商。
+- **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站（包括它的跳转）、它的标记和 robots.txt 指向的地址
+  （`sameAs` 主页链接、logo、声明的 sitemap，检查是否有效），以及 Wikidata 和维基百科的搜索接口；第二、三级只调用你配了 Key 的 AI 服务商。
 - **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务只访问公网地址，Key 从不写进任何文件。
   威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 

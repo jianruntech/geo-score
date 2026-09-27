@@ -21,7 +21,7 @@
 **怎么办。** 第一种不用管。第二种，换一个能访问 Wikidata 和 Wikipedia 的网络重跑（见下文「代理」）。
 报告里的 `reason` 字段写明了是哪种情况。
 
-## 分数被封顶在 40
+## 分数被封顶在 40（有门槛项得 0 分）
 
 **原因。** 三个门槛项（`g.robots`、`g.reachable`、`g.ssr`）中有一项得了 0 分，意味着检索爬虫根本拿不到内容。
 只有得 0 分才封顶；中间档是普通扣分。
@@ -62,7 +62,7 @@ CLI 使用 Python 的标准代理设置：`HTTPS_PROXY`、`HTTP_PROXY` 和 `NO_P
 **原因。** 第二、三级在 `cli/geo_watch.py` 里。一行命令 `curl … | python3 -` 只运行第一级，
 而且从不加载当前目录下的 `geo_watch.py`。
 
-**怎么办。** 安装工具（`pipx install git+https://github.com/jianruntech/geo-score`），或者克隆仓库，
+**怎么办。** 安装工具（`pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`），或者克隆仓库，
 或者从同一个版本下载 `cli/geo_score.py` 和 `cli/geo_watch.py` 放在同一个文件夹。两个文件的版本必须一致。
 
 ## `watch run` 退出码 3
@@ -82,8 +82,9 @@ CLI 使用 Python 的标准代理设置：`HTTPS_PROXY`、`HTTP_PROXY` 和 `NO_P
 
 ## 中文站按字数算，英文站按词数算
 
-**原因。** 页面可见文字大部分是中文时，长度阈值从词数换成字数（例如答案段落是 50–200 字，而不是 25–120 词），
-并且 `p4.cn-engines` 变为可测。报告里的 `audience_language` 写明了走的是哪一支。
+**原因。** 只要抽到的页面里有一个页面的可见文字以中文为主，整次运行的长度阈值就从词数换成字数（例如答案段落是
+50–200 字，而不是 25–120 词），并且 `p4.cn-engines` 变为可测。一个中文页就够了：双语网站只要抽到一个中文页，
+所有页面都按中文阈值判定。报告里的 `audience_language` 写明了走的是哪一支。
 
-**怎么办。** 如果判断看起来不对，检查抽到了哪些页面（`sampled_urls`）；双语网站如果抽到的大多是英文页，
-就会按英文处理。可以用 `--urls` 指定中文页面。
+**怎么办。** 检查抽到了哪些页面（`sampled_urls`）。想按英文阈值评双语网站的英文版，用 `--urls` 只指定英文页；
+想评中文版，就只指定中文页。

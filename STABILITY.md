@@ -56,6 +56,7 @@ one minor release first, and keeps working during that time.
 ## Telemetry
 
 None. The CLI, the Action and the MCP server send nothing to Jianrun or anyone else. Level 1
-fetches the site you name, the profile links that site lists in its `sameAs` markup (to check they
-resolve), and Wikidata and Wikipedia search (for the knowledge-graph check). Levels 2 and 3 call
+fetches the site you name (following its redirects), the URLs that site's markup and robots.txt point
+to (its `sameAs` profiles, its logo and its declared sitemap, to check they resolve), and Wikidata and
+Wikipedia search (for the knowledge-graph check). Levels 2 and 3 call
 only the AI providers whose keys you set.

@@ -156,6 +156,10 @@ engine's row and takes its result instead of being counted twice.
 - `too few questions to tell`: fewer than 6 questions were answered in both runs. With 5, even
   all five flipping the same way gives p = 2 / 2^5 = 0.0625, so no outcome could be called a
   change; saying "within noise" would suggest a test was run that could have said otherwise.
+  The same holds after Holm's correction: with m rows in the family, the best adjusted p is
+  m × 2 / 2^n, so a row whose n cannot bring that below 0.05 is also `too few questions to tell`
+  (six questions on two engines plus the all-engines row: 3 × 2 / 2^6 = 0.094). Those rows leave the
+  family and the rest are corrected again.
 - `change`: `p_adjusted` < 0.05.
 - `within noise`: otherwise.
 

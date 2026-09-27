@@ -1,31 +1,31 @@
 {
  "measured_at": "2026-09-27",
- "tool": "geo-score-cli/1.2.0",
+ "tool": "geo-score-cli/1.3.0",
  "rubric": "v1.1",
  "n_sites": 5,
- "n_check_pairs": 85,
- "exact_tier_agreement": 0.73,
+ "n_check_pairs": 86,
+ "exact_tier_agreement": 0.78,
  "normalised_difference": {
-  "mean": -4.8,
-  "min": -10,
+  "mean": -4.2,
+  "min": -13,
   "max": 6
  },
  "caveats": [
   "n=5 sites, each hand-scored once by one auditor; this is a first measurement, not a validation study",
   "the hand audits are dated; the CLI re-scored the live pages later, so site changes are inside every difference",
   "the CLI samples only the audited host; hand-sampled pages on other hosts were dropped",
-  "the four judgement checks (p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines where not applicable) are never scored by the CLI and are not compared"
+  "the three judgement checks (p3.listings, p3.mentions, p4.question-coverage) are never scored by the CLI and are not compared; p4.cn-engines is compared only where both the CLI and the auditor scored it"
  ],
  "by_method": {
   "rule": {
    "checks": 9,
-   "n_pairs": 40,
-   "exact_agreement": 0.9
+   "n_pairs": 41,
+   "exact_agreement": 0.95
   },
   "heuristic": {
    "checks": 9,
    "n_pairs": 45,
-   "exact_agreement": 0.58
+   "exact_agreement": 0.62
   },
   "judgement": {
    "checks": 3,
@@ -38,14 +38,14 @@
    "site": "anthropic.com",
    "audited_at": "2026-09-08",
    "human_normalised": 70,
-   "cli_normalised": 64,
-   "difference": -6,
+   "cli_normalised": 70,
+   "difference": 0,
    "pages_compared": 8,
    "pages_dropped_other_host": 0,
    "checks_compared": 17,
    "common_checks_human_pct": 67,
-   "common_checks_cli_pct": 64,
-   "tiers_equal": 14
+   "common_checks_cli_pct": 70,
+   "tiers_equal": 16
   },
   {
    "site": "mingdao.com",
@@ -55,23 +55,23 @@
    "difference": -5,
    "pages_compared": 8,
    "pages_dropped_other_host": 0,
-   "checks_compared": 17,
-   "common_checks_human_pct": 70,
+   "checks_compared": 18,
+   "common_checks_human_pct": 67,
    "common_checks_cli_pct": 64,
-   "tiers_equal": 11
+   "tiers_equal": 13
   },
   {
    "site": "nextjs.org",
    "audited_at": "2026-09-08",
    "human_normalised": 87,
-   "cli_normalised": 77,
-   "difference": -10,
+   "cli_normalised": 74,
+   "difference": -13,
    "pages_compared": 8,
    "pages_dropped_other_host": 0,
    "checks_compared": 17,
    "common_checks_human_pct": 81,
-   "common_checks_cli_pct": 76,
-   "tiers_equal": 10
+   "common_checks_cli_pct": 73,
+   "tiers_equal": 11
   },
   {
    "site": "stripe.com",
@@ -105,30 +105,19 @@
    "id": "g.robots",
    "n": 5,
    "max": 5,
-   "exact_agreement": 0.8,
-   "mean_signed_diff": -0.4,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
    "kappa": "n too small",
-   "disagreements": [
-    {
-     "site": "mingdao.com",
-     "human": 5,
-     "cli": 3
-    }
-   ]
+   "disagreements": []
   },
   {
    "id": "g.reachable",
    "n": 5,
    "max": 5,
-   "exact_agreement": 0.4,
-   "mean_signed_diff": -0.4,
+   "exact_agreement": 0.6,
+   "mean_signed_diff": 0,
    "kappa": "n too small",
    "disagreements": [
-    {
-     "site": "anthropic.com",
-     "human": 5,
-     "cli": 3
-    },
     {
      "site": "nextjs.org",
      "human": 5,
@@ -183,16 +172,10 @@
    "id": "p1.organization",
    "n": 5,
    "max": 6,
-   "exact_agreement": 0.8,
-   "mean_signed_diff": 0.4,
+   "exact_agreement": 1.0,
+   "mean_signed_diff": 0,
    "kappa": "n too small",
-   "disagreements": [
-    {
-     "site": "nextjs.org",
-     "human": 3,
-     "cli": 5
-    }
-   ]
+   "disagreements": []
   },
   {
    "id": "p1.breadcrumb",
@@ -257,15 +240,10 @@
    "id": "p2.freshness",
    "n": 5,
    "max": 6,
-   "exact_agreement": 0.6,
-   "mean_signed_diff": -1.2,
+   "exact_agreement": 0.8,
+   "mean_signed_diff": -0.6,
    "kappa": "n too small",
    "disagreements": [
-    {
-     "site": "anthropic.com",
-     "human": 3,
-     "cli": 0
-    },
     {
      "site": "mingdao.com",
      "human": 3,
@@ -340,7 +318,7 @@
   },
   {
    "id": "p3.knowledge-graph",
-   "n": 4,
+   "n": 5,
    "max": 4,
    "exact_agreement": 1.0,
    "mean_signed_diff": 0,

@@ -271,8 +271,19 @@ ok("p4.cn-engines" not in by, "an unobservable check is not reported as a proble
 ok("p1.robots-ai" not in by and "g.robots" not in by, "a check at full marks produces no result")
 ok(all(r["ruleId"] in {x["id"] for x in drv["rules"]} for r in sar["runs"][0]["results"]),
    "every result points at a declared rule")
-ok(all(r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "https://x.test"
-       for r in sar["runs"][0]["results"]), "results are located at the scored URL")
+ok(all("://" not in r["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
+       for r in sar["runs"][0]["results"]), "results are located in a repository file, not at a URL (code scanning rejects that)")
+ok(all(r["locations"][0]["physicalLocation"]["region"]["startLine"] >= 1 for r in sar["runs"][0]["results"]),
+   "every result has a line")
+ok(all(r["locations"][0]["logicalLocations"][0]["fullyQualifiedName"] == "https://x.test" and "https://x.test" in r["message"]["text"]
+       for r in sar["runs"][0]["results"]), "the scored site is named in the message and as a logical location")
+_txt = json.dumps(gs.as_json(mk(mixed)), ensure_ascii=False, indent=2) + "\n"
+_ln = gs.check_lines(_txt)
+_s2 = gs.as_sarif(mk(mixed), "out/report.json", _ln)
+_g = next(r for r in _s2["runs"][0]["results"] if r["ruleId"] == "g.ssr")
+eq(_g["locations"][0]["physicalLocation"]["artifactLocation"]["uri"], "out/report.json", "results point at the JSON report")
+ok('"id": "g.ssr"' in _txt.splitlines()[_g["locations"][0]["physicalLocation"]["region"]["startLine"] - 1],
+   "at the line where that check sits")
 eq(sar["runs"][0]["properties"]["normalised"], gs.score(mk(mixed))[4], "SARIF carries the same score as the report")
 eq(len({r["partialFingerprints"]["geoScoreCheck/v1"] for r in sar["runs"][0]["results"]}),
    len(sar["runs"][0]["results"]), "fingerprints are unique, so code scanning can track a check across runs")
@@ -345,6 +356,60 @@ ok(all(c.get("doc_url", "").startswith("https://github.com/jianruntech/geo-score
    "every check in the JSON carries a doc_url pinned to this release's tag")
 eq({r["id"]: r["helpUri"] for r in gs.as_sarif(mk(full))["runs"][0]["tool"]["driver"]["rules"]}["g.ssr"], gs.doc_url("g.ssr"),
    "SARIF rules link to the same place")
+
+# ── the address guard the MCP server turns on: every connection must reach a public address ──
+for _a, _want in (("8.8.8.8", True), ("2606:4700::1111", True), ("100.100.100.200", False), ("100.64.0.1", False),
+                  ("10.0.0.5", False), ("127.0.0.1", False), ("::ffff:127.0.0.1", False), ("169.254.169.254", False),
+                  ("fd00::1", False), ("224.0.0.1", False)):
+    eq(gs.public_ip(_a), _want, "public_ip(%s)" % _a)
+_was = gs.ADDRESS_GUARD
+try:
+    gs.ADDRESS_GUARD = True
+    _r = gs.fetch("http://127.0.0.1:9/")
+    ok(_r.status == 0 and "refused" in (_r.err or ""), "under the guard a loopback URL is refused before any request: %r" % _r.err)
+    class _Req(object):
+        headers, origin_req_host = {}, "example.com"
+        def get_method(self): return "GET"
+    try:
+        gs._Redirects().redirect_request(_Req(), None, 302, "Found", {}, "http://10.0.0.5/admin")
+        ok(False, "a redirect to a private address is refused under the guard")
+    except gs.urllib.error.URLError as e:
+        ok("refused" in str(e), "a redirect to a private address is refused under the guard")
+finally:
+    gs.ADDRESS_GUARD = _was
+ok("public address" not in (gs.fetch("http://127.0.0.1:9/").err or ""),
+   "without the guard (the CLI) a private host is fetched, not refused by policy")
+ok(not gs._UNSAFE.search(gs.fetch("http://127.0.0.1:9/").err or ""), "fetch errors carry no control characters")
+
+# ── robots.txt groups (RFC 9309 2.1): several user-agent lines share the rules that follow ──
+_g = gs.robots_groups("User-agent: GPTBot\nUser-agent: ClaudeBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n")
+eq(_g["gptbot"], [("disallow", "/")], "the first agent of a group gets the group's rules")
+eq(_g["claudebot"], [("disallow", "/")], "and so does the last")
+eq(_g["*"], [("allow", "/")], "a new user-agent line after rules starts a new group")
+_g = gs.robots_groups("User-agent: a\nDisallow: /x\nUser-agent: b\nDisallow: /y\n")
+eq((_g["a"], _g["b"]), ([("disallow", "/x")], [("disallow", "/y")]), "groups without blank lines between them stay apart")
+
+# ── a catch-all 200 with an HTML shell is not a text file ──
+ok(not gs.text_file(gs.Resp("u", 200, b"  <!DOCTYPE html><html><body>app</body></html>")), "an SPA shell is not an llms.txt")
+ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <html>")
+ok(gs.text_file(gs.Resp("u", 200, b"# Acme\n\n> What Acme does.\n\n## Docs\n- [Start](/start)\n")), "a Markdown llms.txt is a text file")
+ok(not gs.text_file(gs.Resp("u", 404, b"# Acme")), "a 404 is not a file")
+ok(not gs.text_file(gs.Resp("u", 200, b"   ")), "an empty body is not a file")
+
+# ── dates a reader can see, including ones flush against Chinese text ──
+import datetime as _dt
+eq(gs.visible_dates("<main><p>更新于2026年8月28日</p></main>"), [_dt.date(2026, 8, 28)], "a date flush against Chinese is seen")
+eq(gs.visible_dates("<main><p>Updated 1 September 2026.</p></main>"), [_dt.date(2026, 9, 1)], "day month year")
+eq(gs.visible_dates("<main><p>Sep 3, 2026</p></main>"), [_dt.date(2026, 9, 3)], "month day, year")
+eq(gs.visible_dates('<main><time datetime="2026-07-01T10:00:00Z">July</time></main>'), [_dt.date(2026, 7, 1)], "<time datetime>")
+eq(gs.visible_dates("<main><p>Order 120261234 shipped</p></main>"), [], "a date inside a longer number is not a date")
+eq(gs.iso_date("2019-01-15T00:00:00+00:00"), _dt.date(2019, 1, 15), "dateModified is read to the day")
+
+# ── figures and sources: Latin word boundaries only ──
+_ATT = r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|research|surveys?|surveyed|according to)(?![A-Za-z])"
+ok(gs.re.search(_ATT, "Free resources for teams") is None, "'resources' is not a source")
+ok(gs.re.search(_ATT, "The price index reports a national average") is not None, "'reports' is an attribution")
+ok("sourced|stud(?:y|ies)|reports?" in io.open(gs.__file__, encoding="utf-8").read(), "the test pattern is the scorer's pattern")
 
 if fails:
     print("FAIL — %d" % len(fails))

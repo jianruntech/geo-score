@@ -54,7 +54,7 @@
       "state": "scored",
       "points": 4,
       "max": 4,
-      "evidence": "Sitemap declared in robots.txt (http://127.0.0.1:{PORT}/sitemap.xml): HTTP 200, 11 <loc>, 11 <lastmod>.",
+      "evidence": "Sitemap declared in robots.txt («site text: http://127.0.0.1:{PORT}/sitemap.xml»): HTTP 200, 11 <loc>, 11 <lastmod>.",
       "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
     },
@@ -90,7 +90,7 @@
       "state": "scored",
       "points": 4,
       "max": 4,
-      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 8 of 8 sampled pages.",
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 8 of 8 sampled pages; 8 of them with real field values.",
       "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
     },

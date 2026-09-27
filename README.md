@@ -173,7 +173,7 @@ Median **56** (95% CI 53–58, [stats.py](benchmark/stats.py)). Range 12 to 98.
 **[The full table, by sector →](https://jianruntech.github.io/geo-score/)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [re-run it](benchmark/run.py)
 
 Two more findings worth the click: sites built for the Chinese market score **19 points
-lower** than everyone else (median 40 against 59 — a gap that has held between 16 and 23
+lower** than everyone else (95% CI 12–26; median 40 against 59 — a gap that has held between 16 and 23
 points across five separate samples, from 38 sites up to 314), and the same three cheap
 things — a date in the page template, an opening paragraph that stands on its own, one
 JSON-LD block — are missing from more than half the field.
@@ -223,9 +223,9 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 ```
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
-the five published hand audits on the same pages, it matched the auditor's tier on 73% of
-85 check pairs (90% where it reads a rule, 58% where it approximates a judgement) and read
-4.8 points lower on average, from 10 lower to 6 higher. n=5 is small:
+the five published hand audits on the same pages, it matched the auditor's tier on 78% of
+86 check pairs (95% where it reads a rule, 62% where it approximates a judgement) and read
+4.2 points lower on average, from 13 lower to 6 higher. n=5 is small:
 [VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
 
 **MCP server** (all three levels) — `python3 cli/geo_score.py mcp`, for Claude Code, Cursor and
@@ -483,10 +483,11 @@ this repo deliberately excludes.
   ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts. What may change in
   which release: [STABILITY.md](STABILITY.md).
 - **No telemetry.** geo-score sends nothing to us or anyone else. Level 1 fetches the site you
-  name, the profile links it lists in `sameAs`, and Wikidata and Wikipedia search; levels 2 and 3
+  name (following its redirects), the URLs its markup and robots.txt point to (`sameAs` profiles, logo,
+  sitemap), and Wikidata and Wikipedia search; levels 2 and 3
   call only the AI providers whose keys you set.
 - **Security:** text quoted from the audited site is fenced as data in every report, the MCP
-  server fetches only public hosts, and keys never reach a file. Threat model and reporting:
+  server connects only to public addresses, and keys never reach a file. Threat model and reporting:
   [SECURITY.md](SECURITY.md).
 
 **Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the

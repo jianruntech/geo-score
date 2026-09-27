@@ -76,7 +76,29 @@ def main():
             p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="101", GEO_ANNOTATIONS="false")
             ok(p.returncode == 1 and "below the 101 threshold" in p.stdout, "fail-under 101 fails the step with exit 1")
             ok(bool(summ) and "score" in o, "and still writes the summary and outputs first")
-            ok("::warning" not in p.stdout, "annotations: false turns annotations off")
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    # annotations need checks at zero: the bare fixture has plenty, and its gate for SSR is fine
+    bare = e2e.start_server("bare")
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            p, _, _ = run(script, tmp, GEO_URL=bare.origin, GEO_SARIF="scan/r.sarif")
+            ok(p.returncode == 0 and "::warning title=geo-score" in p.stdout, "checks at zero become warning annotations")
+            sar = json.load(io.open(os.path.join(tmp, "scan", "r.sarif"), encoding="utf-8"))
+            locs = [r["locations"][0]["physicalLocation"] for r in sar["runs"][0]["results"]]
+            rep_lines = io.open(os.path.join(tmp, "geo-score-report.json"), encoding="utf-8").read().splitlines()
+            ok(locs and all(l["artifactLocation"]["uri"] == "geo-score-report.json" for l in locs),
+               "with sarif and no json-out, results point at geo-score-report.json in the workspace (%d results)" % len(locs))
+            ok(all('"id": "%s"' % r["ruleId"] in rep_lines[r["locations"][0]["physicalLocation"]["region"]["startLine"] - 1]
+                   for r in sar["runs"][0]["results"]), "each result's line is its check in that report")
+            p, _, _ = run(script, tmp, GEO_URL=bare.origin, GEO_ANNOTATIONS="false")
+            ok("::warning" not in p.stdout and "::error title=geo-score ·" not in p.stdout, "annotations: false turns them off")
+    finally:
+        bare.shutdown()
+        bare.server_close()
+    srv = e2e.start_server("good")
+    try:
 
         with tempfile.TemporaryDirectory() as tmp:
             canary = os.path.join(tmp, "pwned")

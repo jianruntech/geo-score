@@ -1,30 +1,30 @@
 {
   "_path": "/docs",
-  "_normalised": 85,
+  "_normalised": 86,
   "_band": "Leading",
   "_gate_capped": false,
   "_lang": "en",
-  "_sample_source": "homepage and section links (no sitemap reachable)",
+  "_sample_source": "sitemap",
   "_sampled": [
-    "/docs-legacy/old-install.html",
     "/docs/",
     "/docs/configure.html",
     "/docs/guides/first-report.html",
     "/docs/guides/share-results.html",
+    "/docs/guides/troubleshoot-proxy.html",
     "/docs/install.html",
     "/docs/quickstart.html"
   ],
   "_notes": {
-    "p1.organization": "SUSPECTED BUG: rubric says 6. The logo is the relative IRI 'logo.png' on /docs/, which resolves to /docs/logo.png (200). The scorer joins it onto the scope root without a trailing slash (urljoin('.../docs', 'logo.png') = '/logo.png', 404) and scores 5.",
-    "_sampled": "SUSPECTED BUG: /docs-legacy/old-install.html is sampled. Scope filtering is a bare startswith('/docs'), so the sibling folder /docs-legacy counts as inside /docs; depth_in_scope then calls it nested ('-legacy/old-install.html').",
-    "_sample_source": "SUSPECTED BUG: run() finds /docs/sitemap.xml for p1.sitemap (the subpath fallback), but discover() only tries origin sitemaps, so the sample ignores it: /docs/guides/troubleshoot-proxy.html (sitemap only) is never sampled and the report says 'no sitemap reachable' next to a sitemap it scored."
+    "p1.organization": "The logo is the relative IRI 'logo.png' on /docs/. JSON-LD resolves it against that page: /docs/logo.png (200), so 6. Before 1.3.0 the scorer joined it onto the scope root without a trailing slash (/logo.png, 404) and gave 5.",
+    "_sampled": "/docs-legacy is a sibling folder, not inside /docs. Before 1.3.0 a bare startswith('/docs') sampled it.",
+    "_sample_source": "discover() now tries /docs/sitemap.xml, the same fallback run() scores, so the sample comes from the sitemap it scored."
   },
   "g.robots": 5,
   "g.reachable": 5,
   "g.ssr": 5,
   "p1.sitemap": 2,
   "p1.llms-txt": 4,
-  "p1.organization": 5,
+  "p1.organization": 6,
   "p1.breadcrumb": 3,
   "p1.page-type": 4,
   "p2.answer-passages": 9,

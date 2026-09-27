@@ -107,7 +107,8 @@ def main():
             "n=%d sites, each hand-scored once by one auditor; this is a first measurement, not a validation study" % len(sites),
             "the hand audits are dated; the CLI re-scored the live pages later, so site changes are inside every difference",
             "the CLI samples only the audited host; hand-sampled pages on other hosts were dropped",
-            "the four judgement checks (%s) are never scored by the CLI and are not compared" % ", ".join(JUDGEMENT + ["p4.cn-engines where not applicable"]),
+            "the three judgement checks (%s) are never scored by the CLI and are not compared; p4.cn-engines is "
+            "compared only where both the CLI and the auditor scored it" % ", ".join(JUDGEMENT),
         ],
         "by_method": groups, "sites": sites, "per_check": per_check,
     }
@@ -185,7 +186,7 @@ def write_md(v):
     cav_zh = ["样本只有 %d 个站，每个站由一位审计者人工打分一次；这是第一次测量，不是效度研究" % v["n_sites"],
               "人工审计有日期，CLI 是之后在线重评的，所以每一处差异里都混有网站自身的变化",
               "CLI 只在被审计的域名内抽样，人工抽到的其他域名页面没有参与比较",
-              "四个需要判断的检查项 CLI 从不打分，不在比较之内"]
+              "三个需要判断的检查项 CLI 从不打分，不在比较之内；p4.cn-engines 只在 CLI 和审计者都打了分时才比较"]
     zh = ["# CLI 与人工审计的一致程度",
           "",
           "由 `benchmark/validity.py` 于 %s 用 %s（量表 %s）生成。请勿手改，重跑脚本即可。" % (v["measured_at"], v["tool"], v["rubric"]),

@@ -1,5 +1,5 @@
 {
-  "_normalised": 24,
+  "_normalised": 15,
   "_band": "Not started",
   "_gate_capped": true,
   "_lang": "en",
@@ -15,16 +15,16 @@
     "/pricing"
   ],
   "_notes": {
-    "p1.llms-txt": "SUSPECTED BUG: rubric says 0. There is no llms.txt; the SPA catch-all answers 200 with index.html and the scorer reads the HTML as an llms.txt with a site definition (tier 4). Neither the content-type nor the body is checked.",
-    "b.llms-full": "SUSPECTED BUG: rubric says 0. Same soft-404: the catch-all's 200 counts as a present file.",
-    "b.ai-txt": "SUSPECTED BUG: rubric says 0. Same soft-404.",
+    "p1.llms-txt": "The SPA catch-all answers /llms.txt with its HTML shell: not a text file, so 0. Before 1.3.0 this scored 4.",
+    "b.llms-full": "Same catch-all: 0. Before 1.3.0, 2.",
+    "b.ai-txt": "Same catch-all: 0. Before 1.3.0, 2.",
     "p2.sourced-stats": "QUESTIONABLE: an empty shell with no figures at all earns 3 of 7 ('little to attribute'); no evidence either way would read better as unobservable."
   },
   "g.robots": 3,
   "g.reachable": 5,
   "g.ssr": 0,
   "p1.sitemap": 2,
-  "p1.llms-txt": 4,
+  "p1.llms-txt": 0,
   "p1.organization": 0,
   "p1.breadcrumb": 0,
   "p1.page-type": 0,
@@ -41,8 +41,8 @@
   "p4.answer-shape": 0,
   "p4.question-coverage": null,
   "p4.cn-engines": null,
-  "b.llms-full": 2,
-  "b.ai-txt": 2,
+  "b.llms-full": 0,
+  "b.ai-txt": 0,
   "b.geo-link": 0,
   "b.speakable": 0
 }

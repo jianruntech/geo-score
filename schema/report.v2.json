@@ -50,6 +50,10 @@
       "minItems": 1,
       "description": "Exactly 8 unless the site has fewer pages; if fewer, say so in notes."
     },
+    "landed": {
+      "type": "string",
+      "description": "Present when the site redirected to a different domain: the URL that was actually scored. Optional; added in 1.3.0."
+    },
     "sample_source": {
       "type": [
         "string",
@@ -243,7 +247,7 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 100,
-      "description": "round(100 × readiness / observable_max), then capped at 40 if gate_capped."
+      "description": "min(100, round(100 × readiness / observable_max)), capped at 40 when a gate check scored zero (gate_capped); bonus points count in readiness, so the 100 ceiling matters."
     },
     "band": {
       "type": "string",
@@ -263,7 +267,7 @@
     },
     "gate_capped": {
       "type": "boolean",
-      "description": "True when g.robots, g.reachable or g.ssr fell short of full marks. Then normalised caps at 40 and the report leads with it."
+      "description": "True when g.robots, g.reachable or g.ssr scored zero, which caps normalised at 40 and leads the report; a gate at a middle tier is a deduction, not a cap."
     },
     "bonus_awarded": {
       "type": "integer",

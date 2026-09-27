@@ -27,7 +27,7 @@ instead of scoring 0. There are two kinds:
 **What to do.** Nothing, for the first kind. For the second, re-run from a network that can reach
 Wikidata and Wikipedia (see *Proxies* below). The report's `reason` field says which case applies.
 
-## The score is capped at 40
+## The score is capped at 40 (a gate scored zero)
 
 **Cause.** One of the three gate checks (`g.robots`, `g.reachable`, `g.ssr`) scored zero, which
 means a retrieval crawler cannot get the content at all. The cap applies only at zero; a middle tier
@@ -76,7 +76,7 @@ of zero, which raises some scores by a few points. Every report states the tool 
 **Cause.** Levels 2 and 3 live in `cli/geo_watch.py`. The one-line `curl … | python3 -` install runs
 level 1 only, and never loads a `geo_watch.py` from the current directory.
 
-**What to do.** Install the tool (`pipx install git+https://github.com/jianruntech/geo-score`), or
+**What to do.** Install the tool (`pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`), or
 clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release
 into one folder. The two files must carry the same version.
 
@@ -100,9 +100,12 @@ limit. `upload-sarif` needs `security-events: write` in the job's permissions.
 
 ## A Chinese site is judged by characters, an English one by words
 
-**Cause.** When most of the visible text is Chinese, length thresholds switch from words to
-characters (for example 50–200 characters for an answer passage instead of 25–120 words), and
-`p4.cn-engines` becomes observable. The report's `audience_language` says which branch was used.
+**Cause.** If any sampled page's visible text is mostly Chinese, the whole run switches its length
+thresholds from words to characters (for example 50–200 characters for an answer passage instead of
+25–120 words), and `p4.cn-engines` becomes observable. One Chinese page is enough, so a bilingual site
+whose sample includes a single Chinese page is judged by the Chinese thresholds on every page. The
+report's `audience_language` says which branch was used.
 
-**What to do.** If the branch looks wrong, check which pages were sampled (`sampled_urls`); a sample
-of mostly English pages on a bilingual site reads as English. Pin Chinese pages with `--urls`.
+**What to do.** Check which pages were sampled (`sampled_urls`). To score the English edition of a
+bilingual site by the English thresholds, pin English pages only with `--urls`; to score the Chinese
+edition, pin Chinese pages.

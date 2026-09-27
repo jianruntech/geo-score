@@ -478,6 +478,8 @@ class EndToEnd(unittest.TestCase):
             import jsonschema
         except ImportError:
             jsonschema = None
+            print("\n  note: jsonschema not installed; checking the 0-100 range only, not the full schema "
+                  "(pip install jsonschema)", file=sys.stderr)
         for name in sorted(EXPECTED):
             with self.subTest(fixture=name):
                 rep = report_for(name, masked=False)

@@ -13,8 +13,8 @@ Levels 2 and 3 live in geo_watch.py next to this file.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, html, io, json, os, re, sys, time, zlib
-import urllib.error, urllib.parse, urllib.request
+import argparse, concurrent.futures as cf, datetime, html, io, json, os, re, sys, time, zlib
+import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 
 __version__ = "1.3.0"
 RUBRIC = "v1.1"
@@ -58,6 +58,12 @@ class C:
 c = C()
 
 # ── fetching ───────────────────────────────────────────────────────────────
+def text_file(r):
+    """A file answer, not a site's catch-all page. Single-page apps answer every path with 200 and their
+    HTML shell, which read as an llms.txt, an llms-full.txt and an ai.txt that do not exist."""
+    return r.ok and bool(r.body.strip()) and not re.match(rb"\s*(<!doctype\s+html|<html|<head|<body)", r.body[:1024].lower())
+
+
 class Resp:
     __slots__ = ("url", "status", "body", "headers", "err", "elapsed")
     def __init__(self, url, status=0, body=b"", headers=None, err=None, elapsed=0.0):
@@ -95,6 +101,81 @@ def idna(url):
     except Exception:
         return url
 
+# Characters that are never legitimate in evidence and are the tools of choice for hiding or reordering
+# text an agent reads: C0/C1 controls (CR included, which would start a new CI workflow command), soft
+# hyphen, Arabic letter mark, Mongolian vowel separator, zero-width characters, bidi embeddings and
+# isolates, line and paragraph separators, interlinear annotation marks, the two non-characters XML
+# cannot carry, and Unicode tag characters (invisible to people, read by language models).
+_UNSAFE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e"
+                     "\u2060-\u2064\u2066-\u2069\ufeff\ufff9-\ufffb\ufffe\uffff\U000e0000-\U000e007f]")
+
+# ── address guard ──
+# The CLI fetches whatever its user names, private hosts included. Under the MCP server an agent chooses
+# the URL, and the audited site chooses every URL after it (redirects, sameAs, logo, sitemap), so there
+# every connection must go to a public address. geo_watch's MCP server switches this on.
+ADDRESS_GUARD = False
+
+
+def public_ip(addr):
+    """Globally routable unicast only: this refuses loopback, private, link-local, CGNAT (100.64/10,
+    where cloud metadata services such as 100.100.100.200 live), reserved and multicast addresses."""
+    ip = ipaddress.ip_address(str(addr).split("%")[0])
+    if ip.version == 6 and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return ip.is_global and not ip.is_multicast
+
+
+def resolve_public(host, port):
+    """Resolve once; every answer must be public. Returns the first address to connect to."""
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except (socket.gaierror, UnicodeError) as e:
+        raise OSError("cannot resolve %s: %s" % (host, e)) from None
+    if not infos or not all(public_ip(i[4][0]) for i in infos):
+        raise OSError("refused: %s does not resolve to a public address" % host)
+    return infos[0][4][:2]
+
+
+def _guarded(conn_class):
+    """An http.client connection factory whose TCP connect is checked. A direct connection goes to the
+    address that passed the check, so a name cannot resolve to something else a moment later. Through
+    a proxy the proxy resolves the name; the target is checked, the proxy itself is the user's own."""
+    def make(host, **kw):
+        c = conn_class(host, **kw)
+        orig = c._create_connection
+
+        def create(address, *a, **k):
+            if not ADDRESS_GUARD:
+                return orig(address, *a, **k)
+            if getattr(c, "_tunnel_host", None):
+                resolve_public(c._tunnel_host, c._tunnel_port or 443)
+                return orig(address, *a, **k)
+            return orig(resolve_public(*address), *a, **k)
+        c._create_connection = create
+        return c
+    return make
+
+
+class _GuardedHTTP(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(_guarded(http.client.HTTPConnection), req)
+
+
+class _GuardedHTTPS(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_guarded(http.client.HTTPSConnection), req, context=self._context)
+
+
+def check_url(url):
+    """Under the guard, a URL whose host does not resolve to a public address is refused before any request."""
+    if not ADDRESS_GUARD:
+        return
+    u = urllib.parse.urlsplit(url)
+    if u.scheme not in ("http", "https") or not u.hostname:
+        raise OSError("refused: %s is not an http(s) URL" % url[:80])
+    resolve_public(u.hostname, u.port or (443 if u.scheme == "https" else 80))
+
+
 class _Redirects(urllib.request.HTTPRedirectHandler):
     """Follow 307 and 308 as well as 301/302.
 
@@ -106,6 +187,10 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
     Real retrieval crawlers follow these hops, so the score has to as well.
     """
     def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            check_url(newurl)           # every hop, not only the first URL
+        except OSError as e:
+            raise urllib.error.URLError(str(e)) from None
         # The base redirect_request in 3.9 rejects 308 outright, so aliasing
         # http_error_308 is not enough on its own — this was the incomplete first fix.
         if code in (307, 308) and req.get_method() in ("GET", "HEAD"):
@@ -119,7 +204,7 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
     http_error_308 = urllib.request.HTTPRedirectHandler.http_error_301
 
 
-_OPENER = urllib.request.build_opener(_Redirects)
+_OPENER = urllib.request.build_opener(_Redirects, _GuardedHTTP, _GuardedHTTPS)
 
 MAX_BODY = 4_000_000       # bytes read off the wire
 MAX_INFLATED = 16_000_000  # bytes after gunzip
@@ -146,6 +231,7 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
         "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
     t0 = time.time()
     try:
+        check_url(url)
         with _OPENER.open(req, timeout=timeout) as r:
             raw = r.read(MAX_BODY)
             if r.headers.get("Content-Encoding") == "gzip":
@@ -158,7 +244,8 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
         return Resp(url, e.code, raw, {k.lower(): v for k, v in (e.headers or {}).items()},
                     elapsed=time.time() - t0)
     except Exception as e:
-        return Resp(url, 0, b"", err=str(e)[:120], elapsed=time.time() - t0)
+        # a server's status line lands in this message: keep it to one clean line
+        return Resp(url, 0, b"", err=" ".join(_UNSAFE.sub("", str(e)).split())[:120], elapsed=time.time() - t0)
 
 DEFINITE = (401, 403, 404, 410)   # answers that will not change on a retry
 
@@ -237,6 +324,56 @@ def types_of(objs):
         v = o.get("@type")
         t.extend(v if isinstance(v, list) else [v] if v else [])
     return set(t)
+
+# The fields that make a page-type object carry information rather than a bare type: any one of them,
+# non-empty, is a "real field value" in the rubric's sense for p1.page-type.
+PAGE_TYPE_FIELDS = {
+    "Product": ("name",), "Offer": ("price", "priceSpecification"), "FAQPage": ("mainEntity",),
+    "HowTo": ("step",), "SoftwareApplication": ("name",), "Course": ("name",), "Recipe": ("name",),
+    "Event": ("startDate",), "JobPosting": ("title",), "Dataset": ("name",),
+    "Article": ("headline", "name"), "BlogPosting": ("headline", "name"),
+    "NewsArticle": ("headline", "name"), "TechArticle": ("headline", "name")}
+
+
+def substantive(obj, types=PAGE_TYPE_FIELDS):
+    """True when a JSON-LD object of one of `types` carries a non-empty value in one of its fields."""
+    t = obj.get("@type")
+    for name in (t if isinstance(t, list) else [t]):
+        if name in types and any(obj.get(f) not in (None, "", [], {}) for f in types[name]):
+            return True
+    return False
+
+
+_MONTHS = {m: i for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), 1)}
+# numeric dates must not start inside a longer number; \b fails when a date sits flush against Chinese
+# text ("更新于2026年8月28日"), because Python counts CJK characters as word characters
+_NUM_DATE = re.compile(r"(?<!\d)(20[12]\d)\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})(?!\d)")
+_DMY = re.compile(r"(?<!\d)(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+(20[12]\d)(?!\d)", re.I)
+_MDY = re.compile(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}),?\s+(20[12]\d)(?!\d)", re.I)
+
+
+def _date(y, m, d):
+    try:
+        return datetime.date(int(y), int(m), int(d))
+    except (ValueError, TypeError):
+        return None
+
+
+def iso_date(v):
+    """The calendar date at the start of an ISO 8601 string (dateModified, <time datetime>), or None."""
+    m = re.match(r"\s*(\d{4})-(\d{2})-(\d{2})", str(v or ""))
+    return _date(*m.groups()) if m else None
+
+
+def visible_dates(page_html):
+    """Dates a reader or a crawler can see on the page: <time datetime> and dates written in the text."""
+    out = [iso_date(m.group(1)) for m in re.finditer(r'<time[^>]+datetime=["\']([^"\']+)', page_html, re.I)]
+    text = visible_text(main_html(page_html))[:3000]
+    out += [_date(*m.groups()) for m in _NUM_DATE.finditer(text)]
+    out += [_date(m.group(3), _MONTHS[m.group(2).lower()[:3]], m.group(1)) for m in _DMY.finditer(text)]
+    out += [_date(m.group(3), _MONTHS[m.group(1).lower()[:3]], m.group(2)) for m in _MDY.finditer(text)]
+    return [d for d in out if d]
+
 
 def headings(h):
     out = [visible_text(m.group(1))[:200]
@@ -527,9 +664,6 @@ def depth_in_scope(url, scope):
     return pth.strip("/").count("/")
 
 
-# C0/C1 controls, zero-width characters and bidi overrides: never legitimate in evidence, and the
-# tools of choice for hiding or reordering text an agent reads
-_UNSAFE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]")
 
 def site_text(s, n=90):
     """Text quoted from the audited site, or from a page about it, is data and never instructions.
@@ -539,6 +673,37 @@ def site_text(s, n=90):
     if len(s) > n:
         s = s[:n].rstrip() + "…"
     return "«site text: %s»" % s
+
+def robots_groups(txt):
+    """{user-agent (lower case): [(allow|disallow, path)]}. Consecutive user-agent lines form one group
+    and every rule in it applies to all of them (RFC 9309, section 2.1). Reading only the last line of a
+    group let a file that blocks GPTBot, ClaudeBot and PerplexityBot together read as blocking none."""
+    groups, cur, in_rules = {}, [], False
+    for line in txt.splitlines():
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        k, _, v = line.partition(":")
+        k, v = k.strip().lower(), v.strip()
+        if k == "user-agent":
+            if in_rules:
+                cur, in_rules = [], False
+            cur.append(v.lower())
+            groups.setdefault(v.lower(), [])
+        elif k in ("allow", "disallow") and cur:
+            in_rules = True
+            for ua in cur:
+                groups[ua].append((k, v))
+    return groups
+
+def clip(s, n):
+    """Cut text for display without cutting a «site text: …» fence open: a quote that loses its closing »
+    would let whatever follows read as the tool's own words."""
+    s = str(s or "")
+    if len(s) <= n:
+        return s
+    out = s[:n - 1] + "…"
+    return out + "»" if out.rfind("«") > out.rfind("»") else out
 
 def scope_of(base):
     """A site can live under a path — a project page, a docs subtree, a country folder.
@@ -559,19 +724,28 @@ def discover(base, want=8, verbose=False):
     origin, scope = scope_of(base)
     root = origin + scope
     host = urllib.parse.urlsplit(origin).netloc
+    scheme = urllib.parse.urlsplit(origin).scheme
     home = fetch_steady(root + "/")
     pool, seen = [], {root + "/", root}
+
+    def same_site(u):
+        """The URL on this site and inside its path, with the site's scheme, or None. One rule for links,
+        sitemap entries and pin_urls(), so a report's sampled_urls can always be pinned again."""
+        pu = urllib.parse.urlsplit(u)
+        if pu.netloc != host or pu.scheme not in ("http", "https") or _UNSAFE.search(u):
+            return None
+        if scope and not (pu.path == scope or pu.path.startswith(scope + "/")):
+            return None
+        return pu._replace(scheme=scheme).geturl() if pu.scheme != scheme else u
 
     def harvest(text, origin):
         out = []
         for m in re.finditer(r'<a\b[^>]*href=["\']([^"\'#]+)', text, re.I):
-            u = urllib.parse.urljoin(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/")
-            pu = urllib.parse.urlsplit(u)
-            if pu.netloc != host: continue
-            if scope and not pu.path.startswith(scope): continue
+            u = same_site(urllib.parse.urljoin(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/"))
+            if not u: continue
             if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
             if re.search(r"/(login|signin|signup|register|cart|checkout|account|admin|search)(/|$)", u, re.I): continue
-            if u in seen or _UNSAFE.search(u): continue
+            if u in seen: continue
             seen.add(u); out.append(u)
         return out
 
@@ -579,9 +753,12 @@ def discover(base, want=8, verbose=False):
 
     # sitemap gives real content URLs, which a homepage nav often does not
     rb = fetch_steady(origin + "/robots.txt")
+    # the same places run() looks for p1.sitemap, including the given path, so a sitemap that is scored
+    # is also the one the sample comes from
     sm_urls = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "") \
-              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"]
-    sm = next((r for r in pmap(fetch_steady, sm_urls[:2]) if r.ok), None)
+              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
+              + ([origin + scope + "/sitemap.xml"] if scope else [])
+    sm = next((r for r in pmap(fetch_steady, sm_urls[:3]) if r.ok), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         kids = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
         got = [r for r in pmap(fetch_steady, kids) if r.ok]
@@ -589,9 +766,8 @@ def discover(base, want=8, verbose=False):
     if sm:
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
         for u in locs[:600]:
-            u = u.split("#")[0].split("?")[0].rstrip("/")
-            pu2 = urllib.parse.urlsplit(u)
-            if pu2.netloc == host and (not scope or pu2.path.startswith(scope)) and u not in seen:
+            u = same_site(u.split("#")[0].split("?")[0].rstrip("/"))
+            if u and u not in seen:
                 seen.add(u); pool.append(u)
 
     # section indexes are where recent posts actually live
@@ -622,14 +798,14 @@ def discover(base, want=8, verbose=False):
 # ── checks ─────────────────────────────────────────────────────────────────
 MAX_PINNED = 8
 
-def pin_urls(base, urls):
+def pin_urls(base, urls, limit=None):
     """--urls / --urls-from: score exactly these pages instead of drawing a sample.
     Sampling is the main source of run-to-run variance; a pinned re-score removes it.
     Every page must be on the scheme, host and path being scored, or the checks
     would describe a different site under this one's name."""
-    origin, scope = scope_of(base)
+    origin, scope = scope_of(idna(base if "://" in base else "https://" + base))
     want = urllib.parse.urlsplit(origin)
-    out = []
+    out, keys = [], set()
     for raw in urls:
         u = raw.strip()
         if not u:
@@ -645,21 +821,25 @@ def pin_urls(base, urls):
                                % (raw.strip()[:200], origin))
         if scope and not (p.path == scope or p.path.startswith(scope + "/")):
             raise RuntimeError("pinned URL %s is outside %s%s" % (raw.strip()[:200], origin, scope))
-        if u not in out:
-            out.append(u)
+        key = (p.netloc.lower(), p.path.rstrip("/") or "/", p.query)
+        if key not in keys:
+            keys.add(key); out.append(u)
     if not out:
         raise RuntimeError("no URLs to pin: the list is empty")
-    if len(out) > MAX_PINNED:
-        raise RuntimeError("%d URLs to pin; the rubric samples at most %d pages" % (len(out), MAX_PINNED))
+    cap = max(MAX_PINNED, limit or 0)
+    if len(out) > cap:
+        raise RuntimeError("%d URLs to pin; the rubric samples at most %d pages" % (len(out), cap))
     return out
 
 def read_url_list(path):
     """--urls FILE: one URL per line; blank lines and # comments are ignored."""
     try:
-        with io.open(path, encoding="utf-8") as f:
+        with io.open(path, encoding="utf-8-sig") as f:
             return [ln.split("#", 1)[0].strip() for ln in f if ln.split("#", 1)[0].strip()]
     except OSError as e:
         raise RuntimeError("cannot read --urls %s: %s" % (path, e.strerror or e)) from None
+    except UnicodeDecodeError:
+        raise RuntimeError("--urls %s is not UTF-8 text: save it as UTF-8, one URL per line" % path) from None
 
 def read_report_urls(path):
     """--urls-from REPORT.json: the sampled_urls of an earlier report, so a re-score reads the same pages."""
@@ -702,14 +882,7 @@ def run(base, sample=8, verbose=False, urls=None):
     # ── g.robots ──
     rb = fetch(origin + "/robots.txt")
     txt = rb.text if rb.ok else ""
-    groups, cur = {}, None
-    for line in txt.splitlines():
-        line = line.split("#")[0].strip()
-        if not line: continue
-        k, _, v = line.partition(":")
-        k, v = k.strip().lower(), v.strip()
-        if k == "user-agent": cur = v.lower(); groups.setdefault(cur, [])
-        elif cur is not None and k in ("allow", "disallow"): groups[cur].append((k, v))
+    groups = robots_groups(txt)
     named = [u for u, _ in RETRIEVAL_UAS if u.lower() in groups]
     def blocked(g):
         return any(k == "disallow" and v in ("/", "/*") for k, v in groups.get(g, []))
@@ -784,19 +957,21 @@ def run(base, sample=8, verbose=False, urls=None):
         tier["p1.sitemap"] = 4 if locs and mods >= locs * .5 else 2
         ev["p1.sitemap"] = "Sitemap %s (%s): HTTP 200, %d <loc>, %d <lastmod>." % (
             "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path",
-            _UNSAFE.sub("", sm.url)[:200] if getattr(sm, "url", None) else "—", locs, mods)
+            site_text(urllib.parse.urlsplit(sm.url)._replace(query="", fragment="").geturl(), 120)
+            if getattr(sm, "url", None) else "—", locs, mods)
 
     # ── p1.llms-txt ──
     lt = fetch(origin + "/llms.txt")
     lt_at = "/llms.txt"
-    if not lt.ok and scope:
+    if not text_file(lt) and scope:
         alt = fetch(origin + scope + "/llms.txt")
-        if alt.ok:
+        if text_file(alt):
             lt, lt_at = alt, scope + "/llms.txt"
-    if not lt.ok:
+    if not text_file(lt):
         tier["p1.llms-txt"] = 0
-        ev["p1.llms-txt"] = ("/llms.txt returned HTTP %d%s." %
-                             (lt.status, " (and none under %s either)" % scope if scope else ""))
+        ev["p1.llms-txt"] = ("/llms.txt %s%s." % (
+            "answered 200 with an HTML page (a catch-all route), not a text file" if lt.ok else "returned HTTP %d" % lt.status,
+            " (and none under %s either)" % scope if scope else ""))
     else:
         t = lt.text
         secs = re.findall(r"(?m)^##\s+(.+)$", t)
@@ -813,22 +988,34 @@ def run(base, sample=8, verbose=False, urls=None):
 
     # ── p1.organization ──
     allld = {u: jsonld(r.text) for u, r in live.items()}
-    org_pages = [u for u, o in allld.items() if "Organization" in types_of(o) or
-                 any(str(x.get("@type", "")).endswith(("Corporation", "LocalBusiness")) for x in o)]
+    def is_org(x):
+        t = x.get("@type")
+        return any(str(v) == "Organization" or str(v).endswith(("Corporation", "LocalBusiness", "Organization"))
+                   for v in (t if isinstance(t, list) else [t]))
+    org_pages = [u for u, o in allld.items() if any(is_org(x) for x in o)]
     site_pages = [u for u, o in allld.items() if "WebSite" in types_of(o)]
-    orgs = [x for o in allld.values() for x in o
-            if str(x.get("@type")) in ("Organization", "Corporation") or
-               (isinstance(x.get("@type"), list) and "Organization" in x["@type"])]
-    logo = next((o.get("logo") for o in orgs if o.get("logo")), None)
+    org_at = [(u, x) for u, o in allld.items() for x in o if is_org(x)]
+    orgs = [x for _, x in org_at]
+    logo_page, logo = next(((u, x.get("logo")) for u, x in org_at if x.get("logo")), (None, None))
     logo_url = logo.get("url") if isinstance(logo, dict) else logo
+    logo_url = logo_url if isinstance(logo_url, str) else None
     same = next((o.get("sameAs") for o in orgs if o.get("sameAs")), None)
-    logo_ok = bool(logo_url) and fetch(urllib.parse.urljoin(root, logo_url), method="GET").ok
+    # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
+    # "logo.png" on /docs/ is /docs/logo.png
+    logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
+    logo_ok = bool(logo_url) and fetch(urllib.parse.urljoin(logo_base, logo_url), method="GET").ok
+    org_complete = any(o.get("name") and o.get("url") and o.get("logo") for o in orgs)
     if not org_pages and not site_pages:
         tier["p1.organization"] = 0; ev["p1.organization"] = "Neither Organization nor WebSite JSON-LD found on any sampled page."
     elif not (org_pages and site_pages):
         tier["p1.organization"] = 3
         ev["p1.organization"] = "Only %s found (%d of %d pages)." % (
             "Organization" if org_pages else "WebSite", len(org_pages or site_pages), n)
+    elif not org_complete:
+        # both types present, but the rubric's middle tier asks for name, url and logo
+        tier["p1.organization"] = 3
+        ev["p1.organization"] = ("Organization and WebSite both present (%d of %d pages), but no Organization carries "
+                                 "all of name, url and logo." % (len(org_pages), n))
     elif logo_ok and same:
         tier["p1.organization"] = 6
         ev["p1.organization"] = "Organization + WebSite on %d of %d pages; logo resolves (HTTP 200); %d sameAs declared." % (
@@ -860,8 +1047,11 @@ def run(base, sample=8, verbose=False, urls=None):
               "Event","JobPosting","Dataset"}
     hit = {u for u, o in allld.items() if types_of(o) & want_t}
     art = {u for u, o in allld.items() if types_of(o) & {"Article","BlogPosting","NewsArticle","TechArticle"}}
-    tier["p1.page-type"] = 4 if len(hit | art) >= max(2, n * .5) else (2 if (hit or art) else 0)
-    ev["p1.page-type"] = "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on %d of %d sampled pages." % (len(hit | art), n)
+    # the top tier needs "real field values": a bare {"@type": "Product"} states a type and nothing else
+    real = {u for u in hit | art if any(substantive(x) for x in allld[u])}
+    tier["p1.page-type"] = 4 if len(real) >= max(2, n * .5) else (2 if (hit or art) else 0)
+    ev["p1.page-type"] = ("Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on %d of %d sampled pages; "
+                          "%d of them with real field values." % (len(hit | art), n, len(real)))
 
     # ── p2.answer-passages ──
     lo, hi = (50, 200) if any(is_cjk(r.text) for r in live.values()) else (25, 120)
@@ -888,29 +1078,37 @@ def run(base, sample=8, verbose=False, urls=None):
     ev["p2.question-intent"] = "%d of %d pages carry at least one heading phrased as a question, a task or an explanation." % (qi, n)
 
     # ── p2.freshness ──
-    fr = 0
+    fr = dm = stale = 0
     for u, r in live.items():
         o = allld.get(u, [])
-        if any(x.get("dateModified") or x.get("datePublished") for x in o) or \
-           re.search(r'<time[^>]+datetime=', r.text, re.I) or \
-           re.search(r'property=["\']article:(published|modified)_time', r.text, re.I) or \
-           re.search(r"\b(20[12]\d)[-/年]\s*\d{1,2}[-/月]\s*\d{1,2}", visible_text(main_html(r.text))[:3000]):
+        shown = visible_dates(r.text)
+        if any(x.get("dateModified") or x.get("datePublished") for x in o) or shown or \
+           re.search(r'property=["\']article:(published|modified)_time', r.text, re.I):
             fr += 1
-    dm = sum(1 for o in allld.values() if any(x.get("dateModified") for x in o))
-    tier["p2.freshness"] = 6 if (fr >= n * .75 and dm) else (3 if fr else 0)
-    ev["p2.freshness"] = "%d of %d pages carry a date a reader or a crawler can see; %d declare dateModified." % (fr, n, dm)
+        mods = [d for d in (iso_date(x.get("dateModified")) for x in o) if d]
+        if any(x.get("dateModified") for x in o):
+            dm += 1
+            # the top tier asks that dateModified agree with the visible date: a page that shows a later
+            # date than the one it declares as its last modification contradicts itself
+            if mods and shown and max(shown) > max(mods) + datetime.timedelta(days=1):
+                stale += 1
+    tier["p2.freshness"] = 6 if (fr >= n * .75 and dm and not stale) else (3 if fr else 0)
+    ev["p2.freshness"] = "%d of %d pages carry a date a reader or a crawler can see; %d declare dateModified%s." % (
+        fr, n, dm, (", %d of them earlier than the date the page shows" % stale) if stale else "")
 
     # ── p2.sourced-stats ──
     pages_with_nums = pages_sourced = tot_num = cited = 0
     for _u, r in live.items():
         body = main_html(r.text)
         vis = visible_text(body)
-        nums = re.findall(r"(?<![\w-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![\w-])", vis)
+        # Latin letters and digits bound a figure; \w would also count Chinese characters, so "占用了61%的"
+        # would not be a figure at all
+        nums = re.findall(r"(?<![A-Za-z0-9_-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![A-Za-z0-9_-])", vis)
         # attribution near a figure: an outbound link, a cite/blockquote, a footnote marker,
         # or an explicit source phrase
         att = (len(re.findall(r"<(cite|blockquote)\b", body, re.I))
-               + len(re.findall(r"(?:source|sources|study|studies|report|research|survey|"
-                                r"according to|数据来源|来源|资料来源|据.{0,6}报告)\s*[::]?", vis, re.I))
+               + len(re.findall(r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|research|surveys?|surveyed|according to)"
+                                r"(?![A-Za-z])|数据来源|资料来源|来源[:：]|据.{0,6}报告", vis, re.I))
                + len(re.findall(r'<a\b[^>]+href=["\']https?://(?!%s)' % re.escape(host_stem(root)), body, re.I)))
         tot_num += len(nums); cited += att
         if len(nums) >= 3:
@@ -927,7 +1125,11 @@ def run(base, sample=8, verbose=False, urls=None):
                                   % (tot_num, pages_with_nums, pages_sourced))
 
     # ── p2.named-author ──
-    BRANDY = re.compile(r"^(team|staff|editор|editorial|admin|support|the .+ team|.*官方|.*团队|.*小编)$", re.I)
+    # a byline that names a role or the organisation is not a person ("editor" was once spelt with
+    # Cyrillic letters here, so it never matched)
+    BRANDY = re.compile(r"^(team|staff|editors?|editorial( team| staff)?|admin|administrator|support|webmaster|"
+                        r"the .+ team|.*官方|.*团队|.*小编|编辑部)$", re.I)
+    org_names = {str(o.get("name")).strip().lower() for o in orgs if o.get("name")}
     named, linked = 0, 0
     for u, r in live.items():
         auth = None
@@ -937,9 +1139,13 @@ def run(base, sample=8, verbose=False, urls=None):
             if isinstance(a, dict) and a.get("name"): auth = a; break
             if isinstance(a, str) and a.strip(): auth = {"name": a}; break
         if not auth:
-            m = re.search(r'(?:rel=["\']author["\'][^>]*>|by\s+)([A-Z][\w.\-]+(?:\s+[A-Z][\w.\-]+){0,2})', r.text)
+            m = re.search(r'rel=["\']author["\'][^>]*>\s*([A-Z][\w.\-]+(?:\s+[A-Z][\w.\-]+){0,2})', r.text)
+            # a "By Jane Doe" byline in the main content, not "Powered by Hugo" in a footer
+            m = m or re.search(r'(?<![A-Za-z])(?<!powered )(?<!built )(?<!made )(?<!hosted )(?<!designed )(?<!sponsored )'
+                               r'[Bb]y\s+([A-Z][a-z][\w.\-]*(?:\s+[A-Z][\w.\-]+){1,2})', visible_text(main_html(r.text)))
             if m: auth = {"name": m.group(1)}
-        if auth and auth.get("name") and not BRANDY.match(auth["name"].strip()):
+        name = str(auth.get("name") or "").strip() if auth else ""
+        if name and not BRANDY.match(name) and name.lower() not in org_names:
             named += 1
             if auth.get("url") or auth.get("sameAs"): linked += 1
     tier["p2.named-author"] = 6 if linked >= max(1, named * .5) and named else (3 if named else 0)
@@ -1091,15 +1297,15 @@ def run(base, sample=8, verbose=False, urls=None):
     # and documented in rubric/open-questions.md #9.
     def at_origin_or_scope(rel):
         r = fetch(origin + rel)
-        if not r.ok and scope:
+        if not text_file(r) and scope:
             alt = fetch(origin + scope + rel)
-            if alt.ok:
+            if text_file(alt):
                 return alt
         return r
-    lf = at_origin_or_scope("/llms-full.txt"); bon["b.llms-full"] = 2 if lf.ok else 0
+    lf = at_origin_or_scope("/llms-full.txt"); bon["b.llms-full"] = 2 if text_file(lf) else 0
     at = at_origin_or_scope("/ai.txt")
-    at2 = at_origin_or_scope("/.well-known/ai.txt") if not at.ok else at
-    bon["b.ai-txt"] = 2 if at2.ok else 0
+    at2 = at_origin_or_scope("/.well-known/ai.txt") if not text_file(at) else at
+    bon["b.ai-txt"] = 2 if text_file(at2) else 0
     home_html = home_html_early
     bon["b.geo-link"] = 1 if re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', home_html, re.I) else 0
     bon["b.speakable"] = 1 if any("SpeakableSpecification" in json.dumps(o) for o in allld.values()) else 0
@@ -1249,6 +1455,8 @@ def report(res, args):
     print("  %s%s%d%s%s / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.grey, c.r, c.b, big, bd, c.r))
     if gap: print("  %s%d points to %s%s" % (c.grey, gap[0], gap[1], c.r))
     if capped: print("  %sGATE CAPPED — a gate check scored zero%s" % (c.red, c.r))
+    _ln = landed_note(res)
+    if _ln: print("  %s%s%s" % (c.amber, _ln, c.r))
     print()
     cur = None
     for cid, pil, name, t, mx, e in rows:
@@ -1264,8 +1472,8 @@ def report(res, args):
         if args.explain:
             if t is not None:
                 tr = tier_reason(cid, t, mx)
-                if tr: print("      %s%s%s" % (c.brass, tr[:112], c.r))
-            if e: print("      %s%s%s" % (c.dim, e[:112], c.r))
+                if tr: print("      %s%s%s" % (c.brass, clip(tr, 112), c.r))
+            if e: print("      %s%s%s" % (c.dim, clip(e, 112), c.r))
             if t is not None and t < mx: print("      %s%s%s" % (c.grey, doc_url(cid), c.r))
     gaps = sorted([(mx - t, cid, name, tier_reason(cid, t, mx))
                    for cid, pil, name, t, mx, e in rows if t is not None and t < mx],
@@ -1296,6 +1504,7 @@ def as_json(res):
     return dict(extra, rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
         audited_at=time.strftime("%Y-%m-%d"),
         target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"], sample_source=res.get("sample_source"),
+        **({"landed": res["landed"]} if landed_note(res) else {}),
         readiness=total, observable_max=den, normalised=norm, band=bd,
         gate_capped=capped, bonus_awarded=b,
         checks=[dict(id=cid, state="scored" if t is not None else "unobservable",
@@ -1349,11 +1558,32 @@ def _level(cid, t, mx):
         return "error" if cid.startswith("g.") else "warning"
     return "note"
 
-def as_sarif(res):
+def _repo_path(path):
+    """A path as a code-scanning location: relative to the working directory (the checkout root in CI),
+    with forward slashes. GitHub rejects a location whose URI scheme differs from the checkout's file://."""
+    return os.path.relpath(os.path.abspath(path)).replace(os.sep, "/")
+
+
+def check_lines(json_text):
+    """{check id: 1-based line} in a report written by json.dumps(as_json(...), indent=2)."""
+    out = {}
+    for i, ln in enumerate(json_text.splitlines(), 1):
+        m = re.match(r'\s*"id": "([a-z0-9.\-]+)"', ln)
+        if m and m.group(1) not in out:
+            out[m.group(1)] = i
+    return out
+
+
+def as_sarif(res, artifact="geo-score.sarif", lines=None):
     """SARIF 2.1.0: one rule per rubric check, one result per check below full marks.
-    Readable by any SARIF viewer and by GitHub code scanning (upload-sarif)."""
+
+    Every result needs a file in the repository and a line (GitHub code scanning rejects a location whose
+    URI is the scored website). Each result points at `artifact`, normally the --json-out report, at the
+    line where that check sits (`lines`), or at line 1. The site itself is in the message and in
+    logicalLocations, which viewers show next to the file."""
     rows, total, den, b, norm, bd, capped = score(res)
     target = res["root"]
+    lines = lines or {}
     rules = [{"id": cid, "name": re.sub(r"[^A-Za-z0-9]+", " ", name).title().replace(" ", ""),
               "shortDescription": {"text": name},
               "helpUri": doc_url(cid),
@@ -1366,8 +1596,10 @@ def as_sarif(res):
         tr = tier_reason(cid, t, mx)
         results.append({
             "ruleId": cid, "level": _level(cid, t, mx),
-            "message": {"text": "%s: %d/%d. %s%s" % (name, t, mx, e, (" " + tr) if tr else "")},
-            "locations": [{"physicalLocation": {"artifactLocation": {"uri": target}}}],
+            "message": {"text": "%s on %s: %d/%d. %s%s" % (name, target, t, mx, e, (" " + tr) if tr else "")},
+            "locations": [{"physicalLocation": {"artifactLocation": {"uri": artifact},
+                                                "region": {"startLine": lines.get(cid, 1)}},
+                           "logicalLocations": [{"fullyQualifiedName": target, "kind": "resource"}]}],
             "partialFingerprints": {"geoScoreCheck/v1": "%s|%s" % (cid, target)},
             "properties": {"points": t, "max": mx, "pillar": pil}})
     return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0",
@@ -1394,6 +1626,7 @@ def as_junit(res):
         out.append('      <property name=%s value=%s/>' % (quoteattr(k), quoteattr(str(v))))
     out.append('    </properties>')
     for cid, pil, name, t, mx, e in rows:
+        e = _UNSAFE.sub("", e or "")      # XML 1.0 cannot carry controls or U+FFFE/FFFF, whatever produced the report
         label = "%s %s (%s)" % (cid, name, "—" if t is None else "%d/%d" % (t, mx))
         out.append('    <testcase classname=%s name=%s>' % (quoteattr("geo-score." + pil.replace(" ", "")), quoteattr(label)))
         if t is None:
@@ -1560,7 +1793,9 @@ def main():
     if a.urls or a.urls_from:
         if len(targets) > 1:
             raise RuntimeError("--urls and --urls-from work with one site at a time; drop --compare")
-        pinned = pin_urls(url, read_url_list(a.urls) if a.urls else read_report_urls(a.urls_from))
+        got = read_url_list(a.urls) if a.urls else read_report_urls(a.urls_from)
+        # a report written with --sample above 8 pins as many pages as it sampled
+        pinned = pin_urls(url, got, limit=len(got) if a.urls_from else None)
     watch = _watch_module() if a.ask else None
     if len(targets) > 1:
         done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
@@ -1589,10 +1824,14 @@ def main():
             report(res, a)
         if watch and not a.json:
             citation_report(crun, res["citation"], watch)
+        report_text = json.dumps(as_json(res), ensure_ascii=False, indent=2) + "\n"
         if a.json_out:
-            _write(a.json_out, json.dumps(as_json(res), ensure_ascii=False, indent=2) + "\n")
+            _write(a.json_out, report_text)
         if a.sarif:
-            _write(a.sarif, json.dumps(as_sarif(res), ensure_ascii=False, indent=2) + "\n")
+            # locate results in the JSON report when there is one, else in the SARIF file itself
+            where = a.json_out or a.sarif
+            _write(a.sarif, json.dumps(as_sarif(res, _repo_path(where), check_lines(report_text) if a.json_out else None),
+                                       ensure_ascii=False, indent=2) + "\n")
         if a.junit:
             _write(a.junit, as_junit(res))
     if a.share:
@@ -1624,7 +1863,7 @@ def cli():
     except KeyboardInterrupt:
         sys.exit(130)
     except RuntimeError as e:
-        print("%s%s%s" % (c.red, e, c.r), file=sys.stderr)
+        print("%s%s%s" % (c.red, " ".join(_UNSAFE.sub("", str(e)).split()), c.r), file=sys.stderr)
         sys.exit(2)
 
 def mcp_main():

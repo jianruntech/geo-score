@@ -770,7 +770,7 @@ class CLI(Base):
         self.assertTrue(os.path.getsize(mdp) > 200)
         code, out, _ = self.main("diff", "-c", cfgp)
         self.assertEqual(code, 0)
-        self.assertIn("within noise", out)
+        self.assertIn("too few questions to tell", out)          # two questions cannot show a change
         code, out, _ = self.main("ask", "-c", cfgp, "which AI video tool is free?", "--engines", "chatgpt-api")
         self.assertEqual(code, 0)
         self.assertIn("cited #1 (https://www.lumo.example/free)", out)
@@ -853,8 +853,9 @@ class MCP(Base):
         self.assertEqual(summary["overall"]["answered"], 2)
         self.assertIn("Changes", self.call(srv, "diff")["content"][0]["text"])
         self.assertTrue(self.call(srv, "report", {"run": "../../x"})["isError"])
-        self.assertTrue(self.call(srv, "nope")["isError"])
-        self.assertTrue(self.call(srv, "__init__")["isError"])
+        for bad in ("nope", "__init__", None):
+            r = srv.handle({"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": bad}})
+            self.assertEqual(r["error"]["code"], -32602, bad)        # a protocol error, not a tool result
 
     def check_schema(self, obj, schema, where):
         """jsonschema when it is installed; otherwise the required keys and types, so the suite stays stdlib-only."""
@@ -1160,7 +1161,8 @@ class ReviewFindings(Base):
         srv = gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
         ask = next(t for t in srv.tools() if t["name"] == "ask")
         self.assertFalse(ask["annotations"]["readOnlyHint"])
-        for bad in ("http://localhost/", "http://127.0.0.1:8080/", "10.0.0.5", "http://169.254.169.254/latest"):
+        for bad in ("http://localhost/", "http://127.0.0.1:8080/", "10.0.0.5", "http://169.254.169.254/latest",
+                    "http://100.100.100.200/latest/meta-data/", "100.64.0.1", "http://[::ffff:127.0.0.1]/"):
             r = srv.call({"name": "score_site", "arguments": {"url": bad}})
             self.assertTrue(r["isError"], bad)
 
@@ -1326,6 +1328,22 @@ class Statistics(Base):
             gw.BOOTSTRAP_REPS = saved
         self.assertLessEqual(alarms, 16, "%d of 200 null diffs called a change" % alarms)
 
+    def test_holm_makes_small_sets_untestable_and_says_so(self):
+        # six questions all lost on two engines: 2/2^6 = 0.031 per row, but three rows make the best adjusted
+        # p 0.094. "within noise" would claim the data showed no change; it only cannot show one.
+        cited = {}
+        for i in range(6):
+            for e in ("chatgpt-api", "perplexity-api"):
+                cited[("q%d" % i, e)] = [True]
+        a = synth("20260919T083000Z", cited)
+        b = synth("20260926T083000Z", dict((k, [False]) for k in cited))
+        d = gw.diff_runs(a, b)
+        self.assertEqual(set(r["verdict"] for r in [d["overall"]] + d["engines"] if r["n_pairs"]),
+                         {"too few questions to tell"})
+        cited = dict((("q%d" % i, e), [True]) for i in range(10) for e in ("chatgpt-api", "perplexity-api"))
+        d = gw.diff_runs(synth("20260919T083000Z", cited), synth("20260926T083000Z", dict((k, [False]) for k in cited)))
+        self.assertEqual(d["overall"]["verdict"], "change")        # ten questions: 3 x 2/2^10 is far below 0.05
+
     def test_too_few_questions_to_tell(self):
         def flip(n):
             a = synth("20260919T083000Z", dict((("q%d" % i, "chatgpt-api"), [True]) for i in range(n)))
@@ -1335,7 +1353,7 @@ class Statistics(Base):
         self.assertEqual(d["overall"]["verdict"], "too few questions to tell")
         self.assertEqual((d["overall"]["p_paired"], d["overall"]["p_adjusted"], d["overall"]["delta_ci"]),
                          (0.0625, None, None))
-        self.assertIn("still be within noise", gw.render_diff(d))
+        self.assertIn("could not reach p < 0.05", gw.render_diff(d))
         d = flip(6)                                           # one engine: overall and engine are one test
         self.assertEqual(d["overall"]["p_adjusted"], 0.0312)
         self.assertEqual(d["engines"][0]["p_adjusted"], 0.0312)
@@ -1541,7 +1559,9 @@ class OldRuns(Base):
         self.assertEqual(json.loads(out)["summary"]["brand_flags"], "computed")
         code, out = self.main("diff", "-c", self.cfgp, "--fail-on-drop")
         self.assertEqual(code, 0)
-        self.assertIn("within noise", out)
+        # six questions over two engines and the overall row: even a unanimous move could not pass Holm
+        self.assertIn("too few questions to tell", out)
+        self.assertNotIn("within noise", out)
         code, out = self.main("runs", "-c", self.cfgp)
         self.assertIn("cited (headline)", out)
         with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:

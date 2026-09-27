@@ -10,11 +10,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 A release about trust in the measurement: outputs CI systems read natively, a pinned sample for
 before/after comparisons, change detection that no longer calls noise a change, offline end-to-end
 tests on twelve fixture sites, a measured CLI-vs-hand-audit agreement, and an evidence basis for every
-check. Two scoring fixes: the percentage can no longer pass 100, and the documents that still stated
-the superseded gate rule now match the code.
+check. The fixtures also found places where the CLI read sites against the rubric (grouped
+robots.txt rules, single-page apps' catch-all pages, empty markup, stale `dateModified`, bylines,
+Chinese dates and figures); those are fixed and listed below with their direction. The percentage can
+no longer pass 100, and the MCP server now keeps every connection on public addresses.
 
-**Upgrading from 1.2.0.** Level 1 scores are unchanged except for sites that read above 100, which
-now read 100. In `watch`, the headline rate leaves out questions that name the brand, intervals widen
+**Upgrading from 1.2.0.** Level 1 scores move only where a check read a site wrongly; each fix and
+its direction is listed under *Fixed*, and the public leaderboard (measured with 1.1.0) is not
+re-scored. In `watch`, the headline rate leaves out questions that name the brand, intervals widen
 when a question has several answers, and some `diff` verdicts that said `change` now say
 `within noise` or `too few questions to tell`; the 1.2.0 fields keep their meaning. Evidence strings
 now quote site text inside `«site text: …»`. The CSV report has an eleventh column, `branded`.
@@ -42,18 +45,19 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
 - [Troubleshooting](guide/troubleshooting.md), in English and Chinese: score movement, checks shown
   as `—`, the gate cap, exit code 2, proxies, redirects, the leaderboard's tool version, `watch`
   exit 3, Action annotation limits, CJK thresholds. The terminal report links to it.
-- **Intervals on the leaderboard's medians.** `benchmark/stats.py` puts a seeded bootstrap 95% interval
-  on every median the README and the page quote: overall 56 (53–58), and the Chinese-market gap 19
-  points (12–26). Sectors with fewer than 10 scored sites (China / cloud and Professional services, 9
+- **Intervals on the leaderboard's medians.** `benchmark/stats.py` computes a seeded bootstrap 95%
+  interval for the overall median, each sector median and the Chinese-market gap; `benchmark/README.md`
+  and both READMEs quote them: overall 56 (53–58), the gap 19 points (12–26). The hosted page shows
+  medians without intervals until it is rebuilt and redeployed. Sectors with fewer than 10 scored sites (China / cloud and Professional services, 9
   each) no longer print a median; `validate.py` counts scored sites, not listed ones.
   `benchmark/run.py --readme-only` regenerates the README without re-scoring.
 - The leaderboard can move host: `GEO_SITE_BASE` sets the base URL for canonical links, `og:image`,
   hreflang, `llms.txt` and the sitemap, and `scripts/check_live.py` compares a hosted page with the
   committed data (today's Pages build still shows 229 sites against 314).
 - **How far to trust the CLI, measured.** `benchmark/validity.py` re-scores the five published hand
-  audits on the same pages and compares every check tier for tier: 73% of 85 check pairs agree (90%
-  for checks read by rule, 58% for heuristics), and the CLI reads 4.8 points lower on average, from
-  10 lower to 6 higher. Results, caveats and every disagreement: `benchmark/VALIDITY.md` (EN + zh).
+  audits on the same pages and compares every check tier for tier: 78% of 86 check pairs agree (95%
+  for checks read by rule, 62% for heuristics), and the CLI reads 4.2 points lower on average, from
+  13 lower to 6 higher. Results, caveats and every disagreement: `benchmark/VALIDITY.md` (EN + zh).
   This replaces the unmeasured "typically 5 to 15 points lower", which was wrong for one site in five.
 - **Evidence basis for every check.** `rubric/v1.1.json` gains an `evidence` object per check
   (basis, sources, last verified), published as `rubric/evidence-v1.1.md` (EN + zh). Metadata only:
@@ -111,8 +115,33 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
 - `--compare` with three or more sites no longer says "Both scored".
 
 ### Fixed
+- **Scoring fixes the offline fixtures found.** Each moves a score only where the old reading
+  contradicted the rubric:
+  - `g.robots`: several `User-agent` lines share the rules that follow them (RFC 9309 2.1). The rules
+    were attached to the last line only, so a file blocking GPTBot, ClaudeBot and PerplexityBot in one
+    group read as blocking none. Down, to 0 and the gate cap, for sites that block that way.
+  - `p1.llms-txt`, `b.llms-full`, `b.ai-txt`: a single-page app that answers every path with its HTML
+    shell no longer counts as serving these files. Down.
+  - `p1.organization`: Organization and WebSite without name, url and logo score 3, as the rubric
+    says, not 5 (down); a relative logo resolves against the page it sits on (up where it now loads).
+  - `p1.page-type`: the top tier needs real field values; a bare `{"@type": "Product"}` scores 2. Down.
+  - `p2.freshness`: dates flush against Chinese text and dates with English month names are read
+    (up); the top tier requires `dateModified` not to be older than the date the page shows (down
+    where it is).
+  - `p2.sourced-stats`: "resources" no longer counts as "source" (down); figures flush against Chinese
+    text count as figures (either way).
+  - `p2.named-author`: "Editor", the organisation's own name and "Powered by Hugo" in a footer are not
+    personal bylines. Down.
+  - Sampling: for a site under a path, a sibling folder (`/docs-legacy` for `/docs`) is no longer
+    sampled, and the path's own sitemap is used when the origin has none.
+- **SARIF uploads to GitHub code scanning.** Results were located at the scored URL, which code
+  scanning rejects; each now points at its check's line in the JSON report (the Action writes one into
+  the workspace when `sarif` is set) and names the site in its message.
+- `watch diff` no longer says `within noise` when the question set is too small for the number of
+  rows compared: with Holm's correction, a row whose best possible adjusted p is 0.05 or more is
+  `too few questions to tell`. An unknown MCP tool is a JSON-RPC error (-32602), as the protocol says.
 - **A score could exceed 100.** Bonus points sit outside the denominator, so a site at or near full
-  marks plus bonus read up to 106, which also broke the report schema (`normalised` ≤ 100). The
+  marks plus bonus read above 100 (the good fixture read 107), which also broke the report schema (`normalised` ≤ 100). The
   percentage is now capped at 100, and rubric rule 5 says so. No published score changes: the
   benchmark's highest is 98 and the hand audits' 87. The offline fixtures found it.
 - `--json-out`, `--sarif` and `--junit` report a path that cannot be written as a clear error (exit
@@ -133,6 +162,18 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
   server-rendered prose, Foglift's upper quartile); a new check compares the numbers in both.
 
 ### Security
+- **The MCP server connects only to public addresses, on every hop.** 1.2.0 checked the URL an agent
+  passed and nothing after it, so the audited site could point the scorer at loopback or intranet
+  addresses through a redirect, its `sameAs` links, its logo or its declared sitemap, and the check
+  let carrier-grade NAT through (100.64.0.0/10, where cloud metadata such as 100.100.100.200 lives).
+  Under MCP every connection is now resolved and checked (`is_global`), each redirect hop is checked,
+  and a direct connection goes to the checked address. The check also uses the exact host to be
+  fetched rather than its brand form. The command-line tool still scores whatever its user names.
+- More text is fenced or cleaned: the sitemap URL a site declares is quoted as site text without its
+  query or fragment; sitemap entries with control or bidi characters are dropped; Unicode tag
+  characters, soft hyphens, line separators and XML-illegal characters are removed; a truncated
+  evidence line never leaves a `«site text: …»` fence open; server error lines are reduced to one
+  clean line; the Action's job summary escapes evidence instead of rendering it as Markdown and HTML.
 - The Action passes its inputs to the script as environment variables. Before this, `url` and the
   other inputs were pasted into the shell script, so a crafted value could run commands in the
   workflow. `sample` and `fail-under` are now checked to be whole numbers.

@@ -1337,12 +1337,23 @@ def diff_runs(a, b):
     family = [r for r in rows + [overall] if "verdict" not in r]
     if len(with_pairs) == 1 and overall in family:
         family.remove(overall)
+    # The smallest p an exact paired test can reach on n questions is 2 / 2^n (every question moving the same
+    # way). If Holm's multiplier puts even that at or above alpha, the row can never be called a change, and
+    # "within noise" would be a claim the data cannot support: say so, then correct over the rows left.
+    while family:
+        untestable = [r for r in family if len(family) * 2.0 / 2 ** r["n_questions"] >= ALPHA]
+        if not untestable:
+            break
+        for r in untestable:
+            r["verdict"] = "too few questions to tell"
+            family.remove(r)
     for r, pa in zip(family, holm([r["_p"] for r in family])):
         r["p_adjusted"] = round(pa, 4)
         r["verdict"] = "change" if pa < ALPHA else "within noise"
     if "verdict" not in overall:
-        overall["p_adjusted"] = with_pairs[0]["p_adjusted"]
-        overall["verdict"] = with_pairs[0]["verdict"]
+        # one engine: the overall row is that engine's test, so it reports the same numbers
+        for k in ("p_adjusted", "verdict", "delta_ci", "delta_pp", "p_paired"):
+            overall[k] = with_pairs[0][k]
     for r in rows + [overall]:
         r.pop("_p", None)
 
@@ -1394,7 +1405,9 @@ def _cut(s, n):
         if _w(out + ch) > n - 1:
             break
         out += ch
-    return out + "…"
+    out += "…"
+    # never leave a «site text: …» fence open: what follows would read as the tool's own words
+    return out + "»" if out.rfind("«") > out.rfind("»") else out
 
 
 def pct(x):
@@ -1583,9 +1596,10 @@ def render_diff(d, fmt="text"):
              "answered (n = answers per run). p: exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-adjusted across the rows; a change "
              "needs p < %.2f." % d.get("alpha", ALPHA))
     if "too few questions to tell" in verdicts:
-        L.append("too few questions to tell: fewer than %d questions were answered in both runs, so even if every "
-                 "one of them flipped the same way the change would still be within noise." % d.get("min_questions",
-                                                                                                  MIN_PAIRED))
+        L.append("too few questions to tell: fewer than %d questions were answered in both runs, or too few for the "
+                 "number of rows compared, so even if every one of them moved the same way the test could not reach "
+                 "p < %.2f after correction. Add questions to tell a change from noise."
+                 % (d.get("min_questions", MIN_PAIRED), d.get("alpha", ALPHA)))
     if d["lost"]:
         L.append(_h("Citations lost (%d)" % len(d["lost"]), fmt))
         L.append(table(["id", "engine", "question", "was citing"],
@@ -2062,9 +2076,12 @@ def _public_host(host):
         return False
     for info in infos:
         ip = ipaddress.ip_address(info[4][0].split("%")[0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+        if ip.version == 6 and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        # globally routable unicast only: a deny-list missed CGNAT (100.64/10), home of 100.100.100.200
+        if not ip.is_global or ip.is_multicast:
             return False
-    return True
+    return bool(infos)
 
 
 # Output schemas for the tools that return structuredContent. Compact on purpose: the full contracts are
@@ -2086,8 +2103,12 @@ OUT_SUMMARY = {"type": "object", "description": "A watch run summary (schema/wat
                "properties": {"overall": _BLOCK, "headline": _BLOCK, "branded": _BLOCK,
                               "engines": {"type": "array", "items": {"type": "object"}},
                               "notes": {"type": "array", "items": {"type": "string"}}}}
-_ROW = {"type": "object", "properties": {"engine": {"type": "string"}, "verdict": {"type": "string"},
-                                         "delta_pp": _NUM_OR_NULL, "delta_ci": _CI, "p_adjusted": _NUM_OR_NULL}}
+_ROW = {"type": "object", "properties": {
+    "engine": {"type": "string"}, "verdict": {"type": "string"},
+    "delta_pp": {"type": ["number", "null"], "description": "change in cited share, percentage points"},
+    "delta_ci": {"type": ["array", "null"], "items": {"type": "number"},
+                 "description": "95% interval for delta_pp, in percentage points"},
+    "p_adjusted": _NUM_OR_NULL}}
 OUT_DIFF = {"type": "object", "description": "Two runs compared (schema/watch.v1.json, $defs/diff).",
             "required": ["from", "to", "overall", "engines"],
             "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "overall": _ROW,
@@ -2123,6 +2144,10 @@ class MCPServer(object):
         self.out = out or sys.stdout
         self.lock = threading.Lock()
         self.geo_score = load_geo_score()
+        if self.geo_score is not None and hasattr(self.geo_score, "ADDRESS_GUARD"):
+            # an agent picks the URL and the audited site picks every URL after it: every connection
+            # this process makes for score_site must go to a public address
+            self.geo_score.ADDRESS_GUARD = True
 
     def send(self, obj):
         with self.lock:
@@ -2219,6 +2244,11 @@ class MCPServer(object):
         elif method == "tools/list":
             result = {"tools": self.tools()}
         elif method == "tools/call":
+            name = params.get("name")
+            if name not in [t["name"] for t in self.tools()]:
+                # an unknown tool is a protocol error, not a tool result (MCP 2025-06-18, tools: error handling)
+                return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": "unknown tool: %s"
+                                                               % (name if isinstance(name, str) else type(name).__name__)[:80]}}
             result = self.call(params)
         elif method == "resources/list":
             result = {"resources": self.resources()}
@@ -2371,10 +2401,14 @@ class MCPServer(object):
     def tool_score_site(self, args, token):
         url = args.get("url")
         m = re.match(r"^(?:https?://)?([^/\s:?#@]+)(?::(\d{1,5}))?(?:[/?#]\S*)?$", url.strip()) if isinstance(url, str) else None
-        host = host_of(m.group(1)) if m else ""
+        url = (url.strip() if "://" in url else "https://" + url.strip()) if m else ""
+        try:
+            # the exact host that will be fetched, not host_of()'s brand form, which drops "www."
+            host = (urllib.parse.urlsplit(url).hostname or "").encode("idna").decode("ascii")
+        except (UnicodeError, ValueError):
+            host = ""
         if not host or "." not in host or not _public_host(host):
             raise ConfigError("url must be an http(s) URL on a public host (not localhost, private or reserved addresses)")
-        url = url.strip() if "://" in url else "https://" + url.strip()
         gs = self.geo_score
         sample = args.get("sample", 8)
         if not isinstance(sample, int) or isinstance(sample, bool) or not 1 <= sample <= 8:

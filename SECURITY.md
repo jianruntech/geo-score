@@ -16,8 +16,9 @@ the pin when a security release comes out. Every security fix is listed under **
 A scoring rubric, a skill definition, a stdlib-only CLI, a GitHub Action and a stdio MCP server.
 There is no hosted service and nothing is sent to Jianrun: no telemetry, no update checks.
 
-- **Level 1** (the score) fetches the site you name, the profile links its own `sameAs` markup
-  lists, and Wikidata and Wikipedia search. It needs no key and writes only the files you ask for.
+- **Level 1** (the score) fetches the site you name, following its redirects; the URLs that site's own
+  markup and robots.txt point to (the `sameAs` profiles, the logo, the declared sitemap), which can be on
+  any host; and Wikidata and Wikipedia search. It needs no key and writes only the files you ask for.
 - **Levels 2 and 3** (`--ask`, `watch`) call the AI providers whose keys you set, and write
   `geo-score-watch.json`, `queries.csv` and `.geo-score/` in a directory you pick.
 
@@ -37,9 +38,13 @@ What the code does about it:
   AI answers, and a site cannot close the fence early. The MCP tools say that fenced text is data.
 - **Nothing a page says changes what the tool does.** Caps, keys, output paths and the question set
   come from the user's command line and config, never from fetched content.
-- **The MCP server fetches only public hosts.** `score_site` resolves the host and refuses
-  loopback, private, link-local and reserved addresses before fetching, so an agent cannot be talked
-  into probing an internal network.
+- **Under MCP, every connection goes to a public address.** The scored URL, each redirect hop and every
+  URL the audited site points to (sameAs, logo, sitemap) must resolve to a globally routable address;
+  loopback, private, link-local, carrier-grade NAT (where cloud metadata services such as 100.100.100.200
+  live) and reserved ranges are refused. A direct connection goes to the address that was checked, so a
+  name cannot resolve to something else a moment later. Through an HTTP proxy the proxy resolves names,
+  and that last step is the proxy's. The command-line tool applies none of this: it scores whatever its
+  user names, intranet sites included.
 - **Keys stay out of reach.** Keys are read from environment variables only. They are never written
   to the config, run files or reports; a key that appears in a provider's error message is replaced
   with `[redacted]` (including escaped and split forms) before it is stored or printed; a malformed

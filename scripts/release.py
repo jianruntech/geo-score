@@ -15,7 +15,8 @@ REPO = "https://github.com/jianruntech/geo-score"
 RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
 # files whose one-line install or download is pinned to a release tag
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
-          ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md", "STABILITY.md"]
+          ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md", "STABILITY.md",
+          "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md"]
 # every way a document pins a release; group 1 is kept, the version after it is rewritten
 PINS = [re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"),
         re.compile(r"(jianruntech/geo-score/releases/download/)v\d+\.\d+\.\d+"),
@@ -116,7 +117,8 @@ def execute(v):
             sys.exit("stopped: %s failed" % step[0])
     for f in ("geo_score.py", "geo_watch.py"):
         shutil.copy(os.path.join(ROOT, "cli", f), os.path.join(dist, f))
-    names = sorted(n for n in os.listdir(dist) if n != "SHA256SUMS")
+    # an explicit list: build tools leave other files in dist/ (uv writes a .gitignore)
+    names = sorted(n for n in os.listdir(dist) if n.endswith((".whl", ".tar.gz")) or n in ("geo_score.py", "geo_watch.py"))
     with io.open(os.path.join(dist, "SHA256SUMS"), "w", encoding="utf-8") as f:
         for n in names:
             f.write("%s  %s\n" % (hashlib.sha256(open(os.path.join(dist, n), "rb").read()).hexdigest(), n))
@@ -124,11 +126,14 @@ def execute(v):
     io.open(notes, "w", encoding="utf-8").write(
         section("CHANGELOG.md", v) + "\n\n---\n\nVerify downloads: `shasum -a 256 -c SHA256SUMS`.\n"
         "中文更新日志：%s/blob/v%s/CHANGELOG.zh-CN.md\n" % (REPO, v))
-    for args in (["tag", "-a", "v" + v, "-m", "geo-score %s" % v], ["tag", "-f", "v1", "v" + v],
-                 ["push", "origin", "main"], ["push", "origin", "v" + v], ["push", "--force", "origin", "v1"]):
+    # main first: if the push is rejected, no tag exists yet and the whole step can simply be rerun
+    for args in (["push", "origin", "main"], ["tag", "-a", "v" + v, "-m", "geo-score %s" % v],
+                 ["push", "origin", "v" + v], ["tag", "-f", "v1", "v" + v], ["push", "--force", "origin", "v1"]):
         print("$ git " + " ".join(args))
         r = git(*args)
         if r.returncode:
+            if args[0] == "push" and args[-1] == "v" + v:
+                git("tag", "-d", "v" + v)          # never strand a local tag the remote does not have
             sys.exit("stopped: git %s failed\n%s" % (" ".join(args), r.stderr))
     assets = [os.path.join(dist, n) for n in names] + [os.path.join(dist, "SHA256SUMS")]
     r = subprocess.run(["gh", "release", "create", "v" + v, "--title", "geo-score %s" % v, "--notes-file", notes]

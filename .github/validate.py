@@ -397,6 +397,10 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
             new = io.open(os.path.join("docs", f), encoding="utf-8").read()
             check(old == new,
                   f"docs/{f} 与 results.json 不同步 —— 跑一遍 python3 benchmark/build_page.py 并提交")
+    # 检查不许改被检查的东西：把原文件写回去。否则失败一次之后，第二次运行会因为文件已被重新生成而通过，
+    # 推上去的提交里却还是旧页面。
+    for f, old in before.items():
+        io.open(os.path.join("docs", f), "w", encoding="utf-8").write(old)
     # 双语页必须成对存在，且各自声明了 hreflang
     for f in ("index.html", "zh.html"):
         pth = os.path.join("docs", f)
@@ -500,7 +504,10 @@ def cap_sentences(text):
 _cap_files = (["README.md", "README.zh-CN.md", "SKILL.md", "cli/README.md", "CONTRIBUTING.md"]
               + [os.path.join("rubric", f) for f in sorted(os.listdir("rubric"))
                  if f.endswith(".md") and not f.startswith("v1.0")]
-              + [os.path.join("examples", f) for f in sorted(os.listdir("examples")) if f.endswith(".md")])
+              + [os.path.join("examples", f) for f in sorted(os.listdir("examples")) if f.endswith(".md")]
+              # the schemas' descriptions are documentation too: the retired rule survived there once
+              + [os.path.join("schema", f) for f in sorted(os.listdir("schema")) if f.endswith(".json")]
+              + [os.path.join("guide", f) for f in sorted(os.listdir("guide")) if f.endswith(".md")])
 for f in _cap_files:
     if not os.path.exists(f): continue
     for x in cap_sentences(io.open(f, encoding="utf-8").read()):
@@ -576,11 +583,15 @@ for r in MODERN:
 # 「通常低 5 到 15 分」曾是一句没有数据的话；换成实测数字之后，不能让它再悄悄过期。
 if os.path.exists("benchmark/validity.json"):
     vj = json.load(io.open("benchmark/validity.json", encoding="utf-8"))
-    want = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
-            "%d check pairs" % vj["n_check_pairs"]}
+    nd, bm = vj["normalised_difference"], vj["by_method"]
+    want = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -nd["mean"],
+            "%d check pairs" % vj["n_check_pairs"],
+            "%d%%" % round(100 * bm["rule"]["exact_agreement"]), "%d%%" % round(100 * bm["heuristic"]["exact_agreement"])}
     for f in ("README.md", "cli/README.md"):
         t = " ".join(io.open(f, encoding="utf-8").read().split())
-        missing = [w for w in want if w not in t]
+        want_f = set(want) | ({"from %d lower to %d %s" % (-nd["min"], abs(nd["max"]), "higher" if nd["max"] > 0 else "lower")}
+                              if f == "README.md" else set())
+        missing = [w for w in want_f if w not in t]
         check(not missing, f"{f}: CLI-vs-hand-audit figures must match benchmark/validity.json; missing {missing}")
     tz = " ".join(io.open("README.zh-CN.md", encoding="utf-8").read().split())
     wz = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
@@ -638,6 +649,11 @@ for root_, dirs_, files_ in os.walk("."):
         t = io.open(pth, encoding="utf-8", errors="replace").read()
         check("raw.githubusercontent.com/jianruntech/geo-score/main/cli" not in t,
               f"{pth}: downloads the CLI from main; pin it to a release tag (python3 scripts/release.py X.Y.Z --bump)")
+        # an install from the git URL without @vX.Y.Z installs whatever main is today; the changelogs may
+        # describe the feature without pinning
+        if not f.startswith("CHANGELOG"):
+            check(not re.search(r"git\+https://github\.com/jianruntech/geo-score(?!@v)(?![\w.-])", t),
+                  f"{pth}: installs from the git URL without a release tag (@vX.Y.Z)")
 
 # ── 28. 每个发布过的 tag 在中英两份更新日志里都有自己的一节 ──
 import subprocess as _sp
