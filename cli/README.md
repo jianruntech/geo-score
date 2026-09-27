@@ -156,7 +156,7 @@ measured" and the readiness report is unchanged.
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
 | `watch runs` | Saved runs and their headline rate |
 | `watch ask "question" [--brand NAME] [--domain D]` | Level 2 without the score: one question to every engine, now, not saved |
-| `mcp` | Score and watch over MCP (stdio) |
+| `mcp` | Score and watch over MCP (stdio); see [guide/mcp.md](../guide/mcp.md) |
 
 Every `watch` command takes `-c PATH` for the config (default `./geo-score-watch.json`, or
 `$GEO_SCORE_WATCH_CONFIG`).
@@ -207,20 +207,11 @@ questions, because answers to one question move together; otherwise it is Wilson
 change only when `diff` says `change`. Formulas and a worked example:
 [guide/watch-methodology.md](../guide/watch-methodology.md).
 
-MCP clients configured in JSON (Cursor, Windsurf and others). The server reads keys from its
-environment; most clients pass their own environment through, so exporting keys in your shell is
-enough. If you add an `env` block instead, note that the client's config file then holds the keys
-in plain text:
-
-```json
-{"mcpServers": {"geo-score": {
-  "command": "uvx",
-  "args": ["--from", "git+https://github.com/jianruntech/geo-score@v1.3.0", "geo-score-mcp",
-           "-c", "/abs/path/geo-score-watch.json"]
-}}}
-```
-
-From a clone, use `"command": "python3"` with `"args": ["/abs/path/geo-score/cli/geo_score.py", "mcp", "-c", …]`.
+**Over MCP.** `geo-score-mcp` (`geo_score.py mcp` from a clone) serves all three levels to an agent
+over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
+app does not share with your shell, and a GUI client does not start it in your project, so pass
+`-c /absolute/path/geo-score-watch.json`. The config for each client, the tool table, keys,
+timeouts and troubleshooting: [guide/mcp.md](../guide/mcp.md).
 
 Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
 `python3 cli/test_geo_watch.py` (offline; every provider is faked).

@@ -10,7 +10,7 @@
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
-[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#第二三级--ai-到底有没有引用你)
+[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![AIV readiness](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
@@ -86,6 +86,77 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 > Gemini、Copilot 引用你。与地理、地图无关。
 
 ---
+
+## MCP 服务
+
+`geo-score-mcp` 是一个本地 MCP 服务（stdio，只用 Python 标准库）。Agent 通过它能用到和命令行一样的三级：
+免费给网站打分、拿一个问题去问各家 AI、每周追踪一组问题。
+
+<!-- BEGIN MCP:install -->
+<!-- 由 scripts/mcp_docs.py 按版本 1.3.0 生成；要改请改脚本，不要改这一段。 -->
+
+[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
+[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
+[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522git%252Bhttps%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%2540v1.3.0%2522%252C%2522geo-score-mcp%2522%255D%257D)
+[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2ppYW5ydW50ZWNoL2dlby1zY29yZUB2MS4zLjAiLCJnZW8tc2NvcmUtbWNwIl19)
+
+按钮和下面几行用 `uvx` 安装 geo-score **1.3.0**，需要先装 [uv](https://docs.astral.sh/uv/)。不带任何 Key：第一级可用；在你把服务商 Key 交给服务之前，`ask` 和 `run` 花不了任何钱。
+
+**Claude Code**
+
+```bash
+claude mcp add --scope user geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp
+```
+
+**标准配置**（第一级，免费，不要 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
+
+```
+{
+  "mcpServers": {
+    "geo-score": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jianruntech/geo-score@v1.3.0", "geo-score-mcp"]
+    }
+  }
+}
+```
+
+Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输出的完整路径。
+<!-- END MCP:install -->
+
+<!-- BEGIN MCP:tools -->
+<!-- 由 scripts/mcp_docs.py 根据 MCPServer.tools() 生成；要改请改服务或脚本，不要改这张表。 -->
+
+| 工具 | 级别 | 费用 | 写入 | 提示 | 参数 |
+|---|:-:|---|---|---|---|
+| `ask` | 2 | 付费（你的 Key） | 否 | 非破坏性、访问外部 | **`question`**、`engines`、`brand`、`domains` |
+| `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd` |
+| `list_runs` | 3 | 免费 | 否 | 只读 | — |
+| `report` | 3 | 免费 | 否 | 只读 | `run`、`format` |
+| `diff` | 3 | 免费 | 否 | 只读 | `from`、`to`、`format` |
+| `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
+
+资源：`geo-score://rubric/v1.1`。
+
+加粗的参数必填。「提示」是工具的 MCP 标注（annotations）：客户端可以据此决定哪些调用要你确认；它们只是提示，不是保证。**只有 `ask` 和 `run` 会花钱**，而且只用你交给服务的服务商 Key。
+<!-- END MCP:tools -->
+
+**可以这样跟 Agent 说：**
+
+| 提示 | 它调用的工具 |
+|---|---|
+| 给 https://acme.com 做 AI 搜索就绪度打分，列出最能提分的 3 项检查。 | `score_site`，参数 `url` |
+| 把我追踪的问题集 dry-run 一遍，告诉我计划调用多少次、上限是多少。 | `run`，带 `dry_run: true`（第三级，需要配置文件） |
+| 比较我最近两次 watch 运行：哪些引擎变了，有没有超出噪声的变化？ | `diff`（默认比较最近两次） |
+
+**Key 与配置。** `score_site` 不要 Key。`ask` 和 `run` 从服务进程的环境变量里读服务商 Key
+（`OPENAI_API_KEY`、`PERPLEXITY_API_KEY`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`、`OPENROUTER_API_KEY`），
+那不是你终端里的环境：桌面应用看不到你在 shell 里 export 的变量。第三级工具还需要 `geo-score-watch.json`，
+请用 `-c /绝对路径/geo-score-watch.json` 传给服务，因为图形界面客户端不会在你的项目目录里启动它。
+从 1.4.0 起，加上 `--read-only`，服务就花不了任何钱。
+
+各客户端的配置（Claude Code、Claude Desktop、Codex、Cursor、VS Code、Gemini CLI、Devin Desktop、Zed）、
+Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp.zh-CN.md)**。
 
 ## 一个工具，三级用法
 
@@ -215,7 +286,7 @@ CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计
 （按规则读取的项 95%，靠启发式近似判断的项 64%），归一化分平均低 3.6 分，范围从低 10 分到高 6 分。
 样本只有 5 个站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
-**MCP 服务**（三级都有）—— `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见[下文](#第二三级--ai-到底有没有引用你)。
+**MCP 服务**（三级都有）—— `geo-score-mcp`，或者在克隆的仓库里 `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见 [MCP 服务](#mcp-服务)。
 
 ## 第二、三级 · AI 到底有没有引用你
 
@@ -342,13 +413,7 @@ Read this before quoting the numbers
 已花的钱加上这个引擎目前最贵的一次调用，所以最多超出每个引擎一次调用的费用。设了 `budget_usd` 时，算不出费用的引擎不跑，除非加 `--allow-unpriced`。每次运行都有账本：
 请求数、token、搜索次数、花费。配置、价格和全部命令见 [cli/README.md](cli/README.md#watch)。
 
-**在 Agent 里用。** `geo_score.py mcp` 是零依赖的 stdio MCP 服务：`score_site`（第一级，免费），以及
-`ask`、`run`、`list_runs`、`report`、`diff`（第二、三级）。Agent 只能把上限调得更紧，不能放宽。
-
-```bash
-claude mcp add geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp -c /绝对路径/geo-score-watch.json
-# 或者从克隆的仓库：claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp -c /绝对路径/geo-score-watch.json
-```
+**在 Agent 里用。** 第二、三级同样是 MCP 工具，Agent 只能把上限调得更紧，不能放宽，见 [MCP 服务](#mcp-服务)。
 
 **每周跑一次。** 引用率变得慢、噪声也大：固定星期几、固定问题、固定模型，看 `diff`，别盯单次结果。
 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml) 按时自动跑，Key 放在仓库 Secrets，每次运行都提交回仓库，历史都在 git 里。运行文件里有你的问题和 AI 的完整回答，问题集要保密就用私有仓库。
