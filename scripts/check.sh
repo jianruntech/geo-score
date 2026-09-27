@@ -3,7 +3,8 @@
 #
 #   bash scripts/check.sh           # offline: structure, generated MCP docs, lint, unit + end-to-end tests,
 #                                   # the Action, the packaging manifests and the .mcpb
-#   bash scripts/check.sh --live    # also score example.com and check the JSON and --fail-under
+#   bash scripts/check.sh --live    # also score example.com, check the JSON and --fail-under, and run the
+#                                   # MCP server through the official Inspector CLI
 #
 # Hosted Actions have never run on this organisation, so this script is the CI: maintainers run it
 # before every merge (the pre-push hook in .githooks does it for you), and .github/workflows/validate.yml
@@ -42,6 +43,7 @@ for py in "${PYS[@]}"; do
   "$py" cli/test_geo_score.py
   "$py" cli/test_geo_watch.py
   "$py" cli/test_geo_score_e2e.py
+  "$py" scripts/check_mcp.py "$py"
 done
 
 # the end-to-end suite validates every report against schema/report.v2.json when jsonschema is importable
@@ -84,6 +86,8 @@ PY
     echo "--fail-under 101 should have failed"; exit 1
   fi
   echo "ok: 0 passes, 101 fails"
+  step "live: the MCP server through the official Inspector CLI (check_mcp.py --inspector)"
+  python3 scripts/check_mcp.py --inspector
 fi
 
 printf '\nall checks passed\n'
