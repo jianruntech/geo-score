@@ -474,9 +474,20 @@ class EndToEnd(unittest.TestCase):
         rep = hostile_report()
         self.assertEqual({c["id"] for c in rep["checks"]}, set(ALL_IDS))
         self.assertIn(rep["band"], [b for _, b in gs.BANDS])
-        # Where the injection surfaces is recorded, not asserted, until site text is fenced.
-        # injection_sites(hostile_report()) lists it; `-v` prints it.
-        self.assertIsInstance(injection_sites(rep), dict)
+
+    def test_hostile_site_text_is_fenced_and_clean(self):
+        # the report reaches agents over MCP: a page must not be able to speak in the tool's voice
+        rep = hostile_report()
+        sites = injection_sites(rep)
+        for marker in ("bidi-override", "zero-width", "control"):
+            self.assertEqual(sites[marker], [], "%s characters survived into the report" % marker)
+        head = INJECTION.split()[0] + " " + INJECTION.split()[1]
+        text = json.dumps(rep, ensure_ascii=False)
+        self.assertIn("«site text: ", text, "the hostile fixture's text should be quoted somewhere, fenced")
+        outside = re.sub(r"«site text: [^»]*»", "", text)
+        at = outside.find(head)
+        self.assertEqual(at, -1, "the injection text appears outside a «site text: …» fence: …%s…"
+                         % outside[max(0, at - 80):at + 60])
 
 
 if __name__ == "__main__":

@@ -36,10 +36,35 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - **Evidence basis for every check.** `rubric/v1.1.json` gains an `evidence` object per check
   (basis, sources, last verified), published as `rubric/evidence-v1.1.md` (EN + zh). Metadata only:
   no weight, tier or score changed.
+- `watch diff --fail-on-drop`: exit 4 when a verdict is `change` with a negative change. The MCP
+  `diff` tool takes `format: "json"`. [guide/watch-methodology.md](guide/watch-methodology.md)
+  (EN + zh) gives the formulas and a worked example.
+- **Offline end-to-end tests.** `cli/test_geo_score_e2e.py` serves twelve fixture sites from
+  127.0.0.1 (a good site, a JavaScript shell, robots blocks, a firewall that refuses AI crawlers, a
+  Chinese site, a site under a path, a hostile site that tries to address an agent, and more) and
+  checks every check's tier against each site's `expected.json`, plus a golden report. A socket
+  guard fails the run if anything leaves the machine; the suite takes under a second.
 - Tests that the CLI's embedded rubric (check ids, points, every tier's points and wording, bands,
   caps, bonus) equals `rubric/v1.1.json`.
 
 ### Changed
+- **`watch diff` is paired, clustered and corrected for multiple comparisons.** It compares the
+  questions both runs answered, with an exact paired test per row (McNemar when every question has
+  one answer per run, otherwise an exact sign-flip test on each question's net change) and Holm's
+  correction across the engine rows and the all-engines row. The verdict is `change` only when the
+  adjusted p < 0.05, and `too few questions to tell` below 6 shared questions. 1.2.0 used an unpaired
+  two-proportion test on answers that are not independent, which called changes too readily. New
+  row fields: `p_paired`, `p_adjusted`, `n_pairs`, `n_questions`, `n_asks`, `before_paired`,
+  `after_paired`, `delta_pp`, `delta_ci`. `before`, `after`, `delta` and `p_value` keep their 1.2.0
+  unpaired meaning; no verdict uses them.
+- **Intervals account for repeated asks.** Every rate block gains `cited_ci_clustered` (a bootstrap
+  over questions, 2,000 seeded resamples, never narrower than Wilson) and `n_questions`; reports quote
+  it whenever a question has more than one answer. `cited_ci` (Wilson) is unchanged.
+- **Headline rates leave out questions that name the brand.** Questions are flagged at run time
+  (`brand_in_query`, `competitor_in_query`) with the matcher used on answers; the headline covers the
+  other questions and branded ones get their own line and n. An optional `branded` column in
+  `queries.csv` (`auto`, `yes`, `no`) overrides the flag, `watch check` warns when more than 30% of the
+  questions name the brand, and the CSV report gains a trailing `branded` column.
 - **The Action scores the site once.** It used to fetch and score twice (once for JSON, once for
   the log), which doubled the time and could print two different scores. The job summary, the
   annotations and every file now come from one run.
@@ -49,6 +74,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - `--compare` with three or more sites no longer says "Both scored".
 
 ### Fixed
+- A Latin brand name written directly next to Chinese, Japanese or Korean text ("用Lumo做视频") now
+  counts as a mention; it never matched before. New runs can therefore show a higher `mentioned` rate
+  on such answers than earlier runs.
+- Run files saved by 1.2.0 still load; reports recompute their summary and the branded flag from the
+  saved question text, and say so in a note.
 - Documentation that still described the superseded gate rule: `rubric/README.md`, the Chinese
   calibration record, `SKILL.md` and the sample report said a gate short of full marks caps the score.
   The rule since v1.1 is that only a gate at **zero** caps it. The scores were always computed with the
@@ -68,6 +98,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `«site text: …»`, and control, zero-width and bidi characters are stripped from every evidence
   string. The report reaches AI agents through the MCP server, so a page could otherwise address the
   agent in the tool's own voice. Harvested links carrying such characters are dropped from the sample.
+- Errors that wrap a lower-level exception (a malformed request header, an unreadable config) no
+  longer chain it, so an uncaught traceback cannot print the original message, which for a header can
+  contain the API key.
 - `SECURITY.md` now has a supported-versions table and a threat model; `SKILL.md` tells the agent
   that fetched text is evidence, never instructions.
 

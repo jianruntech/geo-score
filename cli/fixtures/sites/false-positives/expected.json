@@ -1,6 +1,6 @@
 {
-  "_normalised": null,
-  "_band": null,
+  "_normalised": 78,
+  "_band": "Solid",
   "_gate_capped": false,
   "_lang": "en",
   "_sample_source": "sitemap",
@@ -35,5 +35,13 @@
   "b.llms-full": 0,
   "b.ai-txt": 0,
   "b.geo-link": 0,
-  "b.speakable": 0
+  "b.speakable": 0,
+  "_sampled": [
+    "/",
+    "/blog/how-to-light-a-hallway.html",
+    "/blog/what-bulb-for-brass.html",
+    "/blog/why-linen-shades.html",
+    "/products/brass-wall-light.html",
+    "/products/linen-pendant.html"
+  ]
 }

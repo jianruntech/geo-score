@@ -240,51 +240,58 @@ python3 geo_score.py watch diff                     # 和上一次比，带显�
 ```
 geo-score watch · Lumo · run 20260926T083000Z · api channel
 
-3 questions × 3 engines × 1 = 9 planned · 9 answered · 0 failed · 0 skipped
+6 questions × 2 engines × 2 = 24 planned · 23 answered · 1 failed · 0 skipped
 
-Cited in 67% of answers (6 of 9, 95% CI 35–88%) · mentioned in 67%
-Your site was cited somewhere for 3 of 3 questions.
+Cited in 38% of answers to questions that do not name Lumo (6 of 16, 4 questions, 95% CI 12–62%) · mentioned in 38%
+Questions that name Lumo (2, kept out of the headline): cited in 100% (7 of 7, 95% CI 65–100%) · mentioned in 100%
+Your site was cited somewhere for 5 of 6 questions.
 
 By engine
   engine          model             cited         95% CI   mentioned  avg rank
-  chatgpt-api     gpt-6-luna        3/3 100%      44–100%  100%       1.0
-  perplexity-api  sonar             0/3 0%        0–56%    0%         —
-  gemini-api      gemini-3.8-flash  3/3 100%      44–100%  100%       1.0
-  claude-api      claude-sonnet-5   not measured                                no_key: set ANTHROPIC_API_KEY
+  chatgpt-api     gpt-6-luna        9/12 75%      42–100%  75%        1.0
+  perplexity-api  sonar             4/11 36%      8–75%    36%        2.0       1 failed
+  gemini-api      gemini-3.8-flash  not measured                                no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
+
+These rows, and the tables below, count every question, the 2 that name Lumo included.
 
 Share of voice
               cited  95% CI  mentioned
-  Lumo (you)  67%    35–88%  67%
-  Pixa        67%    35–88%  67%
-  Reelcraft   33%    12–65%  33%
+  Lumo (you)  57%    26–86%  57%
+  Pixa        52%    33–71%  100%
 
 Sources the engines cite most (not yours)
-  domain             answers  share  owner
-  pixa.example       6        67%    Pixa
-  reddit.com         6        67%
-  reelcraft.example  3        33%    Reelcraft
-  g2.com             3        33%
+  domain        answers  share  owner
+  pixa.example  12       52%    Pixa
+  reddit.com    11       48%
+
+Questions where a competitor is cited and you are not (1)
+  id   question                    cited instead
+  q03  cheapest text to video app  Pixa
 
 By question type
-  type         cited    95% CI  mentioned
-  alternative  2/3 67%  21–94%  67%
-  list         2/3 67%  21–94%  67%
-  pricing      2/3 67%  21–94%  67%
+  type         cited     95% CI   mentioned
+  alternative  2/4 50%   15–85%   50%
+  list         4/8 50%   22–78%   50%
+  pricing      3/7 43%   0–100%   43%
+  vs           4/4 100%  51–100%  100%
 
-What the engines searched for (from 6 answers that show it)
+What the engines searched for (from 12 answers that show it)
   times  search
-  3      免费 ai 视频工具
-  1      best free ai video generator 2026
-  1      哪个 ai 视频生成器有免费额度 2026
-  1      pixa alternatives 2026
+  2      best free ai video generator
+  2      ai video tool with no watermark
+  2      cheapest text to video app
+  2      lumo vs pixa
+  2      pixa alternatives
+  2      鹿末视频免费吗
 
 Ledger
-9 questions asked · 9 API requests · 3,180 in / 2,400 out tokens · 9 searches · $0.05 + 3 answers with no price (add prices to geo-score-watch.json)
-Caps: at most 120 questions.
+24 questions asked · 23 API requests · 14,620 in / 4,860 out tokens · 23 searches · $0.07 + 12 answers with no price (add prices to geo-score-watch.json)
+Caps: at most 100 questions.
 
 Read this before quoting the numbers
 - API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.
-- The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, and diff only calls a change a change when a two-proportion test says so (p < 0.05).
+- The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).
+- A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.
 - Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
 - This measures citations. It does not predict traffic, rankings or revenue.
 ```
@@ -310,9 +317,13 @@ Read this before quoting the numbers
 
 - **这不是 ChatGPT App 里的回答。** 数据来自各家 API（开了联网搜索）。App 用的模型、系统提示
   和个性化都不一样。API 渠道只和 API 渠道比，别和人工在 App 里采的样本混着算。
-- **一条回答只是个例。** 同一个问题问两次，引用的来源可能不同。所有比率都带 95% Wilson 区间；
-  `diff` 只有在双比例检验 p < 0.05 时才说「有变化」。20 个问题 × 1 个引擎，区间就是很宽，
-  数据只能说到这个份上。
+- **一条回答只是个例。** 同一个问题问两次，引用的来源可能不同。所有比率都带 95% 区间（同一问题有多条回答时，
+  这些回答会一起变动，区间按问题做自助法重抽样）；`diff` 只比较两次都回答了的问题，用精确配对检验并对各引擎做
+  Holm 校正，p < 0.05 才说「有变化」，共同问题少于 6 个时直接说「问题太少，无法判断」。20 个问题 × 1 个引擎，
+  区间就是很宽，数据只能说到这个份上。方法见 [guide/watch-methodology.zh-CN.md](guide/watch-methodology.zh-CN.md)。
+- **提到你品牌的问题单独统计。** 「acme vs rival」「acme 值不值」这类问题会把品牌名带进引擎的搜索，几乎每次都会被引用。
+  `watch` 在运行时标出这类问题，把它们排除在标题引用率之外，单列一行并给出各自的样本数。`queries.csv` 可选的
+  `branded` 列可以手动修正标记。
 - **没测不等于 0。** 没有 Key 的引擎、失败的调用、被上限跳过的调用，都记为「未测」，
   不会拉低你的比率。
 - **被引用不等于流量。** 这里不预测访问量、排名，也不预测收入。

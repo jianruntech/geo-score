@@ -37,7 +37,8 @@ When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched, a
 pinned URL list was refused, or a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
-`geo_watch.py` missing, `3` nothing could be measured (no key worked).
+`geo_watch.py` missing, `3` nothing could be measured (no key worked), `4` `watch diff --fail-on-drop`
+found a drop beyond noise.
 
 ## Comparing against a competitor
 
@@ -151,8 +152,8 @@ measured" and the readiness report is unchanged.
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv` |
 | `watch check` | Validate the config and the questions, and show which engines have keys and prices |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and exits 0, with or without keys |
-| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note` |
-| `watch diff [A] [B] [--format text\|md\|json]` | Before and after, per engine, with p-values; citations lost and gained |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
+| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
 | `watch runs` | Saved runs and their headline rate |
 | `watch ask "question" [--brand NAME] [--domain D]` | Level 2 without the score: one question to every engine, now, not saved |
 | `mcp` | Score and watch over MCP (stdio) |
@@ -193,7 +194,18 @@ Every `watch` command takes `-c PATH` for the config (default `./geo-score-watch
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
 
 `queries.csv` has four columns, `query_id,query,intent_tier,target_url`. Write the questions the
-way a buyer would type them into ChatGPT, and keep the set fixed from week to week.
+way a buyer would type them into ChatGPT, and keep the set fixed from week to week. An optional
+fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides the automatic check
+for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
+a nickname the matcher cannot see.
+
+**Reading the numbers.** The headline rate counts only questions that do not name the brand.
+"acme vs rival" all but guarantees an Acme citation, so those questions get their own line, and
+`watch check` warns when they are more than 30% of the set. When a question has more than one
+answer (`runs` > 1, or several engines in the overall line), the 95% interval is a bootstrap over
+questions, because answers to one question move together; otherwise it is Wilson. Call something a
+change only when `diff` says `change`. Formulas and a worked example:
+[guide/watch-methodology.md](../guide/watch-methodology.md).
 
 MCP clients configured in JSON (Cursor, Windsurf and others). The server reads keys from its
 environment; most clients pass their own environment through, so exporting keys in your shell is

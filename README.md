@@ -255,51 +255,58 @@ python3 geo_score.py watch diff                     # this run against the last,
 ```
 geo-score watch · Lumo · run 20260926T083000Z · api channel
 
-3 questions × 3 engines × 1 = 9 planned · 9 answered · 0 failed · 0 skipped
+6 questions × 2 engines × 2 = 24 planned · 23 answered · 1 failed · 0 skipped
 
-Cited in 67% of answers (6 of 9, 95% CI 35–88%) · mentioned in 67%
-Your site was cited somewhere for 3 of 3 questions.
+Cited in 38% of answers to questions that do not name Lumo (6 of 16, 4 questions, 95% CI 12–62%) · mentioned in 38%
+Questions that name Lumo (2, kept out of the headline): cited in 100% (7 of 7, 95% CI 65–100%) · mentioned in 100%
+Your site was cited somewhere for 5 of 6 questions.
 
 By engine
   engine          model             cited         95% CI   mentioned  avg rank
-  chatgpt-api     gpt-6-luna        3/3 100%      44–100%  100%       1.0
-  perplexity-api  sonar             0/3 0%        0–56%    0%         —
-  gemini-api      gemini-3.8-flash  3/3 100%      44–100%  100%       1.0
-  claude-api      claude-sonnet-5   not measured                                no_key: set ANTHROPIC_API_KEY
+  chatgpt-api     gpt-6-luna        9/12 75%      42–100%  75%        1.0
+  perplexity-api  sonar             4/11 36%      8–75%    36%        2.0       1 failed
+  gemini-api      gemini-3.8-flash  not measured                                no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
+
+These rows, and the tables below, count every question, the 2 that name Lumo included.
 
 Share of voice
               cited  95% CI  mentioned
-  Lumo (you)  67%    35–88%  67%
-  Pixa        67%    35–88%  67%
-  Reelcraft   33%    12–65%  33%
+  Lumo (you)  57%    26–86%  57%
+  Pixa        52%    33–71%  100%
 
 Sources the engines cite most (not yours)
-  domain             answers  share  owner
-  pixa.example       6        67%    Pixa
-  reddit.com         6        67%
-  reelcraft.example  3        33%    Reelcraft
-  g2.com             3        33%
+  domain        answers  share  owner
+  pixa.example  12       52%    Pixa
+  reddit.com    11       48%
+
+Questions where a competitor is cited and you are not (1)
+  id   question                    cited instead
+  q03  cheapest text to video app  Pixa
 
 By question type
-  type         cited    95% CI  mentioned
-  alternative  2/3 67%  21–94%  67%
-  list         2/3 67%  21–94%  67%
-  pricing      2/3 67%  21–94%  67%
+  type         cited     95% CI   mentioned
+  alternative  2/4 50%   15–85%   50%
+  list         4/8 50%   22–78%   50%
+  pricing      3/7 43%   0–100%   43%
+  vs           4/4 100%  51–100%  100%
 
-What the engines searched for (from 6 answers that show it)
+What the engines searched for (from 12 answers that show it)
   times  search
-  3      免费 ai 视频工具
-  1      best free ai video generator 2026
-  1      哪个 ai 视频生成器有免费额度 2026
-  1      pixa alternatives 2026
+  2      best free ai video generator
+  2      ai video tool with no watermark
+  2      cheapest text to video app
+  2      lumo vs pixa
+  2      pixa alternatives
+  2      鹿末视频免费吗
 
 Ledger
-9 questions asked · 9 API requests · 3,180 in / 2,400 out tokens · 9 searches · $0.05 + 3 answers with no price (add prices to geo-score-watch.json)
-Caps: at most 120 questions.
+24 questions asked · 23 API requests · 14,620 in / 4,860 out tokens · 23 searches · $0.07 + 12 answers with no price (add prices to geo-score-watch.json)
+Caps: at most 100 questions.
 
 Read this before quoting the numbers
 - API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.
-- The same question gets different answers from one ask to the next. Rates carry a 95% Wilson interval, and diff only calls a change a change when a two-proportion test says so (p < 0.05).
+- The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).
+- A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.
 - Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
 - This measures citations. It does not predict traffic, rankings or revenue.
 ```
@@ -328,8 +335,15 @@ see what the engines say today, not to measure a rate.
 - **It is not the ChatGPT app.** Answers come from each provider's API with web search switched
   on. The consumer apps use other models, prompts and personalisation. Compare API runs with API
   runs; never pool them with answers sampled by hand in the apps.
-- **One answer is an anecdote.** Every rate carries a 95% Wilson interval, and `diff` calls
-  something a change only when a two-proportion test says so (p < 0.05).
+- **One answer is an anecdote.** Every rate carries a 95% interval (a bootstrap over questions
+  when a question has several answers, since those answers move together), and `diff` calls
+  something a change only when an exact paired test on the questions both runs answered,
+  Holm-corrected across engines, says so (p < 0.05). Fewer than 6 shared questions is reported as
+  too few to tell. The method: [guide/watch-methodology.md](guide/watch-methodology.md).
+- **Questions that name you are kept apart.** "acme vs rival" or "is acme worth it" put your name
+  in the engine's search and are cited almost every time. `watch` flags them when it runs, keeps
+  them out of the headline rate, and reports them on their own line with their own count. An
+  optional `branded` column in `queries.csv` corrects the flag by hand.
 - **Not measured is not zero.** An engine without a key, a failed call and a capped call are all
   reported as not measured, and none of them lowers your rate.
 - **Citations are not traffic.** Nothing here predicts visits, rankings or revenue.

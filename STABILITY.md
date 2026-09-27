@@ -36,7 +36,10 @@ of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`).
   a site's score only when the earlier result was wrong, and the changelog then names the check
   and the direction (see 1.1.2).
 - **Minor (1.x):** add a flag, a subcommand, an output format, an optional JSON field, an engine,
-  or an MCP tool.
+  or an MCP tool; add an exit code that only an opt-in flag can produce (`watch diff --fail-on-drop`
+  exits 4), leaving the codes of existing invocations unchanged. A minor release may also correct a
+  statistical method when the old one overstated certainty (1.3.0 made `watch diff` paired and
+  corrected for multiple comparisons); the changelog then says which verdicts can change.
 - **Rubric minor (v1.x):** re-weight checks or change tiers. Published with a calibration record
   and never applied to old reports.
 

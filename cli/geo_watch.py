@@ -80,7 +80,7 @@ NOTES = [
     "The same question gets different answers from one ask to the next, and answers to one question move "
     "together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over "
     "questions when a question has several answers. diff pairs the questions both runs answered and calls a "
-    "change a change only when an exact paired test (McNemar), Holm-corrected across engines, says so (p < 0.05).",
+    "change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
     "A question that names the brand invites an answer that cites it. Those questions are kept out of the "
     "headline rate and reported on a line of their own.",
     "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
@@ -378,9 +378,9 @@ def http_post(url, headers, body, timeout=HTTP_TIMEOUT):
         return e.code, dict(e.headers.items()) if e.headers else {}, raw
     except ValueError as e:
         # http.client quotes the offending header, key included, in this message: never pass it on.
-        raise TransportError("invalid request (%s)" % e.__class__.__name__)
+        raise TransportError("invalid request (%s)" % e.__class__.__name__) from None
     except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
-        raise TransportError(str(getattr(e, "reason", "") or e) or e.__class__.__name__)
+        raise TransportError(str(getattr(e, "reason", "") or e) or e.__class__.__name__) from None
 
 
 def resolve_redirect(url, timeout=10):
@@ -434,7 +434,7 @@ def api_post(url, headers, body, secret):
         try:
             st, hdrs, raw = TRANSPORT(url, headers, body)
         except TransportError as e:
-            raise EngineError("network: " + redact(e, secret))
+            raise EngineError("network: " + redact(e, secret)) from None
         if st in RETRY_STATUS and attempt < 3:
             SLEEP(_retry_after(hdrs, attempt))
             continue
@@ -797,9 +797,9 @@ class Config(object):
             with io.open(self.path, encoding="utf-8-sig") as f:
                 raw = json.load(f)
         except (OSError, IOError) as e:
-            raise ConfigError("cannot read %s: %s (run `geo_score.py watch init` to create one)" % (path, e.strerror or e))
+            raise ConfigError("cannot read %s: %s (run `geo_score.py watch init` to create one)" % (path, e.strerror or e)) from None
         except ValueError as e:
-            raise ConfigError("%s is not valid JSON: %s" % (path, e))
+            raise ConfigError("%s is not valid JSON: %s" % (path, e)) from None
         if not isinstance(raw, dict):
             raise ConfigError("%s must hold a JSON object" % path)
         self.raw = raw
@@ -1580,7 +1580,7 @@ def render_diff(d, fmt="text"):
     L.append(table(["", "before", "after", "change", "95% CI", "p (Holm)", "verdict", ""], rows, fmt))
     L.append("")
     L.append("before / after: share of answers citing you, over the asks both runs made of the questions both "
-             "answered (n = answers per run). p: exact paired test (McNemar), Holm-adjusted across the rows; a change "
+             "answered (n = answers per run). p: exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-adjusted across the rows; a change "
              "needs p < %.2f." % d.get("alpha", ALPHA))
     if "too few questions to tell" in verdicts:
         L.append("too few questions to tell: fewer than %d questions were answered in both runs, so even if every "
@@ -1676,9 +1676,9 @@ def load_run(cfg, rid="latest"):
         with io.open(path, encoding="utf-8") as f:
             run = json.load(f)
     except (OSError, IOError):
-        raise ConfigError("no run %s in %s" % (rid, cfg.runs_dir()))
+        raise ConfigError("no run %s in %s" % (rid, cfg.runs_dir())) from None
     except ValueError:
-        raise ConfigError("%s is not valid JSON" % path)
+        raise ConfigError("%s is not valid JSON" % path) from None
     if not isinstance(run, dict) or run.get("format") != RUN_FORMAT:
         raise ConfigError("%s is not a %s file" % (path, RUN_FORMAT))
     return run
@@ -2118,7 +2118,7 @@ class MCPServer(object):
              "annotations": {"readOnlyHint": True, "openWorldHint": False}},
             {"name": "diff", "title": "Compare two runs",
              "description": "Citation rate before and after, per engine, on the questions both runs answered: the "
-                            "change in points with a 95% interval and an exact paired test (McNemar), Holm-adjusted "
+                            "change in points with a 95% interval and an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-adjusted "
                             "across engines. The verdict is 'change' only when the adjusted p < 0.05. Lists citations "
                             "lost and gained. Defaults to the latest two runs.",
              "inputSchema": {"type": "object", "properties": {

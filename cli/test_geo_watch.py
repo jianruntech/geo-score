@@ -1123,7 +1123,7 @@ class MergeSeam(Base):
         res = dict(root="https://www.lumo.example/", landed="https://www.lumo.example/", urls=["https://www.lumo.example/"],
                    lang="en", tier=full, ev={k: "" for k in full}, bonus={}, robots_bytes=0)
         real_run, real_mod, real_argv = gs.run, gs._watch_module, sys.argv
-        gs.run = lambda url, sample=8, verbose=False: json.loads(json.dumps(res))
+        gs.run = lambda url, sample=8, verbose=False, urls=None: json.loads(json.dumps(res))
         gw.GEO_SCORE = gs
         gs._watch_module = lambda: gw
         sys.argv = ["geo_score.py"] + argv
