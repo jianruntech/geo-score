@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/docs/</loc></url>
+  <url><loc>{{ORIGIN}}/docs/install.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/configure.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/quickstart.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/guides/first-report.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/guides/share-results.html</loc></url>
+  <url><loc>{{ORIGIN}}/docs/guides/troubleshoot-proxy.html</loc></url>
+</urlset>

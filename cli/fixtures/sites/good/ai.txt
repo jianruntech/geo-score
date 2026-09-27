@@ -1,0 +1,5 @@
+# ai.txt for Fernhollow
+# Our public pages may be used to answer questions about Fernhollow, with a link back.
+User-Agent: *
+Allow: /
+Disallow: /login

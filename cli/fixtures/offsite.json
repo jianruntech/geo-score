@@ -1,0 +1,101 @@
+{
+  "_doc": "Canned answers for every off-site URL the fixtures make the scorer fetch. The test matches each rule's regex against the percent-decoded URL; the first match wins. status 0 means the request failed (timeout). An off-site URL with no rule fails the test.",
+  "rules": [
+    {
+      "match": "^https://www\\.wikidata\\.org/w/api\\.php\\?.*[?&]search=Fernhollow$",
+      "status": 200,
+      "json": {
+        "search": [
+          {
+            "id": "Q990001",
+            "label": "Fernhollow",
+            "description": "bookkeeping software (test fixture)"
+          }
+        ]
+      }
+    },
+    {
+      "match": "^https://en\\.wikipedia\\.org/w/api\\.php\\?.*[?&]srsearch=Fernhollow$",
+      "status": 200,
+      "json": {
+        "query": {
+          "search": [
+            {
+              "title": "Fernhollow",
+              "pageid": 990001
+            }
+          ]
+        }
+      }
+    },
+    {
+      "match": "^https://zh\\.wikipedia\\.org/w/api\\.php\\?.*[?&]srsearch=青梧记账$",
+      "status": 200,
+      "json": {
+        "query": {
+          "search": [
+            {
+              "title": "青梧记账",
+              "pageid": 990002
+            }
+          ]
+        }
+      }
+    },
+    {
+      "match": "^https://en\\.wikipedia\\.org/w/api\\.php\\?.*[?&]srsearch=Ridgeline Supply$",
+      "status": 0,
+      "err": "timed out"
+    },
+    {
+      "match": "^https://www\\.wikidata\\.org/w/api\\.php\\?",
+      "status": 200,
+      "json": {
+        "search": []
+      }
+    },
+    {
+      "match": "^https://[a-z-]+\\.wikipedia\\.org/w/api\\.php\\?",
+      "status": 200,
+      "json": {
+        "batchcomplete": "",
+        "query": {
+          "searchinfo": {
+            "totalhits": 0
+          },
+          "search": []
+        }
+      }
+    },
+    {
+      "match": "^https://x\\.com/(fernhollow|ridgelinesupply|quillmark)$",
+      "status": 200,
+      "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
+    },
+    {
+      "match": "^https://www\\.linkedin\\.com/company/fernhollow$",
+      "status": 200,
+      "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
+    },
+    {
+      "match": "^https://www\\.youtube\\.com/@fernhollow$",
+      "status": 200,
+      "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
+    },
+    {
+      "match": "^https://github\\.com/(fernhollow|tidemark-cli)$",
+      "status": 200,
+      "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
+    },
+    {
+      "match": "^https://www\\.facebook\\.com/ridgelinesupply$",
+      "status": 404,
+      "body": "<html><body>Page not found</body></html>"
+    },
+    {
+      "match": "^https://(weibo\\.com|www\\.zhihu\\.com/org)/qingwujizhang$",
+      "status": 403,
+      "body": "<html><body>403 Forbidden</body></html>"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configure Tidemark | Tidemark docs</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Configure Tidemark",
+  "dateModified": "2026-08-25"
+}
+</script>
+</head>
+<body>
+<header>
+<nav>
+<a href="/docs/">Tidemark</a>
+<a href="/docs/install.html">Install</a>
+<a href="/docs/configure.html">Configure</a>
+<a href="/docs/quickstart.html">Quickstart</a>
+<a href="/docs/guides/first-report.html">First report</a>
+<a href="/docs/guides/share-results.html">Share results</a>
+</nav>
+</header>
+<main>
+<h1>Configure Tidemark</h1>
+<p>Tidemark reads one configuration file from the root of your site. The file sets which folder to crawl, which hosts to skip, how many requests to make at once and which problems should fail the build rather than only warn.</p>
+<h2>What you can set</h2>
+<ul>
+<li>The folder that holds the built site.</li>
+<li>Hosts that are never checked.</li>
+<li>Which problems fail the build.</li>
+</ul>
+<h2>How settings are resolved</h2>
+<p>Command-line flags win over the configuration file, and the configuration file wins over the defaults. Run with the explain flag to see which source supplied each value.</p>
+<div class="fixture-note">This block is part of a test fixture. It exists so that the page carries enough server-rendered prose for the rendering check to treat it as a real content page rather than a stub. It describes nothing and promises nothing, and it names no person and carries no figure or timestamp, so that it cannot change how the freshness, byline or statistics checks read the page. Readers of the fixture can skip it; the scorer counts its words and nothing more, which is exactly what this block is for, and why it sits in a plain division rather than a paragraph, a list or a heading.</div>
+</main>
+<footer>
+<p>Tidemark is open-licensed. <a href="https://github.com/tidemark-cli">Code on GitHub</a>. Looking for version 1? <a href="/docs-legacy/old-install.html">Legacy docs</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/how-to-read-a-freight-quote.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/what-pallet-sizes-cost.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/why-quotes-change.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/docs/track-a-shipment.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/docs/set-up-delivery-alerts.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/pricing.html</loc><lastmod>2026-08-30</lastmod></url>
+  <url><loc>{{ORIGIN}}/features/live-tracking.html</loc><lastmod>2026-08-30</lastmod></url>
+</urlset>

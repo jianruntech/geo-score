@@ -1,0 +1,3 @@
+# Tidemark (full text)
+
+Tidemark is a command-line tool that checks a static site for broken links.

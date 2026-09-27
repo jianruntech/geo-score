@@ -1,0 +1,11 @@
+# One group, several user-agents (RFC 9309, section 2.1)
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: CCBot
+Disallow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml
