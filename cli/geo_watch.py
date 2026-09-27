@@ -2068,7 +2068,32 @@ def cmd_runs(args):
 
 
 # ── MCP (stdio, JSON-RPC 2.0, one message per line) ───────────────────────
-MCP_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
+# Dual era. A legacy client opens with initialize and gets that revision's semantics for the process; a modern
+# client (2026-07-28) puts the version and its capabilities in every request's _meta and is served statelessly.
+LEGACY_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
+MODERN_VERSIONS = ("2026-07-28",)
+SUPPORTED_VERSIONS = MODERN_VERSIONS + LEGACY_VERSIONS
+MCP_VERSIONS = LEGACY_VERSIONS          # the 1.3.0 name, kept for code that imports it
+META_VERSION = "io.modelcontextprotocol/protocolVersion"
+META_CAPS = "io.modelcontextprotocol/clientCapabilities"
+META_LOG = "io.modelcontextprotocol/logLevel"
+META_SERVER = "io.modelcontextprotocol/serverInfo"
+LOG_LEVELS = ("debug", "info", "notice", "warning", "error", "critical", "alert", "emergency")
+TTL_LIST = 3600000       # modern cache hints, ms: discovery and the tool and prompt lists change with a release
+TTL_STATIC = 86400000    # the rubric and the resource lists change with a rubric version
+LEGACY_ONLY = ("initialize", "ping", "logging/setLevel", "resources/subscribe", "resources/unsubscribe")
+
+
+class RPCError(Exception):
+    def __init__(self, code, message, data=None):
+        Exception.__init__(self, message)
+        self.code, self.message, self.data = code, message, data
+
+    def reply(self, mid):
+        err = {"code": self.code, "message": self.message}
+        if self.data is not None:
+            err["data"] = self.data
+        return {"jsonrpc": "2.0", "id": mid, "error": err}
 
 
 def _public_host(host):
@@ -2234,6 +2259,7 @@ class MCPServer(object):
         self.inflight = {}                    # _rid(request id) -> _Call
         self.workers = []
         self.slots = threading.BoundedSemaphore(MCP_WORKERS)
+        self.session_version = None           # the legacy revision initialize settled on; batches need it
         self.geo_score = load_geo_score()
         if self.geo_score is not None and not hasattr(self.geo_score, "ADDRESS_GUARD"):
             # a scorer older than the address guard would let an agent reach private hosts: do not offer it
@@ -2345,6 +2371,12 @@ class MCPServer(object):
             x["annotations"] = dict({"title": x["title"]}, **x["annotations"])
         return t
 
+    def capabilities(self):
+        caps = {"tools": {"listChanged": False}}
+        if self.resources():
+            caps["resources"] = {"listChanged": False}
+        return caps
+
     def handle(self, msg, ctx=None):
         if not isinstance(msg, dict) or msg.get("jsonrpc") != "2.0" or not isinstance(msg.get("method"), str):
             if isinstance(msg, dict) and "method" not in msg and ("result" in msg or "error" in msg):
@@ -2357,38 +2389,75 @@ class MCPServer(object):
             if method == "notifications/cancelled":
                 self.cancel(params)
             return None
-        if method == "initialize":
-            want = params.get("protocolVersion")
-            result = {"protocolVersion": want if want in MCP_VERSIONS else MCP_VERSIONS[0],
-                      "capabilities": dict({"tools": {"listChanged": False}},
-                                           **({"resources": {"listChanged": False}} if self.geo_score is not None else {})),
-                      "serverInfo": dict(SERVER_INFO), "instructions": MCP_INSTRUCTIONS}
-        elif method == "ping":
-            result = {}
-        elif method == "tools/list":
-            result = {"tools": self.tools()}
-        elif method == "tools/call":
+        meta = params.get("_meta") if isinstance(params.get("_meta"), dict) else {}
+        try:
+            if META_VERSION in meta or method == "server/discover":
+                return {"jsonrpc": "2.0", "id": mid, "result": self._modern(method, params, meta, ctx)}
+            if method == "initialize":
+                want = params.get("protocolVersion")
+                self.session_version = want if want in LEGACY_VERSIONS else LEGACY_VERSIONS[0]
+                result = {"protocolVersion": self.session_version, "capabilities": self.capabilities(),
+                          "serverInfo": dict(SERVER_INFO), "instructions": MCP_INSTRUCTIONS}
+            elif method == "ping":
+                result = {}
+            else:
+                # lenient on purpose: a legacy client that skips initialize is still served
+                result = self._method(method, params, ctx, modern=False)[0]
+        except RPCError as e:
+            return e.reply(mid)
+        return {"jsonrpc": "2.0", "id": mid, "result": result}
+
+    def _modern(self, method, params, meta, ctx):
+        """2026-07-28: everything the request needs is in its _meta; nothing is kept from earlier requests."""
+        v = meta.get(META_VERSION)
+        if not isinstance(v, str):
+            raise RPCError(-32602, "_meta[%r] is required and must be a string" % META_VERSION)
+        if v not in MODERN_VERSIONS:
+            raise RPCError(-32022, "Unsupported protocol version", {"supported": list(SUPPORTED_VERSIONS), "requested": v})
+        if not isinstance(meta.get(META_CAPS), dict):
+            raise RPCError(-32602, "_meta[%r] is required and must be an object" % META_CAPS)
+        if meta.get(META_LOG) is not None and meta.get(META_LOG) not in LOG_LEVELS:
+            raise RPCError(-32602, "_meta[%r] must be one of %s" % (META_LOG, ", ".join(LOG_LEVELS)))
+        if method in LEGACY_ONLY:
+            raise RPCError(-32601, "method not found: %s (not in protocol %s)" % (method, v))
+        if method == "server/discover":
+            result, cache = {"supportedVersions": list(SUPPORTED_VERSIONS), "capabilities": self.capabilities(),
+                             "instructions": MCP_INSTRUCTIONS}, (TTL_LIST, "public")
+        else:
+            result, cache = self._method(method, params, ctx, modern=True)
+        result = dict(result, resultType="complete")
+        result["_meta"] = dict(result.get("_meta") or {}, **{META_SERVER: dict(SERVER_INFO)})
+        if cache:
+            result.update(ttlMs=cache[0], cacheScope=cache[1])
+        return result
+
+    def _method(self, method, params, ctx, modern):
+        """The methods both eras share: (result, modern cache hint or None), or an RPCError."""
+        if method.endswith("/list") and params.get("cursor") is not None:
+            raise RPCError(-32602, "invalid cursor: this server returns every list in one page")
+        if method == "tools/list":
+            return {"tools": self.tools()}, (TTL_LIST, "public")
+        if method == "tools/call":
             name = params.get("name")
             if name not in [t["name"] for t in self.tools()]:
                 # an unknown tool is a protocol error, not a tool result (MCP 2025-06-18, tools: error handling)
-                return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": "unknown tool: %s"
-                                                               % (name if isinstance(name, str) else type(name).__name__)[:80]}}
-            result = self.call(params, ctx)
-        elif method == "resources/list":
-            result = {"resources": self.resources()}
-        elif method == "resources/templates/list":
-            result = {"resourceTemplates": []}
-        elif method == "resources/read":
+                raise RPCError(-32602, "unknown tool: %s" % (name if isinstance(name, str) else type(name).__name__)[:80])
+            return self.call(params, ctx), None
+        if method == "resources/list":
+            return {"resources": self.resources()}, (TTL_STATIC, "public")
+        if method == "resources/templates/list":
+            return {"resourceTemplates": []}, (TTL_STATIC, "public")
+        if method == "resources/read":
             uri = params.get("uri")
             res = next((r for r in self.resources() if r["uri"] == uri), None)
             if res is None:
-                return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32002, "message": "resource not found",
-                                                               "data": {"uri": uri if isinstance(uri, str) else None}}}
-            result = {"contents": [{"uri": uri, "mimeType": "application/json",
-                                    "text": json.dumps(rubric_resource(self.geo_score), ensure_ascii=False, indent=1)}]}
-        else:
-            return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": "method not found: " + method}}
-        return {"jsonrpc": "2.0", "id": mid, "result": result}
+                # -32002 until 2025-11-25; 2026-07-28 moved resource-not-found to -32602
+                raise RPCError(-32602 if modern else -32002, "Resource not found" if modern else "resource not found",
+                               {"uri": uri if isinstance(uri, str) else None})
+            return {"contents": [{"uri": uri, "mimeType": "application/json",
+                                  "text": json.dumps(rubric_resource(self.geo_score), ensure_ascii=False, indent=1)}]}, \
+                (TTL_STATIC, "public")
+        raise RPCError(-32601, "method not found: " + method)
 
     def resources(self):
         if self.geo_score is None or not getattr(self.geo_score, "SPEC", None):
@@ -2638,6 +2707,11 @@ class MCPServer(object):
                 self.send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}})
                 continue
             if isinstance(msg, list):
+                # batches were part of 2025-03-26 only: 2025-06-18 removed them, and no modern revision has them
+                if self.session_version != "2025-03-26" or not msg:
+                    self.send({"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": (
+                        "batches are not supported in this protocol version" if msg else "empty batch")}})
+                    continue
                 out = [r for r in (self.handle(m) for m in msg) if r is not None]
                 if out:
                     self.send(out)

@@ -1278,6 +1278,145 @@ class MCPConcurrency(Base):
         self.assertEqual(ret, [0])
 
 
+MODERN = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientInfo": {"name": "t", "version": "0"},
+          "io.modelcontextprotocol/clientCapabilities": {}}
+
+
+class MCPProtocol(Base):
+    """Dual era: initialize for legacy clients (2024-11-05 to 2025-11-25), per-request _meta for 2026-07-28."""
+    server = MCP.server
+
+    def rpc(self, srv, method, params=None, meta=None, mid=1):
+        p = dict(params or {})
+        if meta is not None:
+            p["_meta"] = meta
+        return srv.handle({"jsonrpc": "2.0", "id": mid, "method": method, "params": p})
+
+    def test_initialize_answers_every_legacy_version_and_falls_back_to_the_newest(self):
+        srv = self.server()
+        for v in gw.LEGACY_VERSIONS:
+            r = self.rpc(srv, "initialize", {"protocolVersion": v, "capabilities": {}})["result"]
+            self.assertEqual(r["protocolVersion"], v)
+            self.assertEqual(srv.session_version, v)
+        # initialize is legacy: a modern or unknown version gets the newest legacy one, which the client may refuse
+        for v in ("2026-07-28", "1999-01-01", None):
+            r = self.rpc(srv, "initialize", {"protocolVersion": v})["result"]
+            self.assertEqual(r["protocolVersion"], "2025-11-25", v)
+        self.assertEqual(gw.MCP_VERSIONS, gw.LEGACY_VERSIONS)
+        self.assertEqual(gw.SUPPORTED_VERSIONS, ("2026-07-28",) + gw.LEGACY_VERSIONS)
+
+    def test_server_discover(self):
+        r = self.rpc(self.server(), "server/discover", meta=MODERN)["result"]
+        self.assertEqual(r["resultType"], "complete")
+        self.assertEqual(r["supportedVersions"], list(gw.SUPPORTED_VERSIONS))
+        self.assertIn("tools", r["capabilities"])
+        self.assertIn("«site text", r["instructions"])
+        info = r["_meta"]["io.modelcontextprotocol/serverInfo"]
+        self.assertEqual((info["name"], info["version"]), ("geo-score", gw.__version__))
+        self.assertEqual((r["ttlMs"], r["cacheScope"]), (3600000, "public"))
+
+    def test_an_unsupported_version_names_the_supported_ones(self):
+        srv = self.server()
+        for v in ("1999-01-01", "2025-11-25"):          # a legacy version is served through initialize, not _meta
+            e = self.rpc(srv, "tools/list", meta=dict(MODERN, **{"io.modelcontextprotocol/protocolVersion": v}))["error"]
+            self.assertEqual(e["code"], -32022)
+            self.assertEqual(e["message"], "Unsupported protocol version")
+            self.assertEqual(e["data"], {"supported": list(gw.SUPPORTED_VERSIONS), "requested": v})
+        e = self.rpc(srv, "server/discover", meta={"io.modelcontextprotocol/protocolVersion": "1999-01-01",
+                                                   "io.modelcontextprotocol/clientCapabilities": {}})["error"]
+        self.assertEqual(e["code"], -32022)
+
+    def test_required_meta_fields_are_checked(self):
+        srv = self.server()
+        for meta in ({"io.modelcontextprotocol/protocolVersion": "2026-07-28"},
+                     dict(MODERN, **{"io.modelcontextprotocol/clientCapabilities": "all"}),
+                     dict(MODERN, **{"io.modelcontextprotocol/protocolVersion": 20260728}),
+                     dict(MODERN, **{"io.modelcontextprotocol/logLevel": "loud"})):
+            self.assertEqual(self.rpc(srv, "tools/list", meta=meta)["error"]["code"], -32602, meta)
+        self.assertEqual(self.rpc(srv, "server/discover")["error"]["code"], -32602)       # no _meta at all
+        ok = self.rpc(srv, "tools/list", meta=dict(MODERN, **{"io.modelcontextprotocol/logLevel": "warning"}))
+        self.assertIn("result", ok)
+
+    def test_modern_results_carry_result_type_and_cache_hints_and_legacy_ones_do_not(self):
+        srv = self.server()
+        hints = {"tools/list": (3600000, "public"), "resources/list": (86400000, "public"),
+                 "resources/templates/list": (86400000, "public")}
+        for method, (ttl, scope) in sorted(hints.items()):
+            modern = self.rpc(srv, method, meta=MODERN)["result"]
+            self.assertEqual((modern["resultType"], modern["ttlMs"], modern["cacheScope"]), ("complete", ttl, scope))
+            self.assertIn("io.modelcontextprotocol/serverInfo", modern["_meta"])
+            legacy = self.rpc(srv, method)["result"]
+            for k in ("resultType", "ttlMs", "cacheScope", "_meta"):
+                self.assertNotIn(k, legacy, method)
+            self.assertEqual(dict((k, v) for k, v in modern.items() if k not in ("resultType", "ttlMs", "cacheScope", "_meta")),
+                             legacy, method)                     # the same answer, only the envelope differs
+        read = self.rpc(srv, "resources/read", {"uri": "geo-score://rubric/v1.1"}, meta=MODERN)["result"]
+        self.assertEqual((read["ttlMs"], read["cacheScope"]), (86400000, "public"))
+        self.assertNotIn("ttlMs", self.rpc(srv, "resources/read", {"uri": "geo-score://rubric/v1.1"})["result"])
+        call = self.rpc(srv, "tools/call", {"name": "ask", "arguments": {"question": ""}}, meta=MODERN)["result"]
+        self.assertEqual(call["resultType"], "complete")
+        self.assertTrue(call["isError"])
+        self.assertNotIn("ttlMs", call)                          # only lists, discovery and reads are cacheable
+
+    def test_resource_not_found_is_32002_for_legacy_and_32602_for_modern(self):
+        srv = self.server()
+        legacy = self.rpc(srv, "resources/read", {"uri": "file:///etc/passwd"})["error"]
+        self.assertEqual((legacy["code"], legacy["data"]["uri"]), (-32002, "file:///etc/passwd"))
+        modern = self.rpc(srv, "resources/read", {"uri": "file:///etc/passwd"}, meta=MODERN)["error"]
+        self.assertEqual((modern["code"], modern["data"]["uri"]), (-32602, "file:///etc/passwd"))
+
+    def test_legacy_only_methods_are_not_found_on_the_modern_path(self):
+        srv = self.server()
+        for method in ("initialize", "ping", "logging/setLevel", "resources/subscribe"):
+            self.assertEqual(self.rpc(srv, method, meta=MODERN)["error"]["code"], -32601, method)
+        self.assertEqual(self.rpc(srv, "ping")["result"], {})    # still there for legacy clients
+        self.assertIsNone(srv.session_version)                   # and a modern request never set any state
+
+    def test_a_cursor_is_refused_because_none_is_ever_issued(self):
+        srv = self.server()
+        for method in ("tools/list", "resources/list", "resources/templates/list"):
+            self.assertEqual(self.rpc(srv, method, {"cursor": "garbage"})["error"]["code"], -32602, method)
+            self.assertEqual(self.rpc(srv, method, {"cursor": "garbage"}, meta=MODERN)["error"]["code"], -32602, method)
+
+    def serve(self, *msgs):
+        srv, out = self.server(), io.StringIO()
+        srv.out = out
+        srv.serve(io.StringIO("".join(json.dumps(m) + "\n" for m in msgs)))
+        return [json.loads(l) for l in out.getvalue().splitlines()]
+
+    def test_batches_only_in_2025_03_26(self):
+        batch = [{"jsonrpc": "2.0", "id": 2, "method": "ping"}, {"jsonrpc": "2.0", "id": 3, "method": "tools/list"}]
+        refused = {"jsonrpc": "2.0", "id": None,
+                   "error": {"code": -32600, "message": "batches are not supported in this protocol version"}}
+        self.assertEqual(self.serve(batch), [refused])                                   # no initialize at all
+        init = lambda v: {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": v}}
+        for v in ("2025-11-25", "2025-06-18", "2024-11-05"):
+            self.assertEqual(self.serve(init(v), batch)[1], refused, v)
+        out = self.serve(init("2025-03-26"), batch)
+        self.assertEqual([r["id"] for r in out[1]], [2, 3])
+        self.assertEqual(self.serve(init("2025-03-26"), [])[1]["error"]["code"], -32600)
+
+    def test_stdio_serves_a_modern_client_that_never_initializes(self):
+        env = dict(os.environ)
+        for k in ALL_KEY_ENVS:
+            env.pop(k, None)
+        msgs = [{"jsonrpc": "2.0", "id": 1, "method": "server/discover", "params": {"_meta": MODERN}},
+                {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {"_meta": MODERN}},
+                {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                 "params": {"name": "ask", "arguments": {"question": "q"}, "_meta": MODERN}}]
+        p = subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"), "mcp", "-c",
+                            os.path.join(self.tmp, "none.json")], capture_output=True, env=env, timeout=60,
+                           input="".join(json.dumps(m) + "\n" for m in msgs).encode())
+        self.assertEqual(p.returncode, 0, p.stderr)
+        by_id = dict((l["id"], l) for l in (json.loads(x) for x in p.stdout.decode().splitlines()))
+        self.assertEqual(sorted(by_id), [1, 2, 3])
+        self.assertEqual(by_id[1]["result"]["supportedVersions"][0], "2026-07-28")
+        self.assertIn("score_site", [t["name"] for t in by_id[2]["result"]["tools"]])
+        self.assertEqual(by_id[3]["result"]["resultType"], "complete")
+        self.assertTrue(by_id[3]["result"]["isError"])                               # no keys in this environment
+
+
 # ── level 2 and the geo_score.py entry point ─────────────────────────────
 class Level2(Base):
     def schema_citation(self):
