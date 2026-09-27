@@ -4,8 +4,8 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, re, shutil, subprocess, sys, tempfile, threading
-import unittest, urllib.request
+import contextlib, datetime, http.server, io, json, os, queue, re, shutil, subprocess, sys, tempfile, threading
+import time, unittest, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -792,6 +792,50 @@ class CLI(Base):
 
 
 # ── MCP ───────────────────────────────────────────────────────────────────
+def schema_errors(o, sch, path="$"):
+    """The part of JSON Schema the MCP output schemas use: type, enum, required, properties, items and anyOf.
+    The fallback when jsonschema is not installed, so the suite stays stdlib-only."""
+    types = {"object": dict, "array": list, "string": str, "integer": int, "number": (int, float),
+             "boolean": bool, "null": type(None)}
+    if "anyOf" in sch:
+        if not any(not schema_errors(o, branch, path) for branch in sch["anyOf"]):
+            return ["%s: %r matches no branch of anyOf" % (path, o)]
+    t = sch.get("type")
+    if t:
+        allowed = tuple(types[x] for x in (t if isinstance(t, list) else [t]))
+        if not isinstance(o, allowed) or (isinstance(o, bool) and "boolean" not in (t if isinstance(t, list) else [t])):
+            return ["%s: expected %s, got %r" % (path, t, o)]
+    if "enum" in sch and o not in sch["enum"]:
+        return ["%s: %r not in %r" % (path, o, sch["enum"])]
+    errs = []
+    if isinstance(o, dict):
+        errs += ["%s: missing %s" % (path, k) for k in sch.get("required", []) if k not in o]
+        for k, sub in sch.get("properties", {}).items():
+            if k in o:
+                errs += schema_errors(o[k], sub, path + "." + k)
+    if isinstance(o, list) and "items" in sch:
+        for i, x in enumerate(o):
+            errs += schema_errors(x, sch["items"], "%s[%d]" % (path, i))
+    return errs
+
+
+def schema_nodes(sch):
+    """Every subschema, for rules that hold everywhere (no type lists)."""
+    yield sch
+    for k, v in sch.items():
+        if k in ("properties",) and isinstance(v, dict):
+            for sub in v.values():
+                for x in schema_nodes(sub):
+                    yield x
+        elif k in ("items",) and isinstance(v, dict):
+            for x in schema_nodes(v):
+                yield x
+        elif k in ("anyOf",):
+            for sub in v:
+                for x in schema_nodes(sub):
+                    yield x
+
+
 class MCP(Base):
     def server(self, with_config=True):
         cfgp = os.path.join(self.tmp, "geo-score-watch.json")
@@ -823,7 +867,7 @@ class MCP(Base):
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"})["result"], {})
         names = [t["name"] for t in srv.handle({"jsonrpc": "2.0", "id": 4, "method": "tools/list"})["result"]["tools"]]
-        self.assertEqual(names[:5], ["ask", "run", "list_runs", "report", "diff"])
+        self.assertEqual(names, ["score_site", "ask", "run", "list_runs", "report", "diff", "status"])   # free first
         self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"})["error"]["code"], -32601)
         self.assertEqual(srv.handle({"id": 6, "method": "ping"})["error"]["code"], -32600)
         self.assertIsNone(srv.handle({"jsonrpc": "2.0", "id": 9, "result": {}}))
@@ -866,24 +910,7 @@ class MCP(Base):
         if jsonschema is not None:
             jsonschema.validate(obj, schema)
             return
-        types = {"object": dict, "array": list, "string": str, "integer": int, "number": (int, float),
-                 "boolean": bool, "null": type(None)}
-
-        def walk(o, sch, path):
-            t = sch.get("type")
-            if t:
-                allowed = tuple(types[x] for x in (t if isinstance(t, list) else [t]))
-                self.assertIsInstance(o, allowed, "%s %s: %r" % (where, path, o))
-            if isinstance(o, dict):
-                for k in sch.get("required", []):
-                    self.assertIn(k, o, "%s %s: missing %s" % (where, path, k))
-                for k, sub in sch.get("properties", {}).items():
-                    if k in o:
-                        walk(o[k], sub, path + "." + k)
-            if isinstance(o, list) and "items" in sch:
-                for i, x in enumerate(o):
-                    walk(x, sch["items"], "%s[%d]" % (path, i))
-        walk(obj, schema, "$")
+        self.assertEqual(schema_errors(obj, schema), [], where)
 
     def test_structured_content_matches_the_declared_output_schema(self):
         srv = self.server()
@@ -900,7 +927,29 @@ class MCP(Base):
             self.check_schema(r["structuredContent"], schemas[name], name)
             self.assertTrue(r["content"][0]["text"], name)       # people still get the text
         self.assertEqual(len(self.call(srv, "list_runs")["structuredContent"]["runs"]), 2)
-        self.assertIsNone(schemas["ask"])                         # no schema promised where none is kept
+        # ask and run: the answers and the plan as data, a dry run included
+        del os.environ["PERPLEXITY_API_KEY"]
+        for name, args in (("ask", {"question": "best free ai video generator"}), ("run", {"dry_run": True}),
+                           ("run", {"limit": 1})):
+            r = self.call(srv, name, args)
+            self.assertFalse(r["isError"], r)
+            self.check_schema(r["structuredContent"], schemas[name], name)
+            self.assertTrue(r["content"][0]["text"], name)
+        a = self.call(srv, "ask", {"question": "q"})["structuredContent"]
+        chat, pplx = a["engines"]
+        self.assertEqual((chat["engine"], chat["status"], chat["cited"], chat["rank"]), ("chatgpt-api", "ok", True, 1))
+        self.assertIn("https://pixa.example/pricing", chat["cited_urls"])
+        self.assertEqual(chat["searches"], ["best free ai video generator"])
+        self.assertEqual((pplx["status"], pplx["cited"]), ("no_key", None))       # not measured, never a zero
+        dry = self.call(srv, "run", {"dry_run": True, "max_calls": 999})["structuredContent"]
+        self.assertEqual((dry["dry_run"], dry["run_id"], dry["summary"]), (True, None, None))
+        self.assertEqual(dry["plan"]["engines_active"], ["chatgpt-api"])
+        self.assertEqual((dry["plan"]["planned_calls"], dry["plan"]["max_calls"]), (2, 10))
+        self.assertEqual(dry["plan"]["not_measured"], [{"engine": "perplexity-api", "reason": "no_key"}])
+        gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=14)
+        real = self.call(srv, "run", {"limit": 1})["structuredContent"]
+        self.assertEqual((real["dry_run"], real["run_id"]), (False, "20261010T083000Z"))
+        self.assertEqual(real["summary"]["overall"]["answered"], 1)
 
     def test_rubric_resource_and_site_text_notice(self):
         srv = self.server()
@@ -983,11 +1032,646 @@ class MCP(Base):
                             os.path.join(self.tmp, "none.json")], input=stdin.encode(), capture_output=True,
                            env=env, timeout=60)
         lines = [json.loads(l) for l in p.stdout.decode().splitlines()]
-        self.assertEqual([l.get("id") for l in lines], [1, 2, 3, None])
-        self.assertEqual(lines[0]["result"]["serverInfo"]["name"], "geo-score")
-        self.assertIn("score_site", [t["name"] for t in lines[1]["result"]["tools"]])
-        self.assertTrue(lines[2]["result"]["isError"])                              # no keys in this environment
-        self.assertEqual(lines[3]["error"]["code"], -32700)
+        # tools/call answers from a worker thread, so it may come after later lines; it still comes before exit
+        by_id = dict((l.get("id"), l) for l in lines)
+        self.assertEqual(len(lines), 4)
+        self.assertEqual([l.get("id") for l in lines if l.get("id") != 3], [1, 2, None])
+        self.assertEqual(by_id[1]["result"]["serverInfo"]["name"], "geo-score")
+        self.assertIn("score_site", [t["name"] for t in by_id[2]["result"]["tools"]])
+        self.assertTrue(by_id[3]["result"]["isError"])                              # no keys in this environment
+        self.assertEqual(by_id[None]["error"]["code"], -32700)
+        self.assertEqual(p.returncode, 0)
+
+
+MCP_FIXTURES = os.path.join(HERE, "fixtures", "mcp")
+
+
+class MCPSurface(Base):
+    """What a client sees before it calls anything: the tool list is a contract (STABILITY.md) and a snapshot."""
+    def server(self):
+        return gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+
+    def listing(self, srv):
+        return srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})["result"]
+
+    def test_tools_list_matches_the_snapshot(self):
+        # UPDATE_SNAPSHOTS=1 python3 cli/test_geo_watch.py rewrites it; say why in the commit
+        got = json.dumps(self.listing(self.server()), ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+        path = os.path.join(MCP_FIXTURES, "tools.snapshot.json")
+        if os.environ.get("UPDATE_SNAPSHOTS") == "1":
+            with io.open(path, "w", encoding="utf-8") as f:
+                f.write(got)
+        with io.open(path, encoding="utf-8") as f:
+            self.assertEqual(got, f.read(), "tools/list changed: check it, then UPDATE_SNAPSHOTS=1")
+
+    def test_no_released_tool_or_argument_disappears_and_none_becomes_required(self):
+        with io.open(os.path.join(MCP_FIXTURES, "contract-1.3.0.json"), encoding="utf-8") as f:
+            base = json.load(f)["tools"]
+        now = dict((t["name"], t["inputSchema"]) for t in self.listing(self.server())["tools"])
+        for name, was in sorted(base.items()):
+            self.assertIn(name, now, "tool %s was removed or renamed" % name)
+            args = now[name].get("properties", {})
+            for a in was["arguments"]:
+                self.assertIn(a, args, "%s.%s was removed or renamed" % (name, a))
+            self.assertEqual(sorted(set(now[name].get("required", [])) - set(was["required"])), [],
+                             "%s gained a required argument" % name)
+
+    def test_every_tool_has_a_title_and_all_four_hints(self):
+        tools = self.listing(self.server())["tools"]
+        for t in tools:
+            self.assertTrue(t.get("title"), t["name"])
+            ann = t["annotations"]
+            self.assertEqual(ann["title"], t["title"], t["name"])
+            for h in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"):
+                self.assertIsInstance(ann.get(h), bool, "%s.%s" % (t["name"], h))
+            self.assertFalse(ann["destructiveHint"], t["name"])
+        hints = dict((t["name"], tuple(t["annotations"][h] for h in ("readOnlyHint", "idempotentHint", "openWorldHint")))
+                     for t in tools)
+        self.assertEqual(hints["score_site"], (True, False, True))      # the live site can change between calls
+        for name in ("ask", "run"):
+            self.assertEqual(hints[name], (False, False, True), name)     # paid: never marked read-only
+        for name in ("list_runs", "report", "diff", "status"):
+            self.assertEqual(hints[name], (True, True, False), name)
+
+    def test_schemas_are_portable_and_closed(self):
+        for t in self.listing(self.server())["tools"]:
+            self.assertEqual(t["inputSchema"]["type"], "object", t["name"])
+            self.assertIs(t["inputSchema"].get("additionalProperties"), False, t["name"])
+            if "outputSchema" in t:
+                self.assertEqual(t["outputSchema"]["type"], "object", t["name"])      # legacy clients need an object root
+            for sch in (t["inputSchema"], t.get("outputSchema") or {}):
+                for node in schema_nodes(sch):
+                    self.assertNotIsInstance(node.get("type"), list, "%s: a type list; use anyOf" % t["name"])
+        # the schema is closed, the server stays lenient: an extra key is ignored, not an error
+        srv = gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+        r = srv.call({"name": "ask", "arguments": {"question": "", "unexpected": 1}})
+        self.assertIn("question must be", r["content"][0]["text"])
+
+    def test_descriptions_open_with_the_cost(self):
+        d = dict((t["name"], t["description"]) for t in self.listing(self.server())["tools"])
+        self.assertTrue(d["score_site"].startswith("Free, no API key."))
+        self.assertTrue(d["ask"].startswith("Paid: one API call per configured engine, billed to your keys."))
+        self.assertTrue(d["run"].startswith("Paid: up to max_calls calls; call with dry_run:true first."))
+        for name in ("list_runs", "report", "diff", "status"):
+            self.assertTrue(d[name].startswith("Free, local:"), name)
+
+    def test_the_first_512_characters_of_the_instructions_stand_alone(self):
+        init = self.server().handle({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2025-06-18"}})["result"]
+        text = init["instructions"]
+        head = text[:512]
+        self.assertIn("«site text", head)                    # Codex keeps only this much
+        self.assertIn("dry_run", head)
+        end = text.index("not a trend.") + len("not a trend.")
+        self.assertLessEqual(end, 512)                       # the self-contained part ends before the cut
+        info = init["serverInfo"]
+        self.assertEqual((info["name"], info["version"]), ("geo-score", gw.__version__))
+        self.assertEqual(info["websiteUrl"], "https://github.com/jianruntech/geo-score")
+        self.assertLessEqual(len(info["description"]), 100)
+        self.assertNotIn("icons", info)
+
+
+class Feed(object):
+    """stdin for a server under test: lines go in when the test says, and close() is the end of file."""
+    def __init__(self):
+        self.q = queue.Queue()
+
+    def send(self, obj):
+        self.q.put(json.dumps(obj) + "\n")
+
+    def close(self):
+        self.q.put(None)
+
+    def __iter__(self):
+        while True:
+            line = self.q.get()
+            if line is None:
+                return
+            yield line
+
+
+class Lines(object):
+    """stdout for a server under test: every line must be JSON, and a test can wait for the one it expects."""
+    def __init__(self):
+        self.cond, self.buf = threading.Condition(), ""
+
+    def write(self, s):
+        with self.cond:
+            self.buf += s
+            self.cond.notify_all()
+
+    def flush(self):
+        pass
+
+    def lines(self):
+        with self.cond:
+            return [json.loads(l) for l in self.buf.splitlines()]
+
+    def wait_until(self, done, timeout=10):
+        deadline = time.time() + timeout
+        with self.cond:
+            while True:
+                got = [json.loads(l) for l in self.buf.splitlines()]
+                if done(got):
+                    return got
+                if time.time() >= deadline:
+                    raise AssertionError("timed out waiting; stdout so far: %r" % got)
+                self.cond.wait(0.1)
+
+    def wait_for(self, pred, timeout=10):
+        return self.wait_until(lambda got: any(pred(l) for l in got), timeout)
+
+
+class MCPConcurrency(Base):
+    """tools/call runs on worker threads: the loop keeps answering, and notifications/cancelled stops the spend."""
+    server = MCP.server
+
+    def start(self, gate):
+        routes = self.standard_routes()
+        slow = routes["api.openai.com"]
+        routes["api.openai.com"] = lambda u, h, b: (gate.wait(10), slow(u, h, b))[1]
+        api = self.fake(routes)
+        srv = self.server()
+        srv.out = out = Lines()
+        feed, ret = Feed(), []
+        t = threading.Thread(target=lambda: ret.append(srv.serve(feed)), daemon=True)
+        t.start()
+        return srv, feed, out, t, ret, api
+
+    def settle(self, srv):
+        deadline = time.time() + 10
+        while srv.inflight and time.time() < deadline:
+            time.sleep(0.02)
+        self.assertEqual(srv.inflight, {})
+
+    def runs_saved(self):
+        d = os.path.join(self.tmp, ".geo-score", "watch", "runs")
+        return os.listdir(d) if os.path.isdir(d) else []
+
+    def test_ping_is_answered_during_a_run_and_a_cancelled_run_falls_silent(self):
+        gate, err = threading.Event(), io.StringIO()
+        with contextlib.redirect_stderr(err):
+            srv, feed, out, t, ret, _ = self.start(gate)
+            feed.send({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                       "params": {"name": "run", "arguments": {}, "_meta": {"progressToken": "p7"}}})
+            out.wait_for(lambda l: l.get("method") == "notifications/progress")   # perplexity answered at once
+            feed.send({"jsonrpc": "2.0", "id": 8, "method": "ping"})
+            out.wait_for(lambda l: l.get("id") == 8)                             # while chatgpt is still asking
+            self.assertFalse(any(l.get("id") == 7 for l in out.lines()))
+            feed.send({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {"requestId": 7, "reason": "user"}})
+            feed.send({"jsonrpc": "2.0", "id": 9, "method": "ping"})
+            n = len(out.wait_for(lambda l: l.get("id") == 9))                      # the cancel has been read
+            gate.set()
+            self.settle(srv)
+            feed.close()
+            t.join(5)
+        self.assertEqual(ret, [0])
+        after = out.lines()[n:]
+        self.assertEqual(after, [])                                  # no progress and no answer after the cancel
+        self.assertFalse(any(l.get("id") == 7 for l in out.lines()))
+        self.assertEqual(self.runs_saved(), [])                      # a cancelled run is not saved
+        self.assertIn("geo-score mcp: run stopped before it finished", err.getvalue())
+        self.assertIn("not saved", err.getvalue())
+
+    def test_cancelling_an_unknown_or_finished_request_is_ignored(self):
+        srv = self.server()
+        self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {"requestId": 99}}))
+        self.assertIsNone(srv.handle({"jsonrpc": "2.0", "method": "notifications/cancelled", "params": {}}))
+        self.assertEqual(srv.inflight, {})
+
+    def test_end_of_file_stops_the_calls_in_flight_and_returns_promptly(self):
+        gate = threading.Event()
+        with contextlib.redirect_stderr(io.StringIO()):
+            srv, feed, out, t, ret, api = self.start(gate)
+            feed.send({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                       "params": {"name": "run", "arguments": {}, "_meta": {"progressToken": 1}}})
+            out.wait_for(lambda l: l.get("method") == "notifications/progress")
+            t0 = time.time()
+            feed.close()
+            t.join(5)
+            self.assertLess(time.time() - t0, gw.EOF_GRACE + 1)
+            self.assertEqual(ret, [0])
+            asked = len(api.calls)
+            gate.set()                                               # the one call already on the wire comes back
+            self.settle(srv)
+        self.assertEqual(len(api.calls), asked)                      # and nothing new was asked after the end of file
+        self.assertEqual(self.runs_saved(), [])
+
+    def test_at_most_four_calls_run_at_once_and_the_loop_stays_responsive(self):
+        gate = threading.Event()
+        srv, feed, out, t, ret, api = self.start(gate)
+        for i in range(5):
+            feed.send({"jsonrpc": "2.0", "id": "a%d" % i, "method": "tools/call",
+                       "params": {"name": "ask", "arguments": {"question": "q%d" % i, "engines": ["chatgpt-api"]}}})
+        deadline = time.time() + 10
+        while len(api.calls) < gw.MCP_WORKERS and time.time() < deadline:
+            time.sleep(0.02)
+        feed.send({"jsonrpc": "2.0", "id": "p", "method": "ping"})
+        out.wait_for(lambda l: l.get("id") == "p")
+        time.sleep(0.3)
+        self.assertEqual(len(api.calls), gw.MCP_WORKERS)             # the fifth waits for a free worker
+        gate.set()
+        answers = lambda got: [l for l in got if str(l.get("id")).startswith("a")]
+        got = answers(out.wait_until(lambda got: len(answers(got)) == 5))
+        self.assertEqual(sorted(l["id"] for l in got), ["a%d" % i for i in range(5)])
+        self.assertTrue(all(not l["result"]["isError"] for l in got), got)
+        feed.close()
+        t.join(5)
+        self.assertEqual(ret, [0])
+
+
+class MCPToolsets(Base):
+    """--toolsets, --tools, --exclude-tools and --read-only, their environment twins, and the status tool."""
+    server = MCP.server
+
+    def test_the_filter(self):
+        f = gw.tool_filter
+        self.assertEqual(f(), set(gw.MCP_TOOLS))
+        self.assertEqual(f("all"), set(gw.MCP_TOOLS))
+        self.assertEqual(f("score"), {"score_site", "status"})
+        self.assertEqual(f("score,ask"), {"score_site", "ask", "status"})
+        self.assertEqual(f(["watch"], ["ask"]), {"run", "list_runs", "report", "diff", "ask", "status"})
+        self.assertEqual(f(None, "score_site"), {"score_site", "status"})            # --tools alone: only those
+        self.assertEqual(f(read_only=True), set(gw.MCP_TOOLS) - {"ask", "run"})
+        self.assertEqual(f("ask,watch", read_only=True), {"list_runs", "report", "diff", "status"})
+        self.assertEqual(f(None, "ask,run", "run"), {"ask", "status"})              # exclusion always wins
+        self.assertEqual(f(exclude="status"), set(gw.MCP_TOOLS) - {"status"})
+        for bad, word in (({"toolsets": "nope"}, "toolset"), ({"tools": "score"}, "tool"),
+                          ({"exclude": "scor_site"}, "tool")):
+            with self.assertRaises(ValueError) as cm:
+                f(**bad)
+            self.assertIn("unknown %s" % word, str(cm.exception))
+            self.assertIn("known: ", str(cm.exception))
+
+    def test_capabilities_resources_and_calls_follow_the_filter(self):
+        cfgp = os.path.join(self.tmp, "none.json")
+        srv = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("ask"))
+        self.assertEqual([t["name"] for t in srv.tools()], ["ask", "status"])
+        init = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-11-25"}})
+        self.assertNotIn("resources", init["result"]["capabilities"])                 # the rubric is in the score set
+        self.assertEqual(srv.handle({"jsonrpc": "2.0", "id": 2, "method": "resources/list"})["result"]["resources"], [])
+        r = srv.handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "score_site",
+                                                                                      "arguments": {"url": "a.example"}}})
+        self.assertEqual(r["error"]["code"], -32602)                                  # not offered, so unknown
+        ro = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter(read_only=True))
+        self.assertEqual([t["name"] for t in ro.tools()], ["score_site", "list_runs", "report", "diff", "status"])
+        self.assertTrue(all(t["annotations"]["readOnlyHint"] for t in ro.tools()))
+
+    def test_status_says_what_can_run_and_never_shows_a_key(self):
+        os.environ["OPENAI_API_KEY"] = "sk-test-SECRET"
+        os.environ["PERPLEXITY_API_KEY"] = "pplx-test-SECRET with a space"            # malformed: named, never echoed
+        for with_config in (False, True):
+            srv = self.server(with_config)
+            r = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "status"}})
+            wire = json.dumps(r)
+            self.assertNotIn("SECRET", wire)
+            res = r["result"]
+            self.assertFalse(res["isError"], res)
+            st = res["structuredContent"]
+            self.assertEqual(schema_errors(st, gw.OUT_STATUS), [])
+            self.assertEqual(st["version"], gw.__version__)
+            self.assertEqual(st["tools"], list(gw.MCP_TOOLS))
+            self.assertEqual(st["toolsets"], ["ask", "score", "status", "watch"])
+            self.assertEqual(st["config"]["found"], with_config)
+            keys = dict((e["id"], e["key_present"]) for e in st["engines"])
+            self.assertTrue(keys["chatgpt-api"])
+            self.assertFalse(keys["perplexity-api"])
+            self.assertTrue(st["ready"]["ask"])
+            self.assertTrue(st["ready"]["score_site"])
+        self.assertEqual((st["questions"], st["runs"], st["caps"]), (2, 0, {"max_calls": 10, "budget_usd": None}))
+        self.assertEqual((st["ready"]["run"], st["ready"]["report"], st["ready"]["diff"]), (True, False, False))
+        self.assertIn("OPENAI_API_KEY", [e["key_env"] for e in st["engines"]])
+        broken = self.server(with_config=False)
+        with io.open(broken.config_path, "w", encoding="utf-8") as f:
+            f.write("{not json")
+        st = broken.call({"name": "status"})["structuredContent"]
+        self.assertTrue(st["config"]["found"])
+        self.assertIn("not valid JSON", st["config"]["errors"][0])
+        self.assertEqual((st["ready"]["ask"], st["ready"]["run"], st["ready"]["list_runs"]), (False, False, False))
+
+    def mcp(self, *args, env=None, entry=None, lines=()):
+        e = dict(os.environ)
+        for k in ALL_KEY_ENVS + ["GEO_SCORE_MCP_TOOLSETS", "GEO_SCORE_MCP_TOOLS", "GEO_SCORE_MCP_EXCLUDE_TOOLS",
+                                 "GEO_SCORE_MCP_READ_ONLY"]:
+            e.pop(k, None)
+        e.update(env or {})
+        cmd = [sys.executable, os.path.join(HERE, "geo_score.py"), "mcp"] if entry is None else entry
+        return subprocess.run(cmd + ["-c", os.path.join(self.tmp, "none.json")] + list(args), capture_output=True,
+                              env=e, timeout=60, input="".join(json.dumps(m) + "\n" for m in lines).encode())
+
+    def listed(self, p):
+        self.assertEqual(p.returncode, 0, p.stderr)
+        return [t["name"] for t in json.loads(p.stdout.decode().splitlines()[0])["result"]["tools"]]
+
+    def test_flags_and_environment_on_both_entry_points(self):
+        ls = [{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
+        free = ["score_site", "list_runs", "report", "diff", "status"]
+        self.assertEqual(self.listed(self.mcp("--read-only", lines=ls)), free)
+        self.assertEqual(self.listed(self.mcp(lines=ls, env={"GEO_SCORE_MCP_READ_ONLY": "1"})), free)
+        self.assertEqual(self.listed(self.mcp("--toolsets", "score", lines=ls)), ["score_site", "status"])
+        self.assertEqual(self.listed(self.mcp(lines=ls, env={"GEO_SCORE_MCP_TOOLSETS": "watch",
+                                                             "GEO_SCORE_MCP_EXCLUDE_TOOLS": "diff,status"})),
+                         ["run", "list_runs", "report"])
+        self.assertEqual(self.listed(self.mcp("--tools", "ask", "--tools", "diff", lines=ls,
+                                              env={"GEO_SCORE_MCP_TOOLS": "run"})),        # a flag beats its twin
+                         ["ask", "diff", "status"])
+        # the console script geo-score-mcp goes through geo_score.mcp_main with the same flags
+        entry = [sys.executable, "-c", "import sys; sys.path.insert(0, %r); import geo_score; "
+                                       "sys.argv[0] = 'geo-score-mcp'; geo_score.mcp_main()" % HERE]
+        self.assertEqual(self.listed(self.mcp("--read-only", "--exclude-tools", "status", entry=entry, lines=ls)),
+                         ["score_site", "list_runs", "report", "diff"])
+        for args, env, word in ((["--toolsets", "nope"], {}, "unknown toolset 'nope' (known: all, ask, score, status, watch)"),
+                                (["--tools", "score"], {}, "unknown tool 'score' (known: score_site, ask, run,"),
+                                ([], {"GEO_SCORE_MCP_EXCLUDE_TOOLS": "asks"}, "unknown tool 'asks'"),
+                                ([], {"GEO_SCORE_MCP_READ_ONLY": "maybe"}, "GEO_SCORE_MCP_READ_ONLY must be 1 or 0")):
+            for e in (None, entry):
+                p = self.mcp(*args, env=env, entry=e)
+                self.assertEqual(p.returncode, 2, (args, env, p.stderr))
+                self.assertIn(word, p.stderr.decode())
+                self.assertEqual(p.stdout, b"")
+
+
+MODERN = {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientInfo": {"name": "t", "version": "0"},
+          "io.modelcontextprotocol/clientCapabilities": {}}
+
+
+class MCPProtocol(Base):
+    """Dual era: initialize for legacy clients (2024-11-05 to 2025-11-25), per-request _meta for 2026-07-28."""
+    server = MCP.server
+
+    def rpc(self, srv, method, params=None, meta=None, mid=1):
+        p = dict(params or {})
+        if meta is not None:
+            p["_meta"] = meta
+        return srv.handle({"jsonrpc": "2.0", "id": mid, "method": method, "params": p})
+
+    def test_initialize_answers_every_legacy_version_and_falls_back_to_the_newest(self):
+        srv = self.server()
+        for v in gw.LEGACY_VERSIONS:
+            r = self.rpc(srv, "initialize", {"protocolVersion": v, "capabilities": {}})["result"]
+            self.assertEqual(r["protocolVersion"], v)
+            self.assertEqual(srv.session_version, v)
+        # initialize is legacy: a modern or unknown version gets the newest legacy one, which the client may refuse
+        for v in ("2026-07-28", "1999-01-01", None):
+            r = self.rpc(srv, "initialize", {"protocolVersion": v})["result"]
+            self.assertEqual(r["protocolVersion"], "2025-11-25", v)
+        self.assertEqual(gw.MCP_VERSIONS, gw.LEGACY_VERSIONS)
+        self.assertEqual(gw.SUPPORTED_VERSIONS, ("2026-07-28",) + gw.LEGACY_VERSIONS)
+
+    def test_server_discover(self):
+        r = self.rpc(self.server(), "server/discover", meta=MODERN)["result"]
+        self.assertEqual(r["resultType"], "complete")
+        self.assertEqual(r["supportedVersions"], list(gw.SUPPORTED_VERSIONS))
+        self.assertIn("tools", r["capabilities"])
+        self.assertIn("«site text", r["instructions"])
+        info = r["_meta"]["io.modelcontextprotocol/serverInfo"]
+        self.assertEqual((info["name"], info["version"]), ("geo-score", gw.__version__))
+        self.assertEqual((r["ttlMs"], r["cacheScope"]), (3600000, "public"))
+
+    def test_an_unsupported_version_names_the_supported_ones(self):
+        srv = self.server()
+        for v in ("1999-01-01", "2025-11-25"):          # a legacy version is served through initialize, not _meta
+            e = self.rpc(srv, "tools/list", meta=dict(MODERN, **{"io.modelcontextprotocol/protocolVersion": v}))["error"]
+            self.assertEqual(e["code"], -32022)
+            self.assertEqual(e["message"], "Unsupported protocol version")
+            self.assertEqual(e["data"], {"supported": list(gw.SUPPORTED_VERSIONS), "requested": v})
+        e = self.rpc(srv, "server/discover", meta={"io.modelcontextprotocol/protocolVersion": "1999-01-01",
+                                                   "io.modelcontextprotocol/clientCapabilities": {}})["error"]
+        self.assertEqual(e["code"], -32022)
+
+    def test_required_meta_fields_are_checked(self):
+        srv = self.server()
+        for meta in ({"io.modelcontextprotocol/protocolVersion": "2026-07-28"},
+                     dict(MODERN, **{"io.modelcontextprotocol/clientCapabilities": "all"}),
+                     dict(MODERN, **{"io.modelcontextprotocol/protocolVersion": 20260728}),
+                     dict(MODERN, **{"io.modelcontextprotocol/logLevel": "loud"})):
+            self.assertEqual(self.rpc(srv, "tools/list", meta=meta)["error"]["code"], -32602, meta)
+        self.assertEqual(self.rpc(srv, "server/discover")["error"]["code"], -32602)       # no _meta at all
+        ok = self.rpc(srv, "tools/list", meta=dict(MODERN, **{"io.modelcontextprotocol/logLevel": "warning"}))
+        self.assertIn("result", ok)
+
+    def test_modern_results_carry_result_type_and_cache_hints_and_legacy_ones_do_not(self):
+        srv = self.server()
+        hints = {"tools/list": (3600000, "public"), "resources/list": (86400000, "public"),
+                 "resources/templates/list": (86400000, "public")}
+        for method, (ttl, scope) in sorted(hints.items()):
+            modern = self.rpc(srv, method, meta=MODERN)["result"]
+            self.assertEqual((modern["resultType"], modern["ttlMs"], modern["cacheScope"]), ("complete", ttl, scope))
+            self.assertIn("io.modelcontextprotocol/serverInfo", modern["_meta"])
+            legacy = self.rpc(srv, method)["result"]
+            for k in ("resultType", "ttlMs", "cacheScope", "_meta"):
+                self.assertNotIn(k, legacy, method)
+            self.assertEqual(dict((k, v) for k, v in modern.items() if k not in ("resultType", "ttlMs", "cacheScope", "_meta")),
+                             legacy, method)                     # the same answer, only the envelope differs
+        read = self.rpc(srv, "resources/read", {"uri": "geo-score://rubric/v1.1"}, meta=MODERN)["result"]
+        self.assertEqual((read["ttlMs"], read["cacheScope"]), (86400000, "public"))
+        self.assertNotIn("ttlMs", self.rpc(srv, "resources/read", {"uri": "geo-score://rubric/v1.1"})["result"])
+        call = self.rpc(srv, "tools/call", {"name": "ask", "arguments": {"question": ""}}, meta=MODERN)["result"]
+        self.assertEqual(call["resultType"], "complete")
+        self.assertTrue(call["isError"])
+        self.assertNotIn("ttlMs", call)                          # only lists, discovery and reads are cacheable
+
+    def test_resource_not_found_is_32002_for_legacy_and_32602_for_modern(self):
+        srv = self.server()
+        legacy = self.rpc(srv, "resources/read", {"uri": "file:///etc/passwd"})["error"]
+        self.assertEqual((legacy["code"], legacy["data"]["uri"]), (-32002, "file:///etc/passwd"))
+        modern = self.rpc(srv, "resources/read", {"uri": "file:///etc/passwd"}, meta=MODERN)["error"]
+        self.assertEqual((modern["code"], modern["data"]["uri"]), (-32602, "file:///etc/passwd"))
+
+    def test_legacy_only_methods_are_not_found_on_the_modern_path(self):
+        srv = self.server()
+        for method in ("initialize", "ping", "logging/setLevel", "resources/subscribe"):
+            self.assertEqual(self.rpc(srv, method, meta=MODERN)["error"]["code"], -32601, method)
+        self.assertEqual(self.rpc(srv, "ping")["result"], {})    # still there for legacy clients
+        self.assertIsNone(srv.session_version)                   # and a modern request never set any state
+
+    def test_a_cursor_is_refused_because_none_is_ever_issued(self):
+        srv = self.server()
+        for method in ("tools/list", "resources/list", "resources/templates/list"):
+            self.assertEqual(self.rpc(srv, method, {"cursor": "garbage"})["error"]["code"], -32602, method)
+            self.assertEqual(self.rpc(srv, method, {"cursor": "garbage"}, meta=MODERN)["error"]["code"], -32602, method)
+
+    def serve(self, *msgs):
+        srv, out = self.server(), io.StringIO()
+        srv.out = out
+        srv.serve(io.StringIO("".join(json.dumps(m) + "\n" for m in msgs)))
+        return [json.loads(l) for l in out.getvalue().splitlines()]
+
+    def test_batches_only_in_2025_03_26(self):
+        batch = [{"jsonrpc": "2.0", "id": 2, "method": "ping"}, {"jsonrpc": "2.0", "id": 3, "method": "tools/list"}]
+        refused = {"jsonrpc": "2.0", "id": None,
+                   "error": {"code": -32600, "message": "batches are not supported in this protocol version"}}
+        self.assertEqual(self.serve(batch), [refused])                                   # no initialize at all
+        init = lambda v: {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": v}}
+        for v in ("2025-11-25", "2025-06-18", "2024-11-05"):
+            self.assertEqual(self.serve(init(v), batch)[1], refused, v)
+        out = self.serve(init("2025-03-26"), batch)
+        self.assertEqual([r["id"] for r in out[1]], [2, 3])
+        self.assertEqual(self.serve(init("2025-03-26"), [])[1]["error"]["code"], -32600)
+
+    def test_stdio_serves_a_modern_client_that_never_initializes(self):
+        env = dict(os.environ)
+        for k in ALL_KEY_ENVS:
+            env.pop(k, None)
+        msgs = [{"jsonrpc": "2.0", "id": 1, "method": "server/discover", "params": {"_meta": MODERN}},
+                {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {"_meta": MODERN}},
+                {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                 "params": {"name": "ask", "arguments": {"question": "q"}, "_meta": MODERN}}]
+        p = subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"), "mcp", "-c",
+                            os.path.join(self.tmp, "none.json")], capture_output=True, env=env, timeout=60,
+                           input="".join(json.dumps(m) + "\n" for m in msgs).encode())
+        self.assertEqual(p.returncode, 0, p.stderr)
+        by_id = dict((l["id"], l) for l in (json.loads(x) for x in p.stdout.decode().splitlines()))
+        self.assertEqual(sorted(by_id), [1, 2, 3])
+        self.assertEqual(by_id[1]["result"]["supportedVersions"][0], "2026-07-28")
+        self.assertIn("score_site", [t["name"] for t in by_id[2]["result"]["tools"]])
+        self.assertEqual(by_id[3]["result"]["resultType"], "complete")
+        self.assertTrue(by_id[3]["result"]["isError"])                               # no keys in this environment
+
+
+class MCPPrompts(Base):
+    """Prompts (the user's slash commands), completions, and the saved-run resource template."""
+    server = MCP.server
+    PROMPTS = ["audit_site", "check_citations", "weekly_watch", "compare_runs", "explain_check"]
+
+    def rpc(self, srv, method, params=None, meta=None):
+        p = dict(params or {})
+        if meta is not None:
+            p["_meta"] = meta
+        return srv.handle({"jsonrpc": "2.0", "id": 1, "method": method, "params": p})
+
+    def get(self, srv, name, args=None):
+        return self.rpc(srv, "prompts/get", {"name": name, "arguments": args or {}})
+
+    def with_two_runs(self):
+        srv = self.server()
+        self.fake(self.standard_routes())
+        self.assertFalse(srv.call({"name": "run", "arguments": {}})["isError"])
+        gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=7)
+        self.assertFalse(srv.call({"name": "run", "arguments": {}})["isError"])
+        return srv
+
+    def test_listed_with_their_capabilities(self):
+        srv = self.server()
+        caps = self.rpc(srv, "initialize", {"protocolVersion": "2025-11-25"})["result"]["capabilities"]
+        self.assertEqual((caps["prompts"], caps["completions"]), ({"listChanged": False}, {}))
+        prompts = self.rpc(srv, "prompts/list")["result"]["prompts"]
+        self.assertEqual([p["name"] for p in prompts], self.PROMPTS)
+        for p in prompts:
+            self.assertTrue(p["title"] and p["description"], p)
+            self.assertNotIn("needs", p)
+            for a in p["arguments"]:
+                self.assertIsInstance(a["required"], bool)
+        req = dict((p["name"], [a["name"] for a in p["arguments"] if a["required"]]) for p in prompts)
+        self.assertEqual(req, {"audit_site": ["url"], "check_citations": ["question"], "weekly_watch": [],
+                               "compare_runs": [], "explain_check": ["check_id"]})
+        modern = self.rpc(srv, "prompts/list", meta=MODERN)["result"]
+        self.assertEqual((modern["resultType"], modern["ttlMs"], modern["cacheScope"]), ("complete", 3600000, "public"))
+        self.assertEqual(self.rpc(srv, "prompts/list", {"cursor": "x"})["error"]["code"], -32602)
+
+    def test_prompts_follow_the_tool_filter(self):
+        cfgp = os.path.join(self.tmp, "none.json")
+        names = lambda srv: [p["name"] for p in srv.prompts()]
+        ro = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter(read_only=True))
+        self.assertEqual(names(ro), ["audit_site", "compare_runs", "explain_check"])     # nothing that spends
+        self.assertEqual(self.get(ro, "weekly_watch")["error"]["code"], -32602)
+        ask = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("ask"))
+        self.assertEqual(names(ask), ["check_citations"])
+        bare = gw.MCPServer(cfgp, out=io.StringIO(), enabled=gw.tool_filter("status"))
+        self.assertEqual(names(bare), [])
+        caps = self.rpc(bare, "initialize", {"protocolVersion": "2025-11-25"})["result"]["capabilities"]
+        self.assertEqual(sorted(caps), ["tools"])                     # no prompts, completions or resources
+
+    def test_prompts_get(self):
+        srv = self.server()
+        r = self.get(srv, "audit_site", {"url": "example.com"})["result"]
+        text = r["messages"][-1]["content"]["text"]
+        self.assertEqual(r["messages"][-1]["role"], "user")
+        self.assertIn('call score_site with {"url": "example.com"}', text)
+        self.assertIn("«site text", text)
+        self.assertIn("not whether they do", text)
+        t = self.get(srv, "check_citations", {"question": "best free ai video generator", "brand": "Lumo"})["result"]
+        t = t["messages"][0]["content"]["text"]
+        self.assertIn("paid", t)
+        self.assertIn('call ask with {"question": "best free ai video generator", "brand": "Lumo"}', t)
+        self.assertIn("domains", t)
+        self.assertNotIn("domains", self.get(srv, "check_citations", {"question": "q"})["result"]["messages"][0]
+                         ["content"]["text"])
+        w = self.get(srv, "weekly_watch")["result"]["messages"][0]["content"]["text"]
+        self.assertLess(w.index("status"), w.index('{"dry_run": true}'))
+        self.assertLess(w.index('{"dry_run": true}'), w.index("wait for me to confirm"))
+        self.assertLess(w.index("wait for me to confirm"), w.index("Call diff"))
+        c = self.get(srv, "compare_runs", {"from": "20260926T083000Z"})["result"]["messages"][0]["content"]["text"]
+        self.assertIn('call diff with {"from": "20260926T083000Z"}', c)
+        self.assertIn("(the previous and the latest run)", self.get(srv, "compare_runs")["result"]["messages"][0]
+                      ["content"]["text"])
+        e = self.get(srv, "explain_check", {"check_id": "p1.sitemap"})["result"]["messages"]
+        self.assertEqual(e[0]["content"]["type"], "resource")
+        self.assertEqual(e[0]["content"]["resource"]["uri"], "geo-score://rubric/v1.1")
+        self.assertIn("p1.sitemap", [c["id"] for c in json.loads(e[0]["content"]["resource"]["text"])["checks"]])
+        self.assertIn("explain check p1.sitemap", e[1]["content"]["text"])
+        modern = self.rpc(srv, "prompts/get", {"name": "weekly_watch"}, meta=MODERN)["result"]
+        self.assertEqual(modern["resultType"], "complete")
+        self.assertNotIn("ttlMs", modern)
+
+    def test_bad_prompt_requests_are_invalid_params(self):
+        srv = self.server()
+        for name, args in (("nope", {}), (None, {}), ("audit_site", {}), ("audit_site", {"url": "  "}),
+                           ("audit_site", {"url": 5}), ("audit_site", {"url": "x" * 3000}),
+                           ("check_citations", {"question": "q" * 501}), ("compare_runs", {"from": "../x"}),
+                           ("explain_check", {"check_id": "p9.nope"})):
+            self.assertEqual(self.get(srv, name, args)["error"]["code"], -32602, (name, args))
+        self.assertEqual(self.rpc(srv, "prompts/get", {"name": "audit_site", "arguments": ["x"]})["error"]["code"], -32602)
+
+    def test_no_prompt_writes_a_fix(self):
+        # measurement is public, remediation is private (AGENTS.md): prompts measure and explain, never prescribe
+        srv = self.server()
+        args = {"audit_site": {"url": "example.com"}, "check_citations": {"question": "q", "brand": "b"},
+                "explain_check": {"check_id": "p1.sitemap"}}
+        for name in self.PROMPTS:
+            r = self.get(srv, name, args.get(name))["result"]
+            text = " ".join([r["description"]] + [m["content"]["text"] for m in r["messages"]
+                                                  if m["content"]["type"] == "text"]).lower()
+            for word in ("fix", "remediat", "improve", "```", "markup", "json-ld"):
+                self.assertNotIn(word, text, name)
+
+    def test_completions(self):
+        srv = self.with_two_runs()
+        comp = lambda ref, name, value, meta=None: self.rpc(
+            srv, "completion/complete", {"ref": ref, "argument": {"name": name, "value": value}}, meta)
+        prompt = lambda n: {"type": "ref/prompt", "name": n}
+        ids = [c["id"] for c in gw.rubric_resource(srv.geo_score)["checks"]]
+        c = comp(prompt("explain_check"), "check_id", "")["result"]["completion"]
+        self.assertEqual((c["values"], c["total"], c["hasMore"]), (ids[:100], len(ids), len(ids) > 100))
+        c = comp(prompt("explain_check"), "check_id", "P1.")["result"]["completion"]
+        self.assertTrue(c["values"] and all(v.startswith("p1.") for v in c["values"]), c)
+        runs = ["20261003T083000Z", "20260926T083000Z"]                                     # newest first
+        self.assertEqual(comp(prompt("compare_runs"), "from", "")["result"]["completion"]["values"],
+                         runs + ["latest", "previous"])
+        self.assertEqual(comp(prompt("compare_runs"), "to", "202609")["result"]["completion"]["values"], runs[1:])
+        self.assertEqual(comp({"type": "ref/resource", "uri": "geo-score://runs/{run_id}"}, "run_id", "")["result"]
+                         ["completion"]["values"], runs)
+        self.assertEqual(comp(prompt("audit_site"), "url", "exa")["result"]["completion"]["values"], [])
+        modern = comp(prompt("explain_check"), "check_id", "g.", MODERN)["result"]
+        self.assertEqual(modern["resultType"], "complete")
+        for ref, name in ((prompt("nope"), "x"), ({"type": "ref/other"}, "x"), ("explain_check", "check_id")):
+            self.assertEqual(comp(ref, name, "")["error"]["code"], -32602, ref)
+
+    def test_saved_runs_as_a_resource_template(self):
+        srv = self.with_two_runs()
+        tpl = self.rpc(srv, "resources/templates/list")["result"]["resourceTemplates"]
+        self.assertEqual([t["uriTemplate"] for t in tpl], ["geo-score://runs/{run_id}"])
+        r = self.rpc(srv, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"})["result"]
+        self.assertEqual(json.loads(r["contents"][0]["text"])["overall"]["answered"], 4)
+        m = self.rpc(srv, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"}, meta=MODERN)["result"]
+        self.assertEqual((m["ttlMs"], m["cacheScope"]), (0, "private"))                # the user's own data
+        for uri in ("geo-score://runs/20990101T000000Z", "geo-score://runs/../../etc/passwd", "geo-score://runs/latest"):
+            self.assertEqual(self.rpc(srv, "resources/read", {"uri": uri})["error"]["code"], -32002, uri)
+        score_only = gw.MCPServer(srv.config_path, out=io.StringIO(), enabled=gw.tool_filter("score"))
+        self.assertEqual(self.rpc(score_only, "resources/templates/list")["result"]["resourceTemplates"], [])
+        self.assertEqual(self.rpc(score_only, "resources/read", {"uri": "geo-score://runs/20260926T083000Z"})
+                         ["error"]["code"], -32002)
 
 
 # ── level 2 and the geo_score.py entry point ─────────────────────────────
