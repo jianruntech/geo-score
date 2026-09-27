@@ -1,0 +1,46 @@
+{
+  "name": "geo-score",
+  "version": "1.3.0",
+  "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
+  "mcpServers": {
+    "geo-score": {
+      "command": "python3",
+      "args": [
+        "${extensionPath}${/}cli${/}geo_score.py",
+        "mcp"
+      ]
+    }
+  },
+  "settings": [
+    {
+      "name": "OpenAI API key",
+      "description": "Optional. Enables ask and run on OpenAI; sent only to that provider.",
+      "envVar": "OPENAI_API_KEY",
+      "sensitive": true
+    },
+    {
+      "name": "Perplexity API key",
+      "description": "Optional. Enables ask and run on Perplexity; sent only to that provider.",
+      "envVar": "PERPLEXITY_API_KEY",
+      "sensitive": true
+    },
+    {
+      "name": "Gemini API key",
+      "description": "Optional. Enables ask and run on Gemini (Google AI Studio); sent only to that provider.",
+      "envVar": "GEMINI_API_KEY",
+      "sensitive": true
+    },
+    {
+      "name": "Anthropic API key",
+      "description": "Optional. Enables ask and run on Anthropic; sent only to that provider.",
+      "envVar": "ANTHROPIC_API_KEY",
+      "sensitive": true
+    },
+    {
+      "name": "OpenRouter API key",
+      "description": "Optional. Enables ask and run on OpenRouter; sent only to that provider.",
+      "envVar": "OPENROUTER_API_KEY",
+      "sensitive": true
+    }
+  ]
+}
