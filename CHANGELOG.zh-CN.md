@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-27
+
+这一版关乎测量是否可信：CI 系统能直接读的输出、做前后对比用的固定抽样、不再把噪声判成变化的变化检测、12 个测试站点上的离线端到端测试、
+实测的 CLI 与人工审计一致度，以及每个检查项的证据依据。两处计分修复：百分比不再可能超过 100；仍在描述旧门槛规则的文档与代码一致了。
+
+**从 1.2.0 升级。** 第一级的分数不变，只有原本读数超过 100 的站现在读 100。`watch` 里，标题引用率不再计入提到品牌的问题；
+同一问题有多条回答时区间变宽；部分原先判为 `change` 的 `diff` 结论会变成 `within noise` 或 `too few questions to tell`，
+1.2.0 的字段含义保持不变。证据里引用的网站原文现在包在 `«site text: …»` 里。CSV 报告多了第 11 列 `branded`。
+
 ### 新增
 - **一次运行，多种输出**：`--json-out FILE`、`--sarif FILE`（SARIF 2.1.0：每个检查项一条规则，没拿满分的项各一条结果）、
   `--junit FILE`（每个检查项一个测试；0 分为失败，测不到的项跳过）。都和屏幕上的报告来自同一次抓取，不会互相对不上。
@@ -138,6 +147,23 @@ geo-watch 0.1.0 并入本仓库。一个工具测 AI 可见度的两半：AI **�
   几 MB 构造好的 gzip 能解出几 GB，直接把进程打崩——在 GitHub Action 的运行器上就是内存溢出，而不是一个分数。
   现在解压后最多 16 MB，真实页面远用不到这么多。**不影响任何分数。**
 
+## [1.1.1] — 2026-09-09
+
+量表变成了能直接跑的工具。本节根据该 tag 的提交历史补记；这个版本发布时没有写更新日志。
+
+### 新增
+- **CLI**（`cli/geo_score.py`）：只用标准库，一条命令、无需安装；给静态抓取能观测到的 17 项打分，其余移出分母。
+  每一项都写明上一档要什么、值几分，报告列出最大的几个缺口。
+- **GitHub Action**（`uses: jianruntech/geo-score@v1`），CI 可用 `--fail-under`，以及浮动的 `v1` 标签。
+- `--compare URL` 与竞品并排打分；`--badge` 生成可嵌入的 SVG 徽章；`--share` 输出一行摘要。
+- **公开基准**：266 个知名站点中 229 个用同一套量表打分，门槛失效分成主动与无意两类；榜单页由数据生成，中英两版，带分享卡。
+
+### 修复
+- 位于某个路径下的站点（项目页、文档子目录）在该路径内抽样。
+- 解析 `@graph` 里的 `@id` 作者引用；此前有作者的页面会被判成没有作者。
+- 非 ASCII 域名在发出第一个请求前就崩溃。
+- examples 索引里 22 条坏链接；CI 开始检查站内链接。
+
 ## [1.1.0] — 2026-09-08 · 重新标定
 
 v1.0 把 anthropic.com 判为 *Critical*，而该站对十个检索爬虫全部返回 200、
@@ -173,6 +199,16 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 [rubric/open-questions.md](rubric/open-questions.md) 里公开的 8 条口径歧义全部有了决定。
 
 
----
+## [1.0.0] — 2026-09-08
 
-更早的条目见[英文版](CHANGELOG.md)。
+打了 tag 但没有对外发布；几个小时后未通过自己的校准检查，被 1.1.0 取代。保留发布是为了让这次修正可以追溯。
+量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
+AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
+
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/jianruntech/geo-score/compare/v1.1.2...v1.2.0
+[1.1.2]: https://github.com/jianruntech/geo-score/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/jianruntech/geo-score/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/jianruntech/geo-score/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/jianruntech/geo-score/releases/tag/v1.0.0

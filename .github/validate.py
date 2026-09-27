@@ -627,6 +627,32 @@ if os.path.exists("benchmark/stats.json"):
         t = io.open(f, encoding="utf-8").read()
         check("%d–%d" % (lo, hi) in t, f"{f}: the median's 95% interval must read {lo}–{hi} (benchmark/stats.json)")
 
+# ── 27. 一行安装从发布的 tag 下载，不从 main ──
+# main 上的代码随时在变：README 教的那行命令，今天和明天可能跑的不是同一个 CLI。schema 的 $id 是标识符，不算下载。
+for root_, dirs_, files_ in os.walk("."):
+    dirs_[:] = [d for d in dirs_ if d not in (".git", "node_modules", "dist", "__pycache__")]
+    for f in files_:
+        if not f.endswith((".md", ".yml", ".yaml", ".py", ".html", ".txt")) or f == "validate.py":
+            continue
+        pth = os.path.join(root_, f)
+        t = io.open(pth, encoding="utf-8", errors="replace").read()
+        check("raw.githubusercontent.com/jianruntech/geo-score/main/cli" not in t,
+              f"{pth}: downloads the CLI from main; pin it to a release tag (python3 scripts/release.py X.Y.Z --bump)")
+
+# ── 28. 每个发布过的 tag 在中英两份更新日志里都有自己的一节 ──
+import subprocess as _sp
+try:
+    _tags = [t[1:] for t in _sp.run(["git", "tag", "-l", "v*.*.*"], capture_output=True, text=True).stdout.split()]
+except OSError:
+    _tags = []
+for c in ("CHANGELOG.md", "CHANGELOG.zh-CN.md"):
+    t = io.open(c, encoding="utf-8").read()
+    for v in _tags:
+        check(re.search(r"^## \[%s\]" % re.escape(v), t, re.M), f"{c}: tag v{v} has no '## [{v}]' section")
+        check(re.search(r"^\[%s\]: https://github\.com/jianruntech/geo-score/" % re.escape(v), t, re.M),
+              f"{c}: no compare link for [{v}]")
+    check(len(re.findall(r"^## \[Unreleased\]", t, re.M)) <= 1, f"{c}: more than one [Unreleased] section")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

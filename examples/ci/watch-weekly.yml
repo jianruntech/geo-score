@@ -20,11 +20,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - name: Fetch geo-score (pinned to a release)
+      - name: Fetch geo-score (pinned to a release, checksums verified)
         run: |
-          base=https://raw.githubusercontent.com/jianruntech/geo-score/v1.2.0/cli
-          curl -sSfL -o geo_score.py "$base/geo_score.py"
-          curl -sSfL -o geo_watch.py "$base/geo_watch.py"
+          rel=https://github.com/jianruntech/geo-score/releases/download/v1.3.0
+          curl -sSfL -o geo_score.py "$rel/geo_score.py"
+          curl -sSfL -o geo_watch.py "$rel/geo_watch.py"
+          curl -sSfL -o SHA256SUMS "$rel/SHA256SUMS"
+          grep -E ' geo_(score|watch)\.py$' SHA256SUMS | sha256sum -c -
       - name: Run
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

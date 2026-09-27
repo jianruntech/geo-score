@@ -28,7 +28,7 @@ Level 1 is a single file with no dependencies and a machine-readable mode, so an
 works:
 
 ```bash
-curl -sLO https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py
+curl -sLO https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py
 python3 geo_score.py "$SITE_URL" --json --quiet > geo-score.json
 python3 geo_score.py "$SITE_URL" --fail-under 40 --quiet
 ```

@@ -4,10 +4,10 @@
 
 | Version | Security fixes |
 |---|---|
-| 1.2.x (latest) | Yes |
-| 1.1.x and older | No. Upgrade; the report format is compatible (see [STABILITY.md](STABILITY.md)) |
+| 1.3.x (latest) | Yes |
+| 1.2.x and older | No. Upgrade; the report format is compatible (see [STABILITY.md](STABILITY.md)) |
 
-Pin an exact tag in CI (`jianruntech/geo-score@v1.2.0`) if you need a fixed version, and move
+Pin an exact tag in CI (`jianruntech/geo-score@v1.3.0`) if you need a fixed version, and move
 the pin when a security release comes out. Every security fix is listed under **Security** in the
 [changelog](CHANGELOG.md).
 
@@ -53,6 +53,21 @@ What the code does about it:
 - **CSV output escapes** cells a spreadsheet would treat as formulas.
 - **Piped installs load nothing extra.** `curl … | python3 -` runs level 1 only and never imports a
   `geo_watch.py` from the current directory.
+
+## Verifying a download
+
+Every release attaches `SHA256SUMS` covering `geo_score.py`, `geo_watch.py`, the wheel and the sdist.
+Download it with the files and check them before running anything:
+
+```bash
+v=v1.3.0
+base=https://github.com/jianruntech/geo-score/releases/download/$v
+curl -sSfLO "$base/geo_score.py" -O "$base/geo_watch.py" -O "$base/SHA256SUMS"
+grep -E ' geo_(score|watch)\.py$' SHA256SUMS | shasum -a 256 -c
+```
+
+The one-line install in the README downloads from a release tag, never from `main`, so the code you
+run is the code that was released.
 
 ## Your data
 

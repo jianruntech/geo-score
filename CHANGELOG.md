@@ -5,6 +5,20 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-27
+
+A release about trust in the measurement: outputs CI systems read natively, a pinned sample for
+before/after comparisons, change detection that no longer calls noise a change, offline end-to-end
+tests on twelve fixture sites, a measured CLI-vs-hand-audit agreement, and an evidence basis for every
+check. Two scoring fixes: the percentage can no longer pass 100, and the documents that still stated
+the superseded gate rule now match the code.
+
+**Upgrading from 1.2.0.** Level 1 scores are unchanged except for sites that read above 100, which
+now read 100. In `watch`, the headline rate leaves out questions that name the brand, intervals widen
+when a question has several answers, and some `diff` verdicts that said `change` now say
+`within noise` or `too few questions to tell`; the 1.2.0 fields keep their meaning. Evidence strings
+now quote site text inside `«site text: …»`. The CSV report has an eleventh column, `branded`.
+
 ### Added
 - **One run, several outputs:** `--json-out FILE`, `--sarif FILE` (SARIF 2.1.0: one rule per check,
   one result per check below full marks) and `--junit FILE` (one test per check; a check at zero
@@ -202,6 +216,29 @@ two can be told apart.
   process — on a GitHub Action runner, an out-of-memory crash instead of a score. Inflation
   is now capped at 16 MB; real pages never get near it. **No score changes.**
 
+## [1.1.1] — 2026-09-09
+
+The rubric became something you can run. Backfilled from the tag's history; this release shipped
+without a changelog section.
+
+### Added
+- **The CLI** (`cli/geo_score.py`): standard library only, one command, no install; scores the 17
+  checks a static fetch can observe and leaves the rest out of the denominator. Every check says what
+  the next tier needs and what it is worth, and the report lists the largest gaps.
+- **The GitHub Action** (`uses: jianruntech/geo-score@v1`) with `--fail-under` for CI, and the moving
+  `v1` tag.
+- `--compare URL` to score a competitor side by side; `--badge` for an embeddable SVG; `--share` for a
+  one-line summary.
+- **The public benchmark**: 229 of 266 well-known sites scored with the same rubric, with the gate
+  failures split into deliberate and accidental, and a generated leaderboard page in English and
+  Chinese with share cards.
+
+### Fixed
+- Sites that live under a path (a project page, a docs subtree) are sampled inside that path.
+- Author references through `@graph` `@id` are resolved; pages with an author were read as having none.
+- Non-ASCII domains crashed before the first request.
+- 22 broken links in the examples index; CI now guards internal links.
+
 ## [1.1.0] — 2026-09-08
 
 Rubric **v1.1**. v1.0 was tagged a few hours earlier but never announced: running it
@@ -255,8 +292,6 @@ unaltered — they are the evidence that found the problem.
 - The eight ambiguities in [`rubric/open-questions.md`](rubric/open-questions.md) all have
   decisions, recorded inline.
 
-## [Unreleased]
-
 ## [1.0.0] — 2026-09-08
 
 Tagged but never announced; superseded within hours by 1.1.0 after it failed its own
@@ -298,3 +333,11 @@ Corrections made in that window are listed under *Fixed before first tag*.
 ### Scope note
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
+
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/jianruntech/geo-score/compare/v1.1.2...v1.2.0
+[1.1.2]: https://github.com/jianruntech/geo-score/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/jianruntech/geo-score/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/jianruntech/geo-score/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/jianruntech/geo-score/releases/tag/v1.0.0

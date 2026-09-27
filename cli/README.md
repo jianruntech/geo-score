@@ -6,7 +6,7 @@ install. Level 1 is `geo_score.py` alone; levels 2 and 3 need `geo_watch.py` fro
 release beside it.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py \
   | python3 - yoursite.com
 ```
 
@@ -214,10 +214,13 @@ in plain text:
 
 ```json
 {"mcpServers": {"geo-score": {
-  "command": "python3",
-  "args": ["/abs/path/geo-score/cli/geo_score.py", "mcp", "-c", "/abs/path/geo-score-watch.json"]
+  "command": "uvx",
+  "args": ["--from", "git+https://github.com/jianruntech/geo-score@v1.3.0", "geo-score-mcp",
+           "-c", "/abs/path/geo-score-watch.json"]
 }}}
 ```
+
+From a clone, use `"command": "python3"` with `"args": ["/abs/path/geo-score/cli/geo_score.py", "mcp", "-c", …]`.
 
 Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
 `python3 cli/test_geo_watch.py` (offline; every provider is faked).

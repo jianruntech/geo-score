@@ -18,7 +18,7 @@
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
 
@@ -371,7 +371,8 @@ and cost. Configuration, prices and all commands: [cli/README.md](cli/README.md#
 agent can only tighten your caps, never loosen them.
 
 ```bash
-claude mcp add geo-score -- python3 /abs/path/geo-score/cli/geo_score.py mcp -c /abs/path/geo-score-watch.json
+claude mcp add geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp -c /abs/path/geo-score-watch.json
+# or, from a clone: claude mcp add geo-score -- python3 /abs/path/geo-score/cli/geo_score.py mcp -c /abs/path/geo-score-watch.json
 ```
 
 **Every week.** Citation rates move slowly and noisily: run on the same weekday with the same
@@ -473,9 +474,11 @@ this repo deliberately excludes.
 
 ## Stability, privacy and install options
 
-- **Install:** nothing to install for level 1 (the `curl` line above), or
-  `pipx install git+https://github.com/jianruntech/geo-score` for a `geo-score` command with all
-  three levels. Standard library only either way.
+- **Install:** nothing to install for level 1 (the `curl` line above, pinned to a release). For
+  a `geo-score` command with all three levels, `pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`,
+  or run it without installing: `uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score example.com`.
+  Standard library only either way. Release downloads carry a `SHA256SUMS` file
+  ([how to check](SECURITY.md#verifying-a-download)).
 - **Stability:** the rubric and the tool are versioned separately, and the report schema, check
   ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts. What may change in
   which release: [STABILITY.md](STABILITY.md).

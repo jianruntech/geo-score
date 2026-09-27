@@ -18,7 +18,7 @@
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/main/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.3.0/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
 
@@ -346,7 +346,8 @@ Read this before quoting the numbers
 `ask`、`run`、`list_runs`、`report`、`diff`（第二、三级）。Agent 只能把上限调得更紧，不能放宽。
 
 ```bash
-claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp -c /绝对路径/geo-score-watch.json
+claude mcp add geo-score -- uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score-mcp -c /绝对路径/geo-score-watch.json
+# 或者从克隆的仓库：claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp -c /绝对路径/geo-score-watch.json
 ```
 
 **每周跑一次。** 引用率变得慢、噪声也大：固定星期几、固定问题、固定模型，看 `diff`，别盯单次结果。
@@ -435,8 +436,10 @@ claude mcp add geo-score -- python3 /绝对路径/geo-score/cli/geo_score.py mcp
 
 ## 稳定性、隐私与安装
 
-- **安装：** 第一级什么都不用装（上面那行 `curl`）；想要一个包含三级的 `geo-score` 命令，用
-  `pipx install git+https://github.com/jianruntech/geo-score`。两种方式都只用 Python 标准库。
+- **安装：** 第一级什么都不用装（上面那行 `curl`，锁定到某个发布版本）；想要一个包含三级的 `geo-score` 命令，用
+  `pipx install git+https://github.com/jianruntech/geo-score@v1.3.0`，或者不安装直接运行：
+  `uvx --from git+https://github.com/jianruntech/geo-score@v1.3.0 geo-score example.com`。两种方式都只用 Python 标准库。
+  发布的下载文件附带 `SHA256SUMS`（[如何校验](SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站、它在 `sameAs` 里列出的主页链接（检查是否有效），以及

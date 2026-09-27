@@ -28,6 +28,7 @@ merges unless it passes.
 | `guide/` | Troubleshooting and the watch statistics, in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
 | `STABILITY.md` | What is a public contract and what semver means here |
+| `RELEASING.md`, `scripts/release.py` | How a release is cut, pinned and checksummed |
 
 ## Invariants
 
