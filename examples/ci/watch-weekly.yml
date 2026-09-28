@@ -28,7 +28,11 @@ jobs:
           curl -sSfL -o geo_score.py "$rel/geo_score.py"
           curl -sSfL -o geo_watch.py "$rel/geo_watch.py"
           curl -sSfL -o SHA256SUMS "$rel/SHA256SUMS"
-          grep -E ' geo_(score|watch)\.py$' SHA256SUMS | sha256sum -c -
+          # each file's line goes to its own file: a SHA256SUMS without one of them stops the step here
+          # instead of leaving that file unchecked
+          grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
+          grep ' geo_watch\.py$' SHA256SUMS > geo_watch.py.sha256
+          sha256sum -c geo_score.py.sha256 geo_watch.py.sha256
       - name: Run
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
