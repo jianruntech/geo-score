@@ -3,18 +3,23 @@
 
     python3 benchmark/run.py            # score everything
     python3 benchmark/run.py --limit 5  # a quick subset
+    python3 benchmark/run.py --out ~/geo-runs/b --vantage "LABEL" [--urls-from-dir ~/geo-runs/a/raw]
+                                        # a retest run for retest.py; the published files are left alone
 
 Runs the CLI in-process. Live sites change, so re-running gives slightly different
-numbers; every result records the date it was measured.
+numbers; every result records the date it was measured, the tool and Python versions,
+and the vantage the operator declared.
 """
 import urllib.parse
-import argparse, concurrent.futures as cf, importlib.util, io, json, os, re, statistics, sys, time
+import argparse, concurrent.futures as cf, importlib.util, io, json, os, platform, re, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
 gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
 gs.c.on = False
 
 RAW = os.path.join(HERE, "raw")
+# --urls-from-dir: re-read the pages an earlier run sampled, DIR/<site>.json, through the CLI's --urls-from reader
+PIN_DIR = None
 
 def raw_name(site_url):
     """benchmark/raw/<site>.json; a site given with a path keeps it, with / as __."""
@@ -24,10 +29,20 @@ def one(site):
     base = site["url"] if "://" in site["url"] else "https://" + site["url"]
     host = base.split("://", 1)[1]
     attempts = [base] + ([("https://www." + host)] if not host.startswith("www.") else [])
+    pinned = None
+    if PIN_DIR:
+        # sampling is the largest source of run-to-run variance; a pinned run leaves the site and the network
+        try:
+            pinned = gs.read_report_urls(os.path.join(PIN_DIR, raw_name(site["url"])))
+        except RuntimeError as e:
+            return dict(site=site["url"], sector=site["sector"], error=("not pinned: %s" % e)[:120])
+        # score the origin those pages were read on, which may be the www host the earlier run landed on
+        p0 = urllib.parse.urlsplit(pinned[0])
+        attempts = ["%s://%s%s" % (p0.scheme, p0.netloc, urllib.parse.urlsplit(base).path.rstrip("/"))]
     res = err = None
     for u in attempts:                       # some sites only answer on www
         try:
-            res = gs.run(u, 8); break
+            res = gs.run(u, 8, urls=pinned) if pinned else gs.run(u, 8); break
         except Exception as e:
             err = e; time.sleep(1)
     try:
@@ -71,11 +86,24 @@ def main():
     ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--readme-only", action="store_true",
                     help="rewrite README.md and stats.json from the committed results.json; no scoring, no network")
+    ap.add_argument("--out", metavar="DIR",
+                    help="write results.json and raw/ to DIR instead of benchmark/, for retest.py; "
+                         "README.md and stats.json describe the published run and are left alone")
+    ap.add_argument("--urls-from-dir", metavar="DIR",
+                    help="pin each site to the pages in DIR/<site>.json (an earlier run's raw/), as --urls-from does")
+    ap.add_argument("--vantage", metavar="LABEL",
+                    help="where this run is measured from, as the operator declares it (e.g. 'Shenzhen, home "
+                         "broadband'); recorded as measured_from, never looked up")
     a = ap.parse_args()
     if a.readme_only:
         write_readme(json.load(io.open(os.path.join(HERE, "results.json"), encoding="utf-8")))
         print("wrote benchmark/README.md and benchmark/stats.json from results.json", file=sys.stderr)
         return
+    global RAW, PIN_DIR
+    out_dir = os.path.abspath(a.out) if a.out else HERE
+    RAW, PIN_DIR = os.path.join(out_dir, "raw"), a.urls_from_dir
+    if PIN_DIR and not os.path.isdir(PIN_DIR):
+        ap.error("--urls-from-dir %s is not a directory" % PIN_DIR)
     cfg = json.load(io.open(os.path.join(HERE, "sites.json"), encoding="utf-8"))
     sites = cfg["sites"][:a.limit] if a.limit else cfg["sites"]
     print("scoring %d sites…" % len(sites), file=sys.stderr)
@@ -94,14 +122,20 @@ def main():
     by_sector = {}
     for r in ok: by_sector.setdefault(r["sector"], []).append(r["normalised"])
     payload = dict(rubric_version=gs.RUBRIC, tool="geo-score-cli/%s" % gs.__version__,
-                   measured_at=time.strftime("%Y-%m-%d"), stats=stats,
+                   measured_at=time.strftime("%Y-%m-%d"),
+                   # what retest.py needs to tell runs apart: the vantage is declared, not detected
+                   measured_from=a.vantage, python=platform.python_version(), pinned_from=a.urls_from_dir,
+                   stats=stats,
                    sectors={k: dict(n=len(v), median=statistics.median(v)) for k, v in sorted(by_sector.items())},
                    results=ok + [r for r in out if "error" in r])
-    io.open(os.path.join(HERE, "results.json"), "w", encoding="utf-8").write(
+    io.open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8").write(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    write_readme(payload)
     print("\n%d sites · mean %s · median %s · range %d-%d"
           % (stats["n"], stats["mean"], stats["median"], stats["min"], stats["max"]), file=sys.stderr)
+    if out_dir != HERE:
+        print("wrote %s; compare runs with python3 benchmark/retest.py DIR_A DIR_B …" % out_dir, file=sys.stderr)
+        return
+    write_readme(payload)
     print("next: python3 benchmark/build_page.py   (regenerates the public pages)", file=sys.stderr)
 
 def _rubric():
