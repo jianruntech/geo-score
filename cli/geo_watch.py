@@ -1703,6 +1703,12 @@ def _json_bytes(obj):
         return (json.dumps(obj, ensure_ascii=True, indent=1) + "\n").encode("utf-8")
 
 
+def _printable(s):
+    """Text for a terminal or a file. Half a surrogate pair (see _json_bytes) in an answer or a search query cannot
+    be written as UTF-8: it is shown as a \\u escape rather than ending the command after a run has been paid for."""
+    return s.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
 def _unlink(path):
     try:
         os.unlink(path)
@@ -2066,7 +2072,7 @@ def cmd_run(args):
     run = execute(cfg.brand, cfg.competitors, engines, queries, runs, cfg.country, cfg.prices, max_calls, budget,
                   args.allow_unpriced, progress=_progress_printer(args.quiet))
     path = save_run(cfg, run)
-    print(render(run, args.format if args.format in ("text", "md") else "text"))
+    print(_printable(render(run, args.format if args.format in ("text", "md") else "text")))
     print("saved %s" % os.path.relpath(path))
     return 0 if run["summary"]["overall"]["answered"] else 3
 
@@ -2093,11 +2099,12 @@ def cmd_ask(args):
     if args.format == "json":
         sys.stdout.write(_json_bytes(run).decode("utf-8"))     # answers can hold half a surrogate pair
     else:
-        print(render_ask(run, args.format))
+        print(_printable(render_ask(run, args.format)))
     return 0 if run["summary"]["overall"]["answered"] else 3
 
 
 def _out(text, path):
+    text = _printable(text)
     if path:
         with io.open(path, "w", encoding="utf-8", newline="") as f:
             f.write(text)

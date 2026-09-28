@@ -992,6 +992,49 @@ class CLI(Base):
         self.assertIn("perplexity-api (sonar) — cited #1 (https://pixa.example/)", out)
         self.assertIn("chatgpt-api — not measured", out)
 
+    def test_half_a_surrogate_pair_prints_in_every_text_format(self):
+        # a provider can send half an emoji in an answer or a search query: the run is saved (see RunFile), and
+        # the text that follows it must not die on the one character UTF-8 cannot carry
+        half = json.loads('"\\ud83d"')
+        for k in ("PERPLEXITY_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
+            del os.environ[k]
+        self.fake({"api.openai.com": lambda u, h, b: openai_resp(
+            "Lumo " + half + " gives 15 free credits.", [("https://www.lumo.example/free", "Lumo")],
+            ["best " + half + " video tool"])})
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api")}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query\nq01,best free ai video generator\n")
+
+        def main(*argv):
+            # stdout as a terminal or a pipe has it: strict UTF-8, where a StringIO would take anything
+            out, err = io.TextIOWrapper(io.BytesIO(), encoding="utf-8", newline=""), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = gw.main(list(argv))
+            out.flush()
+            return code, out.buffer.getvalue().decode("utf-8"), err.getvalue()
+        for fmt in ("text", "md"):
+            code, out, err = main("run", "-c", cfgp, "--format", fmt, "-q")
+            self.assertEqual(code, 0, err)
+            self.assertIn("saved ", out)
+            gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=7)
+        self.assertEqual(len(gw.list_run_ids(gw.Config(cfgp))), 2)
+        code, out, err = main("report", "-c", cfgp)
+        self.assertEqual(code, 0, err)
+        self.assertIn("best \\ud83d video tool", out)                 # shown as an escape, never dropped
+        for fmt in ("md", "csv", "json"):
+            code, out, err = main("report", "-c", cfgp, "--format", fmt)
+            self.assertEqual(code, 0, (fmt, err))
+        mdp = os.path.join(self.tmp, "r.md")
+        self.assertEqual(main("report", "-c", cfgp, "--format", "md", "-o", mdp)[0], 0)
+        for fmt in ("text", "md", "json"):
+            self.assertEqual(main("diff", "-c", cfgp, "--format", fmt)[0], 0, fmt)
+        for fmt in ("text", "md", "json"):
+            code, out, err = main("ask", "-c", cfgp, "which AI video tool is free?", "--format", fmt)
+            self.assertEqual(code, 0, (fmt, err))
+            self.assertIn("\\ud83d", out)
+
 
 # ── MCP ───────────────────────────────────────────────────────────────────
 def schema_errors(o, sch, path="$"):
