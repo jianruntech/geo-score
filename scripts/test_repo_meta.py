@@ -266,7 +266,7 @@ def check_rubric_steps():
        % (", ".join(names) or "a next version", (": not " + ", ".join(miss)) if miss else ""))
     pr = rd(".github/PULL_REQUEST_TEMPLATE.md")
     line = pr[pr.index("New version files:"):].split("\n\n", 1)[0]
-    miss = [f for f in RUBRIC_FILES if "`%s`" % f.replace("V", "___") not in line]
+    miss = [f.replace("V", "___") for f in RUBRIC_FILES if "`%s`" % f.replace("V", "___") not in line]
     ok(not miss, "PULL_REQUEST_TEMPLATE.md 'New version files' names all %d%s"
        % (len(RUBRIC_FILES), (": not " + ", ".join(miss)) if miss else ""))
 
@@ -289,8 +289,10 @@ def check_sync_script():
     ok([x["name"] for x in extra] == ["wontfix"], "a label only on GitHub is reported as kept")
     src = rd("scripts/sync_labels.py")
     ok('"delete"' not in src and "'delete'" not in src, "the script never calls gh label delete")
-    ok([sync.proxy_shown(u) for u in ("http://user:s3cret@proxy.example:8080", "user:pw@host:3128", "http://127.0.0.1:7897")]
-       == ["proxy.example:8080", "host:3128", "127.0.0.1:7897"], "proxy_shown keeps the host and port and drops user:password@")
+    shown = getattr(sync, "proxy_shown", None)
+    ok(shown is not None and [shown(u) for u in ("http://user:s3cret@proxy.example:8080", "user:pw@host:3128",
+                                                 "http://127.0.0.1:7897")] == ["proxy.example:8080", "host:3128", "127.0.0.1:7897"],
+       "proxy_shown keeps the host and port and drops user:password@")
     if os.name == "nt":
         return
     # the whole script with a gh that knows no labels: the summary line must not carry the proxy's password
