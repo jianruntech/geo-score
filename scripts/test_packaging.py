@@ -114,9 +114,14 @@ def check_pythons():
        "a classifier for each of 3.%d to 3.%d (%s)" % (lo, hi, ", ".join("3.%d" % x for x in got)))
     ok('"Programming Language :: Python :: 3 :: Only"' in pp, "the '3 :: Only' classifier")
     ends = ["3.%d" % lo, "3.%d" % hi]
-    mx = re.search(r"^\s*matrix:\s*\{py:\s*\[([^\]]*)\]", rd(".github/workflows/validate.yml"), re.M)
+    wf = rd(".github/workflows/validate.yml")
+    mx = re.search(r"^\s*matrix:\s*\{py:\s*\[([^\]]*)\]", wf, re.M)
     got = re.findall(r'"([^"]*)"', mx.group(1)) if mx else None
     ok(got == ends, "validate.yml's matrix is %s (%s)" % (ends, got))
+    # setup-python builds each Python for particular images, and 3.8 stops at ubuntu-24.04
+    got = re.findall(r"^\s*runs-on:\s*(\S+)", wf, re.M)
+    ok(bool(got) and not [r for r in got if r.endswith("-latest")],
+       "validate.yml runs on a named image, not a moving -latest one (%s)" % ", ".join(got))
     rel = rd("RELEASING.md")
     got = sorted(set(re.findall(r"\bpy -(3\.\d+)", rel)), key=lambda x: int(x[2:]))
     ok(got == ends, "RELEASING.md's Windows run uses py -%s and py -%s (%s)" % (ends[0], ends[1], ", ".join(got)))

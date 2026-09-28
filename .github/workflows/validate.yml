@@ -12,7 +12,9 @@ jobs:
   # has not run on this organisation so far). Running the same script here means the two cannot drift.
   check:
     name: check (python ${{ matrix.py }})
-    runs-on: ubuntu-latest
+    # a named image, not ubuntu-latest: setup-python's newest 3.8 (3.8.18) is built for Ubuntu 20.04 to 24.04
+    # only, so the 3.8 job would fail to start once ubuntu-latest moves on
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix: {py: ["3.8", "3.14"]}      # the oldest and the newest stable, as check.sh tests
