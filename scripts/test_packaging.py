@@ -99,8 +99,9 @@ def check_pins(version):
 
 
 def check_pythons():
-    """pyproject.toml's requires-python and classifiers say what check.sh tests: PY_OLDEST to PY_NEWEST."""
-    print("\n  Python versions: pyproject.toml against check.sh's PY_OLDEST and PY_NEWEST")
+    """pyproject.toml's requires-python and classifiers say what check.sh tests, PY_OLDEST to PY_NEWEST; the
+    workflow's matrix and RELEASING.md's Windows run and --strict hint name those two ends."""
+    print("\n  Python versions: pyproject.toml, validate.yml and RELEASING.md against check.sh's PY_OLDEST and PY_NEWEST")
     gate, pp = rd("scripts/check.sh"), rd("pyproject.toml")
     lo, hi = (re.search(r"^%s=3\.(\d+)$" % k, gate, re.M) for k in ("PY_OLDEST", "PY_NEWEST"))
     ok(lo is not None and hi is not None, "check.sh sets PY_OLDEST and PY_NEWEST")
@@ -112,6 +113,17 @@ def check_pythons():
     ok(got == list(range(lo, hi + 1)),
        "a classifier for each of 3.%d to 3.%d (%s)" % (lo, hi, ", ".join("3.%d" % x for x in got)))
     ok('"Programming Language :: Python :: 3 :: Only"' in pp, "the '3 :: Only' classifier")
+    ends = ["3.%d" % lo, "3.%d" % hi]
+    mx = re.search(r"^\s*matrix:\s*\{py:\s*\[([^\]]*)\]", rd(".github/workflows/validate.yml"), re.M)
+    got = re.findall(r'"([^"]*)"', mx.group(1)) if mx else None
+    ok(got == ends, "validate.yml's matrix is %s (%s)" % (ends, got))
+    rel = rd("RELEASING.md")
+    got = sorted(set(re.findall(r"\bpy -(3\.\d+)", rel)), key=lambda x: int(x[2:]))
+    ok(got == ends, "RELEASING.md's Windows run uses py -%s and py -%s (%s)" % (ends[0], ends[1], ", ".join(got)))
+    got = re.search(r"uv python install (3\.\d+) (3\.\d+)", rel)
+    ok(got is not None and list(got.groups()) == ends, "RELEASING.md's --strict hint is uv python install %s" % " ".join(ends))
+    got = {v for pair in re.findall(r"Python (3\.\d+)(?: and (3\.\d+))?", rel) for v in pair if v}
+    ok(got <= set(ends), "RELEASING.md names no other Python (%s)" % ", ".join(sorted(got, key=lambda x: int(x[2:]))))
 
 
 def check_gate_pins():
