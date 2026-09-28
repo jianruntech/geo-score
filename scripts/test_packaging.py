@@ -214,13 +214,46 @@ def run_block(bash, block, fakes, env=None, files=None):
 def check_gate_steps():
     """check.sh's steps that depend on the machine: each one skips, or falls back, instead of failing the gate
     for something the change under test did not cause."""
-    print("\n  the gate on other machines: lint without the pinned ruff, the pinned jsonschema, the --live label step,"
-          " gh for --execute")
+    print("\n  the gate on other machines: the Pythons, lint without the pinned ruff, the pinned jsonschema,"
+          " the --live label step, gh for --execute")
     bash = shutil.which("bash")
     if bash is None or os.name == "nt":
         print("  skip  no bash here")
         return
     gate = rd("scripts/check.sh")
+    # the Pythons: --strict needs PY_OLDEST to PY_NEWEST under --all, and the minor after PY_NEWEST is optional,
+    # so its note names no install; without uv, --all says that only python3 runs
+    ends = [re.search(r"^%s=3\.(\d+)$" % k, gate, re.M) for k in ("PY_OLDEST", "PY_NEWEST")]
+    pys = gate_block(r"# Which Pythons the tests run on", r'step "structure:')
+    ok(None not in ends and pys is not None, "check.sh chooses the Pythons before its first step")
+    if None not in ends and pys is not None:
+        lo, hi = (int(m.group(1)) for m in ends)
+        stable = " ".join("3.%d" % m for m in range(lo, hi + 1))
+        nxt = "3.%d" % (hi + 1)
+        uv = ('[ "$1 $2" = "python find" ] || exit 2\n'
+              'case " $FAKE_UV_PYS " in *" $4 "*) echo "/fake/python$4"; exit 0 ;; esac; exit 2')
+
+        def pick(fakes, all_, strict, found=""):
+            block = ("PY_OLDEST=3.%d PY_NEWEST=3.%d ALL=%d STRICT=%d\n%s\necho \"PYS=${PYS[*]}\"\n"
+                     % (lo, hi, all_, strict, pys))
+            return run_block(bash, block, fakes, {"FAKE_UV_PYS": found})[:2]
+        rc, out = pick({"uv": uv}, 1, 1, stable)
+        ok(rc == 0 and "python %s (optional" % nxt in out and "uv python install %s" % nxt not in out
+           and "PYS=" + " ".join("/fake/python" + v for v in stable.split()) in out,
+           "--all --strict: every stable Python runs, and a missing %s is optional, with no install hint (rc %d)" % (nxt, rc))
+        rc, out = pick({"uv": uv}, 1, 1, stable.replace("3.%d " % (lo + 1), ""))
+        ok(rc == 1 and "uv python install 3.%d" % (lo + 1) in out and "PYS=" not in out,
+           "--all --strict with 3.%d missing: the gate stops and names uv python install 3.%d (rc %d)" % (lo + 1, lo + 1, rc))
+        rc, out = pick({"uv": uv}, 0, 0, "3.%d 3.%d" % (lo, hi))
+        ok(rc == 0 and "python 3.12 not found by uv: skipped (uv python install 3.12)" in out,
+           "by default a missing 3.12 is skipped with its install hint (rc %d)" % rc)
+        rc, out = pick({}, 1, 0)
+        ok(rc == 0 and "--all needs uv" in out and "PYS=python3" in out,
+           "--all without uv: says that the tests run on python3 only (rc %d)" % rc)
+        rc, out = pick({}, 0, 0)
+        ok(rc == 0 and "needs uv" not in out and "PYS=python3" in out, "no uv, no flag: python3, as before (rc %d)" % rc)
+        rc, out = pick({}, 0, 1)
+        ok(rc == 1 and "--strict needs uv" in out, "--strict without uv: the gate stops (rc %d)" % rc)
     # lint: the pinned ruff from PATH, or from uvx's cache, or fetched by uvx, in that order, so a warm cache
     # never touches the network; offline and uncached with another ruff, that one with a warning; lint errors
     # fail the gate whichever ruff found them

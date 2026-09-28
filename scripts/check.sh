@@ -41,10 +41,12 @@ step() { printf '\n== %s\n' "$*"; }
 
 # Which Pythons the tests run on, decided first so that --strict stops before anything else runs.
 # NEED must be found (under --strict); WANT is tried and skipped with a note when it is missing.
+# NEXT, under --all, is the minor after PY_NEWEST: not supported yet, so it is tested only when it is installed.
+NEXT=""
 if [ "$ALL" = 1 ]; then
   NEED="" m=${PY_OLDEST#3.}
   while [ "$m" -le "${PY_NEWEST#3.}" ]; do NEED="${NEED:+$NEED }3.$m"; m=$((m + 1)); done
-  WANT="$NEED 3.$m"
+  NEXT="3.$m" WANT="$NEED 3.$m"
 else
   NEED="$PY_OLDEST $PY_NEWEST" WANT="$PY_OLDEST 3.12 $PY_NEWEST"
 fi
@@ -57,6 +59,7 @@ if command -v uv >/dev/null 2>&1; then
     p="$(uv python find --no-project "$v" 2>/dev/null || true)"
     if [ -n "$p" ]; then PYS+=("$p"); echo "python $v: $p"
     elif [ "$STRICT" = 1 ] && needed "$v"; then missing="$missing $v"
+    elif [ "$v" = "$NEXT" ]; then echo "python $v (optional, newer than PY_NEWEST=$PY_NEWEST) not found by uv: skipped"
     else echo "python $v not found by uv: skipped (uv python install $v)"; fi
   done
   if [ -n "$missing" ]; then
@@ -65,6 +68,8 @@ if command -v uv >/dev/null 2>&1; then
   fi
 elif [ "$STRICT" = 1 ]; then
   echo "--strict needs uv to find each Python (https://docs.astral.sh/uv/)"; exit 1
+elif [ "$ALL" = 1 ]; then
+  echo "--all needs uv to find each Python (https://docs.astral.sh/uv/): the tests run on python3 only"
 fi
 # without uv, test whatever python3 is
 [ ${#PYS[@]} -gt 0 ] || PYS=("python3")
