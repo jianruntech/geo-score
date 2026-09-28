@@ -131,9 +131,10 @@ def idna(url):
 # text an agent reads: C0/C1 controls (CR included, which would start a new CI workflow command), soft
 # hyphen, Arabic letter mark, Mongolian vowel separator, zero-width characters, bidi embeddings and
 # isolates, line and paragraph separators, interlinear annotation marks, the two non-characters XML
-# cannot carry, and Unicode tag characters (invisible to people, read by language models).
+# cannot carry, Unicode tag characters (invisible to people, read by language models), and lone surrogates,
+# which a JSON escape can produce and no UTF-8 output can carry.
 _UNSAFE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e"
-                     "\u2060-\u2064\u2066-\u2069\ufeff\ufff9-\ufffb\ufffe\uffff\U000e0000-\U000e007f]")
+                     "\u2060-\u2064\u2066-\u2069\ud800-\udfff\ufeff\ufff9-\ufffb\ufffe\uffff\U000e0000-\U000e007f]")
 
 # ── address guard ──
 # The CLI fetches whatever its user names, private hosts included. Under the MCP server an agent chooses
@@ -353,6 +354,14 @@ def fault_name(err):
             return name
     return "no response"
 
+def join_link(base, ref):
+    """urljoin for a link the site wrote, which never raises: a malformed one ("http://[::1") is no link,
+    where it used to end the run."""
+    try:
+        return urllib.parse.urljoin(base, ref)
+    except ValueError:
+        return ""
+
 def pmap(fn, items, workers=8):
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
         return list(ex.map(fn, items))
@@ -369,6 +378,8 @@ def main_html(h):
         re.search(r'<article\b[^>]*>(.*?)</article>', h, re.S | re.I)
     return m.group(1) if m else h
 
+_SURROGATE_ESC = re.compile(r"\\u[dD][89a-fA-F]")
+
 def jsonld(h):
     out = []
     for m in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', h, re.S | re.I):
@@ -377,16 +388,22 @@ def jsonld(h):
         except Exception:
             try: d = json.loads(re.sub(r",\s*([}\]])", r"\1", raw))
             except Exception: continue
+        if _SURROGATE_ESC.search(raw):
+            # a lone \ud800 escape decodes to a character no UTF-8 output can carry, and the first print of a
+            # name holding one ended the run: it becomes "?" here, while a pair (an emoji) comes through whole
+            try: d = json.loads(json.dumps(d, ensure_ascii=False).encode("utf-8", "replace"))
+            except Exception: continue
         out.extend(d if isinstance(d, list) else [d])
-    flat = []
-    def walk(o):
+    # flattened in document order with a stack, not by recursion: a page can nest lists or @graph a few
+    # thousand deep, which json.loads accepts on newer Pythons and a recursive walk did not survive
+    flat, stack = [], out[::-1]
+    while stack:
+        o = stack.pop()
         if isinstance(o, dict):
-            if "@graph" in o and isinstance(o["@graph"], list):
-                for g in o["@graph"]: walk(g)
+            if isinstance(o.get("@graph"), list): stack.extend(o["@graph"][::-1])
             else: flat.append(o)
         elif isinstance(o, list):
-            for x in o: walk(x)
-    for o in out: walk(o)
+            stack.extend(o[::-1])
     return resolve_refs(flat)
 
 def resolve_refs(objs):
@@ -398,7 +415,8 @@ def resolve_refs(objs):
     def deref(v, depth=0):
         if depth > 3: return v
         if isinstance(v, dict):
-            if set(v) == {"@id"} and v["@id"] in by_id:
+            # an @id that is an object or a list names nothing, and cannot be looked up
+            if set(v) == {"@id"} and isinstance(v["@id"], str) and v["@id"] in by_id:
                 return deref({k: x for k, x in by_id[v["@id"]].items() if k != "@id"}, depth + 1)
             return {k: deref(x, depth + 1) for k, x in v.items()}
         if isinstance(v, list): return [deref(x, depth + 1) for x in v]
@@ -406,11 +424,13 @@ def resolve_refs(objs):
     return [deref(o) for o in objs]
 
 def types_of(objs):
-    t = []
+    """Every type the objects declare. Only a string names a type: an @type that is an object, a number or
+    null, alone or in a list, names none (one written as {"@id": "Organization"} used to end the run)."""
+    t = set()
     for o in objs:
         v = o.get("@type")
-        t.extend(v if isinstance(v, list) else [v] if v else [])
-    return set(t)
+        t.update(x for x in (v if isinstance(v, list) else [v]) if isinstance(x, str) and x)
+    return t
 
 # The fields that make a page-type object carry information rather than a bare type: any one of them,
 # non-empty, is a "real field value" in the rubric's sense for p1.page-type.
@@ -426,7 +446,7 @@ def substantive(obj, types=PAGE_TYPE_FIELDS):
     """True when a JSON-LD object of one of `types` carries a non-empty value in one of its fields."""
     t = obj.get("@type")
     for name in (t if isinstance(t, list) else [t]):
-        if name in types and any(obj.get(f) not in (None, "", [], {}) for f in types[name]):
+        if isinstance(name, str) and name in types and any(obj.get(f) not in (None, "", [], {}) for f in types[name]):
             return True
     return False
 
@@ -927,7 +947,10 @@ def discover(base, want=8, verbose=False, *, memo=None):
     def same_site(u):
         """The URL on this site and inside its path, with the site's scheme, or None. One rule for links,
         sitemap entries and pin_urls(), so a report's sampled_urls can always be pinned again."""
-        pu = urllib.parse.urlsplit(u)
+        try:
+            pu = urllib.parse.urlsplit(u)
+        except ValueError:
+            return None
         if pu.netloc != host or pu.scheme not in ("http", "https") or _UNSAFE.search(u):
             return None
         if scope and not (pu.path == scope or pu.path.startswith(scope + "/")):
@@ -937,7 +960,7 @@ def discover(base, want=8, verbose=False, *, memo=None):
     def harvest(text, origin):
         out = []
         for m in re.finditer(r'<a\b[^>]*href=["\']([^"\'#]+)', text, re.I):
-            u = same_site(urllib.parse.urljoin(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/"))
+            u = same_site(join_link(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/"))
             if not u: continue
             if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
             if re.search(r"/(login|signin|signup|register|cart|checkout|account|admin|search)(/|$)", u, re.I): continue
@@ -952,12 +975,12 @@ def discover(base, want=8, verbose=False, *, memo=None):
     # the same places run() looks for p1.sitemap, including the given path, so a sitemap that is scored
     # is also the one the sample comes from
     # a relative Sitemap: line is invalid but common; resolve it against the origin
-    sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "")] \
+    sm_urls = [join_link(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "")] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
     sm = next((r for r in pmap(steady, sm_urls[:3]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
-        kids = [urllib.parse.urljoin(sm.url, x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
+        kids = [join_link(sm.url, x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
         got = [r for r in pmap(steady, kids) if is_sitemap(r)]
         sm = got[0] if got else None
     if sm:
@@ -1012,7 +1035,10 @@ def pin_urls(base, urls, limit=None):
         if _UNSAFE.search(u):
             raise RuntimeError("pinned URL %r contains control or bidi characters" % raw.strip()[:200])
         u = idna(u.split("#")[0])
-        p = urllib.parse.urlsplit(u)
+        try:
+            p = urllib.parse.urlsplit(u)
+        except ValueError:
+            raise RuntimeError("pinned URL %s is not a valid URL" % raw.strip()[:200]) from None
         if (p.scheme, p.netloc.lower()) != (want.scheme, want.netloc.lower()):
             raise RuntimeError("pinned URL %s is not on %s; every pinned page must be on the site being scored"
                                % (raw.strip()[:200], origin))
@@ -1148,14 +1174,14 @@ def run(base, sample=8, verbose=False, urls=None):
     # owner of example.com/docs cannot place a file at example.com. Scoring them zero
     # penalises them for something they do not control (open question #9), so fall
     # back to the path they were given. Origin still wins when both exist.
-    sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)] \
+    sm_urls = [join_link(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
     sm = next((r for r in pmap(steady, sm_urls[:4]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
-            sub = steady(urllib.parse.urljoin(sm.url, child[0].strip()))
+            sub = steady(join_link(sm.url, child[0].strip()))
             if is_sitemap(sub): sm = sub
     if not sm:
         tier["p1.sitemap"] = 0; ev["p1.sitemap"] = "No sitemap found via robots.txt or the conventional paths."
@@ -1210,7 +1236,7 @@ def run(base, sample=8, verbose=False, urls=None):
     # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
     # "logo.png" on /docs/ is /docs/logo.png
     logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
-    logo_ok = bool(logo_url) and fetch(urllib.parse.urljoin(logo_base, logo_url), method="GET").ok
+    logo_ok = bool(logo_url) and fetch(join_link(logo_base, logo_url), method="GET").ok
     org_complete = any(o.get("name") and o.get("url") and o.get("logo") for o in orgs)
     if not org_pages and not site_pages:
         tier["p1.organization"] = 0; ev["p1.organization"] = "Neither Organization nor WebSite JSON-LD found on any sampled page."
@@ -1983,6 +2009,7 @@ def compare(pairs, args):
     print()
 
 def main():
+    global _TARGET
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
         w = _watch_module()
         # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
@@ -2044,6 +2071,7 @@ def main():
         if not 1 <= len(qs) <= 5 or len(qs) != len(a.ask) or any(len(q) > 500 for q in qs):
             ap.error("--ask takes 1 to 5 non-empty questions of up to 500 characters")
     url = a.url if "://" in a.url else "https://" + a.url
+    _TARGET = url
     if not a.json and not a.quiet:
         print("%s  scoring %s …%s" % (c.dim, url, c.r), file=sys.stderr)
     targets = [url] + [(u if "://" in u else "https://" + u) for u in (a.compare or [])]
@@ -2137,6 +2165,9 @@ def main():
     if failed:
         sys.exit(1)
 
+ISSUES_URL = "https://github.com/jianruntech/geo-score/issues"
+_TARGET = None      # the site main() is scoring, named in an internal error
+
 def cli():
     """Console entry point (`geo-score` after `pipx install`); the same exits as running the file."""
     try:
@@ -2145,6 +2176,15 @@ def cli():
         sys.exit(130)
     except RuntimeError as e:
         print("%s%s%s" % (c.red, " ".join(_UNSAFE.sub("", str(e)).split()), c.r), file=sys.stderr)
+        sys.exit(2)
+    except Exception as e:
+        # a bug, or input no one foresaw: one line and exit 2, never a traceback that exits 1, which CI reads
+        # as "below --fail-under". GEO_SCORE_DEBUG=1 shows the traceback.
+        if os.environ.get("GEO_SCORE_DEBUG") == "1":
+            raise
+        print("%sgeo-score internal error (%s)%s; please report it at %s%s"
+              % (c.red, type(e).__name__, " while scoring %s" % _UNSAFE.sub("", _TARGET) if _TARGET else "",
+                 ISSUES_URL, c.r), file=sys.stderr)
         sys.exit(2)
 
 def mcp_main():

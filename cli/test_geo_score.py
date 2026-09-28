@@ -580,6 +580,209 @@ finally:
     gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public = _saved
     _px.shutdown()
 
+# ── a hostile page cannot end the run ──
+# SECURITY.md names the audited site as an adversary. {"@type": {"@id": "Organization"}} used to raise TypeError out
+# of types_of(), a malformed link ("http://[::1") ValueError out of urljoin(), and a lone "\ud800" escape in a name
+# UnicodeEncodeError at the first print: each ended the run with a traceback and exit 1, which CI reads as "below
+# --fail-under". Fixed cases first, then seeded random pages, dates, bylines and robots.txt files.
+import random as _random
+_PROP = "https://prop.test"
+
+def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None):
+    """run() on an in-memory site: `page(path)` gives each page's HTML. fetch and fetch_steady are stubbed, so
+    nothing is sent; anything off the site gets no answer."""
+    saved = (gs.fetch, gs.fetch_steady, gs.time.sleep)
+    def fetch(url, ua=None, timeout=15, method="GET", **kw):
+        url = str(url)
+        if not url.startswith(_PROP + "/"):
+            return gs.Resp(url, 0, b"", err="offline")
+        path = url[len(_PROP):]
+        if path == "/robots.txt":
+            return gs.Resp(url, 200, robots.encode("utf-8", "replace"), {"content-type": "text/plain"})
+        if path.endswith((".xml", ".txt")):
+            return gs.Resp(url, 200, sitemap.encode("utf-8"), {"content-type": "application/xml"}) if sitemap and \
+                path.endswith(".xml") else gs.Resp(url, 404, b"")
+        return gs.Resp(url, 200, page(path).encode("utf-8", "replace"), {"content-type": "text/html; charset=utf-8"})
+    gs.fetch, gs.fetch_steady = fetch, (lambda u, tries=3, memo=None, **kw: fetch(u, **kw))
+    gs.time.sleep = lambda s: None
+    try:
+        return gs.run(_PROP)
+    finally:
+        gs.fetch, gs.fetch_steady, gs.time.sleep = saved
+
+def _outputs_hold(res, why):
+    """Every tier is one of its check's tiers, and the report, SARIF and JUnit are written and encode as UTF-8."""
+    for cid, _pil, _name, _mx, pts in gs.SPEC:
+        ok(res["tier"].get(cid) is None or res["tier"][cid] in pts, "%s: %s reads %r, not one of %s"
+           % (why, cid, res["tier"].get(cid), pts))
+    for bid, _bname, bmx in gs.BONUS:
+        ok(0 <= res["bonus"].get(bid, 0) <= bmx, "%s: bonus %s out of range" % (why, bid))
+    rep = gs.as_json(res)
+    ok(0 <= rep["normalised"] <= 100, "%s: normalised %r" % (why, rep["normalised"]))
+    json.dumps(rep, ensure_ascii=False).encode("utf-8")
+    json.dumps(gs.as_sarif(res), ensure_ascii=False).encode("utf-8")
+    xml.dom.minidom.parseString(gs.as_junit(res).encode("utf-8"))
+
+def _ld_page(*blocks, body="<p>x</p>", head=""):
+    return "<html><head><title>Prop</title>%s%s</head><body><main>%s</main></body></html>" % (
+        head, "".join('<script type="application/ld+json">%s</script>' % b for b in blocks), body)
+
+eq(gs.types_of([{"@type": {"@id": "Organization"}}, {"@type": [None, 5, ["x"], "WebSite"]}, {"@type": 7}]), {"WebSite"},
+   "only a string names a type, alone or in a list")
+eq(gs.resolve_refs([{"@id": "#a", "@type": "T", "n": 1}, {"author": {"@id": {"x": 1}}}, {"author": {"@id": ["#a"]}}])[1:],
+   [{"author": {"@id": {"x": 1}}}, {"author": {"@id": ["#a"]}}], "an @id that is an object or a list is left alone")
+ok(not gs.substantive({"@type": [{"x": 1}, ["Product"]], "name": "A"}), "a type that is not a string is no page type")
+eq(gs.jsonld('<script type="application/ld+json">' + "[" * 3000 + "]" * 3000 + "</script>"), [],
+   "lists nested 3000 deep are read without recursion")
+# json.loads itself gives up at a depth that depends on the Python version; what it accepts, the walk survives
+ok(len(gs.jsonld('<script type="application/ld+json">' + '{"@graph":[' * 1500 + '{"@type":"T"}' + "]}" * 1500 + "</script>"))
+   <= 1, "and so is a @graph nested 1500 deep")
+eq([x.get("name") for x in gs.jsonld('<script type="application/ld+json">[{"name": "\\ud800Acme"}, {"name": "\\ud83d\\ude00"}]'
+                                     '</script>')], ["?Acme", "\U0001f600"], "a lone surrogate escape becomes ?, a pair stays whole")
+eq(gs.join_link("https://x.test/", "http://[::1"), "", "a malformed link is no link")
+ok("not a valid URL" in (_raises(gs.pin_urls, "https://x.test", ["https://x.test[/a"]) or ""), "nor a malformed pinned URL")
+
+_ALLOW = "User-agent: *\nAllow: /\n"
+_fixed = [
+    ("an @type written as a reference", lambda p: _ld_page('{"@type": {"@id": "Organization"}, "name": "A"}'), _ALLOW, None),
+    ("an @id that is a list", lambda p: _ld_page('{"@graph": [{"@id": "#o", "@type": "Organization", "name": "A"},'
+                                                 '{"@type": "Article", "author": {"@id": ["#o"]}}]}'), _ALLOW, None),
+    ("a lone surrogate in the Organization's name", lambda p: _ld_page(
+        '{"@type": "Organization", "name": "\\ud800Acme", "url": "https://prop.test", "logo": "l.png"}'), _ALLOW, None),
+    ("a malformed logo URL", lambda p: _ld_page('{"@type": "Organization", "name": "A", "url": "https://prop.test", '
+                                                '"logo": "http://[::1"}'), _ALLOW, None),
+    ("a malformed link", lambda p: _ld_page(body='<a href="http://[::1">x</a><p>x</p>'), _ALLOW, None),
+    ("a malformed Sitemap line", lambda p: _ld_page(), "Sitemap: http://[::1/s.xml\n" + _ALLOW, None),
+    ("a malformed sitemap entry", lambda p: _ld_page(), _ALLOW, "<sitemapindex><sitemap><loc>http://[::1/a</loc></sitemap>"
+                                                                 "</sitemapindex><urlset><url><loc>http://[::1/b</loc></url></urlset>"),
+]
+for _why, _page, _rb, _sm in _fixed:
+    try:
+        _outputs_hold(_run_site(_page, _rb, _sm), _why)
+    except Exception as e:
+        ok(False, "%s: run() raised %s: %s" % (_why, type(e).__name__, e))
+
+_TYPES = ["Organization", "WebSite", "Article", "BlogPosting", "Person", "FAQPage", "Product", "VideoObject",
+          "BreadcrumbList", "NewsMediaOrganization", "HowTo", "Offer", "Dataset"]
+_KEYS = ["@type", "@id", "@graph", "name", "url", "logo", "sameAs", "author", "publisher", "datePublished", "dateModified",
+         "headline", "mainEntity", "legalName", "alternateName", "step", "price", "startDate", "title"]
+_SCALARS = [None, 0, -1, 1.5, True, "", " ", "x", "#a", "Organization", "2026-02-30", "2026-13-45T00:00",
+            "2019-01-15T00:00:00Z", "https://prop.test/a", "logo.png", "http://[::1", "\ud800x", "‮evil", "a" * 300]
+_BITS = ["By Jane Doe", "by", "By Dr. Maria de la Cruz", "Powered by Hugo Theme", "更新于2026年8月28日", "2029年13月40日",
+         "31 Feb 2026", "Sep 31, 2026", "12 Sep 2026", "<time datetime='2026-02-30'>t</time>", "<time datetime=''>",
+         "According to a 45% study", "$1,200", "<h2>How does it work?</h2>", "<h1>", "<p>" + "word " * 40 + "</p>",
+         "<p>", "</p>", "<main>", "</main>", "<article>", "<script>", "<style>x", "<a href='/blog/a/b'>x</a>",
+         "<a href='http://[::1'>", "<a href='//elsewhere.test/x'>", "<meta property='og:site_name' content='Brand'>",
+         "&#xd800;", "‮", "\x00", "ICP备", "youtube.com/@x", "<table>", "<li>a", "<!--", "]]>"]
+_RLINES = ["User-agent: *", "User-agent: PerplexityBot", "User-agent: GPTBot", "User-agent: Googlebot/2.1", "user-agent:",
+           "Disallow: /", "Disallow:", "Allow: /", "Disallow: /*", "Sitemap: /sitemap.xml", "Sitemap: http://[::1",
+           "no colon at all", ":", "# comment", "Disallow: /" + "a" * 20000, "﻿User-agent: *", "", "User-agent: " + "b" * 5000]
+
+def _val(rng, d):
+    r = rng.random()
+    if d > 3 or r < .4: return rng.choice(_SCALARS + _TYPES)
+    if r < .7: return [_val(rng, d + 1) for _ in range(rng.randrange(4))]
+    return _obj(rng, d + 1)
+
+def _obj(rng, d=0):
+    """A JSON-LD object whose @type, @id and @graph are as often a string as an object, a list, a number or null."""
+    o = {}
+    for k in rng.sample(_KEYS, rng.randrange(1, 8)):
+        if k == "@type" and rng.random() < .5: o[k] = rng.choice([rng.choice(_TYPES), [rng.choice(_TYPES), rng.choice(_TYPES)]])
+        elif k == "@graph" and rng.random() < .6: o[k] = [_obj(rng, d + 1) for _ in range(rng.randrange(4))]
+        else: o[k] = _val(rng, d)
+    return o
+
+def _rand_page(rng):
+    blocks = []
+    for _ in range(rng.randrange(4)):
+        r = rng.random()
+        if r < .1: blocks.append(json.dumps(_obj(rng))[:rng.randrange(1, 80)])          # cut short
+        elif r < .15: blocks.append('{"@type": "Organization", "name": "A",}')           # a trailing comma
+        else: blocks.append(json.dumps(rng.choice([_obj(rng), [_obj(rng), _obj(rng)], {"@graph": [_obj(rng), _obj(rng)]}]),
+                                       ensure_ascii=rng.random() < .5))
+    return _ld_page(*blocks, body=" ".join(rng.choice(_BITS) for _ in range(rng.randrange(5, 40))))
+
+def _rand_robots(rng):
+    return ("﻿" if rng.random() < .2 else "") + rng.choice(["\n", "\r\n", "\r"]).join(
+        rng.choice(_RLINES) for _ in range(rng.randrange(12)))
+
+_crashed = []
+for _seed in range(200):
+    _rng = _random.Random(_seed)
+    try:
+        _h = _rand_page(_rng)
+        _o = gs.jsonld(_h)
+        gs.types_of(_o); gs.resolve_refs(_o + [_obj(_rng)]); [gs.substantive(x) for x in _o]
+        gs.visible_dates(_h); gs.own_dates(_h, _o); gs.first_date(_h); gs.byline_name(gs.visible_text(_h))
+        gs.iso_date(_rng.choice(_SCALARS))
+        _rb = _rand_robots(_rng)
+        gs.robots_groups(_rb)
+        ok(gs.robots_tier(_rb, len(_rb))[0] in (0, 3, 5), "seed %d: g.robots tier" % _seed)
+        _pages = {}
+        def _page_at(path, rng=_rng, pages=_pages):
+            if path not in pages:
+                pages[path] = _rand_page(rng)
+            return pages[path]
+        _res = _run_site(_page_at, _rand_robots(_rng),
+                         "<urlset><url><loc>%s/blog/p%d</loc><lastmod>x</lastmod></url></urlset>" % (_PROP, _seed))
+        _outputs_hold(_res, "seed %d" % _seed)
+    except Exception as e:
+        import traceback as _tb
+        _at = _tb.extract_tb(e.__traceback__)[-1]
+        _crashed.append("seed %d: %s at line %d (%s): %s" % (_seed, type(e).__name__, _at.lineno, _at.name, str(e)[:100]))
+eq(_crashed, [], "no random page, date, byline or robots.txt raises out of the parsers or run()")
+
+# the CLI on a live site whose only JSON-LD is {"@type": {"@id": "Organization"}}: it scores and exits 0. Off-site
+# lookups go to a proxy port nothing listens on, so they fail at once and nothing leaves the machine.
+import threading as _thr
+from http.server import BaseHTTPRequestHandler as _BRH, ThreadingHTTPServer as _THS
+class _LdSite(_BRH):
+    def do_GET(self):
+        body = _ld_page('{"@type": {"@id": "Organization"}, "name": "A"}').encode() if self.path == "/" else b"no"
+        self.send_response(200 if self.path == "/" else 404)
+        self.send_header("Content-Type", "text/html"); self.send_header("Content-Length", str(len(body))); self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, *a): pass
+_lds = _THS(("127.0.0.1", 0), _LdSite); _thr.Thread(target=_lds.serve_forever, daemon=True).start()
+_dead = "http://127.0.0.1:9"
+_env = dict({k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}, NO_COLOR="1",
+            HTTPS_PROXY=_dead, HTTP_PROXY=_dead, https_proxy=_dead, http_proxy=_dead,
+            NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+try:
+    pr = subprocess.run([sys.executable, _cli, "http://127.0.0.1:%d" % _lds.server_port, "--json"],
+                        capture_output=True, text=True, timeout=120, env=_env)
+    eq(pr.returncode, 0, "a site whose @type is an object scores: %s" % pr.stderr[-300:])
+    ok(pr.returncode != 0 or 0 <= json.loads(pr.stdout)["normalised"] <= 100, "and prints its report")
+finally:
+    _lds.shutdown()
+
+# an unforeseen exception exits 2 with one line naming the site, never a traceback that exits 1
+import contextlib as _cl
+def _cli_exit(argv, env=None):
+    saved, err = (sys.argv, gs.run, dict(os.environ)), io.StringIO()
+    sys.argv = ["geo_score.py"] + argv
+    gs.run = lambda *a, **k: {}["boom"]
+    os.environ.update(env or {})
+    try:
+        with _cl.redirect_stderr(err):
+            gs.cli()
+        return 0, err.getvalue()
+    except SystemExit as e:
+        return e.code, err.getvalue()
+    finally:
+        sys.argv, gs.run = saved[0], saved[1]
+        os.environ.clear(); os.environ.update(saved[2])
+_code, _err = _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": ""})
+eq(_code, 2, "an internal error exits 2")
+eq(_err.strip(), "geo-score internal error (KeyError) while scoring http://127.0.0.1:9; please report it at "
+   "https://github.com/jianruntech/geo-score/issues", "in one line that names the site and where to report it")
+try:
+    _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": "1"})
+    ok(False, "GEO_SCORE_DEBUG=1 re-raises the error with its traceback")
+except KeyError:
+    pass
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

@@ -38,8 +38,9 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, a gate at zero under `--fail-on-gate`, or a
-failed `--assert`, `2` the site could not be fetched, a pinned URL list was refused, or a usage error
-(a malformed `--assert` included). Assertions on the heuristic checks listed under *How far to trust
+failed `--assert`, `2` the site could not be fetched, a pinned URL list was refused, a usage error
+(a malformed `--assert` included), or an internal error, reported in one line with where to file it
+(`GEO_SCORE_DEBUG=1` shows the traceback). Assertions on the heuristic checks listed under *How far to trust
 each check* carry the same run-to-run noise as the score: pin the pages with `--urls-from` when you
 assert on them. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
 `geo_watch.py` missing, `3` nothing could be measured (no key worked), `4` `watch diff --fail-on-drop`
