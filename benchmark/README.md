@@ -56,6 +56,23 @@ largest gaps:
 
 The top three, `p2.named-author`, `p2.answer-passages`, `p2.freshness`, are worth 21 points between them.
 
+## How common each practice is
+
+Shares of the scored sites, each over the sites where the check could be observed, from the
+[per-site reports](raw/):
+
+| Practice | Sites | Share |
+|---|:-:|:-:|
+| An `llms.txt` served as text | 137 of 317 | 43% |
+| Organization and WebSite markup with name, url and logo (`p1.organization` at 5 or more) | 98 of 317 | 31% |
+| BreadcrumbList on at least one nested page | 82 of 251 | 33% |
+| A sitemap with `<lastmod>` on most of its URLs (`p1.sitemap` at 4) | 161 of 317 | 51% |
+| A personal byline on at least half the sampled pages | 67 of 317 | 21% |
+
+For comparison, the [Web Almanac 2025](https://almanac.httparchive.org/en/2025/seo) found `llms.txt` on
+2.13% of desktop sites. The populations differ: the Almanac crawls millions of sites, this list is a few
+hundred prominent ones picked for sector and language coverage, so neither share estimates the other.
+
 ## By sector
 
 Each median carries a 95% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than 10
@@ -85,6 +102,9 @@ scored sites gets no median: the number would print like a real one and mean muc
 | China / cloud | 9 | — | fewer than 10 sites |
 
 ## Every site
+
+The same rows, flat: [results.csv](results.csv) has one row per listed site and one column per check,
+[checks.csv](checks.csv) one row per scored site and check. The full reports are in [raw/](raw/).
 
 | # | Site | Score | Band | Sector | Biggest gaps |
 |:-:|---|:-:|---|---|---|

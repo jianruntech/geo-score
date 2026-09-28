@@ -15,7 +15,7 @@ server-rendered content and the result caps at 40.
 
 - [The state of AI visibility](https://www.jianruntech.com/leaderboard): 317 well-known sites scored. Median 56, range 11–99. 26% of them are unreadable to AI crawlers — 23 block AI crawlers by name (counted with the 1.3.0 reading, which treated GPTBot, ClaudeBot and Google-Extended as retrieval crawlers; fixed in 1.5.0, re-run pending), 47 serve a page whose body only exists after JavaScript runs (counted with the 1.3.0 reading, which could not tell a bot-challenge page from a JavaScript shell; fixed in 1.5.0, re-run pending), and at 13 the server refuses crawler user-agents (unverified probes from the auditor's address).
 - [简体中文版](https://www.jianruntech.com/leaderboard/zh): the same data and findings in Chinese.
-- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
+- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable. The same rows flat, one column per check: [results.csv](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.csv); one row per site and check: [checks.csv](https://github.com/jianruntech/geo-score/blob/main/benchmark/checks.csv).
 
 ## The rubric
 

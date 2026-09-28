@@ -345,6 +345,45 @@ class FetchBudget(unittest.TestCase):
         self.assertIn(run.CORRECTION_FORM, readme)
 
 
+class Csv(unittest.TestCase):
+    def test_flat_files(self):
+        import csv
+        ids = [c["id"] for c in retest._rubric()["checks"]]
+        p = {"tool": "geo-score-cli/1.5.0", "measured_at": "2026-10-01", "results": [
+            {"site": "b.test", "sector": "Test", "tool_version": "1.5.0", "normalised": 40, "readiness": 30,
+             "observable_max": 60, "band": "Early", "gate_capped": True, "gate_reason": "blocks crawlers",
+             "resolved_to": None},
+            {"site": "a.test", "sector": "Test", "error": run.BOT_CHALLENGE + " (Cloudflare): a static fetch cannot "
+                                                          "measure this site"}]}
+        checks = [{"id": c, "state": "unobservable"} if c == "p3.listings" else
+                  {"id": c, "state": "scored", "points": 1, "max": 2} for c in ids]
+        reports = {"b.test": {"audited_at": "2026-10-02", "sampled_urls": ["https://b.test/"], "sample_source": "pinned",
+                              "checks": checks}}
+        tmp = tempfile.mkdtemp()
+        try:
+            run.write_csvs(p, reports, tmp)
+            with io.open(os.path.join(tmp, "results.csv"), encoding="utf-8", newline="") as f:
+                rows = list(csv.DictReader(f))
+            with io.open(os.path.join(tmp, "checks.csv"), encoding="utf-8", newline="") as f:
+                long = list(csv.reader(f))
+        finally:
+            shutil.rmtree(tmp)
+        self.assertEqual([r["site"] for r in rows], ["a.test", "b.test"])
+        a, b = rows
+        self.assertEqual((a["not_scored_reason"], a["normalised"], a["tool_version"], a["p1.llms-txt"]),
+                         ("bot challenge", "", "1.5.0", ""))
+        self.assertEqual((b["gate_capped"], b["resolved_to"], b["sample_n"], b["measured_at"], b["p3.listings"],
+                          b["p1.llms-txt"]), ("true", "", "1", "2026-10-02", "", "1"))
+        self.assertEqual(long[0], run.CHECK_COLUMNS)
+        self.assertEqual(len(long), 1 + len(ids))
+        self.assertIn(["b.test", "p3.listings", "unobservable", "", ""], long)
+
+    def test_byline_share_reads_the_evidence(self):
+        self.assertTrue(run._half_bylined("4 of 8 pages carry a personal byline; 0 link that name"))
+        self.assertFalse(run._half_bylined("3 of 8 pages carry a personal byline; 0 link that name"))
+        self.assertIsNone(run._half_bylined("something else"))
+
+
 class Validity(unittest.TestCase):
     def test_common_checks_arithmetic(self):
         import validity

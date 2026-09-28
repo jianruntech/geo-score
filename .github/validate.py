@@ -825,6 +825,58 @@ if os.path.exists("benchmark/results.json") and os.path.exists("cli/geo_score.py
             if m2:
                 check(os.path.exists(m2.group(2)), f"{page}: download {u} names {m2.group(2)}, which does not exist")
 
+# ── 35. results.csv and checks.csv are results.json and raw/, flattened ──
+# The per-check points used to exist only in 317 nested reports. The flat files are generated with the README
+# (python3 benchmark/run.py --readme-only); each cell has to be what results.json and raw/ hold for that site.
+if os.path.exists("benchmark/results.json") and os.path.isdir("benchmark/raw"):
+    import csv as _csv
+    for f in ("benchmark/results.csv", "benchmark/checks.csv"):
+        check(os.path.exists(f), f"{f} missing (python3 benchmark/run.py --readme-only)")
+    if os.path.exists("benchmark/results.csv") and os.path.exists("benchmark/checks.csv"):
+        rj5 = json.load(io.open("benchmark/results.json", encoding="utf-8"))
+        ids5 = [c["id"] for c in json.load(io.open("rubric/v1.1.json", encoding="utf-8"))["checks"]]
+
+        def _cell(v):
+            return "" if v is None else ("true" if v is True else "false" if v is False else str(v))
+        with io.open("benchmark/results.csv", encoding="utf-8", newline="") as f:
+            rows5 = list(_csv.DictReader(f))
+        with io.open("benchmark/checks.csv", encoding="utf-8", newline="") as f:
+            long5 = list(_csv.reader(f))
+        check([r["site"] for r in rows5] == sorted(r["site"] for r in rj5["results"]),
+              "benchmark/results.csv: not one row per site in results.json, sorted by site (python3 benchmark/run.py --readme-only)")
+        by5, bad5, want_long = {r["site"]: r for r in rj5["results"]}, [], []
+        for row in rows5:
+            r = by5.get(row["site"])
+            if r is None:
+                continue
+            if r.get("normalised") is None:
+                exp = {"sector": r["sector"], "error": r.get("error"), "normalised": None}
+                exp.update({c: None for c in ids5})
+            else:
+                fn = os.path.join("benchmark/raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
+                if not os.path.exists(fn):
+                    continue                                   # rule 29 reports the missing report
+                rep = json.load(io.open(fn, encoding="utf-8"))
+                st5 = {c["id"]: c for c in rep["checks"]}
+                exp = {k: r.get(k) for k in ("sector", "normalised", "readiness", "observable_max", "band",
+                                             "gate_reason", "resolved_to", "tool_version")}
+                exp.update(gate_capped=bool(r.get("gate_capped")), measured_at=rep.get("audited_at"),
+                           sample_n=len(rep.get("sampled_urls") or []), sample_source=rep.get("sample_source"), error=None)
+                exp.update({c: st5[c].get("points") if c in st5 and st5[c].get("state") == "scored" else None for c in ids5})
+                for c in ids5:
+                    if c in st5:
+                        sc = st5[c].get("state") == "scored"
+                        want_long.append([r["site"], c, st5[c].get("state"), _cell(st5[c].get("points") if sc else None),
+                                          _cell(st5[c].get("max") if sc else None)])
+            diff5 = [k for k, v in exp.items() if row.get(k) != _cell(v)]
+            if diff5:
+                bad5.append("%s (%s)" % (row["site"], ", ".join(diff5[:3])))
+        check(not bad5, f"benchmark/results.csv differs from results.json and raw/ for {len(bad5)} sites: {bad5[:3]} "
+                        f"(python3 benchmark/run.py --readme-only)")
+        check(long5[:1] == [["site", "check_id", "state", "points", "max"]] and long5[1:] == want_long,
+              "benchmark/checks.csv is not the checks in raw/, one row per scored site and check "
+              "(python3 benchmark/run.py --readme-only)")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

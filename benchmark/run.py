@@ -11,7 +11,7 @@ numbers; every result records the date it was measured, the tool and Python vers
 and the vantage the operator declared.
 """
 import urllib.parse
-import argparse, concurrent.futures as cf, importlib.util, inspect, io, json, os, platform, re, statistics, sys, time
+import argparse, concurrent.futures as cf, csv, importlib.util, inspect, io, json, os, platform, re, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
 gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
@@ -185,7 +185,8 @@ def main():
     a = ap.parse_args()
     if a.readme_only:
         write_readme(json.load(io.open(os.path.join(HERE, "results.json"), encoding="utf-8")))
-        print("wrote benchmark/README.md and benchmark/stats.json from results.json", file=sys.stderr)
+        print("wrote benchmark/README.md, stats.json, results.csv and checks.csv from results.json and raw/",
+              file=sys.stderr)
         return
     global RAW, PIN_DIR
     out_dir = os.path.abspath(a.out) if a.out else HERE
@@ -321,6 +322,78 @@ def _china_block(u):
     L.append("<!-- /china-gap -->\n")
     return "\n".join(L)
 
+# results.csv: one row per listed site, then one column per check holding its points (blank when unobservable);
+# checks.csv: one row per scored site and check. Flat files for a spreadsheet, pandas or Datasette, written with
+# README.md from the same results.json and raw/, so validate.py can hold them to both.
+RESULT_COLUMNS = ["site", "sector", "measured_at", "tool_version", "normalised", "readiness", "observable_max", "band",
+                  "gate_capped", "gate_reason", "resolved_to", "sample_n", "sample_source", "not_scored_reason", "error"]
+CHECK_COLUMNS = ["site", "check_id", "state", "points", "max"]
+
+def _cell(v):
+    return "" if v is None else ("true" if v is True else "false" if v is False else v)
+
+def _write_csv(path, header, rows):
+    with io.open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(header)
+        for r in rows:
+            w.writerow([_cell(x) for x in r])
+
+def write_csvs(p, reports, out_dir=HERE):
+    """results.csv and checks.csv in out_dir, sorted by site. `reports` maps a scored site to its raw report."""
+    ids = [c["id"] for c in _rubric()["checks"]]
+    tool = (p.get("tool") or "").rsplit("/", 1)[-1] or None
+    res, chk = [], []
+    for r in sorted(p["results"], key=lambda x: x["site"]):
+        rep = reports.get(r["site"])
+        if rep is None:
+            res.append([r["site"], r["sector"], p["measured_at"], r.get("tool_version") or tool] + [None] * 9
+                       + [not_scored_reason(r.get("error")) if "error" in r else None, r.get("error")] + [None] * len(ids))
+            continue
+        st = {c["id"]: c for c in rep["checks"]}
+        pts = [st[c].get("points") if c in st and st[c].get("state") == "scored" else None for c in ids]
+        res.append([r["site"], r["sector"], rep.get("audited_at") or p["measured_at"], r.get("tool_version") or tool,
+                    r["normalised"], r["readiness"], r["observable_max"], r["band"], bool(r.get("gate_capped")),
+                    r.get("gate_reason"), r.get("resolved_to"), len(rep.get("sampled_urls") or []),
+                    rep.get("sample_source"), None, None] + pts)
+        for c in ids:
+            if c in st:
+                scored = st[c].get("state") == "scored"
+                chk.append([r["site"], c, st[c].get("state"), st[c].get("points") if scored else None,
+                            st[c].get("max") if scored else None])
+    _write_csv(os.path.join(out_dir, "results.csv"), RESULT_COLUMNS + ids, res)
+    _write_csv(os.path.join(out_dir, "checks.csv"), CHECK_COLUMNS, chk)
+
+# The adoption table: shares of scored sites, each over the sites where its check was observed, from raw/.
+ADOPTION = [("An `llms.txt` served as text", "p1.llms-txt", lambda c: c["points"] > 0),
+            ("Organization and WebSite markup with name, url and logo (`p1.organization` at 5 or more)",
+             "p1.organization", lambda c: c["points"] >= 5),
+            ("BreadcrumbList on at least one nested page", "p1.breadcrumb", lambda c: c["points"] > 0),
+            ("A sitemap with `<lastmod>` on most of its URLs (`p1.sitemap` at 4)", "p1.sitemap",
+             lambda c: c["points"] == c["max"]),
+            ("A personal byline on at least half the sampled pages", "p2.named-author",
+             lambda c: _half_bylined(c.get("evidence")))]
+
+def _half_bylined(evidence):
+    """True or False from the check's evidence ('N of M pages carry a personal byline'); None when it does not say."""
+    m = re.search(r"(\d+) of (\d+) pages carry a personal byline", evidence or "")
+    return None if not m else 2 * int(m.group(1)) >= int(m.group(2))
+
+def _adoption_block(reports):
+    L = ["## How common each practice is\n",
+         "Shares of the scored sites, each over the sites where the check could be observed, from the",
+         "[per-site reports](raw/):\n",
+         "| Practice | Sites | Share |", "|---|:-:|:-:|"]
+    for what, cid, test in ADOPTION:
+        got = [test(c) for rep in reports.values() for c in rep["checks"] if c["id"] == cid and c["state"] == "scored"]
+        got = [g for g in got if g is not None]
+        if got:
+            L.append("| %s | %d of %d | %d%% |" % (what, sum(got), len(got), round(100.0 * sum(got) / len(got))))
+    L += ["\nFor comparison, the [Web Almanac 2025](https://almanac.httparchive.org/en/2025/seo) found `llms.txt` on",
+          "2.13% of desktop sites. The populations differ: the Almanac crawls millions of sites, this list is a few",
+          "hundred prominent ones picked for sector and language coverage, so neither share estimates the other.\n"]
+    return "\n".join(L)
+
 def _sample_sentence(u):
     """The opening sentence: the sample is up to eight pages, and the rows that got fewer than THIN_N are counted
     from raw/ and named. validate.py holds it to raw/."""
@@ -356,6 +429,12 @@ def write_readme(p):
     sys.path.insert(0, HERE)
     from build_page import share_words, crawler_note, challenge_note, thin_words, REFUSED
     import stats as bstats
+    reports = {}
+    for x in ok:
+        fp = bstats.raw_path(x["site"])
+        if os.path.exists(fp):
+            reports[x["site"]] = json.load(io.open(fp, encoding="utf-8"))
+    write_csvs(p, reports)
     sample_n = {x["site"]: bstats.sample_of(x)[0] for x in ok}
     thin = {x["site"] for x in ok if sample_n[x["site"]] is not None and sample_n[x["site"]] < bstats.THIN_N}
     A("## %s of the field is unreadable to AI crawlers\n" % share_words(int(round(100.0 * len(capped) / len(ok))), "en"))
@@ -406,6 +485,7 @@ def write_readme(p):
     top3 = [k for k, _ in gap.most_common(3)]
     A("\nThe top three, %s, are worth %d points between them.\n"
       % (", ".join("`%s`" % k for k in top3), sum(RBP.get(k, 0) for k in top3)))
+    A(_adoption_block(reports))
     A("## By sector\n")
     A("Each median carries a 95%% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than %d"
       % u["min_n"])
@@ -418,6 +498,8 @@ def write_readme(p):
         else:
             A("| %s | %d | **%s** | %d–%d |" % (k, v["n"], v["median"], us[k]["ci"][0], us[k]["ci"][1]))
     A("\n## Every site\n")
+    A("The same rows, flat: [results.csv](results.csv) has one row per listed site and one column per check,")
+    A("[checks.csv](checks.csv) one row per scored site and check. The full reports are in [raw/](raw/).\n")
     A("| # | Site | Score | Band | Sector | Biggest gaps |")
     A("|:-:|---|:-:|---|---|---|")
     for i, r in enumerate([x for x in p["results"] if "error" not in x], 1):

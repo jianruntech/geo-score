@@ -176,8 +176,9 @@ def jsonld(lang, v):
                                 "10 retrieval user-agents probed live"),
        "variableMeasured": [{"@type": "PropertyValue", "name": name, "description": zd if zh else en}
                             for name, en, zd in VARIABLES],
-       "distribution": [{"@type": "DataDownload", "name": "results.json", "encodingFormat": "application/json",
-                         "contentUrl": DOWNLOAD + "results.json"}],
+       "distribution": [{"@type": "DataDownload", "name": f, "encodingFormat": fmt, "contentUrl": DOWNLOAD + f}
+                        for f, fmt in (("results.json", "application/json"), ("results.csv", "text/csv"),
+                                       ("checks.csv", "text/csv"))],
        "citation": REPO + "/blob/main/rubric/v1.1.md"},
       {"@type": "WebSite", "@id": SITE + "/#website", "url": PAGE["en"],
        "name": "geo-score", "publisher": {"@id": SITE + "/#org"}},
@@ -245,7 +246,8 @@ def strings(lang, v):
             l_count='"{a} of {b} sites"',
             t_h2sec="By sector",
             t_footer=('Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
-                     '%(date)s · <a href="%(repo)s/blob/main/benchmark/results.json">raw data</a> · '
+                     '%(date)s · <a href="%(repo)s/blob/main/benchmark/results.json">raw data</a> '
+                     '(<a href="%(repo)s/blob/main/benchmark/results.csv">CSV</a>) · '
                      '<a href="%(repo)s/blob/main/benchmark/run.py">the script</a> · '
                      '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">how reproducible a single run is</a> · '
                      '<a href="%(repo)s">the repository</a><br><br>'
@@ -307,7 +309,8 @@ def strings(lang, v):
         l_count='"共 {b} 个，当前显示 {a} 个"',
         t_h2sec="分行业",
         t_footer=('按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
-                 '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a> · '
+                 '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a>'
+                 '（<a href="%(repo)s/blob/main/benchmark/results.csv">CSV</a>）· '
                  '<a href="%(repo)s/blob/main/benchmark/run.py">跑分脚本</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
                  '<a href="%(repo)s">仓库</a> · '
@@ -414,7 +417,7 @@ server-rendered content and the result caps at 40.
 
 - [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name%(blk_note)s, %(njs)d serve a page whose body only exists after JavaScript runs%(js_note)s, and at %(nerr)d %(refused)s.
 - [\u7b80\u4f53\u4e2d\u6587\u7248](%(url_zh)s): the same data and findings in Chinese.
-- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
+- [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable. The same rows flat, one column per check: [results.csv](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.csv); one row per site and check: [checks.csv](https://github.com/jianruntech/geo-score/blob/main/benchmark/checks.csv).
 
 ## The rubric
 
