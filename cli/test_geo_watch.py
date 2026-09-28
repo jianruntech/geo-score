@@ -563,7 +563,8 @@ def validate(inst, schema, root=None, path="$"):
         types = t if isinstance(t, list) else [t]
         ok = any({"object": isinstance(inst, dict), "array": isinstance(inst, list), "string": isinstance(inst, str),
                   "boolean": isinstance(inst, bool), "null": inst is None,
-                  "integer": isinstance(inst, int) and not isinstance(inst, bool),
+                  "integer": isinstance(inst, int) and not isinstance(inst, bool) or
+                             isinstance(inst, float) and inst.is_integer(),
                   "number": isinstance(inst, (int, float)) and not isinstance(inst, bool)}[x] for x in types)
         if not ok:
             return errs + ["%s: expected %s, got %r" % (path, t, inst)]
@@ -892,7 +893,10 @@ class ConfigKeys(Base):
                 {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
                  "max_calls": 10},
                 {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None},
-                {"brand": {"name": "Lumo"}, "country": ""}]
+                {"brand": {"name": "Lumo"}, "country": ""},
+                # JSON has one number type: a schema's "integer" takes 2.0, and so does Config
+                {"brand": {"name": "Lumo"}, "runs": 2.0, "max_calls": 50.0,
+                 "engines": [{"provider": "anthropic", "max_tokens": 1024.0, "max_searches": 3.0}]}]
         typo = dict(good[0], budget=1.0)
         # validate() always runs, so check.sh (stdlib only) checks every rule; jsonschema, when installed, agrees
         checks = [lambda c: validate(c, sc)]
@@ -905,6 +909,9 @@ class ConfigKeys(Base):
             self.assertEqual(gw.Config(self.write(c)).errors, [], c)
             for check in checks:
                 self.assertEqual(check(c), [], c)
+        whole = gw.Config(self.write(good[-1]))            # and the adapters get an int
+        got = (whole.runs, whole.max_calls, whole.engines[0]["max_tokens"], whole.engines[0]["max_searches"])
+        self.assertEqual([(x, type(x)) for x in got], [(2, int), (50, int), (1024, int), (3, int)])
         self.assertEqual(validate(typo, sc), ["$: unexpected key budget"])
         base = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}}
         # what Config refuses, the schema refuses too
@@ -913,6 +920,7 @@ class ConfigKeys(Base):
                    {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
                    {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
                    {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
+                   {"runs": 2.5}, {"max_calls": 50.5}, {"runs": True},
                    {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}},
                    {"engines": [{"provider": "anthropic", "max_tokens": "lots"}]},
                    {"engines": [{"provider": "anthropic", "max_searches": 0}]},

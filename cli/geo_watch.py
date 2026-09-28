@@ -927,12 +927,12 @@ class Config(object):
         self.country = raw.get("country") or None
         if self.country is not None and not (isinstance(self.country, str) and COUNTRY_RE.match(self.country)):
             err("country must be a two-letter ISO code such as US, or null")
-        self.runs = raw.get("runs", 1)
-        if isinstance(self.runs, bool) or not isinstance(self.runs, int) or not 1 <= self.runs <= MAX_RUNS:
+        self.runs = _whole(raw.get("runs", 1))
+        if self.runs is None or not 1 <= self.runs <= MAX_RUNS:
             err("runs must be an integer from 1 to %d" % MAX_RUNS)
             self.runs = 1
-        self.max_calls = raw.get("max_calls", DEFAULT_MAX_CALLS)
-        if isinstance(self.max_calls, bool) or not isinstance(self.max_calls, int) or self.max_calls < 1:
+        self.max_calls = _whole(raw.get("max_calls", DEFAULT_MAX_CALLS))
+        if self.max_calls is None or self.max_calls < 1:
             err("max_calls must be a positive integer")
             self.max_calls = DEFAULT_MAX_CALLS
         self.budget_usd = raw.get("budget_usd")
