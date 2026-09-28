@@ -70,8 +70,10 @@ Weights and pass conditions are versioned so that scores stay comparable over ti
 - Any change to a weight, or to whether a check passes — requires a rubric proposal
   issue first, then a version bump
 
-Never edit a released rubric file in place. Add the next version (`rubric/v1.2.md` and
-`rubric/v1.2.json`) and mark the previous one superseded.
+Never edit a released rubric file in place. Add the next version (`rubric/v1.2.md`, its Chinese twin
+`rubric/v1.2.zh-CN.md` and `rubric/v1.2.json`) and mark the previous one superseded. `.github/validate.py`
+also requires, for every rubric version, its evidence table in both languages (`rubric/evidence-v1.2.md` and
+`rubric/evidence-v1.2.zh-CN.md`) and a public audit scored with it (`examples/audits/v1.2/`).
 
 ## Development
 

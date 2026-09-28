@@ -11,7 +11,8 @@
 - [ ] Docs or cosmetic (typo, wording): no rubric version bump
 
 Rubric proposal issue: #
-New version files: `rubric/v___.md` and `rubric/v___.json`
+New version files: `rubric/v___.md`, `rubric/v___.zh-CN.md` and `rubric/v___.json`, with what `.github/validate.py`
+requires of every rubric version: `rubric/evidence-v___.md`, `rubric/evidence-v___.zh-CN.md` and `examples/audits/v___/`
 
 ## Test plan
 
