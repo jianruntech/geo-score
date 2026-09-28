@@ -160,7 +160,7 @@ def check_support():
         ok(re.search(r"^    url: %s\s*$" % re.escape(u), cfg, re.M) is not None, "config.yml links %s" % u)
     # every absolute link into this repository from the chooser, the forms and SUPPORT.md must resolve
     texts = [(".github/ISSUE_TEMPLATE/" + f, rd(".github/ISSUE_TEMPLATE/" + f)) for f in forms() + ["config.yml"]]
-    texts.append(("SUPPORT.md", rd("SUPPORT.md")))
+    texts += [("SUPPORT.md", rd("SUPPORT.md")), (".github/PULL_REQUEST_TEMPLATE.md", rd(".github/PULL_REQUEST_TEMPLATE.md"))]
     seen = 0
     for name, text in texts:
         for path, anchor in re.findall(r"https://github\.com/jianruntech/geo-score(?:/blob/main/([^\s)#\]]+))?(?:#([\w-]+))?", text):
@@ -180,6 +180,30 @@ def check_support():
     linked = set(re.findall(r"issues/new\?template=([\w.-]+)", sup))
     ok(linked == set(forms()), "SUPPORT.md links every issue form and only those (%s)" % ", ".join(sorted(linked)))
     ok("README.md#scope--what-this-does-not-do" in sup, "SUPPORT.md says remediation is out of scope, linked to Scope")
+
+
+def relative_links(text):
+    """Markdown link targets that are not absolute. A PR description or an issue body resolves a relative link
+    against /pull/N or /issues/new, so ../README.md#scope becomes a 404."""
+    return [u for u in re.findall(r"\]\(\s*([^)\s]+)", text) if not u.startswith(("https://", "http://", "mailto:"))]
+
+
+def check_pr_template():
+    print("pr template: asks for the gate and the changelog, and links only absolutely")
+    pr = rd(".github/PULL_REQUEST_TEMPLATE.md")
+    for need, why in (("## Summary", "a Summary section"), ("## Test plan", "a Test plan section"),
+                      ("bash scripts/check.sh", "the gate's output"), ("CHANGELOG.zh-CN.md", "both changelogs"),
+                      ("[Unreleased]", "the [Unreleased] section"), (".zh-CN.md` twin", "English and Chinese in step"),
+                      ("build_og.py", "the benchmark regeneration"), ("employer", "an employer's site disclosed"),
+                      ("remediation", "no remediation"), ("rubric_proposal.yml", "the rubric proposal form")):
+        ok(need in pr, "PULL_REQUEST_TEMPLATE.md asks for %s" % why)
+    for kind in ("A site added to the benchmark", "Heuristic fix", "Rubric change", "Engine, MCP server or Action", "Docs or cosmetic"):
+        ok("- [ ] " + kind in pr, "PULL_REQUEST_TEMPLATE.md offers the type %r" % kind)
+    for name in [".github/PULL_REQUEST_TEMPLATE.md"] + [".github/ISSUE_TEMPLATE/" + f for f in forms() + ["config.yml"]]:
+        rel = relative_links(rd(name))
+        ok(not rel, "%s has no relative links%s" % (name, (": " + ", ".join(rel)) if rel else ""))
+    ok(relative_links("see [Scope](../README.md#scope) and [x](https://a.b/c) [m](mailto:a@b.c)") == ["../README.md#scope"],
+       "relative_links finds ../README.md#scope and passes https and mailto")
 
 
 def check_sync_script():
@@ -207,6 +231,7 @@ def main():
     check_forms()
     check_badge()
     check_support()
+    check_pr_template()
     check_sync_script()
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))
