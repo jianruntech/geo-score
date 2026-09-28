@@ -12,6 +12,11 @@
 # runs the same script, so the two cannot drift if Actions is ever enabled.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# The tools the gate pins, so an unchanged tree passes or fails the same way on every machine (a new ruff can
+# add rules). jsonschema 4.23.0 is the newest release that still installs on Python 3.8, as validate.yml needs;
+# the workflow pip-installs these same versions.
+RUFF_VERSION=0.15.15
+JSONSCHEMA_VERSION=4.23.0
 LIVE=0
 [ "${1:-}" = "--live" ] && LIVE=1
 
@@ -23,10 +28,17 @@ python3 .github/validate.py
 step "generated MCP docs: tool table and install links in README*/guide/mcp* (mcp_docs.py --check)"
 python3 scripts/mcp_docs.py --check
 
-step "lint: ruff (E9, F, B)"
-if command -v ruff >/dev/null 2>&1; then ruff check cli benchmark .github action scripts
-elif command -v uvx >/dev/null 2>&1; then uvx ruff check cli benchmark .github action scripts
-else echo "ruff not installed: skipped (pip install ruff)"; fi
+step "lint: ruff $RUFF_VERSION (E9, F, B)"
+LINT="cli benchmark .github action scripts"
+path_ruff="$(command -v ruff >/dev/null 2>&1 && ruff --version 2>/dev/null || true)"
+if [ "$path_ruff" = "ruff $RUFF_VERSION" ]; then
+  echo "using $path_ruff from PATH"; ruff check $LINT
+elif command -v uvx >/dev/null 2>&1; then
+  echo "using uvx ruff@$RUFF_VERSION${path_ruff:+ (PATH has $path_ruff)}"; uvx "ruff@$RUFF_VERSION" check $LINT
+elif [ -n "$path_ruff" ]; then
+  echo "warning: $path_ruff is not the pinned $RUFF_VERSION and there is no uvx to fetch it; its rules may differ"
+  ruff check $LINT
+else echo "ruff not installed: skipped (pip install ruff==$RUFF_VERSION)"; fi
 
 # The CLI promises Python 3.8+. With uv, test the oldest and the newest it can find; without it,
 # test whatever python3 is.
@@ -48,12 +60,15 @@ for py in "${PYS[@]}"; do
 done
 
 # the end-to-end suite validates every report against schema/report.v2.json when jsonschema is importable
-if python3 -c "import jsonschema" >/dev/null 2>&1; then
-  step "reports against the published schema (jsonschema)"; python3 cli/test_geo_score_e2e.py
-elif command -v uv >/dev/null 2>&1 && uv run --no-project --with jsonschema python -c "import jsonschema" >/dev/null 2>&1; then
-  step "reports against the published schema (jsonschema via uv)"; uv run --no-project --with jsonschema python cli/test_geo_score_e2e.py
+JS="jsonschema==$JSONSCHEMA_VERSION"
+if command -v uv >/dev/null 2>&1 && uv run --no-project --with "$JS" python -c "import jsonschema" >/dev/null 2>&1; then
+  step "reports against the published schema (jsonschema $JSONSCHEMA_VERSION via uv)"
+  uv run --no-project --with "$JS" python cli/test_geo_score_e2e.py
+elif have="$(python3 -c 'import importlib.metadata as m; print(m.version("jsonschema"))' 2>/dev/null)"; then
+  step "reports against the published schema (jsonschema $have$([ "$have" = "$JSONSCHEMA_VERSION" ] || echo ", not the pinned $JSONSCHEMA_VERSION"))"
+  python3 cli/test_geo_score_e2e.py
 else
-  echo "jsonschema unavailable: the full schema check was skipped (pip install jsonschema)"
+  echo "jsonschema unavailable: the full schema check was skipped (pip install $JS)"
 fi
 
 step "the GitHub Action, run as a runner would (scripts/test_action.py)"

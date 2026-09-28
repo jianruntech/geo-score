@@ -98,6 +98,31 @@ def check_pins(version):
         ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
 
 
+def check_gate_pins():
+    """The workflow runs the gate with the tool versions check.sh pins, on actions pinned by commit."""
+    print("\n  the gate's pins: tools in check.sh and the workflows, actions by commit")
+    gate = rd("scripts/check.sh")
+    for var, pkg in (("RUFF_VERSION", "ruff"), ("JSONSCHEMA_VERSION", "jsonschema")):
+        m = re.search(r"^%s=(\S+)$" % var, gate, re.M)
+        ok(m is not None, "check.sh sets %s" % var)
+        if m:
+            wf = rd(".github/workflows/validate.yml")
+            ok("%s==%s" % (pkg, m.group(1)) in wf, "validate.yml installs %s==%s, as check.sh pins" % (pkg, m.group(1)))
+    wdir = os.path.join(ROOT, ".github", "workflows")
+    for f in sorted(os.listdir(wdir)):
+        if not f.endswith((".yml", ".yaml")):
+            continue
+        text = rd(os.path.join(".github", "workflows", f))
+        uses = re.findall(r"^\s*(?:-\s+)?uses:\s*(\S+)(.*)$", text, re.M)
+        loose = [u for u, rest in uses if not (re.search(r"@[0-9a-f]{40}$", u) and re.match(r"\s+#\s*v\d", rest))]
+        ok(not loose, "%s: every action is pinned by commit with a '# vX.Y.Z' comment%s"
+           % (f, " (not: %s)" % ", ".join(loose) if loose else ""))
+        ok(re.search(r"^permissions:", text, re.M) is not None, "%s: sets top-level permissions" % f)
+        checkouts = len(re.findall(r"uses:\s*actions/checkout@", text))
+        ok(len(re.findall(r"persist-credentials:\s*false", text)) >= checkouts,
+           "%s: no checkout keeps the token (persist-credentials: false)" % f)
+
+
 def mcp_session(cmd, cwd, env):
     """initialize then tools/list over stdio; returns (serverInfo, tool names)."""
     lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -206,6 +231,9 @@ def main():
        "the image copies the two CLI files")
     ok([x for x in rd(".dockerignore").splitlines() if x and not x.startswith("#")]
        == ["*", "!cli/geo_score.py", "!cli/geo_watch.py"], ".dockerignore lets in the two CLI files only")
+    ok(re.search(r"^FROM python:[\w.-]+@sha256:[0-9a-f]{64}$", dock, re.M) is not None,
+       "the Dockerfile's base image is pinned by digest")
+    check_gate_pins()
 
     print("\n  the .mcpb release.py builds")
     with tempfile.TemporaryDirectory() as tmp:
