@@ -79,6 +79,28 @@ def static_checks(name, lines, text):
     return pins
 
 
+def pinning_checks():
+    """Workflows people copy: third-party actions by full SHA with the release as a comment, and no token left
+    behind unless the job pushes."""
+    for f in sorted(x for x in os.listdir(CI) if x.endswith(".yml") and x != "gitlab-ci.yml"):
+        text = rd(os.path.join("examples", "ci", f))
+        uses = re.findall(r"^\s*(?:- )?uses: (\S+)(.*)$", text, re.M)
+        third = [(u, rest) for u, rest in uses if not u.startswith("jianruntech/geo-score@")]
+        bad = [u for u, rest in third if not (re.match(r"^[\w.-]+/[\w./-]+@[0-9a-f]{40}$", u)
+                                             and re.match(r"^\s+# v\d+\.\d+\.\d+\b", rest))]
+        ok(bool(third) and not bad, "%s: %d third-party actions pinned to a commit SHA with a '# vX.Y.Z' comment%s"
+           % (f, len(third), (": not " + ", ".join(bad)) if bad else ""))
+        ok(not re.search(r"^\s*(?:- )?run: .*\$\{\{", text, re.M), "%s: no ${{ }} expression is pasted into a run: line" % f)
+        pushes = re.search(r"^\s+git push\b", text, re.M) is not None
+        co = re.search(r"^\s*- uses: actions/checkout@.*\n(?:\s+with: (.*)\n)?", text, re.M)
+        if pushes:
+            ok(co is not None and "zizmor: ignore[artipacked]" in co.group(0) and "persist-credentials: false" not in co.group(0),
+               "%s: pushes, so the checkout keeps its credentials, marked for zizmor" % f)
+        else:
+            ok(co is not None and "persist-credentials: false" in (co.group(1) or ""),
+               "%s: does not push, so the checkout sets persist-credentials: false" % f)
+
+
 def local_script(lines, fail_under=None):
     """The same commands with the download replaced by a copy from $GEO_TEST_SRC."""
     out, copied = [], False
@@ -194,6 +216,7 @@ def main():
             others |= set(PIN.findall(rd(os.path.join("examples", "ci", f))))
     allpins = readme_pins | gitlab_pins | others
     ok(len(allpins) == 1, "every example in examples/ci pins the same release (%s)" % ", ".join(sorted(allpins)))
+    pinning_checks()
     table = rd("examples/ci/README.md")
     for ci, directive in (("Bitbucket", "test-results/"), ("Azure", "PublishTestResults@2"),
                           ("Jenkins", "junit 'geo-score.xml'"), ("CircleCI", "store_test_results")):

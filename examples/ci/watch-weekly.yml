@@ -17,8 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # The last step pushes the run file back, so this job keeps the checkout's credentials on purpose.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1  # zizmor: ignore[artipacked]
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
         with: {python-version: "3.12"}
       - name: Fetch geo-score (pinned to a release, checksums verified)
         run: |

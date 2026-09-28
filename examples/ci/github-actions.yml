@@ -1,5 +1,6 @@
 # Copy this into .github/workflows/ in your own repository and change the url.
 # It lives here rather than in this repo's own workflows so that it does not run here.
+# Third-party actions are pinned to a full commit SHA, with the release it is in as a comment.
 name: AI visibility
 on:
   push: {branches: [main]}
@@ -12,19 +13,23 @@ jobs:
       contents: read
       security-events: write     # only needed for the SARIF upload step
     steps:
-      - uses: actions/checkout@v4
-      - uses: jianruntech/geo-score@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+        with: {persist-credentials: false}   # nothing here pushes, so the token is not left in .git/config
+      # v1 follows the latest 1.x release; to pin one release, use its commit SHA from
+      # https://github.com/jianruntech/geo-score/releases instead
+      - uses: jianruntech/geo-score@v1   # zizmor: ignore[unpinned-uses]
         id: geo
         with:
           url: https://example.com
           fail-under: 40           # remove this to report without failing the build
           json-out: geo-score.json
           sarif: geo-score.sarif   # optional: drop this and the upload-sarif step if you do not use code scanning
-      - run: echo "Scored ${{ steps.geo.outputs.score }} (${{ steps.geo.outputs.band }})"
+      - run: echo "Scored $SCORE ($BAND)"
+        env: {SCORE: "${{ steps.geo.outputs.score }}", BAND: "${{ steps.geo.outputs.band }}"}
       # report-path is set once the site was scored, so these also run when fail-under fails the job
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
         if: always() && steps.geo.outputs.report-path != ''
         with: {name: geo-score-report, path: geo-score.json}
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2   # v4.38.2
         if: always() && steps.geo.outputs.report-path != ''
         with: {sarif_file: geo-score.sarif, category: geo-score}
