@@ -31,14 +31,20 @@ works. Download the CLI and the checksums from a pinned release, check the file,
 rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
 curl -sSfLO "$rel/geo_score.py"
 curl -sSfLO "$rel/SHA256SUMS"
-grep ' geo_score\.py$' SHA256SUMS | sha256sum -c -
+grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256 && sha256sum -c geo_score.py.sha256 &&
 python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under 40
 ```
+
+The `&&` chain is what keeps an unchecked file from running. Some CI shells, Azure Pipelines' script
+step among them, do not stop at a failed command, so a check on a line of its own would print `FAILED`
+and score anyway. The line goes to its own file rather than through a pipe because some `sha256sum`
+builds (macOS) pass empty input. On a machine without `sha256sum`, `shasum -a 256 -c geo_score.py.sha256`
+reads the same file.
 
 One run writes the report, writes the test file and applies the threshold. Two runs fetch the site
 twice and can print two different scores, so the report you keep would not be the run that passed or
 failed the build. Exit code is 1 when the score is below `--fail-under`, 2 when the site could not be
-fetched, and 0 otherwise. On a machine without `sha256sum`, `shasum -a 256 -c -` reads the same line.
+fetched, and 0 otherwise; a file that does not match `SHA256SUMS` stops the step before scoring.
 
 ### GitLab CI
 

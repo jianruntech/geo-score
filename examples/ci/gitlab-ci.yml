@@ -16,7 +16,10 @@ geo-score:
   script:
     # python:3.12-slim has no curl, so Python fetches the two release files
     - python3 -c 'import sys, urllib.request as u; [u.urlretrieve(sys.argv[1] + "/" + f, f) for f in sys.argv[2:]]' "$GEO_SCORE_RELEASE" geo_score.py SHA256SUMS
-    - grep ' geo_score\.py$' SHA256SUMS | sha256sum -c -
+    # GitLab stops the job at the first line that fails. grep writes the checksum line to a file instead of
+    # piping it, so a SHA256SUMS without that line stops the job here, pipefail or not
+    - grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
+    - sha256sum -c geo_score.py.sha256
     - python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under "$GEO_SCORE_FAIL_UNDER"
   artifacts:
     when: always                      # keep the report when the threshold fails the job
