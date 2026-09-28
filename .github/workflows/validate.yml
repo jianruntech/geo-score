@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: {py: ["3.8", "3.12"]}
+      matrix: {py: ["3.8", "3.14"]}      # the oldest and the newest stable, as check.sh tests
     steps:
       # actions are pinned by commit; the comment names the release that commit is
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1

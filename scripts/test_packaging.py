@@ -98,6 +98,22 @@ def check_pins(version):
         ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
 
 
+def check_pythons():
+    """pyproject.toml's requires-python and classifiers say what check.sh tests: PY_OLDEST to PY_NEWEST."""
+    print("\n  Python versions: pyproject.toml against check.sh's PY_OLDEST and PY_NEWEST")
+    gate, pp = rd("scripts/check.sh"), rd("pyproject.toml")
+    lo, hi = (re.search(r"^%s=3\.(\d+)$" % k, gate, re.M) for k in ("PY_OLDEST", "PY_NEWEST"))
+    ok(lo is not None and hi is not None, "check.sh sets PY_OLDEST and PY_NEWEST")
+    if lo is None or hi is None:
+        return
+    lo, hi = int(lo.group(1)), int(hi.group(1))
+    ok(re.search(r'^requires-python = ">=3\.%d"$' % lo, pp, re.M) is not None, "requires-python is >=3.%d" % lo)
+    got = sorted(int(x) for x in re.findall(r'"Programming Language :: Python :: 3\.(\d+)"', pp))
+    ok(got == list(range(lo, hi + 1)),
+       "a classifier for each of 3.%d to 3.%d (%s)" % (lo, hi, ", ".join("3.%d" % x for x in got)))
+    ok('"Programming Language :: Python :: 3 :: Only"' in pp, "the '3 :: Only' classifier")
+
+
 def check_gate_pins():
     """The workflow runs the gate with the tool versions check.sh pins, on actions pinned by commit."""
     print("\n  the gate's pins: tools in check.sh and the workflows, actions by commit")
@@ -234,6 +250,7 @@ def main():
     ok(re.search(r"^FROM python:[\w.-]+@sha256:[0-9a-f]{64}$", dock, re.M) is not None,
        "the Dockerfile's base image is pinned by digest")
     check_gate_pins()
+    check_pythons()
 
     print("\n  the .mcpb release.py builds")
     with tempfile.TemporaryDirectory() as tmp:

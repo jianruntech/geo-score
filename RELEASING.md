@@ -27,11 +27,24 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 5. **Preflight:** `python3 scripts/release.py X.Y.Z` must print `ready`. It refuses while any version,
    pin, manifest, changelog section or compare link is out of step, `scripts/mcp_docs.py --check`
    finds a generated MCP block out of date, the tree is dirty, or the tag exists.
-6. **Try the bundle (minor and major releases):** `python3 scripts/release.py X.Y.Z --pack` builds only
+6. **Try the bundle, and Windows (minor and major releases):** `python3 scripts/release.py X.Y.Z --pack` builds only
    `dist/geo-score-X.Y.Z.mcpb` and `dist/server.json`. Double-click the `.mcpb` in Claude Desktop on
    macOS and on Windows, fill in one key, and run `score_site` and `status`. The bundle runs the user's
    own `python3` (`python` on Windows).
-7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live`, builds the
+   On the same Windows machine, in a clone at the release commit, run the three CLI suites and the MCP
+   conformance check with Python 3.8 and with the newest Python (`check.sh` does not run on Windows):
+
+   ```
+   py -3.8 cli/test_geo_score.py
+   py -3.8 cli/test_geo_watch.py
+   py -3.8 cli/test_geo_score_e2e.py
+   py -3.8 scripts/check_mcp.py
+   ```
+
+   then the same four with `py -3.14` (the newest stable Python, `PY_NEWEST` in `scripts/check.sh`). Say in
+   the release notes that they passed, or what failed.
+7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live --strict` (so the
+   tests must run on Python 3.8 and 3.14: `uv python install 3.8 3.14` if either is missing), builds the
    wheel and sdist (and stops unless the wheel's file name is the one the install lines download),
    the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` (a zip of `mcpb/manifest.json`,
    both CLI files under `server/` and the licence, byte-for-byte reproducible on the same platform) and `dist/server.json`

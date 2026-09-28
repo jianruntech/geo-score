@@ -19,8 +19,9 @@ MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", 
 # files whose one-line install or download is pinned to a release tag
 # (scripts/test_packaging.py fails when a tracked file names a release and is not listed here)
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
-          "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md", "STABILITY.md",
-          "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md", "guide/mcp.zh-CN.md"] + MANIFESTS
+          "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md",
+          "STABILITY.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
+          "guide/mcp.zh-CN.md"] + MANIFESTS
 # every way a document pins a release, as (pattern, prefix): group 1 is kept, and the version after it is rewritten
 # to prefix + version. A tag carries a "v"; the wheel's file name, which follows the tag in a download URL, does not
 PINS = [(re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"), "v"),
@@ -265,7 +266,8 @@ def execute(v):
     dist = os.path.join(ROOT, "dist")
     shutil.rmtree(dist, ignore_errors=True)
     os.makedirs(dist)
-    for step in (["bash", "scripts/check.sh", "--live"],
+    # --strict: a release is tested on the oldest and the newest Python, never on whatever happens to be installed
+    for step in (["bash", "scripts/check.sh", "--live", "--strict"],
                  ["uv", "build", "--out-dir", "dist"] if shutil.which("uv") else [sys.executable, "-m", "build", "--outdir", "dist"]):
         print("$ " + " ".join(step))
         if subprocess.run(step, cwd=ROOT).returncode:
@@ -331,8 +333,8 @@ def main():
             print("  - " + p)
         sys.exit(1)
     if not a.execute:
-        print("\nready for %s. Plan: check.sh --live, build sdist + wheel (stopping unless the wheel is the file the install "
-              "lines name), the .mcpb and dist/server.json, "
+        print("\nready for %s. Plan: check.sh --live --strict, build sdist + wheel (stopping unless the wheel is the "
+              "file the install lines name), the .mcpb and dist/server.json, "
               "SHA256SUMS over them and the two CLI files, push main, tag v%s and push it, move v1 and push it, "
               "gh release create with the changelog section.\nRun again with --execute." % (a.version, a.version))
         return
