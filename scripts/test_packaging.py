@@ -126,6 +126,19 @@ def check_pythons():
     ok(got <= set(ends), "RELEASING.md names no other Python (%s)" % ", ".join(sorted(got, key=lambda x: int(x[2:]))))
 
 
+def loose_uses(text):
+    """The `uses:` in a workflow that are not pinned: an action needs a full commit SHA and a '# vX.Y.Z' comment.
+    A local action (./path) is this repository at the commit under test, and a docker:// image pinned by its
+    digest is already immutable, so neither needs one."""
+    out = []
+    for u, rest in re.findall(r"^\s*(?:-\s+)?uses:\s*(\S+)(.*)$", text, re.M):
+        if u.startswith("./") or re.match(r"^docker://\S+@sha256:[0-9a-f]{64}$", u):
+            continue
+        if not (re.search(r"@[0-9a-f]{40}$", u) and re.match(r"\s+#\s*v\d", rest)):
+            out.append(u)
+    return out
+
+
 def check_gate_pins():
     """The workflow runs the gate with the tool versions check.sh pins, on actions pinned by commit."""
     print("\n  the gate's pins: tools in check.sh and the workflows, actions by commit")
@@ -141,14 +154,21 @@ def check_gate_pins():
         if not f.endswith((".yml", ".yaml")):
             continue
         text = rd(os.path.join(".github", "workflows", f))
-        uses = re.findall(r"^\s*(?:-\s+)?uses:\s*(\S+)(.*)$", text, re.M)
-        loose = [u for u, rest in uses if not (re.search(r"@[0-9a-f]{40}$", u) and re.match(r"\s+#\s*v\d", rest))]
+        loose = loose_uses(text)
         ok(not loose, "%s: every action is pinned by commit with a '# vX.Y.Z' comment%s"
            % (f, " (not: %s)" % ", ".join(loose) if loose else ""))
         ok(re.search(r"^permissions:", text, re.M) is not None, "%s: sets top-level permissions" % f)
         checkouts = len(re.findall(r"uses:\s*actions/checkout@", text))
         ok(len(re.findall(r"persist-credentials:\s*false", text)) >= checkouts,
            "%s: no checkout keeps the token (persist-credentials: false)" % f)
+    sha, digest = "0123456789abcdef" * 2 + "01234567", "0" * 64
+    ok(loose_uses("steps:\n  - uses: ./\n  - uses: ./.github/actions/x\n  - uses: docker://alpine@sha256:%s\n"
+                  "  - uses: actions/checkout@%s  # v7.0.1\n" % (digest, sha)) == [],
+       "a local action, a docker image by digest and an action by commit count as pinned")
+    ok(loose_uses("steps:\n  - uses: actions/checkout@v7\n  - uses: docker://alpine:3.20\n"
+                  "  - uses: actions/setup-python@%s\n" % sha)
+       == ["actions/checkout@v7", "docker://alpine:3.20", "actions/setup-python@" + sha],
+       "a tag, a docker tag and a commit with no '# vX.Y.Z' comment do not")
 
 
 def gate_block(start, end):
