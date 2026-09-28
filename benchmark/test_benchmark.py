@@ -284,7 +284,7 @@ class FetchBudget(unittest.TestCase):
         chinese = {ua for _, ua in gs.CN_UAS}
         sections = ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")
 
-        def fake_fetch(url, ua=gs.UA_BROWSER, timeout=15, method="GET"):
+        def fake_fetch(url, ua=gs.UA_BROWSER, *a, **kw):
             sent.append((url, ua))
             return self.site(url, ua)
         saved = gs.fetch, getattr(gs, "preflight_host", None)
