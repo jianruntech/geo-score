@@ -15,8 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
         with: {persist-credentials: false}   # nothing here pushes, so the token is not left in .git/config
-      # v1 follows the latest 1.x release; to pin one release, use its commit SHA from
-      # https://github.com/jianruntech/geo-score/releases instead
+      # v1 follows the latest 1.x release. To hold the tool still between runs, pin a release tag (@vX.Y.Z)
+      # or, stricter, that release's commit SHA from https://github.com/jianruntech/geo-score/releases
       - uses: jianruntech/geo-score@v1   # zizmor: ignore[unpinned-uses]
         id: geo
         with:
