@@ -540,16 +540,24 @@ class Reading(Base):
 
 
 # ── the run file ──────────────────────────────────────────────────────────
+# every keyword validate() applies, and the ones that only annotate; a test holds both schemas to this list, so a
+# keyword added to a schema later cannot be skipped here without a word
+VALIDATED = ("$ref", "type", "const", "enum", "pattern", "minLength", "maxLength", "minimum", "maximum", "required",
+             "properties", "additionalProperties", "propertyNames", "items", "minItems", "anyOf", "allOf", "not",
+             "if", "then", "else")
+ANNOTATIONS = ("$schema", "$id", "$defs", "title", "description", "default", "format")
+
+
 def validate(inst, schema, root=None, path="$"):
-    """Enough JSON Schema for our own file: type, const, enum, required, properties, additionalProperties,
-    items, pattern, minimum and local $ref."""
+    """Enough JSON Schema (draft 2020-12) for our own files: the keywords in VALIDATED, with local $ref only. It runs
+    where jsonschema is not installed, so the stdlib-only gate still checks every rule the schemas state."""
     root = root or schema
     errs = []
     if "$ref" in schema:
         node = root
         for part in schema["$ref"].lstrip("#/").split("/"):
             node = node[part]
-        return validate(inst, node, root, path)
+        errs += validate(inst, node, root, path)
     t = schema.get("type")
     if t:
         types = t if isinstance(t, list) else [t]
@@ -558,15 +566,33 @@ def validate(inst, schema, root=None, path="$"):
                   "integer": isinstance(inst, int) and not isinstance(inst, bool),
                   "number": isinstance(inst, (int, float)) and not isinstance(inst, bool)}[x] for x in types)
         if not ok:
-            return ["%s: expected %s, got %r" % (path, t, inst)]
+            return errs + ["%s: expected %s, got %r" % (path, t, inst)]
     if "const" in schema and inst != schema["const"]:
         errs.append("%s: expected %r" % (path, schema["const"]))
     if "enum" in schema and inst not in schema["enum"]:
         errs.append("%s: %r not in %r" % (path, inst, schema["enum"]))
-    if "pattern" in schema and isinstance(inst, str) and not re.search(schema["pattern"], inst):
-        errs.append("%s: %r does not match %s" % (path, inst, schema["pattern"]))
-    if "minimum" in schema and isinstance(inst, (int, float)) and inst < schema["minimum"]:
-        errs.append("%s: below minimum" % path)
+    if "anyOf" in schema and all(validate(inst, b, root, path) for b in schema["anyOf"]):
+        errs.append("%s: %r matches no branch of anyOf" % (path, inst))
+    for b in schema.get("allOf", ()):
+        errs += validate(inst, b, root, path)
+    if "not" in schema and not validate(inst, schema["not"], root, path):
+        errs.append("%s: %r matches a schema it must not" % (path, inst))
+    if "if" in schema:
+        branch = schema.get("then" if not validate(inst, schema["if"], root, path) else "else")
+        if branch is not None:
+            errs += validate(inst, branch, root, path)
+    if isinstance(inst, str):
+        if "pattern" in schema and not re.search(schema["pattern"], inst):
+            errs.append("%s: %r does not match %s" % (path, inst, schema["pattern"]))
+        if len(inst) < schema.get("minLength", 0):
+            errs.append("%s: shorter than %d" % (path, schema["minLength"]))
+        if "maxLength" in schema and len(inst) > schema["maxLength"]:
+            errs.append("%s: longer than %d" % (path, schema["maxLength"]))
+    if isinstance(inst, (int, float)) and not isinstance(inst, bool):
+        if "minimum" in schema and inst < schema["minimum"]:
+            errs.append("%s: below minimum" % path)
+        if "maximum" in schema and inst > schema["maximum"]:
+            errs.append("%s: above maximum" % path)
     if isinstance(inst, dict):
         for k in schema.get("required", []):
             if k not in inst:
@@ -574,16 +600,38 @@ def validate(inst, schema, root=None, path="$"):
         props = schema.get("properties", {})
         extra = schema.get("additionalProperties", True)
         for k, v in inst.items():
+            if "propertyNames" in schema:
+                errs += validate(k, schema["propertyNames"], root, "%s.<%s>" % (path, k))
             if k in props:
                 errs += validate(v, props[k], root, path + "." + k)
             elif extra is False:
                 errs.append("%s: unexpected key %s" % (path, k))
             elif isinstance(extra, dict):
                 errs += validate(v, extra, root, path + "." + k)
-    if isinstance(inst, list) and "items" in schema:
-        for i, v in enumerate(inst):
-            errs += validate(v, schema["items"], root, "%s[%d]" % (path, i))
+    if isinstance(inst, list):
+        if len(inst) < schema.get("minItems", 0):
+            errs.append("%s: fewer than %d items" % (path, schema["minItems"]))
+        if "items" in schema:
+            for i, v in enumerate(inst):
+                errs += validate(v, schema["items"], root, "%s[%d]" % (path, i))
     return errs
+
+
+def schema_keywords(node, out=None):
+    """Every keyword a schema uses. The keys under properties and $defs are names, not keywords."""
+    out = set() if out is None else out
+    if isinstance(node, dict):
+        for k, v in node.items():
+            out.add(k)
+            if k in ("properties", "$defs") and isinstance(v, dict):
+                for sub in v.values():
+                    schema_keywords(sub, out)
+            else:
+                schema_keywords(v, out)
+    elif isinstance(node, list):
+        for x in node:
+            schema_keywords(x, out)
+    return out
 
 
 class RunFile(Base):
@@ -844,30 +892,49 @@ class ConfigKeys(Base):
                  "max_calls": 10},
                 {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None}]
         typo = dict(good[0], budget=1.0)
+        # validate() always runs, so check.sh (stdlib only) checks every rule; jsonschema, when installed, agrees
+        checks = [lambda c: validate(c, sc)]
         if jsonschema is not None:
             v = jsonschema.validators.validator_for(sc)
             v.check_schema(sc)
-            check = v(sc)
+            full = v(sc)
+            checks.append(lambda c: [e.message for e in full.iter_errors(c)])
         for c in good:
-            self.assertEqual(validate(c, sc), [], c)
             self.assertEqual(gw.Config(self.write(c)).errors, [], c)
-            if jsonschema is not None:
-                self.assertEqual([e.message for e in check.iter_errors(c)], [], c)
+            for check in checks:
+                self.assertEqual(check(c), [], c)
         self.assertEqual(validate(typo, sc), ["$: unexpected key budget"])
-        if jsonschema is None:
-            return
-        self.assertTrue(list(check.iter_errors(typo)))
+        base = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}}
         # what Config refuses, the schema refuses too
-        for bad in ({"engines": [{"provider": "openai", "api": "generate_content"}]}, {"engines": []},
-                    {"engines": [{"provider": "nope"}]}, {"engines": [{"provider": "openai", "id": "Chat GPT"}]},
-                    {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
-                    {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
-                    {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
-                    {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}}):
-            c = dict({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, **bad)
+        refused = ({"engines": [{"provider": "openai", "api": "generate_content"}]}, {"engines": []},
+                   {"engines": [{"provider": "nope"}]}, {"engines": [{"provider": "openai", "id": "Chat GPT"}]},
+                   {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
+                   {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
+                   {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
+                   {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}})
+        for bad in refused:
+            c = dict(base, **bad)
             self.assertTrue(gw.Config(self.write(c)).errors, bad)
-            self.assertTrue(list(check.iter_errors(c)), bad)
-        self.assertTrue(list(check.iter_errors({"competitors": []})))       # brand.name is required
+            for check in checks:
+                self.assertTrue(check(c), bad)
+        # where the schema is stricter: values Config takes as they come
+        for bad in ({"brand": {"name": "Lumo", "domains": 5}}, {"prices": {"Claude": {"per_call": 0.01}}},
+                    {"engines": [{"provider": "anthropic", "max_tokens": "lots"}]},
+                    {"engines": [{"provider": "anthropic", "max_searches": 0}]},
+                    {"engines": [{"provider": "openai", "tool": 3}]}):
+            for check in checks:
+                self.assertTrue(check(dict(base, **bad)), bad)
+        for check in checks:
+            self.assertTrue(check({"competitors": []}))                     # brand.name is required
+            self.assertTrue(check(typo))
+
+    def test_the_stdlib_validator_knows_every_keyword_the_schemas_use(self):
+        # a keyword validate() skipped would let a broken rule through check.sh, which has no jsonschema
+        for sc in (config_schema(), watch_schema()):
+            self.assertEqual(sorted(schema_keywords(sc) - set(VALIDATED + ANNOTATIONS)), [], sc["$id"])
+        broken = config_schema()
+        broken["$defs"]["strings"] = {"anyOf": [{"type": "integer"}]}          # every real config is now invalid
+        self.assertTrue(validate(FULL_CONFIG, broken))
 
 
 # ── transport, for real, against a local server ───────────────────────────
@@ -2309,7 +2376,7 @@ class MergeSeam(Base):
         import geo_score as gs
         full = {c[0]: c[3] for c in gs.SPEC}
         res = dict(root="https://www.lumo.example/", landed="https://www.lumo.example/", urls=["https://www.lumo.example/"],
-                   lang="en", tier=full, ev={k: "" for k in full}, bonus={}, robots_bytes=0)
+                   lang="en", tier=full, ev={k: "observed" for k in full}, bonus={}, robots_bytes=0)
         real_run, real_mod, real_argv = gs.run, gs._watch_module, sys.argv
         gs.run = lambda url, sample=8, verbose=False, urls=None: json.loads(json.dumps(res))
         gw.GEO_SCORE = gs
