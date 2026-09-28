@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "title": "geo-score watch config (geo-score-watch.json)",
+  "description": "The file `geo_score.py watch` and the MCP server read: the brand and competitors to look for in answers, the question file, the engines and the spending caps. It mirrors the checks `watch check` applies. `watch check` warns about a key it does not know and ignores it; this schema rejects one, so an editor flags a mistyped cap such as `budget` for `budget_usd` before a paid run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["brand"],
+  "properties": {
+    "$schema": {"type": "string", "description": "The URL of this schema. `watch init` writes it, so editors validate and complete the file."},
+    "brand": {"$ref": "#/$defs/entity", "description": "You: what counts as your citation and your mention."},
+    "competitors": {"type": ["array", "null"], "items": {"$ref": "#/$defs/entity"},
+                    "description": "Tracked competitors. Names must differ from each other and from the brand."},
+    "queries": {"type": "string", "minLength": 1, "default": "queries.csv",
+                "description": "The question file, relative to this file: a CSV with the columns query_id,query and optionally intent_tier,target_url,branded."},
+    "engines": {"type": ["array", "null"], "minItems": 1, "items": {"$ref": "#/$defs/engine"},
+                "description": "The engines to ask. Omitted or null: ChatGPT, Perplexity, Gemini and Claude through their APIs, with the default model of the running release; `watch init` writes the models out."},
+    "country": {"type": ["string", "null"], "pattern": "^[A-Z]{2}$",
+                "description": "Two-letter ISO code passed to the engines that accept a location, or null."},
+    "runs": {"type": "integer", "minimum": 1, "maximum": 10, "default": 1,
+             "description": "Asks per question per engine."},
+    "max_calls": {"type": "integer", "minimum": 1, "default": 120,
+                  "description": "Exact cap on the questions asked in one run. A plan above it does not start."},
+    "budget_usd": {"type": ["number", "null"], "minimum": 0,
+                   "description": "Spend cap in USD, checked before every call; it can be exceeded by at most one call per engine. null: no budget."},
+    "prices": {"type": ["object", "null"], "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]{0,39}$"},
+               "additionalProperties": {"$ref": "#/$defs/price"},
+               "description": "Per engine id, USD, for the engines whose provider does not report the cost of a call."}
+  },
+  "$defs": {
+    "strings": {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}],
+                "description": "One string, or a list of strings."},
+    "entity": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "pattern": "\\S"},
+        "domains": {"$ref": "#/$defs/strings", "description": "Domains that count as this entity's; subdomains count too."},
+        "url_prefixes": {"$ref": "#/$defs/strings", "description": "URL prefixes that count as this entity's, such as a store or profile on someone else's site."},
+        "aliases": {"$ref": "#/$defs/strings", "description": "Other names an answer may use."}
+      }},
+    "engine": {
+      "type": "object", "additionalProperties": false, "required": ["provider"],
+      "properties": {
+        "provider": {"enum": ["anthropic", "gemini", "openai", "openrouter", "perplexity"]},
+        "id": {"type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+               "description": "Unique engine id; defaults to the provider name."},
+        "model": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$",
+                  "description": "Defaults to the provider's default model in the running release."},
+        "base_url": {"type": ["string", "null"], "pattern": "^(https://[^\\s/]+|http://(localhost|127\\.0\\.0\\.1)(:\\d+)?)(/\\S*)?$",
+                     "description": "A compatible endpoint: https://, or http://localhost."},
+        "api": {"enum": ["interactions", "generate_content", null],
+                "description": "Gemini only: the Interactions API (the default) or generateContent."},
+        "key_env": {"type": ["string", "null"], "pattern": "^[A-Z_][A-Z0-9_]{0,63}$",
+                    "description": "The environment variable that holds the key, instead of the provider's usual one. Never the key itself."},
+        "tool": {"type": ["string", "null"], "description": "The web-search tool version (OpenAI, Anthropic)."},
+        "max_tokens": {"type": ["integer", "null"], "minimum": 1, "description": "Output tokens per answer (Anthropic)."},
+        "max_searches": {"type": ["integer", "null"], "minimum": 1, "description": "Searches per answer (Anthropic)."},
+        "max_results": {"type": ["integer", "null"], "minimum": 1, "description": "Results per search (OpenRouter)."}
+      },
+      "if": {"properties": {"provider": {"const": "gemini"}}},
+      "else": {"properties": {"api": {"type": "null"}}}},
+    "price": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "input_per_mtok": {"type": ["number", "null"], "minimum": 0, "description": "USD per million input tokens."},
+        "output_per_mtok": {"type": ["number", "null"], "minimum": 0, "description": "USD per million output tokens."},
+        "per_search": {"type": ["number", "null"], "minimum": 0, "description": "USD per web search."},
+        "per_call": {"type": ["number", "null"], "minimum": 0, "description": "USD per API request."}
+      }}
+  }
+}

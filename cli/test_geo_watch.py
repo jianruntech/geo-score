@@ -668,6 +668,164 @@ class RunFile(Base):
             self.assertIn(needle, str(cm.exception))
 
 
+# ── the config file: unknown keys and schema/watch-config.v1.json ────────
+def config_schema():
+    with io.open(os.path.join(HERE, "..", "schema", "watch-config.v1.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+try:
+    import jsonschema
+except ImportError:          # the stdlib validator above still runs; the full check needs `pip install jsonschema`
+    jsonschema = None
+
+FULL_CONFIG = {
+    "$schema": gw.CONFIG_SCHEMA_URL,
+    "brand": {"name": "Lumo", "domains": ["lumo.example"], "url_prefixes": ["https://www.amazon.com/stores/Lumo/"],
+              "aliases": ["鹿末"]},
+    "competitors": [{"name": "Pixa", "domains": "pixa.example", "aliases": []}],
+    "queries": "queries.csv",
+    "engines": [{"id": "chatgpt-api", "provider": "openai", "model": "gpt-6-luna", "tool": "web_search",
+                 "key_env": "WORK_OPENAI_KEY", "base_url": "https://proxy.example/v1/responses"},
+                {"id": "gemini-api", "provider": "gemini", "api": "generate_content"},
+                {"id": "claude-api", "provider": "anthropic", "max_tokens": 1024, "max_searches": 3},
+                {"id": "or-api", "provider": "openrouter", "model": "deepseek/deepseek-chat", "max_results": 3},
+                {"id": "local-api", "provider": "perplexity", "base_url": "http://localhost:8080/chat"}],
+    "country": "US",
+    "runs": 2,
+    "max_calls": 50,
+    "budget_usd": 1.5,
+    "prices": {"chatgpt-api": {"input_per_mtok": 0.1, "output_per_mtok": 0.5, "per_search": 0.01, "per_call": 0},
+               "claude-api": {"input_per_mtok": 3, "output_per_mtok": 15}},
+}
+
+
+class ConfigKeys(Base):
+    """A mistyped key used to vanish without a word: "budget" for "budget_usd" silently meant no budget."""
+
+    def write(self, cfg, questions="query_id,query\nq01,best free ai video generator\n"):
+        p = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(p, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(questions)
+        return p
+
+    def main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def init(self):
+        self.assertEqual(self.main("init", "--dir", self.tmp, "--brand", "Lumo", "--domain", "lumo.example",
+                                   "--competitor", "Pixa=pixa.example", "--country", "us")[0], 0)
+        with io.open(os.path.join(self.tmp, gw.CONFIG_NAME), encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_a_mistyped_cap_is_named_with_a_suggestion_everywhere_the_config_is_read(self):
+        cfg = self.init()
+        cfg["budget"] = cfg.pop("budget_usd")
+        cfg["max_call"] = cfg.pop("max_calls")
+        p = self.write(cfg)
+        budget = "unknown key 'budget' (did you mean 'budget_usd'?); it is ignored"
+        max_call = "unknown key 'max_call' (did you mean 'max_calls'?); it is ignored"
+        code, out, _ = self.main("check", "-c", p)
+        self.assertEqual(code, 0, out)                          # a warning, never a failure
+        self.assertIn("! " + budget, out)
+        self.assertIn("! " + max_call, out)
+        code, out, err = self.main("run", "-c", p, "--dry-run")
+        self.assertEqual(code, 0, err)
+        self.assertIn("warning: " + budget, err)
+        self.assertIn("warning: " + max_call, err)
+        srv = gw.MCPServer(p, out=io.StringIO())
+        st = srv.call({"name": "status", "arguments": {}})
+        self.assertIn(budget, st["structuredContent"]["config"]["warnings"])
+        self.assertIn("warning: " + max_call, st["content"][0]["text"])
+        dry = srv.call({"name": "run", "arguments": {"dry_run": True}})
+        self.assertFalse(dry["isError"], dry)
+        self.assertIn(budget, dry["content"][0]["text"])
+
+    def test_every_level_is_checked(self):
+        cfg = gw.Config(self.write({
+            "brand": {"name": "Lumo", "domain": ["lumo.example"]},
+            "competitors": [{"name": "Pixa", "domains": ["pixa.example"], "alias": ["PX"]}],
+            "engines": [{"id": "claude-api", "provider": "anthropic", "max_token": 900}],
+            "prices": {"claude-api": {"input_per_mtok": 3, "output_per_mtok": 15, "per_searches": 0.01},
+                       "claude": {"input_per_mtok": 3, "output_per_mtok": 15}},
+            "zzz": 1}))
+        self.assertEqual(cfg.errors, [])
+        w = "\n".join(cfg.warnings)
+        for needle in ("'brand.domain' (did you mean 'brand.domains'?)",
+                       "'competitors[0].alias' (did you mean 'competitors[0].aliases'?)",
+                       "'engines[0].max_token' (did you mean 'engines[0].max_tokens'?)",
+                       "'prices.claude-api.per_searches' (did you mean 'prices.claude-api.per_search'?)",
+                       "prices.claude names no engine (did you mean 'claude-api'?); it is ignored",
+                       "unknown key 'zzz'; it is ignored"):
+            self.assertIn(needle, w)
+
+    def test_a_fresh_config_names_its_schema_first_and_warns_about_nothing(self):
+        self.assertEqual(list(self.init())[0], "$schema")
+        cfg = gw.Config(os.path.join(self.tmp, gw.CONFIG_NAME))
+        self.assertEqual(cfg.raw["$schema"], gw.CONFIG_SCHEMA_URL)
+        self.assertFalse([w for w in cfg.warnings if "unknown key" in w or "names no engine" in w], cfg.warnings)
+        full = gw.Config(self.write(FULL_CONFIG))
+        self.assertEqual((full.errors, full.warnings), ([], []))
+
+    def test_the_schema_lists_exactly_the_keys_config_reads(self):
+        sc = config_schema()
+        d = sc["$defs"]
+        self.assertEqual(sc["$id"], gw.CONFIG_SCHEMA_URL)
+        self.assertEqual(list(sc["properties"]), list(gw.CONFIG_KEYS))
+        self.assertEqual(list(d["entity"]["properties"]), list(gw.ENTITY_KEYS))
+        self.assertEqual(list(d["engine"]["properties"]), list(gw.ENGINE_KEYS))
+        self.assertEqual(list(d["price"]["properties"]), list(gw.PRICE_KEYS))
+        for node in (sc, d["entity"], d["engine"], d["price"]):
+            self.assertIs(node["additionalProperties"], False)
+        eng = d["engine"]["properties"]
+        self.assertEqual(eng["provider"]["enum"], sorted(gw.PROVIDERS))
+        self.assertEqual(eng["id"]["pattern"], gw.ENGINE_ID_RE.pattern)
+        self.assertEqual(sc["properties"]["prices"]["propertyNames"]["pattern"], gw.ENGINE_ID_RE.pattern)
+        self.assertEqual(eng["model"]["pattern"], gw.MODEL_RE.pattern)
+        self.assertEqual(eng["key_env"]["pattern"], gw.ENV_RE.pattern)
+        self.assertEqual(eng["base_url"]["pattern"], gw.BASE_URL_RE.pattern)
+        self.assertEqual(sc["properties"]["country"]["pattern"], gw.COUNTRY_RE.pattern)
+        self.assertEqual(sc["properties"]["runs"]["maximum"], gw.MAX_RUNS)
+        self.assertEqual(sc["properties"]["max_calls"]["default"], gw.DEFAULT_MAX_CALLS)
+
+    def test_configs_validate_against_the_schema(self):
+        sc = config_schema()
+        good = [self.init(), FULL_CONFIG, {"brand": {"name": "Lumo", "domains": ["lumo.example"]}},
+                {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
+                 "max_calls": 10},
+                {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None}]
+        typo = dict(good[0], budget=1.0)
+        if jsonschema is not None:
+            v = jsonschema.validators.validator_for(sc)
+            v.check_schema(sc)
+            check = v(sc)
+        for c in good:
+            self.assertEqual(validate(c, sc), [], c)
+            self.assertEqual(gw.Config(self.write(c)).errors, [], c)
+            if jsonschema is not None:
+                self.assertEqual([e.message for e in check.iter_errors(c)], [], c)
+        self.assertEqual(validate(typo, sc), ["$: unexpected key budget"])
+        if jsonschema is None:
+            return
+        self.assertTrue(list(check.iter_errors(typo)))
+        # what Config refuses, the schema refuses too
+        for bad in ({"engines": [{"provider": "openai", "api": "generate_content"}]}, {"engines": []},
+                    {"engines": [{"provider": "nope"}]}, {"engines": [{"provider": "openai", "id": "Chat GPT"}]},
+                    {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
+                    {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
+                    {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
+                    {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}}):
+            c = dict({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, **bad)
+            self.assertTrue(gw.Config(self.write(c)).errors, bad)
+            self.assertTrue(list(check.iter_errors(c)), bad)
+        self.assertTrue(list(check.iter_errors({"competitors": []})))       # brand.name is required
+
+
 # ── transport, for real, against a local server ───────────────────────────
 class _Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a):
