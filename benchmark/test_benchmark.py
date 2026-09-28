@@ -232,6 +232,37 @@ class NotScored(unittest.TestCase):
         self.assertEqual(calls, ["https://x.test", "https://www.x.test"])
         self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge")
 
+    def test_the_cli_error_carries_the_prefix_run_py_matches(self):
+        """The string contract with the CLI: a site that serves every page as an AWS WAF challenge (202 with a
+        challenge body) is not scored, and its row files under "bot challenge". Skipped while the CLI does not
+        tell challenge pages apart; once it does, a reworded error fails here instead of landing under "other"."""
+        gs = run.gs
+        with io.open(os.path.join(HERE, "..", "cli", "geo_score.py"), encoding="utf-8") as f:
+            if "bot challenge" not in f.read().lower():
+                self.skipTest("this CLI does not tell bot-challenge pages apart yet")
+        page = (b'<html><head><title>Human Verification</title><script>window.awsWafCookieDomainList = [];'
+                b'window.gokuProps = {};</script><script src="https://x.token.awswaf.com/challenge.js"></script>'
+                b'</head><body><div id="challenge-container"></div><script>AwsWafIntegration.checkForceRefresh()'
+                b'.then(function () {}).catch(reportChallengeError);</script></body></html>')
+
+        def fake_fetch(url, ua=gs.UA_BROWSER, *a, **kw):
+            if run.urllib.parse.urlsplit(url).path.endswith((".txt", ".xml")):
+                return gs.Resp(url, 404, b"", {})
+            return gs.Resp(url, 202, page, {"content-type": "text/html; charset=utf-8"})
+        saved = gs.fetch, getattr(gs, "preflight_host", None), run.time.sleep
+        gs.fetch, run.time.sleep = fake_fetch, lambda s: None
+        if saved[1]:
+            gs.preflight_host = lambda *a, **k: None          # challenge.test has no DNS; fetch never leaves the process
+        try:
+            row = run.one({"url": "challenge.test", "sector": "Test"})
+        finally:
+            gs.fetch, run.time.sleep = saved[0], saved[2]
+            if saved[1]:
+                gs.preflight_host = saved[1]
+        self.assertIn("error", row, "the CLI scored a site that serves only challenge pages: %s" % row.get("normalised"))
+        self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge",
+                         "the CLI's error no longer starts with %r: %s" % (run.BOT_CHALLENGE, row["error"]))
+
     def test_challenge_qualifier_only_for_data_older_than_the_fix(self):
         self.assertIn("bot-challenge page", build_page.challenge_note("geo-score-cli/1.3.0", "en"))
         self.assertIn("人机验证", build_page.challenge_note("geo-score-cli/1.4.0", "zh"))
