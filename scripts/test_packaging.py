@@ -183,10 +183,11 @@ def gate_block(start, end):
 
 
 def fake_bin(tmp, fakes):
-    """A directory holding python3 and the fake commands {name: sh body}, and nothing else, for PATH."""
+    """A directory holding python3 (the real one unless fakes has its own) and the fake commands
+    {name: sh body}, and nothing else, for PATH."""
     d = os.path.join(tmp, "bin")
     os.makedirs(d)
-    for name, body in dict(fakes, python3='exec "%s" "$@"' % sys.executable).items():
+    for name, body in dict({"python3": 'exec "%s" "$@"' % sys.executable}, **fakes).items():
         path = os.path.join(d, name)
         io.open(path, "w", encoding="utf-8").write(u"#!/bin/sh\n%s\n" % body)
         os.chmod(path, 0o755)
@@ -195,7 +196,8 @@ def fake_bin(tmp, fakes):
 
 def run_block(bash, block, fakes, env=None, files=None):
     """Runs a block cut from check.sh under bash -euo pipefail, as check.sh does, in an empty directory with
-    only the fakes on PATH. Returns (exit code, output)."""
+    only the fakes on PATH. A fake may log each call to "$HOME/calls", even one whose output the block throws
+    away. Returns (exit code, output, the calls in order)."""
     with tempfile.TemporaryDirectory() as tmp:
         for rel, text in (files or {}).items():
             os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
@@ -204,44 +206,85 @@ def run_block(bash, block, fakes, env=None, files=None):
         r = subprocess.run([bash, "-euo", "pipefail", "-c", prelude + block], cwd=tmp,
                            env=dict(env or {}, PATH=fake_bin(tmp, fakes), HOME=tmp),
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
-        return r.returncode, r.stdout
+        log = os.path.join(tmp, "calls")
+        calls = io.open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
+        return r.returncode, r.stdout, calls
 
 
 def check_gate_steps():
     """check.sh's steps that depend on the machine: each one skips, or falls back, instead of failing the gate
     for something the change under test did not cause."""
-    print("\n  the gate on other machines: lint without the pinned ruff, the --live label step, gh for --execute")
+    print("\n  the gate on other machines: lint without the pinned ruff, the pinned jsonschema, the --live label step,"
+          " gh for --execute")
     bash = shutil.which("bash")
     if bash is None or os.name == "nt":
         print("  skip  no bash here")
         return
-    # lint: the pinned ruff from PATH or uvx; offline with another ruff, that one with a warning; lint errors
+    gate = rd("scripts/check.sh")
+    # lint: the pinned ruff from PATH, or from uvx's cache, or fetched by uvx, in that order, so a warm cache
+    # never touches the network; offline and uncached with another ruff, that one with a warning; lint errors
     # fail the gate whichever ruff found them
-    pin = re.search(r"^RUFF_VERSION=(\S+)$", rd("scripts/check.sh"), re.M)
+    pin = re.search(r"^RUFF_VERSION=(\S+)$", gate, re.M)
     lint = gate_block(r'step "lint:', r"for py in ")
     ok(pin is not None and lint is not None, "check.sh has the lint step")
     if pin is not None and lint is not None:
-        lint = "RUFF_VERSION=%s\n%s" % (pin.group(1), lint)
+        v = pin.group(1)
+        lint = "RUFF_VERSION=%s\n%s" % (v, lint)
         ruff = ('[ "$1" = --version ] && { echo "ruff $FAKE_RUFF"; exit 0; }\n'
                 'echo "path ruff $*"; exit "$FAKE_RUFF_RC"')
-        uvx = ('[ "$2" = --version ] && exit "$FAKE_UVX_FETCH"\n'
-               'echo "uvx $*"; exit "$FAKE_UVX_RC"')
+        uvx = ('a="$*"; echo "uvx $a" >> "$HOME/calls"\n'
+               'off=; [ "$1" = --offline ] && { off=1; shift; }\n'
+               'if [ "$2" = --version ]; then [ -n "$off" ] && exit "$FAKE_UVX_CACHED"; exit "$FAKE_UVX_FETCH"; fi\n'
+               'echo "uvx $a"; exit "$FAKE_UVX_RC"')
         both = {"ruff": ruff, "uvx": uvx}
-        env = {"FAKE_RUFF": "0.0.1", "FAKE_RUFF_RC": "0", "FAKE_UVX_FETCH": "0", "FAKE_UVX_RC": "0"}
-        rc, out = run_block(bash, lint, both, env)
-        ok(rc == 0 and "uvx ruff@%s check" % pin.group(1) in out and "path ruff" not in out,
-           "another ruff on PATH: the pinned one runs through uvx (rc %d)" % rc)
-        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_RC="1"))
+        env = {"FAKE_RUFF": "0.0.1", "FAKE_RUFF_RC": "0", "FAKE_UVX_CACHED": "0", "FAKE_UVX_FETCH": "0", "FAKE_UVX_RC": "0"}
+        online = "uvx ruff@%s --version" % v
+        rc, out, calls = run_block(bash, lint, both, env)
+        ok(rc == 0 and "uvx --offline ruff@%s check" % v in out and "path ruff" not in out and online not in calls,
+           "another ruff on PATH, the pin in uv's cache: uvx runs it offline, with no fetch (rc %d)" % rc)
+        rc, out, calls = run_block(bash, lint, both, dict(env, FAKE_UVX_CACHED="1"))
+        ok(rc == 0 and "uvx ruff@%s check" % v in out and calls[:2] == ["uvx --offline ruff@%s --version" % v, online],
+           "the pin not cached: uvx fetches it, after looking in the cache (rc %d, %s)" % (rc, calls[:2]))
+        rc, out, calls = run_block(bash, lint, both, dict(env, FAKE_UVX_RC="1"))
         ok(rc != 0, "lint errors found by uvx's ruff fail the gate (rc %d)" % rc)
-        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1"))
+        rc, out, calls = run_block(bash, lint, both, dict(env, FAKE_UVX_CACHED="1", FAKE_UVX_FETCH="1"))
         ok(rc == 0 and "warning: ruff 0.0.1" in out and "path ruff check" in out and "uvx ruff" not in out,
-           "offline (uvx cannot fetch the pin): the PATH ruff runs, with a warning (rc %d)" % rc)
-        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1", FAKE_RUFF_RC="1"))
+           "offline (uvx has no cached pin and cannot fetch it): the PATH ruff runs, with a warning (rc %d)" % rc)
+        rc, out, calls = run_block(bash, lint, both, dict(env, FAKE_UVX_CACHED="1", FAKE_UVX_FETCH="1", FAKE_RUFF_RC="1"))
         ok(rc != 0, "lint errors found by the PATH ruff fail the gate (rc %d)" % rc)
-        rc, out = run_block(bash, lint, {"uvx": uvx}, dict(env, FAKE_UVX_FETCH="1"))
+        rc, out, calls = run_block(bash, lint, {"uvx": uvx}, dict(env, FAKE_UVX_CACHED="1", FAKE_UVX_FETCH="1"))
         ok(rc == 0 and "skipped" in out, "offline with no ruff on PATH: lint is skipped (rc %d)" % rc)
-        rc, out = run_block(bash, lint, both, dict(env, FAKE_RUFF=pin.group(1), FAKE_UVX_FETCH="1"))
-        ok(rc == 0 and "path ruff check" in out and "uvx" not in out, "the pinned ruff on PATH runs as it is (rc %d)" % rc)
+        rc, out, calls = run_block(bash, lint, both, dict(env, FAKE_RUFF=v))
+        ok(rc == 0 and "path ruff check" in out and "uvx" not in out and not calls,
+           "the pinned ruff on PATH runs as it is, and uvx is not asked (rc %d)" % rc)
+    # the schema check: the pinned jsonschema from python3, or from uv's cache, or fetched by uv, in that order;
+    # failing those, python3's other jsonschema, and with none at all the step is skipped
+    js = re.search(r"^JSONSCHEMA_VERSION=(\S+)$", gate, re.M)
+    schema = gate_block(r'JS="jsonschema==', r'if \[ -n "\$SCHEMA_PY" \]; then')
+    ok(js is not None and schema is not None, "check.sh chooses a jsonschema for the schema step")
+    if js is not None and schema is not None:
+        v = js.group(1)
+        block = 'JSONSCHEMA_VERSION=%s\n%s\necho "SCHEMA_PY=$SCHEMA_PY;"\n' % (v, schema)
+        py = ('case "$*" in *importlib.metadata*) [ -n "$FAKE_JS" ] || exit 1; echo "$FAKE_JS"; exit 0 ;; esac\n'
+              'exec "%s" "$@"' % sys.executable)
+        uv = ('echo "uv $*" >> "$HOME/calls"\n'
+              'case " $* " in *" --offline "*) exit "$FAKE_UV_CACHED" ;; esac; exit "$FAKE_UV_FETCH"')
+        both = {"python3": py, "uv": uv}
+        env = {"FAKE_JS": "0.0.1", "FAKE_UV_CACHED": "0", "FAKE_UV_FETCH": "0"}
+        offline = "uv run --offline --no-project --with jsonschema==%s python" % v
+        rc, out, calls = run_block(bash, block, both, dict(env, FAKE_JS=v))
+        ok(rc == 0 and "SCHEMA_PY=python3;" in out and not calls, "python3 has the pinned jsonschema: it runs, uv is not asked (rc %d)" % rc)
+        rc, out, calls = run_block(bash, block, both, env)
+        ok(rc == 0 and "SCHEMA_PY=%s;" % offline in out and len(calls) == 1,
+           "the pin in uv's cache: uv runs it offline, with no fetch (rc %d, %s)" % (rc, calls))
+        rc, out, calls = run_block(bash, block, both, dict(env, FAKE_UV_CACHED="1"))
+        ok(rc == 0 and "SCHEMA_PY=uv run --no-project --with jsonschema==%s python;" % v in out
+           and len(calls) == 2 and "--offline" in calls[0],
+           "the pin not cached: uv fetches it, after looking in the cache (rc %d, %s)" % (rc, calls))
+        rc, out, calls = run_block(bash, block, both, dict(env, FAKE_UV_CACHED="1", FAKE_UV_FETCH="1"))
+        ok(rc == 0 and "SCHEMA_PY=python3;" in out, "offline and uncached: python3's own jsonschema runs (rc %d)" % rc)
+        rc, out, calls = run_block(bash, block, {"python3": py}, dict(env, FAKE_JS=""))
+        ok(rc == 0 and "SCHEMA_PY=;" in out, "no jsonschema and no uv: the step is skipped, not failed (rc %d)" % rc)
     # the label step needs a logged-in gh: the workflow has none, and a release checks gh itself (gh_problem)
     labels = gate_block(r"  if \[ -f scripts/sync_labels\.py \]; then$", r"  fi$")
     ok(labels is not None, "check.sh has the sync_labels.py step")
@@ -250,17 +293,17 @@ def check_gate_steps():
         gh = 'case "$1" in auth) exit "$FAKE_GH_AUTH" ;; esac; exit 0'
         sync = {"scripts/sync_labels.py": "import os, sys\nprint('fake sync ' + ' '.join(sys.argv[1:]))\n"
                                           "sys.exit(int(os.environ['FAKE_SYNC_RC']))\n"}
-        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "1", "FAKE_SYNC_RC": "1"}, sync)
+        rc, out, _ = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "1", "FAKE_SYNC_RC": "1"}, sync)
         ok(rc == 0 and "gh not authenticated: skipped" in out and "fake sync" not in out,
            "gh logged out: the label step is skipped, not failed (rc %d)" % rc)
-        rc, out = run_block(bash, labels, {}, {"FAKE_SYNC_RC": "1"}, sync)
+        rc, out, _ = run_block(bash, labels, {}, {"FAKE_SYNC_RC": "1"}, sync)
         ok(rc == 0 and "gh not installed: skipped" in out, "no gh: the label step is skipped (rc %d)" % rc)
-        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"}, sync)
+        rc, out, _ = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"}, sync)
         ok(rc != 0 and "fake sync --check" in out and "sync_labels.py --apply" in out,
            "gh logged in and a label missing: the gate stops and names --apply (rc %d)" % rc)
-        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "0"}, sync)
+        rc, out, _ = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "0"}, sync)
         ok(rc == 0 and "fake sync --check" in out, "gh logged in and every label there: the step passes (rc %d)" % rc)
-        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"})
+        rc, out, _ = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"})
         ok(rc == 0 and "labels" not in out, "no scripts/sync_labels.py: no label step (rc %d)" % rc)
 
     saved = dict(os.environ)
