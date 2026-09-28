@@ -17,16 +17,22 @@ RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
 # packaging manifests whose "version" is the release: bump() rewrites them, preflight() checks them
 MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", "gemini-extension.json"]
 # files whose one-line install or download is pinned to a release tag
+# (scripts/test_packaging.py fails when a tracked file names a release and is not listed here)
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
-          ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md", "STABILITY.md",
-          "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md", "guide/mcp.zh-CN.md"] + MANIFESTS
-# every way a document pins a release; group 1 is kept, the version after it is rewritten
-PINS = [re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"),
-        re.compile(r"(jianruntech/geo-score/releases/download/)v\d+\.\d+\.\d+"),
-        re.compile(r"(jianruntech/geo-score@)v\d+\.\d+\.\d+"),
-        re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"),
-        re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+"),
-        re.compile(r"(jianruntech/geo-score --ref )v\d+\.\d+\.\d+")]
+          "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md",
+          "STABILITY.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
+          "guide/mcp.zh-CN.md"] + MANIFESTS
+# every way a document pins a release, as (pattern, prefix): group 1 is kept, and the version after it is rewritten
+# to prefix + version. A tag carries a "v"; the wheel's file name, which follows the tag in a download URL, does not
+PINS = [(re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"), "v"),
+        (re.compile(r"(jianruntech/geo-score/releases/download/)v\d+\.\d+\.\d+"), "v"),
+        (re.compile(r"(jianruntech/geo-score@)v\d+\.\d+\.\d+"), "v"),
+        (re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"), "v"),
+        (re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+"), "v"),
+        (re.compile(r"(jianruntech/geo-score --ref )v\d+\.\d+\.\d+"), "v"),
+        (re.compile(r"(?<![\w.-])(geo_score-)\d+\.\d+\.\d+(?=-py3-none-any\.whl)"), "")]
+# a wheel the install lines download from a release, by its file name
+WHEEL_URL_RX = re.compile(r"jianruntech/geo-score/releases/download/v\d+\.\d+\.\d+/([\w.-]+\.whl)")
 # rewrites the generated MCP blocks (tool table, install buttons) in README*/guide/mcp*; --check exits 1 on drift.
 # PINS cannot see the version inside a URL-encoded or base64 install link, so bump() regenerates them instead.
 MCP_DOCS = "scripts/mcp_docs.py"
@@ -58,6 +64,54 @@ def sha256(path):
 
 def mcpb_url(v):
     return "%s/releases/download/v%s/geo-score-%s.mcpb" % (REPO, v, v)
+
+
+def wheel_name(v):
+    """The file name the build gives the wheel, and the one the uvx and pipx install lines download."""
+    return "geo_score-%s-py3-none-any.whl" % v
+
+
+def stale_pins(text, v):
+    """The pins in text that name a release other than v (or main)."""
+    return sorted({m.group(0) for rx, pre in PINS for m in rx.finditer(text) if m.group(0) != m.group(1) + pre + v})
+
+
+def repin(text, v):
+    """text with every pin pointed at release v."""
+    for rx, pre in PINS:
+        text = rx.sub(lambda m, pre=pre: m.group(1) + pre + v, text)
+    return text
+
+
+def named_wheels():
+    """{wheel file name: [pinned files whose install lines download it]}."""
+    out = {}
+    for p in PINNED:
+        if os.path.exists(os.path.join(ROOT, p)):
+            for m in WHEEL_URL_RX.finditer(rd(p)):
+                out.setdefault(m.group(1), []).append(p)
+    return out
+
+
+def wheel_problem(v, dist):
+    """Why the wheel built into dist cannot ship as v, or None. The install lines download it by name, so a build
+    that names it differently would leave every one of them broken."""
+    built = sorted(n for n in os.listdir(dist) if n.endswith(".whl"))
+    named = named_wheels()
+    if built == [wheel_name(v)] and not set(named) - set(built):
+        return None
+    return "the build made %s; the install lines need %s%s" % (
+        ", ".join(built) or "no wheel", wheel_name(v),
+        "".join("\n  %s: %s" % (n, ", ".join(sorted(set(ps)))) for n, ps in sorted(named.items()) if n not in built))
+
+
+def gh_problem():
+    """Why gh cannot publish the release, or None. It runs last, after main, the tag and v1 are pushed, and
+    check.sh skips its label check when gh is logged out, so --execute asks first."""
+    if not shutil.which("gh"):
+        return "gh is not installed (https://cli.github.com); it creates the GitHub release"
+    r = subprocess.run(["gh", "auth", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return "gh is not logged in (gh auth login); it creates the GitHub release" if r.returncode else None
 
 
 def version_fields(obj, v):
@@ -104,8 +158,7 @@ def preflight(v):
     for p in PINNED:
         if not os.path.exists(os.path.join(ROOT, p)):
             continue
-        t = rd(p)
-        bad = sorted({m.group(0) for rx in PINS for m in rx.finditer(t) if not m.group(0).endswith("v" + v)})
+        bad = stale_pins(rd(p), v)
         if bad:
             problems.append("%s: %s, not v%s" % (p, ", ".join(bad), v))
     for p in MANIFESTS:
@@ -154,10 +207,7 @@ def bump(v):
     wr("SKILL.md", re.sub(r"^(\s+version: )\S+", r"\g<1>" + v, rd("SKILL.md"), count=1, flags=re.M))
     for p in PINNED:
         if os.path.exists(os.path.join(ROOT, p)):
-            t = rd(p)
-            for rx in PINS:
-                t = rx.sub(lambda m: m.group(1) + "v" + v, t)
-            wr(p, t)
+            wr(p, repin(rd(p), v))
     for p in MANIFESTS:
         wrj(p, set_version_fields(rdj(p), v))
     # before the changelog, which a second --bump would rewrite twice: a failure here can simply be rerun
@@ -222,14 +272,21 @@ def pack(v, out_dir):
 
 
 def execute(v):
+    why = gh_problem()
+    if why:
+        sys.exit("stopped: " + why)
     dist = os.path.join(ROOT, "dist")
     shutil.rmtree(dist, ignore_errors=True)
     os.makedirs(dist)
-    for step in (["bash", "scripts/check.sh", "--live"],
+    # --strict: a release is tested on the oldest and the newest Python, never on whatever happens to be installed
+    for step in (["bash", "scripts/check.sh", "--live", "--strict"],
                  ["uv", "build", "--out-dir", "dist"] if shutil.which("uv") else [sys.executable, "-m", "build", "--outdir", "dist"]):
         print("$ " + " ".join(step))
         if subprocess.run(step, cwd=ROOT).returncode:
             sys.exit("stopped: %s failed" % step[0])
+    why = wheel_problem(v, dist)
+    if why:
+        sys.exit("stopped: " + why)
     for f in ("geo_score.py", "geo_watch.py"):
         shutil.copy(os.path.join(ROOT, "cli", f), os.path.join(dist, f))
     for p in pack(v, dist):
@@ -288,7 +345,8 @@ def main():
             print("  - " + p)
         sys.exit(1)
     if not a.execute:
-        print("\nready for %s. Plan: check.sh --live, build sdist + wheel, the .mcpb and dist/server.json, "
+        print("\nready for %s. Plan: stop unless gh is logged in, check.sh --live --strict, build sdist + wheel "
+              "(stopping unless the wheel is the file the install lines name), the .mcpb and dist/server.json, "
               "SHA256SUMS over them and the two CLI files, push main, tag v%s and push it, move v1 and push it, "
               "gh release create with the changelog section.\nRun again with --execute." % (a.version, a.version))
         return

@@ -5,7 +5,10 @@
 #
 # Level 1 (score_site) needs no key. Pass only the keys you want with -e NAME (no value, so it stays out of
 # your shell history and the client config); /work is where geo-score-watch.json and .geo-score/ live.
-FROM python:3.12-slim
+
+# python:3.12-slim as of 2026-09-28 (3.12.14-slim-trixie), pinned by digest so a rebuild starts from the same image.
+# Move it on purpose: `docker buildx imagetools inspect python:3.12-slim` prints the current digest.
+FROM python:3.12-slim@sha256:f77ac9e44ae96ef2c90b8053ea08c31f8be030f824196b0ae4db6d462c84e51f
 
 LABEL io.modelcontextprotocol.server.name="io.github.jianruntech/geo-score" \
       org.opencontainers.image.title="geo-score" \

@@ -9,12 +9,19 @@ version, the tool names, the key variables, the entry point. Nothing else would 
 falls behind, so this compares each with the code, then builds the .mcpb the way release.py does, starts the
 bundled server and asks it for its tools.
 """
-import importlib.util, io, json, os, re, subprocess, sys, tempfile, zipfile
+import importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import release  # noqa: E402  (MANIFESTS, version_fields, pack: the same code a release runs)
+import mcp_docs  # noqa: E402  (the install block's wheel URL)
 
+# tracked files that may name a release although --bump does not rewrite them: the changelogs (history), raw
+# benchmark reports, build output, the pages build_page.py regenerates from the PINNED benchmark/_page_tpl.py,
+# and validate.py, whose rule 27 holds the pattern's text
+PIN_EXEMPT = re.compile(r"^(?:CHANGELOG[^/]*|benchmark/raw/.*|dist/.*|docs/[^/]*\.html|\.github/validate\.py)$")
+# a wheel download: (the release tag, the version in the wheel's file name)
+WHEEL_URL = re.compile(r"releases/download/v(\d+\.\d+\.\d+)/geo_score-(\d+\.\d+\.\d+)-py3-none-any\.whl")
 SERVER_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
 NAME_RE = re.compile(r"^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$")     # server.json schema 2025-12-11, `name`
 WATCH_ENV = "GEO_SCORE_WATCH_CONFIG"
@@ -40,6 +47,237 @@ def load_watch():
     return mod
 
 
+def tracked():
+    """The repository's tracked files, or None outside a git checkout."""
+    try:
+        r = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError:
+        return None
+    return [p for p in r.stdout.decode("utf-8").split("\0") if p] if r.returncode == 0 else None
+
+
+def check_pins(version):
+    """Every tracked file that pins a release is one release.py rewrites, and every wheel URL names this release."""
+    print("\n  release pins: every tracked file that names a release is in release.py's PINNED")
+    files = tracked()
+    if files is None:
+        print("  skip  not a git checkout, so there is no list of tracked files")
+        return
+    listed, bad, wheels = set(release.PINNED), 0, 0
+    for p in files:
+        full = os.path.join(ROOT, p)
+        if PIN_EXEMPT.match(p) or not os.path.isfile(full):
+            continue
+        text = io.open(full, encoding="utf-8", errors="replace").read()
+        for m in WHEEL_URL.finditer(text):
+            wheels += 1
+            if not m.group(1) == m.group(2) == version:
+                ok(False, "%s downloads %s; tag and wheel must both be %s" % (p, m.group(0), version))
+        if p in listed:
+            continue
+        hits = sorted({m.group(0) for rx, _ in release.PINS for m in rx.finditer(text)})
+        if hits:
+            bad += 1
+            ok(False, "%s names %s but is not in PINNED, so --bump would leave it behind" % (p, ", ".join(hits)))
+    if not bad:
+        ok(True, "%d tracked files: each one that names a release is in PINNED or exempt" % len(files))
+    ok(wheels > 0, "%d wheel URLs, each releases/download/v%s/%s" % (wheels, version, release.wheel_name(version)))
+
+    print("\n  the wheel: what the install lines download, and what --bump and preflight do to it")
+    url = "%s/releases/download/v%s/%s" % (release.REPO, version, release.wheel_name(version))
+    ok(mcp_docs.cfg_for(version)["args"][1] == url, "mcp_docs.py installs %s" % url)
+    # built from parts, so this file does not itself name a release
+    old = "uvx --from %s/releases/download/v%s/%s geo-score" % (release.REPO, "1.2.3", release.wheel_name("1.2.3"))
+    ok(release.repin(old, "9.9.9") == old.replace("1.2.3", "9.9.9"), "--bump rewrites the tag and the wheel's version")
+    ok(release.stale_pins(old.replace("v1.2.3", "v9.9.9"), "9.9.9") == ["geo_score-1.2.3"],
+       "preflight names a wheel whose version is not the tag's")
+    with tempfile.TemporaryDirectory() as tmp:
+        io.open(os.path.join(tmp, release.wheel_name(version)), "wb").close()
+        ok(release.wheel_problem(version, tmp) is None, "--execute goes on when the build made %s" % release.wheel_name(version))
+        os.rename(os.path.join(tmp, release.wheel_name(version)), os.path.join(tmp, "geo_score-%s-cp312-cp312-any.whl" % version))
+        ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
+
+
+def check_pythons():
+    """pyproject.toml's requires-python and classifiers say what check.sh tests, PY_OLDEST to PY_NEWEST; the
+    workflow's matrix and RELEASING.md's Windows run and --strict hint name those two ends."""
+    print("\n  Python versions: pyproject.toml, validate.yml and RELEASING.md against check.sh's PY_OLDEST and PY_NEWEST")
+    gate, pp = rd("scripts/check.sh"), rd("pyproject.toml")
+    lo, hi = (re.search(r"^%s=3\.(\d+)$" % k, gate, re.M) for k in ("PY_OLDEST", "PY_NEWEST"))
+    ok(lo is not None and hi is not None, "check.sh sets PY_OLDEST and PY_NEWEST")
+    if lo is None or hi is None:
+        return
+    lo, hi = int(lo.group(1)), int(hi.group(1))
+    ok(re.search(r'^requires-python = ">=3\.%d"$' % lo, pp, re.M) is not None, "requires-python is >=3.%d" % lo)
+    got = sorted(int(x) for x in re.findall(r'"Programming Language :: Python :: 3\.(\d+)"', pp))
+    ok(got == list(range(lo, hi + 1)),
+       "a classifier for each of 3.%d to 3.%d (%s)" % (lo, hi, ", ".join("3.%d" % x for x in got)))
+    ok('"Programming Language :: Python :: 3 :: Only"' in pp, "the '3 :: Only' classifier")
+    ends = ["3.%d" % lo, "3.%d" % hi]
+    wf = rd(".github/workflows/validate.yml")
+    mx = re.search(r"^\s*matrix:\s*\{py:\s*\[([^\]]*)\]", wf, re.M)
+    got = re.findall(r'"([^"]*)"', mx.group(1)) if mx else None
+    ok(got == ends, "validate.yml's matrix is %s (%s)" % (ends, got))
+    # setup-python builds each Python for particular images, and 3.8 stops at ubuntu-24.04
+    got = re.findall(r"^\s*runs-on:\s*(\S+)", wf, re.M)
+    ok(bool(got) and not [r for r in got if r.endswith("-latest")],
+       "validate.yml runs on a named image, not a moving -latest one (%s)" % ", ".join(got))
+    rel = rd("RELEASING.md")
+    got = sorted(set(re.findall(r"\bpy -(3\.\d+)", rel)), key=lambda x: int(x[2:]))
+    ok(got == ends, "RELEASING.md's Windows run uses py -%s and py -%s (%s)" % (ends[0], ends[1], ", ".join(got)))
+    got = re.search(r"uv python install (3\.\d+) (3\.\d+)", rel)
+    ok(got is not None and list(got.groups()) == ends, "RELEASING.md's --strict hint is uv python install %s" % " ".join(ends))
+    got = {v for pair in re.findall(r"Python (3\.\d+)(?: and (3\.\d+))?", rel) for v in pair if v}
+    ok(got <= set(ends), "RELEASING.md names no other Python (%s)" % ", ".join(sorted(got, key=lambda x: int(x[2:]))))
+
+
+def loose_uses(text):
+    """The `uses:` in a workflow that are not pinned: an action needs a full commit SHA and a '# vX.Y.Z' comment.
+    A local action (./path) is this repository at the commit under test, and a docker:// image pinned by its
+    digest is already immutable, so neither needs one."""
+    out = []
+    for u, rest in re.findall(r"^\s*(?:-\s+)?uses:\s*(\S+)(.*)$", text, re.M):
+        if u.startswith("./") or re.match(r"^docker://\S+@sha256:[0-9a-f]{64}$", u):
+            continue
+        if not (re.search(r"@[0-9a-f]{40}$", u) and re.match(r"\s+#\s*v\d", rest)):
+            out.append(u)
+    return out
+
+
+def check_gate_pins():
+    """The workflow runs the gate with the tool versions check.sh pins, on actions pinned by commit."""
+    print("\n  the gate's pins: tools in check.sh and the workflows, actions by commit")
+    gate = rd("scripts/check.sh")
+    for var, pkg in (("RUFF_VERSION", "ruff"), ("JSONSCHEMA_VERSION", "jsonschema")):
+        m = re.search(r"^%s=(\S+)$" % var, gate, re.M)
+        ok(m is not None, "check.sh sets %s" % var)
+        if m:
+            wf = rd(".github/workflows/validate.yml")
+            ok("%s==%s" % (pkg, m.group(1)) in wf, "validate.yml installs %s==%s, as check.sh pins" % (pkg, m.group(1)))
+    wdir = os.path.join(ROOT, ".github", "workflows")
+    for f in sorted(os.listdir(wdir)):
+        if not f.endswith((".yml", ".yaml")):
+            continue
+        text = rd(os.path.join(".github", "workflows", f))
+        loose = loose_uses(text)
+        ok(not loose, "%s: every action is pinned by commit with a '# vX.Y.Z' comment%s"
+           % (f, " (not: %s)" % ", ".join(loose) if loose else ""))
+        ok(re.search(r"^permissions:", text, re.M) is not None, "%s: sets top-level permissions" % f)
+        checkouts = len(re.findall(r"uses:\s*actions/checkout@", text))
+        ok(len(re.findall(r"persist-credentials:\s*false", text)) >= checkouts,
+           "%s: no checkout keeps the token (persist-credentials: false)" % f)
+    sha, digest = "0123456789abcdef" * 2 + "01234567", "0" * 64
+    ok(loose_uses("steps:\n  - uses: ./\n  - uses: ./.github/actions/x\n  - uses: docker://alpine@sha256:%s\n"
+                  "  - uses: actions/checkout@%s  # v7.0.1\n" % (digest, sha)) == [],
+       "a local action, a docker image by digest and an action by commit count as pinned")
+    ok(loose_uses("steps:\n  - uses: actions/checkout@v7\n  - uses: docker://alpine:3.20\n"
+                  "  - uses: actions/setup-python@%s\n" % sha)
+       == ["actions/checkout@v7", "docker://alpine:3.20", "actions/setup-python@" + sha],
+       "a tag, a docker tag and a commit with no '# vX.Y.Z' comment do not")
+
+
+def gate_block(start, end):
+    """The lines of check.sh from the one matching start up to (not including) the one matching end."""
+    m = re.search(r"^%s.*?(?=^%s)" % (start, end), rd("scripts/check.sh"), re.M | re.S)
+    return m.group(0) if m else None
+
+
+def fake_bin(tmp, fakes):
+    """A directory holding python3 and the fake commands {name: sh body}, and nothing else, for PATH."""
+    d = os.path.join(tmp, "bin")
+    os.makedirs(d)
+    for name, body in dict(fakes, python3='exec "%s" "$@"' % sys.executable).items():
+        path = os.path.join(d, name)
+        io.open(path, "w", encoding="utf-8").write(u"#!/bin/sh\n%s\n" % body)
+        os.chmod(path, 0o755)
+    return d
+
+
+def run_block(bash, block, fakes, env=None, files=None):
+    """Runs a block cut from check.sh under bash -euo pipefail, as check.sh does, in an empty directory with
+    only the fakes on PATH. Returns (exit code, output)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        for rel, text in (files or {}).items():
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            io.open(os.path.join(tmp, rel), "w", encoding="utf-8").write(text)
+        prelude = "step() { printf '\\n== %s\\n' \"$*\"; }\n"
+        r = subprocess.run([bash, "-euo", "pipefail", "-c", prelude + block], cwd=tmp,
+                           env=dict(env or {}, PATH=fake_bin(tmp, fakes), HOME=tmp),
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+        return r.returncode, r.stdout
+
+
+def check_gate_steps():
+    """check.sh's steps that depend on the machine: each one skips, or falls back, instead of failing the gate
+    for something the change under test did not cause."""
+    print("\n  the gate on other machines: lint without the pinned ruff, the --live label step, gh for --execute")
+    bash = shutil.which("bash")
+    if bash is None or os.name == "nt":
+        print("  skip  no bash here")
+        return
+    # lint: the pinned ruff from PATH or uvx; offline with another ruff, that one with a warning; lint errors
+    # fail the gate whichever ruff found them
+    pin = re.search(r"^RUFF_VERSION=(\S+)$", rd("scripts/check.sh"), re.M)
+    lint = gate_block(r'step "lint:', r"for py in ")
+    ok(pin is not None and lint is not None, "check.sh has the lint step")
+    if pin is not None and lint is not None:
+        lint = "RUFF_VERSION=%s\n%s" % (pin.group(1), lint)
+        ruff = ('[ "$1" = --version ] && { echo "ruff $FAKE_RUFF"; exit 0; }\n'
+                'echo "path ruff $*"; exit "$FAKE_RUFF_RC"')
+        uvx = ('[ "$2" = --version ] && exit "$FAKE_UVX_FETCH"\n'
+               'echo "uvx $*"; exit "$FAKE_UVX_RC"')
+        both = {"ruff": ruff, "uvx": uvx}
+        env = {"FAKE_RUFF": "0.0.1", "FAKE_RUFF_RC": "0", "FAKE_UVX_FETCH": "0", "FAKE_UVX_RC": "0"}
+        rc, out = run_block(bash, lint, both, env)
+        ok(rc == 0 and "uvx ruff@%s check" % pin.group(1) in out and "path ruff" not in out,
+           "another ruff on PATH: the pinned one runs through uvx (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_RC="1"))
+        ok(rc != 0, "lint errors found by uvx's ruff fail the gate (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "warning: ruff 0.0.1" in out and "path ruff check" in out and "uvx ruff" not in out,
+           "offline (uvx cannot fetch the pin): the PATH ruff runs, with a warning (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1", FAKE_RUFF_RC="1"))
+        ok(rc != 0, "lint errors found by the PATH ruff fail the gate (rc %d)" % rc)
+        rc, out = run_block(bash, lint, {"uvx": uvx}, dict(env, FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "skipped" in out, "offline with no ruff on PATH: lint is skipped (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_RUFF=pin.group(1), FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "path ruff check" in out and "uvx" not in out, "the pinned ruff on PATH runs as it is (rc %d)" % rc)
+    # the label step needs a logged-in gh: the workflow has none, and a release checks gh itself (gh_problem)
+    labels = gate_block(r"  if \[ -f scripts/sync_labels\.py \]; then$", r"  fi$")
+    ok(labels is not None, "check.sh has the sync_labels.py step")
+    if labels is not None:
+        labels += "  fi\n"
+        gh = 'case "$1" in auth) exit "$FAKE_GH_AUTH" ;; esac; exit 0'
+        sync = {"scripts/sync_labels.py": "import os, sys\nprint('fake sync ' + ' '.join(sys.argv[1:]))\n"
+                                          "sys.exit(int(os.environ['FAKE_SYNC_RC']))\n"}
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "1", "FAKE_SYNC_RC": "1"}, sync)
+        ok(rc == 0 and "gh not authenticated: skipped" in out and "fake sync" not in out,
+           "gh logged out: the label step is skipped, not failed (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {}, {"FAKE_SYNC_RC": "1"}, sync)
+        ok(rc == 0 and "gh not installed: skipped" in out, "no gh: the label step is skipped (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"}, sync)
+        ok(rc != 0 and "fake sync --check" in out and "sync_labels.py --apply" in out,
+           "gh logged in and a label missing: the gate stops and names --apply (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "0"}, sync)
+        ok(rc == 0 and "fake sync --check" in out, "gh logged in and every label there: the step passes (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"})
+        ok(rc == 0 and "labels" not in out, "no scripts/sync_labels.py: no label step (rc %d)" % rc)
+
+    saved = dict(os.environ)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["PATH"] = fake_bin(tmp, {})
+            ok("not installed" in (release.gh_problem() or ""), "--execute stops first when there is no gh")
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["PATH"] = fake_bin(tmp, {"gh": 'case "$1" in auth) exit "$FAKE_GH_AUTH" ;; esac; exit 0'})
+            os.environ["FAKE_GH_AUTH"] = "1"
+            ok("not logged in" in (release.gh_problem() or ""), "--execute stops first when gh is logged out")
+            os.environ["FAKE_GH_AUTH"] = "0"
+            ok(release.gh_problem() is None, "--execute goes on when gh is logged in")
+    finally:
+        os.environ.clear()
+        os.environ.update(saved)
+
 def mcp_session(cmd, cwd, env):
     """initialize then tools/list over stdio; returns (serverInfo, tool names)."""
     lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -57,6 +295,7 @@ def main():
     version = re.search(r'^__version__ = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     watch = load_watch()
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
+    check_pins(version)
 
     print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
     m = {}
@@ -147,6 +386,11 @@ def main():
        "the image copies the two CLI files")
     ok([x for x in rd(".dockerignore").splitlines() if x and not x.startswith("#")]
        == ["*", "!cli/geo_score.py", "!cli/geo_watch.py"], ".dockerignore lets in the two CLI files only")
+    ok(re.search(r"^FROM python:[\w.-]+@sha256:[0-9a-f]{64}$", dock, re.M) is not None,
+       "the Dockerfile's base image is pinned by digest")
+    check_gate_pins()
+    check_pythons()
+    check_gate_steps()
 
     print("\n  the .mcpb release.py builds")
     with tempfile.TemporaryDirectory() as tmp:
