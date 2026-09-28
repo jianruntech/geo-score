@@ -15,6 +15,10 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import release  # noqa: E402  (MANIFESTS, version_fields, pack: the same code a release runs)
 
+# tracked files that may name a release although --bump does not rewrite them: the changelogs (history), raw
+# benchmark reports, build output, the pages build_page.py regenerates from the PINNED benchmark/_page_tpl.py,
+# and validate.py, whose rule 27 holds the pattern's text
+PIN_EXEMPT = re.compile(r"^(?:CHANGELOG[^/]*|benchmark/raw/.*|dist/.*|docs/[^/]*\.html|\.github/validate\.py)$")
 SERVER_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
 NAME_RE = re.compile(r"^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$")     # server.json schema 2025-12-11, `name`
 WATCH_ENV = "GEO_SCORE_WATCH_CONFIG"
@@ -40,6 +44,36 @@ def load_watch():
     return mod
 
 
+def tracked():
+    """The repository's tracked files, or None outside a git checkout."""
+    try:
+        r = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError:
+        return None
+    return [p for p in r.stdout.decode("utf-8").split("\0") if p] if r.returncode == 0 else None
+
+
+def check_pins():
+    """Every tracked file that pins a release is one release.py rewrites and checks."""
+    print("\n  release pins: every tracked file that names a release is in release.py's PINNED")
+    files = tracked()
+    if files is None:
+        print("  skip  not a git checkout, so there is no list of tracked files")
+        return
+    listed, bad = set(release.PINNED), 0
+    for p in files:
+        full = os.path.join(ROOT, p)
+        if PIN_EXEMPT.match(p) or p in listed or not os.path.isfile(full):
+            continue
+        text = io.open(full, encoding="utf-8", errors="replace").read()
+        hits = sorted({m.group(0) for rx in release.PINS for m in rx.finditer(text)})
+        if hits:
+            bad += 1
+            ok(False, "%s names %s but is not in PINNED, so --bump would leave it behind" % (p, ", ".join(hits)))
+    if not bad:
+        ok(True, "%d tracked files: each one that names a release is in PINNED or exempt" % len(files))
+
+
 def mcp_session(cmd, cwd, env):
     """initialize then tools/list over stdio; returns (serverInfo, tool names)."""
     lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -57,6 +91,7 @@ def main():
     version = re.search(r'^__version__ = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     watch = load_watch()
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
+    check_pins()
 
     print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
     m = {}

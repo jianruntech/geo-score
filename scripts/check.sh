@@ -2,9 +2,10 @@
 # The gate every change passes before it merges.
 #
 #   bash scripts/check.sh           # offline: structure, generated MCP docs, lint, unit + end-to-end tests,
-#                                   # the Action, the packaging manifests and the .mcpb
-#   bash scripts/check.sh --live    # also score example.com, check the JSON and --fail-under, and run the
-#                                   # MCP server through the official Inspector CLI
+#                                   # the Action, the packaging manifests and the .mcpb, and every other
+#                                   # scripts/test_*.py and benchmark/test_*.py
+#   bash scripts/check.sh --live    # also score example.com, check the JSON and --fail-under, run the
+#                                   # MCP server through the official Inspector CLI, and check the labels
 #
 # Hosted Actions have never run on this organisation, so this script is the CI: maintainers run it
 # before every merge (the pre-push hook in .githooks does it for you), and .github/workflows/validate.yml
@@ -61,6 +62,14 @@ python3 scripts/test_action.py
 step "packaging: the manifests against the code; the .mcpb builds, starts and serves its tools (test_packaging.py)"
 python3 scripts/test_packaging.py
 
+# every other scripts/test_*.py and benchmark/test_*.py: a new suite joins the gate by its name alone
+for t in scripts/test_*.py benchmark/test_*.py; do
+  case "$t" in scripts/test_action.py|scripts/test_packaging.py) continue ;; esac
+  [ -f "$t" ] || continue       # a pattern that matched nothing stays as written
+  step "extra tests: $t"
+  python3 "$t"
+done
+
 if [ "$LIVE" = 1 ]; then
   step "live: example.com, JSON against the schema"
   out="$(mktemp)"
@@ -88,6 +97,11 @@ PY
   echo "ok: 0 passes, 101 fails"
   step "live: the MCP server through the official Inspector CLI (check_mcp.py --inspector)"
   python3 scripts/check_mcp.py --inspector
+  if [ -f scripts/sync_labels.py ]; then
+    step "live: the repository's issue labels (sync_labels.py --check)"
+    if command -v gh >/dev/null 2>&1; then python3 scripts/sync_labels.py --check
+    else echo "gh not installed: skipped (https://cli.github.com)"; fi
+  fi
 fi
 
 printf '\nall checks passed\n'
