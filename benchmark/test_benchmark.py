@@ -412,6 +412,25 @@ class Sensitivity(unittest.TestCase):
                          (1.0, 0, 0, 20))
 
 
+class Percentiles(unittest.TestCase):
+    def test_ranks_cuts_and_rounding(self):
+        import percentiles
+        xs = [10, 20, 20, 30, 40]
+        self.assertEqual([percentiles.pct_rank(xs, s) for s in (5, 10, 20, 40, 50)], [0.0, 10.0, 40.0, 90.0, 100.0])
+        self.assertEqual(percentiles.cut_for(xs, 40), 30)       # 30 and 40: two of five sites
+        self.assertEqual(percentiles.cut_for(xs, 100), 10)
+        self.assertEqual(percentiles.share(271, 317), "85%")    # 85.49, never 86 by way of a rounded 85.5
+
+    def test_committed_shares(self):
+        import percentiles
+        d = percentiles.compute()
+        o = d["overall"]
+        self.assertEqual([percentiles.share(o["at_or_above"][c]["n"], o["n"]) for c in sorted(d["cuts"], key=int)],
+                         ["85%", "58%", "34%", "10%"])
+        self.assertEqual(d["candidates"]["v1.1"]["cuts"], [31, 51, 66, 83])
+        self.assertEqual(d["gate_cap"]["capped"], sum(d["gate_cap"]["capped_by_band_before_cap"].values()))
+
+
 class Validity(unittest.TestCase):
     def test_common_checks_arithmetic(self):
         import validity

@@ -402,11 +402,17 @@ def render(doc, lang):
     return "\n".join(L) + "\n"
 
 
-def main(argv):
+def outputs():
+    """{path: text} for sensitivity.json and the two documents, and the study they came from."""
     rub, res, sites = load()
     doc = analyse(rub, res, sites)
     files = {OUT_JSON: json.dumps(doc, ensure_ascii=False, indent=1) + "\n"}
     files.update({OUT_MD[lang]: render(doc, lang) for lang in OUT_MD})
+    return files, doc
+
+
+def main(argv):
+    files, doc = outputs()
     if "--check" in argv:
         bad = [p for p, text in files.items() if not os.path.exists(p) or _read(p) != text]
         for p in bad:
@@ -417,7 +423,7 @@ def main(argv):
         _write(p, text)
     e = doc["alternatives"]["equal"]
     print("%d of %d published scores recomputed exactly; equal weights: rho %.3f, %d band changes; random draws: "
-          "median %d band changes" % (len(sites), len(sites), e["spearman"], e["band_changes"],
+          "median %d band changes" % (doc["recompute"]["n"], doc["recompute"]["n"], e["spearman"], e["band_changes"],
                                       doc["draws"]["band_changes"]["median"]))
     return 0
 

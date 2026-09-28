@@ -531,7 +531,9 @@ def _cal_facts(p):
     t = re.sub(r"\]\([^)]*\)", "]", io.open(p, encoding="utf-8").read())
     return (len(re.findall(r"^## ", t, re.M)),
             {int(x) for x in re.findall(r"(?<![\w.])(\d{2,})(?![\w])", t) if int(x) >= 10})
-for base in ("rubric/calibration-v1.1",):
+for base in ("rubric/calibration-v1.1", "rubric/bands-analysis"):
+    if not os.path.exists(base + ".md"):
+        continue
     (se, ne), (sz, nz) = _cal_facts(base + ".md"), _cal_facts(base + ".zh-CN.md")
     check(se == sz, "%s 中英章节数不同：%d vs %d" % (base, se, sz))
     check(ne == nz, "%s 中英数字不一致 —— 只在英文：%s；只在中文：%s"
@@ -886,6 +888,47 @@ if os.path.exists("benchmark/sensitivity.py"):
     r = subprocess.run([sys.executable, "benchmark/sensitivity.py", "--check"], capture_output=True, text=True)
     check(r.returncode == 0, "benchmark/sensitivity.json or SENSITIVITY*.md is not what sensitivity.py derives: "
                              + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+
+# ── 37. Where the band cuts fall: percentiles.json, the README table and the dated bands analysis agree ──
+# The cuts were borrowed from a vendor ladder and never set against the benchmark. percentiles.py places them in the
+# field; the README table between the markers must quote it, and rubric/bands-analysis.md (+zh), a record of the run
+# it names, must quote the same shares while percentiles.json still describes that run.
+if os.path.exists("benchmark/percentiles.py"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/percentiles.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/percentiles.json is not what percentiles.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+if os.path.exists("benchmark/percentiles.json"):
+    pj = json.load(io.open("benchmark/percentiles.json", encoding="utf-8"))
+    o7, f7, g7 = pj["overall"], pj["uncapped"], pj["gate_cap"]
+
+    def _pc(n, of):
+        return "%d%%" % round(100.0 * n / of)
+    m = re.search(r"<!-- bands:.*?-->(.*?)<!-- /bands -->", io.open("benchmark/README.md", encoding="utf-8").read(), re.S)
+    check(bool(m), "benchmark/README.md: no generated band-cut block (python3 benchmark/run.py --readme-only)")
+    rows7 = ["| %s | %s | %d of %d | %s | %s |" % (pj["cuts"][c], c, o7["at_or_above"][c]["n"], o7["n"],
+                                                  _pc(o7["at_or_above"][c]["n"], o7["n"]),
+                                                  _pc(f7["at_or_above"][c]["n"], f7["n"])) for c in pj["cuts"]]
+    if m:
+        blk = " ".join(m.group(1).split())
+        want = rows7 + ["%d sites score exactly %d, %d of them" % (g7["at_cap"], g7["score"], g7["at_cap_capped"]),
+                        "band holds %d sites, %d of them capped" % (g7["band_n"], g7["band_capped"])]
+        missing = [w for w in want if w not in blk]
+        check(not missing, f"benchmark/README.md: the band-cut block does not match benchmark/percentiles.json; missing "
+                           f"{missing[:3]} (python3 benchmark/run.py --readme-only)")
+    for f in ("rubric/bands-analysis.md", "rubric/bands-analysis.zh-CN.md"):
+        if not os.path.exists(f):
+            continue
+        t = " ".join(io.open(f, encoding="utf-8").read().split())
+        if pj["source"]["measured_at"] not in t:
+            continue                          # a record of an earlier run: its figures describe that run
+        want = ["| %s |" % c for c in pj["cuts"]] + ["%d" % o7["n"], "%d" % f7["n"]]
+        want += ["%d" % o7["at_or_above"][c]["n"] for c in pj["cuts"]] + [_pc(o7["at_or_above"][c]["n"], o7["n"])
+                                                                         for c in pj["cuts"]]
+        want += ["%d" % pj["noise"]["near_any_cut"], "%s" % pj["noise"]["sem"], "%d" % g7["band_capped"]]
+        missing = [w for w in want if w not in t]
+        check(not missing, f"{f}: quotes the {pj['source']['measured_at']} run, but not these benchmark/percentiles.json "
+                           f"figures: {missing[:5]}")
 
 if fail:
     print("FAIL")

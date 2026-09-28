@@ -173,7 +173,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=WORKERS)
     ap.add_argument("--readme-only", action="store_true",
-                    help="rewrite README.md and stats.json from the committed results.json; no scoring, no network")
+                    help="rewrite README.md, stats.json, percentiles.json, the sensitivity study and the CSVs from "
+                         "the committed results.json and raw/; no scoring, no network")
     ap.add_argument("--out", metavar="DIR",
                     help="write results.json and raw/ to DIR instead of benchmark/, for retest.py; "
                          "README.md and stats.json describe the published run and are left alone")
@@ -184,16 +185,16 @@ def main():
                          "broadband'); recorded as measured_from, never looked up")
     a = ap.parse_args()
     if a.readme_only:
-        write_readme(json.load(io.open(os.path.join(HERE, "results.json"), encoding="utf-8")))
-        print("wrote benchmark/README.md, stats.json, results.csv and checks.csv from results.json and raw/",
-              file=sys.stderr)
+        write_readme(_load(os.path.join(HERE, "results.json")))
+        print("wrote benchmark/README.md, stats.json, percentiles.json, sensitivity.json, SENSITIVITY*.md, "
+              "results.csv and checks.csv from results.json and raw/", file=sys.stderr)
         return
     global RAW, PIN_DIR
     out_dir = os.path.abspath(a.out) if a.out else HERE
     RAW, PIN_DIR = os.path.join(out_dir, "raw"), a.urls_from_dir
     if PIN_DIR and not os.path.isdir(PIN_DIR):
         ap.error("--urls-from-dir %s is not a directory" % PIN_DIR)
-    cfg = json.load(io.open(os.path.join(HERE, "sites.json"), encoding="utf-8"))
+    cfg = _load(os.path.join(HERE, "sites.json"))
     sites = cfg["sites"][:a.limit] if a.limit else cfg["sites"]
     print("scoring %d sites…" % len(sites), file=sys.stderr)
     out = []
@@ -217,8 +218,7 @@ def main():
                    stats=stats,
                    sectors={k: dict(n=len(v), median=statistics.median(v)) for k, v in sorted(by_sector.items())},
                    results=ok + [r for r in out if "error" in r])
-    io.open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8").write(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    _save(os.path.join(out_dir, "results.json"), json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     print("\n%d sites · mean %s · median %s · range %d-%d"
           % (stats["n"], stats["mean"], stats["median"], stats["min"], stats["max"]), file=sys.stderr)
     if out_dir != HERE:
@@ -230,6 +230,10 @@ def main():
 def _load(path):
     with io.open(path, encoding="utf-8") as f:
         return json.load(f)
+
+def _save(path, text):
+    with io.open(path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 def _rubric():
     return _load(os.path.join(HERE, "..", "rubric", "v1.1.json"))
@@ -244,7 +248,7 @@ def _uncertainty(p):
     sys.path.insert(0, HERE)
     import stats as bstats
     u = bstats.compute(p)
-    io.open(os.path.join(HERE, "stats.json"), "w", encoding="utf-8").write(json.dumps(u, ensure_ascii=False, indent=1) + "\n")
+    _save(os.path.join(HERE, "stats.json"), json.dumps(u, ensure_ascii=False, indent=1) + "\n")
     return u
 
 def _gap_drivers(ok):
@@ -255,7 +259,7 @@ def _gap_drivers(ok):
         fp = os.path.join(RAW, raw_name(r["site"]))
         if not os.path.exists(fp):
             return []
-        rep = json.load(io.open(fp, encoding="utf-8"))
+        rep = _load(fp)
         g = groups[r["sector"].startswith("China")]
         for c in rep["checks"]:
             if c["state"] == "scored" and not c["id"].startswith("b."):
@@ -270,14 +274,14 @@ def _cjk_caveat(check_ids):
     vp = os.path.join(HERE, "validity.json")
     if not os.path.exists(vp):
         return ""
-    v = json.load(io.open(vp, encoding="utf-8"))
+    v = _load(vp)
     hits = []
     for c in v["per_check"]:
         if c["id"] not in check_ids:
             continue
         for d in c.get("disagreements", []):
             ap = os.path.join(HERE, "..", "examples", "audits", "v1.1", d["site"] + ".json")
-            if os.path.exists(ap) and str(json.load(io.open(ap, encoding="utf-8")).get("audience_language", "")).startswith("zh") \
+            if os.path.exists(ap) and str(_load(ap).get("audience_language", "")).startswith("zh") \
                     and d["cli"] < d["human"]:
                 hits.append("`%s` on %s (%d by hand, %d by the CLI)" % (c["id"], d["site"], d["human"], d["cli"]))
     if not hits:
@@ -398,6 +402,30 @@ def _adoption_block(reports):
           "hundred prominent ones picked for sector and language coverage, so neither share estimates the other.\n"]
     return "\n".join(L)
 
+def _bands_block():
+    """Where the v1.1 cuts fall in this field, from percentiles.json (percentiles.py); validate.py holds the block
+    between the markers to that file."""
+    pp = os.path.join(HERE, "percentiles.json")
+    if not os.path.exists(pp):
+        return ""
+    from percentiles import share
+    d = _load(pp)
+    o, f, g = d["overall"], d["uncapped"], d["gate_cap"]
+    L = ["## Where the band cuts fall\n", "<!-- bands: generated by run.py from percentiles.json -->",
+         "The v1.1 cuts were not derived from this field ([how they compare, and candidates for v1.2](../rubric/bands-analysis.md));",
+         "this is where they land in it:\n",
+         "| Band | From | Sites at or above | Share | Share of the %d sites no gate capped |" % f["n"], "|---|:-:|:-:|:-:|:-:|"]
+    for c in sorted(d["cuts"], key=int, reverse=True):
+        a, b = o["at_or_above"][c], f["at_or_above"][c]
+        L.append("| %s | %s | %d of %d | %s | %s |" % (d["cuts"][c], c, a["n"], o["n"], share(a["n"], o["n"]),
+                                                       share(b["n"], f["n"])))
+    L += ["\n%d sites score exactly %d, %d of them because a gate scored zero and capped them there; the %s band holds"
+          % (g["at_cap"], g["score"], g["at_cap_capped"], g["band"]),
+          "%d sites, %d of them capped. Every score's percentile rank, overall, for the uncapped sites and per sector,"
+          % (g["band_n"], g["band_capped"]),
+          "is in [percentiles.json](percentiles.json).", "<!-- /bands -->\n"]
+    return "\n".join(L)
+
 def _sample_sentence(u):
     """The opening sentence: the sample is up to eight pages, and the rows that got fewer than THIN_N are counted
     from raw/ and named. validate.py holds it to raw/."""
@@ -439,6 +467,11 @@ def write_readme(p):
         if os.path.exists(fp):
             reports[x["site"]] = _load(fp)
     write_csvs(p, reports)
+    # the band-cut percentiles and the weight study read the same results.json and raw/, so they are rewritten with it
+    import percentiles, sensitivity
+    _save(percentiles.OUT_JSON, percentiles.render())
+    for fp, text in sensitivity.outputs()[0].items():
+        _save(fp, text)
     sample_n = {x["site"]: bstats.sample_of(x)[0] for x in ok}
     thin = {x["site"] for x in ok if sample_n[x["site"]] is not None and sample_n[x["site"]] < bstats.THIN_N}
     A("## %s of the field is unreadable to AI crawlers\n" % share_words(int(round(100.0 * len(capped) / len(ok))), "en"))
@@ -490,6 +523,7 @@ def write_readme(p):
     A("\nThe top three, %s, are worth %d points between them.\n"
       % (", ".join("`%s`" % k for k in top3), sum(RBP.get(k, 0) for k in top3)))
     A(_adoption_block(reports))
+    A(_bands_block())
     A("## By sector\n")
     A("Each median carries a 95%% interval (bootstrap, [stats.py](stats.py)). A sector with fewer than %d"
       % u["min_n"])
@@ -539,7 +573,7 @@ def write_readme(p):
     A("the table.\n")
     A(_fetch_block())
     A(_corrections_block())
-    io.open(os.path.join(HERE, "README.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
+    _save(os.path.join(HERE, "README.md"), "\n".join(L) + "\n")
 
 if __name__ == "__main__":
     main()

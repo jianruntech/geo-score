@@ -292,16 +292,18 @@ def derive(doc):
 
 
 def headline(doc=None):
-    """The figures the page footer quotes: the latest study's first pair, else the legacy runs."""
+    """The figures the page footer and percentiles.py quote: the latest study's first pair, else the legacy runs."""
     doc = doc or json.loads(_read(OUT_JSON))
     st = doc.get("study")
     if st:
         p, ra = st["analysis"]["pairs"][0], st["runs"][0]
         return {"measured_at": ra["measured_at"], "tool": ra["tool"], "legacy": False, "compared": p["compared"],
-                "within_5_pct": p["within_5_pct"], "identical_pct": p["identical_pct"], "gate_flips": len(p["gate_flips"])}
+                "within_5_pct": p["within_5_pct"], "identical_pct": p["identical_pct"], "gate_flips": len(p["gate_flips"]),
+                "sem": p["sem"], "band_changes": p["band_changes"]}
     lg, la = doc["legacy"], doc["legacy"]["analysis"]
     return {"measured_at": lg["measured_at"], "tool": lg["tool"], "legacy": True, "compared": la["compared"],
-            "within_5_pct": la["within_5_pct"], "identical_pct": la["identical_pct"], "gate_flips": len(lg["gate_flips"])}
+            "within_5_pct": la["within_5_pct"], "identical_pct": la["identical_pct"], "gate_flips": len(lg["gate_flips"]),
+            "sem": la["sem"], "band_changes": la["band_changes"]}
 
 
 def main(argv):
