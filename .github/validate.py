@@ -792,6 +792,39 @@ if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json") a
               "benchmark/README.md: a thin-sample page count differs from raw/: %s"
               % sorted(x for x, k in marked.items() if int(k) != sn.get(x))[:5])
 
+# ── 34. The leaderboard's Dataset markup describes the data it links ──
+# It once called `readiness` the 0-100 score (that is `normalised`; readiness is raw points) and pointed its download
+# at a blob/main page that moves with every run. Every variableMeasured name must be a key of every scored row, and
+# every download must be a file in benchmark/ at the tag of the CLI version the page was built with.
+if os.path.exists("benchmark/results.json") and os.path.exists("cli/geo_score.py"):
+    _rows = [r for r in json.load(io.open("benchmark/results.json", encoding="utf-8"))["results"]
+             if r.get("normalised") is not None]
+    _ver = re.search(r'^__version__ = "([^"]+)"', io.open("cli/geo_score.py", encoding="utf-8").read(), re.M).group(1)
+    for page in ("docs/index.html", "docs/zh.html"):
+        if not os.path.exists(page):
+            continue
+        _m = re.search(r'<script type="application/ld\+json">(.*?)</script>', io.open(page, encoding="utf-8").read(), re.S)
+        try:
+            _ld = json.loads(_m.group(1)) if _m else None
+        except ValueError as e:
+            _ld = None
+            check(False, f"{page}: the JSON-LD block does not parse ({e})")
+        _ds = [x for x in (_ld or {}).get("@graph", []) if x.get("@type") == "Dataset"]
+        check(len(_ds) == 1, f"{page}: expected one Dataset in the JSON-LD, found {len(_ds)}")
+        if not _ds:
+            continue
+        names = [v.get("name") for v in _ds[0].get("variableMeasured", [])]
+        bad = sorted({n for n in names if any(n not in r for r in _rows)})
+        check(names and not bad, f"{page}: variableMeasured names {bad or names} are not keys of every scored row "
+                                 f"in benchmark/results.json")
+        for d in _ds[0].get("distribution", []):
+            u = d.get("contentUrl", "")
+            m2 = re.match(r"^https://raw\.githubusercontent\.com/jianruntech/geo-score/v([\d.]+)/(benchmark/[\w.-]+)$", u)
+            check(bool(m2) and m2.group(1) == _ver,
+                  f"{page}: download {u} is not pinned to v{_ver}/benchmark/ (python3 benchmark/build_page.py)")
+            if m2:
+                check(os.path.exists(m2.group(2)), f"{page}: download {u} names {m2.group(2)}, which does not exist")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

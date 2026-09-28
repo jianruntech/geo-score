@@ -21,6 +21,26 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
            "Early": "起步期", "Not started": "未起步", "Not scored": "未打分"}
 
 REPO = "https://github.com/jianruntech/geo-score"
+# the page is rebuilt at every release (RELEASING.md step 4), so its downloads point at that release's tag: a file
+# at a tag never moves, where a blob/main link moves with every run. The tool version recorded in results.json
+# would be the wrong tag, because the data can predate the release that publishes it.
+_CLI = io.open(os.path.join(ROOT, "cli", "geo_score.py"), encoding="utf-8").read()
+VERSION = re.search(r'^__version__ = "([^"]+)"', _CLI, re.M).group(1)
+DOWNLOAD = "https://raw.githubusercontent.com/jianruntech/geo-score/v%s/benchmark/" % VERSION
+# the Dataset's data dictionary: each name is a key of every scored row in results.json (validate.py checks it)
+VARIABLES = [
+    ("normalised", "0-100 percentage: readiness over observable_max, capped at 100, and capped at 40 when a gate "
+                   "check scores zero",
+     "0–100 的百分比：readiness 除以 observable_max，最高 100；任一门槛项得 0 分时封顶 40"),
+    ("readiness", "raw points earned on the observable checks, plus the bonus (at most +6)",
+     "在可观测检查项上拿到的原始分，加上加分项（最多 +6）"),
+    ("observable_max", "the points the observable checks carry: the denominator, less the checks that could not "
+                       "be observed",
+     "可观测检查项的满分之和，即分母；观测不到的检查项不计入"),
+    ("band", "Not started / Early / Growing / Solid / Leading, from normalised",
+     "未起步 / 起步期 / 成长期 / 基础扎实 / 领先，由 normalised 决定"),
+    ("gate_capped", "true when a gate check (g.robots, g.reachable or g.ssr) scored zero, which caps normalised at 40",
+     "任一门槛项（g.robots、g.reachable 或 g.ssr）得 0 分时为 true，此时 normalised 封顶 40")]
 # the maintained mirror. The old GitHub Pages copy stopped updating at 229 sites, and a canonical
 # pointing there handed engines the stale numbers.
 DEFAULT_SITE = "https://www.jianruntech.com/leaderboard"
@@ -154,12 +174,10 @@ def jsonld(lang, v):
                     "llms.txt", "structured data", "AI crawlers"],
        "measurementTechnique": ("AIV rubric v1.1 — 21 tiered checks over a sample of up to 8 pages, "
                                 "10 retrieval user-agents probed live"),
-       "variableMeasured": [
-         {"@type": "PropertyValue", "name": "readiness", "description": "0-100 normalised score"},
-         {"@type": "PropertyValue", "name": "band", "description": "Not started / Early / Growing / Solid / Leading"},
-         {"@type": "PropertyValue", "name": "gate_capped", "description": "whether a retrieval crawler can reach the content at all"}],
-       "distribution": [{"@type": "DataDownload", "encodingFormat": "application/json",
-                         "contentUrl": REPO + "/blob/main/benchmark/results.json"}],
+       "variableMeasured": [{"@type": "PropertyValue", "name": name, "description": zd if zh else en}
+                            for name, en, zd in VARIABLES],
+       "distribution": [{"@type": "DataDownload", "name": "results.json", "encodingFormat": "application/json",
+                         "contentUrl": DOWNLOAD + "results.json"}],
        "citation": REPO + "/blob/main/rubric/v1.1.md"},
       {"@type": "WebSite", "@id": SITE + "/#website", "url": PAGE["en"],
        "name": "geo-score", "publisher": {"@id": SITE + "/#org"}},
