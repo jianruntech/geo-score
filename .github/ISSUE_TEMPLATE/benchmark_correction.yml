@@ -1,0 +1,78 @@
+name: Benchmark correction
+description: A leaderboard row is measured wrong — its score, gate reason, label or not-scored reason
+title: "[correction] "
+labels: ["benchmark", "correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when the public leaderboard says something about a site that a fresh
+        measurement does not support. Every scored row comes from one recorded run, and that run's
+        full report is in [`benchmark/raw/`](https://github.com/jianruntech/geo-score/tree/main/benchmark/raw),
+        so a correction can be checked against the same evidence.
+
+        **Score it again first.** `python3 geo_score.py SITE --json-out report.json` with the current
+        release. To read the same pages the leaderboard read, add `--urls-from` with that site's file
+        from `benchmark/raw/`.
+
+        This form is for measurement only. How to raise a score is out of scope for this repository —
+        see [Scope](https://github.com/jianruntech/geo-score/blob/main/README.md#scope--what-this-does-not-do).
+  - type: input
+    id: site
+    attributes:
+      label: Site
+      description: As the leaderboard lists it.
+      placeholder: "example.com"
+    validations: { required: true }
+  - type: dropdown
+    id: claim
+    attributes:
+      label: What is disputed
+      options:
+        - The score or band
+        - The gate reason (why the score is capped at 40)
+        - The row's label (Deliberate, Deliberate or accidental, Accidental)
+        - The not-scored reason
+        - Something else in the row
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What the leaderboard says, and what you observed instead
+      description: >
+        Name the check id where there is one (for example `g.robots`), and say how you observed
+        the difference: which URL, which user-agent, when.
+    validations: { required: true }
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Your report
+      description: >
+        The report.json written by `geo_score.py SITE --json-out report.json` (optionally with
+        `--urls-from`). It carries the sampled pages and the evidence for every check.
+      render: json
+    validations: { required: true }
+  - type: input
+    id: tool_version
+    attributes:
+      label: Tool version
+      description: The output of `geo-score --version` (or `python3 geo_score.py --version`).
+      placeholder: "geo-score 1.4.0 (rubric v1.1)"
+    validations: { required: true }
+  - type: dropdown
+    id: relationship
+    attributes:
+      label: Do you speak for the site?
+      description: Either answer is fine.
+      options:
+        - Yes, I work for or represent the site
+        - No, I am reporting as a reader
+    validations: { required: true }
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: Before you submit
+      options:
+        - label: >
+            This is a measurement correction, not a request for a fix. Remediation is out of scope here.
+          required: true

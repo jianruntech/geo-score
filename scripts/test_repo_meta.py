@@ -48,6 +48,20 @@ def form_labels(text):
     return [x.strip().strip("'\"") for x in items if x.strip().strip("'\"")]
 
 
+def form_fields(text):
+    """{id: (type, required)} for each body item of an issue form."""
+    out = {}
+    for item in re.split(r"^  - type: ", text, flags=re.M)[1:]:
+        m = re.search(r"^    id: ([a-z_]+)\s*$", item, re.M)
+        if m:
+            out[m.group(1)] = (item.split("\n", 1)[0].strip(), bool(re.search(r"required: true", item)))
+    return out
+
+
+# forms whose reports cannot be reproduced without knowing which release produced them
+NEED_VERSION = ("bug_report.yml", "engine_bug.yml", "benchmark_correction.yml")
+
+
 def check_labels():
     print("labels: .github/labels.json and the issue forms")
     doc = json.loads(rd(".github/labels.json"))
@@ -69,6 +83,25 @@ def check_labels():
     ok(form_labels('name: x\nlabels: ["a", b]\nbody:\n') == ["a", "b"], "form_labels reads a flow list")
     ok(form_labels("name: x\nlabels: a, b\nbody:\n") == ["a", "b"], "form_labels reads a comma-separated string")
     ok(form_labels("name: x\nlabels:\n  - a\n  - 'b'\nbody:\n") == ["a", "b"], "form_labels reads a block list")
+
+
+def check_forms():
+    print("forms: what each issue form must ask")
+    have = forms()
+    for f in NEED_VERSION:
+        if f not in have:
+            ok(False, "%s exists" % f)
+            continue
+        fields = form_fields(rd(os.path.join(".github", "ISSUE_TEMPLATE", f)))
+        ok(fields.get("tool_version") == ("input", True), "%s asks for tool_version, required" % f)
+    corr = rd(".github/ISSUE_TEMPLATE/benchmark_correction.yml")
+    fields = form_fields(corr)
+    ok(sorted(form_labels(corr)) == ["benchmark", "correction"], "benchmark_correction.yml applies benchmark and correction")
+    ok(all(fields.get(k, ("", False))[1] for k in ("site", "claim", "evidence", "relationship", "ack")),
+       "benchmark_correction.yml requires the site, the disputed claim, the evidence, the relationship and the ack")
+    ok("measurement correction, not a request for a fix" in corr, "benchmark_correction.yml: the ack says it is not a fix request")
+    ok("https://github.com/jianruntech/geo-score/blob/main/README.md#scope--what-this-does-not-do" in corr,
+       "benchmark_correction.yml links the README's Scope section by absolute URL")
 
 
 def check_sync_script():
@@ -93,6 +126,7 @@ def check_sync_script():
 
 def main():
     check_labels()
+    check_forms()
     check_sync_script()
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))
