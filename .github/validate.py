@@ -606,6 +606,16 @@ if os.path.exists("benchmark/validity.json"):
     wz = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
           "%d 对" % vj["n_check_pairs"]}
     check(all(w in tz for w in wz), f"README.zh-CN.md: 与人工审计一致度的数字必须等于 benchmark/validity.json：{sorted(wz)}")
+    # the like-for-like headline (checks both scored) must be the arithmetic of the per-site rows it summarises
+    cc = vj.get("common_checks")
+    check(bool(cc), "benchmark/validity.json: no common_checks block (python3 benchmark/validity.py)")
+    if cc:
+        dd = [s["common_checks_cli_pct"] - s["common_checks_human_pct"] for s in vj["sites"]
+              if s.get("common_checks_cli_pct") is not None and s.get("common_checks_human_pct") is not None]
+        got = {"n": len(dd), "mean": round(sum(dd) / len(dd), 1) if dd else None, "min": min(dd, default=None),
+               "max": max(dd, default=None), "mean_abs": round(sum(abs(x) for x in dd) / len(dd), 1) if dd else None}
+        check(all(cc.get(k) == v for k, v in got.items()),
+              f"benchmark/validity.json: common_checks {({k: cc.get(k) for k in got})} is not what its sites give {got}")
     for f in (f for f in ("README.md", "README.zh-CN.md", "cli/README.md") if os.path.exists(f)):
         t = io.open(f, encoding="utf-8").read()
         check("5 to 15 points" not in t and "低 5 到 15 分" not in t,
