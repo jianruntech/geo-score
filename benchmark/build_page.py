@@ -68,6 +68,12 @@ def crawler_note(tool, lang):
 REFUSED = {"en": "the server refuses crawler user-agents (unverified probes from the auditor's address)",
            "zh": "服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）"}
 
+def num_words(n, lang):
+    """Small counts as words ('five' / '五'), anything else as digits."""
+    en = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten"}
+    zh = {2: "两", 3: "三", 4: "四", 5: "五", 6: "六", 7: "七", 8: "八", 9: "九", 10: "十"}
+    return (en if lang == "en" else zh).get(n, str(n))
+
 def share_words(pct, lang):
     """A share as words when it is close to a simple fraction, else as a percentage: the headline has to
     stay true when the benchmark is re-run, so it is derived from the data, never written by hand."""
@@ -166,11 +172,12 @@ def strings(lang, v):
             t_accid="Body copy only exists after JavaScript runs. The content is there and a browser "
                     "sees it; a retrieval crawler gets an empty shell. This group almost certainly "
                     "did not choose it.",
-            t_china="<b>Sites built for the Chinese market score %(gap)d points lower</b> — median "
-                    "%(cn)s against %(row)s for everyone else. The gap is not content quality. It is "
-                    "<code>llms.txt</code>, <code>Organization</code> schema, visible dates and real "
-                    "bylines — conventions that spread through the English web first and have not "
-                    "crossed over." % v,
+            t_china=("<b>Sites in the %(ncs_en)s China sectors score %(gap)d points lower</b> — median %(cn)s "
+                     "against %(row)s for everyone else." % v) + ((
+                     " Grouped by the language a site serves instead, Chinese-language sites score %(lgap)d "
+                     "lower; within matched sector families the gap runs from %(flo)d to %(fhi)d points. Up to "
+                     "%(hshare)d%% of it sits in checks the tool reads with a heuristic, so part of it may be "
+                     "the tool reading Chinese pages conservatively rather than the sites." % v) if v["lgap"] is not None else ""),
             t_h2dist="Where everyone lands",
             t_pdist="Bars are counts of sites per ten-point band. The rubric is not graded on a "
                     "curve; this is the distribution that falls out of it.",
@@ -228,9 +235,10 @@ def strings(lang, v):
                 "一个不希望被引用的站不是配置错了，量表照实记录即可。" + crawler_note(v["tool"], "zh"),
         t_accid="正文只在 JavaScript 跑完之后才存在。内容是有的，浏览器看得见；"
                 "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。",
-        t_china="<b>面向中文市场的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。"
-                "差的不是内容质量，是 <code>llms.txt</code>、<code>Organization</code> 结构化数据、"
-                "页面上的可见日期、文章署名到人——这些约定先在英文网络里扩散，还没有传过来。" % v,
+        t_china=("<b>%(ncs_zh)s个中国行业的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。" % v) + ((
+                "改按站点面向的语言分组，中文站低 %(lgap)d 分；在相近的行业之间一一对比，差距在 %(flo)d 到 %(fhi)d 分之间。"
+                "其中最多 %(hshare)d%% 落在工具靠启发式判断的检查项上，所以有一部分可能是工具对中文页面判得偏严，"
+                "而不是网站本身。" % v) if v["lgap"] is not None else ""),
         t_h2dist="大家都落在哪",
         t_pdist="每根柱子是该十分段内的站点数。这套口径不按曲线给分，这就是它跑出来的分布。",
         t_h2check="测测你自己的站",
@@ -278,7 +286,17 @@ def data():
     # a sector with too few scored sites gets no median: it would print like a real one (stats.py)
     sys.path.insert(0, HERE)
     import stats as bstats
-    thin = {k for k, v in bstats.compute(d)["sectors"].items() if v["median"] is None}
+    u = bstats.compute(d)
+    thin = {k for k, v in u["sectors"].items() if v["median"] is None}
+    # the China gap taken apart (stats.py china_gap_detail), so the page never states the gap without it
+    cd = u.get("china_gap_detail") or {}
+    fam = (cd.get("families") or {}).get("range") or [None, None]
+    cgap = dict(lgap=(cd.get("by_language") or {}).get("gap"), flo=fam[0], fhi=fam[1],
+                hshare=(cd.get("by_method") or {}).get("heuristic_share_pct"))
+    if None in cgap.values():
+        cgap["lgap"] = None
+    ncs = len({r["sector"] for r in ok if r["sector"].startswith("China")})
+    cgap.update(ncs_en=num_words(ncs, "en"), ncs_zh=num_words(ncs, "zh"))
     sec = sorted(d["sectors"].items(), key=lambda kv: (kv[0] in thin, -kv[1]["median"]))
     bins = [0] * 10
     for r in ok:
@@ -294,7 +312,7 @@ def data():
         nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
-        tool=d.get("tool"), refused=REFUSED["en"],
+        tool=d.get("tool"), refused=REFUSED["en"], **cgap,
         blk_note=(" (%s)" % crawler_note(d.get("tool"), "short")) if crawler_note(d.get("tool"), "short") else "",
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),
         bandcol=json.dumps(BAND_COL), bandmap=json.dumps(BAND_ZH, ensure_ascii=False),

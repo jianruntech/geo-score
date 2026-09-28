@@ -720,6 +720,38 @@ for page, readme in (("docs/index.html", "README.md"), ("docs/zh.html", "README.
     check(canon == want, f"{page}: canonical {canon} is not {want}, the base build_page.py builds for "
                          f"(python3 benchmark/build_page.py)")
 
+# ── 31. The China-gap block in benchmark/README.md quotes stats.json ──
+# "Sites built for the Chinese market score 20 points lower" was one sentence over a sector label. The block that
+# replaced it states the definition, the language gap, the matched families and the heuristic bound; each of its
+# figures has to be the one stats.json holds (python3 benchmark/run.py --readme-only rewrites both).
+if os.path.exists("benchmark/stats.json") and os.path.exists("benchmark/README.md"):
+    sj3 = json.load(io.open("benchmark/stats.json", encoding="utf-8"))
+    m = re.search(r"<!-- china-gap:.*?-->(.*?)<!-- /china-gap -->", io.open("benchmark/README.md", encoding="utf-8").read(), re.S)
+    check(bool(m), "benchmark/README.md: no generated China-gap block (python3 benchmark/run.py --readme-only)")
+    g, d = sj3["china_gap"], sj3.get("china_gap_detail")
+    if m:
+        blk = " ".join(m.group(1).split())
+        want = ["score %d points lower** (95%% CI %d–%d): median %d against %d for the other %d scored sites"
+                % (g["gap"], g["ci"][0], g["ci"][1], g["median_china"], g["median_rest"], g["n_rest"])]
+        if d:
+            lg, x, f, mt, kg = d["by_language"], d["crosstab"], d["families"], d["by_method"], d["knowledge_graph"]["by_language"]
+            want += ["the %d Chinese-language sites score %d points lower than the %d others (95%% CI %d–%d)"
+                     % (lg["n_group"], lg["gap"], lg["n_vs"], lg["ci"][0], lg["ci"][1]),
+                     "%d of the %d China-sector sites" % (x["china"]["other"], x["china"]["zh"] + x["china"]["other"]),
+                     "%d sites in other sectors serve Chinese" % x["rest"]["zh"],
+                     "on %d of %d Chinese-language sites against %d of %d others"
+                     % (kg["zh"]["unobservable"], kg["zh"]["n"], kg["other"]["unobservable"], kg["other"]["n"]),
+                     "the gap would be %s points" % " or ".join(str(d["kg_imputed"][k]["gap"])
+                                                                for k in sorted(d["kg_imputed"], key=int))]
+            if f["range"]:
+                want += ["gap runs from %d points (" % f["range"][0], ") to %d (" % f["range"][1]]
+            if mt["heuristic_share_pct"] is not None:
+                want += ["the gap is %.1f points, and %.1f of them" % (mt["total"], mt["heuristic"]),
+                         "at most %d%% of the gap" % mt["heuristic_share_pct"]]
+        missing = [w for w in want if w not in blk]
+        check(not missing, f"benchmark/README.md: the China-gap block does not match benchmark/stats.json; missing {missing} "
+                           f"(python3 benchmark/run.py --readme-only)")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)
