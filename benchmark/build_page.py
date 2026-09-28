@@ -196,18 +196,20 @@ def strings(lang, v):
             l_gaps="BIGGEST GAPS", l_pill="UNREADABLE",
             l_count='"{a} of {b} sites"',
             t_h2sec="By sector",
-            t_footer='Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
+            t_footer=('Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
                      '%(date)s · <a href="%(repo)s/blob/main/benchmark/results.json">raw data</a> · '
                      '<a href="%(repo)s/blob/main/benchmark/run.py">the script</a> · '
                      '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">how reproducible a single run is</a> · '
                      '<a href="%(repo)s">the repository</a><br><br>'
-                     "We ran the whole benchmark twice and compared every site: <strong>96%% of sites land within &plusmn;5</strong> and 45%% land identically, so read one site's number as &plusmn;5 rather than as exact. Medians are stable. The unstable part is the gate checks &mdash; five sites flipped because their bot protection answered a crawler differently between the two runs, which is a property of those sites rather than of the measurement. "
+                     "We ran the whole benchmark twice on %(rp_date)s, with %(rp_tool)s, and compared every site: <strong>%(rp_w5)d%% of sites land within &plusmn;5</strong> and %(rp_same)d%% land identically, so read one site's number as &plusmn;5 rather than as exact. Medians are stable. "
+                     + ("The unstable part is the gate checks &mdash; %(rp_flips_en)s sites flipped because their bot protection answered a crawler differently between the two runs, which is a property of those sites rather than of the measurement. "
+                        if v["rp_legacy"] else "The gate-cap state flipped on %(rp_flips)d sites between the two runs. ") +
                      "This measures readiness, not outcomes: whether an engine <em>can</em> cite a "
                      "site. Whether one <em>does</em> depends on competition and query intent, which "
                      "no site-side audit can observe. Four checks needing off-site search are left "
                      "out of the denominator rather than guessed, so these run lower than a "
                      "hand-scored audit. Sites change; every number carries the date it was "
-                     'measured.<br><br>Built by <a href="https://www.jianruntech.com">Jianrun Tech</a>. MIT.'
+                     'measured.<br><br>Built by <a href="https://www.jianruntech.com">Jianrun Tech</a>. MIT.')
                      % dict(v, repo=REPO))
     return dict(
         htmllang="zh-CN", on_en="", on_zh="on",
@@ -254,18 +256,20 @@ def strings(lang, v):
         l_gaps="最大缺口", l_pill="读不到",
         l_count='"共 {b} 个，当前显示 {a} 个"',
         t_h2sec="分行业",
-        t_footer='按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
+        t_footer=('按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
                  '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/run.py">跑分脚本</a> · '
                  '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
                  '<a href="%(repo)s">仓库</a> · '
                  '<a href="https://www.jianruntech.com/geo-score">中文说明页</a><br><br>'
-                 "整个榜单我们跑了两遍并逐站比对：<strong>96%% 的站落在 &plusmn;5 以内</strong>，45%% 完全一致。所以单个站的分数请按 &plusmn;5 读，不要当成精确值；中位数是稳的。不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了，那是那些站点的属性，不是测量的毛病。"
+                 "整个榜单我们于 %(rp_date)s 用%(rp_tool_zh)s跑了两遍并逐站比对：<strong>%(rp_w5)d%% 的站落在 &plusmn;5 以内</strong>，%(rp_same)d%% 完全一致。所以单个站的分数请按 &plusmn;5 读，不要当成精确值；中位数是稳的。"
+                 + ("不稳的是门槛检查——两次之间有%(rp_flips_zh)s个站翻转，因为它们的 bot 防护对爬虫的答复变了，那是那些站点的属性，不是测量的毛病。"
+                    if v["rp_legacy"] else "两次之间有 %(rp_flips)d 个站的门槛封顶状态翻转。") +
                  "这里测的是就绪度，不是结果：引擎<em>能不能</em>引用一个站。"
                  "它<em>会不会</em>引用，取决于竞争与提问意图，任何站外审计都观察不到。"
                  "四项需要站外检索的检查退出了分母而不是靠猜，所以这些分比人工逐项审计略低。"
                  "站点会变；每个数字都带着它被测量的日期。"
-                 '<br><br>由<a href="https://www.jianruntech.com">见润科技</a>构建。MIT 许可。'
+                 '<br><br>由<a href="https://www.jianruntech.com">见润科技</a>构建。MIT 许可。')
                  % dict(v, repo=REPO))
 
 def data():
@@ -288,6 +292,14 @@ def data():
     import stats as bstats
     u = bstats.compute(d)
     thin = {k for k, v in u["sectors"].items() if v["median"] is None}
+    # the reproducibility figures the footer quotes, from reproducibility.json (retest.py): the latest study,
+    # or the two runs of 2026-09-09 and the 1.1.x build that made them
+    import retest
+    h = retest.headline()
+    rp = dict(rp_date=h["measured_at"], rp_w5=int(round(h["within_5_pct"])), rp_same=int(round(h["identical_pct"])),
+              rp_flips=h["gate_flips"], rp_flips_en=num_words(h["gate_flips"], "en"),
+              rp_flips_zh=num_words(h["gate_flips"], "zh"), rp_legacy=h["legacy"],
+              rp_tool=h["tool"], rp_tool_zh=(" 1.1.2 修正波动之前的 1.1.x 版本" if h["legacy"] else " %s " % h["tool"]))
     # the China gap taken apart (stats.py china_gap_detail), so the page never states the gap without it
     cd = u.get("china_gap_detail") or {}
     fam = (cd.get("families") or {}).get("range") or [None, None]
@@ -312,7 +324,7 @@ def data():
         nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
-        tool=d.get("tool"), refused=REFUSED["en"], **cgap,
+        tool=d.get("tool"), refused=REFUSED["en"], **dict(cgap, **rp),
         blk_note=(" (%s)" % crawler_note(d.get("tool"), "short")) if crawler_note(d.get("tool"), "short") else "",
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),
         bandcol=json.dumps(BAND_COL), bandmap=json.dumps(BAND_ZH, ensure_ascii=False),

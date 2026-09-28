@@ -62,8 +62,10 @@ def china_detail(ok, rng):
         fp = os.path.join(HERE, "raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
         if not os.path.exists(fp):
             return None
-        raw[r["site"]] = json.load(io.open(fp, encoding="utf-8"))
-    rub = json.load(io.open(os.path.join(HERE, "..", "rubric", "v1.1.json"), encoding="utf-8"))
+        with io.open(fp, encoding="utf-8") as f:
+            raw[r["site"]] = json.load(f)
+    with io.open(os.path.join(HERE, "..", "rubric", "v1.1.json"), encoding="utf-8") as f:
+        rub = json.load(f)
     kg_max = next(c["points"] for c in rub["checks"] if c["id"] == KG)
     sys.path.insert(0, HERE)
     from validity import METHOD                   # how the CLI reads each check: by rule or by heuristic

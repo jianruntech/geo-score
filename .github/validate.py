@@ -752,6 +752,15 @@ if os.path.exists("benchmark/stats.json") and os.path.exists("benchmark/README.m
         check(not missing, f"benchmark/README.md: the China-gap block does not match benchmark/stats.json; missing {missing} "
                            f"(python3 benchmark/run.py --readme-only)")
 
+# ── 32. The reproducibility tables are what retest.py derives from the committed records ──
+# The ±5 figure was once compared by a `python3 -c "..."` step nobody committed. retest.py now derives every
+# figure in reproducibility.json and every table in REPRODUCIBILITY.md from the records in that file.
+if os.path.exists("benchmark/retest.py") and os.path.exists("benchmark/reproducibility.json"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/retest.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/reproducibility.json or REPRODUCIBILITY.md is not what retest.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)
