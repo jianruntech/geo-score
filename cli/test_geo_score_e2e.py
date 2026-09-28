@@ -24,7 +24,7 @@ import sys
 for _k in [k for k in os.environ if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "ftp_proxy")]:
     del os.environ[_k]
 
-import atexit, difflib, gzip, importlib.util, json, posixpath, re, socket, threading, time, traceback, unittest
+import atexit, collections, difflib, gzip, importlib.util, json, posixpath, re, socket, threading, time, traceback, unittest
 import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -38,6 +38,8 @@ _spec = importlib.util.spec_from_file_location("geo_score_e2e", os.path.join(HER
 gs = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gs)
 gs.c.on = False
+# retries wait for nothing here: a fault test must not sleep its way through the suite's time budget
+gs.RETRY_BACKOFF = 0
 # On macOS urllib also reads the system proxy configuration, which the env purge above
 # does not touch. An explicit empty ProxyHandler keeps every request direct.
 if hasattr(gs, "_OPENER"):
@@ -70,6 +72,17 @@ BEHAVIOUR = {
     "js-shell": {"spa_fallback": "index.html"},
 }
 
+# Transient faults, served only when a test asks: {case: (fixture, faults)}. drop_nth {path: N} closes the
+# connection on the Nth request for that path without an answer (N may be a tuple of request numbers);
+# 429_once_per_ua answers the first request per (non-browser user-agent, path) with 429 and Retry-After: 0;
+# status_for {path: code} answers every request for that path with that code. Every gate in FAULTS must read
+# as it does without the fault.
+FAULTS = {
+    "robots-blocks, first robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 1}}),
+    "robots-blocks, second robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 2}}),
+    "good, one 429 per crawler and page": ("good", {"429_once_per_ua": True}),
+}
+
 FIXTURES = sorted(d for d in os.listdir(SITES) if os.path.isfile(os.path.join(SITES, d, "expected.json")))
 EXPECTED = {}
 for _n in FIXTURES:
@@ -94,6 +107,21 @@ class FixtureHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         srv, rules = self.server, self.server.rules
         ua = self.headers.get("User-Agent", "")
+        at = urllib.parse.urlsplit(self.path).path
+        with srv.lock:
+            srv.hits[at] += 1
+            nth = srv.hits[at]
+            first_for_ua = (ua, at) not in srv.seen
+            srv.seen.add((ua, at))
+        drop = srv.faults.get("drop_nth", {}).get(at)
+        if nth == drop or (isinstance(drop, tuple) and nth in drop):
+            srv.drops[at] += 1
+            self.close_connection = True        # no status line at all: the client reads a dropped connection
+            return
+        if srv.faults.get("429_once_per_ua") and ua != gs.UA_BROWSER and first_for_ua:
+            return self._send(429, b"slow down", TEXT_TYPES[".txt"], {"Retry-After": "0"})
+        if at in srv.faults.get("status_for", {}):
+            return self._send(srv.faults["status_for"][at], b"unavailable", TEXT_TYPES[".txt"])
         if any(b in ua for b in rules.get("deny_ua", ())) or \
                 (rules.get("deny_unless_ua") and rules["deny_unless_ua"] not in ua):
             return self._send(403, b"<!doctype html><title>403</title><h1>Access denied</h1>", TEXT_TYPES[".html"])
@@ -141,7 +169,7 @@ class FixtureServer(ThreadingHTTPServer):
     request_queue_size = 128
 
 
-def start_server(name):
+def start_server(name, faults=None):
     for _ in range(50):
         srv = FixtureServer(("127.0.0.1", 0), FixtureHandler)
         # a five-digit port keeps byte counts in evidence (robots.txt, llms.txt) stable
@@ -151,7 +179,11 @@ def start_server(name):
     srv.root = os.path.join(SITES, name)
     srv.origin = "http://127.0.0.1:%d" % srv.server_port
     srv.rules = BEHAVIOUR.get(name, {})
-    threading.Thread(target=srv.serve_forever, name="fixture-" + name, daemon=True).start()
+    # requests per path, the ones dropped on purpose, and the (user-agent, path) pairs seen
+    srv.faults, srv.lock = faults or {}, threading.Lock()
+    srv.hits, srv.drops, srv.seen = collections.Counter(), collections.Counter(), set()
+    # a short poll interval: shutdown() waits for it, once per server
+    threading.Thread(target=srv.serve_forever, kwargs={"poll_interval": 0.05}, name="fixture-" + name, daemon=True).start()
     return srv
 
 
@@ -452,6 +484,63 @@ class EndToEnd(unittest.TestCase):
             s.close()
         self.assertEqual(len(LEAKS) - n, 2, LEAKS[n:])
         del LEAKS[n:]
+
+    def test_robots_txt_is_read_once_per_run(self):
+        # discover() and the g.robots check share one fetch; a second request was where a drop hid a block
+        for name in FIXTURES:
+            H.result(name)
+            with self.subTest(fixture=name):
+                self.assertEqual(H.servers[name].hits["/robots.txt"], 1)
+
+    def test_transient_faults_do_not_move_a_gate(self):
+        for case, (name, faults) in FAULTS.items():
+            with self.subTest(case=case):
+                H.start()
+                srv = start_server(name, faults)
+                t0 = time.time()
+                try:
+                    try:
+                        res, err = gs.run(srv.origin + EXPECTED[name].get("_path", ""), 8), None
+                    except Exception:
+                        res, err = None, traceback.format_exc()
+                    self.assertIsNone(err, "%s: run() raised\n%s" % (case, err))
+                    r = dict(res=res, err=None, origin=srv.origin, secs=time.time() - t0)
+                    diffs = mismatches(name, r)
+                    self.assertFalse(diffs, "%s\n%s" % (case, format_diff(name, r, diffs) if diffs else ""))
+                    self.assertEqual(srv.hits["/robots.txt"] - srv.drops["/robots.txt"], 1,
+                                     "%s: robots.txt is requested once per run, retries aside" % case)
+                    if faults.get("drop_nth"):
+                        self.assertEqual(sum(srv.drops.values()), 1 if 1 in faults["drop_nth"].values() else 0,
+                                         "%s: the drop happened where the test put it" % case)
+                    if faults.get("429_once_per_ua"):
+                        self.assertTrue(any(ua != gs.UA_BROWSER for ua, _ in srv.seen), "%s: crawler probes were sent" % case)
+                    self.assertLess(time.time() - t0, 5, "%s: a retry slept" % case)
+                finally:
+                    srv.shutdown()
+                    srv.server_close()
+
+    def test_an_unreadable_robots_txt(self):
+        # every try dropped: a network that cannot read the file is no evidence it is missing, so g.robots
+        # leaves the denominator; 503 on every try keeps the middle tier and says so
+        cases = (({"drop_nth": {"/robots.txt": (1, 2, 3)}}, None, "could not be read after 3 tries (connection dropped); not observed"),
+                 ({"status_for": {"/robots.txt": 503}}, 3, "answered HTTP 503 on all 3 tries"))
+        for faults, want, says in cases:
+            with self.subTest(faults=faults):
+                H.start()
+                srv = start_server("robots-blocks", faults)
+                try:
+                    res = gs.run(srv.origin, 8)
+                finally:
+                    srv.shutdown()
+                    srv.server_close()
+                self.assertEqual(res["tier"]["g.robots"], want)
+                self.assertIn(says, res["ev"]["g.robots"])
+                rep = gs.as_json(res)
+                self.assertFalse(rep["gate_capped"])
+                other = {k: v for k, v in EXPECTED["robots-blocks"].items() if k in SPEC_IDS and k != "g.robots"}
+                self.assertEqual({k: res["tier"].get(k) for k in other}, other, "the other checks read as without the fault")
+                if want is None:
+                    self.assertEqual([c["state"] for c in rep["checks"] if c["id"] == "g.robots"], ["unobservable"])
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

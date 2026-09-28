@@ -13,7 +13,7 @@ Levels 2 and 3 live in geo_watch.py next to this file.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, datetime, html, io, json, os, re, sys, time, zlib
+import argparse, concurrent.futures as cf, datetime, html, io, json, os, re, sys, threading, time, zlib
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 
 __version__ = "1.4.0"
@@ -290,24 +290,68 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
         # a server's status line lands in this message: keep it to one clean line
         return Resp(url, 0, b"", err=" ".join(_UNSAFE.sub("", str(e)).split())[:120], elapsed=time.time() - t0)
 
-DEFINITE = (401, 403, 404, 410)   # answers that will not change on a retry
+# Retries. A timeout, a reset, 408, 429 or a 5xx can change on the next try; any other answer is definite.
+# The wait grows by RETRY_BACKOFF seconds a try (the tests set it to 0), or follows a Retry-After of up to
+# RETRY_AFTER_MAX seconds.
+RETRY_BACKOFF, RETRY_AFTER_MAX = 1.5, 5
+STEADY_TRIES = 3
+# a crawler probe gets one retry: enough for a dropped connection or a 429 from the burst of probes, and a
+# server that drops every bot request costs one extra round, not two
+PROBE_TRIES = 2
 
-def fetch_steady(url, tries=3, **kw):
+def transient(status):
+    return status in (0, 408, 429) or 500 <= status < 600
+
+def retry_wait(r, i):
+    ra = r.headers.get("retry-after", "").strip()
+    if ra.isdigit():
+        return min(int(ra), RETRY_AFTER_MAX)
+    return RETRY_BACKOFF * (i + 1)
+
+class FetchMemo:
+    """One run's answers from fetch_steady, keyed by (url, user agent, method), so the homepage, robots.txt
+    and the sitemap are fetched once per run. discover() used to read robots.txt with retries and run()
+    read it again without: one dropped second request turned a blocking robots.txt into "No robots.txt".
+    Made per run, never per module: the MCP server scores several sites at once in one process."""
+    def __init__(self):
+        self.lock, self.got = threading.Lock(), {}
+
+def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
     """fetch() for the requests that decide which pages get sampled — the homepage,
     robots.txt, the sitemap, section indexes, and the sampled pages themselves.
 
     One dropped request there used to swap the whole sample: a sitemap that timed out
     once sent discovery to homepage links instead, a different eight pages were scored,
     and a site measured 71, 40 and 71 on three consecutive runs from one machine (the
-    middle sample fell under the g.ssr gate). Timeouts, resets, 429 and 5xx are retried
-    with a short backoff; a definite answer is returned at once."""
+    middle sample fell under the g.ssr gate). Timeouts, resets, 408, 429 and 5xx are
+    retried with a short backoff; a definite answer is returned at once. With a memo,
+    an answer already fetched in this run is returned without a request."""
+    key = (url, kw.get("ua", UA_BROWSER), kw.get("method", "GET"))
+    if memo is not None:
+        with memo.lock:
+            if key in memo.got:
+                return memo.got[key]
     for i in range(tries):
         r = fetch(url, **kw)
-        if r.ok or r.status in DEFINITE or (300 <= r.status < 400):
-            return r
+        if not transient(r.status):
+            break
         if i < tries - 1:
-            time.sleep(1.5 * (i + 1))
+            time.sleep(retry_wait(r, i))
+    if memo is not None:
+        with memo.lock:
+            r = memo.got.setdefault(key, r)
     return r
+
+def fault_name(err):
+    """A request that got no answer, in the tool's words: the raw error can carry a server's status line."""
+    e = (err or "").lower()
+    for keys, name in ((("timed out", "timeout"), "timed out"), (("refused",), "connection refused"),
+                       (("reset", "closed connection", "remote end closed", "broken pipe"), "connection dropped"),
+                       (("ssl", "certificate", "tls"), "TLS failure"),
+                       (("resolve", "getaddrinfo", "nodename", "name or service"), "DNS failure")):
+        if any(k in e for k in keys):
+            return name
+    return "no response"
 
 def pmap(fn, items, workers=8):
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
@@ -868,7 +912,7 @@ def scope_of(base):
         path = path.rsplit("/", 1)[0]
     return origin, path
 
-def discover(base, want=8, verbose=False):
+def discover(base, want=8, verbose=False, *, memo=None):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
     depends on the sample being representative."""
@@ -876,7 +920,8 @@ def discover(base, want=8, verbose=False):
     root = origin + scope
     host = urllib.parse.urlsplit(origin).netloc
     scheme = urllib.parse.urlsplit(origin).scheme
-    home = fetch_steady(root + "/")
+    steady = lambda u: fetch_steady(u, memo=memo)
+    home = steady(root + "/")
     pool, seen = [], {root + "/", root}
 
     def same_site(u):
@@ -903,17 +948,17 @@ def discover(base, want=8, verbose=False):
     pool += harvest(home.text, root + "/")
 
     # sitemap gives real content URLs, which a homepage nav often does not
-    rb = fetch_steady(origin + "/robots.txt")
+    rb = steady(origin + "/robots.txt")
     # the same places run() looks for p1.sitemap, including the given path, so a sitemap that is scored
     # is also the one the sample comes from
     # a relative Sitemap: line is invalid but common; resolve it against the origin
     sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "")] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
-    sm = next((r for r in pmap(fetch_steady, sm_urls[:3]) if is_sitemap(r)), None)
+    sm = next((r for r in pmap(steady, sm_urls[:3]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         kids = [urllib.parse.urljoin(sm.url, x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)][:2]
-        got = [r for r in pmap(fetch_steady, kids) if is_sitemap(r)]
+        got = [r for r in pmap(steady, kids) if is_sitemap(r)]
         sm = got[0] if got else None
     if sm:
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
@@ -924,7 +969,7 @@ def discover(base, want=8, verbose=False):
 
     # section indexes are where recent posts actually live
     idx = [root + p for p in ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")]
-    for r in pmap(fetch_steady, idx):
+    for r in pmap(steady, idx):
         if r.ok and r.body: pool += harvest(r.text, r.url)
 
     depth = lambda u: urllib.parse.urlsplit(u).path.strip("/").count("/")
@@ -1014,14 +1059,17 @@ def run(base, sample=8, verbose=False, urls=None):
     def say(msg):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
+    # every request that decides the sample or a gate goes through this run's memo: fetched once, retried
+    memo = FetchMemo()
+    steady = lambda u: fetch_steady(u, memo=memo)
     if urls:
         # the caller validated the list and its length (--urls caps at 8, --urls-from at the report's own count)
         urls, sample_source = pin_urls(base, urls, limit=len(urls)), "pinned"
     else:
         say("discovering sample pages…")
-        urls, sample_source = discover(base, sample, verbose)
+        urls, sample_source = discover(base, sample, verbose, memo=memo)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
-    pages = dict(zip(urls, pmap(fetch_steady, urls)))
+    pages = dict(zip(urls, pmap(steady, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
     if not live:
         why = next((r.err for r in pages.values() if r.err), None)
@@ -1033,18 +1081,32 @@ def run(base, sample=8, verbose=False, urls=None):
     home_html_early = live.get(root + "/", list(live.values())[0]).text
 
     # ── g.robots ──
-    rb = fetch(origin + "/robots.txt")
+    # read once per run, retries included: discover() fetched it through the memo, or it is fetched here
+    rb = steady(origin + "/robots.txt")
     txt = rb.text if rb.ok else ""
-    if not rb.ok:
+    if rb.ok:
+        tier["g.robots"], ev["g.robots"] = robots_tier(txt, len(rb.body))
+    elif rb.status == 0:
+        # a network that cannot read the file is not evidence that it is missing (RFC 9309 2.3.1.4 has
+        # crawlers assume a full disallow here; rubric/open-questions.md #10)
+        tier["g.robots"] = None
+        ev["g.robots"] = ("robots.txt could not be read after %d tries (%s); not observed."
+                          % (STEADY_TRIES, fault_name(rb.err)))
+    elif transient(rb.status):
+        tier["g.robots"] = 3
+        ev["g.robots"] = ("robots.txt answered HTTP %d on all %d tries. Nothing readable is disallowed, but nothing "
+                          "is explicitly allowed either." % (rb.status, STEADY_TRIES))
+    else:
+        # 4xx: no robots.txt, and a crawler may fetch anything (RFC 9309 2.3.1.3)
         tier["g.robots"] = 3
         ev["g.robots"] = "No robots.txt (HTTP %d). Nothing is disallowed, but nothing is explicitly allowed either." % rb.status
-    else:
-        tier["g.robots"], ev["g.robots"] = robots_tier(txt, len(rb.body))
 
     # ── g.reachable ──
     say("probing %d retrieval user-agents…" % len(RETRIEVAL_UAS))
     probe = list(live)[:3]
-    results = pmap(lambda t: (t[0], fetch(t[1], t[2])),
+    # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
+    # reached the same page moments earlier
+    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2])),
                    [(name, u, ua) for name, ua in RETRIEVAL_UAS for u in probe])
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
@@ -1089,11 +1151,11 @@ def run(base, sample=8, verbose=False, urls=None):
     sm_urls = [urllib.parse.urljoin(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
-    sm = next((r for r in pmap(fetch, sm_urls[:4]) if is_sitemap(r)), None)
+    sm = next((r for r in pmap(steady, sm_urls[:4]) if is_sitemap(r)), None)
     if sm and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
-            sub = fetch(urllib.parse.urljoin(sm.url, child[0].strip()))
+            sub = steady(urllib.parse.urljoin(sm.url, child[0].strip()))
             if is_sitemap(sub): sm = sub
     if not sm:
         tier["p1.sitemap"] = 0; ev["p1.sitemap"] = "No sitemap found via robots.txt or the conventional paths."

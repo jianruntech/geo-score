@@ -175,3 +175,23 @@ that file is GitHub's. That asymmetry is real, and it is the honest answer rathe
 fixable bug.
 
 The five published audits are unaffected — all five targets are root domains.
+
+---
+
+## 10 · A robots.txt that cannot be read: allowed, or fully disallowed? (open, for v1.2)
+
+RFC 9309 reads an unreadable robots.txt in two ways. A 4xx answer means there is no file,
+and a crawler may fetch anything (section 2.3.1.3). A server error, or a network that gets
+no answer, means the file is unreachable, and a crawler must assume a full disallow until it
+can read the file again (section 2.3.1.4).
+
+geo-score 1.5.0 does not apply 2.3.1.4. A robots.txt that answers 429 or 5xx on every try
+keeps the middle tier of `g.robots`, and the evidence names the status and the number of
+tries. A robots.txt that never answers (timeouts, dropped connections) is `unobservable` and
+leaves the denominator, because a network that cannot reach a file is no evidence of what the
+file says.
+
+**The question for v1.2:** should a robots.txt that answers 5xx on every try read as a full
+disallow, which is tier 0 and the gate cap, the way a crawler that follows the RFC treats it?
+Against: one audit sees one moment, while a crawler keeps retrying for much longer before it
+acts on an outage. Nothing changes in v1.1.
