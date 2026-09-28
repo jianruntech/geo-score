@@ -20,6 +20,30 @@ gs.c.on = False
 RAW = os.path.join(HERE, "raw")
 # --urls-from-dir: re-read the pages an earlier run sampled, DIR/<site>.json, through the CLI's --urls-from reader
 PIN_DIR = None
+SAMPLE = 8                  # pages asked of the CLI per site; a site with fewer reachable pages is scored on fewer
+
+# The CLI's error when every sampled page was a bot challenge (the string is its contract with this script).
+# Such a site cannot be measured by a static fetch, which is a different thing from refusing crawlers.
+BOT_CHALLENGE = "bot challenge served to a browser user-agent"
+NOT_SCORED = [("bot challenge", "**Bot challenge** — a browser user-agent was served a challenge page, so a static "
+                                "fetch cannot measure the site"),
+              ("refused", "**Refused** — no request came back 200 (each site's statuses are listed below)"),
+              ("timed out", "**Timed out**"),
+              ("connection failed", "**Connection failed** — a TLS or network error before any answer"),
+              ("other", "Other")]
+
+def not_scored_reason(error):
+    """The reason a listed site has no score, from the error run.py recorded for it."""
+    e = error or ""
+    if e.startswith(BOT_CHALLENGE):
+        return "bot challenge"
+    if "all requests returned" in e:
+        return "refused"
+    if "timed out" in e:
+        return "timed out"
+    if "urlopen error" in e or "ssl" in e.lower():
+        return "connection failed"
+    return "other"
 
 def raw_name(site_url):
     """benchmark/raw/<site>.json; a site given with a path keeps it, with / as __."""
@@ -42,9 +66,12 @@ def one(site):
     res = err = None
     for u in attempts:                       # some sites only answer on www
         try:
-            res = gs.run(u, 8, urls=pinned) if pinned else gs.run(u, 8); break
+            res = gs.run(u, SAMPLE, urls=pinned) if pinned else gs.run(u, SAMPLE); break
         except Exception as e:
-            err = e; time.sleep(1)
+            # a bot challenge on the bare host says more than whatever the www host answers after it
+            if err is None or not str(err).startswith(BOT_CHALLENGE):
+                err = e
+            time.sleep(1)
     try:
         if res is None: raise err or RuntimeError("unreachable")
         rows, total, den, bon, norm, bd, capped = gs.score(res)
@@ -73,6 +100,8 @@ def one(site):
         return dict(site=site["url"], sector=site["sector"], tool_version=gs.__version__, readiness=total,
                     observable_max=den, normalised=norm, band=bd, gate_capped=capped,
                     resolved_to=resolved,
+                    # how many pages the checks actually read, and where the sample came from
+                    sample_n=len(res["urls"]), sample_source=res.get("sample_source"),
                     gates=gates, gate_reason=reason,
                     bonus=bon, top_gaps=[c for _, c in gaps],
                     pillars={p: [sum(r[3] for r in rows if r[1] == p and r[3] is not None),
@@ -233,13 +262,29 @@ def _china_block(u):
     L.append("<!-- /china-gap -->\n")
     return "\n".join(L)
 
+def _sample_sentence(u):
+    """The opening sentence: the sample is up to eight pages, and the rows that got fewer than THIN_N are counted
+    from raw/ and named. validate.py holds it to raw/."""
+    ts = u.get("thin_sample")
+    if not ts:
+        return "Every site below scored with the same open rubric and the same public tool, on up to eight pages per site."
+    s = ("Every site below scored with the same open rubric and the same public tool, on up to eight pages per site; "
+         "%d sites were scored on fewer than %d pages (%d of them on a single page) and are marked *thin sample*."
+         % (ts["n_thin"], ts["threshold"], ts["n_single_page"]))
+    if ts["n_thin"] and ts["without_thin"]:
+        s += (" A site gets fewer pages when its sample cannot be filled: no sitemap was reachable and the homepage "
+              "links to few pages, or sampled pages failed to load. Without those rows the median is %d (95%% CI "
+              "%d–%d) rather than %d." % (ts["without_thin"]["median"], ts["without_thin"]["ci"][0],
+                                          ts["without_thin"]["ci"][1], ts["with_thin"]["median"]))
+    return s
+
 def write_readme(p):
     s, L = p["stats"], []
     A = L.append
     u = _uncertainty(p)
     A("# The state of AI visibility\n")
-    A("Every site below scored with the same open rubric, the same public tool and the same")
-    A("eight-page sample. No private data, no vendor dashboards — [re-run it yourself](run.py).\n")
+    A(_sample_sentence(u))
+    A("No private data, no vendor dashboards — [re-run it yourself](run.py).\n")
     A("**%d sites · median %s (95%% CI %d–%d) · mean %s · upper quartile %s · range %d–%d** · rubric %s · measured %s\n"
       % (s["n"], s["median"], u["overall"]["ci"][0], u["overall"]["ci"][1], s["mean"], s["p75"], s["min"], s["max"],
          p["rubric_version"], p["measured_at"]))
@@ -250,7 +295,10 @@ def write_readme(p):
     gap = Counter(g for x in ok for g in x["top_gaps"])
     capped = [x for x in ok if x.get("gate_capped")]
     sys.path.insert(0, HERE)
-    from build_page import share_words, crawler_note, REFUSED
+    from build_page import share_words, crawler_note, challenge_note, thin_words, REFUSED
+    import stats as bstats
+    sample_n = {x["site"]: bstats.sample_of(x)[0] for x in ok}
+    thin = {x["site"] for x in ok if sample_n[x["site"]] is not None and sample_n[x["site"]] < bstats.THIN_N}
     A("## %s of the field is unreadable to AI crawlers\n" % share_words(int(round(100.0 * len(capped) / len(ok))), "en"))
     A("**%d of %d sites have a gate check at zero** — a crawler cannot get the content, so"
       % (len(capped), len(ok)))
@@ -262,7 +310,10 @@ def write_readme(p):
     note = crawler_note(p.get("tool"), "en")
     LBL = {"blocks crawlers": "**Deliberate** — `robots.txt` disallows retrieval crawlers" + (". " + note if note else ""),
            "serves crawlers an error": "**Deliberate or accidental** — " + REFUSED["en"],
-           "content needs JavaScript": "**Accidental** — body copy only exists after JS runs",
+           "content needs JavaScript": " ".join(x for x in (
+               "**Accidental** — body copy only exists after JS runs.",
+               thin_words(sum(1 for x in _r.get("content needs JavaScript", []) if x in thin), "en"),
+               challenge_note(p.get("tool"), "en")) if x),
            "other": "Other"}
     for k in ("blocks crawlers", "serves crawlers an error", "content needs JavaScript", "other"):
         if k in _r:
@@ -311,12 +362,22 @@ def write_readme(p):
     A("| # | Site | Score | Band | Sector | Biggest gaps |")
     A("|:-:|---|:-:|---|---|---|")
     for i, r in enumerate([x for x in p["results"] if "error" not in x], 1):
-        A("| %d | %s | **%d** | %s | %s | %s |" % (i, r["site"], r["normalised"], r["band"],
+        mark = (" *(thin sample: %d page%s)*" % (sample_n[r["site"]], "" if sample_n[r["site"]] == 1 else "s")
+                if r["site"] in thin else "")
+        A("| %d | %s%s | **%d** | %s | %s | %s |" % (i, r["site"], mark, r["normalised"], r["band"],
           r["sector"], " · ".join("`%s`" % g for g in r["top_gaps"])))
     errs = [r for r in p["results"] if "error" in r]
     if errs:
         A("\n### Not scored\n")
-        for r in errs: A("- **%s** — %s" % (r["site"], r["error"]))
+        why = {}
+        for r in errs: why.setdefault(not_scored_reason(r["error"]), []).append(r)
+        A("| Why | Sites |"); A("|---|:-:|")
+        for k, label in NOT_SCORED:
+            if k in why:
+                A("| %s | %d |" % (label, len(why[k])))
+        A("")
+        for k, _ in NOT_SCORED:
+            for r in why.get(k, []): A("- **%s** — %s" % (r["site"], r["error"]))
         A("\nA 403 to every client, a browser user-agent included, is bot protection working at the")
         A("TLS layer rather than on the user-agent string. It means a static fetch cannot observe")
         A("the site — not that the site blocks AI crawlers, which is a separate question this tool")

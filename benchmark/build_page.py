@@ -40,12 +40,16 @@ def _hosted(text):
 # tool still counts them as retrieval crawlers, so every label built on it says so until the data is re-run,
 # and the qualifier drops out by itself once results.json records 1.5.0 or later.
 CRAWLER_FIX = (1, 5, 0)
+# 1.5.0 also tells a bot-challenge page from a JavaScript shell: a site that serves a browser user-agent a
+# challenge is not scored, where it used to read as g.ssr 0. Older data files such sites under "content needs
+# JavaScript", so that group carries its own qualifier on the same terms.
+CHALLENGE_FIX = (1, 5, 0)
 
-def old_crawler_reading(tool):
+def old_crawler_reading(tool, fix=CRAWLER_FIX):
     """The version in results.json's tool string ('geo-score-cli/1.3.0' gives '1.3.0') when it predates the
-    crawler fix, else None."""
+    fix, else None."""
     m = re.search(r"(\d+)\.(\d+)\.(\d+)", tool or "")
-    return m.group(0) if m and tuple(int(x) for x in m.groups()) < CRAWLER_FIX else None
+    return m.group(0) if m and tuple(int(x) for x in m.groups()) < fix else None
 
 def crawler_note(tool, lang):
     """The qualifier on the robots.txt group ("en", "zh", or "short" for llms.txt), or "" when the data was
@@ -62,6 +66,31 @@ def crawler_note(tool, lang):
                 "re-run pending)." % v)
     return ("%s 版的读法把 GPTBot、ClaudeBot 和 Google-Extended 也算作检索爬虫，所以这个数里包括只屏蔽训练爬虫"
             "或只声明退出令牌的站（1.5.0 已修正，榜单待重跑）。" % v)
+
+def challenge_note(tool, lang):
+    """The qualifier on the "content needs JavaScript" group ("en", "zh", or "short" for llms.txt), or "" when
+    the data was measured with a tool that tells bot challenges apart."""
+    v = old_crawler_reading(tool, CHALLENGE_FIX)
+    if not v:
+        return ""
+    if lang == "short":
+        return ("counted with the %s reading, which could not tell a bot-challenge page from a JavaScript shell; "
+                "fixed in 1.5.0, re-run pending" % v)
+    if lang == "en":
+        return ("The %s reading could not tell a bot-challenge page from a JavaScript shell, so this group can "
+                "include sites that served a challenge page instead of their content (fixed in 1.5.0, re-run "
+                "pending)." % v)
+    return ("%s 版的读法分不出人机验证页和 JavaScript 空壳，所以这一组里可能有返回人机验证页、而不是正文的站"
+            "（1.5.0 已修正，榜单待重跑）。" % v)
+
+def thin_words(n_thin, lang):
+    """How many rows of a group rest on a thin sample, as a sentence, or "" when none does."""
+    if not n_thin:
+        return ""
+    import stats as bstats
+    if lang == "en":
+        return "%d of them were scored on fewer than %d pages." % (n_thin, bstats.THIN_N)
+    return "其中 %d 个站实际评分的页面不足 %d 个。" % (n_thin, bstats.THIN_N)
 
 # what a 403 group can and cannot show: the probes carry crawler user-agent strings but come from the
 # auditor's address, so a server that verifies crawlers by IP may refuse them and still serve the real bot
@@ -123,7 +152,7 @@ def jsonld(lang, v):
        "inLanguage": "zh-CN" if zh else "en",
        "keywords": ["generative engine optimization", "GEO", "AEO", "AI search visibility",
                     "llms.txt", "structured data", "AI crawlers"],
-       "measurementTechnique": ("AIV rubric v1.1 — 21 tiered checks over an 8-page sample, "
+       "measurementTechnique": ("AIV rubric v1.1 — 21 tiered checks over a sample of up to 8 pages, "
                                 "10 retrieval user-agents probed live"),
        "variableMeasured": [
          {"@type": "PropertyValue", "name": "readiness", "description": "0-100 normalised score"},
@@ -156,9 +185,9 @@ def strings(lang, v):
                      "crawlers. Open rubric, one command, reproducible." % v),
             t_h1="The state of<br>AI visibility",
             t_sub="%(n)d well-known sites, scored on whether an AI answer engine can find, parse, "
-                  "trust and cite them. One open rubric, one public tool, the same eight-page "
-                  'sample for every site. Nothing here is a black box — <a href="%(repo)s">'
-                  "re-run it yourself</a>." % dict(v, repo=REPO),
+                  "trust and cite them. One open rubric, one public tool, up to eight pages per site: "
+                  "%(nthin)d sites were scored on fewer than %(thin_en)s and are marked thin sample. Nothing here is a "
+                  'black box — <a href="%(repo)s">re-run it yourself</a>.' % dict(v, repo=REPO),
             l_sites="SITES", l_median="MEDIAN", l_uq="UPPER QUARTILE", l_range="RANGE",
             l_cap="UNREADABLE TO AI",
             t_h2gate=share_words(v["cappct"], "en") + " of the field is unreadable to AI crawlers",
@@ -169,9 +198,10 @@ def strings(lang, v):
             t_delib="Their <code>robots.txt</code> disallows AI retrieval crawlers by name. A site "
                     "that does not want to be quoted is not misconfigured, and this rubric reports "
                     "it as it is." + (" " + crawler_note(v["tool"], "en") if crawler_note(v["tool"], "en") else ""),
-            t_accid="Body copy only exists after JavaScript runs. The content is there and a browser "
+            t_accid=" ".join(x for x in (
+                    "Body copy only exists after JavaScript runs. The content is there and a browser "
                     "sees it; a retrieval crawler gets an empty shell. This group almost certainly "
-                    "did not choose it.",
+                    "did not choose it.", thin_words(v["njs_thin"], "en"), challenge_note(v["tool"], "en")) if x),
             t_china=("<b>Sites in the %(ncs_en)s China sectors score %(gap)d points lower</b> — median %(cn)s "
                      "against %(row)s for everyone else." % v) + ((
                      " Grouped by the language a site serves instead, Chinese-language sites score %(lgap)d "
@@ -191,9 +221,9 @@ def strings(lang, v):
             t_pall="Click a column to sort. The score is <em>readiness</em> — whether an engine "
                    "<em>can</em> cite the site, not whether one does.",
             l_search="Find a site or sector…", l_allsec="All sectors", l_allsites="All sites",
-            l_fcap="Unreadable to AI", l_ftop="Solid or better", l_flow="Below 50",
+            l_fcap="Unreadable to AI", l_ftop="Solid or better", l_flow="Below 50", l_fthin="Thin sample",
             l_site="SITE", l_score="SCORE", l_band="BAND", l_sector="SECTOR",
-            l_gaps="BIGGEST GAPS", l_pill="UNREADABLE",
+            l_gaps="BIGGEST GAPS", l_pill="UNREADABLE", l_thin="THIN SAMPLE",
             l_count='"{a} of {b} sites"',
             t_h2sec="By sector",
             t_footer=('Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
@@ -225,7 +255,8 @@ def strings(lang, v):
                  "口径公开，一行命令，结果可复现。"),
         t_h1="AI 可见度<br>现状",
         t_sub="%(n)d 个知名网站，实测 AI 回答引擎能不能找到、读懂、信任并引用它们。"
-              "同一套公开口径、同一个公开工具、每个站同样抽 8 个页面。"
+              "同一套公开口径、同一个公开工具，每个站最多抽 8 个页面；其中 %(nthin)d 个站实际评分的页面不足 %(thin_n)d 个，"
+              "表中标为「样本少」。"
               '这里没有黑箱——<a href="%(repo)s">你可以自己重跑</a>。' % dict(v, repo=REPO),
         l_sites="站点数", l_median="中位数", l_uq="上四分位", l_range="区间",
         l_cap="AI 读不到",
@@ -236,7 +267,8 @@ def strings(lang, v):
         t_delib="它们的 <code>robots.txt</code> 点名禁止了 AI 检索爬虫。"
                 "一个不希望被引用的站不是配置错了，量表照实记录即可。" + crawler_note(v["tool"], "zh"),
         t_accid="正文只在 JavaScript 跑完之后才存在。内容是有的，浏览器看得见；"
-                "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。",
+                "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。"
+                + thin_words(v["njs_thin"], "zh") + challenge_note(v["tool"], "zh"),
         t_china=("<b>%(ncs_zh)s个中国行业的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。" % v) + ((
                 "改按站点面向的语言分组，中文站低 %(lgap)d 分；在相近的行业之间一一对比，差距在 %(flo)d 到 %(fhi)d 分之间。"
                 "其中最多 %(hshare)d%% 落在工具靠启发式判断的检查项上，所以有一部分可能是工具对中文页面判得偏严，"
@@ -251,9 +283,9 @@ def strings(lang, v):
         t_h2all="全部站点",
         t_pall="点列头排序。分数是<em>就绪度</em>——引擎<em>能不能</em>引用你，不是它有没有引用你。",
         l_search="搜站点或行业…", l_allsec="全部行业", l_allsites="全部站点",
-        l_fcap="AI 读不到", l_ftop="基础扎实及以上", l_flow="低于 50 分",
+        l_fcap="AI 读不到", l_ftop="基础扎实及以上", l_flow="低于 50 分", l_fthin="样本少",
         l_site="站点", l_score="分数", l_band="档", l_sector="行业",
-        l_gaps="最大缺口", l_pill="读不到",
+        l_gaps="最大缺口", l_pill="读不到", l_thin="样本少",
         l_count='"共 {b} 个，当前显示 {a} 个"',
         t_h2sec="分行业",
         t_footer=('按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
@@ -313,16 +345,21 @@ def data():
     bins = [0] * 10
     for r in ok:
         bins[min(9, r["normalised"] // 10)] += 1
+    # pages each row was scored on (raw/ for rows that predate the field); fewer than THIN_N is a thin sample
+    sn = {r["site"]: bstats.sample_of(r)[0] for r in ok}
+    thin_rows = sorted(x for x, k in sn.items() if k is not None and k < bstats.THIN_N)
     rows = [dict(s=r["site"], n=r["normalised"], b=r["band"], k=r["sector"],
                  c=bool(r.get("gate_capped")), w=r.get("gate_reason") or "",
-                 g=r.get("top_gaps", []), r=r["readiness"], m=r["observable_max"]) for r in ok]
+                 g=r.get("top_gaps", []), r=r["readiness"], m=r["observable_max"], t=sn[r["site"]]) for r in ok]
     rows += [dict(s=r["site"], n=None, b="Not scored", k=r["sector"], c=False,
-                  w=r.get("error", ""), g=[], r=None, m=None) for r in err]
+                  w=r.get("error", ""), g=[], r=None, m=None, t=None) for r in err]
     return dict(
         n=s["n"], med=_fmt(s["median"]), p75=_fmt(s["p75"]), mn=s["min"], mx=s["max"], cap=len(cap),
         cappct=int(round(100.0 * len(cap) / s["n"])),
         nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
+        nthin=len(thin_rows), thin_n=bstats.THIN_N, thin_en=num_words(bstats.THIN_N, "en"), njs_thin=sum(1 for x in js if x in thin_rows),
+        js_note=(" (%s)" % challenge_note(d.get("tool"), "short")) if challenge_note(d.get("tool"), "short") else "",
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
         tool=d.get("tool"), refused=REFUSED["en"], **dict(cgap, **rp),
         blk_note=(" (%s)" % crawler_note(d.get("tool"), "short")) if crawler_note(d.get("tool"), "short") else "",
@@ -357,7 +394,7 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name%(blk_note)s, %(njs)d serve a page whose body only exists after JavaScript runs, and at %(nerr)d %(refused)s.
+- [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name%(blk_note)s, %(njs)d serve a page whose body only exists after JavaScript runs%(js_note)s, and at %(nerr)d %(refused)s.
 - [\u7b80\u4f53\u4e2d\u6587\u7248](%(url_zh)s): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 

@@ -10,11 +10,33 @@ fewer than MIN_N scored sites get no median at all.
 
 china_gap_detail takes the China gap apart using the per-site reports in raw/: by language, within
 matched sector families, by how the CLI reads each check, and with p3.knowledge-graph imputed.
+thin_sample puts the overall median beside the median without the rows scored on fewer than THIN_N pages.
 """
 import io, json, os, random, re, statistics, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESAMPLES, SEED, MIN_N = 10000, 20260909, 10
+# the benchmark asks for eight pages, but a site with no reachable sitemap, or pages that fail, is scored on
+# fewer; a row scored on fewer than THIN_N pages is published as a "thin sample"
+THIN_N = 4
+
+
+def raw_path(site, raw_dir=None):
+    """benchmark/raw/<site>.json, named as run.py names it."""
+    return os.path.join(raw_dir or os.path.join(HERE, "raw"), re.sub(r"[^A-Za-z0-9.\-]+", "__", site.strip("/")) + ".json")
+
+
+def sample_of(row, raw_dir=None):
+    """(sample_n, sample_source) of a scored row: the fields run.py writes into each row, else read from the
+    row's report in raw/ (the committed 1.3.0 rows predate the fields). (None, None) when neither exists."""
+    if row.get("sample_n") is not None:
+        return row["sample_n"], row.get("sample_source")
+    fp = raw_path(row["site"], raw_dir)
+    if not os.path.exists(fp):
+        return None, None
+    with io.open(fp, encoding="utf-8") as f:
+        rep = json.load(f)
+    return len(rep.get("sampled_urls") or []), rep.get("sample_source")
 
 
 def _q(xs, q):
@@ -59,7 +81,7 @@ def china_detail(ok, rng):
     """The China gap decomposed, from the per-site reports in raw/. None when any of them is missing."""
     raw = {}
     for r in ok:
-        fp = os.path.join(HERE, "raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
+        fp = raw_path(r["site"])
         if not os.path.exists(fp):
             return None
         with io.open(fp, encoding="utf-8") as f:
@@ -173,7 +195,22 @@ def compute(results, detail=True):
     if detail:
         # after every figure above, so adding it leaves their intervals (same seed, same draws) unchanged
         out["china_gap_detail"] = china_detail(ok, rng)
+    out["thin_sample"] = thin_sample(ok)
     return out
+
+
+def thin_sample(ok):
+    """The overall median with and without the rows scored on fewer than THIN_N pages. None when a row's
+    sample size is unknown. Its own generator, so every interval above keeps its draws."""
+    n = {r["site"]: sample_of(r)[0] for r in ok}
+    if any(v is None for v in n.values()):
+        return None
+    keep = [r["normalised"] for r in ok if n[r["site"]] >= THIN_N]
+    return {"threshold": THIN_N, "n_thin": len(ok) - len(keep),
+            "n_single_page": sum(1 for v in n.values() if v == 1),
+            "with_thin": {"n": len(ok), "median": round(statistics.median([r["normalised"] for r in ok]))},
+            "without_thin": {"n": len(keep), "median": round(statistics.median(keep)),
+                             "ci": boot_median(keep, random.Random(SEED))} if keep else None}
 
 
 def main():
@@ -188,6 +225,10 @@ def main():
     thin = [k for k, v in out["sectors"].items() if v["median"] is None]
     if thin:
         print("no median (n < %d): %s" % (MIN_N, ", ".join(thin)))
+    ts = out["thin_sample"]
+    if ts and ts["without_thin"]:
+        print("%d rows scored on fewer than %d pages; median without them %d (n=%d)"
+              % (ts["n_thin"], THIN_N, ts["without_thin"]["median"], ts["without_thin"]["n"]))
 
 
 if __name__ == "__main__":

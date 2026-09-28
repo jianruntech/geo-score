@@ -12,6 +12,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import build_page  # noqa: E402
 import retest      # noqa: E402
+import run         # noqa: E402
 import stats       # noqa: E402
 
 CHECKS = [c["id"] for c in retest._rubric()["checks"] if c["kind"] != "bonus"]
@@ -174,6 +175,68 @@ class Stats(unittest.TestCase):
         self.assertAlmostEqual(m["rule"] + m["heuristic"], m["total"], delta=0.11)
         kg = d["knowledge_graph"]["by_language"]
         self.assertEqual(kg["zh"]["n"] + kg["other"]["n"], len(ok))
+
+
+class Sample(unittest.TestCase):
+    def test_sample_size_comes_from_the_row_else_raw(self):
+        self.assertEqual(stats.sample_of({"site": "x.test", "sample_n": 3, "sample_source": "sitemap"}), (3, "sitemap"))
+        tmp = tempfile.mkdtemp()
+        try:
+            with io.open(os.path.join(tmp, "x.test.json"), "w", encoding="utf-8") as f:
+                json.dump({"sampled_urls": ["https://x.test/"], "sample_source": "pinned"}, f)
+            self.assertEqual(stats.sample_of({"site": "x.test"}, tmp), (1, "pinned"))
+            self.assertEqual(stats.sample_of({"site": "y.test"}, tmp), (None, None))
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_thin_rows_leave_the_second_median(self):
+        ok = [{"site": "s%d.test" % i, "normalised": 10 * i, "sample_n": 1 if i < 3 else 8} for i in range(12)]
+        t = stats.thin_sample(ok)
+        self.assertEqual((t["n_thin"], t["n_single_page"], t["with_thin"]["n"], t["without_thin"]["n"]), (3, 3, 12, 9))
+        self.assertEqual(t["without_thin"]["median"], 70)
+        self.assertIsNone(stats.thin_sample(ok + [{"site": "nowhere.test", "normalised": 5}]))
+
+    def test_the_committed_counts(self):
+        res = json.loads(retest._read(os.path.join(HERE, "results.json")))
+        ok = [r for r in res["results"] if r.get("normalised") is not None]
+        n = [stats.sample_of(r)[0] for r in ok]
+        t = stats.thin_sample(ok)
+        self.assertEqual(t["n_thin"], sum(1 for k in n if k < stats.THIN_N))
+        self.assertEqual(t["n_single_page"], n.count(1))
+
+
+class NotScored(unittest.TestCase):
+    def test_reasons(self):
+        self.assertEqual(run.not_scored_reason(run.BOT_CHALLENGE + " (AWS WAF): a static fetch cannot measure this site"),
+                         "bot challenge")
+        self.assertEqual(run.not_scored_reason("could not fetch https://x.test — all requests returned 403"), "refused")
+        self.assertEqual(run.not_scored_reason("could not fetch https://x.test — The read operation timed out"), "timed out")
+        self.assertEqual(run.not_scored_reason("could not fetch https://x.test — <urlopen error EOF occurred in "
+                                               "violation of protocol (_ssl.c:1129)>"), "connection failed")
+        self.assertEqual({k for k, _ in run.NOT_SCORED} >= {"bot challenge", "refused", "timed out", "other"}, True)
+
+    def test_a_bot_challenge_on_the_bare_host_is_what_the_row_keeps(self):
+        calls = []
+
+        def fake_run(url, sample, **kw):
+            calls.append(url)
+            if url == "https://x.test":
+                raise RuntimeError(run.BOT_CHALLENGE + " (Akamai): a static fetch cannot measure this site")
+            raise RuntimeError("could not fetch %s — all requests returned 403" % url)
+        saved = (run.gs.run, run.time.sleep)
+        run.gs.run, run.time.sleep = fake_run, lambda s: None
+        try:
+            row = run.one({"url": "x.test", "sector": "Test"})
+        finally:
+            run.gs.run, run.time.sleep = saved
+        self.assertEqual(calls, ["https://x.test", "https://www.x.test"])
+        self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge")
+
+    def test_challenge_qualifier_only_for_data_older_than_the_fix(self):
+        self.assertIn("bot-challenge page", build_page.challenge_note("geo-score-cli/1.3.0", "en"))
+        self.assertIn("人机验证", build_page.challenge_note("geo-score-cli/1.4.0", "zh"))
+        for tool in ("geo-score-cli/1.5.0", "geo-score-cli/2.0.0", None):
+            self.assertEqual(build_page.challenge_note(tool, "en"), "")
 
 
 class Validity(unittest.TestCase):

@@ -340,5 +340,22 @@
     "gap": 19
    }
   }
+ },
+ "thin_sample": {
+  "threshold": 4,
+  "n_thin": 69,
+  "n_single_page": 55,
+  "with_thin": {
+   "n": 317,
+   "median": 56
+  },
+  "without_thin": {
+   "n": 248,
+   "median": 62,
+   "ci": [
+    58,
+    65
+   ]
+  }
  }
 }

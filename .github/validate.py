@@ -761,6 +761,37 @@ if os.path.exists("benchmark/retest.py") and os.path.exists("benchmark/reproduci
     check(r.returncode == 0, "benchmark/reproducibility.json or REPRODUCIBILITY.md is not what retest.py derives: "
                              + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
 
+# ── 33. The sample the benchmark README describes is the one raw/ records ──
+# "The same eight-page sample" was printed over 55 rows scored on a single page. The opening sentence counts the rows
+# scored on fewer than stats.py's THIN_N pages, and the Every-site table marks each of them with its page count.
+if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json") and os.path.exists("benchmark/stats.py"):
+    _m = re.search(r"^THIN_N = (\d+)", io.open("benchmark/stats.py", encoding="utf-8").read(), re.M)
+    check(bool(_m), "benchmark/stats.py: THIN_N not found")
+    brd_raw = io.open("benchmark/README.md", encoding="utf-8").read()
+    if _m:
+        thin_n, sn = int(_m.group(1)), {}
+        for r in json.load(io.open("benchmark/results.json", encoding="utf-8"))["results"]:
+            if r.get("normalised") is None:
+                continue
+            fn = os.path.join("benchmark/raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
+            if r.get("sample_n") is not None:
+                sn[r["site"]] = r["sample_n"]
+            elif os.path.exists(fn):
+                sn[r["site"]] = len(json.load(io.open(fn, encoding="utf-8")).get("sampled_urls") or [])
+        thin_sites = {x for x, k in sn.items() if k < thin_n}
+        want = ("on up to eight pages per site; %d sites were scored on fewer than %d pages (%d of them on a single page)"
+                % (len(thin_sites), thin_n, sum(1 for k in sn.values() if k == 1)))
+        check(want in " ".join(brd_raw.split()),
+              f"benchmark/README.md: the sample sentence must read '{want}', as raw/ gives (python3 benchmark/run.py --readme-only)")
+        check("eight-page sample" not in brd_raw, "benchmark/README.md: 'the same eight-page sample' is back; raw/ says otherwise")
+        marked = dict(re.findall(r"^\| \d+ \| (\S+) \*\(thin sample: (\d+) pages?\)\* \|", brd_raw, re.M))
+        check(set(marked) == thin_sites,
+              "benchmark/README.md: the rows marked thin sample are not the ones raw/ gives; unmarked %s, marked in error %s"
+              % (sorted(thin_sites - set(marked))[:5], sorted(set(marked) - thin_sites)[:5]))
+        check(all(int(k) == sn.get(x) for x, k in marked.items()),
+              "benchmark/README.md: a thin-sample page count differs from raw/: %s"
+              % sorted(x for x, k in marked.items() if int(k) != sn.get(x))[:5])
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

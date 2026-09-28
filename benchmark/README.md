@@ -1,7 +1,7 @@
 # The state of AI visibility
 
-Every site below scored with the same open rubric, the same public tool and the same
-eight-page sample. No private data, no vendor dashboards — [re-run it yourself](run.py).
+Every site below scored with the same open rubric and the same public tool, on up to eight pages per site; 69 sites were scored on fewer than 4 pages (55 of them on a single page) and are marked *thin sample*. A site gets fewer pages when its sample cannot be filled: no sitemap was reachable and the homepage links to few pages, or sampled pages failed to load. Without those rows the median is 62 (95% CI 58–65) rather than 56.
+No private data, no vendor dashboards — [re-run it yourself](run.py).
 
 **317 sites · median 56 (95% CI 52–58) · mean 54.2 · upper quartile 73.0 · range 11–99** · rubric v1.1 · measured 2026-09-27
 
@@ -15,7 +15,7 @@ them as one number is what makes such a number useless:
 |---|:-:|---|
 | **Deliberate** — `robots.txt` disallows retrieval crawlers. The 1.3.0 reading counted GPTBot, ClaudeBot and Google-Extended as retrieval crawlers, so this count includes sites that block only training crawlers or an opt-out token (fixed in 1.5.0, re-run pending). | 23 | airbnb.com, amazon.com, arstechnica.com, drugs.com, ebay.com, figma.com, healthline.com, jdcloud.com, june.so, khanacademy.org, kuehne-nagel.com, lexisnexis.com, lonelyplanet.com, loom.com, mercadolibre.com, qcloud.com, stackoverflow.blog, techcrunch.com, theregister.com, theverge.com, together.ai, webmd.com, wired.com |
 | **Deliberate or accidental** — the server refuses crawler user-agents (unverified probes from the auditor's address) | 13 | abb.com, clubfactory.com, cma-cgm.com, css-tricks.com, ecoflow.com, hilton.com, honeywell.com, lenovo.com, maersk.com, marriott.com, stratechery.com, trendyol.com, viator.com |
-| **Accidental** — body copy only exists after JS runs | 47 | 01.ai, 4px.com, agoda.com, airtable.com, aliexpress.com, baichuan-ai.com, bigmodel.cn, booking.com, clevelandclinic.org, cohere.com, continue.dev, datahawk.co, dingtalk.com, drizzle.team, duolingo.com, fanruan.com, feishu.cn, freecodecamp.org, hioscar.com, huggingface.co, huoban.com, jushuitan.com, keepa.com, lianlianpay.com, megvii.com, narwal.com, obsidian.md, payoneer.cn, perpetua.io, rakuten.com, roborock.com, sellersprite.com, sf-express.com, shein.com, shopee.com, skyscanner.net, solidjs.com, stepfun.com, temu.com, turso.tech, ups.com, walmart.com, weaviate.io, windsurf.com, wps.cn, xiaomi.com, yuque.com |
+| **Accidental** — body copy only exists after JS runs. 30 of them were scored on fewer than 4 pages. The 1.3.0 reading could not tell a bot-challenge page from a JavaScript shell, so this group can include sites that served a challenge page instead of their content (fixed in 1.5.0, re-run pending). | 47 | 01.ai, 4px.com, agoda.com, airtable.com, aliexpress.com, baichuan-ai.com, bigmodel.cn, booking.com, clevelandclinic.org, cohere.com, continue.dev, datahawk.co, dingtalk.com, drizzle.team, duolingo.com, fanruan.com, feishu.cn, freecodecamp.org, hioscar.com, huggingface.co, huoban.com, jushuitan.com, keepa.com, lianlianpay.com, megvii.com, narwal.com, obsidian.md, payoneer.cn, perpetua.io, rakuten.com, roborock.com, sellersprite.com, sf-express.com, shein.com, shopee.com, skyscanner.net, solidjs.com, stepfun.com, temu.com, turso.tech, ups.com, walmart.com, weaviate.io, windsurf.com, wps.cn, xiaomi.com, yuque.com |
 
 The first group made a choice. Several news and health publishers block AI crawlers by
 name, and this rubric reports that as it is — a site that does not want to be quoted is
@@ -103,7 +103,7 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 13 | axiom.co | **87** | Leading | Cloud & DevOps | `p3.video` · `p2.named-author` · `p2.freshness` |
 | 14 | render.com | **86** | Leading | Cloud & DevOps | `p2.named-author` · `p2.freshness` · `p1.breadcrumb` |
 | 15 | veeva.com | **86** | Leading | Healthcare | `p3.sameas` · `p2.named-author` · `p1.page-type` |
-| 16 | payoneer.com | **86** | Leading | Payments / Fintech | `p1.page-type` · `p2.named-author` · `g.robots` |
+| 16 | payoneer.com *(thin sample: 1 page)* | **86** | Leading | Payments / Fintech | `p1.page-type` · `p2.named-author` · `g.robots` |
 | 17 | clickhouse.com | **85** | Leading | Cloud & DevOps | `p3.video` · `p3.sameas` · `p2.answer-passages` |
 | 18 | cloudflare.com | **85** | Leading | Cloud & DevOps | `p1.page-type` · `p3.video` · `p2.named-author` |
 | 19 | netlify.com | **85** | Leading | Cloud & DevOps | `p2.named-author` · `p2.freshness` · `p2.answer-passages` |
@@ -128,7 +128,7 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 38 | fireworks.ai | **80** | Solid | AI | `p1.llms-txt` · `p2.named-author` · `p2.freshness` |
 | 39 | suno.com | **80** | Solid | AI | `p2.named-author` · `p2.freshness` · `p1.breadcrumb` |
 | 40 | nuxt.com | **80** | Solid | Developer tools | `p2.named-author` · `p3.video` · `p2.freshness` |
-| 41 | hubspot.com | **80** | Solid | Marketing / CRM | `p2.freshness` · `p2.named-author` · `p1.page-type` |
+| 41 | hubspot.com *(thin sample: 1 page)* | **80** | Solid | Marketing / CRM | `p2.freshness` · `p2.named-author` · `p1.page-type` |
 | 42 | kpmg.com | **80** | Solid | Professional services | `p3.sameas` · `p2.named-author` · `p2.freshness` |
 | 43 | mistral.ai | **79** | Solid | AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 44 | supabase.com | **79** | Solid | Developer tools | `p2.named-author` · `p2.answer-passages` · `p2.freshness` |
@@ -221,7 +221,7 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 131 | slack.com | **60** | Growing | SaaS / Productivity | `p2.freshness` · `p1.organization` · `p1.page-type` |
 | 132 | betterstack.com | **59** | Growing | Cloud & DevOps | `p2.freshness` · `p1.organization` · `p1.llms-txt` |
 | 133 | astro.build | **59** | Growing | Developer tools | `p1.organization` · `p1.llms-txt` · `p1.page-type` |
-| 134 | bigcommerce.com | **59** | Growing | Ecommerce | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 134 | bigcommerce.com *(thin sample: 2 pages)* | **59** | Growing | Ecommerce | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 135 | customer.io | **59** | Growing | Marketing / CRM | `p2.answer-passages` · `p2.freshness` · `p2.sourced-stats` |
 | 136 | mercury.com | **59** | Growing | Payments / Fintech | `p2.freshness` · `p2.answer-passages` · `p1.llms-txt` |
 | 137 | wise.com | **59** | Growing | Payments / Fintech | `p2.answer-passages` · `p1.llms-txt` · `p1.page-type` |
@@ -230,23 +230,23 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 140 | hono.dev | **58** | Growing | Developer tools | `p1.organization` · `p2.sourced-stats` · `p1.sitemap` |
 | 141 | codecademy.com | **58** | Growing | Education | `p2.freshness` · `p2.answer-passages` · `p1.llms-txt` |
 | 142 | ro.co | **58** | Growing | Healthcare | `p2.answer-passages` · `p1.llms-txt` · `p3.video` |
-| 143 | zocdoc.com | **58** | Growing | Healthcare | `p2.freshness` · `p1.llms-txt` · `p2.sourced-stats` |
+| 143 | zocdoc.com *(thin sample: 1 page)* | **58** | Growing | Healthcare | `p2.freshness` · `p1.llms-txt` · `p2.sourced-stats` |
 | 144 | plaid.com | **58** | Growing | Payments / Fintech | `p1.organization` · `p2.answer-passages` · `p2.sourced-stats` |
 | 145 | aider.chat | **57** | Growing | AI | `p2.named-author` · `p1.organization` · `p1.llms-txt` |
 | 146 | anthropic.com | **57** | Growing | AI | `p2.question-intent` · `p1.organization` · `p1.llms-txt` |
-| 147 | datadoghq.com | **57** | Growing | Cloud & DevOps | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
+| 147 | datadoghq.com *(thin sample: 3 pages)* | **57** | Growing | Cloud & DevOps | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
 | 148 | panda-css.com | **57** | Growing | Developer tools | `p2.named-author` · `p1.organization` · `p3.knowledge-graph` |
 | 149 | posthog.com | **57** | Growing | Marketing / CRM | `p2.named-author` · `p2.answer-passages` · `p2.sourced-stats` |
-| 150 | smashingmagazine.com | **57** | Growing | Media / Publishing | `p2.named-author` · `p1.organization` · `p1.llms-txt` |
+| 150 | smashingmagazine.com *(thin sample: 1 page)* | **57** | Growing | Media / Publishing | `p2.named-author` · `p1.organization` · `p1.llms-txt` |
 | 151 | superhuman.com | **57** | Growing | SaaS / Productivity | `p2.freshness` · `p1.organization` · `p1.llms-txt` |
-| 152 | klook.com | **57** | Growing | Travel | `p2.named-author` · `p2.freshness` · `p1.organization` |
+| 152 | klook.com *(thin sample: 2 pages)* | **57** | Growing | Travel | `p2.named-author` · `p2.freshness` · `p1.organization` |
 | 153 | browserbase.com | **56** | Growing | AI | `p2.named-author` · `p2.answer-passages` · `p3.knowledge-graph` |
 | 154 | vevor.com | **56** | Growing | China / consumer | `p2.answer-passages` · `p1.llms-txt` · `p2.question-intent` |
 | 155 | koyeb.com | **56** | Growing | Cloud & DevOps | `p1.organization` · `p1.llms-txt` · `p3.knowledge-graph` |
 | 156 | dianxiaomi.com | **56** | Growing | Cross-border services | `p2.named-author` · `p2.answer-passages` · `p1.llms-txt` |
 | 157 | deno.com | **56** | Growing | Developer tools | `p1.organization` · `p1.llms-txt` · `p1.sitemap` |
 | 158 | valibot.dev | **56** | Growing | Developer tools | `p2.named-author` · `p1.organization` · `p2.question-intent` |
-| 159 | skillshare.com | **56** | Growing | Education | `p2.named-author` · `p2.freshness` · `p2.answer-passages` |
+| 159 | skillshare.com *(thin sample: 3 pages)* | **56** | Growing | Education | `p2.named-author` · `p2.freshness` · `p2.answer-passages` |
 | 160 | hackaday.com | **56** | Growing | Media / Publishing | `p1.organization` · `p1.llms-txt` · `p2.question-intent` |
 | 161 | simonwillison.net | **56** | Growing | Media / Publishing | `p1.organization` · `p1.llms-txt` · `p2.question-intent` |
 | 162 | thomsonreuters.com | **56** | Growing | Professional services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
@@ -255,7 +255,7 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 165 | notion.com | **56** | Growing | SaaS / Productivity | `p2.freshness` · `p1.organization` · `p1.page-type` |
 | 166 | deepseek.com | **55** | Growing | China / AI | `p2.question-intent` · `p2.named-author` · `p1.organization` |
 | 167 | remix.run | **55** | Growing | Developer tools | `p2.named-author` · `p1.organization` · `p1.llms-txt` |
-| 168 | wix.com | **55** | Growing | Ecommerce | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 168 | wix.com *(thin sample: 2 pages)* | **55** | Growing | Ecommerce | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 169 | who.int | **55** | Growing | Healthcare | `p2.named-author` · `p1.llms-txt` · `p1.page-type` |
 | 170 | expeditors.com | **55** | Growing | Logistics / Freight | `p2.freshness` · `p1.organization` · `p1.llms-txt` |
 | 171 | mailchimp.com | **55** | Growing | Marketing / CRM | `p2.named-author` · `p2.freshness` · `p1.organization` |
@@ -281,37 +281,37 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 191 | coda.io | **49** | Early | SaaS / Productivity | `p2.answer-passages` · `p2.freshness` · `p1.organization` |
 | 192 | nostarch.com | **48** | Early | Education | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 193 | rockwellautomation.com | **48** | Early | Manufacturing / Industrial | `p2.answer-passages` · `p2.sourced-stats` · `p2.freshness` |
-| 194 | moonshot.cn | **47** | Early | China / AI | `p2.question-intent` · `p2.named-author` · `p1.organization` |
+| 194 | moonshot.cn *(thin sample: 2 pages)* | **47** | Early | China / AI | `p2.question-intent` · `p2.named-author` · `p1.organization` |
 | 195 | haier.com | **46** | Early | Manufacturing / Industrial | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
 | 196 | radix-ui.com | **45** | Early | Developer tools | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 197 | doximity.com | **45** | Early | Healthcare | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
-| 198 | dji.com | **44** | Early | China / consumer | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
+| 198 | dji.com *(thin sample: 2 pages)* | **44** | Early | China / consumer | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
 | 199 | pingpongx.com | **44** | Early | Cross-border services | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
-| 200 | aliyun.com | **43** | Early | China / cloud | `p2.answer-passages` · `p2.freshness` · `p1.organization` |
+| 200 | aliyun.com *(thin sample: 1 page)* | **43** | Early | China / cloud | `p2.answer-passages` · `p2.freshness` · `p1.organization` |
 | 201 | clickpaas.com | **42** | Early | China / no-code | `p2.answer-passages` · `p2.named-author` · `p1.organization` |
-| 202 | huaweicloud.com | **41** | Early | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 202 | huaweicloud.com *(thin sample: 1 page)* | **41** | Early | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 203 | lazada.com | **41** | Early | China / consumer | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 204 | cohere.com | **40** | Early | AI | `p2.answer-passages` · `g.ssr` · `p4.answer-shape` |
-| 205 | continue.dev | **40** | Early | AI | `p2.named-author` · `p2.freshness` · `p1.llms-txt` |
+| 205 | continue.dev *(thin sample: 1 page)* | **40** | Early | AI | `p2.named-author` · `p2.freshness` · `p1.llms-txt` |
 | 206 | huggingface.co | **40** | Early | AI | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 207 | together.ai | **40** | Early | AI | `p2.answer-passages` · `g.robots` · `p3.video` |
 | 208 | weaviate.io | **40** | Early | AI | `g.ssr` · `p2.named-author` · `p2.freshness` |
 | 209 | windsurf.com | **40** | Early | AI | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 210 | 01.ai | **40** | Early | China / AI | `p2.freshness` · `p1.llms-txt` · `g.ssr` |
-| 211 | jdcloud.com | **40** | Early | China / cloud | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 211 | jdcloud.com *(thin sample: 1 page)* | **40** | Early | China / cloud | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 212 | ecoflow.com | **40** | Early | China / consumer | `p2.answer-passages` · `p1.llms-txt` · `g.reachable` |
 | 213 | yonyou.com | **40** | Early | China / enterprise | `p2.question-intent` · `p2.named-author` · `p1.organization` |
 | 214 | datahawk.co | **40** | Early | Cross-border services | `p2.answer-passages` · `p1.llms-txt` · `g.ssr` |
-| 215 | mabangerp.com | **40** | Early | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 215 | mabangerp.com *(thin sample: 1 page)* | **40** | Early | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 216 | sellersprite.com | **40** | Early | Cross-border services | `p2.answer-passages` · `g.ssr` · `p2.question-intent` |
 | 217 | wiseasy.com | **40** | Early | Cross-border services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 218 | turso.tech | **40** | Early | Developer tools | `p2.named-author` · `p2.answer-passages` · `g.ssr` |
 | 219 | rakuten.com | **40** | Early | Ecommerce | `p2.answer-passages` · `p2.freshness` · `p1.llms-txt` |
-| 220 | clevelandclinic.org | **40** | Early | Healthcare | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 220 | clevelandclinic.org *(thin sample: 1 page)* | **40** | Early | Healthcare | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 221 | drugs.com | **40** | Early | Healthcare | `p2.named-author` · `p1.llms-txt` · `g.robots` |
 | 222 | healthline.com | **40** | Early | Healthcare | `p1.organization` · `p1.llms-txt` · `g.robots` |
 | 223 | hioscar.com | **40** | Early | Healthcare | `p2.answer-passages` · `g.ssr` · `p4.answer-shape` |
-| 224 | webmd.com | **40** | Early | Healthcare | `p2.named-author` · `p2.freshness` · `p1.organization` |
+| 224 | webmd.com *(thin sample: 1 page)* | **40** | Early | Healthcare | `p2.named-author` · `p2.freshness` · `p1.organization` |
 | 225 | kuehne-nagel.com | **40** | Early | Logistics / Freight | `p2.named-author` · `p1.llms-txt` · `g.robots` |
 | 226 | maersk.com | **40** | Early | Logistics / Freight | `p2.named-author` · `p2.freshness` · `g.reachable` |
 | 227 | yunexpress.com | **40** | Early | Logistics / Freight | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
@@ -326,111 +326,110 @@ scored sites gets no median: the number would print like a real one and mean muc
 | 236 | wired.com | **40** | Early | Media / Publishing | `p2.answer-passages` · `p1.llms-txt` · `g.robots` |
 | 237 | lexisnexis.com | **40** | Early | Professional services | `p1.llms-txt` · `g.robots` · `p1.page-type` |
 | 238 | airtable.com | **40** | Early | SaaS / Productivity | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
-| 239 | figma.com | **40** | Early | SaaS / Productivity | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 239 | figma.com *(thin sample: 1 page)* | **40** | Early | SaaS / Productivity | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 240 | loom.com | **40** | Early | SaaS / Productivity | `p2.freshness` · `p2.answer-passages` · `g.robots` |
 | 241 | obsidian.md | **40** | Early | SaaS / Productivity | `p1.organization` · `p2.answer-passages` · `p1.llms-txt` |
 | 242 | hilton.com | **40** | Early | Travel | `p1.llms-txt` · `g.reachable` · `p1.page-type` |
 | 243 | lonelyplanet.com | **40** | Early | Travel | `p1.llms-txt` · `g.robots` · `p3.video` |
 | 244 | marriott.com | **40** | Early | Travel | `p1.organization` · `p1.llms-txt` · `g.reachable` |
-| 245 | viator.com | **40** | Early | Travel | `p2.answer-passages` · `p2.sourced-stats` · `p2.freshness` |
+| 245 | viator.com *(thin sample: 1 page)* | **40** | Early | Travel | `p2.answer-passages` · `p2.sourced-stats` · `p2.freshness` |
 | 246 | iflytek.com | **39** | Early | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 247 | huawei.com | **39** | Early | China / enterprise | `p2.answer-passages` · `p2.freshness` · `p1.organization` |
 | 248 | huoban.com | **39** | Early | China / no-code | `p2.named-author` · `p1.organization` · `p2.answer-passages` |
 | 249 | tongtool.com | **38** | Early | Cross-border services | `p2.named-author` · `p2.freshness` · `p1.organization` |
 | 250 | jtexpress.com | **38** | Early | Logistics / Freight | `p2.question-intent` · `p2.named-author` · `p1.organization` |
 | 251 | teambition.com | **37** | Early | China / no-code | `p2.question-intent` · `p2.named-author` · `p1.organization` |
-| 252 | shoplazza.com | **37** | Early | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.freshness` |
+| 252 | shoplazza.com *(thin sample: 1 page)* | **37** | Early | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.freshness` |
 | 253 | weichai.com | **37** | Early | Manufacturing / Industrial | `p2.question-intent` · `p2.named-author` · `p1.organization` |
 | 254 | ebay.com | **36** | Early | Ecommerce | `p2.named-author` · `p2.freshness` · `p1.organization` |
-| 255 | trendyol.com | **36** | Early | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 255 | trendyol.com *(thin sample: 1 page)* | **36** | Early | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 256 | june.so | **36** | Early | Marketing / CRM | `p2.answer-passages` · `p2.freshness` · `p1.organization` |
 | 257 | zhipuai.cn | **35** | Early | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 258 | ucloud.cn | **35** | Early | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 258 | ucloud.cn *(thin sample: 2 pages)* | **35** | Early | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 259 | oceanpayment.com | **35** | Early | Cross-border services | `p2.sourced-stats` · `p2.named-author` · `p1.organization` |
 | 260 | walmart.com | **34** | Early | Ecommerce | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 261 | upyun.com | **33** | Early | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 262 | lenovo.com | **33** | Early | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 263 | xiaomi.com | **33** | Early | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 264 | yuncang.com | **33** | Early | Cross-border services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
+| 262 | lenovo.com *(thin sample: 1 page)* | **33** | Early | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 263 | xiaomi.com *(thin sample: 1 page)* | **33** | Early | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 264 | yuncang.com *(thin sample: 1 page)* | **33** | Early | Cross-border services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 265 | cma-cgm.com | **33** | Early | Logistics / Freight | `p2.question-intent` · `p2.named-author` · `p1.organization` |
-| 266 | abb.com | **33** | Early | Manufacturing / Industrial | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
+| 266 | abb.com *(thin sample: 1 page)* | **33** | Early | Manufacturing / Industrial | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
 | 267 | midea.com | **33** | Early | Manufacturing / Industrial | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 268 | miniso.com | **32** | Early | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p1.organization` |
 | 269 | yunzhijia.com | **32** | Early | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 270 | perpetua.io | **32** | Early | Cross-border services | `p2.named-author` · `p2.freshness` · `p1.organization` |
-| 271 | fedex.com | **31** | Early | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 272 | tapd.cn | **30** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 271 | fedex.com *(thin sample: 1 page)* | **31** | Early | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 272 | tapd.cn *(thin sample: 2 pages)* | **30** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 273 | payoneer.cn | **30** | Not started | Cross-border services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
 | 274 | ueeshop.com | **30** | Not started | Cross-border services | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
-| 275 | temu.com | **29** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 276 | bytedance.com | **29** | Not started | China / enterprise | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
-| 277 | shadcn.com | **29** | Not started | Developer tools | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
+| 275 | temu.com *(thin sample: 1 page)* | **29** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 276 | bytedance.com *(thin sample: 2 pages)* | **29** | Not started | China / enterprise | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
+| 277 | shadcn.com *(thin sample: 2 pages)* | **29** | Not started | Developer tools | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
 | 278 | ctyun.cn | **28** | Not started | China / cloud | `p2.question-intent` · `p2.named-author` · `p2.freshness` |
-| 279 | hisense.com | **27** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 280 | shopee.com | **27** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 281 | gree.com | **27** | Not started | Manufacturing / Industrial | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
-| 282 | xcmg.com | **27** | Not started | Manufacturing / Industrial | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 279 | hisense.com *(thin sample: 3 pages)* | **27** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 280 | shopee.com *(thin sample: 1 page)* | **27** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 281 | gree.com *(thin sample: 1 page)* | **27** | Not started | Manufacturing / Industrial | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
+| 282 | xcmg.com *(thin sample: 1 page)* | **27** | Not started | Manufacturing / Industrial | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 | 283 | shein.com | **26** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 284 | stepfun.com | **25** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 285 | volcengine.com | **25** | Not started | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 286 | freecodecamp.org | **23** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 287 | agoda.com | **23** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 288 | aliwork.com | **22** | Not started | China / no-code | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
+| 284 | stepfun.com *(thin sample: 1 page)* | **25** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 285 | volcengine.com *(thin sample: 2 pages)* | **25** | Not started | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 286 | freecodecamp.org *(thin sample: 1 page)* | **23** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 287 | agoda.com *(thin sample: 1 page)* | **23** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 288 | aliwork.com *(thin sample: 2 pages)* | **22** | Not started | China / no-code | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
 | 289 | airbnb.com | **22** | Not started | Travel | `p2.answer-passages` · `p2.named-author` · `p2.freshness` |
-| 290 | fanruan.com | **20** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 291 | feishu.cn | **20** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 292 | booking.com | **20** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 293 | aliexpress.com | **19** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 294 | yuque.com | **19** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 295 | solidjs.com | **19** | Not started | Developer tools | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 296 | khanacademy.org | **19** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 297 | megvii.com | **18** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 298 | clubfactory.com | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 299 | narwal.com | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 300 | roborock.com | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 301 | duolingo.com | **18** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 302 | skyscanner.net | **18** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 303 | wps.cn | **17** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 304 | baichuan-ai.com | **16** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 305 | qcloud.com | **16** | Not started | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 306 | dreame.tech | **16** | Not started | China / consumer | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
-| 307 | lianlianpay.com | **16** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 308 | ups.com | **16** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 309 | bigmodel.cn | **15** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 310 | dingtalk.com | **15** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 311 | drizzle.team | **14** | Not started | Developer tools | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 312 | jushuitan.com | **13** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 313 | 4px.com | **13** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 314 | sf-express.com | **13** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 315 | amazon.com | **12** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 316 | mercadolibre.com | **12** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
-| 317 | keepa.com | **11** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 290 | fanruan.com *(thin sample: 1 page)* | **20** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 291 | feishu.cn *(thin sample: 1 page)* | **20** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 292 | booking.com *(thin sample: 1 page)* | **20** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 293 | aliexpress.com *(thin sample: 1 page)* | **19** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 294 | yuque.com *(thin sample: 1 page)* | **19** | Not started | China / no-code | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 295 | solidjs.com *(thin sample: 1 page)* | **19** | Not started | Developer tools | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 296 | khanacademy.org *(thin sample: 1 page)* | **19** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 297 | megvii.com *(thin sample: 1 page)* | **18** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 298 | clubfactory.com *(thin sample: 1 page)* | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 299 | narwal.com *(thin sample: 1 page)* | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 300 | roborock.com *(thin sample: 1 page)* | **18** | Not started | China / consumer | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 301 | duolingo.com *(thin sample: 1 page)* | **18** | Not started | Education | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 302 | skyscanner.net *(thin sample: 1 page)* | **18** | Not started | Travel | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 303 | wps.cn *(thin sample: 1 page)* | **17** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 304 | baichuan-ai.com *(thin sample: 1 page)* | **16** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 305 | qcloud.com *(thin sample: 1 page)* | **16** | Not started | China / cloud | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 306 | dreame.tech *(thin sample: 1 page)* | **16** | Not started | China / consumer | `p2.answer-passages` · `p2.sourced-stats` · `p2.question-intent` |
+| 307 | lianlianpay.com *(thin sample: 1 page)* | **16** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 308 | ups.com *(thin sample: 1 page)* | **16** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 309 | bigmodel.cn *(thin sample: 1 page)* | **15** | Not started | China / AI | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 310 | dingtalk.com *(thin sample: 1 page)* | **15** | Not started | China / enterprise | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 311 | drizzle.team *(thin sample: 1 page)* | **14** | Not started | Developer tools | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 312 | jushuitan.com *(thin sample: 1 page)* | **13** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 313 | 4px.com *(thin sample: 1 page)* | **13** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 314 | sf-express.com *(thin sample: 1 page)* | **13** | Not started | Logistics / Freight | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 315 | amazon.com *(thin sample: 1 page)* | **12** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 316 | mercadolibre.com *(thin sample: 1 page)* | **12** | Not started | Ecommerce | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
+| 317 | keepa.com *(thin sample: 1 page)* | **11** | Not started | Cross-border services | `p2.answer-passages` · `p2.question-intent` · `p2.named-author` |
 
 ### Not scored
 
-- **midjourney.com** — could not fetch https://www.midjourney.com — <urlopen error [SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol ver
+| Why | Sites |
+|---|:-:|
+| **Refused** — no request came back 200 (each site's statuses are listed below) | 37 |
+| **Timed out** | 6 |
+| **Connection failed** — a TLS or network error before any answer | 10 |
+
 - **openai.com** — could not fetch https://www.openai.com — all requests returned 403
 - **perplexity.ai** — could not fetch https://www.perplexity.ai — all requests returned 403
-- **baidubce.com** — could not fetch https://www.baidubce.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
 - **aosom.com** — could not fetch https://www.aosom.com — all requests returned 403
 - **bambulab.com** — could not fetch https://www.bambulab.com — all requests returned 403
-- **cider.com** — could not fetch https://www.cider.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostn
-- **cubiitek.com** — could not fetch https://www.cubiitek.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
 - **elegoo.com** — could not fetch https://www.elegoo.com — all requests returned 429
 - **hiwonder.com** — could not fetch https://www.hiwonder.com — all requests returned 429
 - **insta360.com** — could not fetch https://www.insta360.com — all requests returned 403
-- **laifen.com** — could not fetch https://www.laifen.com — <urlopen error _ssl.c:1112: The handshake operation timed out>
 - **oceanwing.com** — could not fetch https://www.oceanwing.com — all requests returned 403
 - **sonoff.tech** — could not fetch https://www.sonoff.tech — all requests returned 429
 - **ugreen.com** — could not fetch https://www.ugreen.com — all requests returned 429
-- **treelab.com.cn** — could not fetch https://www.treelab.com.cn — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
 - **hashicorp.com** — could not fetch https://www.hashicorp.com — all requests returned 429
 - **aftership.com** — could not fetch https://www.aftership.com — all requests returned 403
 - **allegro.pl** — could not fetch https://www.allegro.pl — all requests returned 403
 - **coupang.com** — could not fetch https://www.coupang.com — all requests returned 403
 - **etsy.com** — could not fetch https://www.etsy.com — all requests returned 403
 - **jumia.com** — could not fetch https://www.jumia.com — all requests returned 403
-- **noon.com** — could not fetch https://www.noon.com — The read operation timed out
 - **ozon.ru** — could not fetch https://www.ozon.ru — all requests returned 307
 - **shopline.com** — could not fetch https://www.shopline.com — all requests returned 403
 - **wildberries.ru** — could not fetch https://www.wildberries.ru — all requests returned 498
@@ -440,12 +439,7 @@ scored sites gets no median: the number would print like a real one and mean muc
 - **udemy.com** — could not fetch https://www.udemy.com — all requests returned 403
 - **hims.com** — could not fetch https://www.hims.com — all requests returned 403
 - **mayoclinic.org** — could not fetch https://www.mayoclinic.org — all requests returned 403
-- **medlineplus.gov** — could not fetch https://www.medlineplus.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
-- **nih.gov** — could not fetch https://www.nih.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
-- **dhl.com** — could not fetch https://www.dhl.com — The read operation timed out
 - **hapag-lloyd.com** — could not fetch https://www.hapag-lloyd.com — all requests returned 403
-- **ge.com** — could not fetch https://www.ge.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
-- **sany.com** — could not fetch https://www.sany.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self s
 - **se.com** — could not fetch https://www.se.com — all requests returned 403
 - **lwn.net** — could not fetch https://www.lwn.net — all requests returned 429
 - **phoronix.com** — could not fetch https://www.phoronix.com — all requests returned 403
@@ -453,14 +447,26 @@ scored sites gets no median: the number would print like a real one and mean muc
 - **revolut.com** — could not fetch https://www.revolut.com — all requests returned 403
 - **bcg.com** — could not fetch https://www.bcg.com — all requests returned 403
 - **clio.com** — could not fetch https://www.clio.com — all requests returned 403
-- **mckinsey.com** — could not fetch https://www.mckinsey.com — The read operation timed out
 - **pwc.com** — could not fetch https://www.pwc.com — all requests returned 403
-- **height.app** — could not fetch https://www.height.app — <urlopen error _ssl.c:1112: The handshake operation timed out>
-- **delta.com** — could not fetch https://www.delta.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
 - **expedia.com** — could not fetch https://www.expedia.com — all requests returned 429
 - **getyourguide.com** — could not fetch https://www.getyourguide.com — all requests returned 403
 - **tripadvisor.com** — could not fetch https://www.tripadvisor.com — all requests returned 403
+- **laifen.com** — could not fetch https://www.laifen.com — <urlopen error _ssl.c:1112: The handshake operation timed out>
+- **noon.com** — could not fetch https://www.noon.com — The read operation timed out
+- **dhl.com** — could not fetch https://www.dhl.com — The read operation timed out
+- **mckinsey.com** — could not fetch https://www.mckinsey.com — The read operation timed out
+- **height.app** — could not fetch https://www.height.app — <urlopen error _ssl.c:1112: The handshake operation timed out>
 - **united.com** — could not fetch https://www.united.com — The read operation timed out
+- **midjourney.com** — could not fetch https://www.midjourney.com — <urlopen error [SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol ver
+- **baidubce.com** — could not fetch https://www.baidubce.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **cider.com** — could not fetch https://www.cider.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostn
+- **cubiitek.com** — could not fetch https://www.cubiitek.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **treelab.com.cn** — could not fetch https://www.treelab.com.cn — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **medlineplus.gov** — could not fetch https://www.medlineplus.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **nih.gov** — could not fetch https://www.nih.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **ge.com** — could not fetch https://www.ge.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
+- **sany.com** — could not fetch https://www.sany.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self s
+- **delta.com** — could not fetch https://www.delta.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>
 
 A 403 to every client, a browser user-agent included, is bot protection working at the
 TLS layer rather than on the user-agent string. It means a static fetch cannot observe
