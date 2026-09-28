@@ -580,6 +580,95 @@ finally:
     gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public = _saved
     _px.shutdown()
 
+def _oserr(fn, *a):
+    try: return fn(*a)
+    except OSError as e: raise RuntimeError(str(e)) from None
+
+# ── the guard at connect time: the address that was checked is the one connected to ──
+# SECURITY.md promises that a direct connection goes to the address that passed the check, so a name cannot resolve
+# to something else a moment later (DNS rebinding). That promise rests on private CPython attributes; these tests
+# run the connect-time path itself, and fail loudly if a Python release stops reading them.
+import http.client as _hc, socketserver as _ss
+ok(hasattr(_hc.HTTPConnection("x"), "_create_connection"), "http.client still connects through _create_connection")
+ok(all(hasattr(_hc.HTTPConnection("x"), a) for a in ("_tunnel_host", "_tunnel_port")), "and names a CONNECT target there")
+ok(hasattr(_ur.HTTPSHandler(), "_context"), "urllib's HTTPSHandler still keeps its TLS context in _context")
+_hits = []
+class _Origin(_BH):
+    def do_GET(self):
+        _hits.append(self.path); self.send_response(200); self.send_header("Content-Length", "2"); self.end_headers(); self.wfile.write(b"ok")
+    def log_message(self, *a): pass
+class _Connect(_ss.BaseRequestHandler):
+    """A CONNECT proxy that records every connection and request line, and refuses every tunnel."""
+    def handle(self):
+        _tunnels.append(self.request.recv(4096).split(b"\r\n", 1)[0])
+        self.request.sendall(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
+_tunnels = []
+_os = _HS(("127.0.0.1", 0), _Origin); _th.Thread(target=_os.serve_forever, daemon=True).start()
+_cp = _ss.ThreadingTCPServer(("127.0.0.1", 0), _Connect); _cp.daemon_threads = True
+_th.Thread(target=_cp.serve_forever, daemon=True).start()
+_port = _os.server_port
+_saved = (gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public, gs.check_url)
+try:
+    gs.ADDRESS_GUARD = True
+    # no proxy from the environment: the direct path is the one under test
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({}), gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    # (a) pinning. pinned.test has no DNS entry, so a connection that did not go through the checked answer fails
+    _asked = []
+    def _pinned(h, p):
+        _asked.append((h, p))
+        if h == "pinned.test":
+            return [("127.0.0.1", _port)]
+        raise OSError("refused: %s does not resolve to a public address" % h)
+    gs.resolve_public = _pinned
+    _r = gs.fetch("http://pinned.test:%d/pinned" % _port)
+    eq((_r.status, _hits), (200, ["/pinned"]), "the connection goes to the address the check returned: %r" % _r.err)
+    ok(_asked.count(("pinned.test", _port)) >= 2, "resolved at the URL check and again at connect: %r" % _asked)
+    _closed = _ss.TCPServer(("127.0.0.1", 0), _ss.BaseRequestHandler); _dead_port = _closed.server_address[1]; _closed.server_close()
+    gs.resolve_public = lambda h, p: [("127.0.0.1", _dead_port)]
+    _r = gs.fetch("http://pinned.test/")
+    ok(_r.status == 0 and _hits == ["/pinned"], "when no checked address answers, the fetch fails there: %r" % _r.err)
+    # (b) rebinding: public when the URL is checked, private by the time of the connection
+    del _hits[:]
+    _answers = [[("93.184.216.34", _port)]]
+    def _rebind(h, p):
+        if _answers:
+            return _answers.pop()
+        raise OSError("refused: %s does not resolve to a public address" % h)
+    gs.resolve_public = _rebind
+    _r = gs.fetch("http://rebind.test:%d/" % _port)
+    ok(_r.status == 0 and "refused" in (_r.err or ""), "a name that rebinds between check and connect is refused: %r" % _r.err)
+    eq(_hits, [], "and no request reaches the address it rebound to")
+    # (c) HTTPS through a proxy: the CONNECT target is resolved and refused before the proxy is dialled
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({"https": "http://127.0.0.1:%d" % _cp.server_address[1]}),
+                                  gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    gs.check_url = lambda url: None             # as if the name answered publicly when the URL was checked
+    gs.resolve_public = lambda h, p: [("93.184.216.34", p)] if h == "allowed.test" else _pinned(h, p)
+    _r = gs.fetch("https://private.test/")
+    ok(_r.status == 0 and "refused" in (_r.err or ""), "a CONNECT tunnel to a private target is refused: %r" % _r.err)
+    eq(_tunnels, [], "and the proxy sees no connection, so no tunnelled byte")
+    gs.fetch("https://allowed.test/")
+    eq([t.rsplit(b" ", 1)[0] for t in _tunnels], [b"CONNECT allowed.test:443"],
+       "while a public target does reach the proxy as a CONNECT")
+finally:
+    gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public, gs.check_url = _saved
+    _os.shutdown(); _cp.shutdown()
+# resolve_public itself: every answer must be public, and a name that does not resolve is refused, not skipped
+_gai = gs.socket.getaddrinfo
+_ai = lambda *ips: [(gs.socket.AF_INET6 if ":" in ip else gs.socket.AF_INET, gs.socket.SOCK_STREAM, 6, "", (ip, 443))
+                    for ip in ips]
+try:
+    gs.socket.getaddrinfo = lambda h, p, **k: _ai("93.184.216.34", "2606:4700::1111")
+    eq(gs.resolve_public("x.test", 443), [("93.184.216.34", 443), ("2606:4700::1111", 443)], "public answers come back in order")
+    for _ips in (("93.184.216.34", "10.0.0.5"), ("64:ff9b::a00:5",), ("2002:a00:5::1",)):
+        gs.socket.getaddrinfo = lambda h, p, _ips=_ips, **k: _ai(*_ips)
+        ok("refused" in (_raises(lambda: _oserr(gs.resolve_public, "x.test", 443)) or ""),
+           "one private answer refuses the name, NAT64 and 6to4 included: %s" % (_ips,))
+    def _nx(h, p, **k): raise gs.socket.gaierror(gs.socket.EAI_NONAME, "not known")
+    gs.socket.getaddrinfo = _nx
+    ok("cannot resolve" in (_raises(lambda: _oserr(gs.resolve_public, "nx.test", 443)) or ""), "an unresolvable name is refused")
+finally:
+    gs.socket.getaddrinfo = _gai
+
 # ── a hostile page cannot end the run ──
 # SECURITY.md names the audited site as an adversary. {"@type": {"@id": "Organization"}} used to raise TypeError out
 # of types_of(), a malformed link ("http://[::1") ValueError out of urljoin(), and a lone "\ud800" escape in a name
