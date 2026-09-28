@@ -466,7 +466,7 @@
           "https://arxiv.org/abs/2604.25707"
         ],
         "last_verified": "2026-09-27",
-        "note": "No primary source we found ties heading phrasing to citation: Google says its AI features match meaning and synonyms without content being rewritten for them, and one observational preprint found Q&A-formatted pages 5.7% less influential; the substance-over-format criterion comes from the calibration audits and the 7-point weight is the authors' judgement."
+        "note": "No primary source we found ties heading phrasing to citation: Google says its AI features match meaning and synonyms without content being rewritten for them, and one observational preprint found Q&A-formatted pages 5.7% less influential; the substance-over-format criterion comes from the calibration audits and the 7-point weight is the authors' judgement. Implementation note: through 1.4.x the CLI's Chinese heading lexicon matched question words and tutorial or guide terms but not the task and explanation headings its English lexicon matches (the Chinese forms of 'create your first app' or 'how workflows work'), so Chinese pages could read lower on this check; 1.5.0 adds those forms."
       }
     },
     {
@@ -702,7 +702,7 @@
           "https://arxiv.org/abs/2604.25707"
         ],
         "last_verified": "2026-09-27",
-        "note": "Google documents a Knowledge Graph built from public sources and licensed data without naming Wikidata or Wikipedia, and one observational preprint found encyclopedia pages the most influential cited domain type; nothing we found shows that an entry raises a brand's citations, so the rationale's 'strongest single signal' is not established."
+        "note": "Google documents a Knowledge Graph built from public sources and licensed data without naming Wikidata or Wikipedia, and one observational preprint found encyclopedia pages the most influential cited domain type; nothing we found shows that an entry raises a brand's citations, so the rationale's 'strongest single signal' is not established. Implementation note: the top tier names Wikidata, Wikipedia and Baidu Baike, but the CLI queries only Wikidata and Wikipedia, so a brand whose only entry is in Baidu Baike reads as absent; querying Baike would add an outbound host to the CLI's network calls and has not been decided."
       }
     },
     {
