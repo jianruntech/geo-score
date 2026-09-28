@@ -848,20 +848,20 @@ finally:
 
 # an unforeseen exception exits 2 with one line naming the site, never a traceback that exits 1
 import contextlib as _cl
-def _cli_exit(argv, env=None):
-    saved, err = (sys.argv, gs.run, dict(os.environ)), io.StringIO()
+def _cli_exit(argv, env=None, out=None, run=None):
+    saved, err = (sys.argv, gs.run, dict(os.environ), gs.TIMEOUT, dict(gs._CLI), gs.PREFLIGHT), io.StringIO()
     sys.argv = ["geo_score.py"] + argv
-    gs.run = lambda *a, **k: {}["boom"]
+    gs.run = run or (lambda *a, **k: {}["boom"])
     os.environ.update(env or {})
     try:
-        with _cl.redirect_stderr(err):
+        with _cl.redirect_stderr(err), _cl.redirect_stdout(out or io.StringIO()):
             gs.cli()
         return 0, err.getvalue()
     except SystemExit as e:
         return e.code, err.getvalue()
     finally:
-        sys.argv, gs.run = saved[0], saved[1]
-        os.environ.clear(); os.environ.update(saved[2])
+        sys.argv, gs.run, gs.TIMEOUT, gs.PREFLIGHT = saved[0], saved[1], saved[3], saved[5]
+        os.environ.clear(); os.environ.update(saved[2]); gs._CLI.update(saved[4])
 _code, _err = _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": ""})
 eq(_code, 2, "an internal error exits 2")
 eq(_err.strip(), "geo-score internal error (KeyError) while scoring http://127.0.0.1:9; please report it at "
@@ -870,6 +870,124 @@ try:
     _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": "1"})
     ok(False, "GEO_SCORE_DEBUG=1 re-raises the error with its traceback")
 except KeyError:
+    pass
+
+# ── a site that cannot be fetched fails fast, and says why in plain words ──
+# A mistyped host used to take 20 s to 4 minutes and end in raw urllib text; under --json stdout was empty.
+for _raw, _want in (("example.com", "https://example.com"), ("  localhost:8080/docs ", "https://localhost:8080/docs"),
+                    ("http://127.0.0.1:9", "http://127.0.0.1:9"), ("[::1]:8443", "https://[::1]:8443"),
+                    ("intranet", "https://intranet"), ("中文.tw", "https://中文.tw")):
+    eq(gs.target_url(_raw), _want, "%r is scored" % _raw)
+for _raw, _says in (("not a url", "whitespace"), ("ftp://x.test", "only http"), ("https://", "no host"), ("", "empty"),
+                    ("x.test:0", "port"), ("x.test:70000", "port"), ("x.test:abc", "port"), ("http://[::1", "not a URL"),
+                    ("mailto:someone", "port")):
+    try:
+        gs.target_url(_raw)
+        ok(False, "%r is refused" % _raw)
+    except ValueError as e:
+        ok(_says in str(e), "%r is refused with a reason: %s" % (_raw, e))
+import socket as _sock, ssl as _ssl, http.client as _hcl, urllib.error as _ue
+for _e, _kind in ((_ue.URLError(_sock.gaierror(_sock.EAI_NONAME, "nodename nor servname provided")), "dns"),
+                  (_ue.URLError(ConnectionRefusedError(61, "Connection refused")), "refused"),
+                  (_ue.URLError(_sock.timeout("timed out")), "timeout"), (_sock.timeout("The read operation timed out"), "timeout"),
+                  (_ue.URLError(_ssl.SSLCertVerificationError(1, "certificate verify failed")), "tls"),
+                  (_ue.URLError(_ssl.SSLEOFError(8, "EOF occurred in violation of protocol")), "tls"),
+                  (_hcl.RemoteDisconnected("Remote end closed connection without response"), "dropped"),
+                  (_ue.URLError(ConnectionResetError(54, "Connection reset by peer")), "dropped"),
+                  (OSError("refused: x.test does not resolve to a public address"), "not_public"),
+                  (_ue.URLError("refused: 10.0.0.5 is not public"), "not_public"),
+                  (OSError("cannot resolve x.test: [Errno 8] nodename"), "dns"),
+                  (ValueError("unknown url type: ''"), "no_response"), (_hcl.BadStatusLine("junk"), "no_response")):
+    eq(gs.fault_kind(_e), _kind, "%s(%s) is kind %s" % (type(_e).__name__, _e, _kind))
+eq([gs.Resp("u", 404).kind, gs.Resp("u", 200, b"").kind, gs.Resp("u", 200, b"x").kind, gs.Resp("u", 0, err="timed out").kind],
+   ["http_404", "no_content", None, "timeout"], "an answer's kind: an HTTP error, an empty page, a page, and no answer")
+_calls, _slept = [], []
+_orig_fetch, _orig_sleep = gs.fetch, gs.time.sleep
+gs.time.sleep = _slept.append
+try:
+    for _kind, _want in (("dns", 1), ("refused", 1), ("tls", 1), ("not_public", 1), ("timeout", 3), ("dropped", 3)):
+        del _calls[:]
+        gs.fetch = lambda url, _k=_kind, **kw: (_calls.append(url), gs.Resp(url, 0, err="x", kind=_k))[1]
+        gs.fetch_steady("https://x.test/")
+        eq(len(_calls), _want, "a %s fault is tried %d time(s)" % (_kind, _want))
+    del _slept[:]
+    gs.fetch = lambda url, **kw: gs.Resp(url, 0, err="timed out", kind="timeout")
+    gs.fetch_steady("https://x.test/")
+    eq(_slept, [0, 0], "a timeout is retried without a further wait: it has waited already")
+finally:
+    gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+# preflight: one lookup before anything is fetched, skipped when a proxy will resolve the name
+_saved_env, _saved_gai = dict(os.environ), gs.socket.getaddrinfo
+_saved_px = (gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass)
+_lookups = []
+def _gai_fail(errno):
+    def f(h, *a, **k):
+        _lookups.append(h)
+        raise gs.socket.gaierror(errno, "lookup failed")
+    return f
+try:
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = (lambda: {}), (lambda h: False)
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_NONAME)
+    try:
+        gs.preflight_host("https://exampel.test/docs")
+        ok(False, "a name that does not resolve fails the preflight")
+    except gs.ScoreError as e:
+        eq((e.kind, e.target), ("dns", "https://exampel.test/docs"), "the preflight's kind and target")
+        ok(str(e).startswith("cannot resolve exampel.test: check the spelling, or your DNS/proxy settings (HTTPS_PROXY); see "
+                             "https://github.com/jianruntech/geo-score/blob/v%s/guide/troubleshooting.md#" % gs.__version__),
+           "and it says so in plain words, with the troubleshooting section: %s" % e)
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_AGAIN)
+    ok(gs.preflight_host("https://flaky.test/") is None, "a temporary resolver failure lets the run go ahead")
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = _saved_px
+    os.environ.update(HTTPS_PROXY="http://user:secret@127.0.0.1:9", https_proxy="http://user:secret@127.0.0.1:9")
+    for _k in ("NO_PROXY", "no_proxy"):
+        os.environ.pop(_k, None)
+    del _lookups[:]
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_NONAME)
+    ok(gs.preflight_host("https://exampel.test/") is None and _lookups == [], "with HTTPS_PROXY set, the proxy resolves: no lookup")
+    _e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 0, err="EOF occurred", kind="tls")])
+    ok("(tls)" in str(_e) and "through the proxy at 127.0.0.1:9" in str(_e) and "secret" not in str(_e),
+       "a failure through a proxy names the proxy, never its credentials: %s" % _e)
+finally:
+    gs.socket.getaddrinfo = _saved_gai
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = _saved_px
+    os.environ.clear(); os.environ.update(_saved_env)
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 403), gs.Resp("https://x.test/a", 404)], 15)
+eq((_e.kind, _e.target), ("http_403", "https://x.test"), "HTTP errors take the first page's code")
+ok("(http_403): every page asked for answered with an HTTP error (HTTP 403, HTTP 404); see https://" in str(_e), str(_e))
+_tr = io.open(os.path.join(HERE, "..", "guide", "troubleshooting.md"), encoding="utf-8").read()
+_tslugs = {_re.sub(r"[^\w\- ]", "", h.strip().lower()).replace(" ", "-") for h in _re.findall(r"^#{1,6} (.+?)\s*$", _tr, _re.M)}
+for _k, (_text, _anchor) in gs.FAULTS.items():
+    ok(_anchor in _tslugs, "the %s error links to #%s, a heading in guide/troubleshooting.md" % (_k, _anchor))
+# --timeout: seconds per request, above 0 and no longer than a whole run may take
+for _t in ("0", "-1", "nan", "inf", "301"):
+    _code, _err = _cli_exit(["x.test", "--timeout", _t])
+    ok(_code == 2 and "--timeout takes a number of seconds above 0 and up to 300" in _err, "--timeout %s is refused" % _t)
+_seen = {}
+def _record(*a, **k):
+    _seen.update(k, timeout_now=gs.TIMEOUT, preflight=gs.PREFLIGHT)
+    raise gs.ScoreError("could not fetch x (timeout): …", "timeout", "https://x.test")
+_out = io.StringIO()
+_code, _err = _cli_exit(["x.test", "--timeout", "2.5", "--json"], out=_out, run=_record)
+eq((_code, _seen.get("preflight"), _seen.get("timeout_now")), (2, True, 2.5),
+   "the CLI resolves the host first, and every request waits --timeout seconds")
+eq(json.loads(_out.getvalue()), {"error": {"kind": "timeout", "message": "could not fetch x (timeout): …",
+                                           "target": "https://x.test"}, "tool": "geo-score-cli/%s" % gs.__version__},
+   "under --json, a site that cannot be fetched prints the JSON error on stdout")
+for _argv, _kind, _target in ((["ftp://x.test", "--json"], "usage", None), (["x.test", "--json", "--sample"], "usage", None),
+                              (["x.test", "--json", "--quiet"], "internal", "https://x.test")):
+    _out = io.StringIO()
+    _code, _err = _cli_exit(_argv, {"GEO_SCORE_DEBUG": ""}, out=_out)
+    _got = json.loads(_out.getvalue() or "null") or {}
+    eq((_code, _got.get("error", {}).get("kind"), _got.get("error", {}).get("target")), (2, _kind, _target),
+       "%s exits 2 with a JSON error of kind %s on stdout" % (" ".join(_argv), _kind))
+    ok(_got.get("error", {}).get("message", "\0") in _err, "and the same message on stderr: %r" % _err[-200:])
+_ej = gs.error_json("dns", "cannot resolve x.test", "https://x.test")
+eq(sorted(_ej), ["error", "tool"], "the JSON error has the error and the tool")
+try:
+    import jsonschema as _js
+    _js.validate(_ej, json.load(io.open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8")))
+except ImportError:
     pass
 
 if fails:

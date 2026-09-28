@@ -582,6 +582,50 @@ class EndToEnd(unittest.TestCase):
                                                                          "--assert", "g.*=max"))].stderr)
         self.assertIn("names no check", good[("good", ("--assert", "x.nope>0"))].stderr)
 
+    def test_an_unreachable_site_fails_fast_and_says_why(self):
+        # a typo, a closed port or a silent server used to take up to four minutes and end in raw urllib text,
+        # with nothing on stdout under --json. Each now exits 2 within seconds, naming the kind of failure.
+        dead = "http://127.0.0.1:9"
+        env = {k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}
+        env.update(HTTPS_PROXY=dead, HTTP_PROXY=dead, https_proxy=dead, http_proxy=dead, NO_COLOR="1",
+                   NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+        closed = socket.socket()
+        closed.bind(("127.0.0.1", 0))
+        closed_port = closed.getsockname()[1]
+        closed.close()
+        silent = socket.socket()                    # accepts connections into its backlog and never answers
+        silent.bind(("127.0.0.1", 0))
+        silent.listen(16)
+        with open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8") as f:
+            schema = json.load(f)
+        try:
+            import jsonschema
+        except ImportError:
+            jsonschema = None
+        cases = [("not a url", [], "usage", 1),
+                 ("http://127.0.0.1:%d" % closed_port, [], "refused", 2),
+                 ("http://127.0.0.1:%d" % silent.getsockname()[1], ["--timeout", "1"], "timeout", 5)]
+        try:
+            for url, args, kind, limit in cases:
+                with self.subTest(kind=kind):
+                    t0 = time.time()
+                    p = subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"), url, "--json"] + args,
+                                       capture_output=True, text=True, timeout=60, env=env)
+                    secs = time.time() - t0
+                    self.assertEqual(p.returncode, 2, p.stderr[-400:])
+                    got = json.loads(p.stdout)
+                    self.assertEqual(got["error"]["kind"], kind, got)
+                    self.assertLess(secs, limit, "%s took %.1f s" % (kind, secs))
+                    self.assertIn(got["error"]["message"], p.stderr, "stdout and stderr carry the same message")
+                    if kind != "usage":
+                        self.assertEqual(got["error"]["target"], url)
+                        self.assertIn("(%s): " % kind, got["error"]["message"])
+                        self.assertIn("/guide/troubleshooting.md#", got["error"]["message"])
+                    if jsonschema is not None:
+                        jsonschema.validate(got, schema)
+        finally:
+            silent.close()
+
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)
         self.assertLess(secs, 20, "fixture runs took %.1fs; a retry sleep or a timeout is hiding somewhere" % secs)

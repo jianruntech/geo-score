@@ -15,6 +15,10 @@ Rubric: https://github.com/jianruntech/geo-score
 """
 import argparse, concurrent.futures as cf, datetime, fnmatch, html, io, json, os, re, sys, threading, time, zlib
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
+try:
+    import ssl
+except ImportError:         # a Python built without OpenSSL: https fails, and says so
+    ssl = None
 
 __version__ = "1.4.0"
 RUBRIC = "v1.1"
@@ -91,10 +95,20 @@ def is_sitemap(r):
 
 
 class Resp:
-    __slots__ = ("url", "status", "body", "headers", "err", "elapsed")
-    def __init__(self, url, status=0, body=b"", headers=None, err=None, elapsed=0.0):
+    __slots__ = ("url", "status", "body", "headers", "err", "elapsed", "_kind")
+    def __init__(self, url, status=0, body=b"", headers=None, err=None, elapsed=0.0, kind=None):
         self.url, self.status, self.body = url, status, body
-        self.headers, self.err, self.elapsed = headers or {}, err, elapsed
+        self.headers, self.err, self.elapsed, self._kind = headers or {}, err, elapsed, kind
+    @property
+    def kind(self):
+        """Why this answer is no page to score, in schema/error.v1.json's words: with no HTTP answer dns,
+        refused, tls, timeout, dropped, no_response (or not_public under the address guard); http_<code> for an
+        HTTP error; no_content for an empty 2xx. None for a page with content."""
+        if self.status == 0:
+            return self._kind or fault_kind(self.err)
+        if not self.ok:
+            return "http_%d" % self.status
+        return None if self.body else "no_content"
     @property
     def text(self):
         cs = "utf-8"
@@ -266,7 +280,18 @@ def gunzip(raw, limit=MAX_INFLATED):
         return raw
 
 
-def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
+# Seconds a request may wait for the server, per read. main() sets it from --timeout; run(timeout=…) overrides it.
+DEFAULT_TIMEOUT = 15
+TIMEOUT = DEFAULT_TIMEOUT
+MAX_TIMEOUT = 300
+# Resolve the host before a run, so a mistyped name fails at once. main() switches this on for the CLI. It is a
+# module setting, not a run() parameter, so run() keeps the signature callers and test stubs rely on; the MCP
+# server resolves the host itself before it calls run().
+PREFLIGHT = False
+
+
+def fetch(url, ua=UA_BROWSER, timeout=None, method="GET"):
+    timeout = timeout or TIMEOUT
     t0 = time.time()
     try:
         # inside the try: a URL the site wrote badly (relative, schemeless, empty) is a failed fetch,
@@ -289,7 +314,8 @@ def fetch(url, ua=UA_BROWSER, timeout=15, method="GET"):
                     elapsed=time.time() - t0)
     except Exception as e:
         # a server's status line lands in this message: keep it to one clean line
-        return Resp(url, 0, b"", err=" ".join(_UNSAFE.sub("", str(e)).split())[:120], elapsed=time.time() - t0)
+        return Resp(url, 0, b"", err=" ".join(_UNSAFE.sub("", str(e)).split())[:120], elapsed=time.time() - t0,
+                    kind=fault_kind(e))
 
 # Retries. A timeout, a reset, 408, 429 or a 5xx can change on the next try; any other answer is definite.
 # The wait grows by RETRY_BACKOFF seconds a try (the tests set it to 0), or follows a Retry-After of up to
@@ -303,7 +329,12 @@ PROBE_TRIES = 2
 def transient(status):
     return status in (0, 408, 429) or 500 <= status < 600
 
+# faults the next try meets again at once: a name that does not resolve, a closed port, a failed handshake
+DEFINITE = {"dns", "refused", "not_public", "tls"}
+
 def retry_wait(r, i):
+    if r.status == 0 and r.kind == "timeout":
+        return 0            # a timeout has already waited
     ra = r.headers.get("retry-after", "").strip()
     if ra.isdigit():
         return min(int(ra), RETRY_AFTER_MAX)
@@ -325,7 +356,8 @@ def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
     once sent discovery to homepage links instead, a different eight pages were scored,
     and a site measured 71, 40 and 71 on three consecutive runs from one machine (the
     middle sample fell under the g.ssr gate). Timeouts, resets, 408, 429 and 5xx are
-    retried with a short backoff; a definite answer is returned at once. With a memo,
+    retried with a short backoff; a definite answer, or a DNS, refused or TLS fault, is
+    returned at once. With a memo,
     an answer already fetched in this run is returned without a request."""
     key = (url, kw.get("ua", UA_BROWSER), kw.get("method", "GET"))
     if memo is not None:
@@ -334,7 +366,7 @@ def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
                 return memo.got[key]
     for i in range(tries):
         r = fetch(url, **kw)
-        if not transient(r.status):
+        if not transient(r.status) or r.kind in DEFINITE:
             break
         if i < tries - 1:
             time.sleep(retry_wait(r, i))
@@ -342,6 +374,103 @@ def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
         with memo.lock:
             r = memo.got.setdefault(key, r)
     return r
+
+def fault_kind(e):
+    """The kind of a fault that left no HTTP answer, from the exception fetch() caught, or from its
+    one-line text when only that is left."""
+    if isinstance(e, BaseException):
+        why = getattr(e, "reason", None)            # URLError wraps the cause
+        x = why if isinstance(why, BaseException) else e
+        if isinstance(x, (socket.timeout, TimeoutError)):
+            return "timeout"
+        if isinstance(x, socket.gaierror):
+            return "dns"
+        if isinstance(x, ConnectionRefusedError):
+            return "refused"
+        if ssl is not None and isinstance(x, ssl.SSLError):      # certificate failures included
+            return "tls"
+        if isinstance(x, (ConnectionError, http.client.IncompleteRead)):
+            return "dropped"
+        e = why if isinstance(why, str) else str(x)
+    e = (e or "").lower()
+    for keys, kind in ((("timed out", "timeout"), "timeout"), (("refused:",), "not_public"),
+                       (("cannot resolve", "getaddrinfo", "nodename", "name or service", "name resolution"), "dns"),
+                       (("refused",), "refused"), (("ssl", "certificate", "tls"), "tls"),
+                       (("reset", "closed connection", "remote end closed", "broken pipe", "eof"), "dropped")):
+        if any(k in e for k in keys):
+            return kind
+    return "no_response"
+
+class ScoreError(RuntimeError):
+    """A site that cannot be scored. `kind` says why in schema/error.v1.json's words; the CLI prints the
+    message, and under --json the JSON error as well."""
+    def __init__(self, message, kind="error", target=None):
+        RuntimeError.__init__(self, message)
+        self.kind, self.target = kind, target
+
+# What each kind of failed fetch means, in one plain sentence, and the section of guide/troubleshooting.md that
+# explains it (test_geo_score.py checks that every anchor is a heading there)
+FAULTS = {
+    "dns": ("cannot resolve {host}: check the spelling, or your DNS/proxy settings (HTTPS_PROXY)",
+            "dns-the-name-does-not-resolve"),
+    "refused": ("{host} refused the connection: nothing accepts connections on that port, or a firewall turned "
+                "the request away", "refused-the-connection-was-refused"),
+    "not_public": ("the address guard refused {host}: it does not resolve to a public address",
+                   "could-not-fetch--and-exit-code-2"),
+    "tls": ("the TLS handshake with {host} failed: its certificate is invalid, expired or for another name, or "
+            "something between here and the site interferes with HTTPS", "tls-the-https-handshake-failed"),
+    "timeout": ("{host} did not answer within {timeout:g} s on any try (--timeout sets the wait)",
+                "timeout-no-answer-in-time"),
+    "dropped": ("{host} closed the connection without answering, on every try", "dropped-no_response-no-answer-came-back"),
+    "no_response": ("{host} gave no usable HTTP answer", "dropped-no_response-no-answer-came-back"),
+    "http": ("every page asked for answered with an HTTP error ({codes})", "http_nnn-the-pages-answered-with-an-http-error"),
+    "no_content": ("{host} answered with an empty page", "no_content-the-page-came-back-empty"),
+}
+
+def troubleshooting(anchor):
+    """A section of the troubleshooting guide, pinned to this release's tag."""
+    return "https://github.com/jianruntech/geo-score/blob/v%s/guide/troubleshooting.md#%s" % (__version__, anchor)
+
+def proxy_for(url):
+    """The proxy a request to `url` goes through, as host:port (never its credentials), or None."""
+    u = urllib.parse.urlsplit(url)
+    p = urllib.request.getproxies().get(u.scheme)
+    if not p or urllib.request.proxy_bypass(u.hostname or ""):
+        return None
+    pu = urllib.parse.urlsplit(p if "://" in p else "http://" + p)
+    return pu.hostname + (":%d" % pu.port if pu.port else "") if pu.hostname else None
+
+def fetch_failure(base, rs, timeout=None):
+    """The error for a site that gave no page to score: the first answer's kind, in one plain sentence that names
+    it, with the troubleshooting section for it."""
+    kind = rs[0].kind or "no_content"
+    codes = sorted({r.status for r in rs if r.status and not r.ok})
+    host = urllib.parse.urlsplit(base).hostname or base
+    text, anchor = FAULTS["http" if kind.startswith("http_") else kind]
+    text = text.format(host=host, timeout=timeout or TIMEOUT, codes=", ".join("HTTP %d" % c for c in codes))
+    via = proxy_for(base) if rs[0].status == 0 and kind != "not_public" else None
+    return ScoreError("could not fetch %s (%s): %s%s; see %s" % (
+        base, kind, text, "; the request went through the proxy at %s, which may be where it failed" % via if via else "",
+        troubleshooting(anchor)), kind, base)
+
+# getaddrinfo's answers for a name that does not exist (EAI_NODATA is missing on some platforms)
+NO_SUCH_NAME = {getattr(socket, n) for n in ("EAI_NONAME", "EAI_NODATA") if hasattr(socket, n)}
+
+def preflight_host(url):
+    """Resolve the host once before anything is fetched, so a mistyped name fails at once, in plain words.
+    Skipped when a proxy will carry the request: behind a proxy local DNS can fail while the proxy resolves
+    the name. A temporary resolver failure (EAI_AGAIN) lets the run go ahead."""
+    u = urllib.parse.urlsplit(idna(url))
+    if not u.hostname or proxy_for(url):
+        return
+    try:
+        socket.getaddrinfo(u.hostname, u.port or (443 if u.scheme == "https" else 80), type=socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        if e.errno in NO_SUCH_NAME:
+            raise ScoreError("cannot resolve %s: check the spelling, or your DNS/proxy settings (HTTPS_PROXY); see %s"
+                             % (u.hostname, troubleshooting(FAULTS["dns"][1])), "dns", url) from None
+    except (UnicodeError, ValueError):
+        pass
 
 def fault_name(err):
     """A request that got no answer, in the tool's words: the raw error can carry a server's status line."""
@@ -932,7 +1061,7 @@ def scope_of(base):
         path = path.rsplit("/", 1)[0]
     return origin, path
 
-def discover(base, want=8, verbose=False, *, memo=None):
+def discover(base, want=8, verbose=False, *, memo=None, timeout=None):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
     depends on the sample being representative."""
@@ -940,8 +1069,12 @@ def discover(base, want=8, verbose=False, *, memo=None):
     root = origin + scope
     host = urllib.parse.urlsplit(origin).netloc
     scheme = urllib.parse.urlsplit(origin).scheme
-    steady = lambda u: fetch_steady(u, memo=memo)
+    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout)
     home = steady(root + "/")
+    if home.status == 0:
+        # no answer at all: every other request to this host would meet the same fault after its own retries,
+        # which made a mistyped or dead host take minutes to report
+        raise fetch_failure(base, [home], timeout)
     pool, seen = [], {root + "/", root}
 
     def same_site(u):
@@ -1078,7 +1211,11 @@ def read_report_urls(path):
         raise RuntimeError("--urls-from %s has no sampled_urls list; pass a report written by --json or --json-out" % path)
     return urls
 
-def run(base, sample=8, verbose=False, urls=None):
+def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
+    """Score one site. `timeout` is the wait per request (default TIMEOUT, which --timeout sets)."""
+    timeout = timeout or TIMEOUT
+    if PREFLIGHT:
+        preflight_host(base)
     origin, scope = scope_of(base)
     root = origin + scope
     ev, tier = {}, {}
@@ -1087,21 +1224,19 @@ def run(base, sample=8, verbose=False, urls=None):
 
     # every request that decides the sample or a gate goes through this run's memo: fetched once, retried
     memo = FetchMemo()
-    steady = lambda u: fetch_steady(u, memo=memo)
+    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout)
+    get = lambda u, **kw: fetch(u, timeout=timeout, **kw)
     if urls:
         # the caller validated the list and its length (--urls caps at 8, --urls-from at the report's own count)
         urls, sample_source = pin_urls(base, urls, limit=len(urls)), "pinned"
     else:
         say("discovering sample pages…")
-        urls, sample_source = discover(base, sample, verbose, memo=memo)
+        urls, sample_source = discover(base, sample, verbose, memo=memo, timeout=timeout)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
     pages = dict(zip(urls, pmap(steady, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
     if not live:
-        why = next((r.err for r in pages.values() if r.err), None)
-        codes = sorted({r.status for r in pages.values() if r.status})
-        raise RuntimeError("could not fetch %s — %s" % (base,
-            why or ("all requests returned %s" % ", ".join(map(str, codes)) if codes else "no response")))
+        raise fetch_failure(base, [pages[u] for u in urls], timeout)
     n = len(live)
 
     home_html_early = live.get(root + "/", list(live.values())[0]).text
@@ -1116,8 +1251,8 @@ def run(base, sample=8, verbose=False, urls=None):
         # a network that cannot read the file is not evidence that it is missing (RFC 9309 2.3.1.4 has
         # crawlers assume a full disallow here; rubric/open-questions.md #10)
         tier["g.robots"] = None
-        ev["g.robots"] = ("robots.txt could not be read after %d tries (%s); not observed."
-                          % (STEADY_TRIES, fault_name(rb.err)))
+        ev["g.robots"] = ("robots.txt could not be read%s (%s); not observed."
+                          % ("" if rb.kind in DEFINITE else " after %d tries" % STEADY_TRIES, fault_name(rb.err)))
     elif transient(rb.status):
         tier["g.robots"] = 3
         ev["g.robots"] = ("robots.txt answered HTTP %d on all %d tries. Nothing readable is disallowed, but nothing "
@@ -1132,7 +1267,7 @@ def run(base, sample=8, verbose=False, urls=None):
     probe = list(live)[:3]
     # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
     # reached the same page moments earlier
-    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2])),
+    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2], timeout=timeout)),
                    [(name, u, ua) for name, ua in RETRIEVAL_UAS for u in probe])
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
@@ -1194,10 +1329,10 @@ def run(base, sample=8, verbose=False, urls=None):
             if getattr(sm, "url", None) else "—", locs, mods)
 
     # ── p1.llms-txt ──
-    lt = fetch(origin + "/llms.txt")
+    lt = get(origin + "/llms.txt")
     lt_at = "/llms.txt"
     if not text_file(lt) and scope:
-        alt = fetch(origin + scope + "/llms.txt")
+        alt = get(origin + scope + "/llms.txt")
         if text_file(alt):
             lt, lt_at = alt, scope + "/llms.txt"
     if not text_file(lt):
@@ -1236,7 +1371,7 @@ def run(base, sample=8, verbose=False, urls=None):
     # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
     # "logo.png" on /docs/ is /docs/logo.png
     logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
-    logo_ok = bool(logo_url) and fetch(join_link(logo_base, logo_url), method="GET").ok
+    logo_ok = bool(logo_url) and get(join_link(logo_base, logo_url)).ok
     org_complete = any(o.get("name") and o.get("url") and o.get("logo") for o in orgs)
     if not org_pages and not site_pages:
         tier["p1.organization"] = 0; ev["p1.organization"] = "Neither Organization nor WebSite JSON-LD found on any sampled page."
@@ -1402,7 +1537,7 @@ def run(base, sample=8, verbose=False, urls=None):
         # unreachable from mainland China); 401 / 403 / 429 / 999 and similar are bot walls
         # in front of pages that exist (Crunchbase, Zhihu, Facebook, LinkedIn). Counting
         # either as dead made the score depend on where and when the tool ran.
-        res = pmap(lambda u: fetch(u, method="GET"), sa[:8])
+        res = pmap(get, sa[:8])
         t, good, dead, unseen = sameas_tier([r.status for r in res])
         if t is None:
             tier["p3.sameas"] = None
@@ -1444,7 +1579,7 @@ def run(base, sample=8, verbose=False, urls=None):
         tier["p4.cn-engines"] = None
         ev["p4.cn-engines"] = "Site does not address the Chinese market — the check leaves the denominator."
     else:
-        cn = pmap(lambda t: fetch(root + "/", t[1]), CN_UAS)
+        cn = pmap(lambda t: get(root + "/", ua=t[1]), CN_UAS)
         okc2 = sum(1 for r in cn if r.ok)
         icp = bool(re.search(r"ICP备|京ICP|沪ICP|粤ICP", " ".join(r.text for r in live.values())))
         tier["p4.cn-engines"] = 2 if okc2 == len(CN_UAS) and icp else (1 if okc2 else 0)
@@ -1483,7 +1618,7 @@ def run(base, sample=8, verbose=False, urls=None):
     for cand in brands:
         q = urllib.parse.quote(cand)
         for lg in langs:
-            wd = fetch("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
+            wd = get("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
                        "&language=%s&uselang=%s&limit=5&search=%s" % (lg, lg, q))
             kg_queries += 1; kg_ok += 1 if wd.ok else 0
             if wd.ok:
@@ -1494,7 +1629,7 @@ def run(base, sample=8, verbose=False, urls=None):
                                                                      site_text(it.get("description", ""), 40)))
                             break
                 except Exception: pass
-            wp = fetch("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
+            wp = get("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
                        "&srlimit=3&srsearch=%s" % (lg, q))
             kg_queries += 1; kg_ok += 1 if wp.ok else 0
             if wp.ok:
@@ -1537,9 +1672,9 @@ def run(base, sample=8, verbose=False, urls=None):
     # site under a path has no robots.txt of its own to offer. That asymmetry is real
     # and documented in rubric/open-questions.md #9.
     def at_origin_or_scope(rel):
-        r = fetch(origin + rel)
+        r = get(origin + rel)
         if not text_file(r) and scope:
-            alt = fetch(origin + scope + rel)
+            alt = get(origin + scope + rel)
             if text_file(alt):
                 return alt
         return r
@@ -2008,8 +2143,42 @@ def compare(pairs, args):
           % (c.grey, "Both" if len(cols) == 2 else "All", RUBRIC, c.r))
     print()
 
+def target_url(raw):
+    """The URL to score, from what the user typed; ValueError says why it is not one. localhost, IP literals and
+    intranet names without a dot are scored like any other host."""
+    raw = raw.strip()
+    if not raw or any(ch.isspace() for ch in raw):
+        raise ValueError("%r is not a URL: it contains whitespace" % raw[:80] if raw else "the URL is empty")
+    url = raw if "://" in raw else "https://" + raw
+    try:
+        u = urllib.parse.urlsplit(url)
+    except ValueError as e:
+        raise ValueError("%s is not a URL (%s)" % (raw[:80], e)) from None
+    if u.scheme.lower() not in ("http", "https"):
+        raise ValueError("%s: only http:// and https:// sites can be scored" % raw[:80])
+    if not u.hostname:
+        raise ValueError("%s has no host name" % raw[:80])
+    try:
+        port = u.port
+    except ValueError:              # not a number, or above 65535
+        port = 0
+    if port is not None and not 1 <= port <= 65535:
+        raise ValueError("%s: the port must be a number from 1 to 65535" % raw[:80])
+    return url
+
+class _Parser(argparse.ArgumentParser):
+    """argparse, but a usage error under --json also prints the JSON error on stdout, as every other exit 2 does."""
+    def error(self, message):
+        if "--json" in sys.argv[1:]:
+            print(json.dumps(error_json("usage", message, None), ensure_ascii=False))
+        argparse.ArgumentParser.error(self, message)
+
+def error_json(kind, message, target):
+    """The --json answer when nothing could be scored (schema/error.v1.json)."""
+    return {"error": {"kind": kind, "message": message, "target": target}, "tool": "geo-score-cli/%s" % __version__}
+
 def main():
-    global _TARGET
+    global TIMEOUT, PREFLIGHT
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
         w = _watch_module()
         # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
@@ -2017,7 +2186,7 @@ def main():
         if sys.argv[1] == "watch":
             sys.exit(w.main(sys.argv[2:], prog=me + " watch"))
         sys.exit(w.main(["mcp"] + sys.argv[2:], prog=me))
-    ap = argparse.ArgumentParser(prog="geo-score",
+    ap = _Parser(prog="geo-score",
         description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.",
         epilog="Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
                "`geo_score.py watch {init,check,run,report,diff,runs,ask}` tracks a question set week over week; "
@@ -2034,6 +2203,8 @@ def main():
     ap.add_argument("--badge", metavar="FILE", nargs="?", const="aiv-badge.svg",
                     help="also write an embeddable SVG badge (default aiv-badge.svg)")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
+    ap.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, metavar="SECONDS",
+                    help="seconds to wait for each request before it counts as unanswered (default %d)" % DEFAULT_TIMEOUT)
     pin = ap.add_mutually_exclusive_group()
     pin.add_argument("--urls", metavar="FILE",
                      help="score exactly these pages (one URL per line, up to 8) instead of drawing a sample")
@@ -2070,11 +2241,17 @@ def main():
         qs = [q.strip() for q in a.ask if q.strip()]
         if not 1 <= len(qs) <= 5 or len(qs) != len(a.ask) or any(len(q) > 500 for q in qs):
             ap.error("--ask takes 1 to 5 non-empty questions of up to 500 characters")
-    url = a.url if "://" in a.url else "https://" + a.url
-    _TARGET = url
+    if not 0 < a.timeout <= MAX_TIMEOUT:            # NaN fails both comparisons
+        ap.error("--timeout takes a number of seconds above 0 and up to %d" % MAX_TIMEOUT)
+    try:
+        targets = [target_url(u) for u in [a.url] + (a.compare or [])]
+    except ValueError as e:
+        ap.error(str(e))
+    url = targets[0]
+    _CLI.update(target=url, json=a.json)
+    TIMEOUT, PREFLIGHT = a.timeout, True
     if not a.json and not a.quiet:
         print("%s  scoring %s …%s" % (c.dim, url, c.r), file=sys.stderr)
-    targets = [url] + [(u if "://" in u else "https://" + u) for u in (a.compare or [])]
     if a.ask and len(targets) > 1:
         raise RuntimeError("--ask works with one site at a time; drop --compare")
     if (a.json_out or a.sarif or a.junit) and len(targets) > 1:
@@ -2166,7 +2343,15 @@ def main():
         sys.exit(1)
 
 ISSUES_URL = "https://github.com/jianruntech/geo-score/issues"
-_TARGET = None      # the site main() is scoring, named in an internal error
+_CLI = {"target": None, "json": False}      # what main() is scoring, and whether it answers in JSON
+
+def _fail(kind, message, target=None):
+    """Exit 2: the message on stderr, and under --json the JSON error on stdout, so a pipeline never reads nothing."""
+    message = " ".join(_UNSAFE.sub("", message).split())
+    print("%s%s%s" % (c.red, message, c.r), file=sys.stderr)
+    if _CLI["json"]:
+        print(json.dumps(error_json(kind, message, target or _CLI["target"]), ensure_ascii=False))
+    sys.exit(2)
 
 def cli():
     """Console entry point (`geo-score` after `pipx install`); the same exits as running the file."""
@@ -2175,17 +2360,14 @@ def cli():
     except KeyboardInterrupt:
         sys.exit(130)
     except RuntimeError as e:
-        print("%s%s%s" % (c.red, " ".join(_UNSAFE.sub("", str(e)).split()), c.r), file=sys.stderr)
-        sys.exit(2)
+        _fail(getattr(e, "kind", "error"), str(e), getattr(e, "target", None))
     except Exception as e:
         # a bug, or input no one foresaw: one line and exit 2, never a traceback that exits 1, which CI reads
         # as "below --fail-under". GEO_SCORE_DEBUG=1 shows the traceback.
         if os.environ.get("GEO_SCORE_DEBUG") == "1":
             raise
-        print("%sgeo-score internal error (%s)%s; please report it at %s%s"
-              % (c.red, type(e).__name__, " while scoring %s" % _UNSAFE.sub("", _TARGET) if _TARGET else "",
-                 ISSUES_URL, c.r), file=sys.stderr)
-        sys.exit(2)
+        _fail("internal", "geo-score internal error (%s)%s; please report it at %s" % (
+            type(e).__name__, " while scoring %s" % _CLI["target"] if _CLI["target"] else "", ISSUES_URL))
 
 def mcp_main():
     """Console entry point `geo-score-mcp`: the MCP server over stdio, for MCP client configs."""

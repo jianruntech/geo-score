@@ -21,6 +21,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). Each result points at the line of its check in the `--json-out` report (or at the SARIF file when there is none), with the site named in the message, which is what GitHub code scanning requires |
 | `--junit FILE` | Also write JUnit XML: one test per check. A check at zero fails, a check the CLI cannot observe is skipped, partial credit passes |
 | `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
+| `--timeout SECONDS` | How long each request may wait for the server before it counts as unanswered (default 15, at most 300). A site that cannot be reached fails fast and says why: a name that does not resolve, a refused connection or a failed TLS handshake is not retried |
 | `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
 | `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
@@ -40,11 +41,15 @@ When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, a gate at zero under `--fail-on-gate`, or a
 failed `--assert`, `2` the site could not be fetched, a pinned URL list was refused, a usage error
 (a malformed `--assert` included), or an internal error, reported in one line with where to file it
-(`GEO_SCORE_DEBUG=1` shows the traceback). Assertions on the heuristic checks listed under *How far to trust
-each check* carry the same run-to-run noise as the score: pin the pages with `--urls-from` when you
-assert on them. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
-`geo_watch.py` missing, `3` nothing could be measured (no key worked), `4` `watch diff --fail-on-drop`
-found a drop beyond noise.
+(`GEO_SCORE_DEBUG=1` shows the traceback). When the site could not be fetched, the message names the
+kind of failure, such as `dns`, `timeout` or `http_403`, and links to
+[its section in troubleshooting](../guide/troubleshooting.md#could-not-fetch--and-exit-code-2). With
+`--json`, an exit 2 prints a JSON error on stdout instead of a report
+([`schema/error.v1.json`](../schema/error.v1.json)), with the same kind in `error.kind`. Assertions on
+the heuristic checks listed under *How far to trust each check* carry the same run-to-run noise as the
+score: pin the pages with `--urls-from` when you assert on them. Levels 2 and 3 (`watch …`): `0` done,
+`1` configuration error, `2` usage error or `geo_watch.py` missing, `3` nothing could be measured (no
+key worked), `4` `watch diff --fail-on-drop` found a drop beyond noise.
 
 ## Comparing against a competitor
 

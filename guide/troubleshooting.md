@@ -46,13 +46,81 @@ run-to-run noise as the score, so pin the pages with `--urls-from` when you asse
 
 ## `could not fetch …` and exit code 2
 
-**Cause.** No sampled page answered with content: DNS failed, TLS failed, every request timed out,
-or the server refused a non-browser client. Exit code 2 also covers usage errors and refused
-`--urls` lists.
+**Cause.** Nothing the CLI asked for came back as a page to score. The message names the kind of failure
+in parentheses, for example `could not fetch https://example.com (timeout): …`, and links to its section
+below. A name that does not resolve, a refused connection and a failed TLS handshake are not retried, so
+they fail within a second; a timeout or a dropped connection is tried three times. Exit code 2 also
+covers usage errors (including a URL that is not one), refused `--urls` lists and internal errors.
 
-**What to do.** Check that `curl -I https://the-site/` works from the same machine. Behind a proxy,
-set `HTTPS_PROXY`. If the site answers a browser but not the CLI, that difference is itself what
-`g.reachable` measures once the page loads.
+With `--json`, an exit 2 prints a JSON error on stdout instead of a report
+([`schema/error.v1.json`](../schema/error.v1.json)): `error.kind` is the same token, so a pipeline can
+tell a mistyped host from a site that refused the tool without reading the message.
+
+**What to do.** Read the section for the kind. Check that `curl -I https://the-site/` works from the
+same machine. Behind a proxy, set `HTTPS_PROXY`; when a proxy carried the request, the message names it,
+because the failure may be the proxy's.
+
+### dns: the name does not resolve
+
+**Cause.** The host name has no address: a typo, a lapsed domain, or a DNS server or VPN that cannot see
+it. Without a proxy, the CLI resolves the name once before it fetches anything, so this fails at once.
+When a proxy carries the request, the proxy resolves the name, and this check is skipped.
+
+**What to do.** Check the spelling. `nslookup the-host` from the same machine shows what DNS answers. On
+a network that resolves names only through a proxy, set `HTTPS_PROXY`.
+
+### refused: the connection was refused
+
+**Cause.** The host has an address, but nothing accepted a connection on that port: the server is down,
+the URL names the wrong port, or a firewall rejects the connection.
+
+**What to do.** Check the port in the URL (`https://` means 443 and `http://` means 80 unless the URL
+says otherwise) and whether the site is up from another network.
+
+### tls: the HTTPS handshake failed
+
+**Cause.** Python could not complete an HTTPS connection: the certificate is invalid, expired or issued
+for another name, the server offers only protocol versions Python refuses, or something between this
+machine and the site (a proxy, antivirus or a corporate firewall) interferes with HTTPS. Behind a proxy
+a host that does not exist can look like this too, because some proxies accept the connection and then
+close it when they cannot reach the host.
+
+**What to do.** Check the spelling first when the message names a proxy. Then open the site in a
+browser on the same machine. The CLI checks certificates against Python's own certificate store, which
+can differ from the browser's.
+
+### timeout: no answer in time
+
+**Cause.** The server did not answer within `--timeout` seconds (15 by default) on any of three tries.
+A timeout is retried at once, because the wait has already passed.
+
+**What to do.** Re-run. A site that is slow but up may need a longer wait, such as `--timeout 40`.
+If every run times out, check the site from the same network with `curl -I`.
+
+### dropped, no_response: no answer came back
+
+**Cause.** The connection closed before an HTTP answer arrived (`dropped`), or what came back was not
+HTTP (`no_response`). Firewalls and bot protection do this to clients they do not trust, and so do
+overloaded servers. Each is tried three times.
+
+**What to do.** Re-run later, and compare with `curl -I` from the same machine. A proxy that cannot
+reach the site can also close the connection; the message names the proxy when one was used.
+
+### http_NNN: the pages answered with an HTTP error
+
+**Cause.** Every page the CLI asked for answered with an HTTP error. The kind carries the first page's
+code, such as `http_403` (often a firewall or bot protection turning away a non-browser client),
+`http_404` (the path does not exist), `http_429` (a rate limit) or `http_503`, and the message lists every
+code it saw.
+
+**What to do.** Check the URL, including its path. If a browser gets the page and the CLI gets a 403,
+the site refuses the tool; that difference is what `g.reachable` measures once any page loads.
+
+### no_content: the page came back empty
+
+**Cause.** The server answered with a success code and an empty body.
+
+**What to do.** Check the URL, then compare with `curl -i` from the same machine.
 
 ## Proxies
 
@@ -86,9 +154,11 @@ pages with `--urls-from` on it.
 **Cause.** Levels 2 and 3 live in `cli/geo_watch.py`. The one-line `curl … | python3 -` install runs
 level 1 only, and never loads a `geo_watch.py` from the current directory.
 
-**What to do.** Install the tool (`pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`), or
-clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release
-into one folder. The two files must carry the same version.
+**What to do.** Install the tool from the release wheel
+(`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.4.0/geo_score-1.4.0-py3-none-any.whl`;
+from source, which needs git: `pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`), or
+clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release into
+one folder. The two files must carry the same version.
 
 ## `watch run` exits 3
 
