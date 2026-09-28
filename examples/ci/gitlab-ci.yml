@@ -1,0 +1,28 @@
+# Copy this job into your project's .gitlab-ci.yml and change SITE_URL.
+# It downloads geo_score.py from a pinned release, checks it against the release's SHA256SUMS, and scores
+# the site once: the report, the JUnit file and the threshold all come from the same run.
+# The JUnit report puts one test case per check in the pipeline's Tests tab, and a check at zero shows as
+# a failed test there and in the merge request widget (when the job runs in merge request pipelines).
+geo-score:
+  image: python:3.12-slim
+  variables:
+    SITE_URL: https://example.com
+    GEO_SCORE_FAIL_UNDER: "40"        # the job fails below this score; drop --fail-under to only report
+    GEO_SCORE_RELEASE: https://github.com/jianruntech/geo-score/releases/download/v1.4.0
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"          # CI/CD > Schedules, e.g. weekly
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # - if: $CI_PIPELINE_SOURCE == "merge_request_event"   # also score in merge request pipelines
+  script:
+    # python:3.12-slim has no curl, so Python fetches the two release files
+    - python3 -c 'import sys, urllib.request as u; [u.urlretrieve(sys.argv[1] + "/" + f, f) for f in sys.argv[2:]]' "$GEO_SCORE_RELEASE" geo_score.py SHA256SUMS
+    # GitLab stops the job at the first line that fails. grep writes the checksum line to a file instead of
+    # piping it, so a SHA256SUMS without that line stops the job here, pipefail or not
+    - grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
+    - sha256sum -c geo_score.py.sha256
+    - python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under "$GEO_SCORE_FAIL_UNDER"
+  artifacts:
+    when: always                      # keep the report when the threshold fails the job
+    paths: [geo-score.json]
+    reports:
+      junit: geo-score.xml

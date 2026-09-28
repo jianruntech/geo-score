@@ -17,10 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # The last step pushes the run file back, so this job keeps the checkout's credentials on purpose.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1  # zizmor: ignore[artipacked]
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
         with: {python-version: "3.12"}
       - name: Fetch geo-score (pinned to a release, checksums verified)
+        id: fetch
         run: |
           rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
           curl -sSfL -o geo_score.py "$rel/geo_score.py"
@@ -37,7 +39,8 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python3 geo_score.py watch run -c geo-score/geo-score-watch.json -q --format md >> "$GITHUB_STEP_SUMMARY"
       - name: Compare with last week
-        if: always()
+        # also after a failed run, but never with files that did not pass the checksum step
+        if: ${{ !cancelled() && steps.fetch.outcome == 'success' }}
         run: python3 geo_score.py watch diff -c geo-score/geo-score-watch.json --format md >> "$GITHUB_STEP_SUMMARY" || true
       - name: Commit the run
         run: |
