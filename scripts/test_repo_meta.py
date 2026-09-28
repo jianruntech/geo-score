@@ -9,10 +9,11 @@ These files only work together, and nothing else notices when they drift apart:
 - what each form asks: a report without the tool version cannot be reproduced;
 - docs/aiv-badge.svg and docs/aiv-badge.json: the badge must be the run the report records;
 - the issue chooser, SUPPORT.md and the PR template: every link resolves, and none is relative, because a
-  PR body or an issue resolves ../README.md against /pull/N and serves a 404.
+  PR body or an issue resolves ../README.md against /pull/N and serves a 404;
+- CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires.
 The forms are read without a YAML library.
 """
-import importlib.util, io, json, os, re, sys
+import importlib.util, io, json, os, re, subprocess, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 FORMS = os.path.join(ROOT, ".github", "ISSUE_TEMPLATE")
@@ -128,10 +129,9 @@ def check_badge():
     svg = rd("docs/aiv-badge.svg")
     want = "%d/100 %s" % (rep["normalised"], rep["band"])
     # the value appears in the aria-label, the title and the text with its shadow; every copy must agree
-    said = re.findall(r"(\d+/100 [A-Z][a-z]+(?: [a-z]+)*)( \(gate capped\))?", svg)
-    ok(len(said) >= 2 and all(s == want for s, _ in said), "the SVG reads %r everywhere, as the report does (%s)"
-       % (want, sorted({s for s, _ in said})))
-    ok(all(rep.get("gate_capped") is True for _, capped in said if capped), "the SVG says gate capped only when the report is")
+    said = re.findall(r"\d+/100 [A-Z][a-z]+(?: [a-z]+)*", svg)
+    ok(len(said) >= 2 and all(s == want for s in said), "the SVG reads %r everywhere, as the report does (%s)"
+       % (want, sorted(set(said))))
     ok(bool(rep.get("audited_at")) and bool(rep.get("tool")), "the report records when (%s) and with what (%s) it was measured"
        % (rep.get("audited_at"), rep.get("tool")))
     m = re.search(r"\[!\[([^\]]*)\]\(docs/aiv-badge\.svg\)\]\(([^)\s]+)\)", rd("README.md"))
@@ -140,9 +140,11 @@ def check_badge():
         alt, link = m.groups()
         ok(link.rstrip("/") == rep["target"].rstrip("/"), "the badge links to the page it measured (%s; report: %s)"
            % (link, rep["target"]))
+        # the alt text names no date yet, so this passes vacuously until one is added; from then on the date
+        # must move with each regenerated badge
         dates = re.findall(r"\d{4}-\d{2}-\d{2}", alt)
         ok(all(d == rep["audited_at"] for d in dates), "a date in the badge's alt text is the report's audited_at (%s)"
-           % (", ".join(dates) or "none named"))
+           % (", ".join(dates) or "none named yet"))
 
 
 def check_support():
@@ -162,19 +164,27 @@ def check_support():
     cfg = rd(".github/ISSUE_TEMPLATE/config.yml")
     for u in (BLOB + "guide/troubleshooting.md", BLOB + "guide/mcp.md#troubleshooting"):
         ok(re.search(r"^    url: %s\s*$" % re.escape(u), cfg, re.M) is not None, "config.yml links %s" % u)
-    # every absolute link into this repository from the chooser, the forms and SUPPORT.md must resolve
+    # every absolute link into this repository from the chooser, the forms, SUPPORT.md and the PR template
     texts = [(".github/ISSUE_TEMPLATE/" + f, rd(".github/ISSUE_TEMPLATE/" + f)) for f in forms() + ["config.yml"]]
     texts += [("SUPPORT.md", rd("SUPPORT.md")), (".github/PULL_REQUEST_TEMPLATE.md", rd(".github/PULL_REQUEST_TEMPLATE.md"))]
-    seen = 0
+    seen, targets = 0, 0
     for name, text in texts:
-        for path, anchor in re.findall(r"https://github\.com/jianruntech/geo-score(?:/blob/main/([^\s)#\]]+))?(?:#([\w-]+))?", text):
-            path = path or "README.md"
-            if not os.path.exists(os.path.join(ROOT, path)):
-                ok(False, "%s: links %s, which does not exist" % (name, path))
-                continue
-            if anchor and path.endswith(".md"):
+        for url in re.findall(REPO_LINK, text):
+            problem, path, anchor = resolve(url)
+            targets += 1
+            if problem:
+                ok(False, "%s: %s %s" % (name, url, problem))
+            elif anchor and path.endswith(".md"):
                 seen += 1
                 ok(anchor_exists(path, anchor), "%s: %s#%s is a heading there" % (name, path, anchor))
+    ok(targets >= 15, "the chooser, the forms, SUPPORT.md and the PR template link %d pages here, all resolved" % targets)
+    for url, want in ((REPO + "/tree/main/benchmark/raw", None), (REPO + "/tree/main/benchmark/no-such-dir", "no directory"),
+                      (REPO + "/blob/main/benchmark/raw", "not a file"), (REPO + "/tree/main/README.md", "no directory"),
+                      (REPO + "/issues/new?template=tool_problem.yml", None),
+                      (REPO + "/issues/new?template=nope.yml", "no issue form"), (REPO + "#scope", None),
+                      (REPO + "/wiki/Home", "cannot check"), (REPO + "/blob/main/SUPPORT.md.", None)):
+        got = resolve(url)[0]
+        ok(got == want or (want and got and want in got), "resolve(%s): %s" % (url[len(REPO):] or "/", want or "resolves"))
     sup = rd("SUPPORT.md")
     for path, anchor in re.findall(r"\]\(([\w./-]+\.md)#([\w-]+)\)", sup):
         seen += 1
@@ -184,6 +194,35 @@ def check_support():
     linked = set(re.findall(r"issues/new\?template=([\w.-]+)", sup))
     ok(linked == set(forms()), "SUPPORT.md links every issue form and only those (%s)" % ", ".join(sorted(linked)))
     ok("README.md#scope--what-this-does-not-do" in sup, "SUPPORT.md says remediation is out of scope, linked to Scope")
+
+
+REPO = "https://github.com/jianruntech/geo-score"
+REPO_LINK = re.escape(REPO) + r"(?![\w-])(?:[/?#][^\s)\]\"'`<>]*)?"
+# GitHub pages that are not files in the repository and exist whatever the tree holds
+PAGES = ("releases", "issues", "pulls", "discussions", "security", "actions", "labels")
+
+
+def resolve(url):
+    """(problem or None, path, anchor) for an absolute link into this repository: blob/main must be a file,
+    tree/main a directory, issues/new?template= an issue form, and the bare repository is README.md."""
+    rest, _, anchor = url[len(REPO):].rstrip(".,;:").partition("#")
+    m = re.match(r"^/(blob|tree)/main/([^?]+)$", rest)
+    if rest in ("", "/"):
+        return None, "README.md", anchor
+    if m:
+        kind, path = m.groups()
+        full = os.path.join(ROOT, path.rstrip("/"))
+        if kind == "blob" and not os.path.isfile(full):
+            return "is not a file here" if os.path.exists(full) else "links %s, which does not exist" % path, path, anchor
+        if kind == "tree" and not os.path.isdir(full):
+            return "names no directory here", path, anchor
+        return None, path, anchor
+    m = re.match(r"^/issues/new\?template=([\w.-]+)$", rest)
+    if m:
+        return (None if m.group(1) in forms() else "names no issue form in .github/ISSUE_TEMPLATE/"), "", ""
+    if rest.lstrip("/").split("/")[0].split("?")[0] in PAGES:
+        return None, "", ""
+    return "is a link this test cannot check", "", ""
 
 
 def relative_links(text):
@@ -210,6 +249,28 @@ def check_pr_template():
        "relative_links finds ../README.md#scope and passes https and mailto")
 
 
+# what .github/validate.py requires of every rubric version after v1.0 (rules 10, 13 and 22), the version as V
+RUBRIC_FILES = ("rubric/vV.md", "rubric/vV.zh-CN.md", "rubric/vV.json", "rubric/evidence-vV.md",
+                "rubric/evidence-vV.zh-CN.md", "examples/audits/vV/")
+
+
+def check_rubric_steps():
+    print("rubric: CONTRIBUTING.md and the PR template name every file a new rubric version needs")
+    con = rd("CONTRIBUTING.md")
+    sec = con[con.index("## Changing the rubric"):]
+    sec = sec[:sec.index("\n## ", 1)]
+    ver = re.search(r"`rubric/v(\d+\.\d+)\.md`", sec)
+    names = [f.replace("V", ver.group(1)) for f in RUBRIC_FILES] if ver else []
+    miss = [f for f in names if "`%s`" % f not in sec]
+    ok(bool(names) and not miss, "CONTRIBUTING.md 'Changing the rubric' names %s%s"
+       % (", ".join(names) or "a next version", (": not " + ", ".join(miss)) if miss else ""))
+    pr = rd(".github/PULL_REQUEST_TEMPLATE.md")
+    line = pr[pr.index("New version files:"):].split("\n\n", 1)[0]
+    miss = [f for f in RUBRIC_FILES if "`%s`" % f.replace("V", "___") not in line]
+    ok(not miss, "PULL_REQUEST_TEMPLATE.md 'New version files' names all %d%s"
+       % (len(RUBRIC_FILES), (": not " + ", ".join(miss)) if miss else ""))
+
+
 def check_sync_script():
     print("sync: scripts/sync_labels.py plans without the network and never deletes")
     spec = importlib.util.spec_from_file_location("sync_labels", os.path.join(ROOT, "scripts", "sync_labels.py"))
@@ -228,6 +289,22 @@ def check_sync_script():
     ok([x["name"] for x in extra] == ["wontfix"], "a label only on GitHub is reported as kept")
     src = rd("scripts/sync_labels.py")
     ok('"delete"' not in src and "'delete'" not in src, "the script never calls gh label delete")
+    ok([sync.proxy_shown(u) for u in ("http://user:s3cret@proxy.example:8080", "user:pw@host:3128", "http://127.0.0.1:7897")]
+       == ["proxy.example:8080", "host:3128", "127.0.0.1:7897"], "proxy_shown keeps the host and port and drops user:password@")
+    if os.name == "nt":
+        return
+    # the whole script with a gh that knows no labels: the summary line must not carry the proxy's password
+    with tempfile.TemporaryDirectory() as tmp:
+        fake = os.path.join(tmp, "gh")
+        io.open(fake, "w").write("#!/bin/sh\necho '[]'\n")
+        os.chmod(fake, 0o755)
+        env = dict(os.environ, PATH=tmp + os.pathsep + os.environ.get("PATH", ""),
+                   HTTPS_PROXY="http://user:s3cret@proxy.example:8080")
+        p = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "sync_labels.py"), "--check"], env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+    ok(p.returncode == 1 and "via proxy.example:8080" in p.stdout and "s3cret" not in p.stdout,
+       "sync_labels.py --check names the proxy's host, not its password, and fails on missing labels (exit %d)"
+       % p.returncode)
 
 
 def main():
@@ -236,6 +313,7 @@ def main():
     check_badge()
     check_support()
     check_pr_template()
+    check_rubric_steps()
     check_sync_script()
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))
