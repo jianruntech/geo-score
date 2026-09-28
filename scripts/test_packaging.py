@@ -173,11 +173,38 @@ def run_block(bash, block, fakes, env=None, files=None):
 def check_gate_steps():
     """check.sh's steps that depend on the machine: each one skips, or falls back, instead of failing the gate
     for something the change under test did not cause."""
-    print("\n  the gate on other machines: the --live label step, and gh for --execute")
+    print("\n  the gate on other machines: lint without the pinned ruff, the --live label step, gh for --execute")
     bash = shutil.which("bash")
     if bash is None or os.name == "nt":
         print("  skip  no bash here")
         return
+    # lint: the pinned ruff from PATH or uvx; offline with another ruff, that one with a warning; lint errors
+    # fail the gate whichever ruff found them
+    pin = re.search(r"^RUFF_VERSION=(\S+)$", rd("scripts/check.sh"), re.M)
+    lint = gate_block(r'step "lint:', r"for py in ")
+    ok(pin is not None and lint is not None, "check.sh has the lint step")
+    if pin is not None and lint is not None:
+        lint = "RUFF_VERSION=%s\n%s" % (pin.group(1), lint)
+        ruff = ('[ "$1" = --version ] && { echo "ruff $FAKE_RUFF"; exit 0; }\n'
+                'echo "path ruff $*"; exit "$FAKE_RUFF_RC"')
+        uvx = ('[ "$2" = --version ] && exit "$FAKE_UVX_FETCH"\n'
+               'echo "uvx $*"; exit "$FAKE_UVX_RC"')
+        both = {"ruff": ruff, "uvx": uvx}
+        env = {"FAKE_RUFF": "0.0.1", "FAKE_RUFF_RC": "0", "FAKE_UVX_FETCH": "0", "FAKE_UVX_RC": "0"}
+        rc, out = run_block(bash, lint, both, env)
+        ok(rc == 0 and "uvx ruff@%s check" % pin.group(1) in out and "path ruff" not in out,
+           "another ruff on PATH: the pinned one runs through uvx (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_RC="1"))
+        ok(rc != 0, "lint errors found by uvx's ruff fail the gate (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "warning: ruff 0.0.1" in out and "path ruff check" in out and "uvx ruff" not in out,
+           "offline (uvx cannot fetch the pin): the PATH ruff runs, with a warning (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_UVX_FETCH="1", FAKE_RUFF_RC="1"))
+        ok(rc != 0, "lint errors found by the PATH ruff fail the gate (rc %d)" % rc)
+        rc, out = run_block(bash, lint, {"uvx": uvx}, dict(env, FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "skipped" in out, "offline with no ruff on PATH: lint is skipped (rc %d)" % rc)
+        rc, out = run_block(bash, lint, both, dict(env, FAKE_RUFF=pin.group(1), FAKE_UVX_FETCH="1"))
+        ok(rc == 0 and "path ruff check" in out and "uvx" not in out, "the pinned ruff on PATH runs as it is (rc %d)" % rc)
     # the label step needs a logged-in gh: the workflow has none, and a release checks gh itself (gh_problem)
     labels = gate_block(r"  if \[ -f scripts/sync_labels\.py \]; then$", r"  fi$")
     ok(labels is not None, "check.sh has the sync_labels.py step")

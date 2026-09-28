@@ -78,14 +78,17 @@ python3 scripts/mcp_docs.py --check
 step "lint: ruff $RUFF_VERSION (E9, F, B)"
 LINT="cli benchmark .github action scripts"
 path_ruff="$(command -v ruff >/dev/null 2>&1 && ruff --version 2>/dev/null || true)"
+# uvx is used only when it can fetch the pinned ruff (offline it needs the cache), so that an offline gate falls
+# back to the PATH ruff, as it did before the pin, while lint findings from either ruff still fail it
 if [ "$path_ruff" = "ruff $RUFF_VERSION" ]; then
   echo "using $path_ruff from PATH"; ruff check $LINT
-elif command -v uvx >/dev/null 2>&1; then
+elif command -v uvx >/dev/null 2>&1 && uvx "ruff@$RUFF_VERSION" --version >/dev/null 2>&1; then
   echo "using uvx ruff@$RUFF_VERSION${path_ruff:+ (PATH has $path_ruff)}"; uvx "ruff@$RUFF_VERSION" check $LINT
 elif [ -n "$path_ruff" ]; then
-  echo "warning: $path_ruff is not the pinned $RUFF_VERSION and there is no uvx to fetch it; its rules may differ"
+  echo "warning: $path_ruff is not the pinned $RUFF_VERSION, and uvx is missing or could not fetch it (offline?);" \
+    "its rules may differ"
   ruff check $LINT
-else echo "ruff not installed: skipped (pip install ruff==$RUFF_VERSION)"; fi
+else echo "ruff $RUFF_VERSION unavailable (no ruff, and no uvx that can fetch it): skipped (pip install ruff==$RUFF_VERSION)"; fi
 
 for py in "${PYS[@]}"; do
   step "tests on $("$py" -c 'import sys; print("python %d.%d" % sys.version_info[:2])')"
