@@ -784,16 +784,27 @@ ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
 ENGINE_KEYS = ("provider", "id", "model", "base_url", "api", "key_env", "tool", "max_tokens", "max_searches",
                "max_results")
 PRICE_KEYS = ("input_per_mtok", "output_per_mtok", "per_search", "per_call")
+# names a pasted API key goes by, lower case with the separators taken out: "did you mean 'api'?" would point at
+# the Gemini API selector
+SECRET_KEYS = ("key", "apikey", "token", "accesstoken", "authtoken", "secret", "clientsecret", "password",
+               "authorization", "bearer")
 
 
 def _unknown_keys(d, known, where=""):
-    """One warning per key that nothing reads, with the nearest known key when there is one."""
+    """One warning per key that nothing reads, with the nearest known key when there is one. Never the value: it
+    may be a key."""
     out = []
     for k in (d if isinstance(d, dict) else ()):
-        if k not in known:
-            near = difflib.get_close_matches(k, known, n=1)
-            out.append("unknown key %r%s; it is ignored" % (where + k, " (did you mean %r?)" % (where + near[0])
-                                                              if near else ""))
+        if k in known:
+            continue
+        norm = re.sub(r"[^a-z]", "", str(k).lower())
+        if norm in SECRET_KEYS or norm.endswith("apikey"):
+            out.append("unknown key %r; it is ignored: API keys are read from environment variables, never from "
+                       "this file (an engine's key_env names the variable)" % (where + k))
+            continue
+        near = difflib.get_close_matches(k, known, n=1)
+        out.append("unknown key %r%s; it is ignored" % (where + k, " (did you mean %r?)" % (where + near[0])
+                                                          if near else ""))
     return out
 
 

@@ -881,7 +881,8 @@ class ConfigKeys(Base):
         self.assertEqual(eng["model"]["pattern"], gw.MODEL_RE.pattern)
         self.assertEqual(eng["key_env"]["pattern"], gw.ENV_RE.pattern)
         self.assertEqual(eng["base_url"]["pattern"], gw.BASE_URL_RE.pattern)
-        self.assertEqual(sc["properties"]["country"]["pattern"], gw.COUNTRY_RE.pattern)
+        # "" is also none: Config reads it as null
+        self.assertEqual(sc["properties"]["country"]["pattern"], "^(%s)?$" % gw.COUNTRY_RE.pattern.strip("^$"))
         self.assertEqual(sc["properties"]["runs"]["maximum"], gw.MAX_RUNS)
         self.assertEqual(sc["properties"]["max_calls"]["default"], gw.DEFAULT_MAX_CALLS)
 
@@ -890,7 +891,8 @@ class ConfigKeys(Base):
         good = [self.init(), FULL_CONFIG, {"brand": {"name": "Lumo", "domains": ["lumo.example"]}},
                 {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
                  "max_calls": 10},
-                {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None}]
+                {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None},
+                {"brand": {"name": "Lumo"}, "country": ""}]
         typo = dict(good[0], budget=1.0)
         # validate() always runs, so check.sh (stdlib only) checks every rule; jsonschema, when installed, agrees
         checks = [lambda c: validate(c, sc)]
@@ -935,6 +937,24 @@ class ConfigKeys(Base):
         broken = config_schema()
         broken["$defs"]["strings"] = {"anyOf": [{"type": "integer"}]}          # every real config is now invalid
         self.assertTrue(validate(FULL_CONFIG, broken))
+
+    def test_a_pasted_api_key_is_pointed_at_the_environment(self):
+        secret = "sk-proj-DO-NOT-ECHO-0123456789"
+        cfg = gw.Config(self.write({"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "OPENAI_API_KEY": secret,
+                                    "engines": [{"provider": "openai", "api_key": secret},
+                                                {"provider": "anthropic", "apiKey": secret},
+                                                {"provider": "perplexity", "key": secret},
+                                                {"provider": "gemini", "token": secret}]}))
+        self.assertEqual(cfg.errors, [])
+        w = "\n".join(cfg.warnings)
+        for k in ("OPENAI_API_KEY", "engines[0].api_key", "engines[1].apiKey", "engines[2].key", "engines[3].token"):
+            self.assertIn("unknown key %r; it is ignored: API keys are read from environment variables, never from "
+                          "this file (an engine's key_env names the variable)" % k, w)
+        self.assertNotIn("did you mean", w)          # not 'api', the Gemini API selector, nor 'key_env'
+        self.assertNotIn(secret, w)
+        self.assertIn("(did you mean 'engines[0].max_tokens'?)",
+                      "\n".join(gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [
+                          {"provider": "anthropic", "max_token": 900}]})).warnings))
 
 
 # ── transport, for real, against a local server ───────────────────────────
