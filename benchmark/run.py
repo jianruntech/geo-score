@@ -60,9 +60,9 @@ def _fetch_block():
          % WORKERS,
          "time and up to %d requests at a time within a site. Per site it sends at most **%d requests to the site**"
          % (threads, sum(x[2] for x in site)),
-         "and **%d elsewhere**, counted before redirects and before the %s retries a sampling request gets after a"
-         % (sum(x[2] for x in elsewhere), num_words(retries, "en")),
-         "timeout, a 429 or a 5xx:\n",
+         "and **%d elsewhere**, counted before redirects and before retries: a request that times out or gets a"
+         % sum(x[2] for x in elsewhere),
+         "429 or a 5xx is tried at most %s more times:\n" % num_words(retries, "en"),
          "| Requests | At most | User-agent |", "|---|:-:|---|"]
     L += ["| %s | %d | %s |" % (what, n, ua) for _, what, n, ua in site]
     L += ["| %s | %d | browser, to other hosts |" % (what, n) for _, what, n in elsewhere]

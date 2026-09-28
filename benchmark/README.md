@@ -529,8 +529,8 @@ the table.
 
 Each site is measured by the CLI in this repository, which [run.py](run.py) runs in-process, 4 sites at a
 time and up to 8 requests at a time within a site. Per site it sends at most **67 requests to the site**
-and **20 elsewhere**, counted before redirects and before the two retries a sampling request gets after a
-timeout, a 429 or a 5xx:
+and **20 elsewhere**, counted before redirects and before retries: a request that times out or gets a
+429 or a 5xx is tried at most two more times:
 
 | Requests | At most | User-agent |
 |---|:-:|---|

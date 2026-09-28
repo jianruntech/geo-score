@@ -205,7 +205,7 @@ def strings(lang, v):
             t_h1="The state of<br>AI visibility",
             t_sub="%(n)d well-known sites, scored on whether an AI answer engine can find, parse, "
                   "trust and cite them. One open rubric, one public tool, up to eight pages per site: "
-                  "%(nthin)d sites were scored on fewer than %(thin_en)s and are marked thin sample. Nothing here is a "
+                  "%(nthin)d sites were scored on fewer than %(thin_en)s pages and are marked thin sample. Nothing here is a "
                   'black box — <a href="%(repo)s">re-run it yourself</a>.' % dict(v, repo=REPO),
             l_sites="SITES", l_median="MEDIAN", l_uq="UPPER QUARTILE", l_range="RANGE",
             l_cap="UNREADABLE TO AI",
