@@ -12,7 +12,7 @@ script carries labels.json to GitHub. It shells out to the gh CLI, which must be
 GitHub that labels.json does not list is reported and kept: this script never deletes a label.
 Stdlib only, Python 3.8+.
 """
-import argparse, io, json, os, shutil, subprocess, sys
+import argparse, io, json, os, shutil, subprocess, sys, urllib.parse
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 LABELS = os.path.join(ROOT, ".github", "labels.json")
@@ -42,6 +42,17 @@ def plan(local, remote):
     return create, update, extra
 
 
+def proxy_shown(url):
+    """The proxy's host and port for the summary line, without the user:password@ a proxy URL can carry:
+    this line ends up in terminals and CI logs."""
+    u = urllib.parse.urlsplit(url if "://" in url else "http://" + url)
+    try:
+        port = u.port
+    except ValueError:
+        port = None
+    return (u.hostname or "?") + (":%d" % port if port else "")
+
+
 def gh(args):
     # the environment, HTTPS_PROXY included, goes to gh as it is
     p = subprocess.run(["gh"] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -64,7 +75,8 @@ def main(argv=None):
     remote = json.loads(gh(["label", "list", "--repo", a.repo, "--json", "name,color,description", "--limit", "1000"]))
     create, update, extra = plan(local, remote)
     print("%s: %d labels · %s: %d labels%s" % (os.path.relpath(LABELS, ROOT), len(local), a.repo, len(remote),
-                                              " (via %s)" % os.environ["HTTPS_PROXY"] if os.environ.get("HTTPS_PROXY") else ""))
+                                              " (via %s)" % proxy_shown(os.environ["HTTPS_PROXY"])
+                                              if os.environ.get("HTTPS_PROXY") else ""))
     for lab in create:
         print("  missing  %-16s #%s  %s" % (lab["name"], lab["color"], lab["description"]))
     for lab, diff in update:
