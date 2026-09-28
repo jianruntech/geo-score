@@ -487,3 +487,36 @@ Sites change. Every number here carries the date it was measured, and re-running
 gives slightly different results — which is the point of publishing the tool alongside
 the table.
 
+## How the benchmark fetches
+
+Each site is measured by the CLI in this repository, which [run.py](run.py) runs in-process, 4 sites at a
+time and up to 8 requests at a time within a site. Per site it sends at most **67 requests to the site**
+and **20 elsewhere**, counted before redirects and before the two retries a sampling request gets after a
+timeout, a 429 or a 5xx:
+
+| Requests | At most | User-agent |
+|---|:-:|---|
+| The homepage, and `robots.txt` twice (to find sitemaps, then for `g.robots`) | 3 | browser |
+| Sitemaps: up to 3 candidates and 2 child sitemaps while sampling, up to 4 and 1 for `p1.sitemap` | 10 | browser |
+| Section index pages (`/blog`, `/news`, …) while sampling | 8 | browser |
+| Sampled pages, the homepage first | 8 | browser |
+| 10 retrieval-crawler user-agents × up to 3 sampled pages (`g.reachable`) | 30 | crawler |
+| 3 Chinese-crawler user-agents on the homepage, only for a site that addresses the Chinese market (`p4.cn-engines`) | 3 | crawler |
+| `llms.txt`, `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt` | 4 | browser |
+| The Organization logo | 1 | browser |
+| The `sameAs` profiles the site declares, up to 8 | 8 | browser, to other hosts |
+| Wikidata and Wikipedia searches: up to 3 brand names, in Chinese and English for a Chinese-language site and in English otherwise | 12 | browser, to other hosts |
+
+A site that fails outright is tried once more on its `www` host. The crawler user-agents are sent from
+the operator's own address, not from the addresses their vendors publish, so a server that verifies
+crawlers by IP range or reverse DNS sees an unverified client. That is why a 403 to those probes is
+reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.
+
+## Corrections
+
+If a row is wrong — a score, a gate reason, a label such as *deliberate*, or a not-scored reason — report it
+with the [benchmark correction form](https://github.com/jianruntech/geo-score/issues/new?template=benchmark_correction.yml), with the output of
+`geo_score.py SITE --json-out` from your own network. A confirmed tool error is fixed in the CLI and shipped
+as a patch release. Published scores change only when a site is measured again, and every row keeps the
+date and the tool version it was measured with.
+

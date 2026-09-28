@@ -11,7 +11,7 @@ numbers; every result records the date it was measured, the tool and Python vers
 and the vantage the operator declared.
 """
 import urllib.parse
-import argparse, concurrent.futures as cf, importlib.util, io, json, os, platform, re, statistics, sys, time
+import argparse, concurrent.futures as cf, importlib.util, inspect, io, json, os, platform, re, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
 gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
@@ -21,6 +21,65 @@ RAW = os.path.join(HERE, "raw")
 # --urls-from-dir: re-read the pages an earlier run sampled, DIR/<site>.json, through the CLI's --urls-from reader
 PIN_DIR = None
 SAMPLE = 8                  # pages asked of the CLI per site; a site with fewer reachable pages is scored on fewer
+WORKERS = 4                 # sites measured at a time
+
+# The most requests one site costs, as cli/geo_score.py's discover() and run() make them. The user-agent lists and
+# the thread count come from the CLI itself; these mirror literals in those two functions (the pages the crawler
+# probes read, the section indexes discovery tries, the sameAs profiles checked, the brand names looked up), and
+# test_benchmark.py drives the CLI against a synthetic site to hold every row to what it actually sends.
+PROBE_PAGES, SECTION_INDEXES, SAMEAS_MAX, KG_NAMES = 3, 8, 8, 3
+CORRECTION_FORM = "https://github.com/jianruntech/geo-score/issues/new?template=benchmark_correction.yml"
+
+def fetch_budget():
+    """Rows of (key, what, requests, user-agent) sent to the site, then (key, what, requests) sent elsewhere."""
+    r, cn = len(gs.RETRIEVAL_UAS), len(gs.CN_UAS)
+    site = [("home_robots", "The homepage, and `robots.txt` twice (to find sitemaps, then for `g.robots`)", 3, "browser"),
+            ("sitemaps", "Sitemaps: up to 3 candidates and 2 child sitemaps while sampling, up to 4 and 1 for "
+                         "`p1.sitemap`", 10, "browser"),
+            ("sections", "Section index pages (`/blog`, `/news`, …) while sampling", SECTION_INDEXES, "browser"),
+            ("sampled", "Sampled pages, the homepage first", SAMPLE, "browser"),
+            ("retrieval", "%d retrieval-crawler user-agents × up to %d sampled pages (`g.reachable`)"
+                          % (r, PROBE_PAGES), r * PROBE_PAGES, "crawler"),
+            ("cn", "%d Chinese-crawler user-agents on the homepage, only for a site that addresses the Chinese "
+                   "market (`p4.cn-engines`)" % cn, cn, "crawler"),
+            ("text_files", "`llms.txt`, `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt`", 4, "browser"),
+            ("logo", "The Organization logo", 1, "browser")]
+    elsewhere = [("sameas", "The `sameAs` profiles the site declares, up to %d" % SAMEAS_MAX, SAMEAS_MAX),
+                 ("kg", "Wikidata and Wikipedia searches: up to %d brand names, in Chinese and English for a "
+                        "Chinese-language site and in English otherwise" % KG_NAMES, KG_NAMES * 2 * 2)]
+    return site, elsewhere
+
+def _fetch_block():
+    """'How the benchmark fetches': the per-site budget from fetch_budget() and who the crawler probes come from."""
+    from build_page import num_words
+    site, elsewhere = fetch_budget()
+    threads = inspect.signature(gs.pmap).parameters["workers"].default
+    retries = inspect.signature(gs.fetch_steady).parameters["tries"].default - 1
+    L = ["## How the benchmark fetches\n",
+         "Each site is measured by the CLI in this repository, which [run.py](run.py) runs in-process, %d sites at a"
+         % WORKERS,
+         "time and up to %d requests at a time within a site. Per site it sends at most **%d requests to the site**"
+         % (threads, sum(x[2] for x in site)),
+         "and **%d elsewhere**, counted before redirects and before the %s retries a sampling request gets after a"
+         % (sum(x[2] for x in elsewhere), num_words(retries, "en")),
+         "timeout, a 429 or a 5xx:\n",
+         "| Requests | At most | User-agent |", "|---|:-:|---|"]
+    L += ["| %s | %d | %s |" % (what, n, ua) for _, what, n, ua in site]
+    L += ["| %s | %d | browser, to other hosts |" % (what, n) for _, what, n in elsewhere]
+    L += ["\nA site that fails outright is tried once more on its `www` host. The crawler user-agents are sent from",
+          "the operator's own address, not from the addresses their vendors publish, so a server that verifies",
+          "crawlers by IP range or reverse DNS sees an unverified client. That is why a 403 to those probes is",
+          "reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.\n"]
+    return "\n".join(L)
+
+def _corrections_block():
+    return "\n".join([
+        "## Corrections\n",
+        "If a row is wrong — a score, a gate reason, a label such as *deliberate*, or a not-scored reason — report it",
+        "with the [benchmark correction form](%s), with the output of" % CORRECTION_FORM,
+        "`geo_score.py SITE --json-out` from your own network. A confirmed tool error is fixed in the CLI and shipped",
+        "as a patch release. Published scores change only when a site is measured again, and every row keeps the",
+        "date and the tool version it was measured with.\n"])
 
 # The CLI's error when every sampled page was a bot challenge (the string is its contract with this script).
 # Such a site cannot be measured by a static fetch, which is a different thing from refusing crawlers.
@@ -112,7 +171,7 @@ def one(site):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=WORKERS)
     ap.add_argument("--readme-only", action="store_true",
                     help="rewrite README.md and stats.json from the committed results.json; no scoring, no network")
     ap.add_argument("--out", metavar="DIR",
@@ -392,6 +451,8 @@ def write_readme(p):
     A("Sites change. Every number here carries the date it was measured, and re-running")
     A("gives slightly different results — which is the point of publishing the tool alongside")
     A("the table.\n")
+    A(_fetch_block())
+    A(_corrections_block())
     io.open(os.path.join(HERE, "README.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 
 if __name__ == "__main__":

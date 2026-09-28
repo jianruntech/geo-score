@@ -239,6 +239,112 @@ class NotScored(unittest.TestCase):
             self.assertEqual(build_page.challenge_note(tool, "en"), "")
 
 
+class FetchBudget(unittest.TestCase):
+    """The README's per-site request budget against what the CLI actually sends, on a synthetic site built to
+    take every branch that fetches: a sitemap index, section indexes, Chinese text, an Organization with a logo
+    and more sameAs profiles than are checked, and brand names no knowledge base matches."""
+    HOST = "budget.test"
+
+    def site(self, url, ua):
+        gs = run.gs
+        u = run.urllib.parse.urlsplit(url)
+        root = "https://" + self.HOST
+        if u.netloc == "www.wikidata.org":
+            return gs.Resp(url, 200, b'{"search": []}', {"content-type": "application/json"})
+        if u.netloc.endswith("wikipedia.org"):
+            return gs.Resp(url, 200, b'{"query": {"search": []}}', {"content-type": "application/json"})
+        if u.netloc != self.HOST or u.path in ("/logo.png",):
+            return gs.Resp(url, 200, b"ok", {"content-type": "text/plain"})
+        if u.path == "/robots.txt":
+            body = "User-agent: *\nAllow: /\n" + "".join("Sitemap: %s/sm-%d.xml\n" % (root, i) for i in range(5))
+            return gs.Resp(url, 200, body.encode(), {"content-type": "text/plain"})
+        if u.path == "/sm-0.xml":
+            kids = "".join("<sitemap><loc>%s/child-%d.xml</loc></sitemap>" % (root, i) for i in range(3))
+            return gs.Resp(url, 200, ("<sitemapindex>%s</sitemapindex>" % kids).encode(), {"content-type": "text/xml"})
+        if u.path.endswith(".xml"):
+            locs = "".join("<url><loc>%s/blog/2026/09/post-%d</loc><lastmod>2026-09-01</lastmod></url>" % (root, i)
+                           for i in range(40))
+            return gs.Resp(url, 200, ("<urlset>%s</urlset>" % locs).encode(), {"content-type": "text/xml"})
+        if u.path.endswith(".txt"):
+            return gs.Resp(url, 404, b"", {})
+        ld = {"@context": "https://schema.org", "@graph": [
+            {"@type": "Organization", "name": "Budget Org", "legalName": "Budget Legal Name", "url": root,
+             "logo": root + "/logo.png", "sameAs": ["https://profiles.test/p%d" % i for i in range(12)]},
+            {"@type": "WebSite", "name": "Budget", "url": root}]}
+        links = "".join('<a href="/%s/a/b/page-%d">x</a>' % (d, i) for d in ("blog", "docs", "product") for i in range(6))
+        body = ("<html><head><title>Budget Title | Budget Tagline</title>"
+                '<meta property="og:site_name" content="Budget Site Name">'
+                '<script type="application/ld+json">%s</script></head><body><main><h2>一</h2><p>%s</p>%s</main>'
+                "</body></html>" % (json.dumps(ld), "这是一个用来测试请求预算的中文页面。" * 30, links))
+        return gs.Resp(url, 200, body.encode("utf-8"), {"content-type": "text/html; charset=utf-8"})
+
+    def test_budget_rows_hold_what_the_cli_sends(self):
+        gs, sent = run.gs, []
+        retrieval = {ua for _, ua in gs.RETRIEVAL_UAS}
+        chinese = {ua for _, ua in gs.CN_UAS}
+        sections = ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")
+
+        def fake_fetch(url, ua=gs.UA_BROWSER, timeout=15, method="GET"):
+            sent.append((url, ua))
+            return self.site(url, ua)
+        saved = gs.fetch, getattr(gs, "preflight_host", None)
+        gs.fetch = fake_fetch
+        if saved[1]:
+            gs.preflight_host = lambda *a, **k: None          # budget.test has no DNS; fetch never leaves the process
+        try:
+            res = gs.run("https://" + self.HOST, run.SAMPLE)
+        finally:
+            gs.fetch = saved[0]
+            if saved[1]:
+                gs.preflight_host = saved[1]
+        got = dict.fromkeys(["home_robots", "sitemaps", "sections", "sampled", "retrieval", "cn", "text_files",
+                             "logo", "sameas", "kg"], 0)
+        for url, ua in sent:
+            u = run.urllib.parse.urlsplit(url)
+            if u.netloc == "www.wikidata.org" or u.netloc.endswith("wikipedia.org"):
+                got["kg"] += 1
+            elif u.netloc != self.HOST:
+                got["sameas"] += 1
+            elif ua in retrieval:
+                got["retrieval"] += 1
+            elif ua in chinese:
+                got["cn"] += 1
+            elif u.path in ("", "/", "/robots.txt"):
+                got["home_robots"] += 1
+            elif u.path.endswith(".xml"):
+                got["sitemaps"] += 1
+            elif u.path in sections:
+                got["sections"] += 1
+            elif u.path.endswith(".txt"):
+                got["text_files"] += 1
+            elif u.path == "/logo.png":
+                got["logo"] += 1
+            else:
+                got["sampled"] += 1
+        self.assertEqual(len(res["urls"]), run.SAMPLE)
+        site, elsewhere = run.fetch_budget()
+        want = {k: n for k, _, n, *_ in site + elsewhere}
+        # the homepage is read in discovery and again as sampled page one (a run that remembers it reads it once)
+        got["home_robots"], got["sampled"] = got["home_robots"] - 1, got["sampled"] + 1
+        for k, n in want.items():
+            self.assertLessEqual(got[k], n, "%s: the CLI sent %d, the README budget says at most %d (all: %s)"
+                                 % (k, got[k], n, got))
+        # every other sampled page is its own request, and the crawler rows are the CLI's own lists, reached in full
+        self.assertEqual(got["sampled"], run.SAMPLE)
+        self.assertEqual((got["retrieval"], want["retrieval"]), (len(gs.RETRIEVAL_UAS) * run.PROBE_PAGES,) * 2)
+        self.assertEqual((got["cn"], want["cn"]), (len(gs.CN_UAS),) * 2)
+        self.assertLessEqual(len(sent), sum(want.values()))
+
+    def test_readme_quotes_the_budget(self):
+        site, elsewhere = run.fetch_budget()
+        block = " ".join(run._fetch_block().split())
+        self.assertIn("at most **%d requests to the site** and **%d elsewhere**"
+                      % (sum(x[2] for x in site), sum(x[2] for x in elsewhere)), block)
+        readme = " ".join(retest._read(os.path.join(HERE, "README.md")).split())
+        self.assertIn(block.strip(), readme)
+        self.assertIn(run.CORRECTION_FORM, readme)
+
+
 class Validity(unittest.TestCase):
     def test_common_checks_arithmetic(self):
         import validity
