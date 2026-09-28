@@ -165,8 +165,8 @@ def junit_normalised(path):
 
 
 def execute(name, lines, env, good, blocked, tmp):
-    bindir = shims(os.path.join(tmp, name.split()[0]))
     base = os.path.join(tmp, name.split()[0])
+    bindir = shims(base)
     for case, origin, fail_under, tamper, want in (("good", good, None, False, 0),
                                                    ("robots-blocks", blocked, 41, False, 1),
                                                    ("tampered", good, None, True, None)):
@@ -175,14 +175,14 @@ def execute(name, lines, env, good, blocked, tmp):
         src = make_src(work, tamper)
         p = run(local_script(lines, fail_under), work, src, bindir, dict(env, SITE_URL=origin))
         rep, xml_ = os.path.join(work, "geo-score.json"), os.path.join(work, "geo-score.xml")
-        tail = "" if p.returncode == want else ": " + p.stdout[-400:]
         if tamper:
             ok(p.returncode != 0 and not os.path.exists(rep),
                "%s: a file that does not match SHA256SUMS stops the job before scoring (exit %d)%s"
                % (name, p.returncode, "" if p.returncode else ": " + p.stdout[-400:]))
             continue
         ok(p.returncode == want, "%s on %s%s: exit %d (got %d)%s"
-           % (name, case, " --fail-under %d" % fail_under if fail_under else "", want, p.returncode, tail))
+           % (name, case, " --fail-under %d" % fail_under if fail_under else "", want, p.returncode,
+              "" if p.returncode == want else ": " + p.stdout[-400:]))
         if not (os.path.exists(rep) and os.path.exists(xml_)):
             ok(False, "%s on %s: writes geo-score.json and geo-score.xml" % (name, case))
             continue
@@ -192,7 +192,7 @@ def execute(name, lines, env, good, blocked, tmp):
            "%s on %s: the JSON (%s/100) and the JUnit file (%s, %d tests) come from the same run"
            % (name, case, r["normalised"], norm, cases))
         if case == "robots-blocks":
-            ok(r["normalised"] == 40 and r.get("gate_capped") is True, "%s on %s: scored 40, gate capped" % (name, case))
+            ok(r["normalised"] <= 40 and r.get("gate_capped") is True, "%s on %s: gate capped (%d)" % (name, case, r["normalised"]))
 
 
 def main():

@@ -3,10 +3,14 @@
 
     python3 scripts/test_repo_meta.py
 
-The issue forms, the label list and the sync script only work together: GitHub drops a label an issue
-form applies when the repository does not have it, so the issue arrives unlabelled and nobody notices.
-This reads the forms without a YAML library and checks every label they apply is in .github/labels.json,
-which scripts/sync_labels.py carries to GitHub.
+These files only work together, and nothing else notices when they drift apart:
+- the issue forms and .github/labels.json: GitHub drops a label a form applies when the repository does not
+  have it, so the issue arrives unlabelled (scripts/sync_labels.py carries labels.json to GitHub);
+- what each form asks: a report without the tool version cannot be reproduced;
+- docs/aiv-badge.svg and docs/aiv-badge.json: the badge must be the run the report records;
+- the issue chooser, SUPPORT.md and the PR template: every link resolves, and none is relative, because a
+  PR body or an issue resolves ../README.md against /pull/N and serves a 404.
+The forms are read without a YAML library.
 """
 import importlib.util, io, json, os, re, sys
 
@@ -236,7 +240,7 @@ def main():
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))
         sys.exit(1)
-    print("\nOK: the issue forms, labels.json and the sync script agree")
+    print("\nOK: the issue forms, labels, badge, SUPPORT.md and PR template agree")
 
 
 if __name__ == "__main__":
