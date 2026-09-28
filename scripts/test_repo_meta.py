@@ -59,7 +59,21 @@ def form_fields(text):
 
 
 # forms whose reports cannot be reproduced without knowing which release produced them
-NEED_VERSION = ("bug_report.yml", "engine_bug.yml", "benchmark_correction.yml")
+NEED_VERSION = ("bug_report.yml", "engine_bug.yml", "benchmark_correction.yml", "tool_problem.yml")
+SURFACES = ["CLI", "GitHub Action", "MCP server", "Install via pip, pipx or uvx", "MCPB bundle (Claude Desktop)",
+            "Claude Code plugin", "Gemini CLI extension", "Docker"]
+BLOB = "https://github.com/jianruntech/geo-score/blob/main/"
+
+
+def slug(heading):
+    """GitHub's anchor for a Markdown heading."""
+    return re.sub(r"[^\w\- ]", "", heading.strip().lower()).replace(" ", "-")
+
+
+def anchor_exists(path, anchor):
+    text = rd(path)
+    text = re.sub(r"```.*?```", "", text, flags=re.S)
+    return anchor in {slug(h) for h in re.findall(r"^#{1,6} (.+?)\s*$", text, re.M)}
 
 
 def check_labels():
@@ -127,6 +141,47 @@ def check_badge():
            % (", ".join(dates) or "none named"))
 
 
+def check_support():
+    print("support: the tool-problem form, the chooser links and SUPPORT.md")
+    tp = rd(".github/ISSUE_TEMPLATE/tool_problem.yml")
+    fields = form_fields(tp)
+    ok(fields.get("surface") == ("dropdown", True), "tool_problem.yml: a required surface dropdown")
+    opts = re.search(r"id: surface\n(?:.*\n)*?      options:\n((?:        - .*\n)+)", tp)
+    got = [x.strip()[2:] for x in opts.group(1).splitlines()] if opts else []
+    ok(got == SURFACES, "tool_problem.yml: surface lists %s" % ", ".join(SURFACES))
+    ok(all(k in fields for k in ("environment", "client", "command", "output")),
+       "tool_problem.yml: asks for the environment, the client, the command and the output")
+    ok("render: text" in tp.split("id: output", 1)[-1].split("- type:", 1)[0], "tool_problem.yml: the output renders as text")
+    ok("**Never paste an API key.**" in tp and "**Never paste an API key.**" in rd(".github/ISSUE_TEMPLATE/engine_bug.yml"),
+       "tool_problem.yml carries engine_bug.yml's warning never to paste a key")
+    ok(form_labels(tp) == ["needs-info"], "tool_problem.yml applies needs-info")
+    cfg = rd(".github/ISSUE_TEMPLATE/config.yml")
+    for u in (BLOB + "guide/troubleshooting.md", BLOB + "guide/mcp.md#troubleshooting"):
+        ok(re.search(r"^    url: %s\s*$" % re.escape(u), cfg, re.M) is not None, "config.yml links %s" % u)
+    # every absolute link into this repository from the chooser, the forms and SUPPORT.md must resolve
+    texts = [(".github/ISSUE_TEMPLATE/" + f, rd(".github/ISSUE_TEMPLATE/" + f)) for f in forms() + ["config.yml"]]
+    texts.append(("SUPPORT.md", rd("SUPPORT.md")))
+    seen = 0
+    for name, text in texts:
+        for path, anchor in re.findall(r"https://github\.com/jianruntech/geo-score(?:/blob/main/([^\s)#\]]+))?(?:#([\w-]+))?", text):
+            path = path or "README.md"
+            if not os.path.exists(os.path.join(ROOT, path)):
+                ok(False, "%s: links %s, which does not exist" % (name, path))
+                continue
+            if anchor and path.endswith(".md"):
+                seen += 1
+                ok(anchor_exists(path, anchor), "%s: %s#%s is a heading there" % (name, path, anchor))
+    sup = rd("SUPPORT.md")
+    for path, anchor in re.findall(r"\]\(([\w./-]+\.md)#([\w-]+)\)", sup):
+        seen += 1
+        ok(os.path.exists(os.path.join(ROOT, path)) and anchor_exists(path, anchor), "SUPPORT.md: %s#%s is a heading there"
+           % (path, anchor))
+    ok(seen >= 6, "the chooser, the forms and SUPPORT.md link %d headings, all checked" % seen)
+    linked = set(re.findall(r"issues/new\?template=([\w.-]+)", sup))
+    ok(linked == set(forms()), "SUPPORT.md links every issue form and only those (%s)" % ", ".join(sorted(linked)))
+    ok("README.md#scope--what-this-does-not-do" in sup, "SUPPORT.md says remediation is out of scope, linked to Scope")
+
+
 def check_sync_script():
     print("sync: scripts/sync_labels.py plans without the network and never deletes")
     spec = importlib.util.spec_from_file_location("sync_labels", os.path.join(ROOT, "scripts", "sync_labels.py"))
@@ -151,6 +206,7 @@ def main():
     check_labels()
     check_forms()
     check_badge()
+    check_support()
     check_sync_script()
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))

@@ -1,5 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/jianruntech/geo-score/blob/main/guide/troubleshooting.md
+    about: The score moved between runs, a check shows —, the score is capped at 40, or a site could not be fetched.
+  - name: MCP server troubleshooting
+    url: https://github.com/jianruntech/geo-score/blob/main/guide/mcp.md#troubleshooting
+    about: The server does not start, cannot find its config or keys, or times out behind a proxy.
   - name: Security vulnerability
     url: https://github.com/jianruntech/geo-score/blob/main/SECURITY.md#reporting-a-vulnerability
     about: Please report security problems by email, not in a public issue.
