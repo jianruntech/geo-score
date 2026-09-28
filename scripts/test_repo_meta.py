@@ -10,7 +10,8 @@ These files only work together, and nothing else notices when they drift apart:
 - docs/aiv-badge.svg and docs/aiv-badge.json: the badge must be the run the report records;
 - the issue chooser, SUPPORT.md and the PR template: every link resolves, and none is relative, because a
   PR body or an issue resolves ../README.md against /pull/N and serves a 404;
-- CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires.
+- CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires, and
+  the version CONTRIBUTING.md tells contributors to add is the next one, not one already in rubric/.
 The forms are read without a YAML library.
 """
 import importlib.util, io, json, os, re, subprocess, sys, tempfile
@@ -264,6 +265,15 @@ def check_rubric_steps():
     miss = [f for f in names if "`%s`" % f not in sec]
     ok(bool(names) and not miss, "CONTRIBUTING.md 'Changing the rubric' names %s%s"
        % (", ".join(names) or "a next version", (": not " + ", ".join(miss)) if miss else ""))
+    # the section tells contributors to add that version, so it must be the one after the newest released
+    # rubric: naming a released one asks them to edit it in place, and the line goes stale when it ships
+    released = sorted(tuple(int(x) for x in m.groups()) for m in
+                      (re.match(r"^v(\d+)\.(\d+)\.md$", f) for f in os.listdir(os.path.join(ROOT, "rubric"))) if m)
+    newest = released[-1] if released else (0, 0)
+    named = tuple(int(x) for x in ver.group(1).split(".")) if ver else None
+    ok(named in ((newest[0], newest[1] + 1), (newest[0] + 1, 0)),
+       "CONTRIBUTING.md's next version, v%s, follows the newest in rubric/ (v%d.%d) and is not released yet"
+       % (ver.group(1) if ver else "?", newest[0], newest[1]))
     pr = rd(".github/PULL_REQUEST_TEMPLATE.md")
     line = pr[pr.index("New version files:"):].split("\n\n", 1)[0]
     miss = [f.replace("V", "___") for f in RUBRIC_FILES if "`%s`" % f.replace("V", "___") not in line]
