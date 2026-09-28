@@ -632,6 +632,49 @@ class RunFile(Base):
             with self.assertRaises(gw.ConfigError):
                 gw.load_run(cfg, bad)
 
+    def test_half_a_surrogate_pair_from_a_provider_is_saved_and_read_back(self):
+        cfg = self.config()
+        run = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]})
+        run["samples"][0]["answer"] = "half an emoji " + json.loads('"\\ud83d"') + " then 鹿末"
+        path = gw.save_run(cfg, run)
+        self.assertEqual(gw.load_run(cfg, "latest"), json.loads(json.dumps(run)))
+        with io.open(path, "rb") as f:
+            self.assertIn(b"\\ud83d", f.read())               # an escape: the file stays valid UTF-8 JSON
+        out = os.path.join(self.tmp, "report.json")
+        code, _, err = CLI.main(self, "report", "-c", cfg.path, "--format", "json", "-o", out)
+        self.assertEqual(code, 0, err)
+        with io.open(out, encoding="utf-8") as f:
+            self.assertEqual(json.load(f)["samples"][0]["answer"], run["samples"][0]["answer"])
+
+    def test_a_failed_write_leaves_no_file_and_the_latest_run_intact(self):
+        cfg = self.config()
+        gw.save_run(cfg, {"run_id": "20260926T083000Z", "format": gw.RUN_FORMAT})
+
+        def disk_full(fd):
+            raise OSError(28, "No space left on device")
+        with mock.patch.object(os, "fsync", disk_full):
+            with self.assertRaises(OSError):
+                gw.save_run(cfg, {"run_id": "20260927T083000Z", "format": gw.RUN_FORMAT})
+        self.assertEqual(os.listdir(cfg.runs_dir()), ["20260926T083000Z.json"])      # no temporary file either
+        self.assertEqual(gw.load_run(cfg, "latest")["run_id"], "20260926T083000Z")
+
+    def test_one_id_twice_and_a_file_system_without_hard_links(self):
+        cfg = self.config()
+        a, b, c = ({"run_id": "20260926T083000Z", "format": gw.RUN_FORMAT} for _ in range(3))
+        gw.save_run(cfg, a)
+        gw.save_run(cfg, b)
+        self.assertEqual((a["run_id"], b["run_id"]), ("20260926T083000Z", "20260926T083000Z-2"))
+        self.assertEqual(gw.load_run(cfg, "20260926T083000Z-2")["run_id"], "20260926T083000Z-2")   # the file's own id
+
+        def no_links(src, dst):
+            raise PermissionError(1, "Operation not permitted")
+        with mock.patch.object(os, "link", no_links):
+            gw.save_run(cfg, c)
+        self.assertEqual(c["run_id"], "20260926T083000Z-3")
+        self.assertEqual(gw.load_run(cfg, "latest"), c)
+        self.assertEqual(sorted(os.listdir(cfg.runs_dir())), ["20260926T083000Z-2.json", "20260926T083000Z-3.json",
+                                                               "20260926T083000Z.json"])
+
     def test_config_validation(self):
         cfg = self.config({"engines": [{"provider": "nope"}, {"id": "Chat GPT", "provider": "openai"},
                                        {"id": "x", "provider": "openai", "model": "a b"},

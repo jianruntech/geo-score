@@ -1694,23 +1694,70 @@ def list_run_ids(cfg):
     return sorted(ids, key=_run_sort_key)
 
 
+def _json_bytes(obj):
+    """UTF-8 JSON. A provider can send half a surrogate pair (half an emoji), which UTF-8 cannot carry: then every
+    non-ASCII character is written as a \\u escape, still valid JSON that loads back to the same text."""
+    try:
+        return (json.dumps(obj, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+    except UnicodeEncodeError:
+        return (json.dumps(obj, ensure_ascii=True, indent=1) + "\n").encode("utf-8")
+
+
+def _unlink(path):
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def _publish(tmp, path):
+    """Put the finished file at path unless a file is already there. False when one is."""
+    try:
+        os.link(tmp, path)          # atomic, and never replaces an existing run
+        return True
+    except FileExistsError:
+        return False
+    except OSError:
+        pass                        # no hard links on this file system (FAT, some network shares)
+    try:
+        os.close(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644))    # claim the name, then fill it
+    except FileExistsError:
+        return False
+    try:
+        os.replace(tmp, path)
+    except BaseException:
+        _unlink(path)
+        raise
+    return True
+
+
 def save_run(cfg, run):
+    """Save under a fresh run id, all or nothing: a run has been paid for, and a half-written file would also break
+    report and diff for every run after it. The file is written in full under a hidden name, flushed to disk, and
+    only then published under a run id no other file has."""
     d = cfg.runs_dir()
     os.makedirs(d, exist_ok=True)
-    base, n = run["run_id"], 1
-    while True:
+    base = run["run_id"]
+    for n in range(1, 1000):        # RUN_ID_RE allows up to three digits of suffix
         rid = base if n == 1 else "%s-%d" % (base, n)
-        path = os.path.join(d, rid + ".json")
+        data = _json_bytes(dict(run, run_id=rid))
+        path, tmp = os.path.join(d, rid + ".json"), os.path.join(d, "." + rid + ".json.tmp")
         try:
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-            break
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o644)
         except FileExistsError:
-            n += 1
-    run["run_id"] = rid
-    with io.open(fd, "w", encoding="utf-8") as f:
-        json.dump(run, f, ensure_ascii=False, indent=1)
-        f.write("\n")
-    return path
+            continue                # another save is writing this id right now
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+                f.flush()
+                os.fsync(f.fileno())
+            done = _publish(tmp, path)
+        finally:
+            _unlink(tmp)            # after a link the run lives on under path; after a failure it goes
+        if done:
+            run["run_id"] = rid
+            return path
+    raise ConfigError("no free run id for %s in %s" % (base, d))
 
 
 def load_run(cfg, rid="latest"):
@@ -2044,7 +2091,7 @@ def cmd_ask(args):
     run = execute(brand, rivals, engines, [{"query_id": "ask", "query": q, "intent_tier": "", "target_url": ""}],
                   1, country, {}, len(active))
     if args.format == "json":
-        print(json.dumps(run, ensure_ascii=False, indent=1))
+        sys.stdout.write(_json_bytes(run).decode("utf-8"))     # answers can hold half a surrogate pair
     else:
         print(render_ask(run, args.format))
     return 0 if run["summary"]["overall"]["answered"] else 3
@@ -2063,7 +2110,7 @@ def cmd_report(args):
     cfg = _load(args)
     run = load_run(cfg, args.run or "latest")
     if args.format == "json":
-        text = json.dumps(dict(run, summary=summary_of(run)), ensure_ascii=False, indent=1) + "\n"
+        text = _json_bytes(dict(run, summary=summary_of(run))).decode("utf-8")     # answers included, as saved
     elif args.format == "csv":
         text = render_csv(run)
     else:
