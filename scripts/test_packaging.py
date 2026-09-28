@@ -14,11 +14,14 @@ import importlib.util, io, json, os, re, subprocess, sys, tempfile, zipfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import release  # noqa: E402  (MANIFESTS, version_fields, pack: the same code a release runs)
+import mcp_docs  # noqa: E402  (the install block's wheel URL)
 
 # tracked files that may name a release although --bump does not rewrite them: the changelogs (history), raw
 # benchmark reports, build output, the pages build_page.py regenerates from the PINNED benchmark/_page_tpl.py,
 # and validate.py, whose rule 27 holds the pattern's text
 PIN_EXEMPT = re.compile(r"^(?:CHANGELOG[^/]*|benchmark/raw/.*|dist/.*|docs/[^/]*\.html|\.github/validate\.py)$")
+# a wheel download: (the release tag, the version in the wheel's file name)
+WHEEL_URL = re.compile(r"releases/download/v(\d+\.\d+\.\d+)/geo_score-(\d+\.\d+\.\d+)-py3-none-any\.whl")
 SERVER_SCHEMA = "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
 NAME_RE = re.compile(r"^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$")     # server.json schema 2025-12-11, `name`
 WATCH_ENV = "GEO_SCORE_WATCH_CONFIG"
@@ -53,25 +56,46 @@ def tracked():
     return [p for p in r.stdout.decode("utf-8").split("\0") if p] if r.returncode == 0 else None
 
 
-def check_pins():
-    """Every tracked file that pins a release is one release.py rewrites and checks."""
+def check_pins(version):
+    """Every tracked file that pins a release is one release.py rewrites, and every wheel URL names this release."""
     print("\n  release pins: every tracked file that names a release is in release.py's PINNED")
     files = tracked()
     if files is None:
         print("  skip  not a git checkout, so there is no list of tracked files")
         return
-    listed, bad = set(release.PINNED), 0
+    listed, bad, wheels = set(release.PINNED), 0, 0
     for p in files:
         full = os.path.join(ROOT, p)
-        if PIN_EXEMPT.match(p) or p in listed or not os.path.isfile(full):
+        if PIN_EXEMPT.match(p) or not os.path.isfile(full):
             continue
         text = io.open(full, encoding="utf-8", errors="replace").read()
-        hits = sorted({m.group(0) for rx in release.PINS for m in rx.finditer(text)})
+        for m in WHEEL_URL.finditer(text):
+            wheels += 1
+            if not m.group(1) == m.group(2) == version:
+                ok(False, "%s downloads %s; tag and wheel must both be %s" % (p, m.group(0), version))
+        if p in listed:
+            continue
+        hits = sorted({m.group(0) for rx, _ in release.PINS for m in rx.finditer(text)})
         if hits:
             bad += 1
             ok(False, "%s names %s but is not in PINNED, so --bump would leave it behind" % (p, ", ".join(hits)))
     if not bad:
         ok(True, "%d tracked files: each one that names a release is in PINNED or exempt" % len(files))
+    ok(wheels > 0, "%d wheel URLs, each releases/download/v%s/%s" % (wheels, version, release.wheel_name(version)))
+
+    print("\n  the wheel: what the install lines download, and what --bump and preflight do to it")
+    url = "%s/releases/download/v%s/%s" % (release.REPO, version, release.wheel_name(version))
+    ok(mcp_docs.cfg_for(version)["args"][1] == url, "mcp_docs.py installs %s" % url)
+    # built from parts, so this file does not itself name a release
+    old = "uvx --from %s/releases/download/v%s/%s geo-score" % (release.REPO, "1.2.3", release.wheel_name("1.2.3"))
+    ok(release.repin(old, "9.9.9") == old.replace("1.2.3", "9.9.9"), "--bump rewrites the tag and the wheel's version")
+    ok(release.stale_pins(old.replace("v1.2.3", "v9.9.9"), "9.9.9") == ["geo_score-1.2.3"],
+       "preflight names a wheel whose version is not the tag's")
+    with tempfile.TemporaryDirectory() as tmp:
+        io.open(os.path.join(tmp, release.wheel_name(version)), "wb").close()
+        ok(release.wheel_problem(version, tmp) is None, "--execute goes on when the build made %s" % release.wheel_name(version))
+        os.rename(os.path.join(tmp, release.wheel_name(version)), os.path.join(tmp, "geo_score-%s-cp312-cp312-any.whl" % version))
+        ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
 
 
 def mcp_session(cmd, cwd, env):
@@ -91,7 +115,7 @@ def main():
     version = re.search(r'^__version__ = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     watch = load_watch()
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
-    check_pins()
+    check_pins(version)
 
     print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
     m = {}
