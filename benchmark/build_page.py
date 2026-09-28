@@ -21,12 +21,20 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
            "Early": "起步期", "Not started": "未起步", "Not scored": "未打分"}
 
 REPO = "https://github.com/jianruntech/geo-score"
-DEFAULT_SITE = "https://jianruntech.github.io/geo-score"
-# where the pages will be served; canonical, og:image, hreflang, llms.txt and the sitemap all follow it
+# the maintained mirror. The old GitHub Pages copy stopped updating at 229 sites, and a canonical
+# pointing there handed engines the stale numbers.
+DEFAULT_SITE = "https://www.jianruntech.com/leaderboard"
+# the Chinese page lives at <SITE>/zh; the mirror answers <SITE>/zh.html with a 308 to it
+ZH_PATH = "/zh"
+# where the pages will be served; canonical, og:url, og:image, hreflang, llms.txt and the sitemap all follow it
 SITE = os.environ.get("GEO_SITE_BASE", DEFAULT_SITE).rstrip("/")
+# each page's own URL, without a trailing slash: the form the mirror declares canonical and the READMEs link
+PAGE = {"en": SITE, "zh": SITE + ZH_PATH}
 
 def _hosted(text):
-    return text.replace(DEFAULT_SITE, SITE)
+    """Map any default-host URL a template still spells out onto SITE. The Chinese page has two forms,
+    <base>/zh and the <base>/zh.html that redirects to it, and both land on PAGE["zh"]."""
+    return text.replace(DEFAULT_SITE + "/zh.html", PAGE["zh"]).replace(DEFAULT_SITE, SITE)
 
 def share_words(pct, lang):
     """A share as words when it is close to a simple fraction, else as a percentage: the headline has to
@@ -50,7 +58,7 @@ def jsonld(lang, v):
     """The leaderboard is a dataset. Saying so is the single highest-leverage thing
     this page can do to be cited — engines treat a declared Dataset very differently
     from an undeclared table."""
-    page = SITE + ("/" if lang == "en" else "/zh.html")
+    page = PAGE[lang]
     zh = lang == "zh"
     return json.dumps({"@context": "https://schema.org", "@graph": [
       {"@type": "Organization", "@id": SITE + "/#org", "name": "见润科技" if zh else "Jianrun Tech",
@@ -86,7 +94,7 @@ def jsonld(lang, v):
        "distribution": [{"@type": "DataDownload", "encodingFormat": "application/json",
                          "contentUrl": REPO + "/blob/main/benchmark/results.json"}],
        "citation": REPO + "/blob/main/rubric/v1.1.md"},
-      {"@type": "WebSite", "@id": SITE + "/#website", "url": SITE + "/",
+      {"@type": "WebSite", "@id": SITE + "/#website", "url": PAGE["en"],
        "name": "geo-score", "publisher": {"@id": SITE + "/#org"}},
       {"@type": "WebPage", "@id": page + "#webpage", "url": page,
        "isPartOf": {"@id": SITE + "/#website"}, "about": {"@id": page + "#dataset"},
@@ -98,8 +106,8 @@ def strings(lang, v):
     if lang == "en":
         return dict(
             htmllang="en", on_en="on", on_zh="",
-            canon="https://jianruntech.github.io/geo-score/", oglocale="en_US",
-            ogimg="https://jianruntech.github.io/geo-score/og.png",
+            canon=PAGE["en"], oglocale="en_US",
+            ogimg=SITE + "/og.png",
             ogalt="Share card: %(cappct)d%% of %(n)d well-known sites are unreadable to AI answer "
                    "engines' crawlers. Median %(med)s, range %(mn)d-%(mx)d." % v,
             t_title="The state of AI visibility — %(n)d sites scored" % v,
@@ -164,8 +172,8 @@ def strings(lang, v):
                      % dict(v, repo=REPO))
     return dict(
         htmllang="zh-CN", on_en="", on_zh="on",
-        canon="https://jianruntech.github.io/geo-score/zh.html", oglocale="zh_CN",
-        ogimg="https://jianruntech.github.io/geo-score/og.zh.png",
+        canon=PAGE["zh"], oglocale="zh_CN",
+        ogimg=SITE + "/og.zh.png",
         ogalt="分享卡：%(n)d 个知名网站里 %(cappct)d%% 的内容 AI 回答引擎的爬虫读不到，"
               "中位数 %(med)s，区间 %(mn)d-%(mx)d。" % v,
         t_title="AI 可见度现状 — %(n)d 个站点实测" % v,
@@ -253,7 +261,7 @@ def data():
         cappct=int(round(100.0 * len(cap) / s["n"])),
         nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
-        gap=round(row - cn), cn=cn, row=row, date=d["measured_at"],
+        gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),
         bandcol=json.dumps(BAND_COL), bandmap=json.dumps(BAND_ZH, ensure_ascii=False),
         hist="".join('<div class="%s" style="height:%d%%"><span>%s</span></div>'
@@ -285,8 +293,8 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](https://jianruntech.github.io/geo-score/): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
-- [\u7b80\u4f53\u4e2d\u6587\u7248](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
+- [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
+- [\u7b80\u4f53\u4e2d\u6587\u7248](%(url_zh)s): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 
 ## The rubric
@@ -318,16 +326,16 @@ SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jianruntech.github.io/geo-score/</loc>
+    <loc>%(url_en)s</loc>
     <lastmod>%(date)s</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="%(url_en)s"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="%(url_zh)s"/>
   </url>
   <url>
-    <loc>https://jianruntech.github.io/geo-score/zh.html</loc>
+    <loc>%(url_zh)s</loc>
     <lastmod>%(date)s</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="%(url_en)s"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="%(url_zh)s"/>
   </url>
 </urlset>
 """

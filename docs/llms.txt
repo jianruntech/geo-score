@@ -13,8 +13,8 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](https://jianruntech.github.io/geo-score/): 317 well-known sites scored. Median 56, range 11–99. 26% of them are unreadable to AI crawlers — 23 block AI crawlers by name, 47 serve a page whose body only exists after JavaScript runs, 13 hand a crawler an outright error.
-- [简体中文版](https://jianruntech.github.io/geo-score/zh.html): the same data and findings in Chinese.
+- [The state of AI visibility](https://www.jianruntech.com/leaderboard): 317 well-known sites scored. Median 56, range 11–99. 26% of them are unreadable to AI crawlers — 23 block AI crawlers by name, 47 serve a page whose body only exists after JavaScript runs, 13 hand a crawler an outright error.
+- [简体中文版](https://www.jianruntech.com/leaderboard/zh): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 
 ## The rubric

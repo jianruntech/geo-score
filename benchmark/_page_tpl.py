@@ -19,8 +19,8 @@ TPL = '''<!doctype html>
 <meta name="twitter:description" content="%(t_ogdesc)s">
 <meta name="twitter:image" content="%(ogimg)s">
 <link rel="canonical" href="%(canon)s">
-<link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/">
-<link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html">
+<link rel="alternate" hreflang="en" href="%(url_en)s">
+<link rel="alternate" hreflang="zh" href="%(url_zh)s">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>%(css)s</style>

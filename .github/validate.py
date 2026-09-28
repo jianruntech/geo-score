@@ -381,7 +381,14 @@ for pth in _g3.glob("**/*.md", recursive=True):
         check(os.path.exists(tgt), f"{pth}: 链接指向不存在的 {t!r}")
 
 # 16 · 公开榜单页必须与 benchmark/results.json 同步 —— 页面是生成的，不该手改
+# the pages' default host is defined once, in build_page.py; rules 17 and 30 read it from there
+_bp = io.open("benchmark/build_page.py", encoding="utf-8").read() if os.path.exists("benchmark/build_page.py") else ""
+_m = re.search(r'^DEFAULT_SITE = "([^"]+)"', _bp, re.M)
+SITE_DEFAULT = _m.group(1) if _m else ""
+_m = re.search(r'^ZH_PATH = "([^"]+)"', _bp, re.M)
+SITE_ZH_PATH = _m.group(1) if _m else ""
 if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
+    check(bool(SITE_DEFAULT and SITE_ZH_PATH), "benchmark/build_page.py: DEFAULT_SITE or ZH_PATH not found")
     import subprocess
     # llms.txt 和 sitemap.xml 也是生成的。llms.txt 是 AI 爬虫唯一真会读的那个文件，
     # 上面的旧数字就是直接递给每个引擎的错答案 —— 它必须和 results.json 一起动。
@@ -430,7 +437,7 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
               f"docs/{card} 不存在 —— 跑一遍 python3 benchmark/build_og.py 并提交")
         check('name="twitter:card" content="summary_large_image"' in t,
               f"docs/{f}: 缺 twitter:card，X 上只会显示一条窄链接")
-        _base = os.environ.get("GEO_SITE_BASE", "https://jianruntech.github.io/geo-score").rstrip("/")
+        _base = os.environ.get("GEO_SITE_BASE", SITE_DEFAULT).rstrip("/")
         check(f'og:image" content="{_base}/{card}"' in t,
               f"docs/{f}: og:image 没指向 {card}")
         check("rel=\"canonical\"" in t, f"docs/{f}: 缺 canonical")
@@ -686,6 +693,22 @@ if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json"):
         check(raw.get("normalised") == r["normalised"],
               f"benchmark/raw/{fn} scores {raw.get('normalised')}, results.json says {r['normalised']}")
     check(len(names) == len(scored), f"benchmark/raw has {len(names)} files for {len(scored)} scored sites")
+
+# ── 30. The leaderboard's canonical URLs are the ones the READMEs link ──
+# The Pages copy kept declaring itself canonical long after it stopped updating, so engines were told
+# the stale page was the real one. Each page's canonical must be the leaderboard link its README gives,
+# and every leaderboard link in that README must be that canonical.
+for page, readme in (("docs/index.html", "README.md"), ("docs/zh.html", "README.zh-CN.md")):
+    if not (os.path.exists(page) and os.path.exists(readme)):
+        continue
+    m = re.search(r'<link rel="canonical" href="([^"]+)">', io.open(page, encoding="utf-8").read())
+    canon = m.group(1) if m else None
+    links = set(re.findall(r'\]\((https?://[^)\s]*/leaderboard[^)\s]*)\)', io.open(readme, encoding="utf-8").read()))
+    check(canon in links, f"{page}: canonical {canon} is not the leaderboard URL {readme} links ({sorted(links)})")
+    check(links <= {canon}, f"{readme}: links the leaderboard as {sorted(links - {canon})}, but {page} declares {canon}")
+    want = os.environ.get("GEO_SITE_BASE", SITE_DEFAULT).rstrip("/") + (SITE_ZH_PATH if page.endswith("zh.html") else "")
+    check(canon == want, f"{page}: canonical {canon} is not {want}, the base build_page.py builds for "
+                         f"(python3 benchmark/build_page.py)")
 
 if fail:
     print("FAIL")
