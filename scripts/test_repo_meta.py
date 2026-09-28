@@ -6,10 +6,13 @@
 These files only work together, and nothing else notices when they drift apart:
 - the issue forms and .github/labels.json: GitHub drops a label a form applies when the repository does not
   have it, so the issue arrives unlabelled (scripts/sync_labels.py carries labels.json to GitHub);
-- what each form asks: a report without the tool version cannot be reproduced;
+- what each form asks: a report without the tool version cannot be reproduced, and a placeholder that names a
+  release goes stale, because scripts/release.py does not bump it;
 - docs/aiv-badge.svg and docs/aiv-badge.json: the badge must be the run the report records;
-- the issue chooser, SUPPORT.md and the PR template: every link resolves, and none is relative, because a
-  PR body or an issue resolves ../README.md against /pull/N and serves a 404;
+- the issue chooser, the forms, SUPPORT.md and the PR template: every absolute link into this repository
+  resolves, and every anchor names a heading there. The chooser, the forms and the PR template carry no relative
+  link, because a PR body or an issue resolves ../README.md against /pull/N and serves a 404; SUPPORT.md is
+  rendered in the repository, so its relative links are right (.github/validate.py checks that their files exist);
 - CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires, and
   the version CONTRIBUTING.md tells contributors to add is the next one, not one already in rubric/.
 The forms are read without a YAML library.
