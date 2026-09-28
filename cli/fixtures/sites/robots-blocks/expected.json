@@ -14,6 +14,9 @@
     "/features/live-tracking.html",
     "/pricing.html"
   ],
+  "_notes": {
+    "g.robots": "GPTBot, ClaudeBot and PerplexityBot each get Disallow: / in a group of their own. PerplexityBot is a retrieval crawler, so this stays at 0 and the gate cap; GPTBot and ClaudeBot are training crawlers, named in the evidence and not scored (1.5.0)."
+  },
   "g.robots": 0,
   "g.reachable": 5,
   "g.ssr": 5,

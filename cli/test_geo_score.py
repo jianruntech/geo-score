@@ -389,6 +389,83 @@ eq(_g["*"], [("allow", "/")], "a new user-agent line after rules starts a new gr
 _g = gs.robots_groups("User-agent: a\nDisallow: /x\nUser-agent: b\nDisallow: /y\n")
 eq((_g["a"], _g["b"]), ([("disallow", "/x")], [("disallow", "/y")]), "groups without blank lines between them stay apart")
 
+# ── the crawler lists are the reference's: g.robots scores retrieval crawlers only ──
+# Up to 1.4.0 the training crawlers GPTBot and ClaudeBot and the opt-out token Google-Extended were scored as
+# retrieval crawlers, and a site that blocked only those was capped at 40. The lists now follow the reference.
+import re as _rx
+_ref = io.open(os.path.join(HERE, "..", "reference", "ai-crawlers.md"), encoding="utf-8").read()
+def _table(heading):
+    part = _ref.split(heading, 1)[1].split("\n## ", 1)[0]
+    return _rx.findall(r"^\| `([^`]+)` \|", part, _rx.M)
+_retrieval, _training, _optout = (_table("## Retrieval crawlers"), _table("## Training crawlers"),
+                                  _table("## Opt-out tokens"))
+eq(len(_retrieval), 10, "the reference's retrieval table lists 10 crawlers")
+eq([n for n, _ in gs.RETRIEVAL_UAS], _retrieval, "RETRIEVAL_UAS is the reference's retrieval table, in order")
+eq(set(n.lower() for n, _ in gs.RETRIEVAL_UAS) & set(t.lower() for t in _training + _optout), set(),
+   "no training crawler or opt-out token is scored as a retrieval crawler")
+eq(sorted(gs.NOT_SCORED_TOKENS), sorted(_training + _optout), "NOT_SCORED_TOKENS is the reference's training and opt-out tables")
+for _n, _ua in gs.RETRIEVAL_UAS:
+    ok(_n.lower() + "/" in _ua.lower(), "%s's user-agent string carries its product token: %r" % (_n, _ua))
+    ok(gs.UA_BROWSER not in _ua and _ua not in gs.UA_BROWSER, "%s is told apart from the browser" % _n)
+
+# ── robots.txt, rule selection (RFC 9309 2.2.1) ──
+# A crawler obeys the group that names it and falls back to * only when none does, so a * Disallow never
+# reaches a crawler that has a group of its own.
+# Cross-checked with urllib.robotparser where robotparser follows the RFC (rp=True). It does not strip a
+# byte-order mark, does not read Disallow: /*, reads only the first group that names an agent instead of
+# merging them, and does not extract the product token from "Googlebot/2.1".
+import urllib.robotparser as _rpm
+_R = [n for n, _ in gs.RETRIEVAL_UAS]
+_ALL10 = "".join("User-agent: %s\n" % n for n in _R)
+_CASES = [
+    # (case, robots.txt, tier, blocked retrieval crawlers, cross-check with robotparser)
+    ("* allows", "User-agent: *\nAllow: /\n", 5, [], True),
+    ("* denies", "User-agent: *\nDisallow: /\n", 0, _R, True),
+    ("byte-order mark", "﻿User-agent: *\nDisallow: /\n", 0, _R, False),
+    ("CRLF", "User-agent: PerplexityBot\r\nDisallow: /\r\n\r\nUser-agent: *\r\nAllow: /\r\n", 0, ["PerplexityBot"], True),
+    ("a named group replaces *", "User-agent: *\nDisallow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n", 0,
+     [n for n in _R if n != "OAI-SearchBot"], True),
+    ("* denies, one group names all 10 with Allow", "User-agent: *\nDisallow: /\n\n" + _ALL10 + "Allow: /\n", 5, [], True),
+    ("* denies, all 10 allowed in groups of their own", "User-agent: *\nDisallow: /\n\n"
+     + "".join("User-agent: %s\nAllow: /\n\n" % n for n in _R), 5, [], True),
+    ("* denies, only some named", "User-agent: *\nDisallow: /\n\nUser-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n", 0,
+     [n for n in _R if n not in ("Googlebot", "Bingbot")], True),
+    ("training crawlers and opt-out tokens only", "User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: CCBot\n"
+     "User-agent: Google-Extended\nUser-agent: Applebot-Extended\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], True),
+    ("grouped user-agent lines", "User-agent: GPTBot\nUser-agent: PerplexityBot\nUser-agent: ClaudeBot\nDisallow: /\n", 0,
+     ["PerplexityBot"], True),
+    ("case-insensitive", "user-agent: perplexitybot\nDISALLOW: /\n", 0, ["PerplexityBot"], True),
+    ("a partial Disallow in its own group", "User-agent: *\nDisallow: /\n\nUser-agent: PerplexityBot\nDisallow: /private\n", 0,
+     [n for n in _R if n != "PerplexityBot"], True),
+    ("no groups at all", "Sitemap: https://x.test/sitemap.xml\n", 3, [], True),
+    ("an empty Disallow allows everything", "User-agent: *\nDisallow:\n", 5, [], True),
+    ("Disallow: /*", "User-agent: Claude-User\nDisallow: /*\n", 0, ["Claude-User"], False),
+    ("groups naming one agent merge", "User-agent: Googlebot\nDisallow: /private\n\nUser-agent: *\nAllow: /\n\n"
+     "User-agent: Googlebot\nDisallow: /\n", 0, ["Googlebot"], False),
+    ("a product token with a version", "User-agent: Googlebot/2.1\nDisallow: /\n", 0, ["Googlebot"], False),
+    ("a longer token is another agent", "User-agent: Googlebot-News\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], True),
+    ("an opt-out token is not its crawler", "User-agent: Applebot-Extended\nDisallow: /\n", 3, [], True),
+]
+eq(len(_CASES) >= 15, True, "the robots.txt table has at least 15 cases")
+for _case, _txt, _tier, _blocked, _cross in _CASES:
+    _grp = gs.robots_groups(_txt)
+    _got = [n for n in _R if gs.blocks_site(gs.robots_rules(_grp, n)[0])]
+    eq(_got, list(_blocked), "robots.txt %s: blocked retrieval crawlers" % _case)
+    eq(gs.robots_tier(_txt, len(_txt))[0], _tier, "robots.txt %s: g.robots tier" % _case)
+    if _cross:
+        _rp = _rpm.RobotFileParser()
+        _rp.parse(_txt.splitlines())
+        eq([n for n in _R if not _rp.can_fetch(n, "https://x.test/")], list(_blocked),
+           "robots.txt %s: urllib.robotparser agrees" % _case)
+eq(gs.robots_token("Googlebot/2.1"), "googlebot", "a version is not part of the product token")
+eq(gs.robots_token(" * "), "*", "the wildcard")
+_ev = gs.robots_tier("User-agent: GPTBot\nDisallow: /\n", 30)[1]
+ok("GPTBot" in _ev and "not scored" in _ev, "evidence names a training crawler disallowed by name as not scored: %r" % _ev)
+_ev = gs.robots_tier("User-agent: PerplexityBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 60)[1]
+ok("PerplexityBot" in _ev and "own group" in _ev, "evidence at zero names the blocked crawler and its group: %r" % _ev)
+_ev = gs.robots_tier("User-agent: *\nDisallow: /\n", 26)[1]
+ok("* group" in _ev and "all 10" in _ev, "a * block says so: %r" % _ev)
+
 # ── a catch-all 200 with an HTML shell is not a text file ──
 ok(not gs.text_file(gs.Resp("u", 200, b"  <!DOCTYPE html><html><body>app</body></html>")), "an SPA shell is not an llms.txt")
 ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <html>")

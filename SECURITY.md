@@ -88,8 +88,10 @@ opens no port. stdout carries MCP messages only; diagnostics go to stderr. What 
   its key fields as sensitive, so the host masks them and keeps them as secrets; the Claude Code plugin
   maps no keys and uses the variables exported in your shell.
 - **User agents.** `score_site` fetches with a desktop browser's user agent and repeats the
-  reachability check with the named AI crawlers' agents (GPTBot, ClaudeBot, PerplexityBot and the others
-  listed in `cli/geo_score.py`). Provider calls send `geo-score-watch/<version>`.
+  reachability check with the user agents of the ten retrieval crawlers in
+  [reference/ai-crawlers.md](reference/ai-crawlers.md) (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
+  Claude-User, PerplexityBot, Perplexity-User, Googlebot, Bingbot, Applebot and Amazonbot), sent from
+  the machine running it. Provider calls send `geo-score-watch/<version>`.
 - The address guard, the fencing of site text and the spending caps above apply to every MCP call.
 
 ## Verifying a download

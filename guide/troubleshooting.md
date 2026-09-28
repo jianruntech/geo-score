@@ -35,7 +35,9 @@ is an ordinary deduction.
 
 **What to do.** Read the gate's evidence with `--explain`. `g.reachable` is the least stable check:
 a firewall or bot-protection service can answer the ten retrieval user-agents differently from one
-minute to the next, so re-run before drawing a conclusion.
+minute to the next, so re-run before drawing a conclusion. Its probes send each vendor's user-agent
+string from your own address, so a firewall that verifies crawlers by IP range may refuse them and
+still serve the real crawler ([reference/ai-crawlers.md](../reference/ai-crawlers.md)).
 
 ## `could not fetch …` and exit code 2
 

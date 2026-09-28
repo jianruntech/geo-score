@@ -27,7 +27,7 @@
       "state": "scored",
       "points": 5,
       "max": 5,
-      "evidence": "robots.txt (263 bytes): 4 retrieval UAs named with an explicit permission. No Disallow applies to retrieval crawlers.",
+      "evidence": "robots.txt (263 bytes): no Disallow applies to retrieval crawlers; 2 named with an explicit permission (OAI-SearchBot, PerplexityBot); 8 fall under the * group, which carries an explicit allow-all.",
       "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
     },

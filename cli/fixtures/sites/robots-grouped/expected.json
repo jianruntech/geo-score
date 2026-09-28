@@ -15,7 +15,7 @@
     "/pricing.html"
   ],
   "_notes": {
-    "g.robots": "One group lists GPTBot, ClaudeBot, PerplexityBot and CCBot over one Disallow: / (RFC 9309 2.1), so retrieval crawlers are blocked: 0 and the gate cap. Before 1.3.0 the rule was attached to CCBot only and this scored 5."
+    "g.robots": "One group lists GPTBot, ClaudeBot, PerplexityBot and CCBot over one Disallow: / (RFC 9309 2.1). PerplexityBot is a retrieval crawler, so 0 and the gate cap; GPTBot, ClaudeBot and CCBot are training crawlers, named in the evidence and not scored (1.5.0). Before 1.3.0 the rule was attached to CCBot only and this scored 5."
   },
   "g.robots": 0,
   "g.reachable": 5,

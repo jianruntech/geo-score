@@ -20,18 +20,32 @@ __version__ = "1.4.0"
 RUBRIC = "v1.1"
 UA_BROWSER = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
+# The 10 retrieval crawlers of reference/ai-crawlers.md, the agents g.robots scores and g.reachable probes,
+# each with the user-agent string its vendor documents. Anthropic documents only the product tokens of
+# Claude-SearchBot and Claude-User; their strings follow the form of ClaudeBot's.
 RETRIEVAL_UAS = [
-    ("GPTBot", "GPTBot/1.2 (+https://openai.com/gptbot)"),
-    ("OAI-SearchBot", "OAI-SearchBot/1.0 (+https://openai.com/searchbot)"),
-    ("ChatGPT-User", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0"),
-    ("ClaudeBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ClaudeBot/1.0"),
-    ("Claude-SearchBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Claude-SearchBot/1.0"),
-    ("PerplexityBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; PerplexityBot/1.0"),
-    ("Perplexity-User", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Perplexity-User/1.0"),
-    ("Google-Extended", "Mozilla/5.0 (compatible; Google-Extended/1.0)"),
-    ("Applebot", "Mozilla/5.0 (compatible; Applebot/0.1)"),
+    ("OAI-SearchBot", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot"),
+    ("ChatGPT-User", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"),
+    ("Claude-SearchBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; "
+                         "+Claude-SearchBot@anthropic.com)"),
+    ("Claude-User", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; "
+                    "+Claude-User@anthropic.com)"),
+    ("PerplexityBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; "
+                      "+https://perplexity.ai/perplexitybot)"),
+    ("Perplexity-User", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; "
+                        "+https://perplexity.ai/perplexity-user)"),
+    ("Googlebot", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"),
     ("Bingbot", "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"),
+    ("Applebot", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                 "Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"),
+    ("Amazonbot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1) "
+                  "Chrome/119.0.6045.214 Safari/537.36"),
 ]
+# Training crawlers and opt-out tokens. Blocking them costs no citations, so they are never scored: a
+# robots.txt group that disallows one by name is reported in g.robots' evidence, and nothing else.
+NOT_SCORED_TOKENS = ["GPTBot", "ClaudeBot", "CCBot", "Google-Extended", "Applebot-Extended", "anthropic-ai",
+                     "cohere-ai", "Bytespider", "Meta-ExternalAgent"]
 CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"),
           ("Sogou", "Sogou web spider/4.0"),
           ("PetalBot", "Mozilla/5.0 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)")]
@@ -747,10 +761,22 @@ def site_text(s, n=90):
         s = s[:n].rstrip() + "…"
     return "«site text: %s»" % s
 
+def robots_token(value):
+    """The product token a user-agent line names, lower case. "Googlebot/2.1" names Googlebot, the way
+    crawlers read it; "*" is the wildcard."""
+    v = value.strip().lower()
+    if v == "*" or re.match(r"\*\s", v):
+        return "*"
+    m = re.match(r"[a-z_-]+", v)
+    return m.group(0) if m else v
+
 def robots_groups(txt):
-    """{user-agent (lower case): [(allow|disallow, path)]}. Consecutive user-agent lines form one group
+    """{product token (lower case): [(allow|disallow, path)]}. Consecutive user-agent lines form one group
     and every rule in it applies to all of them (RFC 9309, section 2.1). Reading only the last line of a
-    group let a file that blocks GPTBot, ClaudeBot and PerplexityBot together read as blocking none."""
+    group let a file that blocks GPTBot, ClaudeBot and PerplexityBot together read as blocking none.
+    A leading byte-order mark is not part of the first line: read as one, it hid the group it opened."""
+    if txt.startswith("\ufeff"):
+        txt = txt[1:]
     groups, cur, in_rules = {}, [], False
     for line in txt.splitlines():
         line = line.split("#")[0].strip()
@@ -761,13 +787,65 @@ def robots_groups(txt):
         if k == "user-agent":
             if in_rules:
                 cur, in_rules = [], False
-            cur.append(v.lower())
-            groups.setdefault(v.lower(), [])
+            ua = robots_token(v)
+            cur.append(ua)
+            groups.setdefault(ua, [])
         elif k in ("allow", "disallow") and cur:
             in_rules = True
-            for ua in cur:
+            for ua in dict.fromkeys(cur):
                 groups[ua].append((k, v))
     return groups
+
+def robots_rules(groups, token):
+    """The rules one crawler obeys, chosen as RFC 9309 section 2.2.1 says: the groups naming its product
+    token (merged, case-insensitive), otherwise the * groups, otherwise none. Returns (rules, whose):
+    whose is the token, "*" or None. A * Disallow never reaches a crawler that has a group of its own."""
+    t = token.lower()
+    if t in groups:
+        return groups[t], t
+    if "*" in groups:
+        return groups["*"], "*"
+    return [], None
+
+def blocks_site(rules):
+    """The Disallow that shuts a crawler out of the whole site ("/" or "/*"), or None."""
+    return next((v for k, v in rules if k == "disallow" and v in ("/", "/*")), None)
+
+def robots_tier(txt, size):
+    """g.robots for a robots.txt that answered 2xx: (tier, evidence). Only the retrieval crawlers are
+    scored. A training crawler or an opt-out token disallowed by name is reported, never scored."""
+    groups = robots_groups(txt)
+    sel = [(name,) + robots_rules(groups, name) for name, _ in RETRIEVAL_UAS]
+    blocked = [(name, whose, blocks_site(rules)) for name, rules, whose in sel if blocks_site(rules)]
+    # an Allow of any path, or an empty Disallow (robots.txt for "allow everything"), is a declaration
+    named_allow = [name for name, rules, whose in sel if whose not in (None, "*")
+                   and any(k == "allow" or (k == "disallow" and v == "") for k, v in rules)]
+    fallback = [name for name, _rules, whose in sel if whose == "*"]
+    star_allow = bool(fallback) and any((k == "allow" and v in ("/", "/*")) or (k == "disallow" and v == "")
+                                        for k, v in groups["*"])
+    not_scored = [t for t in NOT_SCORED_TOKENS if blocks_site(groups.get(t.lower(), []))]
+    also = (" It also disallows %s (training crawlers / opt-out tokens, not scored)." % ", ".join(not_scored)
+            if not_scored else "")
+    n = len(RETRIEVAL_UAS)
+    if blocked:
+        own = [name for name, whose, _ in blocked if whose != "*"]
+        star = [name for name, whose, _ in blocked if whose == "*"]
+        names = lambda xs: "all %d" % n if len(xs) == n else ", ".join(xs)
+        how = (["%s, in %s own group" % (names(own), "its" if len(own) == 1 else "their")] if own else []) \
+            + (["%s, through the * group, having no group of %s own" % (names(star), "its" if len(star) == 1 else "their")]
+               if star else [])
+        dirs = " or ".join(sorted({d for _, _, d in blocked}))
+        return 0, ("robots.txt (%d bytes): a Disallow: %s applies to %d of the %d retrieval crawlers — %s.%s"
+                   % (size, dirs, len(blocked), n, "; ".join(how), also))
+    if named_allow or star_allow:
+        why = (["%d named with an explicit permission (%s)" % (len(named_allow), ", ".join(named_allow))]
+               if named_allow else []) \
+            + (["%d fall under the * group, which carries an explicit allow-all" % len(fallback)] if star_allow else [])
+        return 5, ("robots.txt (%d bytes): no Disallow applies to retrieval crawlers; %s.%s"
+                   % (size, "; ".join(why), also))
+    return 3, ("robots.txt (%d bytes, %d user-agent%s named): no Disallow applies to retrieval crawlers, and none is "
+               "explicitly allowed in the groups that apply to them — permitted by default, not by declaration.%s"
+               % (size, len(groups), "" if len(groups) == 1 else "s", also))
 
 def clip(s, n):
     """Cut text for display without cutting a «site text: …» fence open: a quote that loses its closing »
@@ -957,33 +1035,11 @@ def run(base, sample=8, verbose=False, urls=None):
     # ── g.robots ──
     rb = fetch(origin + "/robots.txt")
     txt = rb.text if rb.ok else ""
-    groups = robots_groups(txt)
-    named = [u for u, _ in RETRIEVAL_UAS if u.lower() in groups]
-    def blocked(g):
-        return any(k == "disallow" and v in ("/", "/*") for k, v in groups.get(g, []))
-    star_block = blocked("*")
-    any_block = star_block or any(blocked(u.lower()) for u, _ in RETRIEVAL_UAS)
-    # 按 robots 规范，`Disallow:` 的空值就是「全部放行」——它是一条显式许可，不是「未表态」
-    star_allow = any((k == "allow" and v in ("/", "/*")) or (k == "disallow" and v == "")
-                     for k, v in groups.get("*", []))
-    named_allow = [u for u in named if any((k == "allow") or (k == "disallow" and v == "")
-                                           for k, v in groups.get(u.lower(), []))]
     if not rb.ok:
         tier["g.robots"] = 3
         ev["g.robots"] = "No robots.txt (HTTP %d). Nothing is disallowed, but nothing is explicitly allowed either." % rb.status
-    elif any_block:
-        tier["g.robots"] = 0
-        ev["g.robots"] = "robots.txt (%d bytes) carries a Disallow that applies to retrieval crawlers." % len(rb.body)
-    elif named_allow or star_allow:
-        tier["g.robots"] = 5
-        ev["g.robots"] = ("robots.txt (%d bytes): %s. No Disallow applies to retrieval crawlers."
-                          % (len(rb.body), ("%d retrieval UAs named with an explicit permission" % len(named_allow))
-                             if named_allow else "the wildcard group carries an explicit allow-all"))
     else:
-        tier["g.robots"] = 3
-        ev["g.robots"] = ("robots.txt (%d bytes, %d user-agent groups): none of the 10 retrieval UAs is named, "
-                          "and no Allow directive is present — permitted by default, not by declaration."
-                          % (len(rb.body), len(groups)))
+        tier["g.robots"], ev["g.robots"] = robots_tier(txt, len(rb.body))
 
     # ── g.reachable ──
     say("probing %d retrieval user-agents…" % len(RETRIEVAL_UAS))
@@ -994,16 +1050,30 @@ def run(base, sample=8, verbose=False, urls=None):
     for name, r in results: per.setdefault(name, []).append(r)
     okc = sum(1 for name, rs in per.items() if all(x.ok for x in rs))
     base_len = {u: len(visible_text(live[u].text)) for u in probe}
-    consistent = 0
-    for _name, rs in per.items():
+    consistent, differ = 0, []
+    for name, rs in per.items():
         if not all(x.ok for x in rs): continue
         good = all(abs(len(visible_text(r.text)) - base_len[u]) <= max(400, base_len[u] * .25)
                    for u, r in zip(probe, rs))
         consistent += 1 if good else 0
-    tier["g.reachable"] = 5 if okc == 10 and consistent == 10 else (0 if okc < 5 else 3)
-    ev["g.reachable"] = ("%d of 10 retrieval user-agents returned 200 on %d sampled pages; "
-                         "%d of those served content matching what a browser receives."
-                         % (okc, len(probe), consistent))
+        if not good: differ.append(name)
+    nua = len(RETRIEVAL_UAS)
+    tier["g.reachable"] = 5 if okc == nua and consistent == nua else (0 if okc < 5 else 3)
+    # which agents failed and how, grouped by what they got, so a reading at zero can be audited
+    failed = {}
+    for name, rs in per.items():
+        if not all(x.ok for x in rs):
+            got = "/".join("HTTP %d" % st if st else "no answer" for st in sorted({x.status for x in rs if not x.ok}))
+            failed.setdefault(got, []).append(name)
+    ev["g.reachable"] = clip("%d of %d retrieval user-agents returned 200 on %d sampled pages; "
+                             "%d of those served content matching what a browser receives.%s%s%s"
+                             % (okc, nua, len(probe), consistent,
+                                " Not reached — %s." % "; ".join(
+                                    "%s: %s" % (got, "all %d" % nua if len(names) == nua else ", ".join(names))
+                                    for got, names in failed.items()) if failed else "",
+                                " Content differed: %s." % ", ".join(differ) if differ else "",
+                                " (Unverified probes: vendor user-agent strings sent from this machine's address.)"
+                                if failed else ""), 480)
 
     # ── g.ssr ──
     ssr = sum(1 for r in live.values() if wc(visible_text(main_html(r.text))) >= 120)
