@@ -4,7 +4,7 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
+import contextlib, datetime, http.server, inspect, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
 import threading, time, unittest, urllib.request
 from unittest import mock
 
@@ -984,6 +984,18 @@ class ConfigKeys(Base):
             code, out, err = self.main("run", "-c", os.path.join(self.tmp, gw.CONFIG_NAME), "--dry-run")
             self.assertNotEqual(code, 0, out + err)
             self.assertNotIn(secret, out + err)
+
+    def test_every_key_the_code_reads_is_a_known_key(self):
+        # test_the_schema_lists_exactly_the_keys_config_reads ties the schema to the constants; this ties the
+        # constants to the code, so an adapter that starts reading a new engine key cannot leave every config that
+        # sets it warned about ("it is ignored") and refused by the schema while the tests pass
+        def read(var, *where):
+            src = "\n".join(inspect.getsource(x) for x in where)
+            return set(re.findall(r"\b%s(?:\.get\(|\[)[\"']([^\"']+)[\"']" % var, src))
+        self.assertEqual(read("eng", gw) | read("e", gw.Config.__init__), set(gw.ENGINE_KEYS))
+        self.assertEqual(read("raw", gw), set(gw.CONFIG_KEYS) - {"$schema"})           # $schema is for editors
+        self.assertEqual(read("d", gw.Entity.__init__), set(gw.ENTITY_KEYS))
+        self.assertEqual(read("p", gw.has_price, gw.cost_of), set(gw.PRICE_KEYS))
 
 
 # ── transport, for real, against a local server ───────────────────────────
