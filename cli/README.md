@@ -27,6 +27,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
+| `--fail-on-gate` | Exit 1 when any gate check (`g.*`) scores 0, and name the gate and its evidence on stderr. A gate at zero caps the score at exactly 40, so `--fail-under 40` never fails a capped site; add `--fail-on-gate`. The same as `--assert 'g.*>0'`. An unobservable gate never fails |
+| `--assert EXPR` | Exit 1 unless `CHECK OP VALUE` holds: a check id or an fnmatch glob over the ids, then `>=`, `>` or `=`, then a whole number or `max`, e.g. `g.robots=max` or `p1.llms-txt>=4`. Repeatable. A check the run could not observe prints `not measured, skipped` and never fails. A malformed expression, or a glob that names no check, is a usage error (exit 2). Results go to stderr, never into the report |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
 | `--ask QUESTION` | Level 2: also ask the AI engines this question through their APIs (your keys) and report who they cite, beside the score. Repeatable, up to 5 |
 | `--brand NAME` | With `--ask`: the brand name to look for in answers. Default: the site's domain name, e.g. `stripe` for `docs.stripe.com` |
@@ -35,8 +37,11 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 `NO_COLOR=1` turns off colour, as does piping to a file. `HTTPS_PROXY` and `NO_PROXY` are honoured.
 When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
-Exit codes. Level 1: `0` scored, `1` below `--fail-under`, `2` the site could not be fetched, a
-pinned URL list was refused, or a usage error. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
+Exit codes. Level 1: `0` scored, `1` below `--fail-under`, a gate at zero under `--fail-on-gate`, or a
+failed `--assert`, `2` the site could not be fetched, a pinned URL list was refused, or a usage error
+(a malformed `--assert` included). Assertions on the heuristic checks listed under *How far to trust
+each check* carry the same run-to-run noise as the score: pin the pages with `--urls-from` when you
+assert on them. Levels 2 and 3 (`watch …`): `0` done, `1` configuration error, `2` usage error or
 `geo_watch.py` missing, `3` nothing could be measured (no key worked), `4` `watch diff --fail-on-drop`
 found a drop beyond noise.
 
@@ -223,6 +228,7 @@ Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
   with:
     url: https://example.com
     fail-under: 40
+    fail-on-gate: true          # a gate at zero caps the score at exactly 40, which fail-under 40 cannot catch
     json-out: geo-score.json
     sarif: geo-score.sarif      # optional
     junit: geo-score.xml        # optional
@@ -230,7 +236,9 @@ Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
 
 The action scores the site once. That one run prints the evidence to the log, writes the scored
 table to the job summary, annotates checks at zero (gates as errors, other checks as warnings;
-`annotations: false` turns this off) and writes whichever files you asked for. Outputs: `score`,
+`annotations: false` turns this off) and writes whichever files you asked for. `fail-on-gate: true`
+fails the job when a gate scores zero, and `assert` takes the same expressions as `--assert`, one per
+line; each failed one is an error annotation. Outputs: `score`,
 `band`, `gate-capped`, `report` and `report-path`. Inputs reach the script as environment
 variables, never pasted into it, so a URL cannot run shell code.
 

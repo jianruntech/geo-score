@@ -97,11 +97,41 @@ def main():
     finally:
         bare.shutdown()
         bare.server_close()
+    # a gate at zero caps the score at exactly 40: fail-under 40 cannot catch it, fail-on-gate and assert can
+    blocked = e2e.start_server("robots-blocks")
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_UNDER="40", GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and o.get("score") == "40" and o.get("gate-capped") == "true",
+               "robots-blocks with fail-under 40 alone passes (score %r): the documented threshold misses a gate at zero"
+               % o.get("score"))
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_ON_GATE="true", GEO_ANNOTATIONS="false")
+            log = p.stdout + p.stderr
+            ok(p.returncode == 1 and "g.robots" in log, "fail-on-gate true fails the step with exit 1 and names g.robots (%d)"
+               % p.returncode)
+            ok(re.search(r"^::error title=geo-score · fail-on-gate::.*g\.robots is 0/5", p.stdout, re.M) is not None,
+               "and emits one ::error for the gate at zero")
+            ok(bool(summ) and o.get("score") == "40", "and still writes the summary and outputs first")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ASSERT="g.ssr=max\n\n  p1.sitemap >= 4  \ng.robots=max\n",
+                          GEO_ANNOTATIONS="false")
+            ok(p.returncode == 1 and p.stdout.count("::error title=geo-score · assert") == 1
+               and "assert g.robots=max" in p.stdout, "a multiline assert runs each line; only the failing one is an error")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ASSERT="g.ssr=max\np3.listings>=1")
+            ok(p.returncode == 0 and "skipped" in p.stderr, "passing and unobservable assertions pass the step (%d)" % p.returncode)
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_ON_GATE="yes")
+            ok(p.returncode == 2 and "true or false" in p.stdout, "fail-on-gate other than true or false is refused")
+    finally:
+        blocked.shutdown()
+        blocked.server_close()
     srv = e2e.start_server("good")
     try:
 
         with tempfile.TemporaryDirectory() as tmp:
             canary = os.path.join(tmp, "pwned")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_ASSERT="$(touch %s)" % canary)
+            ok(p.returncode == 2 and not os.path.exists(canary), "an assert carrying $(…) is data, never shell")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_ASSERT="g.robots=max\n`touch %s`" % canary)
+            ok(p.returncode == 2 and not os.path.exists(canary), "so is one on a later line")
             p, _, _ = run(script, tmp, GEO_URL="$(touch %s)" % canary)
             ok(p.returncode == 2 and not os.path.exists(canary), "a URL carrying $(…) is data, never shell")
             p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="40; touch %s" % canary)

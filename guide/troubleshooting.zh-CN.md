@@ -30,6 +30,10 @@
 的响应可能前后一分钟就不同，下结论前先重跑。它的探测是从你自己的地址发出厂商的 UA 字符串，按 IP 段核验爬虫的防火墙
 可能拒绝这些探测、却照常放行真正的爬虫（见 [reference/ai-crawlers.md](../reference/ai-crawlers.md)）。
 
+**在 CI 里。** 门槛项得 0 分时分数正好封顶在 40，所以 `--fail-under 40`（Action 里是 `fail-under: 40`）永远拦不住被封顶的站；
+请加上 `--fail-on-gate`（`fail-on-gate: true`）。`--assert` 可以把单个检查项锁在某一档，例如 `g.robots=max`。
+对启发式检查项的断言带着和总分一样的逐次波动，断言这类检查时请用 `--urls-from` 固定页面。
+
 ## `could not fetch …`，退出码 2
 
 **原因。** 抽到的页面没有一个返回内容：DNS 失败、TLS 失败、全部超时，或者服务器拒绝非浏览器客户端。

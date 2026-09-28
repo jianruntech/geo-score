@@ -85,5 +85,23 @@ def main(path, annotate):
         f.write("\n".join(lines) + "\n")
 
 
+def assertion_errors(path):
+    """One ::error per failed fail-on-gate or assert check, for the step that already failed on them. The
+    expressions come from the action's inputs through the environment, one per line; the CLI refused any
+    malformed one before it scored, so here they parse."""
+    d = json.load(open(path, encoding="utf-8"))
+    exprs = ([("fail-on-gate", "g.*>0")] if os.environ.get("GEO_FAIL_ON_GATE") == "true" else []) \
+        + [("assert " + x.strip(), x.strip()) for x in os.environ.get("GEO_ASSERT", "").splitlines() if x.strip()]
+    ev = {c["id"]: c.get("evidence", "") for c in d["checks"]}
+    for label, expr in exprs:
+        for _e, cid, got, mx, passed in gs.check_assertions(d, [gs.parse_assert(expr)]):
+            if passed is False:
+                print("::error title=%s::%s" % (_prop("geo-score · %s" % label),
+                                                _cmd("%s: %s is %d/%d. %s" % (d["target"], cid, got, mx, _cut(ev.get(cid, ""), 200)))))
+
+
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2:3] != ["false"])
+    if sys.argv[1:2] == ["--assertions"]:
+        assertion_errors(sys.argv[2])
+    else:
+        main(sys.argv[1], sys.argv[2:3] != ["false"])

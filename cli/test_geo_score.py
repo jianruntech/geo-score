@@ -229,6 +229,29 @@ for c in rep["checks"]:
 ok("failed" not in {c["state"] for c in rep["checks"]},
    "there is no `failed` state under tiered scoring — a bottom tier is scored 0")
 
+# ── --assert and --fail-on-gate: CI policy over the report, never part of it ──
+eq(gs.parse_assert("g.*>0")[1:], (["g.robots", "g.reachable", "g.ssr"], ">", 0), "a glob names every gate")
+eq(gs.parse_assert(" g.robots = max ")[1:], (["g.robots"], "=", "max"), "spaces around the operator, and max")
+eq(gs.parse_assert("p1.llms-txt>=4")[1:], (["p1.llms-txt"], ">=", 4), ">= is not read as > then =")
+eq(gs.parse_assert("b.*>=0")[1], ["b.llms-full", "b.ai-txt", "b.geo-link", "b.speakable"], "bonus ids can be asserted")
+for _bad in ("x.nope>0", "g.robots", "g.robots>=high", "g.robots=>3", "g.robots>-1", "$(touch x)", "g.robots>0; rm -rf /", ""):
+    try:
+        gs.parse_assert(_bad)
+        ok(False, "--assert %r is refused" % _bad)
+    except ValueError:
+        pass
+_ar = gs.as_json(mk(dict(full, **{"g.robots": 0, "p2.freshness": 3, "p4.cn-engines": None})))
+_res = {(e, cid): (got, passed) for e, cid, got, _mx, passed in gs.check_assertions(_ar, [
+    gs.parse_assert("g.*>0"), gs.parse_assert("p2.freshness=max"), gs.parse_assert("p2.freshness>=3"),
+    gs.parse_assert("p4.cn-engines>=1"), gs.parse_assert("p1.sitemap=4"), gs.parse_assert("p1.sitemap>4")])}
+eq(_res[("g.*>0", "g.robots")], (0, False), "a gate at zero fails g.*>0")
+eq(_res[("g.*>0", "g.ssr")], (5, True), "a gate above zero passes it")
+eq(_res[("p2.freshness=max", "p2.freshness")], (3, False), "max is the check's own maximum")
+eq(_res[("p2.freshness>=3", "p2.freshness")], (3, True), ">= includes the value")
+eq(_res[("p4.cn-engines>=1", "p4.cn-engines")], (None, None), "an unobservable check is skipped, never failed")
+eq((_res[("p1.sitemap=4", "p1.sitemap")], _res[("p1.sitemap>4", "p1.sitemap")]), ((4, True), (4, False)), "= and > are exact")
+ok("assert" not in json.dumps(_ar), "assertions leave no trace in the report")
+
 # ── the badge is valid SVG and carries the score ──
 import tempfile, xml.dom.minidom
 pth = os.path.join(tempfile.mkdtemp(), "b.svg")

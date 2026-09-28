@@ -24,7 +24,8 @@ import sys
 for _k in [k for k in os.environ if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "ftp_proxy")]:
     del os.environ[_k]
 
-import atexit, collections, difflib, gzip, importlib.util, json, posixpath, re, socket, threading, time, traceback, unittest
+import atexit, collections, concurrent.futures, difflib, gzip, importlib.util, json, posixpath, re, socket, subprocess
+import threading, time, traceback, unittest
 import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -541,6 +542,45 @@ class EndToEnd(unittest.TestCase):
                 self.assertEqual({k: res["tier"].get(k) for k in other}, other, "the other checks read as without the fault")
                 if want is None:
                     self.assertEqual([c["state"] for c in rep["checks"] if c["id"] == "g.robots"], ["unobservable"])
+
+    def test_fail_on_gate_and_assert(self):
+        # the CLI as CI runs it: a gate at zero caps the score at exactly 40, so --fail-under 40 cannot catch
+        # it and --fail-on-gate must. Off-site lookups go to a proxy port nothing listens on: they fail at once,
+        # read as not measured, and nothing leaves the machine
+        dead = "http://127.0.0.1:9"
+        env = {k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}
+        env.update(HTTPS_PROXY=dead, HTTP_PROXY=dead, https_proxy=dead, http_proxy=dead, NO_COLOR="1",
+                   NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+        gates = {"robots-blocks": "g.robots", "robots-grouped": "g.robots", "bot-wall": "g.reachable", "js-shell": "g.ssr"}
+        cases = [(n, (), 0) for n in gates] + [(n, ("--fail-on-gate",), 1) for n in gates] + [
+            ("good", ("--fail-on-gate",), 0),
+            ("good", ("--fail-on-gate", "--assert", "p3.listings>=1", "--assert", "g.*=max"), 0),
+            ("good", ("--assert", "x.nope>0"), 2),
+            ("good", ("--assert", "g.robots>max"), 1),
+            ("robots-blocks", ("--fail-under", "40"), 0)]
+        servers = {n: start_server(n) for n in {c[0] for c in cases}}
+
+        def cli(case):
+            name, args, _ = case
+            return subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"),
+                                   servers[name].origin + EXPECTED[name].get("_path", ""), "--quiet"] + list(args),
+                                  capture_output=True, text=True, timeout=120, env=env)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+                done = list(ex.map(cli, cases))
+        finally:
+            for srv in servers.values():
+                srv.shutdown()
+                srv.server_close()
+        for (name, args, want), p in zip(cases, done):
+            with self.subTest(fixture=name, args=args):
+                self.assertEqual(p.returncode, want, p.stderr[-600:])
+                if want == 1 and "--fail-on-gate" in args:
+                    self.assertIn("%s is 0/5, failed — " % gates[name], p.stderr, "the gate is named with its evidence")
+        good = dict(zip([(n, a) for n, a, _ in cases], done))
+        self.assertIn("p3.listings not measured, skipped", good[("good", ("--fail-on-gate", "--assert", "p3.listings>=1",
+                                                                         "--assert", "g.*=max"))].stderr)
+        self.assertIn("names no check", good[("good", ("--assert", "x.nope>0"))].stderr)
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

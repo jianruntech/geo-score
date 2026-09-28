@@ -13,7 +13,7 @@ Levels 2 and 3 live in geo_watch.py next to this file.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, datetime, html, io, json, os, re, sys, threading, time, zlib
+import argparse, concurrent.futures as cf, datetime, fnmatch, html, io, json, os, re, sys, threading, time, zlib
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 
 __version__ = "1.4.0"
@@ -1854,6 +1854,40 @@ def as_junit(res):
     out += ['  </testsuite>', '</testsuites>']
     return "\n".join(out) + "\n"
 
+# ── CI assertions ─────────────────────────────────────────────────────────
+# --assert CHECK OP VALUE: CHECK is a check id or an fnmatch glob over the rubric's ids, OP is >=, > or =,
+# VALUE a whole number or "max". CI policy, not measurement: the result never enters the report.
+ASSERT_RE = re.compile(r"^\s*([A-Za-z0-9_.*?\[\]!-]+)\s*(>=|>|=)\s*(\d+|max)\s*$")
+
+def parse_assert(expr):
+    """(expression, the ids it names, op, value). A malformed expression, or a glob that names no check,
+    raises ValueError: a typo must not pass CI by asserting nothing."""
+    m = ASSERT_RE.match(expr)
+    if not m:
+        raise ValueError("--assert %r is not CHECK OP VALUE, e.g. 'g.*>0', 'g.robots=max' or 'p1.llms-txt>=4'"
+                         % expr[:80])
+    pat, op, val = m.groups()
+    ids = [i for i in [c[0] for c in SPEC] + [b[0] for b in BONUS] if fnmatch.fnmatchcase(i, pat)]
+    if not ids:
+        raise ValueError("--assert %r: %s names no check (ids look like g.robots or p1.llms-txt)" % (expr[:80], pat))
+    return expr.strip(), ids, op, (val if val == "max" else int(val))
+
+def check_assertions(rep, asserts):
+    """Parsed assertions against a report from as_json(): [(expression, id, points, max, passed)]. A check
+    the run could not observe gives points None and passed None: skipped, never failed."""
+    by = {c["id"]: c for c in rep["checks"]}
+    out = []
+    for expr, ids, op, val in asserts:
+        for cid in ids:
+            c = by.get(cid) or {}
+            if c.get("state") != "scored":
+                out.append((expr, cid, None, c.get("max"), None))
+                continue
+            got, mx = c["points"], c["max"]
+            want = mx if val == "max" else val
+            out.append((expr, cid, got, mx, got >= want if op == ">=" else got > want if op == ">" else got == want))
+    return out
+
 def _write(path, text):
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -1981,6 +2015,19 @@ def main():
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
+    ap.add_argument("--fail-on-gate", action="store_true",
+                    help="exit 1 if any gate check (g.*) scores 0. A gate at zero caps the score at exactly 40, so "
+                         "--fail-under 40 alone never fails a capped site. The same as --assert 'g.*>0'")
+
+    def assertion(expr):
+        try:
+            return parse_assert(expr)
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(str(e)) from None
+    ap.add_argument("--assert", dest="asserts", metavar="EXPR", action="append", type=assertion,
+                    help="exit 1 unless CHECK OP VALUE holds, e.g. 'g.robots=max' or 'p1.*>=2': CHECK is a check id or a "
+                         "glob over them, OP is >=, > or =, VALUE a number or max. Repeatable. A check the run could not "
+                         "observe is skipped, never failed")
     ap.add_argument("--ask", metavar="QUESTION", action="append",
                     help="level 2: also ask ChatGPT, Perplexity, Gemini and Claude this question through their APIs "
                          "(your keys) and report who they cite. Repeatable, up to 5. Never part of the score.")
@@ -2065,11 +2112,30 @@ def main():
             print("  %sbadge%s %s  —  %d/100 %s" % (c.brass, c.r, pth, nrm, bnd))
             print("  %sMarkdown:%s ![AIV readiness](%s)" % (c.grey, c.r, os.path.basename(pth)))
             print()
+    failed = False
     if a.fail_under is not None:
         _, _, _, _, norm, _, _ = score(res)
         if norm < a.fail_under:
             print("%sgeo-score %d is below --fail-under %d%s" % (c.red, norm, a.fail_under, c.r), file=sys.stderr)
-            sys.exit(1)
+            failed = True
+    checks = [("--fail-on-gate", parse_assert("g.*>0"))] if a.fail_on_gate else []
+    checks += [("--assert %s" % x[0], x) for x in a.asserts or []]
+    if checks:
+        rep = as_json(res)
+        ev = {x["id"]: x.get("evidence", "") for x in rep["checks"]}
+        for label, x in checks:
+            for _expr, cid, got, mx, passed in check_assertions(rep, [x]):
+                if passed is None:
+                    print("%sgeo-score %s: %s not measured, skipped%s" % (c.grey, label, cid, c.r), file=sys.stderr)
+                elif passed and not a.quiet:
+                    print("%sgeo-score %s: %s %d/%d passes%s" % (c.grey, label, cid, got, mx, c.r), file=sys.stderr)
+                elif not passed:
+                    # one line per failure, whitespace collapsed: CI logs read commands at the start of a line
+                    print("%sgeo-score %s: %s is %d/%d, failed — %s%s" % (c.red, label, cid, got, mx,
+                          " ".join(clip(ev.get(cid, ""), 240).split()), c.r), file=sys.stderr)
+                    failed = True
+    if failed:
+        sys.exit(1)
 
 def cli():
     """Console entry point (`geo-score` after `pipx install`); the same exits as running the file."""
