@@ -176,7 +176,7 @@ def write_readme(p):
     gap = Counter(g for x in ok for g in x["top_gaps"])
     capped = [x for x in ok if x.get("gate_capped")]
     sys.path.insert(0, HERE)
-    from build_page import share_words
+    from build_page import share_words, crawler_note, REFUSED
     A("## %s of the field is unreadable to AI crawlers\n" % share_words(int(round(100.0 * len(capped) / len(ok))), "en"))
     A("**%d of %d sites have a gate check at zero** — a crawler cannot get the content, so"
       % (len(capped), len(ok)))
@@ -185,8 +185,9 @@ def write_readme(p):
     _r = {}
     for x in capped: _r.setdefault(x.get("gate_reason") or "other", []).append(x["site"])
     A("| Why | Sites | Which |"); A("|---|:-:|---|")
-    LBL = {"blocks crawlers": "**Deliberate** — `robots.txt` disallows retrieval crawlers",
-           "serves crawlers an error": "**Deliberate or accidental** — the server returns 403 to crawlers",
+    note = crawler_note(p.get("tool"), "en")
+    LBL = {"blocks crawlers": "**Deliberate** — `robots.txt` disallows retrieval crawlers" + (". " + note if note else ""),
+           "serves crawlers an error": "**Deliberate or accidental** — " + REFUSED["en"],
            "content needs JavaScript": "**Accidental** — body copy only exists after JS runs",
            "other": "Other"}
     for k in ("blocks crawlers", "serves crawlers an error", "content needs JavaScript", "other"):

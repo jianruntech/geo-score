@@ -8,7 +8,7 @@ Writes docs/index.html (English) and docs/zh.html (Chinese). The page is generat
 can never drift from the data: add a site to sites.json, run run.py, then run this, and
 commit all of it together.
 """
-import io, json, os, statistics as st, sys
+import io, json, os, re, statistics as st, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -35,6 +35,38 @@ def _hosted(text):
     """Map any default-host URL a template still spells out onto SITE. The Chinese page has two forms,
     <base>/zh and the <base>/zh.html that redirects to it, and both land on PAGE["zh"]."""
     return text.replace(DEFAULT_SITE + "/zh.html", PAGE["zh"]).replace(DEFAULT_SITE, SITE)
+
+# 1.5.0 took training crawlers and opt-out tokens off the list g.robots scores. Data measured with an older
+# tool still counts them as retrieval crawlers, so every label built on it says so until the data is re-run,
+# and the qualifier drops out by itself once results.json records 1.5.0 or later.
+CRAWLER_FIX = (1, 5, 0)
+
+def old_crawler_reading(tool):
+    """The version in results.json's tool string ('geo-score-cli/1.3.0' gives '1.3.0') when it predates the
+    crawler fix, else None."""
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", tool or "")
+    return m.group(0) if m and tuple(int(x) for x in m.groups()) < CRAWLER_FIX else None
+
+def crawler_note(tool, lang):
+    """The qualifier on the robots.txt group ("en", "zh", or "short" for llms.txt), or "" when the data was
+    measured with the fixed reading."""
+    v = old_crawler_reading(tool)
+    if not v:
+        return ""
+    if lang == "short":
+        return ("counted with the %s reading, which treated GPTBot, ClaudeBot and Google-Extended as retrieval "
+                "crawlers; fixed in 1.5.0, re-run pending" % v)
+    if lang == "en":
+        return ("The %s reading counted GPTBot, ClaudeBot and Google-Extended as retrieval crawlers, so this "
+                "count includes sites that block only training crawlers or an opt-out token (fixed in 1.5.0, "
+                "re-run pending)." % v)
+    return ("%s 版的读法把 GPTBot、ClaudeBot 和 Google-Extended 也算作检索爬虫，所以这个数里包括只屏蔽训练爬虫"
+            "或只声明退出令牌的站（1.5.0 已修正，榜单待重跑）。" % v)
+
+# what a 403 group can and cannot show: the probes carry crawler user-agent strings but come from the
+# auditor's address, so a server that verifies crawlers by IP may refuse them and still serve the real bot
+REFUSED = {"en": "the server refuses crawler user-agents (unverified probes from the auditor's address)",
+           "zh": "服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）"}
 
 def share_words(pct, lang):
     """A share as words when it is close to a simple fraction, else as a percentage: the headline has to
@@ -130,7 +162,7 @@ def strings(lang, v):
             l_delib="DELIBERATE", l_accid="ACCIDENTAL",
             t_delib="Their <code>robots.txt</code> disallows AI retrieval crawlers by name. A site "
                     "that does not want to be quoted is not misconfigured, and this rubric reports "
-                    "it as it is.",
+                    "it as it is." + (" " + crawler_note(v["tool"], "en") if crawler_note(v["tool"], "en") else ""),
             t_accid="Body copy only exists after JavaScript runs. The content is there and a browser "
                     "sees it; a retrieval crawler gets an empty shell. This group almost certainly "
                     "did not choose it.",
@@ -193,7 +225,7 @@ def strings(lang, v):
                 "页面上其余的事都不再重要。而这个数字里装着两件性质完全不同的事。" % v,
         l_delib="主动屏蔽", l_accid="无意失效",
         t_delib="它们的 <code>robots.txt</code> 点名禁止了 AI 检索爬虫。"
-                "一个不希望被引用的站不是配置错了，量表照实记录即可。",
+                "一个不希望被引用的站不是配置错了，量表照实记录即可。" + crawler_note(v["tool"], "zh"),
         t_accid="正文只在 JavaScript 跑完之后才存在。内容是有的，浏览器看得见；"
                 "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。",
         t_china="<b>面向中文市场的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。"
@@ -262,6 +294,8 @@ def data():
         nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
+        tool=d.get("tool"), refused=REFUSED["en"],
+        blk_note=(" (%s)" % crawler_note(d.get("tool"), "short")) if crawler_note(d.get("tool"), "short") else "",
         css=io.open(os.path.join(HERE, "page.css"), encoding="utf-8").read(),
         bandcol=json.dumps(BAND_COL), bandmap=json.dumps(BAND_ZH, ensure_ascii=False),
         hist="".join('<div class="%s" style="height:%d%%"><span>%s</span></div>'
@@ -293,7 +327,7 @@ server-rendered content and the result caps at 40.
 
 ## The benchmark
 
-- [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name, %(njs)d serve a page whose body only exists after JavaScript runs, %(nerr)d hand a crawler an outright error.
+- [The state of AI visibility](%(url_en)s): %(n)d well-known sites scored. Median %(med)s, range %(mn)d\u2013%(mx)d. %(cappct)d%% of them are unreadable to AI crawlers \u2014 %(nblk)d block AI crawlers by name%(blk_note)s, %(njs)d serve a page whose body only exists after JavaScript runs, and at %(nerr)d %(refused)s.
 - [\u7b80\u4f53\u4e2d\u6587\u7248](%(url_zh)s): the same data and findings in Chinese.
 - [Raw data](https://github.com/jianruntech/geo-score/blob/main/benchmark/results.json): every site, every score, machine-readable.
 
