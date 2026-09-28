@@ -104,6 +104,29 @@ def check_forms():
        "benchmark_correction.yml links the README's Scope section by absolute URL")
 
 
+def check_badge():
+    print("badge: docs/aiv-badge.svg is the run recorded in docs/aiv-badge.json")
+    rep = json.loads(rd("docs/aiv-badge.json"))
+    svg = rd("docs/aiv-badge.svg")
+    want = "%d/100 %s" % (rep["normalised"], rep["band"])
+    # the value appears in the aria-label, the title and the text with its shadow; every copy must agree
+    said = re.findall(r"(\d+/100 [A-Z][a-z]+(?: [a-z]+)*)( \(gate capped\))?", svg)
+    ok(len(said) >= 2 and all(s == want for s, _ in said), "the SVG reads %r everywhere, as the report does (%s)"
+       % (want, sorted({s for s, _ in said})))
+    ok(all(rep.get("gate_capped") is True for _, capped in said if capped), "the SVG says gate capped only when the report is")
+    ok(bool(rep.get("audited_at")) and bool(rep.get("tool")), "the report records when (%s) and with what (%s) it was measured"
+       % (rep.get("audited_at"), rep.get("tool")))
+    m = re.search(r"\[!\[([^\]]*)\]\(docs/aiv-badge\.svg\)\]\(([^)\s]+)\)", rd("README.md"))
+    ok(m is not None, "README.md shows the badge as a link")
+    if m:
+        alt, link = m.groups()
+        ok(link.rstrip("/") == rep["target"].rstrip("/"), "the badge links to the page it measured (%s; report: %s)"
+           % (link, rep["target"]))
+        dates = re.findall(r"\d{4}-\d{2}-\d{2}", alt)
+        ok(all(d == rep["audited_at"] for d in dates), "a date in the badge's alt text is the report's audited_at (%s)"
+           % (", ".join(dates) or "none named"))
+
+
 def check_sync_script():
     print("sync: scripts/sync_labels.py plans without the network and never deletes")
     spec = importlib.util.spec_from_file_location("sync_labels", os.path.join(ROOT, "scripts", "sync_labels.py"))
@@ -127,6 +150,7 @@ def check_sync_script():
 def main():
     check_labels()
     check_forms()
+    check_badge()
     check_sync_script()
     if fails:
         print("\nFAIL: %d repository metadata check(s)" % len(fails))
