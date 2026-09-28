@@ -27,6 +27,10 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 5. **Preflight:** `python3 scripts/release.py X.Y.Z` must print `ready`. It refuses while any version,
    pin, manifest, changelog section or compare link is out of step, `scripts/mcp_docs.py --check`
    finds a generated MCP block out of date, the tree is dirty, or the tag exists.
+   Then the issue labels, which the forms name: with `gh` logged in as someone with write access,
+   `python3 scripts/sync_labels.py` lists each label in `.github/labels.json` that GitHub lacks, and
+   `python3 scripts/sync_labels.py --apply` creates it (it never deletes one). Do this the first time
+   and whenever `labels.json` has changed: step 7's gate stops while a label is missing.
 6. **Try the bundle, and Windows (minor and major releases):** `python3 scripts/release.py X.Y.Z --pack` builds only
    `dist/geo-score-X.Y.Z.mcpb` and `dist/server.json`. Double-click the `.mcpb` in Claude Desktop on
    macOS and on Windows, fill in one key, and run `score_site` and `status`. The bundle runs the user's
@@ -43,8 +47,10 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 
    then the same four with `py -3.14` (the newest stable Python, `PY_NEWEST` in `scripts/check.sh`). Say in
    the release notes that they passed, or what failed.
-7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` runs `check.sh --live --strict` (so the
-   tests must run on Python 3.8 and 3.14: `uv python install 3.8 3.14` if either is missing), builds the
+7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` stops at once unless `gh` is logged in (it
+   creates the release, after the pushes), then runs `check.sh --live --strict` (so the tests must run on
+   Python 3.8 and 3.14: `uv python install 3.8 3.14` if either is missing; and every label must exist, as
+   in step 5), builds the
    wheel and sdist (and stops unless the wheel's file name is the one the install lines download),
    the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` (a zip of `mcpb/manifest.json`,
    both CLI files under `server/` and the licence, byte-for-byte reproducible on the same platform) and `dist/server.json`
@@ -86,7 +92,7 @@ tool names, the key variables and the entry point.
 ## Who may move `v1`
 
 `v1` is what `uses: jianruntech/geo-score@v1` resolves to, so it only ever moves to a released tag,
-and only by step 6. Never point it at an untagged commit.
+and only by step 7. Never point it at an untagged commit.
 
 ## The benchmark
 

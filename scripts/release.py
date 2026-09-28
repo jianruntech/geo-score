@@ -105,6 +105,15 @@ def wheel_problem(v, dist):
         "".join("\n  %s: %s" % (n, ", ".join(sorted(set(ps)))) for n, ps in sorted(named.items()) if n not in built))
 
 
+def gh_problem():
+    """Why gh cannot publish the release, or None. It runs last, after main, the tag and v1 are pushed, and
+    check.sh skips its label check when gh is logged out, so --execute asks first."""
+    if not shutil.which("gh"):
+        return "gh is not installed (https://cli.github.com); it creates the GitHub release"
+    r = subprocess.run(["gh", "auth", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return "gh is not logged in (gh auth login); it creates the GitHub release" if r.returncode else None
+
+
 def version_fields(obj, v):
     """Every field of a packaging manifest that names the release, as (field, what it says, what it should say)."""
     out = [("version", obj.get("version"), v)]
@@ -263,6 +272,9 @@ def pack(v, out_dir):
 
 
 def execute(v):
+    why = gh_problem()
+    if why:
+        sys.exit("stopped: " + why)
     dist = os.path.join(ROOT, "dist")
     shutil.rmtree(dist, ignore_errors=True)
     os.makedirs(dist)
@@ -333,8 +345,8 @@ def main():
             print("  - " + p)
         sys.exit(1)
     if not a.execute:
-        print("\nready for %s. Plan: check.sh --live --strict, build sdist + wheel (stopping unless the wheel is the "
-              "file the install lines name), the .mcpb and dist/server.json, "
+        print("\nready for %s. Plan: stop unless gh is logged in, check.sh --live --strict, build sdist + wheel "
+              "(stopping unless the wheel is the file the install lines name), the .mcpb and dist/server.json, "
               "SHA256SUMS over them and the two CLI files, push main, tag v%s and push it, move v1 and push it, "
               "gh release create with the changelog section.\nRun again with --execute." % (a.version, a.version))
         return

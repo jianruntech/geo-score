@@ -9,7 +9,7 @@ version, the tool names, the key variables, the entry point. Nothing else would 
 falls behind, so this compares each with the code, then builds the .mcpb the way release.py does, starts the
 bundled server and asks it for its tools.
 """
-import importlib.util, io, json, os, re, subprocess, sys, tempfile, zipfile
+import importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -139,6 +139,81 @@ def check_gate_pins():
            "%s: no checkout keeps the token (persist-credentials: false)" % f)
 
 
+def gate_block(start, end):
+    """The lines of check.sh from the one matching start up to (not including) the one matching end."""
+    m = re.search(r"^%s.*?(?=^%s)" % (start, end), rd("scripts/check.sh"), re.M | re.S)
+    return m.group(0) if m else None
+
+
+def fake_bin(tmp, fakes):
+    """A directory holding python3 and the fake commands {name: sh body}, and nothing else, for PATH."""
+    d = os.path.join(tmp, "bin")
+    os.makedirs(d)
+    for name, body in dict(fakes, python3='exec "%s" "$@"' % sys.executable).items():
+        path = os.path.join(d, name)
+        io.open(path, "w", encoding="utf-8").write(u"#!/bin/sh\n%s\n" % body)
+        os.chmod(path, 0o755)
+    return d
+
+
+def run_block(bash, block, fakes, env=None, files=None):
+    """Runs a block cut from check.sh under bash -euo pipefail, as check.sh does, in an empty directory with
+    only the fakes on PATH. Returns (exit code, output)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        for rel, text in (files or {}).items():
+            os.makedirs(os.path.dirname(os.path.join(tmp, rel)), exist_ok=True)
+            io.open(os.path.join(tmp, rel), "w", encoding="utf-8").write(text)
+        prelude = "step() { printf '\\n== %s\\n' \"$*\"; }\n"
+        r = subprocess.run([bash, "-euo", "pipefail", "-c", prelude + block], cwd=tmp,
+                           env=dict(env or {}, PATH=fake_bin(tmp, fakes), HOME=tmp),
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+        return r.returncode, r.stdout
+
+
+def check_gate_steps():
+    """check.sh's steps that depend on the machine: each one skips, or falls back, instead of failing the gate
+    for something the change under test did not cause."""
+    print("\n  the gate on other machines: the --live label step, and gh for --execute")
+    bash = shutil.which("bash")
+    if bash is None or os.name == "nt":
+        print("  skip  no bash here")
+        return
+    # the label step needs a logged-in gh: the workflow has none, and a release checks gh itself (gh_problem)
+    labels = gate_block(r"  if \[ -f scripts/sync_labels\.py \]; then$", r"  fi$")
+    ok(labels is not None, "check.sh has the sync_labels.py step")
+    if labels is not None:
+        labels += "  fi\n"
+        gh = 'case "$1" in auth) exit "$FAKE_GH_AUTH" ;; esac; exit 0'
+        sync = {"scripts/sync_labels.py": "import os, sys\nprint('fake sync ' + ' '.join(sys.argv[1:]))\n"
+                                          "sys.exit(int(os.environ['FAKE_SYNC_RC']))\n"}
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "1", "FAKE_SYNC_RC": "1"}, sync)
+        ok(rc == 0 and "gh not authenticated: skipped" in out and "fake sync" not in out,
+           "gh logged out: the label step is skipped, not failed (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {}, {"FAKE_SYNC_RC": "1"}, sync)
+        ok(rc == 0 and "gh not installed: skipped" in out, "no gh: the label step is skipped (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"}, sync)
+        ok(rc != 0 and "fake sync --check" in out and "sync_labels.py --apply" in out,
+           "gh logged in and a label missing: the gate stops and names --apply (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "0"}, sync)
+        ok(rc == 0 and "fake sync --check" in out, "gh logged in and every label there: the step passes (rc %d)" % rc)
+        rc, out = run_block(bash, labels, {"gh": gh}, {"FAKE_GH_AUTH": "0", "FAKE_SYNC_RC": "1"})
+        ok(rc == 0 and "labels" not in out, "no scripts/sync_labels.py: no label step (rc %d)" % rc)
+
+    saved = dict(os.environ)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["PATH"] = fake_bin(tmp, {})
+            ok("not installed" in (release.gh_problem() or ""), "--execute stops first when there is no gh")
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["PATH"] = fake_bin(tmp, {"gh": 'case "$1" in auth) exit "$FAKE_GH_AUTH" ;; esac; exit 0'})
+            os.environ["FAKE_GH_AUTH"] = "1"
+            ok("not logged in" in (release.gh_problem() or ""), "--execute stops first when gh is logged out")
+            os.environ["FAKE_GH_AUTH"] = "0"
+            ok(release.gh_problem() is None, "--execute goes on when gh is logged in")
+    finally:
+        os.environ.clear()
+        os.environ.update(saved)
+
 def mcp_session(cmd, cwd, env):
     """initialize then tools/list over stdio; returns (serverInfo, tool names)."""
     lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -251,6 +326,7 @@ def main():
        "the Dockerfile's base image is pinned by digest")
     check_gate_pins()
     check_pythons()
+    check_gate_steps()
 
     print("\n  the .mcpb release.py builds")
     with tempfile.TemporaryDirectory() as tmp:

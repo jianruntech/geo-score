@@ -5,7 +5,8 @@
 #                                   # the Action, the packaging manifests and the .mcpb, and every other
 #                                   # scripts/test_*.py and benchmark/test_*.py
 #   bash scripts/check.sh --live    # also score example.com, check the JSON and --fail-under, run the
-#                                   # MCP server through the official Inspector CLI, and check the labels
+#                                   # MCP server through the official Inspector CLI, and, when gh is logged
+#                                   # in, check that .github/labels.json's labels exist on GitHub
 #   bash scripts/check.sh --all     # run the tests on every Python from 3.8 to 3.14 (and 3.15 when installed)
 #   bash scripts/check.sh --strict  # fail, instead of skipping, when uv cannot find a Python the run needs
 #
@@ -150,10 +151,15 @@ PY
   echo "ok: 0 passes, 101 fails"
   step "live: the MCP server through the official Inspector CLI (check_mcp.py --inspector)"
   python3 scripts/check_mcp.py --inspector
+  # labels are repository settings, not code: without gh credentials (a fresh machine, the workflow, which
+  # has no token) the step is skipped; logged in, a missing label stops the gate until someone creates it
   if [ -f scripts/sync_labels.py ]; then
     step "live: the repository's issue labels (sync_labels.py --check)"
-    if command -v gh >/dev/null 2>&1; then python3 scripts/sync_labels.py --check
-    else echo "gh not installed: skipped (https://cli.github.com)"; fi
+    if ! command -v gh >/dev/null 2>&1; then echo "gh not installed: skipped (https://cli.github.com)"
+    elif ! gh auth status >/dev/null 2>&1; then echo "gh not authenticated: skipped (gh auth login)"
+    else python3 scripts/sync_labels.py --check || {
+      echo "labels: python3 scripts/sync_labels.py --apply creates any that are missing (RELEASING.md, step 5)"; exit 1; }
+    fi
   fi
 fi
 
