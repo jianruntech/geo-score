@@ -18,8 +18,8 @@ competitors, or the third-party pages the engines lean on. Run it through geo_sc
 No dependencies. Python 3.8+. API keys are read from the environment and never written
 anywhere. https://github.com/jianruntech/geo-score
 """
-import argparse, contextlib, csv, datetime, hashlib, http.client, importlib.util, io, ipaddress, json, math, os
-import random, re, socket, sys, threading, time, unicodedata
+import argparse, contextlib, csv, datetime, difflib, hashlib, http.client, importlib.util, io, ipaddress, json, math
+import os, random, re, socket, sys, threading, time, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
@@ -52,6 +52,7 @@ MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$")
 ENV_RE = re.compile(r"^[A-Z_][A-Z0-9_]{0,63}$")
 RUN_ID_RE = re.compile(r"^(\d{8}T\d{6}Z)(?:-(\d{1,3}))?$")
 COUNTRY_RE = re.compile(r"^[A-Z]{2}$")
+BASE_URL_RE = re.compile(r"^(https://[^\s/]+|http://(localhost|127\.0\.0\.1)(:\d+)?)(/\S*)?$")
 DOMAIN_RE = re.compile(r"^(?=.{3,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 REDIRECT_HOSTS = ("vertexaisearch.cloud.google.com",)
 GEMINI_GENERATE_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
@@ -771,6 +772,42 @@ def is_branded(q, brand=None):
 
 
 # ── config ────────────────────────────────────────────────────────────────
+# Every key geo-score-watch.json can hold, level by level. schema/watch-config.v1.json lists the same names (a test
+# keeps the two equal); Config warns about any other key, because a typo such as "budget" for "budget_usd" would
+# otherwise drop a spending cap without a word.
+CONFIG_SCHEMA_URL = "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json"
+CONFIG_KEYS = ("$schema", "brand", "competitors", "queries", "engines", "country", "runs", "max_calls", "budget_usd",
+               "prices")
+ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
+# the last four tune the provider adapters: tool (OpenAI, Anthropic), max_tokens and max_searches (Anthropic),
+# max_results (OpenRouter)
+ENGINE_KEYS = ("provider", "id", "model", "base_url", "api", "key_env", "tool", "max_tokens", "max_searches",
+               "max_results")
+PRICE_KEYS = ("input_per_mtok", "output_per_mtok", "per_search", "per_call")
+# names a pasted API key goes by, lower case with the separators taken out: "did you mean 'api'?" would point at
+# the Gemini API selector
+SECRET_KEYS = ("key", "apikey", "token", "accesstoken", "authtoken", "secret", "clientsecret", "password",
+               "authorization", "bearer")
+
+
+def _unknown_keys(d, known, where=""):
+    """One warning per key that nothing reads, with the nearest known key when there is one. Never the value: it
+    may be a key."""
+    out = []
+    for k in (d if isinstance(d, dict) else ()):
+        if k in known:
+            continue
+        norm = re.sub(r"[^a-z]", "", str(k).lower())
+        if norm in SECRET_KEYS or norm.endswith("apikey"):
+            out.append("unknown key %r; it is ignored: API keys are read from environment variables, never from "
+                       "this file (an engine's key_env names the variable)" % (where + k))
+            continue
+        near = difflib.get_close_matches(k, known, n=1)
+        out.append("unknown key %r%s; it is ignored" % (where + k, " (did you mean %r?)" % (where + near[0])
+                                                          if near else ""))
+    return out
+
+
 def _read_csv(path):
     """utf-8 (BOM or not) first, then gb18030 — what Excel writes on a Chinese Windows machine."""
     with io.open(path, "rb") as f:
@@ -804,8 +841,10 @@ class Config(object):
             raise ConfigError("%s must hold a JSON object" % path)
         self.raw = raw
         err, warn = self.errors.append, self.warnings.append
+        self.warnings += _unknown_keys(raw, CONFIG_KEYS)
 
         self.brand = Entity(raw.get("brand"), you=True)
+        self.warnings += _unknown_keys(raw.get("brand"), ENTITY_KEYS, "brand.")
         if not self.brand.name:
             err("brand.name is required")
         if not self.brand.domains and not self.brand.url_prefixes:
@@ -814,6 +853,7 @@ class Config(object):
         names = {self.brand.name.lower()}
         for i, c in enumerate(raw.get("competitors") or []):
             e = Entity(c)
+            self.warnings += _unknown_keys(c, ENTITY_KEYS, "competitors[%d]." % i)
             if not e.name:
                 err("competitors[%d].name is required" % i)
             elif e.name.lower() in names:
@@ -829,6 +869,7 @@ class Config(object):
         seen = set()
         engines = raw.get("engines") if raw.get("engines") is not None else DEFAULT_ENGINES
         for i, e in enumerate(engines if isinstance(engines, list) else []):
+            self.warnings += _unknown_keys(e, ENGINE_KEYS, "engines[%d]." % i)
             if not isinstance(e, dict) or e.get("provider") not in PROVIDERS:
                 err("engines[%d].provider must be one of: %s" % (i, ", ".join(sorted(PROVIDERS))))
                 continue
@@ -840,8 +881,7 @@ class Config(object):
             if not MODEL_RE.match(eng["model"]):
                 err("engines[%d].model %r is not a model name" % (i, eng["model"]))
             bu = e.get("base_url")
-            if bu is not None and not (isinstance(bu, str) and re.match(
-                    r"^(https://[^\s/]+|http://(localhost|127\.0\.0\.1)(:\d+)?)(/\S*)?$", bu)):
+            if bu is not None and not (isinstance(bu, str) and BASE_URL_RE.match(bu)):
                 err("engines[%d].base_url must be https:// (or http://localhost)" % i)
             if e.get("api") is not None and not (e["provider"] == "gemini" and
                                                  e.get("api") in ("interactions", "generate_content")):
@@ -870,9 +910,14 @@ class Config(object):
             err("budget_usd must be a non-negative number, or null")
             self.budget_usd = None
         self.prices = raw.get("prices") if isinstance(raw.get("prices"), dict) else {}
+        ids = [e["id"] for e in self.engines]
         for eid, p in self.prices.items():
             if not isinstance(p, dict) or any(v is not None and _num(v) is None for v in p.values()):
                 err("prices.%s must map input_per_mtok / output_per_mtok / per_search / per_call to numbers" % eid)
+            self.warnings += _unknown_keys(p, PRICE_KEYS, "prices.%s." % eid)
+            if eid not in ids:
+                near = difflib.get_close_matches(eid, ids, n=1)
+                warn("prices.%s names no engine%s; it is ignored" % (eid, " (did you mean %r?)" % near[0] if near else ""))
         q = raw.get("queries", "queries.csv")
         self.queries_path = os.path.join(self.dir, q) if isinstance(q, str) and q else ""
         if not self.queries_path:
@@ -1660,23 +1705,76 @@ def list_run_ids(cfg):
     return sorted(ids, key=_run_sort_key)
 
 
+def _json_bytes(obj):
+    """UTF-8 JSON. A provider can send half a surrogate pair (half an emoji), which UTF-8 cannot carry: then every
+    non-ASCII character is written as a \\u escape, still valid JSON that loads back to the same text."""
+    try:
+        return (json.dumps(obj, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+    except UnicodeEncodeError:
+        return (json.dumps(obj, ensure_ascii=True, indent=1) + "\n").encode("utf-8")
+
+
+def _printable(s):
+    """Text for a terminal or a file. Half a surrogate pair (see _json_bytes) in an answer or a search query cannot
+    be written as UTF-8: it is shown as a \\u escape rather than ending the command after a run has been paid for."""
+    return s.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
+def _unlink(path):
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def _publish(tmp, path):
+    """Put the finished file at path unless a file is already there. False when one is."""
+    try:
+        os.link(tmp, path)          # atomic, and never replaces an existing run
+        return True
+    except FileExistsError:
+        return False
+    except OSError:
+        pass                        # no hard links on this file system (FAT, some network shares)
+    try:
+        os.close(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644))    # claim the name, then fill it
+    except FileExistsError:
+        return False
+    try:
+        os.replace(tmp, path)
+    except BaseException:
+        _unlink(path)
+        raise
+    return True
+
+
 def save_run(cfg, run):
+    """Save under a fresh run id, all or nothing: a run has been paid for, and a half-written file would also break
+    report and diff for every run after it. The file is written in full under a hidden name, flushed to disk, and
+    only then published under a run id no other file has."""
     d = cfg.runs_dir()
     os.makedirs(d, exist_ok=True)
-    base, n = run["run_id"], 1
-    while True:
+    base = run["run_id"]
+    for n in range(1, 1000):        # RUN_ID_RE allows up to three digits of suffix
         rid = base if n == 1 else "%s-%d" % (base, n)
-        path = os.path.join(d, rid + ".json")
+        data = _json_bytes(dict(run, run_id=rid))
+        path, tmp = os.path.join(d, rid + ".json"), os.path.join(d, "." + rid + ".json.tmp")
         try:
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-            break
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o644)
         except FileExistsError:
-            n += 1
-    run["run_id"] = rid
-    with io.open(fd, "w", encoding="utf-8") as f:
-        json.dump(run, f, ensure_ascii=False, indent=1)
-        f.write("\n")
-    return path
+            continue                # another save is writing this id right now
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+                f.flush()
+                os.fsync(f.fileno())
+            done = _publish(tmp, path)
+        finally:
+            _unlink(tmp)            # after a link the run lives on under path; after a failure it goes
+        if done:
+            run["run_id"] = rid
+            return path
+    raise ConfigError("no free run id for %s in %s" % (base, d))
 
 
 def load_run(cfg, rid="latest"):
@@ -1844,6 +1942,7 @@ def citation_lines(run, cit):
 
 # ── CLI ───────────────────────────────────────────────────────────────────
 CONFIG_TEMPLATE = {
+    "$schema": CONFIG_SCHEMA_URL,        # editors that know JSON Schema validate and complete the file
     "brand": {"name": "Acme", "domains": ["acme.com"], "aliases": [], "url_prefixes": []},
     "competitors": [],
     "queries": "queries.csv",
@@ -1984,7 +2083,7 @@ def cmd_run(args):
     run = execute(cfg.brand, cfg.competitors, engines, queries, runs, cfg.country, cfg.prices, max_calls, budget,
                   args.allow_unpriced, progress=_progress_printer(args.quiet))
     path = save_run(cfg, run)
-    print(render(run, args.format if args.format in ("text", "md") else "text"))
+    print(_printable(render(run, args.format if args.format in ("text", "md") else "text")))
     print("saved %s" % os.path.relpath(path))
     return 0 if run["summary"]["overall"]["answered"] else 3
 
@@ -2009,13 +2108,14 @@ def cmd_ask(args):
     run = execute(brand, rivals, engines, [{"query_id": "ask", "query": q, "intent_tier": "", "target_url": ""}],
                   1, country, {}, len(active))
     if args.format == "json":
-        print(json.dumps(run, ensure_ascii=False, indent=1))
+        sys.stdout.write(_json_bytes(run).decode("utf-8"))     # answers can hold half a surrogate pair
     else:
-        print(render_ask(run, args.format))
+        print(_printable(render_ask(run, args.format)))
     return 0 if run["summary"]["overall"]["answered"] else 3
 
 
 def _out(text, path):
+    text = _printable(text)
     if path:
         with io.open(path, "w", encoding="utf-8", newline="") as f:
             f.write(text)
@@ -2028,7 +2128,7 @@ def cmd_report(args):
     cfg = _load(args)
     run = load_run(cfg, args.run or "latest")
     if args.format == "json":
-        text = json.dumps(dict(run, summary=summary_of(run)), ensure_ascii=False, indent=1) + "\n"
+        text = _json_bytes(dict(run, summary=summary_of(run))).decode("utf-8")     # answers included, as saved
     elif args.format == "csv":
         text = render_csv(run)
     else:
@@ -2097,11 +2197,10 @@ class RPCError(Exception):
 
 
 def _public_host(host):
-    """An agent may be steered by a page it read: never let it point the scorer at this machine or the intranet."""
-    try:
-        infos = socket.getaddrinfo(host, None)
-    except (socket.gaierror, UnicodeError, OSError):
-        return False
+    """An agent may be steered by a page it read: never let it point the scorer at this machine or the intranet.
+    The name is resolved here even when a proxy will fetch the page, as geo_score's address guard does on every
+    connection. socket.gaierror goes to the caller: a name that does not resolve is not a private address."""
+    infos = socket.getaddrinfo(host, None)
     for info in infos:
         ip = ipaddress.ip_address(info[4][0].split("%")[0])
         if ip.version == 6 and ip.ipv4_mapped:
@@ -2110,6 +2209,16 @@ def _public_host(host):
         if not ip.is_global or ip.is_multicast:
             return False
     return bool(infos)
+
+
+def _via_proxy(url):
+    """True when urllib sends this URL through a proxy (the environment's, or the system's on macOS and Windows).
+    Then a name this machine cannot resolve may still work for the proxy, and the error has to say why it counts."""
+    try:
+        u = urllib.parse.urlsplit(url)
+        return bool(urllib.request.getproxies().get(u.scheme)) and not urllib.request.proxy_bypass(u.hostname or "")
+    except Exception:
+        return False
 
 
 # Output schemas for the tools that return structuredContent. Compact on purpose: the full contracts are
@@ -2308,7 +2417,9 @@ def rubric_resource(gs):
                         "tiers": [{"points": t[0], "condition": t[1]} for t in tiers.get(c[0], [])]}
                        for c in getattr(gs, "SPEC", [])]
                       + [{"id": b[0], "kind": "bonus", "name": b[1], "points": b[2]} for b in getattr(gs, "BONUS", [])],
-            "source": "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.json" % getattr(gs, "RUBRIC", "")}
+            # pinned to the release, like the checks' doc_url: main moves on, and this is what the scorer applies
+            "source": "https://github.com/jianruntech/geo-score/blob/v%s/rubric/%s.json" % (
+                getattr(gs, "__version__", __version__), getattr(gs, "RUBRIC", ""))}
 
 
 MCP_WORKERS = 4          # tools/call requests served at once; more wait their turn
@@ -2800,6 +2911,7 @@ class MCPServer(object):
             "" if budget is None else ", budget " + money(budget))]
         lines += ["- %s: not measured (%s)" % (e["id"], status[e["id"]]) for e in engines
                   if status[e["id"]] != "measured"]
+        lines += ["- warning: %s" % _cut(w, 200) for w in cfg.warnings]      # a mistyped cap, before anything is spent
         out = {"dry_run": bool(args.get("dry_run")), "run_id": None, "summary": None,
                "plan": {"questions": len(queries), "engines_active": [e["id"] for e, _ in active], "runs": cfg.runs,
                         "planned_calls": planned, "max_calls": max_calls, "budget_usd": budget,
@@ -2830,7 +2942,8 @@ class MCPServer(object):
             raise ConfigError(why)
         path = save_run(cfg, run)
         out.update(run_id=run["run_id"], summary=summary_of(run))
-        return render(run, "md") + "\nsaved `%s`\n" % os.path.relpath(path, cfg.dir), out
+        return render(run, "md") + "\nsaved `%s`\n" % os.path.relpath(path, cfg.dir) + "".join(
+            "warning: %s\n" % _cut(w, 200) for w in cfg.warnings), out
 
     def tool_list_runs(self, args, token, ctx=None):
         cfg = self._cfg()
@@ -2910,6 +3023,7 @@ class MCPServer(object):
              "ready: " + ", ".join("%s %s" % (n, "yes" if ok else "no") for n, ok in st["ready"].items()),
              "config: %s (%s)" % (conf["path"], "found" if conf["found"] else "not found: `geo_score.py watch init` writes one")]
         L += ["  error: %s" % _cut(x, 200) for x in conf["errors"]]
+        L += ["  warning: %s" % _cut(x, 200) for x in conf["warnings"]]
         L += ["- %s (%s): %s%s" % (r["id"], r["model"], "key set" if r["key_present"] else "no key, set " + r["key_env"],
                                    "" if r["priced"] else ", no prices") for r in rows]
         L.append("questions: %s · saved runs: %s · caps: %d calls%s" % (
@@ -2926,8 +3040,17 @@ class MCPServer(object):
             host = (urllib.parse.urlsplit(url).hostname or "").encode("idna").decode("ascii")
         except (UnicodeError, ValueError):
             host = ""
-        if not host or "." not in host or not _public_host(host):
+        if not host or "." not in host:
             raise ConfigError("url must be an http(s) URL on a public host (not localhost, private or reserved addresses)")
+        try:
+            public = _public_host(host)
+        except (OSError, UnicodeError):          # socket.gaierror is an OSError
+            raise ConfigError("cannot resolve %s: check the spelling, or your DNS/proxy settings%s" % (
+                _cut(host, 100), " (score_site resolves every host on this machine to check it is public, even "
+                                 "through a proxy)" if _via_proxy(url) else "")) from None
+        if not public:
+            raise ConfigError("url must be on a public host: %s resolves to a private, loopback or reserved address"
+                              % _cut(host, 100))
         gs = self.geo_score
         sample = args.get("sample", 8)
         if not isinstance(sample, int) or isinstance(sample, bool) or not 1 <= sample <= 8:
@@ -3122,7 +3245,7 @@ def main(argv=None, prog="geo_score.py watch"):
     p.add_argument("--fail-on-drop", action="store_true", help="exit 4 when a verdict is a change for the worse "
                    "(overall or any engine), for CI")
     with_config(sub.add_parser("runs", help="list saved runs"))
-    p = with_config(sub.add_parser("mcp", help="serve score and watch over MCP (stdio); run it as `geo_score.py mcp`"))
+    p = with_config(sub.add_parser("mcp", help="serve score and watch over MCP (stdio); installed as geo-score-mcp"))
     p.add_argument("--toolsets", action="append", metavar="SETS",
                    help="comma-separated: score, ask, watch, status or all (default: all; $GEO_SCORE_MCP_TOOLSETS)")
     p.add_argument("--tools", action="append", metavar="NAMES",
