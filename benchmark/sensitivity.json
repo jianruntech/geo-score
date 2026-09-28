@@ -1,0 +1,650 @@
+{
+ "generated_by": "benchmark/sensitivity.py",
+ "source": {
+  "measured_at": "2026-09-27",
+  "tool": "geo-score-cli/1.3.0",
+  "rubric_version": "1.1",
+  "n_scored": 317
+ },
+ "method": {
+  "arithmetic": "each observable check: its tier's share of its points times its weight, over the weights of the observable checks; plus the bonus (at most 6); capped at 100, and at 40 when a gate scored zero, in every weighting",
+  "equal": "every scored check weighs 100/21",
+  "evidence_basis": "illustrative: points x convention 0.5, field-observation 0.5, research 1.0, vendor-doc 1.0 by the check's evidence basis, rescaled to 100",
+  "leave_one_out": "the check is treated as unobservable on every site; a gate left out still caps",
+  "draws": "300 draws, each weight = points x U(0.5, 1.5), rescaled to 100; seed 20260909",
+  "ranks": "average ranks, 1 for the highest score; top 20 ordered by score, then site name"
+ },
+ "recompute": {
+  "n": 317,
+  "mismatches": 0
+ },
+ "weights": {
+  "equal": {
+   "g.robots": 4.762,
+   "g.reachable": 4.762,
+   "g.ssr": 4.762,
+   "p1.sitemap": 4.762,
+   "p1.llms-txt": 4.762,
+   "p1.organization": 4.762,
+   "p1.breadcrumb": 4.762,
+   "p1.page-type": 4.762,
+   "p2.answer-passages": 4.762,
+   "p2.question-intent": 4.762,
+   "p2.freshness": 4.762,
+   "p2.sourced-stats": 4.762,
+   "p2.named-author": 4.762,
+   "p3.listings": 4.762,
+   "p3.mentions": 4.762,
+   "p3.knowledge-graph": 4.762,
+   "p3.sameas": 4.762,
+   "p3.video": 4.762,
+   "p4.answer-shape": 4.762,
+   "p4.question-coverage": 4.762,
+   "p4.cn-engines": 4.762
+  },
+  "evidence_basis": {
+   "g.robots": 5.435,
+   "g.reachable": 5.435,
+   "g.ssr": 5.435,
+   "p1.sitemap": 4.348,
+   "p1.llms-txt": 2.717,
+   "p1.organization": 6.522,
+   "p1.breadcrumb": 3.261,
+   "p1.page-type": 4.348,
+   "p2.answer-passages": 9.783,
+   "p2.question-intent": 3.804,
+   "p2.freshness": 6.522,
+   "p2.sourced-stats": 7.609,
+   "p2.named-author": 6.522,
+   "p3.listings": 4.348,
+   "p3.mentions": 4.348,
+   "p3.knowledge-graph": 4.348,
+   "p3.sameas": 3.261,
+   "p3.video": 3.261,
+   "p4.answer-shape": 4.348,
+   "p4.question-coverage": 2.174,
+   "p4.cn-engines": 2.174
+  }
+ },
+ "alternatives": {
+  "equal": {
+   "spearman": 0.991,
+   "band_changes": 39,
+   "median_rank_move": 6.0,
+   "top20_overlap": 16
+  },
+  "evidence_basis": {
+   "spearman": 0.996,
+   "band_changes": 22,
+   "median_rank_move": 4.5,
+   "top20_overlap": 19
+  }
+ },
+ "draws": {
+  "spearman": {
+   "min": 0.989,
+   "p5": 0.991,
+   "median": 0.995,
+   "p95": 0.997,
+   "max": 0.998
+  },
+  "band_changes": {
+   "min": 11,
+   "p5": 18,
+   "median": 26,
+   "p95": 45,
+   "max": 69
+  },
+  "median_rank_move": {
+   "min": 2.5,
+   "p5": 3.0,
+   "median": 4.5,
+   "p95": 7.0,
+   "max": 8.0
+  },
+  "top20_overlap": {
+   "min": 15,
+   "p5": 15,
+   "median": 17,
+   "p95": 19,
+   "max": 20
+  },
+  "n": 300,
+  "sites_band_changed_any": 198,
+  "sites_band_changed_half": 1
+ },
+ "leave_one_out": [
+  {
+   "check": "p2.sourced-stats",
+   "points": 7,
+   "observed": 317,
+   "spearman": 0.994,
+   "band_changes": 48,
+   "median_rank_move": 5.5,
+   "top20_overlap": 18
+  },
+  {
+   "check": "p2.answer-passages",
+   "points": 9,
+   "observed": 317,
+   "spearman": 0.988,
+   "band_changes": 39,
+   "median_rank_move": 8.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p1.llms-txt",
+   "points": 5,
+   "observed": 317,
+   "spearman": 0.993,
+   "band_changes": 34,
+   "median_rank_move": 6.5,
+   "top20_overlap": 19
+  },
+  {
+   "check": "p1.organization",
+   "points": 6,
+   "observed": 317,
+   "spearman": 0.993,
+   "band_changes": 32,
+   "median_rank_move": 6.5,
+   "top20_overlap": 17
+  },
+  {
+   "check": "g.reachable",
+   "points": 5,
+   "observed": 317,
+   "spearman": 0.997,
+   "band_changes": 31,
+   "median_rank_move": 4.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p1.page-type",
+   "points": 4,
+   "observed": 317,
+   "spearman": 0.996,
+   "band_changes": 29,
+   "median_rank_move": 4.5,
+   "top20_overlap": 18
+  },
+  {
+   "check": "p2.question-intent",
+   "points": 7,
+   "observed": 317,
+   "spearman": 0.992,
+   "band_changes": 29,
+   "median_rank_move": 5.0,
+   "top20_overlap": 18
+  },
+  {
+   "check": "g.ssr",
+   "points": 5,
+   "observed": 317,
+   "spearman": 0.997,
+   "band_changes": 25,
+   "median_rank_move": 4.5,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p2.named-author",
+   "points": 6,
+   "observed": 317,
+   "spearman": 0.995,
+   "band_changes": 25,
+   "median_rank_move": 5.5,
+   "top20_overlap": 18
+  },
+  {
+   "check": "p1.breadcrumb",
+   "points": 3,
+   "observed": 251,
+   "spearman": 0.998,
+   "band_changes": 23,
+   "median_rank_move": 3.5,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p3.sameas",
+   "points": 3,
+   "observed": 316,
+   "spearman": 0.997,
+   "band_changes": 23,
+   "median_rank_move": 4.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "g.robots",
+   "points": 5,
+   "observed": 317,
+   "spearman": 0.997,
+   "band_changes": 22,
+   "median_rank_move": 5.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p1.sitemap",
+   "points": 4,
+   "observed": 317,
+   "spearman": 0.996,
+   "band_changes": 22,
+   "median_rank_move": 5.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p2.freshness",
+   "points": 6,
+   "observed": 317,
+   "spearman": 0.995,
+   "band_changes": 22,
+   "median_rank_move": 3.0,
+   "top20_overlap": 15
+  },
+  {
+   "check": "p4.answer-shape",
+   "points": 4,
+   "observed": 317,
+   "spearman": 0.997,
+   "band_changes": 18,
+   "median_rank_move": 4.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p3.knowledge-graph",
+   "points": 4,
+   "observed": 208,
+   "spearman": 0.997,
+   "band_changes": 17,
+   "median_rank_move": 3.0,
+   "top20_overlap": 17
+  },
+  {
+   "check": "p3.video",
+   "points": 3,
+   "observed": 317,
+   "spearman": 0.998,
+   "band_changes": 14,
+   "median_rank_move": 2.5,
+   "top20_overlap": 19
+  },
+  {
+   "check": "p4.cn-engines",
+   "points": 2,
+   "observed": 53,
+   "spearman": 0.999,
+   "band_changes": 1,
+   "median_rank_move": 0.5,
+   "top20_overlap": 20
+  }
+ ],
+ "never_observed": [
+  "p3.listings",
+  "p3.mentions",
+  "p4.question-coverage"
+ ],
+ "items": [
+  {
+   "check": "g.robots",
+   "kind": "gate",
+   "points": 5,
+   "observed": 317,
+   "tiers": {
+    "0": 23,
+    "3": 165,
+    "5": 129
+   },
+   "floor_pct": 7.3,
+   "ceiling_pct": 40.7,
+   "modal_pct": 52.1,
+   "item_rest_r": 0.15
+  },
+  {
+   "check": "g.reachable",
+   "kind": "gate",
+   "points": 5,
+   "observed": 317,
+   "tiers": {
+    "0": 16,
+    "3": 100,
+    "5": 201
+   },
+   "floor_pct": 5.0,
+   "ceiling_pct": 63.4,
+   "modal_pct": 63.4,
+   "item_rest_r": -0.02
+  },
+  {
+   "check": "g.ssr",
+   "kind": "gate",
+   "points": 5,
+   "observed": 317,
+   "tiers": {
+    "0": 53,
+    "3": 83,
+    "5": 181
+   },
+   "floor_pct": 16.7,
+   "ceiling_pct": 57.1,
+   "modal_pct": 57.1,
+   "item_rest_r": 0.51
+  },
+  {
+   "check": "p1.sitemap",
+   "kind": "scored",
+   "points": 4,
+   "observed": 317,
+   "tiers": {
+    "0": 75,
+    "2": 81,
+    "4": 161
+   },
+   "floor_pct": 23.7,
+   "ceiling_pct": 50.8,
+   "modal_pct": 50.8,
+   "item_rest_r": 0.42
+  },
+  {
+   "check": "p1.llms-txt",
+   "kind": "scored",
+   "points": 5,
+   "observed": 317,
+   "tiers": {
+    "0": 180,
+    "2": 1,
+    "4": 27,
+    "5": 109
+   },
+   "floor_pct": 56.8,
+   "ceiling_pct": 34.4,
+   "modal_pct": 56.8,
+   "item_rest_r": 0.49
+  },
+  {
+   "check": "p1.organization",
+   "kind": "scored",
+   "points": 6,
+   "observed": 317,
+   "tiers": {
+    "0": 152,
+    "3": 67,
+    "5": 27,
+    "6": 71
+   },
+   "floor_pct": 47.9,
+   "ceiling_pct": 22.4,
+   "modal_pct": 47.9,
+   "item_rest_r": 0.59
+  },
+  {
+   "check": "p1.breadcrumb",
+   "kind": "scored",
+   "points": 3,
+   "observed": 251,
+   "tiers": {
+    "0": 169,
+    "2": 30,
+    "3": 52
+   },
+   "floor_pct": 67.3,
+   "ceiling_pct": 20.7,
+   "modal_pct": 67.3,
+   "item_rest_r": 0.46
+  },
+  {
+   "check": "p1.page-type",
+   "kind": "scored",
+   "points": 4,
+   "observed": 317,
+   "tiers": {
+    "0": 189,
+    "2": 62,
+    "4": 66
+   },
+   "floor_pct": 59.6,
+   "ceiling_pct": 20.8,
+   "modal_pct": 59.6,
+   "item_rest_r": 0.59
+  },
+  {
+   "check": "p2.answer-passages",
+   "kind": "scored",
+   "points": 9,
+   "observed": 317,
+   "tiers": {
+    "0": 91,
+    "4": 77,
+    "7": 62,
+    "9": 87
+   },
+   "floor_pct": 28.7,
+   "ceiling_pct": 27.4,
+   "modal_pct": 28.7,
+   "item_rest_r": 0.55
+  },
+  {
+   "check": "p2.question-intent",
+   "kind": "scored",
+   "points": 7,
+   "observed": 317,
+   "tiers": {
+    "0": 68,
+    "3": 60,
+    "5": 53,
+    "7": 136
+   },
+   "floor_pct": 21.5,
+   "ceiling_pct": 42.9,
+   "modal_pct": 42.9,
+   "item_rest_r": 0.68
+  },
+  {
+   "check": "p2.freshness",
+   "kind": "scored",
+   "points": 6,
+   "observed": 317,
+   "tiers": {
+    "0": 109,
+    "3": 169,
+    "6": 39
+   },
+   "floor_pct": 34.4,
+   "ceiling_pct": 12.3,
+   "modal_pct": 53.3,
+   "item_rest_r": 0.59
+  },
+  {
+   "check": "p2.sourced-stats",
+   "kind": "scored",
+   "points": 7,
+   "observed": 317,
+   "tiers": {
+    "0": 10,
+    "3": 58,
+    "5": 32,
+    "7": 217
+   },
+   "floor_pct": 3.2,
+   "ceiling_pct": 68.5,
+   "modal_pct": 68.5,
+   "item_rest_r": 0.41
+  },
+  {
+   "check": "p2.named-author",
+   "kind": "scored",
+   "points": 6,
+   "observed": 317,
+   "tiers": {
+    "0": 138,
+    "3": 155,
+    "6": 24
+   },
+   "floor_pct": 43.5,
+   "ceiling_pct": 7.6,
+   "modal_pct": 48.9,
+   "item_rest_r": 0.55
+  },
+  {
+   "check": "p3.listings",
+   "kind": "scored",
+   "points": 4,
+   "observed": 0,
+   "tiers": {},
+   "floor_pct": null,
+   "ceiling_pct": null,
+   "modal_pct": null,
+   "item_rest_r": null
+  },
+  {
+   "check": "p3.mentions",
+   "kind": "scored",
+   "points": 4,
+   "observed": 0,
+   "tiers": {},
+   "floor_pct": null,
+   "ceiling_pct": null,
+   "modal_pct": null,
+   "item_rest_r": null
+  },
+  {
+   "check": "p3.knowledge-graph",
+   "kind": "scored",
+   "points": 4,
+   "observed": 208,
+   "tiers": {
+    "0": 19,
+    "4": 189
+   },
+   "floor_pct": 9.1,
+   "ceiling_pct": 90.9,
+   "modal_pct": 90.9,
+   "item_rest_r": 0.09
+  },
+  {
+   "check": "p3.sameas",
+   "kind": "scored",
+   "points": 3,
+   "observed": 316,
+   "tiers": {
+    "0": 201,
+    "2": 10,
+    "3": 105
+   },
+   "floor_pct": 63.6,
+   "ceiling_pct": 33.2,
+   "modal_pct": 63.6,
+   "item_rest_r": 0.54
+  },
+  {
+   "check": "p3.video",
+   "kind": "scored",
+   "points": 3,
+   "observed": 317,
+   "tiers": {
+    "0": 136,
+    "2": 170,
+    "3": 11
+   },
+   "floor_pct": 42.9,
+   "ceiling_pct": 3.5,
+   "modal_pct": 53.6,
+   "item_rest_r": 0.48
+  },
+  {
+   "check": "p4.answer-shape",
+   "kind": "scored",
+   "points": 4,
+   "observed": 317,
+   "tiers": {
+    "0": 49,
+    "2": 86,
+    "4": 182
+   },
+   "floor_pct": 15.5,
+   "ceiling_pct": 57.4,
+   "modal_pct": 57.4,
+   "item_rest_r": 0.64
+  },
+  {
+   "check": "p4.question-coverage",
+   "kind": "scored",
+   "points": 4,
+   "observed": 0,
+   "tiers": {},
+   "floor_pct": null,
+   "ceiling_pct": null,
+   "modal_pct": null,
+   "item_rest_r": null
+  },
+  {
+   "check": "p4.cn-engines",
+   "kind": "scored",
+   "points": 2,
+   "observed": 53,
+   "tiers": {
+    "0": 1,
+    "1": 17,
+    "2": 35
+   },
+   "floor_pct": 1.9,
+   "ceiling_pct": 66.0,
+   "modal_pct": 66.0,
+   "item_rest_r": 0.23
+  },
+  {
+   "check": "b.llms-full",
+   "kind": "bonus",
+   "points": 2,
+   "observed": 317,
+   "tiers": {
+    "0": 271,
+    "2": 46
+   },
+   "floor_pct": 85.5,
+   "ceiling_pct": 14.5,
+   "modal_pct": 85.5,
+   "item_rest_r": null
+  },
+  {
+   "check": "b.ai-txt",
+   "kind": "bonus",
+   "points": 2,
+   "observed": 317,
+   "tiers": {
+    "0": 314,
+    "2": 3
+   },
+   "floor_pct": 99.1,
+   "ceiling_pct": 0.9,
+   "modal_pct": 99.1,
+   "item_rest_r": null
+  },
+  {
+   "check": "b.geo-link",
+   "kind": "bonus",
+   "points": 1,
+   "observed": 317,
+   "tiers": {
+    "0": 300,
+    "1": 17
+   },
+   "floor_pct": 94.6,
+   "ceiling_pct": 5.4,
+   "modal_pct": 94.6,
+   "item_rest_r": null
+  },
+  {
+   "check": "b.speakable",
+   "kind": "bonus",
+   "points": 1,
+   "observed": 317,
+   "tiers": {
+    "0": 312,
+    "1": 5
+   },
+   "floor_pct": 98.4,
+   "ceiling_pct": 1.6,
+   "modal_pct": 98.4,
+   "item_rest_r": null
+  }
+ ]
+}

@@ -349,7 +349,8 @@ EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECUR
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
-EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md"]
+EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
+               "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
@@ -876,6 +877,15 @@ if os.path.exists("benchmark/results.json") and os.path.isdir("benchmark/raw"):
         check(long5[:1] == [["site", "check_id", "state", "points", "max"]] and long5[1:] == want_long,
               "benchmark/checks.csv is not the checks in raw/, one row per scored site and check "
               "(python3 benchmark/run.py --readme-only)")
+
+# ── 36. The weight-sensitivity study is what sensitivity.py derives from results.json and raw/ ──
+# It first recomputes every published score from the per-check points and stops on any mismatch, so this rule also
+# fails when a raw report and results.json disagree on the arithmetic.
+if os.path.exists("benchmark/sensitivity.py"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/sensitivity.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/sensitivity.json or SENSITIVITY*.md is not what sensitivity.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
 
 if fail:
     print("FAIL")

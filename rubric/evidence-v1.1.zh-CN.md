@@ -74,7 +74,8 @@
 - **`p4.question-coverage`（4 分）**——取决于审计者挑选的十个问题。
 
 这些是将来调整权重的候选项。任何权重改动都以新版本量表发布，绝不原地修改 v1.1——见
-[量表 README](README.md)。
+[量表 README](README.md)。改一项权重或拿掉一个检查项时，基准榜单的名次和档位会移动多少，见
+[SENSITIVITY.zh-CN.md](../benchmark/SENSITIVITY.zh-CN.md)。
 
 ## 关于来源的说明
 

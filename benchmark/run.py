@@ -227,8 +227,12 @@ def main():
     write_readme(payload)
     print("next: python3 benchmark/build_page.py   (regenerates the public pages)", file=sys.stderr)
 
+def _load(path):
+    with io.open(path, encoding="utf-8") as f:
+        return json.load(f)
+
 def _rubric():
-    return json.load(io.open(os.path.join(HERE, "..", "rubric", "v1.1.json"), encoding="utf-8"))
+    return _load(os.path.join(HERE, "..", "rubric", "v1.1.json"))
 
 def _q(xs, q):
     xs = sorted(xs); i = (len(xs) - 1) * q
@@ -433,7 +437,7 @@ def write_readme(p):
     for x in ok:
         fp = bstats.raw_path(x["site"])
         if os.path.exists(fp):
-            reports[x["site"]] = json.load(io.open(fp, encoding="utf-8"))
+            reports[x["site"]] = _load(fp)
     write_csvs(p, reports)
     sample_n = {x["site"]: bstats.sample_of(x)[0] for x in ok}
     thin = {x["site"] for x in ok if sample_n[x["site"]] is not None and sample_n[x["site"]] < bstats.THIN_N}

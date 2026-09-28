@@ -384,6 +384,34 @@ class Csv(unittest.TestCase):
         self.assertIsNone(run._half_bylined("something else"))
 
 
+class Sensitivity(unittest.TestCase):
+    def test_ranks_share_ties(self):
+        import sensitivity
+        self.assertEqual(sensitivity.ranks([10, 20, 20, 5]), [3.0, 1.5, 1.5, 4.0])
+
+    def test_rubric_arithmetic(self):
+        import sensitivity
+        rub = retest._rubric()
+        full = {c["id"]: c["points"] for c in rub["checks"]}
+        site = {"points": dict(full)}
+        capped = {"points": dict(full, **{"g.ssr": 0})}
+        half = {"points": {c: (None if c.startswith("p4.") else (p if c.startswith("b.") else 0)) for c, p in full.items()}}
+        got = sensitivity.scorer(rub, [site, capped, half])({c["id"]: c["points"] for c in rub["checks"] if c["kind"] != "bonus"})
+        # full marks plus a bonus stay at 100; a gate at zero caps at 40; the bonus counts at most bonus_cap
+        den = sum(c["points"] for c in rub["checks"] if c["kind"] != "bonus" and not c["id"].startswith("p4."))
+        self.assertEqual(got, [100, rub["gate_cap"], min(rub["gate_cap"], round(100.0 * rub["bonus_cap"] / den))])
+
+    def test_published_weights_reproduce_the_leaderboard(self):
+        import sensitivity
+        rub, res, sites = sensitivity.load()
+        pts = {c["id"]: c["points"] for c in rub["checks"] if c["kind"] != "bonus"}
+        base = sensitivity.scorer(rub, sites)(pts)
+        self.assertEqual(base, [s["normalised"] for s in sites])
+        same = sensitivity.compare(base, list(base), [s["site"] for s in sites], rub)
+        self.assertEqual((same["spearman"], same["band_changes"], same["median_rank_move"], same["top20_overlap"]),
+                         (1.0, 0, 0, 20))
+
+
 class Validity(unittest.TestCase):
     def test_common_checks_arithmetic(self):
         import validity

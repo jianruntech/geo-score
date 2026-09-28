@@ -79,7 +79,9 @@ Relative to the points each carries:
 - **`p4.question-coverage` (4)** — rests on the auditor's choice of ten questions.
 
 These are candidates for re-weighting in a future version. Any change to a weight ships as a new
-rubric version, never as an edit to v1.1 — see [the rubric README](README.md).
+rubric version, never as an edit to v1.1 — see [the rubric README](README.md). How far the benchmark's
+ranks and bands move when a weight changes or a check is left out is measured in
+[SENSITIVITY.md](../benchmark/SENSITIVITY.md).
 
 ## Notes on sources
 
