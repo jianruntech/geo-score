@@ -4,8 +4,9 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, queue, re, shutil, subprocess, sys, tempfile, threading
-import time, unittest, urllib.request
+import contextlib, datetime, http.server, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
+import threading, time, unittest, urllib.request
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1128,6 +1129,9 @@ class MCP(Base):
         self.assertEqual((served["gate_cap"], served["bonus_cap"]), (published["gate_cap"], published["bonus_cap"]))
         err = srv.handle({"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "file:///etc/passwd"}})
         self.assertEqual(err["error"]["code"], -32002)
+        # pinned to the release it came from, as every check's doc_url is
+        self.assertEqual(served["source"], "https://github.com/jianruntech/geo-score/blob/v%s/rubric/v1.1.json"
+                         % gw.__version__)
 
     def test_score_site_arguments_are_checked(self):
         srv = self.server()
@@ -2025,6 +2029,7 @@ class EntryPoint(unittest.TestCase):
         p = self.cli("watch", "--help")
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn(b"geo_score.py watch", p.stdout)
+        self.assertIn(b"installed as geo-score-mcp", b" ".join(p.stdout.split()))
         self.assertEqual(self.cli("watch", "--version").stdout.strip(), b"geo-score watch " + gw.__version__.encode())
 
     def test_versions_match(self):
@@ -2147,6 +2152,46 @@ class ReviewFindings(Base):
                     "http://100.100.100.200/latest/meta-data/", "100.64.0.1", "http://[::ffff:127.0.0.1]/"):
             r = srv.call({"name": "score_site", "arguments": {"url": bad}})
             self.assertTrue(r["isError"], bad)
+
+    def test_score_site_says_a_name_does_not_resolve_instead_of_calling_it_private(self):
+        fake = os.path.join(self.tmp, "geo_score.py")
+        with io.open(fake, "w", encoding="utf-8") as f:
+            f.write("ADDRESS_GUARD = False\n"
+                    "def run(url, sample=8):\n    return {'u': url}\n"
+                    "def as_json(res):\n    return {'target': res['u'], 'normalised': 71, 'band': 'Solid', "
+                    "'gate_capped': False, 'tool': 'geo-score-cli/1.4.0', 'rubric_version': 'v1.1', 'checks': []}\n")
+        os.environ["GEO_SCORE_PY"] = fake
+        srv = gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+        dns = {"nonexistent-host-zz9q.example": socket.gaierror(socket.EAI_NONAME, "nodename nor servname provided"),
+               "intranet.example": [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.5", 0))],
+               "public.example": [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.215.14", 0))]}
+
+        def getaddrinfo(host, *a, **k):
+            if isinstance(dns[host], Exception):
+                raise dns[host]
+            return dns[host]
+
+        def score(url):
+            r = srv.call({"name": "score_site", "arguments": {"url": url}})
+            return r["isError"], r["content"][0]["text"]
+
+        with mock.patch.object(socket, "getaddrinfo", getaddrinfo), \
+                mock.patch.object(urllib.request, "getproxies", lambda: {}):
+            self.assertEqual(score("nonexistent-host-zz9q.example"), (True, "cannot resolve nonexistent-host-zz9q.example: "
+                                                                           "check the spelling, or your DNS/proxy settings"))
+            bad, text = score("https://intranet.example/docs")
+            self.assertTrue(bad)
+            self.assertEqual(text, "url must be on a public host: intranet.example resolves to a private, loopback or "
+                                   "reserved address")
+            self.assertEqual(score("public.example")[0], False)           # resolved, public: scored
+        # behind a proxy the name still has to resolve here, because the address check runs here: the error says so
+        with mock.patch.object(socket, "getaddrinfo", getaddrinfo), \
+                mock.patch.object(urllib.request, "getproxies", lambda: {"https": "http://127.0.0.1:7897"}), \
+                mock.patch.object(urllib.request, "proxy_bypass", lambda host: False):
+            bad, text = score("nonexistent-host-zz9q.example")
+            self.assertTrue(bad)
+            self.assertTrue(text.startswith("cannot resolve nonexistent-host-zz9q.example: check the spelling"), text)
+            self.assertIn("even through a proxy", text)
 
     def test_init_pins_the_models(self):
         out = io.StringIO()

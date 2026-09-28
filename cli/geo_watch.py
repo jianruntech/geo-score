@@ -2132,11 +2132,10 @@ class RPCError(Exception):
 
 
 def _public_host(host):
-    """An agent may be steered by a page it read: never let it point the scorer at this machine or the intranet."""
-    try:
-        infos = socket.getaddrinfo(host, None)
-    except (socket.gaierror, UnicodeError, OSError):
-        return False
+    """An agent may be steered by a page it read: never let it point the scorer at this machine or the intranet.
+    The name is resolved here even when a proxy will fetch the page, as geo_score's address guard does on every
+    connection. socket.gaierror goes to the caller: a name that does not resolve is not a private address."""
+    infos = socket.getaddrinfo(host, None)
     for info in infos:
         ip = ipaddress.ip_address(info[4][0].split("%")[0])
         if ip.version == 6 and ip.ipv4_mapped:
@@ -2145,6 +2144,16 @@ def _public_host(host):
         if not ip.is_global or ip.is_multicast:
             return False
     return bool(infos)
+
+
+def _via_proxy(url):
+    """True when urllib sends this URL through a proxy (the environment's, or the system's on macOS and Windows).
+    Then a name this machine cannot resolve may still work for the proxy, and the error has to say why it counts."""
+    try:
+        u = urllib.parse.urlsplit(url)
+        return bool(urllib.request.getproxies().get(u.scheme)) and not urllib.request.proxy_bypass(u.hostname or "")
+    except Exception:
+        return False
 
 
 # Output schemas for the tools that return structuredContent. Compact on purpose: the full contracts are
@@ -2343,7 +2352,9 @@ def rubric_resource(gs):
                         "tiers": [{"points": t[0], "condition": t[1]} for t in tiers.get(c[0], [])]}
                        for c in getattr(gs, "SPEC", [])]
                       + [{"id": b[0], "kind": "bonus", "name": b[1], "points": b[2]} for b in getattr(gs, "BONUS", [])],
-            "source": "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.json" % getattr(gs, "RUBRIC", "")}
+            # pinned to the release, like the checks' doc_url: main moves on, and this is what the scorer applies
+            "source": "https://github.com/jianruntech/geo-score/blob/v%s/rubric/%s.json" % (
+                getattr(gs, "__version__", __version__), getattr(gs, "RUBRIC", ""))}
 
 
 MCP_WORKERS = 4          # tools/call requests served at once; more wait their turn
@@ -2964,8 +2975,17 @@ class MCPServer(object):
             host = (urllib.parse.urlsplit(url).hostname or "").encode("idna").decode("ascii")
         except (UnicodeError, ValueError):
             host = ""
-        if not host or "." not in host or not _public_host(host):
+        if not host or "." not in host:
             raise ConfigError("url must be an http(s) URL on a public host (not localhost, private or reserved addresses)")
+        try:
+            public = _public_host(host)
+        except (OSError, UnicodeError):          # socket.gaierror is an OSError
+            raise ConfigError("cannot resolve %s: check the spelling, or your DNS/proxy settings%s" % (
+                _cut(host, 100), " (score_site resolves every host on this machine to check it is public, even "
+                                 "through a proxy)" if _via_proxy(url) else "")) from None
+        if not public:
+            raise ConfigError("url must be on a public host: %s resolves to a private, loopback or reserved address"
+                              % _cut(host, 100))
         gs = self.geo_score
         sample = args.get("sample", 8)
         if not isinstance(sample, int) or isinstance(sample, bool) or not 1 <= sample <= 8:
@@ -3160,7 +3180,7 @@ def main(argv=None, prog="geo_score.py watch"):
     p.add_argument("--fail-on-drop", action="store_true", help="exit 4 when a verdict is a change for the worse "
                    "(overall or any engine), for CI")
     with_config(sub.add_parser("runs", help="list saved runs"))
-    p = with_config(sub.add_parser("mcp", help="serve score and watch over MCP (stdio); run it as `geo_score.py mcp`"))
+    p = with_config(sub.add_parser("mcp", help="serve score and watch over MCP (stdio); installed as geo-score-mcp"))
     p.add_argument("--toolsets", action="append", metavar="SETS",
                    help="comma-separated: score, ask, watch, status or all (default: all; $GEO_SCORE_MCP_TOOLSETS)")
     p.add_argument("--tools", action="append", metavar="NAMES",
