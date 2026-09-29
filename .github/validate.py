@@ -670,6 +670,16 @@ if os.path.exists("benchmark/stats.json"):
     for f in ("README.md", "README.zh-CN.md", "benchmark/README.md"):
         t = io.open(f, encoding="utf-8").read()
         check("%d–%d" % (lo, hi) in t, f"{f}: the median's 95% interval must read {lo}–{hi} (benchmark/stats.json)")
+    # the root READMEs also quote how many rows are thin samples and the median without them
+    th2 = sj2.get("thin_sample")
+    if th2:
+        for f, want in (("README.md", ["%d sites were scored on fewer than" % th2["n_thin"],
+                                       "without them the median is %d" % th2["without_thin"]["median"]]),
+                        ("README.zh-CN.md", ["其中 %d 个站实际评分的页面不足 %d 个，去掉它们后中位数是 %d"
+                                             % (th2["n_thin"], th2["threshold"], th2["without_thin"]["median"])])):
+            t = " ".join(io.open(f, encoding="utf-8").read().split())
+            missing = [w for w in want if w not in t]
+            check(not missing, f"{f}: the thin-sample figures must be benchmark/stats.json's; missing {missing}")
 
 # ── 27. 一行安装从发布的 tag 下载，不从 main ──
 # main 上的代码随时在变：README 教的那行命令，今天和明天可能跑的不是同一个 CLI。schema 的 $id 是标识符，不算下载。
@@ -940,6 +950,14 @@ if os.path.exists("benchmark/percentiles.json"):
         missing = [w for w in want if w not in t]
         check(not missing, f"{f}: quotes the {pj['source']['measured_at']} run, but not these benchmark/percentiles.json "
                            f"figures: {missing[:5]}")
+    # the root READMEs quote the share of sites that reach the lowest band and the highest
+    c7 = sorted(pj["cuts"], key=int)
+    lo7, hi7 = (_pc(o7["at_or_above"][c]["n"], o7["n"]) for c in (c7[0], c7[-1]))
+    for f, w in (("README.md", "%s of %d sites reach %s and %s reach %s" % (lo7, o7["n"], pj["cuts"][c7[0]], hi7,
+                                                                             pj["cuts"][c7[-1]])),
+                 ("README.zh-CN.md", "%d 个站中 %s 达到起步期，%s 达到领先" % (o7["n"], lo7, hi7))):
+        t = " ".join(io.open(f, encoding="utf-8").read().split())
+        check(w in t, f"{f}: the band shares must be benchmark/percentiles.json's; missing '{w}'")
 
 # ── 38. The root READMEs quote the China-gap decomposition from benchmark/stats.json ──
 # They once quoted the sector-label gap alone. Now they give its definition, the gap by the language a site serves,
@@ -961,8 +979,8 @@ if os.path.exists("benchmark/stats.json"):
             en8.append("the gap runs from %d to %d points" % tuple(fr8))
             zh8.append("差距在 %d 到 %d 分之间" % tuple(fr8))
         if hs8 is not None:
-            en8.append("At most %d%% of it" % hs8)
-            zh8.append("其中最多 %d%%" % hs8)
+            en8.append("%d%% of the gap sits in checks the CLI reads with a heuristic, so at most that share" % hs8)
+            zh8.append("差距的 %d%% 落在 CLI 靠启发式判断的检查项上，所以最多" % hs8)
     for f, want in (("README.md", en8), ("README.zh-CN.md", zh8)):
         t8 = " ".join(io.open(f, encoding="utf-8").read().split())
         missing = [w for w in want if w not in t8]

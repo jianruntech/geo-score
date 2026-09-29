@@ -55,10 +55,10 @@
   317 个站中达到起步期、成长期、基础扎实、领先的比例依次是 85%、58%、34%、10%。分析用三条标准检验 v1.1 的档位线（按 Core Web
   Vitals 的定义衡量可达成性：达到领先的是 10%，没有余量；317 个站里 168 个离某条档位线在重测 SEM 的噪声以内；起步期 88 个站里
   48 个是被门槛封顶的），并列出 v1.2 的候选档位线。v1.1 的档位线不变。`validate.py` 第 37 条。
-- **关卡覆盖每个 Python 版本。** `scripts/check.sh --all` 在 3.8 到 3.14 的每个 Python 版本上跑测试，装了 3.15 也会跑；`--strict`
-  在缺少需要的解释器时直接失败并提示 `uv python install X`，不再跳过。两者都可以和 `--live` 组合，参数不认识时退出码为 2。关卡会
-  运行所有 `scripts/test_*.py` 和 `benchmark/test_*.py`，新的测试文件按名字自动加入；`--live` 下，装了 `gh` 且已登录时还会运行
-  `scripts/sync_labels.py --check`。
+- **关卡覆盖每个 Python 版本。** `scripts/check.sh --all` 在 3.8 到 3.14 的每个 Python 版本上跑三个 CLI 测试套件和 MCP 一致性检查，
+  装了 3.15 也会跑；`--strict` 在缺少需要的解释器时直接失败并提示 `uv python install X`，不再跳过。两者都可以和 `--live` 组合，
+  参数不认识时退出码为 2。关卡用 `python3` 运行所有 `scripts/test_*.py` 和 `benchmark/test_*.py`，新的测试文件按名字自动加入；
+  `--live` 下，装了 `gh` 且已登录时还会运行 `scripts/sync_labels.py --check`。
 - **新的测试。** `scripts/test_ci_examples.py` 用 bash 对着本地夹具站点跑可复制的 CI 示例。`scripts/test_repo_meta.py` 检查表单与
   标签是否一致、README 徽章与它记录的那次运行是否一致，以及选择页、表单、`SUPPORT.md` 和 PR 模板里的链接。
   `benchmark/test_benchmark.py` 离线测试 retest.py、限定语、canonical 地址、中国差距的小样本抑制、样本数、抓取请求上限、两个 CSV、

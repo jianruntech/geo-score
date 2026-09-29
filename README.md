@@ -258,12 +258,14 @@ Two more findings worth the click. Sites in the five China sectors score **20 po
 lower** than everyone else (95% CI 16–28; median 39 against 59; earlier samples measured with 1.1.0
 put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 50
 Chinese-language sites score 20 points lower than the 267 others (95% CI 13–25), and within matched
-sector families the gap runs from 6 to 30 points. At most 68% of it sits in checks the CLI reads with a
-heuristic. The two largest per-check differences, question-shaped headings and self-contained answer
-passages, are heuristics the CLI also read lower than a human on the one Chinese site in the
-[hand-audit comparison](benchmark/VALIDITY.md), so part of the gap may be the tool reading Chinese pages
-conservatively ([the breakdown](benchmark/README.md)). And a named, verifiable byline and an
-opening paragraph that stands on its own are among the three largest gaps on more than half the sites.
+sector families the gap runs from 6 to 30 points. Counted check by check in raw points, 68% of the gap
+sits in checks the CLI reads with a heuristic, so at most that share could be the tool misreading
+Chinese pages ([the breakdown](benchmark/README.md#what-the-spread-shows)). The two largest per-check
+differences, question-shaped headings and self-contained answer passages, are heuristics the CLI also
+read lower than a human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md),
+so part of the gap may be the tool reading Chinese pages conservatively. And a named, verifiable
+byline and an opening paragraph that stands on its own are among the three largest gaps on more than
+half the sites.
 
 Every number here is reproducible with the command at the top of this page (the benchmark
 was run with 1.3.0 on 2026-09-27) — and we measured how reproducible, though with an older tool.

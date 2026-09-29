@@ -8,7 +8,7 @@ enforced by a check, named next to it, so a change that breaks one fails `bash s
 ```bash
 bash scripts/check.sh           # the gate (offline): structure, lint, every test suite, the Action, packaging
 bash scripts/check.sh --live    # before a release: also example.com, the MCP Inspector, and the labels when gh is logged in
-bash scripts/check.sh --all     # the tests on every Python from 3.8 to 3.14 (and 3.15 when installed)
+bash scripts/check.sh --all     # the CLI suites and the MCP check on every Python from 3.8 to 3.14 (and 3.15 when installed)
 bash scripts/check.sh --strict  # a missing Python fails instead of being skipped (release.py runs --live --strict)
 ```
 
@@ -56,7 +56,7 @@ merges unless it passes.
 | **The score is 0–100**, and a gate caps it at 40 only when the gate scores zero, in the code and in every document | `test_geo_score.py`; `validate.py` rule 20 |
 | **Every published number can be recomputed.** Sample report, hand audits, leaderboard, per-site reports, CSVs, validity, reproducibility, sensitivity and band-cut figures | `validate.py` rules 6, 13, 16, 18, 23, 29, 31, 32, 33, 35, 36, 37 and 38 |
 | **Benchmark outputs are regenerated, never edited by hand.** docs/ is what `build_page.py` writes; percentiles.json, sensitivity.json with SENSITIVITY*.md, reproducibility.json's figures with REPRODUCIBILITY.md's tables, and results.csv and checks.csv are what their scripts derive; the China-gap, band-cut and sample text in benchmark/README.md matches its data (the commands are under Conventions) | `validate.py` rules 16, 31, 32, 33, 35, 36 and 37 |
-| **The root READMEs quote the benchmark's own figures.** The median's interval, the CLI-vs-hand-audit figures (full score and checks both scored) and the China-gap decomposition | `validate.py` rules 23, 26 and 38 |
+| **The root READMEs quote the benchmark's own figures.** The median's interval, the thin-sample count and the median without those rows, the band shares, the CLI-vs-hand-audit figures (full score and checks both scored) and the China-gap decomposition | `validate.py` rules 23, 26, 37 and 38 |
 | **The leaderboard has one address.** Each page's canonical equals the leaderboard link in its README and `DEFAULT_SITE` in `build_page.py` (or `GEO_SITE_BASE`). That constant is the host's one definition; rule 17 and `scripts/check_live.py` read it from there | `validate.py` rule 30 |
 | **The Dataset downloads name a tag.** They are pinned to `v` plus the CLI's `__version__`, so after a version bump docs/ is rebuilt | `validate.py` rule 34 |
 | **Labels about old data come from the data.** The notes on the robots.txt and JavaScript groups are derived from results.json's `tool` (`build_page.crawler_note`, `challenge_note`); a re-run with a newer tool removes them, never a hand edit | `benchmark/test_benchmark.py` (the notes' derivation); `validate.py` rule 16 (docs/ as `build_page.py` writes it) |
@@ -78,7 +78,7 @@ merges unless it passes.
 | **The config schema lists exactly the keys `geo_watch.py` reads.** The key constants equal the schema's properties and the keys the code reads, and its patterns equal the code's regexes. An unknown key is a warning, never dropped silently | `test_geo_watch.py` (`ConfigKeys`) |
 | **Every label an issue form applies exists** in `.github/labels.json`; `sync_labels.py` never deletes a label | `scripts/test_repo_meta.py`; the owner runs `sync_labels.py --apply` |
 | **The CI examples score once, from a pinned, checksum-verified release**, and the workflow examples pin third-party actions by SHA with a version comment | `scripts/test_ci_examples.py` |
-| **The README badge is a recorded run.** The SVG shows `normalised` and `band` from `docs/aiv-badge.json`, its link is the page it measured, and a date in its alt text is the report's `audited_at` | `scripts/test_repo_meta.py` |
+| **The README badge is a recorded run.** The SVG shows `normalised` and `band` from `docs/aiv-badge.json`; in README.md the badge links to the page it measured, and a date in its alt text is the report's `audited_at` | `scripts/test_repo_meta.py` |
 | **Links in the chooser, the issue forms and the PR template are absolute**, and every link from them and SUPPORT.md into this repository reaches a file and heading that exist | `scripts/test_repo_meta.py` |
 
 ## What the tool may claim

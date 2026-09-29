@@ -58,9 +58,9 @@ when you need a score to stay put between runs.
 
 ## Supported Python
 
-`requires-python` is `>=3.8`. Every release is tested on Python 3.8 and on the newest stable Python
-(3.14, `PY_NEWEST` in `scripts/check.sh`): `release.py --execute` runs `check.sh --live --strict`, which
-stops when either is missing. Before a minor or major release the owner also runs the CLI suites and
+`requires-python` is `>=3.8`. `release.py --execute` tests a release on Python 3.8 and on the newest
+stable Python (3.14, `PY_NEWEST` in `scripts/check.sh`): it runs `check.sh --live --strict`, which stops
+when either is missing. Before a minor or major release the owner also runs the CLI suites and
 the MCP conformance check on Windows with both ([RELEASING.md](RELEASING.md), step 6).
 
 ## Benchmark data
@@ -77,8 +77,9 @@ known ways.
   and the fixed fields are not renamed within a minor release. checks.csv has the columns `site`,
   `check_id`, `state`, `points` and `max`.
 - **Optional fields.** A run made with the current `run.py` records `measured_from` (the vantage its
-  operator declared, or null), `python` and `pinned_from` at the top of results.json, and `sample_n`
-  and `sample_source` on each row; data measured earlier lacks them. `stats.json` has
+  operator declared, or null), `python` (the interpreter's version) and `pinned_from` (the directory of
+  the pinned pages, relative to the run's own, or null) at the top of results.json, and `sample_n` and
+  `sample_source` on each row; data measured earlier lacks them. `stats.json` has
   `china_gap_detail` (null when raw/ is incomplete), and `validity.json` has `common_checks` and
   `validation_set`, beside every earlier key.
 - **`reproducibility.json` is `format: 2`:** `study` (null until a study is recorded) and `legacy` (the

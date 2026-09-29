@@ -84,11 +84,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   Web Vitals defines it: Leading is reached by 10%, with no margin; 168 of 317 sites sit within the
   retest SEM's noise of a cut; 48 of Early's 88 sites are gate-capped) and lists candidates for v1.2. The
   v1.1 cuts are unchanged. `validate.py` rule 37.
-- **The gate on every Python.** `scripts/check.sh --all` runs the tests on every Python from 3.8 to 3.14,
-  and on 3.15 when it is installed; `--strict` fails with `uv python install X` when a needed Python is
-  missing instead of skipping it. Both combine with `--live`, and an unknown argument exits 2. The gate
-  runs every `scripts/test_*.py` and `benchmark/test_*.py`, so a new suite joins it by its name, and
-  under `--live` it runs `scripts/sync_labels.py --check` when `gh` is installed and logged in.
+- **The gate on every Python.** `scripts/check.sh --all` runs the three CLI suites and the MCP
+  conformance check on every Python from 3.8 to 3.14, and on 3.15 when it is installed; `--strict` fails
+  with `uv python install X` when a needed Python is missing instead of skipping it. Both combine with
+  `--live`, and an unknown argument exits 2. The gate runs every `scripts/test_*.py` and
+  `benchmark/test_*.py` on `python3`, so a new suite joins it by its name, and under `--live` it runs
+  `scripts/sync_labels.py --check` when `gh` is installed and logged in.
 - **New tests.** `scripts/test_ci_examples.py` runs the copyable CI examples with bash against fixture
   sites. `scripts/test_repo_meta.py` checks the forms against the labels, the README badge against its
   recorded run, and the links in the chooser, the forms, `SUPPORT.md` and the PR template.
