@@ -1301,17 +1301,28 @@ def text_blocks(h):
 # and a "#" before it bound it (so "v1.2.3" holds no "2.3", and "#1928093" is a reference, not a figure); \w would
 # also count Chinese characters, so "占用了61%的" would not be a figure at all
 _FIGURE = re.compile(r"(?<![A-Za-z0-9_.#-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![A-Za-z0-9_-])")
-# a year, a version number or a dotted date is a number, not a statistic that needs a source
-_NOT_A_FIGURE = re.compile(r"(?:19|20)\d\d|\d+(?:\.\d+){2,}")
+# a year, a version number, a dotted date or a run of seven or more bare digits is a number, not a statistic that
+# needs a source. The run is a phone, filing or account number: 13800138000, 沪ICP备14017582号, 小红书号：3152645850
+_NOT_A_FIGURE = re.compile(r"(?:19|20)\d\d|\d+(?:\.\d+){2,}|\d{7,}")
+# and so is a shorter number that a filing or account label introduces, or that 号 follows: 京ICP证030173号. Chinese
+# sites carry these in a <div class="footer"> as often as in a <footer>, where they read as the page's figures
+_ID_BEFORE = re.compile(r"(?:ICP[备证]|公安备|网安备|号)\s*[:：]?\s*$")
+_ID_AFTER = re.compile(r"\s*号")
 
 
 def figures(text):
     """The figures in a block's text, each without the punctuation after it: "30," in "November 30, 2026" is a
-    day, not a three-character number."""
+    day, not a three-character number. Years, versions, dotted dates and identifiers are left out."""
     out = []
-    for f in (x.rstrip(".,") for x in _FIGURE.findall(text)):
-        if (f[:1] in "$€£¥" or f.endswith("%") or len(f) >= 3) and not _NOT_A_FIGURE.fullmatch(f):
-            out.append(f)
+    for m in _FIGURE.finditer(text):
+        f = m.group(1).rstrip(".,")
+        if not (f[:1] in "$€£¥" or f.endswith("%") or len(f) >= 3) or _NOT_A_FIGURE.fullmatch(f):
+            continue
+        if f[:1] not in "$€£¥" and not f.endswith("%"):
+            before, after = text[max(0, m.start() - 12):m.start()], text[m.end():m.end() + 16]
+            if _ID_BEFORE.search(before) or _ID_AFTER.match(after):
+                continue
+        out.append(f)
     return out
 
 

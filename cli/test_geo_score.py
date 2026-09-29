@@ -777,6 +777,17 @@ eq(gs.figures("In 2025 we shipped 1,240 orders; 38% went abroad for £22,000, on
 eq(gs.figures("占用了61%的时间，样本为1,860家"), ["61%", "1,860"], "figures flush against Chinese text count")
 eq(gs.figures("On November 30, 2022, NMLS #1928093 reported 85,000 users and 3.5x growth."), ["85,000"],
    "a day, a year and a reference number are not figures")
+# identifiers in a Chinese site's chrome: without a <footer> element the chrome rule cannot find them, and under
+# 1.5.0's proximity rule nothing ever attributed them (mingdao.com fell from 7 to 3)
+eq(gs.figures("沪ICP备14017582号-1 | 沪公安备 31010402008586号 | 京ICP证030173号 | 小红书号：3152645850 | QQ号 123456 | "
+              "客服 13800138000 | 门牌 188号"), [], "filing, account and phone numbers are identifiers, not figures")
+eq(gs.figures("服务了4,200家企业，1000000 以上不算，样本为1,860家，涨了300%"), ["4,200", "1,860", "300%"],
+   "a bare run of seven or more digits is an identifier; a grouped number and a percentage are figures")
+_div_footer = ('<h1>数据</h1><p>据<a href="https://stats.test/r">行业报告</a>，客户增长了38%，覆盖1,200家门店和164个城市。</p>'
+               '<div class="footer">沪ICP备14017582号 | 沪公安备 31010402008586号 | 小红书号：3152645850 | 京ICP证030173号</div>')
+eq(gs.stat_reading(_div_footer, {"example"}), (3, 3, 3), "a <div class=footer>'s filing numbers are not figures")
+eq(gs.stat_reading(_div_footer.replace('<div class="footer">', "<footer>").replace("</div>", "</footer>"),
+                   {"example"}), (3, 3, 3), "and in a <footer> they are not read at all")
 eq(list(gs.anchors('<a class=x href="https://a.test/1">one</a> <a href=\'#fn2\'><sup>2</sup></a> <a name=x>no</a>')),
    [("https://a.test/1", "one"), ("#fn2", "<sup>2</sup>")], "every <a href>, with its text")
 _page = ('<header><a href="https://partner.test/">Partner</a> 51% 52% 53%</header><nav>Research</nav>'

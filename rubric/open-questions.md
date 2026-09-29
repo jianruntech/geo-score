@@ -203,10 +203,12 @@ acts on an outage. Nothing changes in v1.1.
 `p2.sourced-stats` reads the sampled pages that carry three or more figures. From geo-score 1.5.0 a
 figure counts as attributed only when its own block of the content, or the next block, holds a link
 to a source off the site, a `<cite>`, a source phrase, or a footnote reference whose note on the page
-links to a source. The page chrome (header, nav, footer, aside) is not read. A page attributes most of
-its figures when more than half of them are attributed. The top tier needs three quarters of those
-pages to attribute most of their figures with a link, the tier below needs half of them to attribute
-most of their figures in any of these ways, and the lowest tier above zero needs one attributed figure.
+links to a source. The page chrome (header, nav, footer, aside) is not read. A year, a version number
+and an identifier (a run of seven or more digits, or a filing or account number such as `京ICP证030173号`)
+are not figures. A page attributes most of its figures when more than half of them are attributed. The
+top tier needs three quarters of those pages to attribute most of their figures with a link, the tier
+below needs half of them to attribute most of their figures in any of these ways, and the lowest tier
+above zero needs one attributed figure.
 
 When no sampled page carries three figures, the check keeps the 3 points it has always given: there is
 nothing to attribute, so nothing is missing, but nothing is shown either.
