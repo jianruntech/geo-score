@@ -4,7 +4,7 @@
 
 # geo-score
 
-**Can AI engines cite your site? A free 0–100 score in 20 seconds. Do they? Check through their APIs with your own keys.**
+**Can AI engines cite your site? A free 0–100 score from one command. Do they? Check through their APIs with your own keys.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
@@ -25,21 +25,21 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 <p align="center"><img src="assets/demo.svg" alt="geo-score scoring stripe.com from the command line — 71 out of 100, band Solid" width="100%"></p>
 <p align="center"><sub>Recorded with geo-score 1.1.0 on 2026-09-09. A run with 1.2.0 on 2026-09-27 read 72.</sub></p>
 
-<sub>One command. About twenty seconds. Every check, and what the next tier needs.</sub>
+<sub>One command. Every check, and what the next tier needs. The report says how long its run took.</sub>
 
 
 <details>
-<summary>Full output — every check, its evidence, and what the next tier asks for</summary>
+<summary>Full output — every check, and what the next tier asks for (<code>--explain</code> adds the evidence)</summary>
 
 ```
   AIV READINESS  https://stripe.com
 ──────────────────────────────────────────────────────────────────────────
-  71 / 100   Solid
-  12 points to Leading
+  65 / 100   Growing
+  1 point to Solid
 
-  Reachable 11/15
+  Reachable 9/15
    ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
-   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ◐ Reachable to retrieval agents    ███████████░░░░░░░  3/5
    ◐ Main content server-rendered     ███████████░░░░░░░  3/5
   Understandable 15/22
    ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
@@ -47,33 +47,39 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
    ✓ Organization + WebSite schema    ██████████████████  6/6
    ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
    ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
-  Content Citability 25/35
+  Content Citability 21/35
    ✓ Self-contained answer passages   ██████████████████  9/9
    ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
    ◐ Freshness signal present         █████████░░░░░░░░░  3/6
-   ✓ Statistics carry a source        ██████████████████  7/7
+   ◐ Statistics carry a source        ████████░░░░░░░░░░  3/7
    ◐ Named, verifiable authorship     █████████░░░░░░░░░  3/6
-  Brand Credibility 8/10
+  Brand Credibility 9/10
    ⊘ Third-party listings             ··················   —
    ⊘ Independent mentions             ··················   —
    ✓ Knowledge-graph entity           ██████████████████  4/4
-   ◐ sameAs links resolve             ████████████░░░░░░  2/3
+   ✓ sameAs links resolve             ██████████████████  3/3
    ◐ Video and multimodal presence    ████████████░░░░░░  2/3
   Answer Fit 2/4
    ◐ Content shaped for extraction    █████████░░░░░░░░░  2/4
    ⊘ Covers the questions people ask  ··················   —
    ⊘ Chinese engine readiness         ··················   —
-  Biggest gaps
-   +4   Headings match how people ask    about half do
-   +3   Named, verifiable authorship     and the name links to a verifiable identity page
-   +3   Freshness signal present         most pages do, and dateModified agrees with the visible date
+  ✓ full · ◐ partial · ✗ zero · ⊘ not measured (left the denominator)
 
-  Scored 61 / 86 observable · 4 checks left the denominator · rubric v1.1
-  Needs judgement: p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines
+  Biggest gaps
+   +3 next tier (+3 to full)  Freshness signal present          needs: most pages do, and dateModified agrees with the visible date
+   +3 next tier (+3 to full)  Named, verifiable authorship      needs: and the name links to a verifiable identity page
+   +2 next tier (+2 to full)  Crawlers allowed in robots.txt    needs: mainstream retrieval user-agents explicitly allowed
+
+  Scored 56 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 136.9 s
+  Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage
+  Not observable this run: p4.cn-engines (not a Chinese-language site)
 
   Full rubric and what each tier means:
-  https://github.com/jianruntech/geo-score
+  https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md
+  Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
+
+<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-09-30 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0.</sub>
 
 </details>
 
@@ -263,7 +269,9 @@ sits in checks the CLI reads with a heuristic, so at most that share could be th
 Chinese pages ([the breakdown](benchmark/README.md#what-the-spread-shows)). The two largest per-check
 differences, question-shaped headings and self-contained answer passages, are heuristics the CLI also
 read lower than a human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md),
-so part of the gap may be the tool reading Chinese pages conservatively. And a named, verifiable
+so part of the gap may be the tool reading Chinese pages conservatively. From 1.5.0 the CLI reads each
+page in its own language and counts Chinese task, explanation and comparison headings; the leaderboard
+above was measured with 1.3.0. And a named, verifiable
 byline and an opening paragraph that stands on its own are among the three largest gaps on more than
 half the sites.
 
@@ -283,8 +291,8 @@ with the evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/
 
 ## Ways to run it
 
-**CLI** — level 1 is one file with no dependencies, 20 seconds. Levels 2 and 3 add
-`cli/geo_watch.py` from the same release.
+**CLI** — level 1 is one file with no dependencies, and every report records how long its run took
+(`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release.
 
 ```bash
 python3 cli/geo_score.py example.com            # human-readable
@@ -292,7 +300,10 @@ python3 cli/geo_score.py example.com --explain  # with the evidence behind every
 python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
 python3 cli/geo_score.py example.com --compare competitor.com   # side by side
 python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # the same badge as shields.io endpoint JSON
 python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
+python3 cli/geo_score.py diff before.json after.json             # what changed between two reports, check by check
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
 ```
 
 **GitHub Action** (level 1) — score on every push, fail the build when it regresses. For level 3 on a
@@ -303,7 +314,10 @@ schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
   with:
     url: https://example.com
     fail-under: 40
+    fail-on-gate: true
 ```
+
+A gate at zero caps the score at exactly 40, so `fail-under: 40` alone never fails a capped site; `fail-on-gate: true` does.
 
 **Claude Code skill** — the CLI measures what a static fetch can see. Four checks need
 off-site search or human judgement, and the skill does those too.
@@ -584,7 +598,8 @@ this repo deliberately excludes.
 
 **Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the
 spread measured with a 1.1.x build is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
-after a change, re-score the same pages with `--urls-from last.json`.
+after a change, re-score the same pages with `--baseline last.json`, which also prints what changed,
+check by check (`--urls-from last.json` re-scores them without the comparison).
 **Why does a check show `—`?** It was not measured, so it left the denominator instead of scoring 0.
 More answers: [troubleshooting](guide/troubleshooting.md).
 

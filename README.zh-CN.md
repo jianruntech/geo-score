@@ -4,7 +4,7 @@
 
 # geo-score
 
-**AI 能不能引用你的网站？免费打分，20 秒出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
+**AI 能不能引用你的网站？免费打分，一条命令出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
@@ -25,21 +25,21 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 <p align="center"><img src="assets/demo.svg" alt="geo-score 在命令行给 stripe.com 打分 —— 71/100，档位 Solid" width="100%"></p>
 <p align="center"><sub>2026-09-09 用 geo-score 1.1.0 录制；2026-09-27 用 1.2.0 重跑为 72 分。</sub></p>
 
-<sub>一行命令，约二十秒。每一项的分数，以及上一档要什么。</sub>
+<sub>一行命令。每一项的分数，以及上一档要什么；报告会写明这次运行用了多久。</sub>
 
 
 <details>
-<summary>完整输出（每一项的分数、证据与下一档要求）</summary>
+<summary>完整输出（每一项的分数与下一档要求；加 <code>--explain</code> 会显示证据）</summary>
 
 ```
   AIV READINESS  https://stripe.com
 ──────────────────────────────────────────────────────────────────────────
-  71 / 100   Solid
-  12 points to Leading
+  65 / 100   Growing
+  1 point to Solid
 
-  Reachable 11/15
+  Reachable 9/15
    ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
-   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ◐ Reachable to retrieval agents    ███████████░░░░░░░  3/5
    ◐ Main content server-rendered     ███████████░░░░░░░  3/5
   Understandable 15/22
    ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
@@ -47,33 +47,39 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
    ✓ Organization + WebSite schema    ██████████████████  6/6
    ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
    ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
-  Content Citability 25/35
+  Content Citability 21/35
    ✓ Self-contained answer passages   ██████████████████  9/9
    ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
    ◐ Freshness signal present         █████████░░░░░░░░░  3/6
-   ✓ Statistics carry a source        ██████████████████  7/7
+   ◐ Statistics carry a source        ████████░░░░░░░░░░  3/7
    ◐ Named, verifiable authorship     █████████░░░░░░░░░  3/6
-  Brand Credibility 8/10
+  Brand Credibility 9/10
    ⊘ Third-party listings             ··················   —
    ⊘ Independent mentions             ··················   —
    ✓ Knowledge-graph entity           ██████████████████  4/4
-   ◐ sameAs links resolve             ████████████░░░░░░  2/3
+   ✓ sameAs links resolve             ██████████████████  3/3
    ◐ Video and multimodal presence    ████████████░░░░░░  2/3
   Answer Fit 2/4
    ◐ Content shaped for extraction    █████████░░░░░░░░░  2/4
    ⊘ Covers the questions people ask  ··················   —
    ⊘ Chinese engine readiness         ··················   —
-  Biggest gaps
-   +4   Headings match how people ask    about half do
-   +3   Named, verifiable authorship     and the name links to a verifiable identity page
-   +3   Freshness signal present         most pages do, and dateModified agrees with the visible date
+  ✓ full · ◐ partial · ✗ zero · ⊘ not measured (left the denominator)
 
-  Scored 61 / 86 observable · 4 checks left the denominator · rubric v1.1
-  Needs judgement: p3.listings, p3.mentions, p4.question-coverage, p4.cn-engines
+  Biggest gaps
+   +3 next tier (+3 to full)  Freshness signal present          needs: most pages do, and dateModified agrees with the visible date
+   +3 next tier (+3 to full)  Named, verifiable authorship      needs: and the name links to a verifiable identity page
+   +2 next tier (+2 to full)  Crawlers allowed in robots.txt    needs: mainstream retrieval user-agents explicitly allowed
+
+  Scored 56 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 136.9 s
+  Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage
+  Not observable this run: p4.cn-engines (not a Chinese-language site)
 
   Full rubric and what each tier means:
-  https://github.com/jianruntech/geo-score
+  https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md
+  Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
+
+<sub>`geo_score.py stripe.com`，2026-09-30 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。</sub>
 
 </details>
 
@@ -247,6 +253,7 @@ amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 J
 相近行业一一对比，差距在 6 到 30 分之间。按逐项原始分算，差距的 68% 落在 CLI 靠启发式判断的检查项上，所以最多只有这么大一部分可能是工具误读了中文页面（[拆解见此](benchmark/README.md#what-the-spread-shows)）。
 逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
 而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
+从 1.5.0 起，CLI 按每个页面自己的语言来读，中文的任务、说明和对比类标题也计入提问意图；上面的榜单是用 1.3.0 测的。
 另外，「具名、可核实的作者署名」和「一段能独立成立的开头」在超过一半的站上都排进了最大的三个缺口。
 
 **中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
@@ -264,7 +271,7 @@ amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 J
 
 ## 几种跑法
 
-**CLI** —— 第一级只要一个文件、无依赖、20 秒；第二、三级再加上同一版本的 `cli/geo_watch.py`。
+**CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
 
 ```bash
 python3 cli/geo_score.py example.com            # 人读
@@ -272,7 +279,10 @@ python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
 python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
 python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
 python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # 同一个徽章，写成 shields.io endpoint JSON
 python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
+python3 cli/geo_score.py diff before.json after.json             # 逐项对比两份报告，看哪里变了
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
 ```
 
 **GitHub Action**（第一级）—— 每次 push 都打分，退步就让构建失败。第三级按周定时跑见 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml)。
@@ -282,7 +292,10 @@ python3 cli/geo_score.py example.com --share                    # 一行可以�
   with:
     url: https://example.com
     fail-under: 40
+    fail-on-gate: true
 ```
+
+门槛项得 0 分时分数正好封顶在 40，所以只写 `fail-under: 40` 永远拦不住被封顶的站；加上 `fail-on-gate: true` 才行。
 
 **Claude Code 技能** —— CLI 只能测静态抓取看得见的东西。
 有四项需要站外检索或人的判断，技能把这些也做了。
@@ -529,7 +542,7 @@ Read this before quoting the numbers
   威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
 **为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，用 1.1.x 版本实测的波动是 ±5
-（[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--urls-from last.json` 重评同一批页面。
+（[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--baseline last.json` 重评同一批页面，它还会逐项列出哪里变了（`--urls-from last.json` 只重评、不对比）。
 **为什么某项显示 `—`？** 它没有被测到，所以移出了分母，而不是记 0 分。更多问题见[排查指南](guide/troubleshooting.zh-CN.md)。
 
 ### 能不能拿来商用
