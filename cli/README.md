@@ -34,9 +34,14 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--fail-on-gate` | Exit 1 when any gate check (`g.*`) scores 0, and name the gate and its evidence on stderr. A gate at zero caps the score at exactly 40, so `--fail-under 40` never fails a capped site; add `--fail-on-gate`. The same as `--assert 'g.*>0'`. An unobservable gate never fails |
 | `--assert EXPR` | Exit 1 unless `CHECK OP VALUE` holds: a check id or an fnmatch glob over the ids, then `>=`, `>` or `=`, then a whole number or `max`, e.g. `g.robots=max` or `p1.llms-txt>=4`. Repeatable. A check the run could not observe prints `not measured, skipped` and never fails. A malformed expression, or a glob that names no check, is a usage error (exit 2). Results go to stderr, never into the report |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
+| `--version` | Print the tool's version and the rubric version it scores |
 | `--ask QUESTION` | Level 2: also ask the AI engines this question through their APIs (your keys) and report who they cite, beside the score. Repeatable, up to 5 |
 | `--brand NAME` | With `--ask`: the brand name to look for in answers. Default: the site's domain name, e.g. `stripe` for `docs.stripe.com` |
 | `--domain DOMAIN` | With `--ask`: another domain that counts as yours. Repeatable. The scored site, its registrable domain and a redirect's landing domain always count |
+
+Subcommands: `diff BEFORE AFTER` compares two saved reports ([Comparing two reports](#comparing-two-reports)),
+and `watch …` and `mcp` are levels 2 and 3 ([Watch](#watch)). `geo_score.py --help` lists them all, with
+examples and the exit codes.
 
 `NO_COLOR=1` turns off colour, as does piping to a file. `HTTPS_PROXY` and `NO_PROXY` are honoured.
 When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
@@ -154,15 +159,18 @@ Four checks are **left out of the denominator** rather than guessed:
 | `p3.listings` | Needs to know your industry and search its directories |
 | `p3.mentions` | Needs off-site search for independent coverage |
 | `p4.question-coverage` | Needs the ten questions people actually ask in your market |
-| `p4.cn-engines` | Skipped unless the site addresses the Chinese market |
+| `p4.cn-engines` | Left out unless a sampled page is in Chinese or the host is under `.cn` |
 
 The [Claude Code skill](../SKILL.md) scores all 21.
 
 ### How far to trust each check
 
-Measured by re-scoring the five published hand audits on the same pages
-([VALIDITY.md](../benchmark/VALIDITY.md)): the CLI matched the auditor's tier on 79% of 86 check
-pairs and read 3.6 points lower on average.
+Re-scoring the five published hand audits on the same pages with 1.3.0
+([VALIDITY.md](../benchmark/VALIDITY.md)), the CLI matched the auditor's tier on 79% of 86 check
+pairs. On the checks both scored it read 0.4 points lower on average (per site from 6 lower
+to 9 higher; mean absolute difference 5.2). Its full normalised score read 3.6 points lower on average,
+because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`, which the
+CLI leaves out.
 
 | How the CLI reads it | Checks | Same tier as the hand audit |
 |---|---|--:|
@@ -170,9 +178,10 @@ pairs and read 3.6 points lower on average.
 | **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 64% of 45 pairs |
 | **Not at all**: needs off-site search or human judgement | `p3.listings`, `p3.mentions`, `p4.question-coverage` | left out of the denominator |
 
-The weakest agreement is `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5
-sites), then `p2.named-author` (2 of 5 agree). Read those two with `--explain` before acting on
-them.
+The weakest agreement was `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5
+sites), then `p2.named-author` (2 of 5 agree). From 1.5.0 a figure's source must sit beside it;
+re-scored on the audited pages on 2026-09-30, `p2.sourced-stats` matched the auditor on 4 of the 5 sites
+and read lower on the fifth. Read both with `--explain` before acting on them.
 
 ## Heuristics, stated plainly
 
@@ -191,9 +200,13 @@ Some checks are judgements the rubric describes in prose, and the CLI approximat
   explanatory and comparison forms, in English and in Chinese, excluding navigation labels
   and brand strings. Pages in other languages are not read; with none left, the check is
   not measured.
-- **Sourced statistics** — counts figures per page against citation elements, source
-  phrases and outbound references near them. Source phrases are read in English and Chinese
-  only.
+- **Sourced statistics** — a figure counts as sourced only when its own block of the main
+  content (a paragraph, list item, table cell, definition, caption or quotation), or the next
+  block, holds an off-site link, a `<cite>`, a source phrase or a footnote whose note links to a
+  source. Links to the site itself, its `sameAs` profiles and social profiles or share buttons are
+  not sources, and a page's header, navigation, footer and asides are not read. Years, version
+  numbers, dates, identifiers (filing, account and phone numbers) and prices are not figures.
+  Source phrases are read in English and Chinese only.
 - **Named authorship** — reads the `author` field from JSON-LD, then falls back to
   `rel="author"` and byline patterns (read in English and Chinese pages only), and rejects
   team and brand names.
@@ -271,6 +284,19 @@ Every `watch` command takes `-c PATH` for the config (default `./geo-score-watch
 | `engines[].api` | Gemini only: `interactions` (default) or `generate_content` |
 | `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
+
+The file's keys are specified in [schema/watch-config.v1.json](../schema/watch-config.v1.json)
+(JSON Schema draft 2020-12). `watch init` writes `"$schema"` as the first key, pointing at it, so an
+editor that reads JSON Schema checks and completes the file as you type.
+
+A key nothing reads is a warning, never dropped in silence: a typo such as `budget` for `budget_usd`
+would otherwise remove a spending cap without a word. `watch check` names every unknown key at every
+level (top, `brand`, `competitors[i]`, `engines[i]`, `prices.<id>`), with the nearest known key when
+one is close, as in `unknown key 'budget' (did you mean 'budget_usd'?); it is ignored`, and flags a
+`prices` entry that names no engine. `watch run` and the other commands that read the config print
+the same warnings on stderr, and the MCP `status` tool lists them. A key named like a credential
+(`api_key`, `OPENAI_KEY`, `api_token`, `client_secret`, `credentials` …) is pointed at environment
+variables instead, and its value is never printed. The warnings change no exit code.
 
 `queries.csv` has four columns, `query_id,query,intent_tier,target_url`. Write the questions the
 way a buyer would type them into ChatGPT, and keep the set fixed from week to week. An optional

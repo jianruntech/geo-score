@@ -619,7 +619,7 @@ if os.path.exists("benchmark/validity.json"):
                "max": max(dd, default=None), "mean_abs": round(sum(abs(x) for x in dd) / len(dd), 1) if dd else None}
         check(all(cc.get(k) == v for k, v in got.items()),
               f"benchmark/validity.json: common_checks {({k: cc.get(k) for k in got})} is not what its sites give {got}")
-        # both root READMEs lead with that like-for-like figure (cli/README.md still quotes the full score only)
+        # both root READMEs and cli/README.md lead with that like-for-like figure
         en_cc = ["%.1f points %s on average" % (abs(cc["mean"]), "lower" if cc["mean"] < 0 else "higher"),
                  "per site from %d lower to %d %s" % (-cc["min"], abs(cc["max"]), "higher" if cc["max"] > 0 else "lower"),
                  "mean absolute difference %.1f" % cc["mean_abs"]]
@@ -627,8 +627,10 @@ if os.path.exists("benchmark/validity.json"):
                  "逐站从低 %d 分到%s %d 分" % (-cc["min"], "高" if cc["max"] > 0 else "低", abs(cc["max"])),
                  "平均绝对差 %.1f 分" % cc["mean_abs"]]
         te = " ".join(io.open("README.md", encoding="utf-8").read().split())
-        miss = [w for w in en_cc if w not in te] + [w for w in zh_cc if w not in tz]
-        check(not miss, f"README.md / README.zh-CN.md: the checks-both-scored figures must be validity.json's "
+        tc = " ".join(io.open("cli/README.md", encoding="utf-8").read().split())
+        miss = ([w for w in en_cc if w not in te] + [w for w in zh_cc if w not in tz]
+                + ["cli/README.md: " + w for w in en_cc if w not in tc])
+        check(not miss, f"README.md / README.zh-CN.md / cli/README.md: the checks-both-scored figures must be validity.json's "
                         f"common_checks; missing {miss}")
     for f in (f for f in ("README.md", "README.zh-CN.md", "cli/README.md") if os.path.exists(f)):
         t = io.open(f, encoding="utf-8").read()
