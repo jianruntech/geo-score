@@ -20,7 +20,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--json-out FILE` | Also write that JSON to FILE, from the same run as the report on screen |
 | `--sarif FILE` | Also write [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html): one rule per check, one result per check below full marks (a gate at zero is `error`, another check at zero `warning`, partial credit `note`). Each result points at the line of its check in the `--json-out` report (or at the SARIF file when there is none), with the site named in the message, which is what GitHub code scanning requires |
 | `--junit FILE` | Also write JUnit XML: one test per check. A check at zero fails, a check the CLI cannot observe is skipped, partial credit passes |
-| `--sample N` | How many pages to sample (default 8, which is what the rubric specifies) |
+| `--sample N` | How many pages to sample, 1 or more (default 8, which is what the rubric specifies) |
 | `--timeout SECONDS` | How long each request may wait for the server before it counts as unanswered (default 15, at most 300). A site that cannot be reached fails fast and says why: a name that does not resolve, a refused connection or a failed TLS handshake is not retried |
 | `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
 | `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |

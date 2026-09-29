@@ -180,6 +180,8 @@ def main():
             ok(p.returncode == 2 and not os.path.exists(canary), "a non-numeric fail-under is refused, not executed")
             p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_SAMPLE="abc")
             ok(p.returncode == 2 and "whole number" in p.stdout, "a non-numeric sample is refused")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_SAMPLE="0")
+            ok(p.returncode == 2 and "1 or more" in p.stdout, "a sample of 0 pages is refused")
     finally:
         srv.shutdown()
         srv.server_close()

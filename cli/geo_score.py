@@ -2083,6 +2083,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     """Score one site. `timeout` is the wait per request (default TIMEOUT, which --timeout sets). The run takes
     at most RUN_DEADLINE seconds: after that no request is sent, and the checks that still needed one are not
     observed; when no sampled page came back by then it raises ScoreError (kind "deadline")."""
+    if not urls and not (isinstance(sample, int) and sample >= 1):
+        # an empty sample has nothing to score, and no fetch failed to say why
+        raise ValueError("sample must be a whole number of pages, 1 or more, got %r" % (sample,))
     timeout = timeout or TIMEOUT
     started = time.monotonic()
     deadline = started + RUN_DEADLINE
@@ -3579,7 +3582,7 @@ def main():
     ap.add_argument("--badge-json", metavar="FILE",
                     help="also write the badge as shields.io endpoint JSON to FILE: host it anywhere and "
                          "https://img.shields.io/endpoint?url=<its URL> draws the badge")
-    ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
+    ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample, 1 or more (default 8)")
     ap.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, metavar="SECONDS",
                     help="seconds to wait for each request before it counts as unanswered (default %d)" % DEFAULT_TIMEOUT)
     pin = ap.add_mutually_exclusive_group()
@@ -3629,6 +3632,8 @@ def main():
             ap.error("--ask takes 1 to 5 non-empty questions of up to 500 characters")
     if not 0 < a.timeout <= MAX_TIMEOUT:            # NaN fails both comparisons
         ap.error("--timeout takes a number of seconds above 0 and up to %d" % MAX_TIMEOUT)
+    if a.sample < 1:
+        ap.error("--sample takes a whole number of pages, 1 or more")
     try:
         targets = [target_url(u) for u in [a.url] + (a.compare or [])]
     except ValueError as e:

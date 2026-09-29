@@ -11,7 +11,7 @@ inputs:
     description: "Fail the job if the normalised score is below this. Omit to report without failing."
     required: false
   sample:
-    description: "How many pages to sample (default 8)."
+    description: "How many pages to sample, 1 or more (default 8)."
     required: false
     default: "8"
   json-out:
@@ -95,7 +95,7 @@ runs:
         GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_BASELINE="${GEO_BASELINE:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
         GEO_FAIL_ON_GATE="${GEO_FAIL_ON_GATE:-false}" GEO_ASSERT="${GEO_ASSERT:-}" GEO_BADGE="${GEO_BADGE:-}"
         [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
-        [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
+        [[ "$GEO_SAMPLE" =~ ^0*[1-9][0-9]*$ ]] || { echo "::error title=geo-score::sample must be a whole number of pages, 1 or more, got '$GEO_SAMPLE'"; exit 2; }
         if [ -n "$GEO_FAIL_UNDER" ] && ! [[ "$GEO_FAIL_UNDER" =~ ^[0-9]+$ ]]; then
           echo "::error title=geo-score::fail-under must be a whole number from 0 to 100, got '$GEO_FAIL_UNDER'"; exit 2
         fi

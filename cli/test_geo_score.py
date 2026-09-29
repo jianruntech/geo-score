@@ -1326,6 +1326,17 @@ for _k, (_text, _anchor) in gs.FAULTS.items():
 for _t in ("0", "-1", "nan", "inf", "301"):
     _code, _err = _cli_exit(["x.test", "--timeout", _t])
     ok(_code == 2 and "--timeout takes a number of seconds above 0 and up to 300" in _err, "--timeout %s is refused" % _t)
+# --sample: at least one page. 0 once ended in an IndexError reported as a bug, and a negative number silently
+# scored fewer pages
+for _s in ("0", "-3"):
+    _code, _err = _cli_exit(["x.test", "--sample", _s])
+    ok(_code == 2 and "--sample takes a whole number of pages, 1 or more" in _err, "--sample %s is refused" % _s)
+for _s in (0, -3, 2.5, None):
+    try:
+        gs.run("https://x.test", _s)
+        ok(False, "run() with sample %r raises" % (_s,))
+    except ValueError as _e:
+        ok("1 or more" in str(_e), "run() with sample %r is a ValueError before any fetch: %s" % (_s, _e))
 _seen = {}
 def _record(*a, **k):
     _seen.update(k, timeout_now=gs.TIMEOUT, preflight=gs.PREFLIGHT)
