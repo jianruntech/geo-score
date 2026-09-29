@@ -172,7 +172,8 @@ thresholds is that any threshold must be one at least 10% of real sites already 
 use GW Content's ladder and have five sites of our own. Widening the reference pool to
 30–50 sites, filed by sector, would both calibrate the thresholds and let a report say
 "you are here relative to your sector" instead of quoting a bare number. That is the main
-v1.2 task.
+v1.2 task. The benchmark has since grown into that pool: [bands-analysis.md](bands-analysis.md)
+checks the v1.1 cuts against its distribution and lists candidate cuts, without changing v1.1.
 
 **`p4.question-coverage` still depends on which ten questions the auditor picks.** Pick
 different questions, get a different score, and the rubric does not say how to pick them.

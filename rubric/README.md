@@ -101,6 +101,11 @@ wrong thing.
 The Princeton GEO study found an authoritative tone produced *no significant improvement*.
 So the rubric scores structure, sourcing and attribution, and stays out of style.
 
+**The weights are argued here, and tested against the benchmark.**
+[SENSITIVITY.md](../benchmark/SENSITIVITY.md) re-scores every benchmark site under equal weights, an
+illustrative evidence-basis weighting, each check left out and random draws, and reports how far the rank
+order and the bands move, and how each check spreads the field. It is input for v1.2; no v1.1 weight changes.
+
 ## Evidence basis
 
 Every check declares what its weight rests on: published research, a vendor's own documentation,

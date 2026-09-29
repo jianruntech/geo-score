@@ -2,15 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://jianruntech.github.io/geo-score/</loc>
+    <loc>https://www.jianruntech.com/leaderboard</loc>
     <lastmod>2026-09-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.jianruntech.com/leaderboard"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://www.jianruntech.com/leaderboard/zh"/>
   </url>
   <url>
-    <loc>https://jianruntech.github.io/geo-score/zh.html</loc>
+    <loc>https://www.jianruntech.com/leaderboard/zh</loc>
     <lastmod>2026-09-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.jianruntech.com/leaderboard"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://www.jianruntech.com/leaderboard/zh"/>
   </url>
 </urlset>

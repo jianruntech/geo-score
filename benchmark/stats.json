@@ -178,5 +178,184 @@
    16,
    28
   ]
+ },
+ "china_gap_detail": {
+  "definition": "sector label: the 5 China sectors against every other sector",
+  "china_sectors": [
+   "China / AI",
+   "China / cloud",
+   "China / consumer",
+   "China / enterprise",
+   "China / no-code"
+  ],
+  "crosstab": {
+   "china": {
+    "zh": 37,
+    "other": 27
+   },
+   "rest": {
+    "zh": 13,
+    "other": 240
+   },
+   "other_languages": {
+    "en": 267
+   }
+  },
+  "by_language": {
+   "group": "zh",
+   "vs": "other",
+   "n_group": 50,
+   "n_vs": 267,
+   "median_group": 38,
+   "median_vs": 58,
+   "gap": 20,
+   "ci": [
+    13,
+    25
+   ]
+  },
+  "china_zh_vs_rest_other": {
+   "group": "China sectors, zh",
+   "vs": "other sectors, other languages",
+   "n_group": 37,
+   "n_vs": 240,
+   "median_group": 40,
+   "median_vs": 59,
+   "gap": 19,
+   "ci": [
+    10,
+    28
+   ]
+  },
+  "families": {
+   "pairs": [
+    {
+     "group": "China / AI",
+     "vs": "AI",
+     "n_group": 13,
+     "n_vs": 29,
+     "median_group": 40,
+     "median_vs": 70,
+     "gap": 30,
+     "ci": [
+      9,
+      48
+     ]
+    },
+    {
+     "group": "China / cloud",
+     "vs": "Cloud & DevOps",
+     "n_group": 9,
+     "n_vs": 24,
+     "median_group": null,
+     "median_vs": null,
+     "gap": null,
+     "ci": null
+    },
+    {
+     "group": "China / consumer",
+     "vs": "Ecommerce",
+     "n_group": 21,
+     "n_vs": 14,
+     "median_group": 33,
+     "median_vs": 38,
+     "gap": 6,
+     "ci": [
+      -14,
+      33
+     ]
+    },
+    {
+     "group": "China / no-code + China / enterprise",
+     "vs": "SaaS / Productivity",
+     "n_group": 21,
+     "n_vs": 22,
+     "median_group": 39,
+     "median_vs": 60,
+     "gap": 20,
+     "ci": [
+      9,
+      39
+     ]
+    }
+   ],
+   "range": [
+    6,
+    30
+   ],
+   "suppressed": [
+    "China / cloud"
+   ]
+  },
+  "by_method": {
+   "what": "mean points, other sectors minus China sectors, per check where scored, summed",
+   "total": 17.2,
+   "rule": 5.5,
+   "heuristic": 11.8,
+   "heuristic_share_pct": 68,
+   "checks": {
+    "g.reachable": -0.34,
+    "g.robots": 0.0,
+    "g.ssr": 0.78,
+    "p1.breadcrumb": 0.14,
+    "p1.llms-txt": 1.55,
+    "p1.organization": 1.19,
+    "p1.page-type": 0.75,
+    "p1.sitemap": 0.68,
+    "p2.answer-passages": 3.01,
+    "p2.freshness": 0.81,
+    "p2.named-author": 1.41,
+    "p2.question-intent": 3.27,
+    "p2.sourced-stats": 0.9,
+    "p3.knowledge-graph": 0.09,
+    "p3.sameas": 0.89,
+    "p3.video": 0.65,
+    "p4.answer-shape": 1.29,
+    "p4.cn-engines": 0.17
+   }
+  },
+  "knowledge_graph": {
+   "check": "p3.knowledge-graph",
+   "by_language": {
+    "zh": {
+     "n": 50,
+     "unobservable": 33
+    },
+    "other": {
+     "n": 267,
+     "unobservable": 76
+    }
+   },
+   "note": "zh sites are looked up in both zh and en, twice the lookups, and absence needs every lookup to answer, so a partial failure leaves it unobservable"
+  },
+  "kg_imputed": {
+   "0": {
+    "median_china": 38,
+    "median_rest": 58,
+    "gap": 20
+   },
+   "4": {
+    "median_china": 40,
+    "median_rest": 59,
+    "gap": 19
+   }
+  }
+ },
+ "thin_sample": {
+  "threshold": 4,
+  "n_thin": 69,
+  "n_single_page": 55,
+  "with_thin": {
+   "n": 317,
+   "median": 56
+  },
+  "without_thin": {
+   "n": 248,
+   "median": 62,
+   "ci": [
+    58,
+    65
+   ]
+  }
  }
 }
