@@ -49,8 +49,10 @@ run-to-run noise as the score, so pin the pages with `--urls-from` when you asse
 **Cause.** Nothing the CLI asked for came back as a page to score. The message names the kind of failure
 in parentheses, for example `could not fetch https://example.com (timeout): …`, and links to its section
 below. A name that does not resolve, a refused connection and a failed TLS handshake are not retried, so
-they fail within a second; a timeout or a dropped connection is tried three times. Exit code 2 also
-covers usage errors (including a URL that is not one), refused `--urls` lists and internal errors.
+they fail within a second; a timeout or a dropped connection is tried three times. A site that answered
+every page with a bot-challenge page exits 2 as well, with `bot challenge served to a browser user-agent (…)`
+(kind `bot_challenge`, below). Exit code 2 also covers usage errors (including a URL that is not one), refused
+`--urls` lists and internal errors.
 
 With `--json`, an exit 2 prints a JSON error on stdout instead of a report
 ([`schema/error.v1.json`](../schema/error.v1.json)): `error.kind` is the same token, so a pipeline can
@@ -138,6 +140,20 @@ flight stops. This error means no page to score had come back by then; when some
 the checks that needed the missing answers show as not observed.
 
 **What to do.** Re-run later, or ask for fewer pages with `--sample` or a shorter `--urls` list.
+
+### bot_challenge: a challenge page came back instead of the site
+
+**Cause.** Bot protection (AWS WAF, Akamai, Cloudflare, Fastly, PerimeterX, DataDome or Imperva) answered the
+CLI's browser user-agent with a challenge page, which only a browser that runs its script can pass. The message
+names the vendor whose page it recognised. A challenge page is not the site's content, so it is never scored: read
+as content, it would put `g.ssr` at zero and cap the site for a JavaScript problem it may not have. When only some
+sampled pages were challenges, the run scores the rest, and the report's notes say `Scored on N of M sampled
+pages; …`. A page that carries substantive text is scored whatever bot-protection script it also loads.
+
+**What to do.** Nothing in the tool gets past a challenge: what a static fetch observes is what it measures. The
+same protection may answer a real retrieval crawler differently from this machine (by its address, its reputation
+or a list of verified bots), so this says nothing either way about what AI crawlers receive. A run from another
+network can get a different answer.
 
 ## Proxies
 

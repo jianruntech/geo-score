@@ -39,12 +39,13 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, a gate at zero under `--fail-on-gate`, or a
-failed `--assert`, `2` the site could not be fetched, a pinned URL list was refused, a usage error
-(a malformed `--assert` included), or an internal error, reported in one line with where to file it
-(`GEO_SCORE_DEBUG=1` shows the traceback). When the site could not be fetched, the message names the
-kind of failure, such as `dns`, `timeout` or `http_403`, and links to
-[its section in troubleshooting](../guide/troubleshooting.md#could-not-fetch--and-exit-code-2). With
-`--json`, an exit 2 prints a JSON error on stdout instead of a report
+failed `--assert`, `2` the site could not be fetched or served only bot-challenge pages, a pinned URL
+list was refused, a usage error (a malformed `--assert` included), or an internal error, reported in one
+line with where to file it (`GEO_SCORE_DEBUG=1` shows the traceback). When the site could not be
+fetched, the message names the kind of failure, such as `dns`, `timeout` or `http_403`, and links to
+[its section in troubleshooting](../guide/troubleshooting.md#could-not-fetch--and-exit-code-2). A site
+that served only bot-challenge pages says `bot challenge served to a browser user-agent (…)`, kind
+`bot_challenge`. With `--json`, an exit 2 prints a JSON error on stdout instead of a report
 ([`schema/error.v1.json`](../schema/error.v1.json)), with the same kind in `error.kind`. Assertions on
 the heuristic checks listed under *How far to trust each check* carry the same run-to-run noise as the
 score: pin the pages with `--urls-from` when you assert on them. Levels 2 and 3 (`watch …`): `0` done,

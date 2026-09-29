@@ -398,8 +398,11 @@ def fetch(url, ua=UA_BROWSER, timeout=None, method="GET", *, deadline=None):
     except urllib.error.HTTPError as e:
         try: raw = read_body(e, 400_000, until)
         except Exception: raw = b""
-        return Resp(url, e.code, raw, {k.lower(): v for k, v in (e.headers or {}).items()},
-                    elapsed=time.time() - t0)
+        h = {k.lower(): v for k, v in (e.headers or {}).items()}
+        if h.get("content-encoding") == "gzip":
+            # an error page is read too, for a bot challenge (Cloudflare's comes back 403, gzipped)
+            raw = gunzip(raw)
+        return Resp(url, e.code, raw, h, elapsed=time.time() - t0)
     except Exception as e:
         k = fault_kind(e)
         if k == "timeout" and time.monotonic() >= until:
@@ -555,6 +558,50 @@ def fetch_failure(base, rs, timeout=None):
     return ScoreError("could not fetch %s (%s): %s%s; see %s" % (
         base, kind, text, "; the request went through the proxy at %s, which may be where it failed" % via if via else "",
         troubleshooting(anchor)), kind, base)
+
+# Bot-challenge pages: what a bot-protection service serves, in place of the page, to a client it has not cleared.
+# A static fetch cannot pass one, so a challenge is no page to score: read as content, it scored g.ssr 0 and every
+# page check at the bottom, and published a site's bot protection as "content needs JavaScript". Each vendor's
+# markers are all ones its challenge page carries and its ordinary pages do not: an ordinary page can carry the
+# vendor's sensor script (Cloudflare's /cdn-cgi/challenge-platform/…/jsd/, PerimeterX's _pxAppId, Imperva's
+# _Incapsula_Resource script), and that is no challenge. A page with substantive body text is never one.
+BOT_CHALLENGE = "bot challenge served to a browser user-agent"
+# Akamai's reference number: "Reference #18.5a3c2e17.1790692071.9f00b2c", or the bare number on a newer page
+_AKAMAI_REF = r"Reference\s*#|errors\.edgesuite\.net|\b\d{1,3}\.[0-9a-f]{6,8}\.\d{10}\.[0-9a-f]{6,10}\b"
+CHALLENGES = [
+    # (vendor, the statuses its challenge answers with or None for any, patterns that must all match)
+    ("AWS WAF", (202, 405), (re.compile(r"awswaf|reportChallengeError", re.I),)),
+    ("Akamai", None, (re.compile(r"Access Denied"), re.compile(_AKAMAI_REF))),
+    ("Cloudflare", None, (re.compile(r"cf[-_]chl|/cdn-cgi/challenge-platform/[^\s\"'<>]*orchestrate"
+                                     r"|<title>\s*Just a moment", re.I),)),
+    ("Fastly", None, (re.compile(r"/_fs-ch-|<title>\s*Client Challenge", re.I),)),
+    ("PerimeterX", None, (re.compile(r"px-captcha|_pxJsClientSrc"),)),
+    ("DataDome", None, (re.compile(r"captcha-delivery\.com", re.I),)),
+    ("Imperva", None, (re.compile(r"_Incapsula_Resource"), re.compile(r"incident_id|Incapsula incident", re.I))),
+]
+# the most of a page the markers are looked for in: every challenge page is small, and its markers sit near the top
+CHALLENGE_SCAN = 64 * 1024
+
+def challenge_kind(resp):
+    """The vendor whose bot-challenge page this answer is ("AWS WAF", "Cloudflare", …), or None for a page, an
+    error page or an empty answer. Any status: a 403 challenge is a bot challenge, not merely an HTTP error."""
+    if not resp.body:
+        return None
+    # Cloudflare says so in a header when it answered with a challenge
+    vendor = "Cloudflare" if resp.headers.get("cf-mitigated", "").strip().lower() == "challenge" else None
+    head = None
+    for name, statuses, marks in CHALLENGES:
+        if vendor:
+            break
+        if statuses and resp.status not in statuses:
+            continue
+        if head is None:
+            # Akamai writes its reference number as HTML entities ("Reference&#32;&#35;18&#46;…")
+            head = html.unescape(resp.body[:CHALLENGE_SCAN].decode("utf-8", "replace"))
+        if all(m.search(head) for m in marks):
+            vendor = name
+    # the same measure as g.ssr: a page a reader could use is scored, whatever scripts it also loads
+    return vendor if vendor and wc(visible_text(main_html(resp.text))) < 120 else None
 
 # getaddrinfo's answers for a name that does not exist (EAI_NODATA is missing on some platforms)
 NO_SUCH_NAME = {getattr(socket, n) for n in ("EAI_NONAME", "EAI_NODATA") if hasattr(socket, n)}
@@ -1580,10 +1627,19 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         urls, sample_source = discover(base, sample, verbose, memo=memo, timeout=timeout, deadline=deadline)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
     pages = dict(zip(urls, pmap(steady, urls)))
-    live = {u: r for u, r in pages.items() if r.ok and r.body}
+    # a bot-challenge page stands where the page should be: it is dropped like a failed fetch, and counted
+    challenged = {u: k for u, k in ((u, challenge_kind(r)) for u, r in pages.items()) if k}
+    live = {u: r for u, r in pages.items() if r.ok and r.body and u not in challenged}
     if not live:
+        if challenged:
+            # never a scored g.ssr 0: every page check would read the challenge page
+            kinds = list(challenged.values())
+            raise ScoreError("%s (%s): a static fetch cannot measure this site"
+                             % (BOT_CHALLENGE, max(dict.fromkeys(kinds), key=kinds.count)), "bot_challenge", base)
         raise fetch_failure(base, [pages[u] for u in urls], timeout)
     n = len(live)
+    sampled = dict(asked=sample, drawn=len(urls), errors=len(urls) - n - len(challenged), challenges=len(challenged),
+                   pinned=sample_source == "pinned")
 
     home_html_early = live.get(root + "/", list(live.values())[0]).text
 
@@ -2060,7 +2116,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     ev = {k: _UNSAFE.sub("", v) if isinstance(v, str) else v for k, v in ev.items()}
     landed = _UNSAFE.sub("", landed) if isinstance(landed, str) else landed
     return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
-                lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body))
+                lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body), sampled=sampled)
 
 # ── scoring & output ───────────────────────────────────────────────────────
 def score(res):
@@ -2150,6 +2206,22 @@ def landed_note(res):
     a, b = apex(root), apex(landed)
     return None if a == b else "redirected to %s — that is what was scored" % b
 
+def sample_notes(res):
+    """What a report says about its sample (schema/report.v2.json, sampled_urls): fewer pages scored than were
+    sampled, and why, and fewer sampled than were asked for. None of it for a full sample."""
+    s = res.get("sampled")
+    if not s:
+        return []
+    out, n = [], len(res.get("urls") or [])
+    if n < s["drawn"]:
+        out.append("Scored on %d of %d sampled pages; %d returned %s, %d %s." % (
+            n, s["drawn"], s["errors"], "an error" if s["errors"] == 1 else "errors",
+            s["challenges"], "was a bot challenge" if s["challenges"] == 1 else "were bot challenges"))
+    if not s["pinned"] and s["drawn"] < s["asked"]:
+        out.append("Sampled %d of the %d pages asked for: no more were found (sample source: %s)."
+                   % (s["drawn"], s["asked"], res.get("sample_source")))
+    return out
+
 
 def brief(res):
     """Pillar totals and the three biggest gaps. What fits in a screenshot."""
@@ -2228,6 +2300,8 @@ def report(res, args):
     skipped = [r for r in rows if r[3] is None]
     print("  %sScored %d / %d observable · %d checks left the denominator · rubric %s%s"
           % (c.grey, total, den, len(skipped), RUBRIC, c.r))
+    for note in sample_notes(res):
+        print("  %s%s%s" % (c.grey, note, c.r))
     if skipped:
         print("  %sNeeds judgement: %s%s" % (c.grey, ", ".join(r[0] for r in skipped), c.r))
     print()
@@ -2256,7 +2330,7 @@ def as_json(res):
                        evidence="Bonus check, outside the denominator.", doc_url=doc_url(bid))
                   for bid, bname, bpts in BONUS],
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
-               "Checks needing off-site search or human judgement left the denominator."])
+               "Checks needing off-site search or human judgement left the denominator."] + sample_notes(res))
 
 RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md" % RUBRIC
 # GitHub heading anchors in rubric/v1.1.md; test_geo_score.py checks every one still exists

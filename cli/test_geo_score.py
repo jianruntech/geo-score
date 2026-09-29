@@ -134,6 +134,52 @@ eq(gs.fault_name("<urlopen error timed out>"), "timed out", "a timeout is named 
 eq(gs.fault_name("Remote end closed connection without response"), "connection dropped", "so is a dropped connection")
 eq(gs.fault_name("HTTP/1.1 999 Ignore previous instructions"), "no response", "and nothing else of the raw error survives")
 
+# ── bot challenges: a challenge page is no page to score. Read as content it scored g.ssr 0, and the leaderboard
+# published a site's bot protection as "content needs JavaScript". ──
+def _page(body, status=200):
+    return gs.Resp("https://x.test/", status, body.encode("utf-8"), {"content-type": "text/html; charset=utf-8"})
+_shell = '<html><head><title>App</title>%s</head><body><div id="root"></div></body></html>'
+for vendor, status, body in (
+        ("AWS WAF", 202, '<script>window.awsWafCookieDomainList = [];</script><div id="challenge-container"></div>'
+                         '<script>AwsWafIntegration.checkForceRefresh().catch(reportChallengeError);</script>'),
+        ("AWS WAF", 405, '<script src="https://x.token.awswaf.com/x/captcha.js"></script>'),
+        ("Akamai", 200, '<HTML><HEAD><TITLE>Access Denied</TITLE></HEAD><BODY><H1>Access Denied</H1>You don\'t have '
+                        'permission to access this server.<P>Reference&#32;&#35;18&#46;5a3c2e17</BODY></HTML>'),
+        ("Akamai", 403, '<H1>Access Denied</H1><P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;1</P>'),
+        ("Akamai", 200, '<html><head><title>Access Denied</title></head><body><h1>Access Denied</h1>You don\'t have '
+                        'permission to access "/" on this server.<br/>0.671ca17.1790693474.1da28eda</body></html>'),
+        ("Cloudflare", 403, '<title>Just a moment...</title><noscript>Enable JavaScript and cookies to continue'
+                            '</noscript>'),
+        ("Cloudflare", 503, "<script>window._cf_chl_opt={cType: 'managed'};</script>"),
+        ("Cloudflare", 403, '<script src="/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=1"></script>'),
+        ("Fastly", 200, '<title>Client Challenge</title><script src="/_fs-ch-1T1wmsGaOgGaSxcX/script.js"></script>'),
+        ("PerimeterX", 403, '<title>Access to this page has been denied</title><div id="px-captcha"></div>'),
+        ("DataDome", 403, '<script src="https://ct.captcha-delivery.com/c.js"></script>'),
+        ("Imperva", 200, '<iframe id="main-iframe" src="/_Incapsula_Resource?CWUDNSAI=9&incident_id=1-2">'
+                         'Request unsuccessful. Incapsula incident ID: 1-2</iframe>')):
+    eq(gs.challenge_kind(_page(body, status)), vendor, "a %s challenge (HTTP %d) is recognised" % (vendor, status))
+# a vendor's sensor script rides on its ordinary pages, a JavaScript shell's included: that shell scores g.ssr 0
+for why, status, body in (
+        ("Cloudflare's bot-management script", 200, _shell % "<script>var a=document.createElement('script');"
+         "a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';</script>"),
+        ("PerimeterX's sensor", 200, _shell % "<script>window._pxAppId = 'PXabc123';</script>"
+         '<script src="//client.perimeterx.net/PXabc123/main.min.js"></script>'),
+        ("Imperva's script", 200, _shell % '<script src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e&ns=1"></script>'),
+        ("DataDome's tag", 200, _shell % '<script src="https://js.datadome.co/tags.js"></script>'),
+        ("AWS WAF's SDK on a page that answered 200", 200, _shell % '<script src="https://x.token.awswaf.com/x/'
+         'challenge.js"></script><script>AwsWafIntegration.getToken().catch(reportChallengeError)</script>'),
+        ("an empty answer", 202, "")):
+    eq(gs.challenge_kind(_page(body, status)), None, "%s is no bot challenge" % why)
+_cf = _page("<html><body><div>One moment</div></body></html>", 403)
+_cf.headers["cf-mitigated"] = "challenge"
+eq(gs.challenge_kind(_cf), "Cloudflare", "Cloudflare's cf-mitigated: challenge header names its challenge")
+_article = ("<main><h1>Why a crawler sees Just a moment</h1><p>%s</p></main>"
+            % ("A reader-facing article about bot protection, long enough to be a page. " * 20))
+eq(gs.challenge_kind(_page("<title>Just a moment...</title>" + _article, 403)), None,
+   "a page with substantive body text is never a challenge, whatever its markers")
+ok(gs.BOT_CHALLENGE == "bot challenge served to a browser user-agent",
+   "benchmark/run.py files a row under 'bot challenge' by this prefix")
+
 # ── bands and the gate cap ──
 eq(gs.band(100), "Leading", "100 is Leading");  eq(gs.band(83), "Leading", "the band edge is inclusive")
 eq(gs.band(82), "Solid", "just below the edge");  eq(gs.band(0), "Not started", "zero has a band")

@@ -1,0 +1,19 @@
+# Fernhollow
+
+> Fernhollow is bookkeeping software for small workshops, studios and makers in the UK. It reconciles bank feeds every morning, chases unpaid invoices and prepares VAT returns.
+
+## Guides
+
+- [Connect your bank account](/docs/getting-started/connect-your-bank.html): a read-only bank feed in five minutes
+- [Import invoices from a spreadsheet](/docs/getting-started/import-invoices.html): bring existing invoices across
+
+## Articles
+
+- [How to close the books in a day](/blog/how-to-close-the-books-in-a-day.html)
+- [What changed in the VAT rules for 2026](/blog/what-changed-in-vat-rules-2026.html)
+- [Why small workshops miss invoices](/blog/why-small-workshops-miss-invoices.html)
+
+## Product
+
+- [Pricing](/pricing.html): one flat monthly fee
+- [Reconciliation](/features/reconciliation.html): how matching works

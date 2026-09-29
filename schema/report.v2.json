@@ -48,7 +48,7 @@
         "format": "uri"
       },
       "minItems": 1,
-      "description": "Exactly 8 unless the site has fewer pages; if fewer, say so in notes."
+      "description": "The pages scored. Exactly 8 unless the site has fewer pages; if fewer, say so in notes. The CLI leaves out a sampled page that answered with an error or a bot-challenge page, and its notes then say how many of how many sampled pages were scored and why (since 1.5.0)."
     },
     "landed": {
       "type": "string",

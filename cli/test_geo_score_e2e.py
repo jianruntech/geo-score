@@ -73,6 +73,11 @@ BEHAVIOUR = {
     "bot-wall": {"deny_unless_ua": gs.UA_BROWSER},
     "partial": {"cloak_unless_ua": gs.UA_BROWSER, "cloak_page": "_bot.html"},
     "js-shell": {"spa_fallback": "index.html"},
+    # bot-challenge pages, served to every user-agent in place of the page: {path: (status, file)}, where the
+    # path "*" stands for every path but robots.txt and the sitemap
+    "aws-waf-challenge": {"challenge": {"*": (202, "_challenge.html")}},
+    "partial-challenge": {"gzip": True, "challenge": {"/pricing.html": (200, "_akamai.html"),
+                                                      "/blog/why-small-workshops-miss-invoices.html": (403, "_cloudflare.html")}},
 }
 
 # Transient faults, served only when a test asks: {case: (fixture, faults)}. drop_nth {path: N} closes the
@@ -140,6 +145,15 @@ class FixtureHandler(BaseHTTPRequestHandler):
             return self._send(429, b"slow down", TEXT_TYPES[".txt"], {"Retry-After": "0"})
         if at in srv.faults.get("status_for", {}):
             return self._send(srv.faults["status_for"][at], b"unavailable", TEXT_TYPES[".txt"])
+        challenge = rules.get("challenge", {})
+        served = challenge.get(at) or (challenge.get("*") if not at.endswith((".txt", ".xml")) else None)
+        if served:
+            with open(os.path.join(srv.root, served[1]), "rb") as f:
+                body = f.read()
+            if rules.get("gzip") and "gzip" in self.headers.get("Accept-Encoding", ""):
+                # an error page comes gzipped too, as Cloudflare's 403 challenge does
+                return self._send(served[0], gzip.compress(body, mtime=0), TEXT_TYPES[".html"], {"Content-Encoding": "gzip"})
+            return self._send(served[0], body, TEXT_TYPES[".html"])
         if any(b in ua for b in rules.get("deny_ua", ())) or \
                 (rules.get("deny_unless_ua") and rules["deny_unless_ua"] not in ua):
             return self._send(403, b"<!doctype html><title>403</title><h1>Access denied</h1>", TEXT_TYPES[".html"])
@@ -707,6 +721,49 @@ class EndToEnd(unittest.TestCase):
         self.assertIn("(deadline): the run reached its 1 s limit before a page to score came back; see https://",
                       str(cm.exception))
         self.assertIsInstance(cm.exception, RuntimeError, "the CLI exits 2")
+
+    def test_a_site_behind_a_bot_challenge_is_not_scored(self):
+        # every page answers 202 with an AWS WAF challenge body. Read as content, it scored g.ssr 0 and was published
+        # as "content needs JavaScript"; a challenge is no page to score, so the run exits 2 and says why
+        dead = "http://127.0.0.1:9"
+        env = {k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}
+        env.update(HTTPS_PROXY=dead, HTTP_PROXY=dead, https_proxy=dead, http_proxy=dead, NO_COLOR="1",
+                   NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+        H.start()
+        srv = start_server("aws-waf-challenge")
+        try:
+            with self.assertRaises(gs.ScoreError) as cm:
+                gs.run(srv.origin, 8)
+            p = subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"), srv.origin, "--json"],
+                               capture_output=True, text=True, timeout=60, env=env)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        want = "bot challenge served to a browser user-agent (AWS WAF): a static fetch cannot measure this site"
+        self.assertEqual((cm.exception.kind, str(cm.exception)), ("bot_challenge", want))
+        self.assertIsInstance(cm.exception, RuntimeError, "the CLI exits 2")
+        self.assertEqual(p.returncode, 2, p.stderr[-400:])
+        got = json.loads(p.stdout)
+        self.assertEqual((got["error"]["kind"], got["error"]["message"], got["error"]["target"]),
+                         ("bot_challenge", want, srv.origin))
+        self.assertIn(want, p.stderr)
+        with open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8") as f:
+            schema = json.load(f)
+        try:
+            import jsonschema
+        except ImportError:
+            return
+        jsonschema.validate(got, schema)
+
+    def test_a_report_on_fewer_pages_says_so(self):
+        # schema/report.v2.json: fewer than a full sample is said in notes. Two of partial-challenge's eight pages
+        # are bot challenges (an Akamai page with a 200, a Cloudflare page with a 403); hostile's sitemap has four
+        rep = report_for("partial-challenge", masked=False)
+        self.assertEqual(len(rep["sampled_urls"]), 6)
+        self.assertIn("Scored on 6 of 8 sampled pages; 0 returned errors, 2 were bot challenges.", rep["notes"])
+        self.assertIn("Sampled 4 of the 8 pages asked for: no more were found (sample source: sitemap).",
+                      hostile_report()["notes"])
+        self.assertEqual(len(report_for("good", masked=False)["notes"]), 1, "a full sample adds no note")
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

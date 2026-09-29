@@ -1,0 +1,5 @@
+# Harbourline: every page is behind an AWS WAF challenge action
+User-agent: *
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml
