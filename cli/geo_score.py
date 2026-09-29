@@ -1727,6 +1727,34 @@ def next_tier(cid, t, mx):
     return nxt[0] - t, nxt[1]
 
 # ── sampling ───────────────────────────────────────────────────────────────
+def kg_lookups(cand, lg):
+    """The Wikidata and the Wikipedia search for one brand candidate in one language: public APIs, no key."""
+    q = urllib.parse.quote(cand)
+    return ("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
+            "&language=%s&uselang=%s&limit=5&search=%s" % (lg, lg, q),
+            "https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
+            "&srlimit=3&srsearch=%s" % (lg, q))
+
+def kg_found(cand, lg, wd, wp):
+    """Where the answers to kg_lookups(cand, lg) name an entity labelled exactly cand: at most one Wikidata item
+    and one Wikipedia title, as evidence."""
+    out = []
+    if wd.ok:
+        try:
+            for it in json.loads(wd.text).get("search", []):
+                if (it.get("label", "") or "").strip().lower() == cand.lower():
+                    out.append("Wikidata %s %s" % (_UNSAFE.sub("", str(it.get("id")))[:20],
+                                                   site_text(it.get("description", ""), 40)))
+                    break
+        except Exception: pass
+    if wp.ok:
+        try:
+            for it in json.loads(wp.text).get("query", {}).get("search", []):
+                if (it.get("title", "") or "").strip().lower() == cand.lower():
+                    out.append("%s.wikipedia: %s" % (lg, site_text(it.get("title"), 60))); break
+        except Exception: pass
+    return out
+
 def depth_in_scope(url, scope):
     """How deep a URL sits inside the scope the user gave, not inside the origin.
 
@@ -2012,7 +2040,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     at most RUN_DEADLINE seconds: after that no request is sent, and the checks that still needed one are not
     observed; when no sampled page came back by then it raises ScoreError (kind "deadline")."""
     timeout = timeout or TIMEOUT
-    deadline = time.monotonic() + RUN_DEADLINE
+    started = time.monotonic()
+    deadline = started + RUN_DEADLINE
     if PREFLIGHT:
         preflight_host(base)
     origin, scope = scope_of(base)
@@ -2021,10 +2050,12 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     def say(msg):
         if verbose: print("%s  %s%s" % (c.dim, msg, c.r), file=sys.stderr)
 
-    # every request that decides the sample or a gate goes through this run's memo: fetched once, retried
+    # every request goes through this run's memo, so none is sent twice: the ones that decide the sample or a
+    # gate are retried (steady), the rest are asked once (get)
     memo = FetchMemo()
     steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout, deadline=deadline)
-    get = lambda u, **kw: fetch(u, timeout=timeout, deadline=deadline, **kw)
+    get = lambda u, ua=UA_BROWSER, tries=1: fetch_steady(u, tries=tries, memo=memo, ua=ua, timeout=timeout,
+                                                         deadline=deadline)
 
     def late(*rs):
         """True when the run's deadline stopped any of these requests: what they feed was not observed."""
@@ -2040,7 +2071,10 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         say("discovering sample pages…")
         urls, sample_source = discover(base, sample, verbose, memo=memo, timeout=timeout, deadline=deadline)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
-    pages = dict(zip(urls, pmap(steady, urls)))
+    # robots.txt comes with the pages: it names the sitemaps the next wave asks for. discover() has read it already
+    # (a memo hit); a pinned sample has not
+    want = list(dict.fromkeys(urls + [origin + "/robots.txt"]))
+    pages = {u: r for u, r in zip(want, pmap(steady, want)) if u in urls}
     # a bot-challenge page stands where the page should be: it is dropped like a failed fetch, and counted
     challenged = {u: k for u, k in ((u, challenge_kind(r)) for u, r in pages.items()) if k}
     live = {u: r for u, r in pages.items() if r.ok and r.body and u not in challenged}
@@ -2059,10 +2093,108 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # each page's language decides its passage unit and whether a lexicon can read it
     langs_of = {u: page_lang(r) for u, r in live.items()}
 
-    # ── g.robots ──
-    # read once per run, retries included: discover() fetched it through the memo, or it is fetched here
+    # ── what the sample names: the sitemaps, the entity, its logo and profiles, the brand ──
+    # read once per run, retries included: fetched with the pages, or by discover() before them
     rb = steady(origin + "/robots.txt")
     txt = rb.text if rb.ok else ""
+    # A site can live under a path — a GitHub Pages project page, a docs subtree, a
+    # country folder. The spec puts sitemap.xml and llms.txt at the origin, but the
+    # owner of example.com/docs cannot place a file at example.com. Scoring them zero
+    # penalises them for something they do not control (open question #9), so fall
+    # back to the path they were given. Origin still wins when both exist.
+    sm_urls = [join_link(origin + "/", u) for u in _SITEMAP_DECL.findall(txt)] \
+              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
+              + ([origin + scope + "/sitemap.xml"] if scope else [])
+    allld = {u: jsonld(r.text) for u, r in live.items()}
+    def is_org(x):
+        t = x.get("@type")
+        return any(str(v) == "Organization" or str(v).endswith(("Corporation", "LocalBusiness", "Organization"))
+                   for v in (t if isinstance(t, list) else [t]))
+    org_at = [(u, x) for u, o in allld.items() for x in o if is_org(x)]
+    orgs = [x for _, x in org_at]
+    logo_page, logo = next(((u, x.get("logo")) for u, x in org_at if x.get("logo")), (None, None))
+    logo_url = logo.get("url") if isinstance(logo, dict) else logo
+    logo_url = logo_url if isinstance(logo_url, str) else None
+    same = next((o.get("sameAs") for o in orgs if o.get("sameAs")), None)
+    # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
+    # "logo.png" on /docs/ is /docs/logo.png
+    logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
+    logo_at = join_link(logo_base, logo_url) if logo_url else None
+    declared = same if isinstance(same, list) else ([same] if same else [])
+    # only http(s) URLs can be checked; a bare "www.x.com/acme", an empty string or null is not one
+    sa = [x.strip() for x in declared if isinstance(x, str) and re.match(r"https?://", x.strip(), re.I)]
+    cjk_site = "zh" in langs_of.values() or ".cn" in root
+
+    # the brand, for p3.knowledge-graph: the Organization's names, og:site_name, then the home page's title
+    stem = host_stem(root)
+    cands = []
+    for o in orgs:
+        for k in ("legalName", "name", "alternateName"):
+            v = o.get(k)
+            if isinstance(v, list): v = v[0] if v else None
+            if isinstance(v, str) and v.strip(): cands.append(v.strip())
+    og = og_site_name(home_html_early)
+    if og is not None: cands.append(html.unescape(og).strip())
+    t = title_html(home_html_early)
+    if t is not None:
+        title = visible_text(t)
+        # a title is usually "Brand | tagline" or "Page \ Brand" — try every segment,
+        # and prefer whichever one the domain itself is named after
+        segs = [x.strip() for x in re.split(r"[|｜·•·\\/—–:»<>~]+|\s[-–]\s", title) if x.strip()]
+        segs.sort(key=lambda x: (stem not in x.lower().replace(" ", ""), len(x)))
+        cands += segs[:3]
+    cands.append(stem.capitalize())
+    seen_c, brands = set(), []
+    for x in cands:
+        k = x.lower()
+        if k in seen_c or len(x) > 60 or len(x) < 2: continue
+        seen_c.add(k); brands.append(x)
+    brands = brands[:3]
+    # in the most common page language besides English, and in English: two languages at most, as before. Only a
+    # Wikipedia edition that exists: a page's own lang tag never names the host a lookup goes to
+    other = [x for x in langs_of.values() if x in WIKI_LANGS]
+    langs = ([max(dict.fromkeys(other), key=other.count)] if other else []) + ["en"]
+
+    # ── one wave ──
+    # Every request whose URL is known by now goes out at once, and the checks below read the answers from the
+    # memo: the sitemaps; llms.txt, llms-full.txt, ai.txt and /.well-known/ai.txt, at the origin and under the
+    # given path; the logo; the first 8 sameAs profiles; the Chinese crawlers on the home page; the retrieval
+    # probes; and the knowledge-graph lookups. They used to go one after another, a lookup at a time. The wave
+    # runs in three lanes side by side, so a network that cannot reach one host does not hold up the others:
+    # requests to the site share 8 connections, as the probes always did; requests to other hosts (a logo on a
+    # CDN, the profiles) have 8 of their own; and the lookups go as p3.knowledge-graph reads them, one brand
+    # candidate at a time with its lookups at once, stopping at the first that finds the entity, so Wikidata and
+    # Wikipedia get no lookup the check would not read. Only a sitemap index's child is asked for after the
+    # wave, and discover() has usually fetched it already.
+    probe = list(live)[:3]
+    plan = {}
+    for u, ua, tries in ([(u, UA_BROWSER, STEADY_TRIES) for u in sm_urls[:4]]
+                         + [(base_ + rel, UA_BROWSER, 1) for rel in ("/llms.txt", "/llms-full.txt", "/ai.txt",
+                                                                     "/.well-known/ai.txt")
+                            for base_ in [origin] + ([origin + scope] if scope else [])]
+                         + ([(logo_at, UA_BROWSER, 1)] if logo_at is not None else [])
+                         + [(u, UA_BROWSER, 1) for u in sa[:8]]
+                         + ([(root + "/", ua, 1) for _, ua in CN_UAS] if cjk_site else [])
+                         + [(u, ua, PROBE_TRIES) for _, ua in RETRIEVAL_UAS for u in probe]):
+        plan.setdefault((u, ua), tries)
+    def on_site(u):
+        try:
+            return urllib.parse.urlsplit(u).netloc == urllib.parse.urlsplit(origin).netloc
+        except ValueError:
+            return False
+    ask = lambda k: get(k[0], ua=k[1], tries=plan[k])
+    def kg_search():
+        for cand in brands:
+            ats = [u for lg in langs for u in kg_lookups(cand, lg)]
+            rs = pmap(get, ats, workers=len(ats))
+            if any(kg_found(cand, lg, rs[2 * i], rs[2 * i + 1]) for i, lg in enumerate(langs)):
+                return
+    say("fetching the rest in one wave: %d requests, %d of them retrieval user-agent probes, and the "
+        "knowledge-graph lookups…" % (len(plan), len(RETRIEVAL_UAS) * len(probe)))
+    pmap(lambda lane: lane(), [lambda: pmap(ask, [k for k in plan if on_site(k[0])]),
+                               lambda: pmap(ask, [k for k in plan if not on_site(k[0])]), kg_search], workers=3)
+
+    # ── g.robots ──
     if rb.ok:
         tier["g.robots"], ev["g.robots"] = robots_tier(txt, len(rb.body))
     elif rb.status == 0:
@@ -2082,12 +2214,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         ev["g.robots"] = "No robots.txt (HTTP %d). Nothing is disallowed, but nothing is explicitly allowed either." % rb.status
 
     # ── g.reachable ──
-    say("probing %d retrieval user-agents…" % len(RETRIEVAL_UAS))
-    probe = list(live)[:3]
     # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
     # reached the same page moments earlier
-    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2], timeout=timeout, deadline=deadline)),
-                   [(name, u, ua) for name, ua in RETRIEVAL_UAS for u in probe])
+    results = [(name, get(u, ua=ua, tries=PROBE_TRIES)) for name, ua in RETRIEVAL_UAS for u in probe]
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
     okc = sum(1 for name, rs in per.items() if all(x.ok for x in rs))
@@ -2126,16 +2255,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     ev["g.ssr"] = "%d of %d sampled pages carry substantive body text in the HTML response with no JavaScript executed." % (ssr, n)
 
     # ── p1.sitemap ──
-    # A site can live under a path — a GitHub Pages project page, a docs subtree, a
-    # country folder. The spec puts sitemap.xml and llms.txt at the origin, but the
-    # owner of example.com/docs cannot place a file at example.com. Scoring them zero
-    # penalises them for something they do not control (open question #9), so fall
-    # back to the path they were given. Origin still wins when both exist.
-    sm_urls = [join_link(origin + "/", u) for u in _SITEMAP_DECL.findall(txt)] \
-              or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
-              + ([origin + scope + "/sitemap.xml"] if scope else [])
-    # the first sitemap in the order they are looked for, unless the deadline stopped a request before it
-    sm = next((r for r in pmap(steady, sm_urls[:4]) if is_sitemap(r) or late(r)), None)
+    # sm_urls: robots.txt's Sitemap lines, else the conventional paths at the origin and under the given path.
+    # The first sitemap in the order they are looked for, unless the deadline stopped a request before it
+    sm = next((r for r in map(steady, sm_urls[:4]) if is_sitemap(r) or late(r)), None)
     if sm and not late(sm) and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
@@ -2182,23 +2304,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             " but a site living under a path cannot place a file there." if lt_at != "/llms.txt" else "")
 
     # ── p1.organization ──
-    allld = {u: jsonld(r.text) for u, r in live.items()}
-    def is_org(x):
-        t = x.get("@type")
-        return any(str(v) == "Organization" or str(v).endswith(("Corporation", "LocalBusiness", "Organization"))
-                   for v in (t if isinstance(t, list) else [t]))
     org_pages = [u for u, o in allld.items() if any(is_org(x) for x in o)]
     site_pages = [u for u, o in allld.items() if "WebSite" in types_of(o)]
-    org_at = [(u, x) for u, o in allld.items() for x in o if is_org(x)]
-    orgs = [x for _, x in org_at]
-    logo_page, logo = next(((u, x.get("logo")) for u, x in org_at if x.get("logo")), (None, None))
-    logo_url = logo.get("url") if isinstance(logo, dict) else logo
-    logo_url = logo_url if isinstance(logo_url, str) else None
-    same = next((o.get("sameAs") for o in orgs if o.get("sameAs")), None)
-    # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
-    # "logo.png" on /docs/ is /docs/logo.png
-    logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
-    logo_r = get(join_link(logo_base, logo_url)) if logo_url else None
+    logo_r = get(logo_at) if logo_at is not None else None
     logo_ok = bool(logo_r and logo_r.ok)
     org_complete = any(o.get("name") and o.get("url") and o.get("logo") for o in orgs)
     if not org_pages and not site_pages:
@@ -2404,9 +2512,6 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                                                       ", ".join(lexicon_gap(skipped))))
 
     # ── p3.sameas ──
-    declared = same if isinstance(same, list) else ([same] if same else [])
-    # only http(s) URLs can be checked; a bare "www.x.com/acme", an empty string or null is not one
-    sa = [x.strip() for x in declared if isinstance(x, str) and re.match(r"https?://", x.strip(), re.I)]
     if not declared:
         tier["p3.sameas"] = 0; ev["p3.sameas"] = "No sameAs declared on the Organization entity."
     elif not sa:
@@ -2418,7 +2523,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         # unreachable from mainland China); 401 / 403 / 429 / 999 and similar are bot walls
         # in front of pages that exist (Crunchbase, Zhihu, Facebook, LinkedIn). Counting
         # either as dead made the score depend on where and when the tool ran.
-        res = pmap(get, sa[:8])
+        res = [get(u) for u in sa[:8]]
         t, good, dead, unseen = sameas_tier([r.status for r in res])
         if late(*res):
             not_reached("p3.sameas", "every sameAs profile")
@@ -2457,12 +2562,11 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     ev["p4.answer-shape"] = "%.0f of %d pages carry subheadings plus lists or tables, with paragraphs of workable length." % (shaped, n)
 
     # ── p4.cn-engines ──
-    cjk_site = "zh" in langs_of.values() or ".cn" in root
     if not cjk_site:
         tier["p4.cn-engines"] = None
         ev["p4.cn-engines"] = "Site does not address the Chinese market — the check leaves the denominator."
     else:
-        cn = pmap(lambda t: get(root + "/", ua=t[1]), CN_UAS)
+        cn = [get(root + "/", ua=ua) for _, ua in CN_UAS]
         okc2 = sum(1 for r in cn if r.ok)
         icp = bool(re.search(r"ICP备|京ICP|沪ICP|粤ICP", " ".join(r.text for r in live.values())))
         tier["p4.cn-engines"] = 2 if okc2 == len(CN_UAS) and icp else (1 if okc2 else 0)
@@ -2472,59 +2576,14 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             not_reached("p4.cn-engines", "every Chinese crawler's request")
 
     # ── p3.knowledge-graph (Wikidata + Wikipedia, both public APIs, no key) ──
-    stem = host_stem(root)
-    cands = []
-    for o in orgs:
-        for k in ("legalName", "name", "alternateName"):
-            v = o.get(k)
-            if isinstance(v, list): v = v[0] if v else None
-            if isinstance(v, str) and v.strip(): cands.append(v.strip())
-    og = og_site_name(home_html_early)
-    if og is not None: cands.append(html.unescape(og).strip())
-    t = title_html(home_html_early)
-    if t is not None:
-        title = visible_text(t)
-        # a title is usually "Brand | tagline" or "Page \ Brand" — try every segment,
-        # and prefer whichever one the domain itself is named after
-        segs = [x.strip() for x in re.split(r"[|｜·•·\\/—–:»<>~]+|\s[-–]\s", title) if x.strip()]
-        segs.sort(key=lambda x: (stem not in x.lower().replace(" ", ""), len(x)))
-        cands += segs[:3]
-    cands.append(stem.capitalize())
-    seen_c, brands = set(), []
-    for x in cands:
-        k = x.lower()
-        if k in seen_c or len(x) > 60 or len(x) < 2: continue
-        seen_c.add(k); brands.append(x)
-    brands = brands[:3]
-
-    # in the most common page language besides English, and in English: two languages at most, as before. Only a
-    # Wikipedia edition that exists: a page's own lang tag never names the host a lookup goes to
-    other = [x for x in langs_of.values() if x in WIKI_LANGS]
-    langs = ([max(dict.fromkeys(other), key=other.count)] if other else []) + ["en"]
+    # the brand candidates and the languages were read before the wave, whose lookups this reads in the same order
     kg_where, brand, kg_queries, kg_ok, kg_late = [], brands[0] if brands else stem, 0, 0, False
     for cand in brands:
-        q = urllib.parse.quote(cand)
         for lg in langs:
-            wd = get("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
-                       "&language=%s&uselang=%s&limit=5&search=%s" % (lg, lg, q))
-            kg_queries += 1; kg_ok += 1 if wd.ok else 0; kg_late = kg_late or late(wd)
-            if wd.ok:
-                try:
-                    for it in json.loads(wd.text).get("search", []):
-                        if (it.get("label", "") or "").strip().lower() == cand.lower():
-                            kg_where.append("Wikidata %s %s" % (_UNSAFE.sub("", str(it.get("id")))[:20],
-                                                                     site_text(it.get("description", ""), 40)))
-                            break
-                except Exception: pass
-            wp = get("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
-                       "&srlimit=3&srsearch=%s" % (lg, q))
-            kg_queries += 1; kg_ok += 1 if wp.ok else 0; kg_late = kg_late or late(wp)
-            if wp.ok:
-                try:
-                    for it in json.loads(wp.text).get("query", {}).get("search", []):
-                        if (it.get("title", "") or "").strip().lower() == cand.lower():
-                            kg_where.append("%s.wikipedia: %s" % (lg, site_text(it.get("title"), 60))); break
-                except Exception: pass
+            wd_at, wp_at = kg_lookups(cand, lg)
+            wd, wp = get(wd_at), get(wp_at)
+            kg_queries += 2; kg_ok += (1 if wd.ok else 0) + (1 if wp.ok else 0); kg_late = kg_late or late(wd, wp)
+            kg_where += kg_found(cand, lg, wd, wp)
         if kg_where: brand = cand; break
     also = "" if len(brands) < 2 else " (also tried %s)" % ", ".join(site_text(x, 60) for x in brands if x != brand)
     kt = kg_tier(bool(kg_where), kg_ok, kg_queries)
@@ -2585,7 +2644,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     ev = {k: _UNSAFE.sub("", v) if isinstance(v, str) else v for k, v in ev.items()}
     landed = _UNSAFE.sub("", landed) if isinstance(landed, str) else landed
     return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
-                lang=audience_language(langs_of.values()), robots_bytes=len(rb.body), sampled=sampled)
+                lang=audience_language(langs_of.values()), robots_bytes=len(rb.body), sampled=sampled,
+                elapsed_s=round(time.monotonic() - started, 1))
 
 # ── scoring & output ───────────────────────────────────────────────────────
 def score(res):
@@ -2839,8 +2899,9 @@ def report(res, args):
         print()
     if b: print("  %s+%d bonus%s (outside the denominator)" % (c.brass, b, c.r))
     skipped = [r for r in rows if r[3] is None]
-    print("  %sScored %d / %d observable · %d checks left the denominator · rubric %s%s"
-          % (c.grey, total, den, len(skipped), RUBRIC, c.r))
+    took = res.get("elapsed_s")
+    print("  %sScored %d / %d observable · %d checks left the denominator · rubric %s%s%s"
+          % (c.grey, total, den, len(skipped), RUBRIC, " · took %.1f s" % took if took is not None else "", c.r))
     for note in sample_notes(res):
         print("  %s%s%s" % (c.grey, note, c.r))
     judged = [r[0] for r in skipped if r[0] in NEEDS_JUDGEMENT]
@@ -2863,6 +2924,7 @@ def as_json(res):
     extra = {"citation": res["citation"]} if res.get("citation") else {}
     return dict(extra, rubric_version=RUBRIC, tool="geo-score-cli/%s" % __version__,
         audited_at=time.strftime("%Y-%m-%d"),
+        **({"elapsed_s": res["elapsed_s"]} if res.get("elapsed_s") is not None else {}),
         target=res["root"], audience_language=res["lang"], sampled_urls=res["urls"], sample_source=res.get("sample_source"),
         **({"landed": res["landed"]} if landed_note(res) else {}),
         readiness=total, observable_max=den, normalised=norm, band=bd,

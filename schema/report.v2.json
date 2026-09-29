@@ -33,6 +33,11 @@
       "format": "date",
       "description": "YYYY-MM-DD"
     },
+    "elapsed_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Seconds the scoring run took, from the first request to the last answer, as measured on the machine that ran it. It depends on that machine's network as much as on the site, so it describes the run, not the site, and a comparison of two reports ignores it. Optional; added in 1.5.0."
+    },
     "target": {
       "type": "string",
       "format": "uri"
