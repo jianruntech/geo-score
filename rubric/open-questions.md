@@ -175,3 +175,46 @@ that file is GitHub's. That asymmetry is real, and it is the honest answer rathe
 fixable bug.
 
 The five published audits are unaffected — all five targets are root domains.
+
+---
+
+## 10 · A robots.txt that cannot be read: allowed, or fully disallowed? (open, for v1.2)
+
+RFC 9309 reads an unreadable robots.txt in two ways. A 4xx answer means there is no file,
+and a crawler may fetch anything (section 2.3.1.3). A server error, or a network that gets
+no answer, means the file is unreachable, and a crawler must assume a full disallow until it
+can read the file again (section 2.3.1.4).
+
+geo-score 1.5.0 does not apply 2.3.1.4. A robots.txt that answers 429 or 5xx on every try
+keeps the middle tier of `g.robots`, and the evidence names the status and the number of
+tries. A robots.txt that never answers (timeouts, dropped connections) is `unobservable` and
+leaves the denominator, because a network that cannot reach a file is no evidence of what the
+file says.
+
+**The question for v1.2:** should a robots.txt that answers 5xx on every try read as a full
+disallow, which is tier 0 and the gate cap, the way a crawler that follows the RFC treats it?
+Against: one audit sees one moment, while a crawler keeps retrying for much longer before it
+acts on an outage. Nothing changes in v1.1.
+
+---
+
+## 11 · A sample with few figures: 3 of 7, or not applicable? (open, for v1.2)
+
+`p2.sourced-stats` reads the sampled pages that carry three or more figures. From geo-score 1.5.0 a
+figure counts as attributed only when its own block of the content, or the next block, holds a link
+to a source off the site, a `<cite>`, a source phrase, or a footnote reference whose note on the page
+links to a source. The page chrome (header, nav, footer, aside) is not read. A year, a version number,
+an identifier (a run of seven or more digits, or a filing or account number such as `京ICP证030173号`)
+and a price (a sum of money written as one, such as `$29/mo` or `68元/月`, or standing alone as a pricing
+card or a price-table cell such as `£12 a month`) are not figures. A page attributes most of its
+figures when more than half of them are attributed. The top tier needs three quarters of those pages
+to attribute most of their figures with a link, the tier below needs half of them to attribute most of
+their figures in any of these ways, and the lowest tier above zero needs one attributed figure.
+
+When no sampled page carries three figures, the check keeps the 3 points it has always given: there is
+nothing to attribute, so nothing is missing, but nothing is shown either.
+
+**The question for v1.2:** should a sample with no page carrying three figures leave the denominator
+(`not_applicable`), as `p1.breadcrumb` does when no nested page is sampled? For: 3 of 7 for a sample
+without figures is a reading of nothing. Against: a site that states no figures makes no claim a reader
+has to check, and the rubric does not score the absence of a claim as a gap. Nothing changes in v1.1.

@@ -1,0 +1,256 @@
+{
+  "format": "geo-score/diff.v1",
+  "tool": "geo-score-cli/{VERSION}",
+  "rubric_version": "v1.1",
+  "before": {
+    "file": "good.report.json",
+    "target": "http://127.0.0.1:{PORT}",
+    "tool": "geo-score-cli/{VERSION}",
+    "audited_at": "{DATE}",
+    "sample_source": "sitemap",
+    "pages": 8,
+    "readiness": 92,
+    "observable_max": 86,
+    "normalised": 100,
+    "band": "Leading",
+    "gate_capped": false,
+    "gates_at_zero": []
+  },
+  "after": {
+    "file": "partial.report.json",
+    "target": "http://127.0.0.1:{PORT}",
+    "tool": "geo-score-cli/{VERSION}",
+    "audited_at": "{DATE}",
+    "sample_source": "sitemap",
+    "pages": 8,
+    "readiness": 50,
+    "observable_max": 82,
+    "normalised": 61,
+    "band": "Growing",
+    "gate_capped": false,
+    "gates_at_zero": []
+  },
+  "normalised_delta": -39,
+  "within_spread": false,
+  "band_fell": true,
+  "same_pages": false,
+  "pages_added": [
+    "http://127.0.0.1:{PORT}/blog/what-glue-for-oak.html",
+    "http://127.0.0.1:{PORT}/blog/why-chisels-go-blunt.html",
+    "http://127.0.0.1:{PORT}/blog/how-to-choose-sandpaper-grit.html",
+    "http://127.0.0.1:{PORT}/docs/setup/first-order.html",
+    "http://127.0.0.1:{PORT}/docs/setup/trade-account.html",
+    "http://127.0.0.1:{PORT}/features/bulk-orders.html"
+  ],
+  "pages_removed": [
+    "http://127.0.0.1:{PORT}/blog/what-changed-in-vat-rules-2026.html",
+    "http://127.0.0.1:{PORT}/blog/how-to-close-the-books-in-a-day.html",
+    "http://127.0.0.1:{PORT}/blog/why-small-workshops-miss-invoices.html",
+    "http://127.0.0.1:{PORT}/docs/getting-started/import-invoices.html",
+    "http://127.0.0.1:{PORT}/docs/getting-started/connect-your-bank.html",
+    "http://127.0.0.1:{PORT}/features/reconciliation.html"
+  ],
+  "gates_reached_zero": [],
+  "gates_left_zero": [],
+  "lost_points": [
+    "g.robots",
+    "g.reachable",
+    "g.ssr",
+    "p1.sitemap",
+    "p1.llms-txt",
+    "p1.organization",
+    "p1.breadcrumb",
+    "p1.page-type",
+    "p2.answer-passages",
+    "p2.question-intent",
+    "p2.freshness",
+    "p2.sourced-stats",
+    "p2.named-author",
+    "p3.sameas",
+    "p3.video",
+    "p4.answer-shape",
+    "b.llms-full",
+    "b.speakable"
+  ],
+  "regressed": true,
+  "checks": [
+    {
+      "id": "g.robots",
+      "before": 5,
+      "after": 3,
+      "max": 5,
+      "state": "down"
+    },
+    {
+      "id": "g.reachable",
+      "before": 5,
+      "after": 3,
+      "max": 5,
+      "state": "down"
+    },
+    {
+      "id": "g.ssr",
+      "before": 5,
+      "after": 3,
+      "max": 5,
+      "state": "down"
+    },
+    {
+      "id": "p1.sitemap",
+      "before": 4,
+      "after": 2,
+      "max": 4,
+      "state": "down"
+    },
+    {
+      "id": "p1.llms-txt",
+      "before": 5,
+      "after": 2,
+      "max": 5,
+      "state": "down"
+    },
+    {
+      "id": "p1.organization",
+      "before": 6,
+      "after": 3,
+      "max": 6,
+      "state": "down"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "before": 3,
+      "after": 2,
+      "max": 3,
+      "state": "down"
+    },
+    {
+      "id": "p1.page-type",
+      "before": 4,
+      "after": 2,
+      "max": 4,
+      "state": "down"
+    },
+    {
+      "id": "p2.answer-passages",
+      "before": 9,
+      "after": 7,
+      "max": 9,
+      "state": "down"
+    },
+    {
+      "id": "p2.question-intent",
+      "before": 7,
+      "after": 5,
+      "max": 7,
+      "state": "down"
+    },
+    {
+      "id": "p2.freshness",
+      "before": 6,
+      "after": 3,
+      "max": 6,
+      "state": "down"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "before": 7,
+      "after": 3,
+      "max": 7,
+      "state": "down"
+    },
+    {
+      "id": "p2.named-author",
+      "before": 6,
+      "after": 3,
+      "max": 6,
+      "state": "down"
+    },
+    {
+      "id": "p3.listings",
+      "before": null,
+      "after": null,
+      "max": 4,
+      "state": "unobservable"
+    },
+    {
+      "id": "p3.mentions",
+      "before": null,
+      "after": null,
+      "max": 4,
+      "state": "unobservable"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "before": 4,
+      "after": null,
+      "max": 4,
+      "state": "became unobservable"
+    },
+    {
+      "id": "p3.sameas",
+      "before": 3,
+      "after": 2,
+      "max": 3,
+      "state": "down"
+    },
+    {
+      "id": "p3.video",
+      "before": 3,
+      "after": 2,
+      "max": 3,
+      "state": "down"
+    },
+    {
+      "id": "p4.answer-shape",
+      "before": 4,
+      "after": 2,
+      "max": 4,
+      "state": "down"
+    },
+    {
+      "id": "p4.question-coverage",
+      "before": null,
+      "after": null,
+      "max": 4,
+      "state": "unobservable"
+    },
+    {
+      "id": "p4.cn-engines",
+      "before": null,
+      "after": null,
+      "max": 2,
+      "state": "unobservable"
+    },
+    {
+      "id": "b.llms-full",
+      "before": 2,
+      "after": 0,
+      "max": 2,
+      "state": "down"
+    },
+    {
+      "id": "b.ai-txt",
+      "before": 2,
+      "after": 2,
+      "max": 2,
+      "state": "same"
+    },
+    {
+      "id": "b.geo-link",
+      "before": 1,
+      "after": 1,
+      "max": 1,
+      "state": "same"
+    },
+    {
+      "id": "b.speakable",
+      "before": 1,
+      "after": 0,
+      "max": 1,
+      "state": "down"
+    }
+  ],
+  "notes": [
+    "Different pages were sampled, so movement on a check mixes change on the site with sampling. Read each total as ±5, the run-to-run spread measured in benchmark/REPRODUCIBILITY.md. g.reachable is the least stable check: some sites answer crawlers differently from one minute to the next. Re-score the same pages (--urls-from, or --baseline) to see the site alone."
+  ]
+}

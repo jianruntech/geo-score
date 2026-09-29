@@ -33,13 +33,18 @@
       "format": "date",
       "description": "YYYY-MM-DD"
     },
+    "elapsed_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Seconds the scoring run took, from the first request to the last answer, as measured on the machine that ran it. It depends on that machine's network as much as on the site, so it describes the run, not the site, and a comparison of two reports ignores it. Optional; added in 1.5.0."
+    },
     "target": {
       "type": "string",
       "format": "uri"
     },
     "audience_language": {
       "type": "string",
-      "description": "BCP 47. Drives the answer-passage length rule: 25–120 words for English, 50–200 characters for Chinese."
+      "description": "BCP 47 primary tag of the most common language among the sampled pages (en, ja, de, …), ties going to the page sampled first; Chinese is written zh-CN, as it was when the field was either that or en, and und means no page's language could be told. Each page is read in its own language: answer passages in characters (50–200) for Chinese, Japanese and Korean pages and in words (25–120) for all others, and the heading, source-phrase and byline lexicons (English and Chinese) read only pages in their languages."
     },
     "sampled_urls": {
       "type": "array",
@@ -48,7 +53,7 @@
         "format": "uri"
       },
       "minItems": 1,
-      "description": "Exactly 8 unless the site has fewer pages; if fewer, say so in notes."
+      "description": "The pages scored. Exactly 8 unless the site has fewer pages; if fewer, say so in notes. The CLI leaves out a sampled page that answered with an error or a bot-challenge page, and its notes then say how many of how many sampled pages were scored and why (since 1.5.0)."
     },
     "landed": {
       "type": "string",

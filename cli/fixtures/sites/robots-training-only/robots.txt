@@ -1,0 +1,12 @@
+# Out of model training, still quotable: training crawlers and opt-out tokens only
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: CCBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml

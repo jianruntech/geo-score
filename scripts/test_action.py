@@ -6,7 +6,8 @@
 Hosted Actions have never run on this organisation, so this is the only execution the action gets
 before a release. It reads the `run:` block and the `env:` map out of action.yml (no YAML library),
 serves the `good` fixture from cli/fixtures on 127.0.0.1, and checks the outputs, the job summary,
-the SARIF and JUnit files, the threshold, input validation, and that a crafted URL cannot run shell.
+the SARIF and JUnit files, the badge, a baseline comparison, the threshold, input validation, and
+that a crafted URL cannot run shell.
 """
 import io, json, os, re, subprocess, sys, tempfile, xml.dom.minidom
 
@@ -60,7 +61,8 @@ def main():
     try:
         with tempfile.TemporaryDirectory() as tmp:
             print("\n  scoring the good fixture through action.yml")
-            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_SARIF="out/r.sarif", GEO_JUNIT="out/r.xml")
+            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_SARIF="out/r.sarif", GEO_JUNIT="out/r.xml",
+                             GEO_BADGE="out/aiv.json")
             ok(p.returncode == 0, "exit 0 (got %d)%s" % (p.returncode, "" if p.returncode == 0 else ": " + p.stderr[-400:]))
             ok({"score", "band", "gate-capped", "report-path"} <= set(o), "outputs score, band, gate-capped, report-path")
             ok(o.get("score", "").isdigit() and 0 <= int(o["score"]) <= 100, "score is 0-100: %r" % o.get("score"))
@@ -71,11 +73,23 @@ def main():
             ok(True, "JUnit XML parses")
             rep = json.load(io.open(o["report-path"], encoding="utf-8"))
             ok(str(rep["normalised"]) == o.get("score"), "the summary, the outputs and the JSON describe the same run")
+            ok(os.path.isabs(o.get("badge-path", "")) and os.path.realpath(o["badge-path"])
+               == os.path.realpath(os.path.join(tmp, "out", "aiv.json")), "badge-path is its absolute path: %r"
+               % o.get("badge-path"))
+            badge = json.load(io.open(os.path.join(tmp, "out", "aiv.json"), encoding="utf-8"))
+            ok(set(badge) == {"schemaVersion", "label", "message", "color", "cacheSeconds"}
+               and badge["message"] == "%s/100 %s" % (o.get("score"), o.get("band")),
+               "a badge path ending in .json gets the shields.io endpoint JSON: %r" % badge)
 
         with tempfile.TemporaryDirectory() as tmp:
-            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="101", GEO_ANNOTATIONS="false")
+            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="101", GEO_ANNOTATIONS="false",
+                             GEO_BADGE="-badge.svg")
             ok(p.returncode == 1 and "below the 101 threshold" in p.stdout, "fail-under 101 fails the step with exit 1")
             ok(bool(summ) and "score" in o, "and still writes the summary and outputs first")
+            svg = os.path.join(tmp, "-badge.svg")
+            ok(os.path.isfile(svg) and o.get("badge-path", "").endswith("-badge.svg"),
+               "any other badge path gets the SVG, a leading dash included: %r" % o.get("badge-path"))
+            xml.dom.minidom.parse(svg)
     finally:
         srv.shutdown()
         srv.server_close()
@@ -97,17 +111,90 @@ def main():
     finally:
         bare.shutdown()
         bare.server_close()
+    # a gate at zero caps the score at exactly 40: fail-under 40 cannot catch it, fail-on-gate and assert can
+    blocked = e2e.start_server("robots-blocks")
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_UNDER="40", GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and o.get("score") == "40" and o.get("gate-capped") == "true",
+               "robots-blocks with fail-under 40 alone passes (score %r): the documented threshold misses a gate at zero"
+               % o.get("score"))
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_ON_GATE="true", GEO_ANNOTATIONS="false")
+            log = p.stdout + p.stderr
+            ok(p.returncode == 1 and "g.robots" in log, "fail-on-gate true fails the step with exit 1 and names g.robots (%d)"
+               % p.returncode)
+            ok(re.search(r"^::error title=geo-score · fail-on-gate::.*g\.robots is 0/5", p.stdout, re.M) is not None,
+               "and emits one ::error for the gate at zero")
+            ok(bool(summ) and o.get("score") == "40", "and still writes the summary and outputs first")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ASSERT="g.ssr=max\n\n  p1.sitemap >= 4  \ng.robots=max\n",
+                          GEO_ANNOTATIONS="false")
+            ok(p.returncode == 1 and p.stdout.count("::error title=geo-score · assert") == 1
+               and "assert g.robots=max" in p.stdout, "a multiline assert runs each line; only the failing one is an error")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ASSERT="g.ssr=max\np3.listings>=1")
+            ok(p.returncode == 0 and "skipped" in p.stderr, "passing and unobservable assertions pass the step (%d)" % p.returncode)
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_ON_GATE="yes")
+            ok(p.returncode == 2 and "true or false" in p.stdout, "fail-on-gate other than true or false is refused")
+
+            print("\n  robots-blocks against a baseline in which its robots.txt gate was open")
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_JSON_OUT="now.json", GEO_ANNOTATIONS="false")
+            base = json.load(io.open(os.path.join(tmp, "now.json"), encoding="utf-8"))
+            pts = {"g.robots": 5, "p2.freshness": 1}
+            base.update(normalised=83, band="Leading", gate_capped=False,
+                        checks=[dict(c, points=pts.get(c["id"], c.get("points"))) for c in base["checks"]])
+            io.open(os.path.join(tmp, "base.json"), "w", encoding="utf-8").write(json.dumps(base))
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and "Changes base.json → this run" in p.stdout,
+               "baseline prints the comparison in the log (%d)%s" % (p.returncode, "" if p.returncode == 0 else ": " + p.stderr[-400:]))
+            ok(o.get("delta") == "-43" and o.get("dropped-checks") == "g.robots",
+               "outputs delta and dropped-checks: %r, %r" % (o.get("delta"), o.get("dropped-checks")))
+            ok("### Changes since baseline" in summ and "**83 → 40** (-43)" in summ and "| up +2 |" in summ
+               and "gate capped: no → yes" in summ, "the job summary has a 'Changes since baseline' section")
+            ok("Both reports scored the same 8 pages" in summ, "and says the pages were the same")
+            rep = json.load(io.open(o["report-path"], encoding="utf-8"))
+            ok(rep["sample_source"] == "pinned", "the baseline's pages were scored again")
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_JSON_OUT="base.json",
+                             GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and o.get("delta") == "-43" and "**83 → 40** (-43)" in summ,
+               "a baseline that is also the json-out path is compared as it was before the run: %r" % o.get("delta"))
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ANNOTATIONS="false")
+            ok("delta" not in o and "dropped-checks" not in o, "without a baseline there is no delta output")
+            # a baseline is any file: a check id in it that closes the code span must not render as Markdown
+            evil = "x` ![i](https://e.invalid/p.png) `"
+            base["checks"].append(dict(id=evil, state="scored", points=1, max=1))
+            io.open(os.path.join(tmp, "evil.json"), "w", encoding="utf-8").write(json.dumps(base))
+            summ_path = os.path.join(tmp, "evil-summary")
+            io.open(summ_path, "w").close()
+            q = subprocess.run([sys.executable, os.path.join(ROOT, "action", "summary.py"), "now.json", "false",
+                                "evil.json"], cwd=tmp, capture_output=True, text=True, timeout=60,
+                               env=dict(os.environ, GITHUB_STEP_SUMMARY=summ_path))
+            summ = io.open(summ_path, encoding="utf-8").read()
+            row = [line for line in summ.splitlines() if "e.invalid" in line]
+            ok(q.returncode == 0 and len(row) == 1 and "\\`" in row[0] and "\\!\\[i\\]" in row[0]
+               and "`p2.freshness`" in summ, "a baseline's check id cannot close its code span: %r" % row)
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="missing.json")
+            ok(p.returncode == 2 and "is not a file" in p.stdout, "a baseline that is not a file is refused")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_URLS_FROM="base.json")
+            ok(p.returncode == 2 and "drop urls-from" in p.stdout, "baseline with urls-from is refused")
+    finally:
+        blocked.shutdown()
+        blocked.server_close()
     srv = e2e.start_server("good")
     try:
 
         with tempfile.TemporaryDirectory() as tmp:
             canary = os.path.join(tmp, "pwned")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_ASSERT="$(touch %s)" % canary)
+            ok(p.returncode == 2 and not os.path.exists(canary), "an assert carrying $(…) is data, never shell")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_ASSERT="g.robots=max\n`touch %s`" % canary)
+            ok(p.returncode == 2 and not os.path.exists(canary), "so is one on a later line")
             p, _, _ = run(script, tmp, GEO_URL="$(touch %s)" % canary)
             ok(p.returncode == 2 and not os.path.exists(canary), "a URL carrying $(…) is data, never shell")
             p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="40; touch %s" % canary)
             ok(p.returncode == 2 and not os.path.exists(canary), "a non-numeric fail-under is refused, not executed")
             p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_SAMPLE="abc")
             ok(p.returncode == 2 and "whole number" in p.stdout, "a non-numeric sample is refused")
+            p, _, _ = run(script, tmp, GEO_URL=srv.origin, GEO_SAMPLE="0")
+            ok(p.returncode == 2 and "1 or more" in p.stdout, "a sample of 0 pages is refused")
     finally:
         srv.shutdown()
         srv.server_close()

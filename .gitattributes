@@ -1,0 +1,2 @@
+# byte-exact fixture: a UTF-8 byte-order mark and CRLF line ends are what it tests
+cli/fixtures/sites/robots-bom/robots.txt -text

@@ -2,6 +2,8 @@
 
 Used by action.yml, which runs the CLI once and hands the report here, so the summary, the
 annotations and the uploaded files all describe the same fetch. Not part of the CLI contract.
+
+    python3 action/summary.py REPORT [true|false] [BASELINE]
 """
 import html, json, os, re, sys
 
@@ -39,7 +41,18 @@ def _md(s):
     return re.sub(r"([\\`*_\[\]()!|<>#~])", r"\\\1", s)
 
 
-def main(path, annotate):
+# a check id as the tool writes it: g.robots, p2.sourced-stats, b.llms-full
+_ID = re.compile(r"[a-z0-9][a-z0-9.-]*")
+
+
+def _check_id(cid):
+    """A check id as a code span. A baseline file is not the tool's own output: an id in it that is not a plain id
+    is escaped outside a code span, where a backtick could otherwise close the span and render Markdown."""
+    cid = str(cid)
+    return "`%s`" % cid if _ID.fullmatch(cid) else _md(cid)
+
+
+def main(path, annotate, baseline=None):
     d = json.load(open(path, encoding="utf-8"))
     url, norm, band = d["target"], d["normalised"], d["band"]
     checks = [c for c in d["checks"] if not c["id"].startswith("b.")]
@@ -47,11 +60,17 @@ def main(path, annotate):
     gates = [c for c in zero if c["id"].startswith("g.")]
     others = sorted((c for c in zero if not c["id"].startswith("g.")), key=lambda c: -c["max"])
 
+    # with a baseline (action.yml's copy of it), the CLI already read and checked it before scoring: here it only
+    # compares
+    diff = gs.diff_reports(gs.load_report(baseline, "baseline"), d, baseline, None) if baseline else None
+
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as f:
             f.write("score=%d\nband=%s\ngate-capped=%s\n" % (norm, band, str(d["gate_capped"]).lower()))
             f.write("report<<GEOEOF\n%s\nGEOEOF\n" % json.dumps(d, ensure_ascii=False))
+            if diff is not None:
+                f.write("delta=%d\ndropped-checks=%s\n" % (diff["normalised_delta"], ",".join(gs.dropped_checks(diff))))
 
     if annotate:
         dropped = 0
@@ -72,12 +91,14 @@ def main(path, annotate):
              "%d of %d checks at zero%s. Rubric %s, %s, %d page%s sampled." % (
                  len(zero), len(checks), " (%d gate)" % len(gates) if gates else "",
                  d["rubric_version"], d["tool"], len(d.get("sampled_urls") or []),
-                 "" if len(d.get("sampled_urls") or []) == 1 else "s"), "",
-             "| Check | Score | Why |", "|---|:-:|---|"]
+                 "" if len(d.get("sampled_urls") or []) == 1 else "s"), ""]
+    if diff is not None:
+        lines += baseline_section(diff)
+    lines += ["| Check | Score | Why |", "|---|:-:|---|"]
     for c in checks:
         s = "%d/%d" % (c["points"], c["max"]) if c["state"] == "scored" else "—"
         why = _md(_cut(c.get("evidence") or c.get("reason") or "", 150))
-        lines.append("| %s `%s` | %s | %s |" % (NAMES.get(c["id"], ""), c["id"], s, why))
+        lines.append("| %s %s | %s | %s |" % (NAMES.get(c["id"], ""), _check_id(c["id"]), s, why))
     lines += ["", "— means the CLI cannot observe the check; it leaves the denominator instead of scoring 0.",
               "Scored against the open [AIV rubric %s](https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md)."
               % (d["rubric_version"], d["rubric_version"]), ""]
@@ -85,5 +106,53 @@ def main(path, annotate):
         f.write("\n".join(lines) + "\n")
 
 
+def baseline_section(diff):
+    """'Changes since baseline': the score, the band and the gate cap before and after, then only the checks that
+    moved. The CLI's log carries the full table."""
+    b, a = diff["before"], diff["after"]
+    delta = diff["normalised_delta"]
+    head = "**%d → %d** (%s)" % (b["normalised"], a["normalised"], "%+d" % delta if delta else "no change")
+    if diff["within_spread"] and delta:
+        head += ", within the measured spread"
+    head += " · %s" % (_md(a["band"]) if a["band"] == b["band"] else "%s → %s" % (_md(b["band"]), _md(a["band"])))
+    head += " · gate capped: %s → %s" % ("yes" if b["gate_capped"] else "no", "yes" if a["gate_capped"] else "no")
+    lines = ["### Changes since baseline", "", head, ""]
+    moved = [x for x in diff["checks"] if x["state"] not in ("same", "unobservable")]
+    if moved:
+        lines += ["| Check | Before | After | Change |", "|---|:-:|:-:|---|"]
+        for x in moved:
+            before, after = ("—" if v is None else "%d/%s" % (v, x["max"]) for v in (x["before"], x["after"]))
+            change = x["state"] + (" %+d" % (x["after"] - x["before"]) if x["state"] in ("up", "down") else "")
+            lines.append("| %s %s | %s | %s | %s |" % (NAMES.get(x["id"], ""), _check_id(x["id"]), before, after, change))
+    else:
+        lines.append("No check moved.")
+    lines.append("")
+    pages = ["%d %s" % (len(urls), label) for label, urls in (("added", diff["pages_added"]),
+                                                             ("removed", diff["pages_removed"])) if urls]
+    if pages:
+        lines += ["Pages since the baseline: %s." % ", ".join(pages), ""]
+    for n in diff["notes"]:
+        lines += [_md(n), ""]
+    return lines
+
+
+def assertion_errors(path):
+    """One ::error per failed fail-on-gate or assert check, for the step that already failed on them. The
+    expressions come from the action's inputs through the environment, one per line; the CLI refused any
+    malformed one before it scored, so here they parse."""
+    d = json.load(open(path, encoding="utf-8"))
+    exprs = ([("fail-on-gate", "g.*>0")] if os.environ.get("GEO_FAIL_ON_GATE") == "true" else []) \
+        + [("assert " + x.strip(), x.strip()) for x in os.environ.get("GEO_ASSERT", "").splitlines() if x.strip()]
+    ev = {c["id"]: c.get("evidence", "") for c in d["checks"]}
+    for label, expr in exprs:
+        for _e, cid, got, mx, passed in gs.check_assertions(d, [gs.parse_assert(expr)]):
+            if passed is False:
+                print("::error title=%s::%s" % (_prop("geo-score · %s" % label),
+                                                _cmd("%s: %s is %d/%d. %s" % (d["target"], cid, got, mx, _cut(ev.get(cid, ""), 200)))))
+
+
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2:3] != ["false"])
+    if sys.argv[1:2] == ["--assertions"]:
+        assertion_errors(sys.argv[2])
+    else:
+        main(sys.argv[1], sys.argv[2:3] != ["false"], (sys.argv[3:4] or [""])[0])

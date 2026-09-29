@@ -1,0 +1,57 @@
+Changes good.report.json → partial.report.json
+
+  before     http://127.0.0.1:{PORT} · {DATE} · geo-score-cli/{VERSION} · 8 pages (sitemap)
+  after      http://127.0.0.1:{PORT} · {DATE} · geo-score-cli/{VERSION} · 8 pages (sitemap)
+
+  score      100 → 61 / 100 (-39) · Leading → Growing
+  observable 86 → 82 points in the denominator
+  gate cap   no → no
+
+  check                name                             before  after  max  change
+  g.robots             Crawlers allowed in robots.txt        5      3    5  down -2
+  g.reachable          Reachable to retrieval agents         5      3    5  down -2
+  g.ssr                Main content server-rendered          5      3    5  down -2
+  p1.sitemap           Sitemap discoverable and fresh        4      2    4  down -2
+  p1.llms-txt          llms.txt present and structured       5      2    5  down -3
+  p1.organization      Organization + WebSite schema         6      3    6  down -3
+  p1.breadcrumb        BreadcrumbList on nested pages        3      2    3  down -1
+  p1.page-type         Page-type schema (Product, FAQ…)      4      2    4  down -2
+  p2.answer-passages   Self-contained answer passages        9      7    9  down -2
+  p2.question-intent   Headings match how people ask         7      5    7  down -2
+  p2.freshness         Freshness signal present              6      3    6  down -3
+  p2.sourced-stats     Statistics carry a source             7      3    7  down -4
+  p2.named-author      Named, verifiable authorship          6      3    6  down -3
+  p3.listings          Third-party listings                  —      —    4  unobservable
+  p3.mentions          Independent mentions                  —      —    4  unobservable
+  p3.knowledge-graph   Knowledge-graph entity                4      —    4  became unobservable
+  p3.sameas            sameAs links resolve                  3      2    3  down -1
+  p3.video             Video and multimodal presence         3      2    3  down -1
+  p4.answer-shape      Content shaped for extraction         4      2    4  down -2
+  p4.question-coverage Covers the questions people ask       —      —    4  unobservable
+  p4.cn-engines        Chinese engine readiness              —      —    2  unobservable
+  b.llms-full          llms-full.txt                         2      0    2  down -2
+  b.ai-txt             ai.txt                                2      2    2  same
+  b.geo-link           GEO link tags                         1      1    1  same
+  b.speakable          speakable markup                      1      0    1  down -1
+
+  Pages added (6)
+    http://127.0.0.1:{PORT}/blog/what-glue-for-oak.html
+    http://127.0.0.1:{PORT}/blog/why-chisels-go-blunt.html
+    http://127.0.0.1:{PORT}/blog/how-to-choose-sandpaper-grit.html
+    http://127.0.0.1:{PORT}/docs/setup/first-order.html
+    http://127.0.0.1:{PORT}/docs/setup/trade-account.html
+    http://127.0.0.1:{PORT}/features/bulk-orders.html
+
+  Pages removed (6)
+    http://127.0.0.1:{PORT}/blog/what-changed-in-vat-rules-2026.html
+    http://127.0.0.1:{PORT}/blog/how-to-close-the-books-in-a-day.html
+    http://127.0.0.1:{PORT}/blog/why-small-workshops-miss-invoices.html
+    http://127.0.0.1:{PORT}/docs/getting-started/import-invoices.html
+    http://127.0.0.1:{PORT}/docs/getting-started/connect-your-bank.html
+    http://127.0.0.1:{PORT}/features/reconciliation.html
+
+  Note: Different pages were sampled, so movement on a check mixes change on the site with sampling.
+        Read each total as ±5, the run-to-run spread measured in benchmark/REPRODUCIBILITY.md.
+        g.reachable is the least stable check: some sites answer crawlers differently from one
+        minute to the next. Re-score the same pages (--urls-from, or --baseline) to see the site
+        alone.

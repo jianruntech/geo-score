@@ -1,0 +1,43 @@
+{
+  "_normalised": 100,
+  "_band": "Leading",
+  "_gate_capped": false,
+  "_lang": "en",
+  "_sample_source": "sitemap",
+  "_sampled": [
+    "/",
+    "/blog/how-to-close-the-books-in-a-day.html",
+    "/blog/what-changed-in-vat-rules-2026.html",
+    "/docs/getting-started/connect-your-bank.html",
+    "/docs/getting-started/import-invoices.html",
+    "/features/reconciliation.html"
+  ],
+  "_notes": {
+    "_sampled": "The good site with two of its eight sampled pages behind bot challenges: /pricing.html answers 200 with an Akamai 'Access Denied' page and /blog/why-small-workshops-miss-invoices.html 403 with a Cloudflare 'Just a moment...' page. Both are dropped like failed fetches, and the report says 'Scored on 6 of 8 sampled pages'. Before 1.5.0 the Akamai page was scored as a page, and g.ssr read 3."
+  },
+  "g.robots": 5,
+  "g.reachable": 5,
+  "g.ssr": 5,
+  "p1.sitemap": 4,
+  "p1.llms-txt": 5,
+  "p1.organization": 6,
+  "p1.breadcrumb": 3,
+  "p1.page-type": 4,
+  "p2.answer-passages": 9,
+  "p2.question-intent": 7,
+  "p2.freshness": 6,
+  "p2.sourced-stats": 7,
+  "p2.named-author": 6,
+  "p3.listings": null,
+  "p3.mentions": null,
+  "p3.knowledge-graph": 4,
+  "p3.sameas": 3,
+  "p3.video": 3,
+  "p4.answer-shape": 4,
+  "p4.question-coverage": null,
+  "p4.cn-engines": null,
+  "b.llms-full": 2,
+  "b.ai-txt": 2,
+  "b.geo-link": 1,
+  "b.speakable": 1
+}

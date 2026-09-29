@@ -1,0 +1,17 @@
+# Everyone out, except the ten retrieval crawlers, named in their own group (RFC 9309 2.2.1)
+User-agent: *
+Disallow: /
+
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml

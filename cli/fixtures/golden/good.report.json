@@ -27,7 +27,7 @@
       "state": "scored",
       "points": 5,
       "max": 5,
-      "evidence": "robots.txt (263 bytes): 4 retrieval UAs named with an explicit permission. No Disallow applies to retrieval crawlers.",
+      "evidence": "robots.txt (263 bytes): no Disallow applies to retrieval crawlers; 2 named with an explicit permission (OAI-SearchBot, PerplexityBot); 8 fall under the * group, which carries an explicit allow-all.",
       "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
     },
@@ -126,7 +126,7 @@
       "state": "scored",
       "points": 7,
       "max": 7,
-      "evidence": "23 figures across the sample; of the 4 pages carrying several, 4 place a source, citation or outbound reference beside them.",
+      "evidence": "8 figures on 4 pages; 7 attributed in the same block or the next, 7 of them with a link. Of the 2 pages carrying three or more, 2 attribute most of theirs, 2 with a link.",
       "tier_reason": "tier 4 of 4 — top tier: most are attributed and the source is clickable and checkable",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
     },

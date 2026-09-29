@@ -4,7 +4,7 @@ The list the `g.robots` check checks `robots.txt` against. Consolidated from ven
 this is a reference, not original research. Vendors change these —
 [open an issue](https://github.com/jianruntech/geo-score/issues) if one is stale.
 
-**Last verified:** 2026-09-08
+**Last verified:** 2026-09-28
 
 ## The distinction that matters most
 
@@ -46,6 +46,22 @@ user-initiated rather than scheduled, but they fetch pages on a person's behalf 
 block on them is still a block, so they count. If a site's audience makes one of these
 genuinely irrelevant, mark the check partially unobservable rather than failing it.
 
+This table is the CLI's list: `RETRIEVAL_UAS` in `cli/geo_score.py` is tested against it, and
+no name from the two tables below may appear there.
+
+Amazon's crawler page now also documents `Amzn-SearchBot` (search, including Alexa) and
+`Amzn-User` (fetches on a user's behalf), and says `Amazonbot`'s crawl may be used to train
+Amazon's models. The table keeps `Amazonbot` as a retrieval crawler until that classification
+is reviewed.
+
+**The probes are unverified.** `g.reachable` sends each vendor's documented user-agent
+string from the auditor's own address, not from the vendor's published IP ranges. For
+two of the ten, `Claude-SearchBot` and `Claude-User`, Anthropic documents only the product
+token: their strings are built from it, in the form of `ClaudeBot`'s. A firewall that
+verifies crawlers by IP range or reverse DNS may refuse these probes and still serve the
+real crawler. A refusal therefore reads as "this server refused unverified crawler
+user-agents", not as proof that the vendor's crawler is blocked.
+
 ## Training crawlers — blocking these costs no citations
 
 | User-agent | Operator |
@@ -71,6 +87,8 @@ This file is a reference, not a scoring rule. Two rubric checks use it, and both
 defined in [`rubric/v1.1.md`](../rubric/v1.1.md) — read the tiers there, not here:
 
 - **`g.robots`** — whether `robots.txt` allows the retrieval crawlers above. Three tiers.
+  Each crawler is read against the group that names it, and against the `*` group only when
+  no group names it (RFC 9309, section 2.2.1).
 - **`g.reachable`** — whether all 10 actually return 200 with the same main content a
   browser gets. Three tiers, counted out of 10.
 

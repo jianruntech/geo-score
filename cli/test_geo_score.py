@@ -105,8 +105,80 @@ try:
     _calls.clear(); gs.fetch = lambda url, **kw: (_calls.append(url), gs.Resp(url, 404, b""))[1]
     r = gs.fetch_steady("https://example.com/nope")
     ok(r.status == 404 and len(_calls) == 1, "a definite 404 is not retried")
+    _calls.clear(); gs.fetch = lambda url, **kw: (_calls.append(url), gs.Resp(url, 400, b""))[1]
+    ok(gs.fetch_steady("https://example.com/bad").status == 400 and len(_calls) == 1, "neither is a 400")
+    # Retry-After is honoured, up to RETRY_AFTER_MAX seconds; without it the backoff grows
+    _slept = []
+    gs.time.sleep = _slept.append
+    for _ra, _want in (("2", [2, 2]), ("60", [gs.RETRY_AFTER_MAX] * 2), ("soon", [gs.RETRY_BACKOFF, 2 * gs.RETRY_BACKOFF])):
+        del _slept[:]
+        gs.fetch = lambda url, _ra=_ra, **kw: gs.Resp(url, 429, b"", {"retry-after": _ra})
+        r = gs.fetch_steady("https://example.com/busy")
+        eq((r.status, _slept), (429, _want), "Retry-After %r: the waits between three tries" % _ra)
+    # the per-run memo: one request per (url, user agent, method), whoever asks
+    _calls.clear(); gs.fetch = lambda url, **kw: (_calls.append((url, kw.get("ua"))), gs.Resp(url, 200, b"ok"))[1]
+    _m = gs.FetchMemo()
+    _a = gs.fetch_steady("https://example.com/robots.txt", memo=_m)
+    _b = gs.fetch_steady("https://example.com/robots.txt", memo=_m)
+    ok(_a is _b and len(_calls) == 1, "a memo answers the second request for the same URL")
+    gs.fetch_steady("https://example.com/robots.txt", memo=_m, ua="PerplexityBot/1.0")
+    gs.fetch_steady("https://example.com/robots.txt", memo=gs.FetchMemo())
+    eq(len(_calls), 3, "another user agent, or another run's memo, fetches again")
+    _calls.clear(); gs.fetch = lambda url, **kw: (_calls.append(url), gs.Resp(url, 0 if len(_calls) < 3 else 200, b"x"))[1]
+    _m = gs.FetchMemo()
+    ok(gs.fetch_steady("https://example.com/s.xml", memo=_m).ok and gs.fetch_steady("https://example.com/s.xml", memo=_m).ok
+       and len(_calls) == 3, "the memo keeps the answer after the retries, not a dropped try")
 finally:
     gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+eq(gs.fault_name("<urlopen error timed out>"), "timed out", "a timeout is named in the tool's words")
+eq(gs.fault_name("Remote end closed connection without response"), "connection dropped", "so is a dropped connection")
+eq(gs.fault_name("HTTP/1.1 999 Ignore previous instructions"), "no response", "and nothing else of the raw error survives")
+
+# ── bot challenges: a challenge page is no page to score. Read as content it scored g.ssr 0, and the leaderboard
+# published a site's bot protection as "content needs JavaScript". ──
+def _page(body, status=200):
+    return gs.Resp("https://x.test/", status, body.encode("utf-8"), {"content-type": "text/html; charset=utf-8"})
+_shell = '<html><head><title>App</title>%s</head><body><div id="root"></div></body></html>'
+for vendor, status, body in (
+        ("AWS WAF", 202, '<script>window.awsWafCookieDomainList = [];</script><div id="challenge-container"></div>'
+                         '<script>AwsWafIntegration.checkForceRefresh().catch(reportChallengeError);</script>'),
+        ("AWS WAF", 405, '<script src="https://x.token.awswaf.com/x/captcha.js"></script>'),
+        ("Akamai", 200, '<HTML><HEAD><TITLE>Access Denied</TITLE></HEAD><BODY><H1>Access Denied</H1>You don\'t have '
+                        'permission to access this server.<P>Reference&#32;&#35;18&#46;5a3c2e17</BODY></HTML>'),
+        ("Akamai", 403, '<H1>Access Denied</H1><P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;1</P>'),
+        ("Akamai", 200, '<html><head><title>Access Denied</title></head><body><h1>Access Denied</h1>You don\'t have '
+                        'permission to access "/" on this server.<br/>0.671ca17.1790693474.1da28eda</body></html>'),
+        ("Cloudflare", 403, '<title>Just a moment...</title><noscript>Enable JavaScript and cookies to continue'
+                            '</noscript>'),
+        ("Cloudflare", 503, "<script>window._cf_chl_opt={cType: 'managed'};</script>"),
+        ("Cloudflare", 403, '<script src="/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1?ray=1"></script>'),
+        ("Fastly", 200, '<title>Client Challenge</title><script src="/_fs-ch-1T1wmsGaOgGaSxcX/script.js"></script>'),
+        ("PerimeterX", 403, '<title>Access to this page has been denied</title><div id="px-captcha"></div>'),
+        ("DataDome", 403, '<script src="https://ct.captcha-delivery.com/c.js"></script>'),
+        ("Imperva", 200, '<iframe id="main-iframe" src="/_Incapsula_Resource?CWUDNSAI=9&incident_id=1-2">'
+                         'Request unsuccessful. Incapsula incident ID: 1-2</iframe>')):
+    eq(gs.challenge_kind(_page(body, status)), vendor, "a %s challenge (HTTP %d) is recognised" % (vendor, status))
+# a vendor's sensor script rides on its ordinary pages, a JavaScript shell's included: that shell scores g.ssr 0
+for why, status, body in (
+        ("Cloudflare's bot-management script", 200, _shell % "<script>var a=document.createElement('script');"
+         "a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';</script>"),
+        ("PerimeterX's sensor", 200, _shell % "<script>window._pxAppId = 'PXabc123';</script>"
+         '<script src="//client.perimeterx.net/PXabc123/main.min.js"></script>'),
+        ("Imperva's script", 200, _shell % '<script src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e&ns=1"></script>'),
+        ("DataDome's tag", 200, _shell % '<script src="https://js.datadome.co/tags.js"></script>'),
+        ("AWS WAF's SDK on a page that answered 200", 200, _shell % '<script src="https://x.token.awswaf.com/x/'
+         'challenge.js"></script><script>AwsWafIntegration.getToken().catch(reportChallengeError)</script>'),
+        ("an empty answer", 202, "")):
+    eq(gs.challenge_kind(_page(body, status)), None, "%s is no bot challenge" % why)
+_cf = _page("<html><body><div>One moment</div></body></html>", 403)
+_cf.headers["cf-mitigated"] = "challenge"
+eq(gs.challenge_kind(_cf), "Cloudflare", "Cloudflare's cf-mitigated: challenge header names its challenge")
+_article = ("<main><h1>Why a crawler sees Just a moment</h1><p>%s</p></main>"
+            % ("A reader-facing article about bot protection, long enough to be a page. " * 20))
+eq(gs.challenge_kind(_page("<title>Just a moment...</title>" + _article, 403)), None,
+   "a page with substantive body text is never a challenge, whatever its markers")
+ok(gs.BOT_CHALLENGE == "bot challenge served to a browser user-agent",
+   "benchmark/run.py files a row under 'bot challenge' by this prefix")
 
 # ── bands and the gate cap ──
 eq(gs.band(100), "Leading", "100 is Leading");  eq(gs.band(83), "Leading", "the band edge is inclusive")
@@ -152,8 +224,62 @@ ok(len(sl) < 260, "it fits in a post, got %d chars" % len(sl))
 gapped = dict(full); gapped["p2.answer-passages"] = 0
 ok("biggest gap" in gs.share_line(mk(gapped)).lower(), "a site with a gap names its biggest one")
 capline = gs.share_line(mk(gate_zero))
-ok("cannot reach" in capline, "a gate-capped site says why, instead of naming a content gap")
+ok("server-rendered" in capline and "cannot reach" not in capline,
+   "a gate-capped site says which gate, instead of claiming every crawler is shut out: %r" % capline)
 ok("Biggest gap" not in capline, "and does not also claim a content gap — the cap is the story")
+_two = dict(full); _two["g.robots"] = 0; _two["g.reachable"] = 0
+ok("robots.txt disallows AI retrieval crawlers; AI retrieval crawlers are refused." in gs.share_line(mk(_two)),
+   "every gate at zero is named, in rubric order")
+ok("(+4 at the next tier)" in gs.share_line(mk(gapped)), "the share line's number is the next tier's, not the headroom")
+
+# ── the headline and the gaps: gates at zero first, then the next tier's gain, then rubric order ──
+import argparse as _ap, contextlib as _ctx
+def _shown(res, view):
+    buf = io.StringIO()
+    with _ctx.redirect_stdout(buf):
+        gs.report(res, _ap.Namespace(explain=False)) if view == "report" else gs.brief(res)
+    return buf.getvalue()
+_mixed = dict(full, **{"g.reachable": 0, "p2.answer-passages": 0, "p1.llms-txt": 0, "p2.question-intent": 3,
+                       "p1.organization": 3, "g.robots": 3})
+_rows = gs.score(mk(_mixed))[0]
+eq([g[:4] for g in gs.top_gaps(_rows, 5)],
+   [("g.reachable", "Reachable to retrieval agents", 3, 5), ("p2.answer-passages", "Self-contained answer passages", 4, 9),
+    ("g.robots", "Crawlers allowed in robots.txt", 2, 2), ("p1.llms-txt", "llms.txt present and structured", 2, 5),
+    ("p1.organization", "Organization + WebSite schema", 2, 3)],
+   "a gate at zero leads; then the next tier's gain; ties in rubric order; a gate at a middle tier is an ordinary gap")
+eq(gs.top_gaps(gs.score(mk(full))[0]), [], "full marks: no gaps")
+eq(gs.next_tier("p2.answer-passages", 4, 9), (3, gs.TIERS["p2.answer-passages"][2][1]), "next_tier reads the tier table")
+_ev = dict((k, "") for k in full)
+_ev["g.ssr"] = "0 of 8 sampled pages carry substantive body text in the HTML response. More detail."
+_ev["g.robots"] = "robots.txt (40 bytes): a Disallow: / applies to 10 of the 10 retrieval crawlers — all 10. It also…"
+_capped = mk(dict(full, **{"g.ssr": 0, "g.robots": 0})); _capped["ev"] = _ev
+eq(gs.gate_line(gs.score(_capped)[0]),
+   "GATE AT ZERO — g.robots: robots.txt (40 bytes): a Disallow: / applies to 10 of the 10 retrieval crawlers — all 10; "
+   "g.ssr: 0 of 8 sampled pages carry substantive body text in the HTML response; "
+   "the score cannot exceed 40 while a gate is at zero", "the cap line names every gate at zero, with its evidence")
+eq(gs.gate_line(gs.score(mk(gate_mid))[0]), None, "a gate at a middle tier caps nothing and gets no line")
+for view in ("report", "brief"):
+    out = _shown(_capped, view)
+    ok(gs.gate_line(gs.score(_capped)[0]) in out, "%s prints the cap line" % view)
+    ok(gs.LEGEND in out, "%s explains its marks" % view)
+_foot = mk(dict(full, **{"p1.breadcrumb": None, "p3.listings": None, "p3.mentions": None,
+                         "p4.question-coverage": None, "p2.question-intent": None}))
+_foot["ev"]["p1.breadcrumb"] = "No nested pages in the sample — the check leaves the denominator."
+_foot["ev"]["p2.question-intent"] = "No question-intent lexicon for ja — the check leaves the denominator."
+_out = _shown(_foot, "report")
+ok("  Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage\n" in _out,
+   "the judgement line lists only the checks that need off-site search or judgement")
+ok("  Not observable this run: p1.breadcrumb (no nested page sampled), p2.question-intent (no question-intent "
+   "lexicon for ja)\n" in _out, "the rest are not observed this run, each with its reason: %r" % _out[-700:])
+eq(gs.unobserved_reason("p3.sameas", "The run reached its 300 s limit before every sameAs profile came back; not observed."),
+   "the run's time limit came first", "a check the deadline stopped says so")
+# links in the footer name the release that printed them, as doc_url() does
+for _u in (gs.RUBRIC_URL, gs.TROUBLESHOOTING_URL):
+    ok("/blob/v%s/" % gs.__version__ in _u and _u in _out, "the footer links to this release's tag: %s" % _u)
+import tokenize as _tk
+with open(os.path.join(HERE, "geo_score.py"), "rb") as _f:
+    _code = [t.string for t in _tk.tokenize(_f.readline) if t.type != _tk.COMMENT]
+eq([x for x in _code if "blob/main" in x], [], "geo_score.py links nowhere that moves with the main branch")
 
 
 # ── 路径型站点：前缀不是层级 ──
@@ -203,6 +329,29 @@ for c in rep["checks"]:
 ok("failed" not in {c["state"] for c in rep["checks"]},
    "there is no `failed` state under tiered scoring — a bottom tier is scored 0")
 
+# ── --assert and --fail-on-gate: CI policy over the report, never part of it ──
+eq(gs.parse_assert("g.*>0")[1:], (["g.robots", "g.reachable", "g.ssr"], ">", 0), "a glob names every gate")
+eq(gs.parse_assert(" g.robots = max ")[1:], (["g.robots"], "=", "max"), "spaces around the operator, and max")
+eq(gs.parse_assert("p1.llms-txt>=4")[1:], (["p1.llms-txt"], ">=", 4), ">= is not read as > then =")
+eq(gs.parse_assert("b.*>=0")[1], ["b.llms-full", "b.ai-txt", "b.geo-link", "b.speakable"], "bonus ids can be asserted")
+for _bad in ("x.nope>0", "g.robots", "g.robots>=high", "g.robots=>3", "g.robots>-1", "$(touch x)", "g.robots>0; rm -rf /", ""):
+    try:
+        gs.parse_assert(_bad)
+        ok(False, "--assert %r is refused" % _bad)
+    except ValueError:
+        pass
+_ar = gs.as_json(mk(dict(full, **{"g.robots": 0, "p2.freshness": 3, "p4.cn-engines": None})))
+_res = {(e, cid): (got, passed) for e, cid, got, _mx, passed in gs.check_assertions(_ar, [
+    gs.parse_assert("g.*>0"), gs.parse_assert("p2.freshness=max"), gs.parse_assert("p2.freshness>=3"),
+    gs.parse_assert("p4.cn-engines>=1"), gs.parse_assert("p1.sitemap=4"), gs.parse_assert("p1.sitemap>4")])}
+eq(_res[("g.*>0", "g.robots")], (0, False), "a gate at zero fails g.*>0")
+eq(_res[("g.*>0", "g.ssr")], (5, True), "a gate above zero passes it")
+eq(_res[("p2.freshness=max", "p2.freshness")], (3, False), "max is the check's own maximum")
+eq(_res[("p2.freshness>=3", "p2.freshness")], (3, True), ">= includes the value")
+eq(_res[("p4.cn-engines>=1", "p4.cn-engines")], (None, None), "an unobservable check is skipped, never failed")
+eq((_res[("p1.sitemap=4", "p1.sitemap")], _res[("p1.sitemap>4", "p1.sitemap")]), ((4, True), (4, False)), "= and > are exact")
+ok("assert" not in json.dumps(_ar), "assertions leave no trace in the report")
+
 # ── the badge is valid SVG and carries the score ──
 import tempfile, xml.dom.minidom
 pth = os.path.join(tempfile.mkdtemp(), "b.svg")
@@ -211,11 +360,66 @@ svg = io.open(pth, encoding="utf-8").read()
 xml.dom.minidom.parseString(svg)
 ok("100/100" in svg and "Leading" in svg, "the badge shows the score and the band")
 ok('role="img"' in svg and "<title>" in svg, "the badge is labelled for screen readers")
+# the shields.io endpoint JSON and the SVG come from one helper: the same label, message and colour, gate cap included
+_capped_robots = mk(dict(full, **{"g.robots": 0}))
+for _res, _msg in ((mk(full), "100/100 Leading"), (_capped_robots, "40/100 Early (gate capped)")):
+    _d = tempfile.mkdtemp()
+    gs.write_badge(_res, os.path.join(_d, "b.svg"))
+    gs.write_badge_json(_res, os.path.join(_d, "b.json"))
+    _svg = xml.dom.minidom.parse(os.path.join(_d, "b.svg")).documentElement
+    _bj = json.load(io.open(os.path.join(_d, "b.json"), encoding="utf-8"))
+    eq(sorted((k, type(v).__name__) for k, v in _bj.items()),
+       [("cacheSeconds", "int"), ("color", "str"), ("label", "str"), ("message", "str"), ("schemaVersion", "int")],
+       "the endpoint JSON has shields.io's keys and types")
+    eq((_bj["schemaVersion"], _bj["message"]), (1, _msg), "schemaVersion 1, and the score, band and any cap")
+    eq("%s: %s" % (_bj["label"], _bj["message"]), _svg.getAttribute("aria-label"), "the JSON says what the SVG says")
+    eq(_bj["color"], _svg.getElementsByTagName("rect")[2].getAttribute("fill"), "in the SVG's colour")
+    ok(_bj["cacheSeconds"] >= 300, "cacheSeconds is at least shields.io's minimum of 300")
 
 # ── html helpers ──
 eq(gs.visible_text("<p>a<script>junk()</script>b</p>"), "a b", "scripts are stripped, not read")
 ok("h2" not in " ".join(gs.headings("<h2>Real heading</h2>")).lower(), "headings come back as text")
 ok("Real heading" in gs.headings("<h2>Real heading</h2>"), "and the text is intact")
+eq(gs.visible_text("<p>a</p><script>x <p>b</p>"), "a", "a script that is never closed hides the rest, as in a browser")
+eq(gs.visible_text("<p>a</p><svg><p>b</p>"), "a b", "an svg that is never closed hides nothing")
+eq(gs.visible_text("<P>a</p><SCRIPT>x</Script>b"), "a b", "closes are found in any case")
+eq(gs.paragraphs("<p>one</p><p>two"), ["one"], "a paragraph that is never closed is not read")
+eq(gs.headings("<h2>a</h3><h1>b</H1><title>T</title>"), ["a", "b", "T"], "a heading runs to the first heading close")
+eq(gs.og_site_name('<meta content="a" content="b>c" property="og:site_name">'), "b>c",
+   "og:site_name after its content, where a value holds '>'")
+eq(gs.og_site_name('<meta property="og:site_name" content="Acme">'), "Acme", "and before it")
+# every scanner reads a page in one pass. The regexes they replaced retried each unclosed opening to the end of the
+# page: 80 KB of "<script>x " took 1.8 s, and the 4 MB a fetch may return would have taken hours
+import time as _time
+def _secs(fn, text):
+    best = None
+    for _ in range(3):
+        t0 = _time.perf_counter(); fn(text); t = _time.perf_counter() - t0
+        best = t if best is None else min(best, t)
+    return best
+# (a scanner, the unit a page of it repeats): each opening that never closes, or a tag that never ends
+_LD = '<script type="application/ld+json">x '
+_SCANS = [("visible_text", gs.visible_text, "<script>x "), ("visible_text", gs.visible_text, _LD),
+          ("jsonld", gs.jsonld, "<script>x "), ("jsonld", gs.jsonld, _LD),
+          ("visible_text", gs.visible_text, "<a "), ("visible_text", gs.visible_text, "<svg>x "),
+          ("main_html", gs.main_html, "<main>x "), ("paragraphs", gs.paragraphs, "<p>x "),
+          ("headings", gs.headings, "<h2>x "), ("visible_dates", gs.visible_dates, "<time "),
+          ("own_dates", lambda h: gs.own_dates(h, []), 'property="article:published_time" '),
+          ("links", lambda h: list(gs.in_tags(gs._A_HREF, gs._A, h)), "<a "),
+          ("geo_link", gs.geo_link, '<link rel="alternate" '), ("og_site_name", gs.og_site_name, 'content="x" '),
+          ("has_md_link", gs.has_md_link, "[a](b "), ("sitemap lines", gs._SITEMAP_DECL.findall, " \n"),
+          ("content_html", gs.content_html, "<nav>x "), ("content_html", gs.content_html, "<div role=navigation>x "),
+          ("content_html", gs.content_html, "</div "), ("content_html", gs.content_html, "<!-- "),
+          ("text_blocks", gs.text_blocks, "<p "), ("anchors", lambda h: list(gs.anchors(h)), "<a href=x>"),
+          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), "<p>1% <a href=#1>1</a>"),
+          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), ' id="1"> 100 <a href="#1">1</a>'),
+          ("figures", gs.figures, "$100 "), ("figures", gs.figures, "号 100 ")]
+for _name, _fn, _unit in _SCANS:
+    _t1 = _secs(_fn, _unit * (1_000_000 // len(_unit)))
+    _t2 = _secs(_fn, _unit * (2_000_000 // len(_unit)))
+    ok(_t1 < 1, "%s on 1 MB of %r takes %.2f s, under 1 s" % (_name, _unit, _t1))
+    ok(_t2 < 3 * max(_t1, 0.005), "%s on 2 MB of %r takes %.3f s, %.3f s on 1 MB: linear, not quadratic"
+       % (_name, _unit, _t2, _t1))
 
 # ── p2.question-intent: \w matches CJK, so the nav-label filter must not swallow short Chinese headings ──
 def _intent(h): return bool(gs.QP_INTENT.search(h)) and not gs.NAV_LABEL.match(h)
@@ -226,11 +430,87 @@ ok(not _intent("价格"), "a bare Chinese nav label does not count")
 ok(not _intent("怎么买"), "a 3-char Chinese label is still treated as nav")
 ok(not _intent("Pricing"), "a single latin word is still a nav label")
 ok(not _intent("首页 · 价格"), "an a · b nav pattern does not count")
+for _h in ("超高动态对比度", "对比度与色域", "电路原理图下载"):
+    ok(not _intent(_h), "a product spec is not an explanation or a comparison: %s" % _h)
+for _h in ("工作流的工作原理", "版本对比", "两种方案的对比", "原理与实现"):
+    ok(_intent(_h), "an explanation or a comparison still counts: %s" % _h)
 
 # ── is_cjk judges the visible text, not the markup ──
 _zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>" + ("var a=1;" * 400) + "</script></head><body><p>" + ("见润科技面向跨境电商与出海企业提供人工智能落地服务。" * 6) + "</p></body></html>"
 ok(gs.is_cjk(_zh_page), "a Chinese page stays Chinese even when its HTML is mostly CSS/JS")
 ok(not gs.is_cjk("<html><body><p>" + ("An English page with a 中文 word. " * 20) + "</p></body></html>"), "a stray CJK word does not make a page Chinese")
+
+# ── page language: each page is read in its own language ──
+# The site-wide switch held every page to the character range once one page was Chinese (airwallex.com's English
+# pages scored 0 of 8), labelled a Japanese site zh-CN, and read German and French headings with the English lexicon.
+def _lang(body, lang=None, headers=None):
+    attr = ' lang="%s"' % lang if lang else ""
+    return gs.page_lang(gs.Resp("u", 200, ("<html%s><body><p>%s</p></body></html>" % (attr, body)).encode("utf-8"),
+                                headers or {}))
+_EN = "The monthly close takes an afternoon when every payment is matched to the invoice it settles, and this is how. " * 3
+_DE = "Der Monatsabschluss ist nicht schwer, wenn die Zahlungen mit den Rechnungen abgeglichen sind und wir sie auch prüfen. " * 3
+_FR = "Le rapprochement est plus simple quand vous avez les factures et les paiements dans une seule liste, avec les dates. " * 3
+_ES = "El cierre del mes es más fácil con las facturas y los pagos en una sola lista, pero muy pocos lo hacen así. " * 3
+_PT = "O fechamento do mês é mais fácil com as faturas e os pagamentos em uma lista, mas você não precisa de mais. " * 3
+_JA = "月末の締めとは、その月の入出金をすべて請求書と照らし合わせる作業のことです。" * 3
+_ZH = "月末结账就是把当月的每一笔收付款都和发票对上，确认账面与银行余额一致。" * 3
+_KO = "월말 결산은 그달의 모든 입출금을 청구서와 맞추는 작업입니다. 은행 잔액과 장부가 일치하는지 확인합니다." * 3
+for _body, _want in ((_EN, "en"), (_DE, "de"), (_FR, "fr"), (_ES, "es"), (_PT, "pt"), (_JA, "ja"), (_ZH, "zh"),
+                     (_KO, "ko"), ("Sign in", "und")):
+    eq(_lang(_body), _want, "undeclared, the script and a few common words tell the language: %s" % _want)
+eq(_lang(_EN, "en-US"), "en", "<html lang> gives the primary tag")
+eq(_lang(_DE, "de-DE"), "de", "a declared German page is German")
+eq(_lang("Hi", "pt-BR"), "pt", "and a page with little text keeps its declaration")
+eq(_lang(_ZH, "en"), "zh", "a page declared English whose text is Chinese is Chinese (a template's default lang)")
+eq(_lang(_EN, "zh-CN"), "en", "a page declared Chinese whose text is English is English")
+eq(_lang(_EN + "简体中文 日本語 한국어 沪ICP备14017582号", "zh-CN"), "en", "and so is one with a language menu and a filing number")
+# a Chinese docs page whose code sample, English comments and all, outweighs its paragraphs: 161 Han characters in
+# 2,700 of text read it as English, and each 55-character paragraph counted as one word
+_para = "<p>工作流由触发器和一连串节点组成，每个节点完成一步操作，上一步的输出就是下一步的输入，出错时会停在出错的那一步。</p>"
+_code = "# send the event to the next step and return the result to the caller\ndef handler(event, context):\n    return 200\n"
+eq(_lang(_para * 3 + "<pre><code>%s</code></pre>" % (_code * 20), "zh-CN"), "zh", "code is not read: a declared Chinese page stays Chinese")
+eq(_lang(_para * 3 + "<div>%s</div>" % (_code * 20), "zh-CN"), "zh", "and 30 or more Chinese characters keep the declaration")
+eq(_lang(_para * 3 + "<pre>%s</pre>" % (_code * 20)), "zh", "undeclared, code does not outweigh the Chinese text either")
+eq(_lang(_JA, "ja"), "ja", "a declared Japanese page is Japanese")
+eq(_lang("Bonjour", headers={"content-language": "fr-CA, en"}), "fr", "Content-Language, when <html> declares nothing")
+eq(_lang("Hallo", "de", headers={"content-language": "fr"}), "de", "<html lang> before Content-Language")
+eq(gs.page_lang(gs.Resp("u", 200, ('<html data-lang="fr" lang="de"><body>%s</body></html>' % _DE).encode("utf-8"))), "de",
+   "data-lang is not lang")
+eq([gs.audience_language(x) for x in (["zh"] + ["en"] * 7, ["zh", "zh", "en"], ["ja"] * 7 + ["en"], ["und", "und"],
+                                      ["ja", "de"], ["und", "de"])],
+   ["en", "zh-CN", "ja", "und", "ja", "de"], "audience_language: the most common page language; Chinese stays zh-CN")
+eq(gs.wc("ひらがなとカタカナだけでかかれたぶんしょうはこれでさんじゅうもじです"), 34, "kana counts as characters")
+ok(gs.wc(_KO) > 50, "and so does hangul")
+# airwallex.com's English pages carry a language menu: once kana and hangul counted, its 24 characters stood for the
+# page's 1,651 words and g.ssr read every page as thin
+_MENU = "English 简体中文 繁體中文 日本語 한국어 Deutsch Français Español Nederlands 中文（香港） 한국어（대한민국） "
+eq(gs.wc(_MENU + "word " * 300), 300 + len(_MENU.split()), "a language menu does not turn an English page's words into characters")
+eq(gs.wc(_ZH), gs.cjk_chars(_ZH), "Chinese text is still counted in characters")
+ok(gs.is_cjk(_JA) and not gs.is_cjk(_DE), "a Japanese page is written in a CJK script, a German one is not")
+eq(gs.lexicon_gap(["en", "ja", "zh", "de", "ja", "und"]), ["ja", "de"], "the page languages no lexicon here reads")
+
+# ── p2.question-intent: the English and the Chinese lexicons match the same kinds of heading ──
+# The Chinese forms of "create your first app" and "how workflows work" did not count, so Chinese sites read lower
+# on this check (rubric/v1.1.json dates the fix to 1.5.0).
+_PARITY = [("question", "How do I reset my password?", "如何重置密码"),
+           ("question", "What is a virtual account", "什么是虚拟账户"),
+           ("task", "Create your first app", "创建你的第一个应用"),
+           ("task", "Install the command-line tool", "安装命令行工具"),
+           ("task", "Configure webhook alerts", "配置 Webhook 通知"),
+           ("task", "Migrate your old data", "迁移旧版数据"),
+           ("task", "Use webhooks to receive events", "使用 Webhook 接收事件"),
+           ("explanation", "How workflows work", "工作流的工作原理"),
+           ("comparison", "Stripe vs Adyen", "Stripe 与 Adyen 对比"),
+           ("comparison", "Plans compared", "价格与版本对比"),
+           ("none", "Enterprise cloud servers", "企业级云服务器"),
+           ("none", "Management team", "管理团队"),
+           ("none", "Processor lineup", "处理器产品线"),
+           ("none", "Integrated circuits", "集成电路"),
+           ("none", "Terms of use", "使用条款"),
+           ("none", "Our customers", "我们的客户"),
+           ("none", "Pricing", "价格")]
+for _kind, _en, _zh in _PARITY:
+    eq((_intent(_en), _intent(_zh)), (_kind != "none",) * 2, "%s heading, in both lexicons: %r / %r" % (_kind, _en, _zh))
 
 # ── the CLI's embedded rubric must equal the published rubric/v1.1.json ──
 # 「CLI 实现的就是公开量表」这句话以前只是口头承诺：两份表今天一致，但没有任何东西保证明天也一致。
@@ -389,6 +669,83 @@ eq(_g["*"], [("allow", "/")], "a new user-agent line after rules starts a new gr
 _g = gs.robots_groups("User-agent: a\nDisallow: /x\nUser-agent: b\nDisallow: /y\n")
 eq((_g["a"], _g["b"]), ([("disallow", "/x")], [("disallow", "/y")]), "groups without blank lines between them stay apart")
 
+# ── the crawler lists are the reference's: g.robots scores retrieval crawlers only ──
+# Up to 1.4.0 the training crawlers GPTBot and ClaudeBot and the opt-out token Google-Extended were scored as
+# retrieval crawlers, and a site that blocked only those was capped at 40. The lists now follow the reference.
+import re as _rx
+_ref = io.open(os.path.join(HERE, "..", "reference", "ai-crawlers.md"), encoding="utf-8").read()
+def _table(heading):
+    part = _ref.split(heading, 1)[1].split("\n## ", 1)[0]
+    return _rx.findall(r"^\| `([^`]+)` \|", part, _rx.M)
+_retrieval, _training, _optout = (_table("## Retrieval crawlers"), _table("## Training crawlers"),
+                                  _table("## Opt-out tokens"))
+eq(len(_retrieval), 10, "the reference's retrieval table lists 10 crawlers")
+eq([n for n, _ in gs.RETRIEVAL_UAS], _retrieval, "RETRIEVAL_UAS is the reference's retrieval table, in order")
+eq(set(n.lower() for n, _ in gs.RETRIEVAL_UAS) & set(t.lower() for t in _training + _optout), set(),
+   "no training crawler or opt-out token is scored as a retrieval crawler")
+eq(sorted(gs.NOT_SCORED_TOKENS), sorted(_training + _optout), "NOT_SCORED_TOKENS is the reference's training and opt-out tables")
+for _n, _ua in gs.RETRIEVAL_UAS:
+    ok(_n.lower() + "/" in _ua.lower(), "%s's user-agent string carries its product token: %r" % (_n, _ua))
+    ok(gs.UA_BROWSER not in _ua and _ua not in gs.UA_BROWSER, "%s is told apart from the browser" % _n)
+
+# ── robots.txt, rule selection (RFC 9309 2.2.1) ──
+# A crawler obeys the group that names it and falls back to * only when none does, so a * Disallow never
+# reaches a crawler that has a group of its own.
+# Cross-checked with urllib.robotparser where robotparser follows the RFC (rp=True). It does not strip a
+# byte-order mark, does not read Disallow: /*, reads only the first group that names an agent instead of
+# merging them, and does not extract the product token from "Googlebot/2.1".
+import urllib.robotparser as _rpm
+_R = [n for n, _ in gs.RETRIEVAL_UAS]
+_ALL10 = "".join("User-agent: %s\n" % n for n in _R)
+_CASES = [
+    # (case, robots.txt, tier, blocked retrieval crawlers, cross-check with robotparser)
+    ("* allows", "User-agent: *\nAllow: /\n", 5, [], True),
+    ("* denies", "User-agent: *\nDisallow: /\n", 0, _R, True),
+    ("byte-order mark", "﻿User-agent: *\nDisallow: /\n", 0, _R, False),
+    ("CRLF", "User-agent: PerplexityBot\r\nDisallow: /\r\n\r\nUser-agent: *\r\nAllow: /\r\n", 0, ["PerplexityBot"], True),
+    ("a named group replaces *", "User-agent: *\nDisallow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n", 0,
+     [n for n in _R if n != "OAI-SearchBot"], True),
+    ("* denies, one group names all 10 with Allow", "User-agent: *\nDisallow: /\n\n" + _ALL10 + "Allow: /\n", 5, [], True),
+    ("* denies, all 10 allowed in groups of their own", "User-agent: *\nDisallow: /\n\n"
+     + "".join("User-agent: %s\nAllow: /\n\n" % n for n in _R), 5, [], True),
+    ("* denies, only some named", "User-agent: *\nDisallow: /\n\nUser-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n", 0,
+     [n for n in _R if n not in ("Googlebot", "Bingbot")], True),
+    ("training crawlers and opt-out tokens only", "User-agent: GPTBot\nUser-agent: ClaudeBot\nUser-agent: CCBot\n"
+     "User-agent: Google-Extended\nUser-agent: Applebot-Extended\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], True),
+    ("grouped user-agent lines", "User-agent: GPTBot\nUser-agent: PerplexityBot\nUser-agent: ClaudeBot\nDisallow: /\n", 0,
+     ["PerplexityBot"], True),
+    ("case-insensitive", "user-agent: perplexitybot\nDISALLOW: /\n", 0, ["PerplexityBot"], True),
+    ("a partial Disallow in its own group", "User-agent: *\nDisallow: /\n\nUser-agent: PerplexityBot\nDisallow: /private\n", 0,
+     [n for n in _R if n != "PerplexityBot"], True),
+    ("no groups at all", "Sitemap: https://x.test/sitemap.xml\n", 3, [], True),
+    ("an empty Disallow allows everything", "User-agent: *\nDisallow:\n", 5, [], True),
+    ("Disallow: /*", "User-agent: Claude-User\nDisallow: /*\n", 0, ["Claude-User"], False),
+    ("groups naming one agent merge", "User-agent: Googlebot\nDisallow: /private\n\nUser-agent: *\nAllow: /\n\n"
+     "User-agent: Googlebot\nDisallow: /\n", 0, ["Googlebot"], False),
+    ("a product token with a version", "User-agent: Googlebot/2.1\nDisallow: /\n", 0, ["Googlebot"], False),
+    ("a longer token is another agent", "User-agent: Googlebot-News\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], True),
+    ("an opt-out token is not its crawler", "User-agent: Applebot-Extended\nDisallow: /\n", 3, [], True),
+]
+eq(len(_CASES) >= 15, True, "the robots.txt table has at least 15 cases")
+for _case, _txt, _tier, _blocked, _cross in _CASES:
+    _grp = gs.robots_groups(_txt)
+    _got = [n for n in _R if gs.blocks_site(gs.robots_rules(_grp, n)[0])]
+    eq(_got, list(_blocked), "robots.txt %s: blocked retrieval crawlers" % _case)
+    eq(gs.robots_tier(_txt, len(_txt))[0], _tier, "robots.txt %s: g.robots tier" % _case)
+    if _cross:
+        _rp = _rpm.RobotFileParser()
+        _rp.parse(_txt.splitlines())
+        eq([n for n in _R if not _rp.can_fetch(n, "https://x.test/")], list(_blocked),
+           "robots.txt %s: urllib.robotparser agrees" % _case)
+eq(gs.robots_token("Googlebot/2.1"), "googlebot", "a version is not part of the product token")
+eq(gs.robots_token(" * "), "*", "the wildcard")
+_ev = gs.robots_tier("User-agent: GPTBot\nDisallow: /\n", 30)[1]
+ok("GPTBot" in _ev and "not scored" in _ev, "evidence names a training crawler disallowed by name as not scored: %r" % _ev)
+_ev = gs.robots_tier("User-agent: PerplexityBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 60)[1]
+ok("PerplexityBot" in _ev and "own group" in _ev, "evidence at zero names the blocked crawler and its group: %r" % _ev)
+_ev = gs.robots_tier("User-agent: *\nDisallow: /\n", 26)[1]
+ok("* group" in _ev and "all 10" in _ev, "a * block says so: %r" % _ev)
+
 # ── a catch-all 200 with an HTML shell is not a text file ──
 ok(not gs.text_file(gs.Resp("u", 200, b"  <!DOCTYPE html><html><body>app</body></html>")), "an SPA shell is not an llms.txt")
 ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <html>")
@@ -412,6 +769,89 @@ _ATT = r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|resear
 ok(gs.re.search(_ATT, "Free resources for teams") is None, "'resources' is not a source")
 ok(gs.re.search(_ATT, "The price index reports a national average") is not None, "'reports' is an attribution")
 ok("sourced|stud(?:y|ies)|reports?" in io.open(gs.__file__, encoding="utf-8").read(), "the test pattern is the scorer's pattern")
+
+# ── p2.sourced-stats: a figure is attributed only by what sits beside it in the content ──
+# Read page-wide, a social icon, a partner logo or a "Research" menu item attributed every figure on the page: the
+# check agreed with 1 of 5 hand audits, and every disagreement was the CLI reading 7.
+_OWN, _PROF = {"acme"}, [gs.profile_of("https://github.com/acme")]
+_src = lambda u: gs.source_link(u, _OWN, _PROF)
+ok(_src("https://www.ons.gov.uk/economy/inflation"), "a link to another site is a source")
+ok(_src("//data.example.org/set"), "so is a protocol-relative one")
+for _u, _why in (("https://acme.com/blog/x", "the site itself"), ("https://docs.acme.co.uk/", "the site under another TLD"),
+                 ("https://twitter.com/acme", "a social profile"), ("https://m.facebook.com/x", "a social host's subdomain"),
+                 ("https://news.example.org/share?u=1", "a share button"), ("https://github.com/acme/data", "the site's own sameAs profile"),
+                 ("mailto:hi@example.org", "not http(s)"), ("/about", "a relative link"), ("https://[::1", "a malformed URL")):
+    ok(not _src(_u), "not a source: %s (%s)" % (_why, _u))
+ok(_src("https://github.com/other-org/data"), "another account on the sameAs profile's host is a source")
+eq([gs.site_key(h) for h in ("www.acme.com", "docs.acme.com", "acme.co.uk", "u.github.io", "127.0.0.1", "localhost")],
+   ["acme", "acme", "acme", "u.github.io", "127.0.0.1", "localhost"], "the name a site goes by across its hosts")
+eq(gs.figures("In 2025 we shipped 1,240 orders; 38% went abroad for £22,000, on v1.2.3 and 2026.09.01, up 3.5%."),
+   ["1,240", "38%", "£22,000", "3.5%"], "a year, a version and a dotted date are not figures")
+# a price is the site's own terms, not a statistic: the good fixture's /pricing table held it to 5 of 7
+eq(gs.figures("Studio US$199/user, ¥199/月, 199元/月, 每月68元, 售价 ￥299, RMB 399 per seat, $29/mo, ¥68起, "
+              "$15 per user per month"), [], "a sum of money written the way only a price is, or after a price word, "
+              "is a price")
+eq([gs.figures(x) for x in ("$29", " US$ 199 ", "￥299", "199元", "$29 *", "£12 a month", "$29 per month", "68元/月",
+                            "€240 billed annually", "RMB 399 monthly")], [[]] * 10,
+   "and so is one that is all its block says, with or without a billing period: a pricing card or a price table")
+eq(gs.figures("Late payment costs a small firm £22,000 a year, and a £90,000 threshold applies; the median load "
+              "paid $2,350, a $4.5 billion market, 3000亿元 in trade, ￥3,000万 raised, USD 120 million, 1.2万元 on average"),
+   ["£22,000", "£90,000", "$2,350", "$4.5", "3000", "3,000", "120", "1.2"], "any other sum of money is a figure")
+eq(gs.figures("$2,350 median"), ["$2,350"], "even at the start of a short block")
+eq(gs.figures("$4 billion a year"), ["$4"], "and a sum with a magnitude is a figure however it is billed")
+eq(gs.stat_reading("<main><table><tr><td>Bench</td><td>£12 a month</td></tr><tr><td>Studio</td><td>£29 a month</td></tr>"
+                   "<tr><td>Works</td><td>£59 a month</td></tr></table><p>VAT is 20%, per "
+                   '<a href="https://tax.test/rates">the tax office</a>.</p></main>', {"acme"}), (1, 1, 1),
+   "a price table carries no figures")
+eq(gs.figures("占用了61%的时间，样本为1,860家"), ["61%", "1,860"], "figures flush against Chinese text count")
+eq(gs.figures("On November 30, 2022, NMLS #1928093 reported 85,000 users and 3.5x growth."), ["85,000"],
+   "a day, a year and a reference number are not figures")
+# identifiers in a Chinese site's chrome: without a <footer> element the chrome rule cannot find them, and under
+# 1.5.0's proximity rule nothing ever attributed them (mingdao.com fell from 7 to 3)
+eq(gs.figures("沪ICP备14017582号-1 | 沪公安备 31010402008586号 | 京ICP证030173号 | 小红书号：3152645850 | QQ号 123456 | "
+              "客服 13800138000 | 门牌 188号"), [], "filing, account and phone numbers are identifiers, not figures")
+eq(gs.figures("服务了4,200家企业，1000000 以上不算，样本为1,860家，涨了300%"), ["4,200", "1,860", "300%"],
+   "a bare run of seven or more digits is an identifier; a grouped number and a percentage are figures")
+_div_footer = ('<h1>数据</h1><p>据<a href="https://stats.test/r">行业报告</a>，客户增长了38%，覆盖1,200家门店和164个城市。</p>'
+               '<div class="footer">沪ICP备14017582号 | 沪公安备 31010402008586号 | 小红书号：3152645850 | 京ICP证030173号</div>')
+eq(gs.stat_reading(_div_footer, {"example"}), (3, 3, 3), "a <div class=footer>'s filing numbers are not figures")
+eq(gs.stat_reading(_div_footer.replace('<div class="footer">', "<footer>").replace("</div>", "</footer>"),
+                   {"example"}), (3, 3, 3), "and in a <footer> they are not read at all")
+eq(list(gs.anchors('<a class=x href="https://a.test/1">one</a> <a href=\'#fn2\'><sup>2</sup></a> <a name=x>no</a>')),
+   [("https://a.test/1", "one"), ("#fn2", "<sup>2</sup>")], "every <a href>, with its text")
+_page = ('<header><a href="https://partner.test/">Partner</a> 51% 52% 53%</header><nav>Research</nav>'
+         '<p>Sales rose 12% to $4,000 on 300 stores.</p><div role="contentinfo"><a href="https://partner.test/">P</a></div>'
+         '<div role="navigation"><div><a href="https://other.test/">x</a></div></div><footer>Source: survey</footer>')
+eq(gs.visible_text(gs.content_html(_page)), "Sales rose 12% to $4,000 on 300 stores.",
+   "with no <main>, the header, nav, footer and role=banner/navigation/contentinfo elements are chrome")
+eq(gs.stat_reading(_page, {"acme"}), (3, 0, 0), "chrome beside a figure attributes nothing")
+_main = ('<header>Source: <a href="https://x.test/">x</a></header><main><p>Up 12%, 15% and 18%.</p>'
+         '<aside>Research: <a href="https://x.test/">x</a></aside><p>Next.</p></main><footer><cite>x</cite></footer>')
+eq(gs.visible_text(gs.content_html(_main)), "Up 12%, 15% and 18%. Next.", "<main> is the content, without any aside in it")
+eq(gs.stat_reading(_main, {"acme"}), (3, 0, 0), "so an aside's link is not the figure's source")
+eq(gs.visible_text(gs.strip_chrome("<nav>a<nav>b</nav>c</nav>d<footer>never closed")), "d never closed",
+   "a nested element closes at its own close; one never closed stays")
+eq(gs.visible_text(gs.content_html("<p>a</p><!-- <nav> --><p>b</p><script>'<footer>'</script><p>c</p>")), "a b c",
+   "comments and scripts cannot open chrome")
+_blocks = lambda h: [t for _, t in gs.text_blocks(h)]
+eq(_blocks("<p>a</p><ul><li>b <em>c</em></li><li>d</li></ul><table><tr><td>e</td><td>f</td></tr></table>x"),
+   ["a", "b c", "d", "e", "f", "x"], "blocks: paragraphs, list items, table cells, and text outside them")
+_read = lambda body: gs.stat_reading("<main>%s</main>" % body, {"acme"})
+eq(_read('<p>Up 12% on 400 farms, per <a href="https://stats.test/">the survey</a>.</p>'), (2, 2, 2), "a link in the block")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Source: <a href="https://stats.test/">stats office</a></p>'), (2, 2, 2),
+   "a link in the next block")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Unrelated.</p><p><a href="https://stats.test/">stats</a></p>'), (2, 0, 0),
+   "a link two blocks away is not beside the figure")
+eq(_read('<p>Up 12% on 400 farms, as <cite>the stats office</cite> says.</p>'), (2, 2, 0), "a <cite> attributes, without a link")
+eq(_read('<p>Up 12% on 400 farms, according to the stats office.</p>'), (2, 2, 0), "so does a source phrase")
+eq(gs.stat_reading('<main><p>Up 12% on 400 farms, according to the stats office.</p></main>', {"acme"}, phrases=False),
+   (2, 0, 0), "unless source phrases are not read")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Read more at <a href="https://acme.com/x">our blog</a> or '
+         '<a href="https://twitter.com/intent/tweet?u=x">share</a>.</p>'), (2, 0, 0), "the site's own links and share buttons are not sources")
+_fn = ('<p>Up 12% on 400 farms<sup><a href="#n1">1</a></sup> and 9%<a href="#n2">[2]</a> and 700<a href="#top">top</a>.</p>'
+       '<h2>More</h2><ol><li id="n1">Stats office, <a href="https://stats.test/">table 4</a>.</li><li id="n2">Our estimate.</li></ol>')
+eq(_read(_fn), (4, 4, 4), "a footnote whose note links out attributes the block, with a link")
+eq(_read(_fn.replace('href="#n1"', 'href="#n2"')), (4, 0, 0), "a footnote whose note has no link does not")
 
 # ── dateModified is compared with the page's own date, not every date on the page ──
 _page = ('<main><p>By Jane Doe · 5 January 2026</p><p>Body.</p>'
@@ -453,6 +893,690 @@ try:
 finally:
     gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public = _saved
     _px.shutdown()
+
+def _oserr(fn, *a):
+    try: return fn(*a)
+    except OSError as e: raise RuntimeError(str(e)) from None
+
+# ── the guard at connect time: the address that was checked is the one connected to ──
+# SECURITY.md promises that a direct connection goes to the address that passed the check, so a name cannot resolve
+# to something else a moment later (DNS rebinding). That promise rests on private CPython attributes; these tests
+# run the connect-time path itself, and fail loudly if a Python release stops reading them.
+import http.client as _hc, socketserver as _ss
+ok(hasattr(_hc.HTTPConnection("x"), "_create_connection"), "http.client still connects through _create_connection")
+ok(all(hasattr(_hc.HTTPConnection("x"), a) for a in ("_tunnel_host", "_tunnel_port")), "and names a CONNECT target there")
+ok(hasattr(_ur.HTTPSHandler(), "_context"), "urllib's HTTPSHandler still keeps its TLS context in _context")
+_hits = []
+class _Origin(_BH):
+    def do_GET(self):
+        _hits.append(self.path); self.send_response(200); self.send_header("Content-Length", "2"); self.end_headers(); self.wfile.write(b"ok")
+    def log_message(self, *a): pass
+class _Connect(_ss.BaseRequestHandler):
+    """A CONNECT proxy that records every connection and request line, and refuses every tunnel."""
+    def handle(self):
+        _tunnels.append(self.request.recv(4096).split(b"\r\n", 1)[0])
+        self.request.sendall(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
+_tunnels = []
+_os = _HS(("127.0.0.1", 0), _Origin); _th.Thread(target=_os.serve_forever, daemon=True).start()
+_cp = _ss.ThreadingTCPServer(("127.0.0.1", 0), _Connect); _cp.daemon_threads = True
+_th.Thread(target=_cp.serve_forever, daemon=True).start()
+_port = _os.server_port
+_saved = (gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public, gs.check_url)
+try:
+    gs.ADDRESS_GUARD = True
+    # no proxy from the environment: the direct path is the one under test
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({}), gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    # (a) pinning. pinned.test has no DNS entry, so a connection that did not go through the checked answer fails
+    _asked = []
+    def _pinned(h, p):
+        _asked.append((h, p))
+        if h == "pinned.test":
+            return [("127.0.0.1", _port)]
+        raise OSError("refused: %s does not resolve to a public address" % h)
+    gs.resolve_public = _pinned
+    _r = gs.fetch("http://pinned.test:%d/pinned" % _port)
+    eq((_r.status, _hits), (200, ["/pinned"]), "the connection goes to the address the check returned: %r" % _r.err)
+    ok(_asked.count(("pinned.test", _port)) >= 2, "resolved at the URL check and again at connect: %r" % _asked)
+    _closed = _ss.TCPServer(("127.0.0.1", 0), _ss.BaseRequestHandler); _dead_port = _closed.server_address[1]; _closed.server_close()
+    gs.resolve_public = lambda h, p: [("127.0.0.1", _dead_port)]
+    _r = gs.fetch("http://pinned.test/")
+    ok(_r.status == 0 and _hits == ["/pinned"], "when no checked address answers, the fetch fails there: %r" % _r.err)
+    # (b) rebinding: public when the URL is checked, private by the time of the connection
+    del _hits[:]
+    _answers = [[("93.184.216.34", _port)]]
+    def _rebind(h, p):
+        if _answers:
+            return _answers.pop()
+        raise OSError("refused: %s does not resolve to a public address" % h)
+    gs.resolve_public = _rebind
+    _r = gs.fetch("http://rebind.test:%d/" % _port)
+    ok(_r.status == 0 and "refused" in (_r.err or ""), "a name that rebinds between check and connect is refused: %r" % _r.err)
+    eq(_hits, [], "and no request reaches the address it rebound to")
+    # (c) HTTPS through a proxy: the CONNECT target is resolved and refused before the proxy is dialled
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({"https": "http://127.0.0.1:%d" % _cp.server_address[1]}),
+                                  gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    gs.check_url = lambda url: None             # as if the name answered publicly when the URL was checked
+    gs.resolve_public = lambda h, p: [("93.184.216.34", p)] if h == "allowed.test" else _pinned(h, p)
+    _r = gs.fetch("https://private.test/")
+    ok(_r.status == 0 and "refused" in (_r.err or ""), "a CONNECT tunnel to a private target is refused: %r" % _r.err)
+    eq(_tunnels, [], "and the proxy sees no connection, so no tunnelled byte")
+    gs.fetch("https://allowed.test/")
+    eq([t.rsplit(b" ", 1)[0] for t in _tunnels], [b"CONNECT allowed.test:443"],
+       "while a public target does reach the proxy as a CONNECT")
+finally:
+    gs._OPENER, gs.ADDRESS_GUARD, gs.resolve_public, gs.check_url = _saved
+    _os.shutdown(); _cp.shutdown()
+# resolve_public itself: every answer must be public, and a name that does not resolve is refused, not skipped
+_gai = gs.socket.getaddrinfo
+_ai = lambda *ips: [(gs.socket.AF_INET6 if ":" in ip else gs.socket.AF_INET, gs.socket.SOCK_STREAM, 6, "", (ip, 443))
+                    for ip in ips]
+try:
+    gs.socket.getaddrinfo = lambda h, p, **k: _ai("93.184.216.34", "2606:4700::1111")
+    eq(gs.resolve_public("x.test", 443), [("93.184.216.34", 443), ("2606:4700::1111", 443)], "public answers come back in order")
+    for _ips in (("93.184.216.34", "10.0.0.5"), ("64:ff9b::a00:5",), ("2002:a00:5::1",)):
+        gs.socket.getaddrinfo = lambda h, p, _ips=_ips, **k: _ai(*_ips)
+        ok("refused" in (_raises(lambda: _oserr(gs.resolve_public, "x.test", 443)) or ""),
+           "one private answer refuses the name, NAT64 and 6to4 included: %s" % (_ips,))
+    def _nx(h, p, **k): raise gs.socket.gaierror(gs.socket.EAI_NONAME, "not known")
+    gs.socket.getaddrinfo = _nx
+    ok("cannot resolve" in (_raises(lambda: _oserr(gs.resolve_public, "nx.test", 443)) or ""), "an unresolvable name is refused")
+finally:
+    gs.socket.getaddrinfo = _gai
+
+# ── a hostile page cannot end the run ──
+# SECURITY.md names the audited site as an adversary. {"@type": {"@id": "Organization"}} used to raise TypeError out
+# of types_of(), a malformed link ("http://[::1") ValueError out of urljoin(), and a lone "\ud800" escape in a name
+# UnicodeEncodeError at the first print: each ended the run with a traceback and exit 1, which CI reads as "below
+# --fail-under". Fixed cases first, then seeded random pages, dates, bylines and robots.txt files.
+import random as _random
+_PROP = "https://prop.test"
+
+def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None, offsite=None):
+    """run() on an in-memory site: `page(path)` gives each page's HTML. fetch and fetch_steady are stubbed, so
+    nothing is sent; anything off the site gets no answer, and its URL is appended to `offsite` when given."""
+    saved = (gs.fetch, gs.fetch_steady, gs.time.sleep)
+    def fetch(url, ua=None, timeout=15, method="GET", **kw):
+        url = str(url)
+        if not url.startswith(_PROP + "/"):
+            if offsite is not None: offsite.append(url)
+            return gs.Resp(url, 0, b"", err="offline")
+        path = url[len(_PROP):]
+        if path == "/robots.txt":
+            return gs.Resp(url, 200, robots.encode("utf-8", "replace"), {"content-type": "text/plain"})
+        if path.endswith((".xml", ".txt")):
+            return gs.Resp(url, 200, sitemap.encode("utf-8"), {"content-type": "application/xml"}) if sitemap and \
+                path.endswith(".xml") else gs.Resp(url, 404, b"")
+        return gs.Resp(url, 200, page(path).encode("utf-8", "replace"), {"content-type": "text/html; charset=utf-8"})
+    gs.fetch, gs.fetch_steady = fetch, (lambda u, tries=3, memo=None, **kw: fetch(u, **kw))
+    gs.time.sleep = lambda s: None
+    try:
+        return gs.run(_PROP)
+    finally:
+        gs.fetch, gs.fetch_steady, gs.time.sleep = saved
+
+def _outputs_hold(res, why):
+    """Every tier is one of its check's tiers, and the report, SARIF and JUnit are written and encode as UTF-8."""
+    for cid, _pil, _name, _mx, pts in gs.SPEC:
+        ok(res["tier"].get(cid) is None or res["tier"][cid] in pts, "%s: %s reads %r, not one of %s"
+           % (why, cid, res["tier"].get(cid), pts))
+    for bid, _bname, bmx in gs.BONUS:
+        ok(0 <= res["bonus"].get(bid, 0) <= bmx, "%s: bonus %s out of range" % (why, bid))
+    rep = gs.as_json(res)
+    ok(0 <= rep["normalised"] <= 100, "%s: normalised %r" % (why, rep["normalised"]))
+    json.dumps(rep, ensure_ascii=False).encode("utf-8")
+    json.dumps(gs.as_sarif(res), ensure_ascii=False).encode("utf-8")
+    xml.dom.minidom.parseString(gs.as_junit(res).encode("utf-8"))
+
+def _ld_page(*blocks, body="<p>x</p>", head=""):
+    return "<html><head><title>Prop</title>%s%s</head><body><main>%s</main></body></html>" % (
+        head, "".join('<script type="application/ld+json">%s</script>' % b for b in blocks), body)
+
+eq(gs.types_of([{"@type": {"@id": "Organization"}}, {"@type": [None, 5, ["x"], "WebSite"]}, {"@type": 7}]), {"WebSite"},
+   "only a string names a type, alone or in a list")
+eq(gs.resolve_refs([{"@id": "#a", "@type": "T", "n": 1}, {"author": {"@id": {"x": 1}}}, {"author": {"@id": ["#a"]}}])[1:],
+   [{"author": {"@id": {"x": 1}}}, {"author": {"@id": ["#a"]}}], "an @id that is an object or a list is left alone")
+ok(not gs.substantive({"@type": [{"x": 1}, ["Product"]], "name": "A"}), "a type that is not a string is no page type")
+eq(gs.jsonld('<script type="application/ld+json">' + "[" * 3000 + "]" * 3000 + "</script>"), [],
+   "lists nested 3000 deep are read without recursion")
+# json.loads itself gives up at a depth that depends on the Python version; what it accepts, the walk survives
+ok(len(gs.jsonld('<script type="application/ld+json">' + '{"@graph":[' * 1500 + '{"@type":"T"}' + "]}" * 1500 + "</script>"))
+   <= 1, "and so is a @graph nested 1500 deep")
+eq([x.get("name") for x in gs.jsonld('<script type="application/ld+json">[{"name": "\\ud800Acme"}, {"name": "\\ud83d\\ude00"}]'
+                                     '</script>')], ["?Acme", "\U0001f600"], "a lone surrogate escape becomes ?, a pair stays whole")
+eq(gs.join_link("https://x.test/", "http://[::1"), "", "a malformed link is no link")
+ok("not a valid URL" in (_raises(gs.pin_urls, "https://x.test", ["https://x.test[/a"]) or ""), "nor a malformed pinned URL")
+
+_ALLOW = "User-agent: *\nAllow: /\n"
+_fixed = [
+    ("an @type written as a reference", lambda p: _ld_page('{"@type": {"@id": "Organization"}, "name": "A"}'), _ALLOW, None),
+    ("an @id that is a list", lambda p: _ld_page('{"@graph": [{"@id": "#o", "@type": "Organization", "name": "A"},'
+                                                 '{"@type": "Article", "author": {"@id": ["#o"]}}]}'), _ALLOW, None),
+    ("a lone surrogate in the Organization's name", lambda p: _ld_page(
+        '{"@type": "Organization", "name": "\\ud800Acme", "url": "https://prop.test", "logo": "l.png"}'), _ALLOW, None),
+    ("a malformed logo URL", lambda p: _ld_page('{"@type": "Organization", "name": "A", "url": "https://prop.test", '
+                                                '"logo": "http://[::1"}'), _ALLOW, None),
+    ("a malformed link", lambda p: _ld_page(body='<a href="http://[::1">x</a><p>x</p>'), _ALLOW, None),
+    ("a malformed Sitemap line", lambda p: _ld_page(), "Sitemap: http://[::1/s.xml\n" + _ALLOW, None),
+    ("a malformed sitemap entry", lambda p: _ld_page(), _ALLOW, "<sitemapindex><sitemap><loc>http://[::1/a</loc></sitemap>"
+                                                                 "</sitemapindex><urlset><url><loc>http://[::1/b</loc></url></urlset>"),
+]
+for _why, _page, _rb, _sm in _fixed:
+    try:
+        _outputs_hold(_run_site(_page, _rb, _sm), _why)
+    except Exception as e:
+        ok(False, "%s: run() raised %s: %s" % (_why, type(e).__name__, e))
+
+_TYPES = ["Organization", "WebSite", "Article", "BlogPosting", "Person", "FAQPage", "Product", "VideoObject",
+          "BreadcrumbList", "NewsMediaOrganization", "HowTo", "Offer", "Dataset"]
+_KEYS = ["@type", "@id", "@graph", "name", "url", "logo", "sameAs", "author", "publisher", "datePublished", "dateModified",
+         "headline", "mainEntity", "legalName", "alternateName", "step", "price", "startDate", "title"]
+_SCALARS = [None, 0, -1, 1.5, True, "", " ", "x", "#a", "Organization", "2026-02-30", "2026-13-45T00:00",
+            "2019-01-15T00:00:00Z", "https://prop.test/a", "logo.png", "http://[::1", "\ud800x", "‮evil", "a" * 300]
+_BITS = ["By Jane Doe", "by", "By Dr. Maria de la Cruz", "Powered by Hugo Theme", "更新于2026年8月28日", "2029年13月40日",
+         "31 Feb 2026", "Sep 31, 2026", "12 Sep 2026", "<time datetime='2026-02-30'>t</time>", "<time datetime=''>",
+         "According to a 45% study", "$1,200", "<h2>How does it work?</h2>", "<h1>", "<p>" + "word " * 40 + "</p>",
+         "<p>", "</p>", "<main>", "</main>", "<article>", "<script>", "<style>x", "<a href='/blog/a/b'>x</a>",
+         "<a href='http://[::1'>", "<a href='//elsewhere.test/x'>", "<meta property='og:site_name' content='Brand'>",
+         "&#xd800;", "‮", "\x00", "ICP备", "youtube.com/@x", "<table>", "<li>a", "<!--", "]]>"]
+_RLINES = ["User-agent: *", "User-agent: PerplexityBot", "User-agent: GPTBot", "User-agent: Googlebot/2.1", "user-agent:",
+           "Disallow: /", "Disallow:", "Allow: /", "Disallow: /*", "Sitemap: /sitemap.xml", "Sitemap: http://[::1",
+           "no colon at all", ":", "# comment", "Disallow: /" + "a" * 20000, "﻿User-agent: *", "", "User-agent: " + "b" * 5000]
+
+def _val(rng, d):
+    r = rng.random()
+    if d > 3 or r < .4: return rng.choice(_SCALARS + _TYPES)
+    if r < .7: return [_val(rng, d + 1) for _ in range(rng.randrange(4))]
+    return _obj(rng, d + 1)
+
+def _obj(rng, d=0):
+    """A JSON-LD object whose @type, @id and @graph are as often a string as an object, a list, a number or null."""
+    o = {}
+    for k in rng.sample(_KEYS, rng.randrange(1, 8)):
+        if k == "@type" and rng.random() < .5: o[k] = rng.choice([rng.choice(_TYPES), [rng.choice(_TYPES), rng.choice(_TYPES)]])
+        elif k == "@graph" and rng.random() < .6: o[k] = [_obj(rng, d + 1) for _ in range(rng.randrange(4))]
+        else: o[k] = _val(rng, d)
+    return o
+
+def _rand_page(rng):
+    blocks = []
+    for _ in range(rng.randrange(4)):
+        r = rng.random()
+        if r < .1: blocks.append(json.dumps(_obj(rng))[:rng.randrange(1, 80)])          # cut short
+        elif r < .15: blocks.append('{"@type": "Organization", "name": "A",}')           # a trailing comma
+        else: blocks.append(json.dumps(rng.choice([_obj(rng), [_obj(rng), _obj(rng)], {"@graph": [_obj(rng), _obj(rng)]}]),
+                                       ensure_ascii=rng.random() < .5))
+    return _ld_page(*blocks, body=" ".join(rng.choice(_BITS) for _ in range(rng.randrange(5, 40))))
+
+def _rand_robots(rng):
+    return ("﻿" if rng.random() < .2 else "") + rng.choice(["\n", "\r\n", "\r"]).join(
+        rng.choice(_RLINES) for _ in range(rng.randrange(12)))
+
+_crashed = []
+for _seed in range(200):
+    _rng = _random.Random(_seed)
+    try:
+        _h = _rand_page(_rng)
+        _o = gs.jsonld(_h)
+        gs.types_of(_o); gs.resolve_refs(_o + [_obj(_rng)]); [gs.substantive(x) for x in _o]
+        gs.visible_dates(_h); gs.own_dates(_h, _o); gs.first_date(_h); gs.byline_name(gs.visible_text(_h))
+        gs.iso_date(_rng.choice(_SCALARS))
+        _rb = _rand_robots(_rng)
+        gs.robots_groups(_rb)
+        ok(gs.robots_tier(_rb, len(_rb))[0] in (0, 3, 5), "seed %d: g.robots tier" % _seed)
+        _pages = {}
+        def _page_at(path, rng=_rng, pages=_pages):
+            if path not in pages:
+                pages[path] = _rand_page(rng)
+            return pages[path]
+        _res = _run_site(_page_at, _rand_robots(_rng),
+                         "<urlset><url><loc>%s/blog/p%d</loc><lastmod>x</lastmod></url></urlset>" % (_PROP, _seed))
+        _outputs_hold(_res, "seed %d" % _seed)
+    except Exception as e:
+        import traceback as _tb
+        _at = _tb.extract_tb(e.__traceback__)[-1]
+        _crashed.append("seed %d: %s at line %d (%s): %s" % (_seed, type(e).__name__, _at.lineno, _at.name, str(e)[:100]))
+eq(_crashed, [], "no random page, date, byline or robots.txt raises out of the parsers or run()")
+
+# ── run(): each page is read in its own language ──
+# A lexicon reads only the pages in its language; a check with no page left to read is not observed, never zero.
+# Structured data and links are read in any language.
+_LANG_PATHS = ["/"] + ["/docs/p%d" % i for i in range(1, 8)]
+_LANG_MAP = "<urlset>%s</urlset>" % "".join("<url><loc>%s%s</loc></url>" % (_PROP, p) for p in _LANG_PATHS)
+
+def _lang_run(page_of):
+    """run() on an eight-page site, `page_of(path)` giving (lang attribute, heading, paragraph, extra body); returns
+    the result and the off-site URLs it asked for."""
+    def page(path):
+        lang, h, p, extra = page_of(path)
+        return ('<html lang="%s"><head><title>Prop</title></head><body><main><h2>%s</h2><p>%s</p>%s</main>'
+                "</body></html>" % (lang, h, p, extra))
+    off = []
+    res = _run_site(page, sitemap=_LANG_MAP, offsite=off)
+    eq(sorted(u[len(_PROP):] for u in res["urls"]), sorted(_LANG_PATHS), "the language site is sampled in full")
+    return res, off
+
+_BYLINE_EN = "<p>By Jane Doe</p>"
+# six English pages with a task heading and a written byline, two German pages with neither
+_r, _off = _lang_run(lambda p: ("de", "Unsere Preise", _DE, "") if p in ("/docs/p6", "/docs/p7")
+                     else ("en", "Create your first invoice", _EN, _BYLINE_EN))
+eq(_r["lang"], "en", "the most common page language is the audience language")
+eq(_r["tier"]["p2.question-intent"], 7, "the six English pages are read, the two German ones leave the count")
+ok("2 pages in de not read" in _r["ev"]["p2.question-intent"], _r["ev"]["p2.question-intent"])
+eq(_r["tier"]["p2.named-author"], 3, "a written byline on an English page is read")
+ok("A written byline on the 2 pages in de was not read" in _r["ev"]["p2.named-author"], _r["ev"]["p2.named-author"])
+eq(sorted({gs.urllib.parse.urlsplit(u).netloc for u in _off if "wikipedia" in u}), ["de.wikipedia.org", "en.wikipedia.org"],
+   "knowledge-graph lookups go to the other page language's Wikipedia and to English")
+
+# every page Japanese: no lexicon reads the headings, the source phrases or a written byline
+_JA_FIGS = "<p>導入店舗は1,240店、そのうち38%が一日で締め、平均で4.5時間を減らしました（出典：当社調べ）。</p>"
+_r, _off = _lang_run(lambda p: ("ja", "請求書を取り込む", _JA, _JA_FIGS + "<p>By Jane Doe</p>"))
+eq(_r["lang"], "ja", "a Japanese site is ja, no longer zh-CN")
+eq([_r["tier"][k] for k in ("p2.question-intent", "p2.sourced-stats", "p2.named-author", "p4.cn-engines")],
+   [None] * 4, "question intent, source phrases and written bylines have no Japanese lexicon; nor is it a Chinese site")
+ok(_r["ev"]["p2.question-intent"].startswith("No question-intent lexicon for ja"), _r["ev"]["p2.question-intent"])
+eq(gs.unobserved_reason("p2.question-intent", _r["ev"]["p2.question-intent"]), "no question-intent lexicon for ja",
+   "the footer says why the check was not observed")
+ok(_r["ev"]["p2.sourced-stats"].startswith("No source-phrase lexicon for ja"), _r["ev"]["p2.sourced-stats"])
+ok(_r["ev"]["p2.named-author"].startswith("No byline lexicon for ja"), _r["ev"]["p2.named-author"])
+ok("50–200 characters" in _r["ev"]["p2.answer-passages"], "Japanese passages are read in characters")
+ok(any("language=ja&" in u for u in _off) and any(u.startswith("https://ja.wikipedia.org/") for u in _off)
+   and not any("zh.wikipedia" in u or "language=zh" in u for u in _off), "and looked up in Japanese, not Chinese")
+
+# the same Japanese pages with a linked source and an author in JSON-LD: both are read in any language
+_JA_LD = ('<script type="application/ld+json">{"@type": "Article", "author": {"@type": "Person", "name": "山田 花子", '
+          '"url": "https://prop.test/team/yamada"}}</script>')
+_JA_LINKED = _JA_FIGS.replace("（出典：当社調べ）", '（<a href="https://stats.example.org/2026">出典</a>）')
+_r, _off = _lang_run(lambda p: ("ja", "請求書を取り込む", _JA, _JA_LINKED + _JA_LD))
+eq((_r["tier"]["p2.sourced-stats"], _r["tier"]["p2.named-author"]), (7, 6),
+   "a linked source and a structured author are read on a Japanese page")
+
+# a page's own lang tag never names a host: a tag Wikipedia has no edition for is looked up in English only
+_r, _off = _lang_run(lambda p: ("xq", "Lorem ipsum", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3, ""))
+eq(_r["lang"], "xq", "a declared tag the text does not contradict is the page's language")
+eq(sorted({gs.urllib.parse.urlsplit(u).netloc for u in _off if "wikipedia" in u}), ["en.wikipedia.org"],
+   "no lookup goes to xq.wikipedia.org")
+ok(not any("language=xq" in u for u in _off), "nor asks Wikidata in that language")
+
+# the CLI on a live site whose only JSON-LD is {"@type": {"@id": "Organization"}}: it scores and exits 0. Off-site
+# lookups go to a proxy port nothing listens on, so they fail at once and nothing leaves the machine.
+import threading as _thr
+from http.server import BaseHTTPRequestHandler as _BRH, ThreadingHTTPServer as _THS
+class _LdSite(_BRH):
+    def do_GET(self):
+        body = _ld_page('{"@type": {"@id": "Organization"}, "name": "A"}').encode() if self.path == "/" else b"no"
+        self.send_response(200 if self.path == "/" else 404)
+        self.send_header("Content-Type", "text/html"); self.send_header("Content-Length", str(len(body))); self.end_headers()
+        self.wfile.write(body)
+    def log_message(self, *a): pass
+_lds = _THS(("127.0.0.1", 0), _LdSite); _thr.Thread(target=_lds.serve_forever, daemon=True).start()
+_dead = "http://127.0.0.1:9"
+_env = dict({k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}, NO_COLOR="1",
+            HTTPS_PROXY=_dead, HTTP_PROXY=_dead, https_proxy=_dead, http_proxy=_dead,
+            NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+try:
+    pr = subprocess.run([sys.executable, _cli, "http://127.0.0.1:%d" % _lds.server_port, "--json"],
+                        capture_output=True, text=True, timeout=120, env=_env)
+    eq(pr.returncode, 0, "a site whose @type is an object scores: %s" % pr.stderr[-300:])
+    ok(pr.returncode != 0 or 0 <= json.loads(pr.stdout)["normalised"] <= 100, "and prints its report")
+finally:
+    _lds.shutdown()
+
+# an unforeseen exception exits 2 with one line naming the site, never a traceback that exits 1
+import contextlib as _cl
+def _cli_exit(argv, env=None, out=None, run=None):
+    saved, err = (sys.argv, gs.run, dict(os.environ), gs.TIMEOUT, dict(gs._CLI), gs.PREFLIGHT), io.StringIO()
+    sys.argv = ["geo_score.py"] + argv
+    gs.run = run or (lambda *a, **k: {}["boom"])
+    os.environ.update(env or {})
+    try:
+        with _cl.redirect_stderr(err), _cl.redirect_stdout(out or io.StringIO()):
+            gs.cli()
+        return 0, err.getvalue()
+    except SystemExit as e:
+        return e.code, err.getvalue()
+    finally:
+        sys.argv, gs.run, gs.TIMEOUT, gs.PREFLIGHT = saved[0], saved[1], saved[3], saved[5]
+        os.environ.clear(); os.environ.update(saved[2]); gs._CLI.update(saved[4])
+_code, _err = _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": ""})
+eq(_code, 2, "an internal error exits 2")
+eq(_err.strip(), "geo-score internal error (KeyError) while scoring http://127.0.0.1:9; please report it at "
+   "https://github.com/jianruntech/geo-score/issues", "in one line that names the site and where to report it")
+try:
+    _cli_exit(["http://127.0.0.1:9", "--quiet"], {"GEO_SCORE_DEBUG": "1"})
+    ok(False, "GEO_SCORE_DEBUG=1 re-raises the error with its traceback")
+except KeyError:
+    pass
+
+# ── a site that cannot be fetched fails fast, and says why in plain words ──
+# A mistyped host used to take 20 s to 4 minutes and end in raw urllib text; under --json stdout was empty.
+for _raw, _want in (("example.com", "https://example.com"), ("  localhost:8080/docs ", "https://localhost:8080/docs"),
+                    ("http://127.0.0.1:9", "http://127.0.0.1:9"), ("[::1]:8443", "https://[::1]:8443"),
+                    ("intranet", "https://intranet"), ("中文.tw", "https://中文.tw")):
+    eq(gs.target_url(_raw), _want, "%r is scored" % _raw)
+for _raw, _says in (("not a url", "whitespace"), ("ftp://x.test", "only http"), ("https://", "no host"), ("", "empty"),
+                    ("x.test:0", "port"), ("x.test:70000", "port"), ("x.test:abc", "port"), ("http://[::1", "not a URL"),
+                    ("mailto:someone", "port")):
+    try:
+        gs.target_url(_raw)
+        ok(False, "%r is refused" % _raw)
+    except ValueError as e:
+        ok(_says in str(e), "%r is refused with a reason: %s" % (_raw, e))
+import socket as _sock, ssl as _ssl, http.client as _hcl, urllib.error as _ue
+for _e, _kind in ((_ue.URLError(_sock.gaierror(_sock.EAI_NONAME, "nodename nor servname provided")), "dns"),
+                  (_ue.URLError(ConnectionRefusedError(61, "Connection refused")), "refused"),
+                  (_ue.URLError(_sock.timeout("timed out")), "timeout"), (_sock.timeout("The read operation timed out"), "timeout"),
+                  (_ue.URLError(_ssl.SSLCertVerificationError(1, "certificate verify failed")), "tls"),
+                  (_ue.URLError(_ssl.SSLEOFError(8, "EOF occurred in violation of protocol")), "tls"),
+                  (_hcl.RemoteDisconnected("Remote end closed connection without response"), "dropped"),
+                  (_ue.URLError(ConnectionResetError(54, "Connection reset by peer")), "dropped"),
+                  (OSError("refused: x.test does not resolve to a public address"), "not_public"),
+                  (_ue.URLError("refused: 10.0.0.5 is not public"), "not_public"),
+                  (OSError("cannot resolve x.test: [Errno 8] nodename"), "dns"),
+                  (ValueError("unknown url type: ''"), "no_response"), (_hcl.BadStatusLine("junk"), "no_response")):
+    eq(gs.fault_kind(_e), _kind, "%s(%s) is kind %s" % (type(_e).__name__, _e, _kind))
+eq([gs.Resp("u", 404).kind, gs.Resp("u", 200, b"").kind, gs.Resp("u", 200, b"x").kind, gs.Resp("u", 0, err="timed out").kind],
+   ["http_404", "no_content", None, "timeout"], "an answer's kind: an HTTP error, an empty page, a page, and no answer")
+_calls, _slept = [], []
+_orig_fetch, _orig_sleep = gs.fetch, gs.time.sleep
+gs.time.sleep = _slept.append
+try:
+    for _kind, _want in (("dns", 1), ("refused", 1), ("tls", 1), ("not_public", 1), ("timeout", 3), ("dropped", 3)):
+        del _calls[:]
+        gs.fetch = lambda url, _k=_kind, **kw: (_calls.append(url), gs.Resp(url, 0, err="x", kind=_k))[1]
+        gs.fetch_steady("https://x.test/")
+        eq(len(_calls), _want, "a %s fault is tried %d time(s)" % (_kind, _want))
+    del _slept[:]
+    gs.fetch = lambda url, **kw: gs.Resp(url, 0, err="timed out", kind="timeout")
+    gs.fetch_steady("https://x.test/")
+    eq(_slept, [0, 0], "a timeout is retried without a further wait: it has waited already")
+finally:
+    gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+# preflight: one lookup before anything is fetched, skipped when a proxy will resolve the name
+_saved_env, _saved_gai = dict(os.environ), gs.socket.getaddrinfo
+_saved_px = (gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass)
+_lookups = []
+def _gai_fail(errno):
+    def f(h, *a, **k):
+        _lookups.append(h)
+        raise gs.socket.gaierror(errno, "lookup failed")
+    return f
+try:
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = (lambda: {}), (lambda h: False)
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_NONAME)
+    try:
+        gs.preflight_host("https://exampel.test/docs")
+        ok(False, "a name that does not resolve fails the preflight")
+    except gs.ScoreError as e:
+        eq((e.kind, e.target), ("dns", "https://exampel.test/docs"), "the preflight's kind and target")
+        ok(str(e).startswith("cannot resolve exampel.test: check the spelling, or your DNS/proxy settings (HTTPS_PROXY); see "
+                             "https://github.com/jianruntech/geo-score/blob/v%s/guide/troubleshooting.md#" % gs.__version__),
+           "and it says so in plain words, with the troubleshooting section: %s" % e)
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_AGAIN)
+    ok(gs.preflight_host("https://flaky.test/") is None, "a temporary resolver failure lets the run go ahead")
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = _saved_px
+    os.environ.update(HTTPS_PROXY="http://user:secret@127.0.0.1:9", https_proxy="http://user:secret@127.0.0.1:9")
+    for _k in ("NO_PROXY", "no_proxy"):
+        os.environ.pop(_k, None)
+    del _lookups[:]
+    gs.socket.getaddrinfo = _gai_fail(gs.socket.EAI_NONAME)
+    ok(gs.preflight_host("https://exampel.test/") is None and _lookups == [], "with HTTPS_PROXY set, the proxy resolves: no lookup")
+    _e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 0, err="EOF occurred", kind="tls")])
+    ok("(tls)" in str(_e) and "through the proxy at 127.0.0.1:9" in str(_e) and "secret" not in str(_e),
+       "a failure through a proxy names the proxy, never its credentials: %s" % _e)
+finally:
+    gs.socket.getaddrinfo = _saved_gai
+    gs.urllib.request.getproxies, gs.urllib.request.proxy_bypass = _saved_px
+    os.environ.clear(); os.environ.update(_saved_env)
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 403), gs.Resp("https://x.test/a", 404)], 15)
+eq((_e.kind, _e.target), ("http_403", "https://x.test"), "HTTP errors take the first page's code")
+ok("(http_403): every page asked for answered with an HTTP error (HTTP 403, HTTP 404); see https://" in str(_e), str(_e))
+_tr = io.open(os.path.join(HERE, "..", "guide", "troubleshooting.md"), encoding="utf-8").read()
+_tslugs = {_re.sub(r"[^\w\- ]", "", h.strip().lower()).replace(" ", "-") for h in _re.findall(r"^#{1,6} (.+?)\s*$", _tr, _re.M)}
+_kinds = json.load(io.open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8"))
+_kinds = _kinds["properties"]["error"]["properties"]["kind"]["description"]
+for _k, (_text, _anchor) in gs.FAULTS.items():
+    ok(_anchor in _tslugs, "the %s error links to #%s, a heading in guide/troubleshooting.md" % (_k, _anchor))
+    ok(_re.search(r"(?<!\w)%s(?!\w)" % _re.escape("http_<code>" if _k == "http" else _k), _kinds),
+       "schema/error.v1.json names the %s kind" % _k)
+# --timeout: seconds per request, above 0 and no longer than a whole run may take
+for _t in ("0", "-1", "nan", "inf", "301"):
+    _code, _err = _cli_exit(["x.test", "--timeout", _t])
+    ok(_code == 2 and "--timeout takes a number of seconds above 0 and up to 300" in _err, "--timeout %s is refused" % _t)
+# --sample: at least one page. 0 once ended in an IndexError reported as a bug, and a negative number silently
+# scored fewer pages
+for _s in ("0", "-3"):
+    _code, _err = _cli_exit(["x.test", "--sample", _s])
+    ok(_code == 2 and "--sample takes a whole number of pages, 1 or more" in _err, "--sample %s is refused" % _s)
+for _s in (0, -3, 2.5, None):
+    try:
+        gs.run("https://x.test", _s)
+        ok(False, "run() with sample %r raises" % (_s,))
+    except ValueError as _e:
+        ok("1 or more" in str(_e), "run() with sample %r is a ValueError before any fetch: %s" % (_s, _e))
+_seen = {}
+def _record(*a, **k):
+    _seen.update(k, timeout_now=gs.TIMEOUT, preflight=gs.PREFLIGHT)
+    raise gs.ScoreError("could not fetch x (timeout): …", "timeout", "https://x.test")
+_out = io.StringIO()
+_code, _err = _cli_exit(["x.test", "--timeout", "2.5", "--json"], out=_out, run=_record)
+eq((_code, _seen.get("preflight"), _seen.get("timeout_now")), (2, True, 2.5),
+   "the CLI resolves the host first, and every request waits --timeout seconds")
+eq(json.loads(_out.getvalue()), {"error": {"kind": "timeout", "message": "could not fetch x (timeout): …",
+                                           "target": "https://x.test"}, "tool": "geo-score-cli/%s" % gs.__version__},
+   "under --json, a site that cannot be fetched prints the JSON error on stdout")
+for _argv, _kind, _target in ((["ftp://x.test", "--json"], "usage", None), (["x.test", "--json", "--sample"], "usage", None),
+                              (["x.test", "--json", "--quiet"], "internal", "https://x.test")):
+    _out = io.StringIO()
+    _code, _err = _cli_exit(_argv, {"GEO_SCORE_DEBUG": ""}, out=_out)
+    _got = json.loads(_out.getvalue() or "null") or {}
+    eq((_code, _got.get("error", {}).get("kind"), _got.get("error", {}).get("target")), (2, _kind, _target),
+       "%s exits 2 with a JSON error of kind %s on stdout" % (" ".join(_argv), _kind))
+    ok(_got.get("error", {}).get("message", "\0") in _err, "and the same message on stderr: %r" % _err[-200:])
+_ej = gs.error_json("dns", "cannot resolve x.test", "https://x.test")
+eq(sorted(_ej), ["error", "tool"], "the JSON error has the error and the tool")
+try:
+    import jsonschema as _js
+    _js.validate(_ej, json.load(io.open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8")))
+except ImportError:
+    pass
+
+# ── time limits: one request, however slowly it arrives, and one run ──
+# A server that drips its headers a byte at a time: every read beats the timeout, and only the budget for the whole
+# request stops it. The scorer's own opener, so the limit reaches the socket through its connection factory.
+import socketserver as _ssv
+class _Drip(_ssv.BaseRequestHandler):
+    def handle(self):
+        _dripped.append(1)
+        try:
+            self.request.recv(65536)
+            self.request.sendall(b"HTTP/1.1 200 OK\r\n")
+            for _ in range(200):
+                self.request.sendall(b"X"); _time.sleep(0.1)
+        except OSError:
+            pass
+_dripped = []
+_ds = _ssv.ThreadingTCPServer(("127.0.0.1", 0), _Drip); _ds.daemon_threads = True
+_th.Thread(target=_ds.serve_forever, daemon=True).start()
+_saved = (gs._OPENER, gs.FETCH_BUDGET)
+try:
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({}), gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    gs.FETCH_BUDGET = 1
+    _t0 = _time.time()
+    _r = gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], timeout=0.5)
+    _took = _time.time() - _t0
+    eq((_r.status, _r.kind, _r.err), (0, "slow", "exceeded 1 s total"), "headers dripped past the budget are no answer")
+    ok(_took < 2.5, "and the fetch stops at the budget: %.1f s" % _took)
+    eq(gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], timeout=1.5).err, "exceeded 3 s total",
+       "a longer timeout raises the budget to twice the timeout")
+    del _dripped[:]
+    _r = gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], deadline=_time.monotonic() - 1)
+    eq((_r.status, _r.kind, _r.err, _dripped), (0, "deadline", "run deadline reached", []),
+       "a request asked for after the run's deadline is not sent")
+finally:
+    gs._OPENER, gs.FETCH_BUDGET = _saved
+    _ds.shutdown(); _ds.server_close()
+_calls = []
+_orig_fetch, _orig_sleep = gs.fetch, gs.time.sleep
+gs.time.sleep = lambda s: None
+try:
+    for _kind in ("slow", "deadline"):
+        del _calls[:]
+        gs.fetch = lambda url, _k=_kind, **kw: (_calls.append(url), gs.Resp(url, 0, err="x", kind=_k))[1]
+        gs.fetch_steady("https://x.test/")
+        eq(len(_calls), 1, "an answer of kind %s is not retried" % _kind)
+finally:
+    gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 404), gs.Resp("https://x.test/a", 0, err="run deadline reached",
+                                                                                   kind="deadline")], 15)
+eq(_e.kind, "deadline", "pages the deadline stopped are why there is nothing to score")
+ok(str(_e).startswith("could not fetch https://x.test (deadline): the run reached its %g s limit before a page to score "
+                      "came back; see https://" % gs.RUN_DEADLINE) and "proxy" not in str(_e), str(_e))
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 0, err="exceeded 40 s total", kind="slow")], 20)
+ok("(slow): x.test kept its answer coming too slowly to finish within 40 s" in str(_e), str(_e))
+
+# ── diff: two level-1 reports, check by check ──
+# 两份报告逐项对比：变得无法观测的检查项不能算成掉到 0 分，--fail-on-drop 只在真的丢分、门槛归零或档位下降时退出 4
+def _diff_files(*reps):
+    d = tempfile.mkdtemp()
+    paths = []
+    for i, r in enumerate(reps):
+        paths.append(os.path.join(d, "r%d.json" % i))
+        io.open(paths[-1], "w", encoding="utf-8").write(r if isinstance(r, str) else json.dumps(r))
+    return paths
+def _state(d, cid):
+    return next(x["state"] for x in d["checks"] if x["id"] == cid)
+_rb = gs.as_json(mk(full))
+_ru = gs.as_json(mk(dict(full, **{"p2.freshness": None})))
+_dd = gs.diff_reports(_rb, _ru)
+eq(_state(_dd, "p2.freshness"), "became unobservable", "a check the later run could not observe says so")
+eq([x for x in _dd["checks"] if x["id"] == "p2.freshness"][0]["after"], None, "and has no points, never 0")
+eq((_dd["lost_points"], _dd["gates_reached_zero"], _dd["band_fell"], _dd["regressed"]), ([], [], False, False),
+   "a check that became unobservable is not a drop")
+eq([x["id"] for x in _dd["checks"]], [c[0] for c in gs.SPEC] + [b[0] for b in gs.BONUS], "every SPEC and BONUS id, in order")
+eq(_state(gs.diff_reports(_ru, _rb), "p2.freshness"), "became observable", "and the other way round")
+_dsch = json.load(io.open(os.path.join(HERE, "..", "schema", "diff.v1.json"), encoding="utf-8"))
+eq(_dsch["properties"]["checks"]["items"]["properties"]["state"]["enum"], list(gs.DIFF_STATES),
+   "schema/diff.v1.json names every state the comparison uses")
+eq(sorted(_dsch["required"]), sorted(_dd), "and requires every field the comparison prints")
+eq(sorted(_dsch["$defs"]["side"]["required"]), sorted(_dd["before"]), "on each side too")
+ok(_dd["same_pages"] and "same 1 page" in _dd["notes"][0], "the same pages: a difference comes from the site")
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, _ru) + ["--fail-on-drop"])
+eq(_code, 0, "--fail-on-drop passes a check that became unobservable: %s" % _err)
+_rl = gs.as_json(mk(dict(full, **{"p2.freshness": 3})))
+_out = io.StringIO()
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, _rl) + ["--fail-on-drop"], out=_out)
+eq(_code, 4, "a check that lost points exits 4 under --fail-on-drop")
+ok("geo-score diff --fail-on-drop: p2.freshness lost 3 points (6/6 → 3/6)" in _err, _err)
+ok("p2.freshness" in _out.getvalue() and "down -3" in _out.getvalue(), "the text names the check and the change")
+eq(_cli_exit(["diff"] + _diff_files(_rb, _rl))[0], 0, "without --fail-on-drop a drop still exits 0")
+# a gate that was not observed and now is at zero caps the score: that is a drop, though no points were lost
+_gd = gs.diff_reports(gs.as_json(mk(dict(full, **{"g.reachable": None}))), gs.as_json(mk(dict(full, **{"g.reachable": 0}))))
+eq((_state(_gd, "g.reachable"), _gd["lost_points"], _gd["gates_reached_zero"], _gd["regressed"]),
+   ("became observable", [], ["g.reachable"], True), "a gate reaching zero is a drop")
+eq(gs.dropped_checks(_gd), ["g.reachable"], "and is among the dropped checks")
+# checks that become observable at zero lower the score without losing a point; a band that falls is a drop
+_few = {k: None for k in ("p2.answer-passages", "p2.question-intent", "p2.freshness")}
+_bd = gs.diff_reports(gs.as_json(mk(dict(full, **_few))), gs.as_json(mk(dict(full, **{k: 0 for k in _few}))))
+eq((_bd["normalised_delta"], _bd["lost_points"], _bd["band_fell"], _bd["regressed"]), (-22, [], True, True),
+   "a band drop alone is a drop")
+eq(gs.drop_lines(_bd), ["the band fell from Leading to Solid (100 → 78)"], "and says so in one line")
+# pages: added and removed, and the ±5 header when they differ
+_rp = dict(_rl, sampled_urls=["https://x.test/", "https://x.test/new"])
+_pd = gs.diff_reports(_rb, _rp)
+eq((_pd["pages_added"], _pd["pages_removed"], _pd["same_pages"]), (["https://x.test/new"], [], False), "a page added")
+ok("±5" in _pd["notes"][-1] and "g.reachable is the least stable check" in _pd["notes"][-1], _pd["notes"])
+_small = gs.diff_reports(_rb, dict(gs.as_json(mk(dict(full, **{"p1.breadcrumb": 0}))), sampled_urls=["https://x.test/a"]))
+ok(_small["within_spread"] and "within the measured spread" in gs.render_report_diff(_small),
+   "a total that moved by 5 or less on different pages is within the measured spread")
+ok(not gs.diff_reports(_rb, _rl)["within_spread"], "never on the same pages")
+# different releases warn; different rubric versions are refused
+_code, _err = _cli_exit(["diff"] + _diff_files(dict(_rb, tool="geo-score-cli/1.3.0"), _rb))
+ok(_code == 0 and "warning: The reports were written by different releases (geo-score-cli/1.3.0, then" in _err, _err)
+_out = io.StringIO()
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, dict(_rb, rubric_version="v1.2")) + ["--format", "json"], out=_out)
+eq(_code, 2, "reports of two rubric versions exit 2")
+ok("scores from different rubric versions are not comparable" in _err, _err)
+eq(json.loads(_out.getvalue())["error"]["kind"], "rubric_mismatch", "and under --format json say so in JSON")
+for _bad, _says in (("{not json", "not JSON"), (json.dumps([_rb, _rb]), "holds 2 reports"),
+                    (json.dumps(dict(_rb, rubric_version="v1.0")), "v1.1 or later"),
+                    (json.dumps({k: v for k, v in _rb.items() if k != "checks"}), "no checks"),
+                    (json.dumps(dict(_rb, checks=[{"id": "g.robots", "state": "scored", "points": 9, "max": 5}])),
+                     "no points from 0 to its max")):
+    _code, _err = _cli_exit(["diff"] + _diff_files(_bad, _rb))
+    ok(_code == 2 and "is not a geo-score report" in _err and _says in _err, "%s: %s" % (_says, _err))
+_code, _err = _cli_exit(["diff", "/nonexistent/before.json", "/nonexistent/after.json"])
+ok(_code == 2 and "cannot read BEFORE" in _err, _err)
+# --baseline: exclusive with --urls and --urls-from; --fail-on-drop needs it
+_b = _diff_files(_rb)[0]
+eq(_cli_exit(["https://x.test", "--baseline", _b, "--urls-from", _b])[0], 2, "--baseline with --urls-from is refused")
+_code, _err = _cli_exit(["https://x.test", "--fail-on-drop"])
+ok(_code == 2 and "--fail-on-drop needs --baseline" in _err, _err)
+_code, _err = _cli_exit(["https://x.test", "--baseline", _diff_files(dict(_rb, rubric_version="v1.2"))[0], "--quiet"])
+ok(_code == 2 and "not comparable" in _err, "a baseline of another rubric version fails before any fetch: %s" % _err)
+# a crafted report cannot steer the terminal through the comparison
+_evil = dict(_rb, target="https://x.test/\x1b[2J\u202e", sampled_urls=["https://x.test/\x1b]0;pwned\x07"])
+ok(not gs._UNSAFE.search(gs.render_report_diff(gs.diff_reports(_evil, _rb))), "control characters are stripped")
+
+# ── the file compiles without a warning: `curl … | python3 -` compiles it on every run, and on Python 3.12 two
+# regexes quoted in docstrings printed "SyntaxWarning: invalid escape sequence" before every report ──
+import warnings as _warnings
+with io.open(os.path.join(HERE, "geo_score.py"), encoding="utf-8") as _f:
+    _src = _f.read()
+with _warnings.catch_warnings():
+    _warnings.simplefilter("error")
+    try:
+        compile(_src, "geo_score.py", "exec")
+    except (SyntaxError, SyntaxWarning, DeprecationWarning) as e:
+        fails.append("geo_score.py compiles with a warning: %s" % e)
+
+# ── --help stands alone: the command the user typed, the other commands, examples, exit codes, the docs ──
+# prog was hard-coded "geo-score" while the epilog named geo_score.py, and exit codes lived only in cli/README.md
+for _me in ("geo_score.py", "geo-score"):
+    _saved, _cols, _out = sys.argv, os.environ.get("COLUMNS"), io.StringIO()
+    sys.argv, os.environ["COLUMNS"] = [os.path.join("somewhere", "bin", _me), "--help"], "80"
+    try:
+        with _cl.redirect_stdout(_out):
+            gs.main()
+        _code = 0
+    except SystemExit as e:
+        _code = e.code
+    finally:
+        sys.argv = _saved
+        if _cols is None: del os.environ["COLUMNS"]
+        else: os.environ["COLUMNS"] = _cols
+    _help = _out.getvalue()
+    _lines = _help.splitlines()
+    eq((_code, _lines[0]), (0, "usage: %s [options] URL" % _me), "the usage line names the command typed")
+    ok(all(any(ln.strip().startswith("%s %s " % (_me, _sub)) for ln in _lines[1:4]) for _sub in ("diff", "watch", "mcp")),
+       "the usage lists diff, watch and mcp:\n" + "\n".join(_lines[:4]))
+    _ex = [ln for ln in _lines if " example.com --" in ln]
+    ok(len(_ex) == 5 and all(ln.startswith("  %s example.com --" % _me) for ln in _ex),
+       "five examples, each run as %s: %r" % (_me, _ex))
+    ok("Exit codes:" in _lines and all(any(ln.startswith("  %s  " % _n) for ln in _lines) for _n in "0124"),
+       "exit codes 0, 1, 2 and 4 are listed")
+    ok("  " + gs.RUBRIC_URL in _lines and "  " + gs.TROUBLESHOOTING_URL in _lines
+       and all("/v%s/" % gs.__version__ in _u for _u in (gs.RUBRIC_URL, gs.TROUBLESHOOTING_URL)),
+       "the rubric and the troubleshooting guide, pinned to this release")
+    ok("domain, URL, or URL with a path" in _help and "no progress lines on stderr" in _help, "URL and -q are explained")
+    ok(max(len(ln) for ln in _lines) <= 80, "80 columns: %r" % max(_lines, key=len))
+    other = "geo-score" if _me == "geo_score.py" else "geo_score.py"
+    ok(other + " " not in _help, "never names %s when the user typed %s" % (other, _me))
+
+# piped through `python3 -` there is no geo_watch.py beside the file: the message names what was typed and how to
+# get the release that carries both files
+import subprocess as _sp, tempfile as _tf
+with io.open(os.path.join(HERE, "geo_score.py"), "rb") as _f:
+    _src = _f.read()
+with _tf.TemporaryDirectory() as _d:
+    for _argv, _then in ((["mcp"], "geo-score-mcp"), (["watch", "run"], "geo-score watch …"),
+                         (["x.test", "--ask", "q", "--quiet"], "geo-score SITE --ask QUESTION")):
+        _p = _sp.run([sys.executable, "-"] + _argv, input=_src, capture_output=True, cwd=_d, timeout=60)
+        _err = _p.stderr.decode("utf-8", "replace")
+        _what = "--ask" if "--ask" in _argv else _argv[0]
+        ok(_p.returncode == 2 and _err.startswith("%s needs geo_watch.py %s next to geo_score.py" % (_what, gs.__version__)),
+           "%s: %s" % (_argv, _err))
+        ok("`uvx --from %s %s`" % (gs.RELEASE_WHEEL, _then) in _err and "`pipx install %s`" % gs.RELEASE_WHEEL in _err
+           and _err.index("uvx") < _err.index("clone"), "%s: the wheel's install lines come before clone" % _argv)
 
 if fails:
     print("FAIL — %d" % len(fails))

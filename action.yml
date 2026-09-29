@@ -11,7 +11,7 @@ inputs:
     description: "Fail the job if the normalised score is below this. Omit to report without failing."
     required: false
   sample:
-    description: "How many pages to sample (default 8)."
+    description: "How many pages to sample, 1 or more (default 8)."
     required: false
     default: "8"
   json-out:
@@ -19,6 +19,9 @@ inputs:
     required: false
   urls-from:
     description: "Score the pages an earlier JSON report sampled instead of drawing a new sample, so two runs compare the same pages."
+    required: false
+  baseline:
+    description: "An earlier JSON report (json-out) to compare with: the action scores the pages it sampled, as urls-from does, prints what changed check by check, adds a 'Changes since baseline' section to the job summary and sets the delta and dropped-checks outputs. Not with urls-from."
     required: false
   sarif:
     description: "Write SARIF 2.1.0 to this path, for github/codeql-action/upload-sarif or any SARIF viewer. Each result points at its check's line in the JSON report (json-out, or geo-score-report.json in the workspace)."
@@ -30,6 +33,16 @@ inputs:
     description: "Annotate the run with checks at zero (gates as errors, others as warnings). Set to false to turn off."
     required: false
     default: "true"
+  fail-on-gate:
+    description: "true to fail the job when any gate check (g.*) scores zero. A gate at zero caps the score at exactly 40, so fail-under: 40 alone never fails a capped site. The same as the assertion g.*>0."
+    required: false
+    default: "false"
+  badge:
+    description: "Write the score as a badge to this path: a path ending in .json gets shields.io endpoint JSON (host it and use https://img.shields.io/endpoint?url=<its URL>), any other path an SVG. The action writes the file; committing or publishing it is up to the workflow."
+    required: false
+  assert:
+    description: "Per-check assertions, one per line, each CHECK OP VALUE: a check id or a glob over them, >=, > or =, and a number or max (for example g.robots=max or p1.llms-txt>=4). A failed one fails the job; a check the run could not observe is skipped."
+    required: false
 outputs:
   score:
     description: "Normalised score, 0-100."
@@ -46,6 +59,15 @@ outputs:
   report-path:
     description: "Where the JSON report was written."
     value: ${{ steps.run.outputs.report-path }}
+  badge-path:
+    description: "Where the badge was written, when the badge input is set."
+    value: ${{ steps.run.outputs.badge-path }}
+  delta:
+    description: "With baseline: the score minus the baseline's, e.g. -5."
+    value: ${{ steps.run.outputs.delta }}
+  dropped-checks:
+    description: "With baseline: the checks that lost points or, for a gate, reached zero since the baseline, comma-separated in rubric order; empty when none did."
+    value: ${{ steps.run.outputs.dropped-checks }}
 runs:
   using: "composite"
   steps:
@@ -59,18 +81,35 @@ runs:
         GEO_SAMPLE: ${{ inputs.sample }}
         GEO_JSON_OUT: ${{ inputs.json-out }}
         GEO_URLS_FROM: ${{ inputs.urls-from }}
+        GEO_BASELINE: ${{ inputs.baseline }}
         GEO_SARIF: ${{ inputs.sarif }}
         GEO_JUNIT: ${{ inputs.junit }}
         GEO_ANNOTATIONS: ${{ inputs.annotations }}
+        GEO_FAIL_ON_GATE: ${{ inputs.fail-on-gate }}
+        GEO_ASSERT: ${{ inputs.assert }}
+        GEO_BADGE: ${{ inputs.badge }}
         GEO_ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail
         GEO_URL="${GEO_URL:-}" GEO_FAIL_UNDER="${GEO_FAIL_UNDER:-}" GEO_SAMPLE="${GEO_SAMPLE:-8}"
-        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
+        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_BASELINE="${GEO_BASELINE:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
+        GEO_FAIL_ON_GATE="${GEO_FAIL_ON_GATE:-false}" GEO_ASSERT="${GEO_ASSERT:-}" GEO_BADGE="${GEO_BADGE:-}"
         [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
-        [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
+        [[ "$GEO_SAMPLE" =~ ^0*[1-9][0-9]*$ ]] || { echo "::error title=geo-score::sample must be a whole number of pages, 1 or more, got '$GEO_SAMPLE'"; exit 2; }
         if [ -n "$GEO_FAIL_UNDER" ] && ! [[ "$GEO_FAIL_UNDER" =~ ^[0-9]+$ ]]; then
           echo "::error title=geo-score::fail-under must be a whole number from 0 to 100, got '$GEO_FAIL_UNDER'"; exit 2
+        fi
+        case "$GEO_FAIL_ON_GATE" in true|false) ;; *) echo "::error title=geo-score::fail-on-gate must be true or false, got '$GEO_FAIL_ON_GATE'"; exit 2 ;; esac
+        if [ -n "$GEO_BASELINE" ] && [ -n "$GEO_URLS_FROM" ]; then
+          echo "::error title=geo-score::baseline already scores the baseline's pages; drop urls-from"; exit 2
+        fi
+        # the summary compares against a copy taken before the run, so a baseline that is also the json-out path
+        # is compared as it was, not with the report that replaced it
+        BASE_COPY=""
+        if [ -n "$GEO_BASELINE" ]; then
+          [ -f "$GEO_BASELINE" ] || { echo "::error title=geo-score::the baseline $GEO_BASELINE is not a file"; exit 2; }
+          BASE_COPY="${RUNNER_TEMP:-/tmp}/geo-score-baseline.json"
+          cp -- "$GEO_BASELINE" "$BASE_COPY"
         fi
         # code scanning locates each SARIF result in a file of the checkout, so with sarif the report is
         # written into the workspace; otherwise it goes to the runner's temp directory
@@ -79,16 +118,36 @@ runs:
         else OUT="${RUNNER_TEMP:-/tmp}/geo-score-report.json"; fi
         ARGS=(--sample "$GEO_SAMPLE" --explain --json-out "$OUT")
         [ -z "$GEO_URLS_FROM" ] || ARGS+=(--urls-from "$GEO_URLS_FROM")
+        [ -z "$GEO_BASELINE" ] || ARGS+=("--baseline=$GEO_BASELINE")
         [ -z "$GEO_SARIF" ] || ARGS+=(--sarif "$GEO_SARIF")
         [ -z "$GEO_JUNIT" ] || ARGS+=(--junit "$GEO_JUNIT")
-        # one run: the log, the summary, the annotations and every file describe the same fetch
-        if ! python3 "$GEO_ACTION_PATH/cli/geo_score.py" "$GEO_URL" "${ARGS[@]}"; then
+        # one = argument, so a path that starts with a dash stays a path
+        case "$GEO_BADGE" in
+          "") ;;
+          *.json|*.JSON) ARGS+=("--badge-json=$GEO_BADGE") ;;
+          *) ARGS+=("--badge=$GEO_BADGE") ;;
+        esac
+        # assertions go to the CLI as arguments, one per line of the input, and are never run as shell
+        CHECKS=0
+        [ "$GEO_FAIL_ON_GATE" != "true" ] || { ARGS+=(--fail-on-gate); CHECKS=1; }
+        while IFS= read -r line || [ -n "$line" ]; do
+          line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
+          [ -z "$line" ] || { ARGS+=(--assert "$line"); CHECKS=1; }
+        done <<< "$GEO_ASSERT"
+        # one run: the log, the summary, the annotations and every file describe the same fetch. Exit 1 with
+        # assertions means scored and a check failed; anything else that is not 0 means it could not score
+        RC=0
+        python3 "$GEO_ACTION_PATH/cli/geo_score.py" "$GEO_URL" "${ARGS[@]}" || RC=$?
+        if [ "$RC" -ne 0 ] && { [ "$RC" -ne 1 ] || [ "$CHECKS" = 0 ] || [ ! -s "$OUT" ]; }; then
           echo "::error title=geo-score::could not score $GEO_URL (see the log above)"; exit 2
         fi
         echo "report-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$OUT")" >> "$GITHUB_OUTPUT"
-        python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS"
+        [ -z "$GEO_BADGE" ] || echo "badge-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$GEO_BADGE")" >> "$GITHUB_OUTPUT"
+        python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS" "$BASE_COPY"
+        [ "$RC" -eq 0 ] || python3 "$GEO_ACTION_PATH/action/summary.py" --assertions "$OUT"
         SCORE=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['normalised'])" "$OUT")
         if [ -n "$GEO_FAIL_UNDER" ] && [ "$SCORE" -lt "$GEO_FAIL_UNDER" ]; then
           echo "::error title=geo-score::$SCORE is below the $GEO_FAIL_UNDER threshold"
           exit 1
         fi
+        exit "$RC"

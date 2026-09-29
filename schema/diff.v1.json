@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/diff.v1.json",
+  "title": "geo-score report comparison",
+  "description": "What `geo-score diff BEFORE AFTER --format json` prints: two level-1 reports (schema/report.v2.json) of one rubric version, compared check by check. Added in 1.5.0. Not a report, and never stored by the tool. Two reports that sampled different pages mix change on the site with sampling; `same_pages` says which case this is.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "tool",
+    "rubric_version",
+    "before",
+    "after",
+    "normalised_delta",
+    "within_spread",
+    "band_fell",
+    "same_pages",
+    "pages_added",
+    "pages_removed",
+    "gates_reached_zero",
+    "gates_left_zero",
+    "lost_points",
+    "regressed",
+    "checks",
+    "notes"
+  ],
+  "properties": {
+    "format": {
+      "const": "geo-score/diff.v1"
+    },
+    "tool": {
+      "type": "string",
+      "pattern": "^geo-score-cli/",
+      "maxLength": 120,
+      "description": "The release that made the comparison. Each report's own tool is in before.tool and after.tool."
+    },
+    "rubric_version": {
+      "type": "string",
+      "pattern": "^v1\\.[1-9]\\d*$",
+      "description": "The rubric both reports were scored against. Reports of two rubric versions are refused (exit 2), never compared."
+    },
+    "before": {
+      "$ref": "#/$defs/side"
+    },
+    "after": {
+      "$ref": "#/$defs/side"
+    },
+    "normalised_delta": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100,
+      "description": "after.normalised minus before.normalised."
+    },
+    "within_spread": {
+      "type": "boolean",
+      "description": "True when the reports sampled different pages and the score moved by 5 or less: the run-to-run spread measured in benchmark/REPRODUCIBILITY.md. Always false on the same pages."
+    },
+    "band_fell": {
+      "type": "boolean",
+      "description": "True when the band of after.normalised is lower than the band of before.normalised."
+    },
+    "same_pages": {
+      "type": "boolean",
+      "description": "True when both reports scored the same pages (a trailing slash aside), so a difference comes from the site rather than from sampling."
+    },
+    "pages_added": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pages after sampled that before did not."
+    },
+    "pages_removed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pages before sampled that after did not. On a re-score of pinned pages, a page that answered with an error or a bot-challenge page this time is here."
+    },
+    "gates_reached_zero": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^g\\."
+      },
+      "description": "Gate checks at zero in after and not in before. A gate at zero caps the score at 40."
+    },
+    "gates_left_zero": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^g\\."
+      },
+      "description": "Gate checks at zero in before and not in after, including one after could not observe."
+    },
+    "lost_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Checks scored in both reports with fewer points in after (state down), bonus checks included."
+    },
+    "regressed": {
+      "type": "boolean",
+      "description": "What --fail-on-drop exits 4 on: lost_points or gates_reached_zero is not empty, or band_fell. A check that became unobservable is never a regression."
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every check id of the rubric and its bonus checks, in rubric order, then any other id either report carries.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "before",
+          "after",
+          "max",
+          "state"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "before": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Points in before, or null when before did not score the check."
+          },
+          "after": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Points in after, or null when after did not score the check."
+          },
+          "max": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "state": {
+            "enum": [
+              "up",
+              "down",
+              "same",
+              "became unobservable",
+              "became observable",
+              "unobservable"
+            ],
+            "description": "up, down or same when both reports scored the check; became unobservable when only before did, which is never a drop to zero; became observable when only after did; unobservable when neither did."
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Caveats for people: whether the pages differ, whether the reports come from different releases or targets. Wording may change in any release."
+    }
+  },
+  "$defs": {
+    "side": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "target",
+        "tool",
+        "audited_at",
+        "sample_source",
+        "pages",
+        "readiness",
+        "observable_max",
+        "normalised",
+        "band",
+        "gate_capped",
+        "gates_at_zero"
+      ],
+      "properties": {
+        "file": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The report file as given; null for the run that --baseline compares against its baseline."
+        },
+        "target": {
+          "type": "string"
+        },
+        "tool": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The report's own tool, or null when it does not state one. When before and after differ, part of the difference may come from the tool: a release can move a score on its own."
+        },
+        "audited_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sample_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many pages the report scored (its sampled_urls)."
+        },
+        "readiness": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observable_max": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "normalised": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "band": {
+          "type": "string"
+        },
+        "gate_capped": {
+          "type": "boolean"
+        },
+        "gates_at_zero": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^g\\."
+          }
+        }
+      }
+    }
+  }
+}
