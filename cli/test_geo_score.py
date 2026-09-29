@@ -265,6 +265,40 @@ ok('role="img"' in svg and "<title>" in svg, "the badge is labelled for screen r
 eq(gs.visible_text("<p>a<script>junk()</script>b</p>"), "a b", "scripts are stripped, not read")
 ok("h2" not in " ".join(gs.headings("<h2>Real heading</h2>")).lower(), "headings come back as text")
 ok("Real heading" in gs.headings("<h2>Real heading</h2>"), "and the text is intact")
+eq(gs.visible_text("<p>a</p><script>x <p>b</p>"), "a", "a script that is never closed hides the rest, as in a browser")
+eq(gs.visible_text("<p>a</p><svg><p>b</p>"), "a b", "an svg that is never closed hides nothing")
+eq(gs.visible_text("<P>a</p><SCRIPT>x</Script>b"), "a b", "closes are found in any case")
+eq(gs.paragraphs("<p>one</p><p>two"), ["one"], "a paragraph that is never closed is not read")
+eq(gs.headings("<h2>a</h3><h1>b</H1><title>T</title>"), ["a", "b", "T"], "a heading runs to the first heading close")
+eq(gs.og_site_name('<meta content="a" content="b>c" property="og:site_name">'), "b>c",
+   "og:site_name after its content, where a value holds '>'")
+eq(gs.og_site_name('<meta property="og:site_name" content="Acme">'), "Acme", "and before it")
+# every scanner reads a page in one pass. The regexes they replaced retried each unclosed opening to the end of the
+# page: 80 KB of "<script>x " took 1.8 s, and the 4 MB a fetch may return would have taken hours
+import time as _time
+def _secs(fn, text):
+    best = None
+    for _ in range(3):
+        t0 = _time.perf_counter(); fn(text); t = _time.perf_counter() - t0
+        best = t if best is None else min(best, t)
+    return best
+# (a scanner, the unit a page of it repeats): each opening that never closes, or a tag that never ends
+_LD = '<script type="application/ld+json">x '
+_SCANS = [("visible_text", gs.visible_text, "<script>x "), ("visible_text", gs.visible_text, _LD),
+          ("jsonld", gs.jsonld, "<script>x "), ("jsonld", gs.jsonld, _LD),
+          ("visible_text", gs.visible_text, "<a "), ("visible_text", gs.visible_text, "<svg>x "),
+          ("main_html", gs.main_html, "<main>x "), ("paragraphs", gs.paragraphs, "<p>x "),
+          ("headings", gs.headings, "<h2>x "), ("visible_dates", gs.visible_dates, "<time "),
+          ("own_dates", lambda h: gs.own_dates(h, []), 'property="article:published_time" '),
+          ("links", lambda h: list(gs.in_tags(gs._A_HREF, gs._A, h)), "<a "),
+          ("geo_link", gs.geo_link, '<link rel="alternate" '), ("og_site_name", gs.og_site_name, 'content="x" '),
+          ("has_md_link", gs.has_md_link, "[a](b "), ("sitemap lines", gs._SITEMAP_DECL.findall, " \n")]
+for _name, _fn, _unit in _SCANS:
+    _t1 = _secs(_fn, _unit * (1_000_000 // len(_unit)))
+    _t2 = _secs(_fn, _unit * (2_000_000 // len(_unit)))
+    ok(_t1 < 1, "%s on 1 MB of %r takes %.2f s, under 1 s" % (_name, _unit, _t1))
+    ok(_t2 < 3 * max(_t1, 0.005), "%s on 2 MB of %r takes %.3f s, %.3f s on 1 MB: linear, not quadratic"
+       % (_name, _unit, _t2, _t1))
 
 # ── p2.question-intent: \w matches CJK, so the nav-label filter must not swallow short Chinese headings ──
 def _intent(h): return bool(gs.QP_INTENT.search(h)) and not gs.NAV_LABEL.match(h)
@@ -989,6 +1023,60 @@ try:
     _js.validate(_ej, json.load(io.open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8")))
 except ImportError:
     pass
+
+# ── time limits: one request, however slowly it arrives, and one run ──
+# A server that drips its headers a byte at a time: every read beats the timeout, and only the budget for the whole
+# request stops it. The scorer's own opener, so the limit reaches the socket through its connection factory.
+import socketserver as _ssv
+class _Drip(_ssv.BaseRequestHandler):
+    def handle(self):
+        _dripped.append(1)
+        try:
+            self.request.recv(65536)
+            self.request.sendall(b"HTTP/1.1 200 OK\r\n")
+            for _ in range(200):
+                self.request.sendall(b"X"); _time.sleep(0.1)
+        except OSError:
+            pass
+_dripped = []
+_ds = _ssv.ThreadingTCPServer(("127.0.0.1", 0), _Drip); _ds.daemon_threads = True
+_th.Thread(target=_ds.serve_forever, daemon=True).start()
+_saved = (gs._OPENER, gs.FETCH_BUDGET)
+try:
+    gs._OPENER = _ur.build_opener(_ur.ProxyHandler({}), gs._Redirects, gs._GuardedHTTP, gs._GuardedHTTPS)
+    gs.FETCH_BUDGET = 1
+    _t0 = _time.time()
+    _r = gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], timeout=0.5)
+    _took = _time.time() - _t0
+    eq((_r.status, _r.kind, _r.err), (0, "slow", "exceeded 1 s total"), "headers dripped past the budget are no answer")
+    ok(_took < 2.5, "and the fetch stops at the budget: %.1f s" % _took)
+    eq(gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], timeout=1.5).err, "exceeded 3 s total",
+       "a longer timeout raises the budget to twice the timeout")
+    del _dripped[:]
+    _r = gs.fetch("http://127.0.0.1:%d/" % _ds.server_address[1], deadline=_time.monotonic() - 1)
+    eq((_r.status, _r.kind, _r.err, _dripped), (0, "deadline", "run deadline reached", []),
+       "a request asked for after the run's deadline is not sent")
+finally:
+    gs._OPENER, gs.FETCH_BUDGET = _saved
+    _ds.shutdown(); _ds.server_close()
+_calls = []
+_orig_fetch, _orig_sleep = gs.fetch, gs.time.sleep
+gs.time.sleep = lambda s: None
+try:
+    for _kind in ("slow", "deadline"):
+        del _calls[:]
+        gs.fetch = lambda url, _k=_kind, **kw: (_calls.append(url), gs.Resp(url, 0, err="x", kind=_k))[1]
+        gs.fetch_steady("https://x.test/")
+        eq(len(_calls), 1, "an answer of kind %s is not retried" % _kind)
+finally:
+    gs.fetch, gs.time.sleep = _orig_fetch, _orig_sleep
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 404), gs.Resp("https://x.test/a", 0, err="run deadline reached",
+                                                                                   kind="deadline")], 15)
+eq(_e.kind, "deadline", "pages the deadline stopped are why there is nothing to score")
+ok(str(_e).startswith("could not fetch https://x.test (deadline): the run reached its %g s limit before a page to score "
+                      "came back; see https://" % gs.RUN_DEADLINE) and "proxy" not in str(_e), str(_e))
+_e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 0, err="exceeded 40 s total", kind="slow")], 20)
+ok("(slow): x.test kept its answer coming too slowly to finish within 40 s" in str(_e), str(_e))
 
 if fails:
     print("FAIL — %d" % len(fails))

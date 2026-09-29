@@ -42,9 +42,11 @@ gs.c.on = False
 # retries wait for nothing here: a fault test must not sleep its way through the suite's time budget
 gs.RETRY_BACKOFF = 0
 # On macOS urllib also reads the system proxy configuration, which the env purge above
-# does not touch. An explicit empty ProxyHandler keeps every request direct.
+# does not touch. An explicit empty ProxyHandler keeps every request direct. The rest is the scorer's own
+# opener: its connection factory is where a request's time limit reaches the socket.
 if hasattr(gs, "_OPENER"):
-    gs._OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), gs._Redirects)
+    gs._OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), gs._Redirects, gs._GuardedHTTP,
+                                             gs._GuardedHTTPS)
 
 SPEC_IDS = [c[0] for c in gs.SPEC]
 BONUS_IDS = [b[0] for b in gs.BONUS]
@@ -76,8 +78,9 @@ BEHAVIOUR = {
 # Transient faults, served only when a test asks: {case: (fixture, faults)}. drop_nth {path: N} closes the
 # connection on the Nth request for that path without an answer (N may be a tuple of request numbers);
 # 429_once_per_ua answers the first request per (non-browser user-agent, path) with 429 and Retry-After: 0;
-# status_for {path: code} answers every request for that path with that code. Every gate in FAULTS must read
-# as it does without the fault.
+# status_for {path: code} answers every request for that path with that code; drip {path: seconds} sends the
+# headers at once and then one byte of the body every that many seconds, so no single read times out and the
+# answer never finishes. Every gate in FAULTS must read as it does without the fault.
 FAULTS = {
     "robots-blocks, first robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 1}}),
     "robots-blocks, second robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 2}}),
@@ -118,6 +121,20 @@ class FixtureHandler(BaseHTTPRequestHandler):
         if nth == drop or (isinstance(drop, tuple) and nth in drop):
             srv.drops[at] += 1
             self.close_connection = True        # no status line at all: the client reads a dropped connection
+            return
+        gap = srv.faults.get("drip", {}).get(at)
+        if gap:
+            self.send_response(200)
+            self.send_header("Content-Type", TEXT_TYPES[".txt"])
+            self.send_header("Content-Length", "1000")
+            self.end_headers()
+            self.close_connection = True
+            try:
+                for _ in range(1000):
+                    self.wfile.write(b"#")
+                    time.sleep(gap)
+            except OSError:
+                pass                            # the scorer stopped reading and closed the connection
             return
         if srv.faults.get("429_once_per_ua") and ua != gs.UA_BROWSER and first_for_ua:
             return self._send(429, b"slow down", TEXT_TYPES[".txt"], {"Retry-After": "0"})
@@ -224,6 +241,9 @@ _REAL = {}
 def _patched_fetch(url, *a, **kw):
     u = urllib.parse.urlsplit(url)
     if u.scheme in ("http", "https") and not is_loopback(u.hostname or ""):
+        # past the run's deadline the scorer's fetch refuses before it connects: let it answer, as it would
+        if kw.get("deadline") is not None and time.monotonic() >= kw["deadline"]:
+            return _REAL["fetch"](url, *a, **kw)
         return offsite_fetch(url)
     return _REAL["fetch"](url, *a, **kw)
 
@@ -625,6 +645,68 @@ class EndToEnd(unittest.TestCase):
                         jsonschema.validate(got, schema)
         finally:
             silent.close()
+
+    def test_a_slow_drip_is_cut_at_the_fetch_budget(self):
+        # a tarpit: robots.txt's headers at once, then one byte every 0.5 s. Every read beats the 1 s timeout, so
+        # only the budget for the whole request stops it. The gate it feeds is not observed, never zero, and an
+        # answer that ran out of time is not asked for again
+        H.start()
+        srv = start_server("good", {"drip": {"/robots.txt": 0.5}})
+        saved, gs.FETCH_BUDGET = gs.FETCH_BUDGET, 2
+        t0 = time.time()
+        try:
+            res = gs.run(srv.origin, 8, timeout=1)
+        finally:
+            gs.FETCH_BUDGET = saved
+            srv.shutdown()
+            srv.server_close()
+        secs = time.time() - t0
+        self.assertLess(secs, 10, "the run took %.1f s" % secs)
+        self.assertIsNone(res["tier"]["g.robots"])
+        self.assertIn("robots.txt could not be read (exceeded 2 s total); not observed.", res["ev"]["g.robots"])
+        self.assertEqual(srv.hits["/robots.txt"], 1, "a request that ran out of time is not retried")
+        rep = gs.as_json(res)
+        self.assertEqual([c["state"] for c in rep["checks"] if c["id"] == "g.robots"], ["unobservable"])
+        self.assertFalse(rep["gate_capped"])
+
+    def test_the_run_deadline(self):
+        # llms.txt drips past a 3 s run deadline: that request stops there, no later request is sent, and every
+        # check still waiting for one is not observed, never zero. The checks on the pages already fetched score
+        # as they do without the fault
+        H.start()
+        srv = start_server("good", {"drip": {"/llms.txt": 0.5}})
+        saved, gs.RUN_DEADLINE = gs.RUN_DEADLINE, 3
+        t0 = time.time()
+        try:
+            res = gs.run(srv.origin, 8, timeout=1)
+        finally:
+            gs.RUN_DEADLINE = saved
+            srv.shutdown()
+            srv.server_close()
+        secs = time.time() - t0
+        self.assertLess(secs, 6, "the run took %.1f s" % secs)
+        cut = ("p1.llms-txt", "p1.organization", "p3.sameas", "p3.knowledge-graph")
+        for cid in cut:
+            self.assertIsNone(res["tier"][cid], cid)
+            self.assertIn("The run reached its 3 s limit before", res["ev"][cid])
+        self.assertEqual(sum(n for path, n in srv.hits.items() if path in ("/logo.png", "/llms-full.txt", "/ai.txt")), 0,
+                         "no request is sent after the deadline")
+        fetched = {k: v for k, v in EXPECTED["good"].items() if k in SPEC_IDS and k not in cut}
+        self.assertEqual({k: res["tier"].get(k) for k in fetched}, fetched)
+        # when the deadline stops every sampled page there is nothing to score: kind deadline, exit 2
+        srv = start_server("good", {"drip": {"/pricing.html": 0.5}})
+        gs.RUN_DEADLINE = 1
+        try:
+            with self.assertRaises(gs.ScoreError) as cm:
+                gs.run(srv.origin, urls=["/pricing.html"], timeout=1)
+        finally:
+            gs.RUN_DEADLINE = saved
+            srv.shutdown()
+            srv.server_close()
+        self.assertEqual(cm.exception.kind, "deadline")
+        self.assertIn("(deadline): the run reached its 1 s limit before a page to score came back; see https://",
+                      str(cm.exception))
+        self.assertIsInstance(cm.exception, RuntimeError, "the CLI exits 2")
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

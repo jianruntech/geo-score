@@ -122,6 +122,23 @@ the site refuses the tool; that difference is what `g.reachable` measures once a
 
 **What to do.** Check the URL, then compare with `curl -i` from the same machine.
 
+### slow: the answer never finished
+
+**Cause.** The server sent its answer so slowly that one request, redirects included, ran past the most
+a request may take: 30 seconds, or twice `--timeout` when that is longer. Some sites do this to crawlers on
+purpose. A slow answer is not retried.
+
+**What to do.** Re-run later. If a browser on the same network loads the page quickly, the site is slowing
+this client down, and a real crawler may meet the same. A longer `--timeout` raises the per-request limit.
+
+### deadline: the run ran out of time
+
+**Cause.** One run takes at most 300 seconds. Once it reaches that, no new request starts and the one in
+flight stops. This error means no page to score had come back by then; when some had, the run finishes and
+the checks that needed the missing answers show as not observed.
+
+**What to do.** Re-run later, or ask for fewer pages with `--sample` or a shorter `--urls` list.
+
 ## Proxies
 
 The CLI uses Python's standard proxy settings: `HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY` (and the

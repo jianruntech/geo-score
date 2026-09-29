@@ -102,8 +102,9 @@ class Resp:
     @property
     def kind(self):
         """Why this answer is no page to score, in schema/error.v1.json's words: with no HTTP answer dns,
-        refused, tls, timeout, dropped, no_response (or not_public under the address guard); http_<code> for an
-        HTTP error; no_content for an empty 2xx. None for a page with content."""
+        refused, tls, timeout, dropped, no_response (or not_public under the address guard), or slow and
+        deadline when fetch() stopped it for time; http_<code> for an HTTP error; no_content for an empty 2xx.
+        None for a page with content."""
         if self.status == 0:
             return self._kind or fault_kind(self.err)
         if not self.ok:
@@ -190,7 +191,15 @@ def _guarded(conn_class, proxied=False):
     a proxy the proxy resolves the name: the target was checked before the request (check_url, and on
     every redirect hop), and the proxy itself is the user's own, so its address is not refused."""
     def make(host, **kw):
+        until = getattr(_LIMIT, "until", None)
+        if until is not None and isinstance(kw.get("timeout"), (int, float)):
+            # the connect and the TLS handshake wait no longer than the fetch has left
+            left = until - time.monotonic()
+            if left <= 0:
+                raise OutOfTime("out of time")
+            kw["timeout"] = min(kw["timeout"], left)
         c = conn_class(host, **kw)
+        c.response_class = _TimedResponse
         orig = c._create_connection
 
         def create(address, *a, **k):
@@ -284,15 +293,94 @@ def gunzip(raw, limit=MAX_INFLATED):
 DEFAULT_TIMEOUT = 15
 TIMEOUT = DEFAULT_TIMEOUT
 MAX_TIMEOUT = 300
+# The time a timeout cannot bound. TIMEOUT limits each read, not their sum: a server that sent one byte every few
+# seconds (a tarpit, which some sites keep for crawlers) held a fetch, and with it a CI job or an MCP worker, for
+# hours. One request, redirects included, takes at most max(FETCH_BUDGET, 2 × its timeout) seconds; past that it
+# is an answer of kind "slow", and it is not retried. One run takes at most RUN_DEADLINE seconds: no request starts
+# after it and one in flight stops there, as an answer of kind "deadline", so the checks that needed it are not
+# observed. Neither is a flag; the tests set them lower.
+FETCH_BUDGET = 30
+RUN_DEADLINE = 300
+READ_CHUNK = 64 * 1024
 # Resolve the host before a run, so a mistyped name fails at once. main() switches this on for the CLI. It is a
 # module setting, not a run() parameter, so run() keeps the signature callers and test stubs rely on; the MCP
 # server resolves the host itself before it calls run().
 PREFLIGHT = False
 
 
-def fetch(url, ua=UA_BROWSER, timeout=None, method="GET"):
+class OutOfTime(socket.timeout):
+    """A fetch whose time is up. fetch() answers it as kind "slow" or "deadline", never as a plain timeout."""
+
+
+# The fetch this thread is making: when its time is up (a time.monotonic() value) and its wait per read. Set by
+# fetch() around the request, so the connection it opens and every read of the answer end by then.
+_LIMIT = threading.local()
+
+
+class _TimedReader(io.RawIOBase):
+    """A response's socket reads, each cut to the time its fetch has left. The status line and the headers are
+    read through it as well as the body, so a server that drips its headers a byte at a time is stopped too."""
+    def __init__(self, raw, sock, until, per_read):
+        io.RawIOBase.__init__(self)
+        self.raw, self.sock, self.until, self.per_read = raw, sock, until, per_read
+
+    def readable(self):
+        return True
+
+    def fileno(self):
+        return self.raw.fileno()
+
+    def readinto(self, b):
+        left = self.until - time.monotonic()
+        if left <= 0:
+            raise OutOfTime("out of time")
+        self.sock.settimeout(min(self.per_read, left))
+        return self.raw.readinto(b)
+
+    def close(self):
+        if not self.closed:
+            self.raw.close()        # the socket's own reader: closing it lets the connection close
+        io.RawIOBase.close(self)
+
+
+class _TimedResponse(http.client.HTTPResponse):
+    """http.client's response, reading through _TimedReader while a fetch() has a time limit set."""
+    def __init__(self, sock, *a, **kw):
+        http.client.HTTPResponse.__init__(self, sock, *a, **kw)
+        until = getattr(_LIMIT, "until", None)
+        if until is not None:
+            self.fp = io.BufferedReader(_TimedReader(self.fp.detach(), sock, until, _LIMIT.timeout))
+
+
+def read_body(r, limit, until):
+    """Up to `limit` bytes of a response's body, READ_CHUNK at a time: raises OutOfTime once `until` has passed.
+    read1 returns what one read brings, so a body sent a byte at a time is checked against the clock each time."""
+    read = getattr(r, "read1", None) or r.read
+    parts, got = [], 0
+    while got < limit:
+        if time.monotonic() >= until:
+            raise OutOfTime("out of time")
+        b = read(min(READ_CHUNK, limit - got))
+        if not b:
+            break
+        parts.append(b)
+        got += len(b)
+    return b"".join(parts)
+
+
+def fetch(url, ua=UA_BROWSER, timeout=None, method="GET", *, deadline=None):
+    """One request, never retried. It waits `timeout` seconds per read (default TIMEOUT) and
+    max(FETCH_BUDGET, 2 × timeout) in all. `deadline`, a time.monotonic() value, is the run's: it stops the
+    request sooner, and a request asked for after it is not sent."""
     timeout = timeout or TIMEOUT
-    t0 = time.time()
+    t0, now = time.time(), time.monotonic()
+    budget = max(FETCH_BUDGET, 2 * timeout)
+    until, kind, why = now + budget, "slow", "exceeded %g s total" % budget
+    if deadline is not None and deadline <= until:
+        until, kind, why = deadline, "deadline", "run deadline reached"
+    if now >= until:
+        return Resp(str(url), 0, b"", err=why, kind=kind)
+    _LIMIT.until, _LIMIT.timeout = until, timeout
     try:
         # inside the try: a URL the site wrote badly (relative, schemeless, empty) is a failed fetch,
         # never an exception that ends the run
@@ -302,20 +390,26 @@ def fetch(url, ua=UA_BROWSER, timeout=None, method="GET"):
             "Accept-Encoding": "gzip", "Accept-Language": "en,zh;q=0.8"})
         check_url(url)
         with _OPENER.open(req, timeout=timeout) as r:
-            raw = r.read(MAX_BODY)
+            raw = read_body(r, MAX_BODY, until)
             if r.headers.get("Content-Encoding") == "gzip":
                 raw = gunzip(raw)
             h = {k.lower(): v for k, v in r.headers.items()}
             return Resp(r.geturl(), r.status, raw, h, elapsed=time.time() - t0)
     except urllib.error.HTTPError as e:
-        try: raw = e.read(400_000)
+        try: raw = read_body(e, 400_000, until)
         except Exception: raw = b""
         return Resp(url, e.code, raw, {k.lower(): v for k, v in (e.headers or {}).items()},
                     elapsed=time.time() - t0)
     except Exception as e:
+        k = fault_kind(e)
+        if k == "timeout" and time.monotonic() >= until:
+            # the last wait was cut to what was left of the time: the answer ran out of it, not one read
+            return Resp(url, 0, b"", err=why, elapsed=time.time() - t0, kind=kind)
         # a server's status line lands in this message: keep it to one clean line
         return Resp(url, 0, b"", err=" ".join(_UNSAFE.sub("", str(e)).split())[:120], elapsed=time.time() - t0,
-                    kind=fault_kind(e))
+                    kind=k)
+    finally:
+        _LIMIT.until = None
 
 # Retries. A timeout, a reset, 408, 429 or a 5xx can change on the next try; any other answer is definite.
 # The wait grows by RETRY_BACKOFF seconds a try (the tests set it to 0), or follows a Retry-After of up to
@@ -331,6 +425,8 @@ def transient(status):
 
 # faults the next try meets again at once: a name that does not resolve, a closed port, a failed handshake
 DEFINITE = {"dns", "refused", "not_public", "tls"}
+# answers that ran out of time: a retry would take as long again, or be refused by the run's deadline
+OUT_OF_TIME = {"slow", "deadline"}
 
 def retry_wait(r, i):
     if r.status == 0 and r.kind == "timeout":
@@ -356,8 +452,8 @@ def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
     once sent discovery to homepage links instead, a different eight pages were scored,
     and a site measured 71, 40 and 71 on three consecutive runs from one machine (the
     middle sample fell under the g.ssr gate). Timeouts, resets, 408, 429 and 5xx are
-    retried with a short backoff; a definite answer, or a DNS, refused or TLS fault, is
-    returned at once. With a memo,
+    retried with a short backoff; a definite answer, a DNS, refused or TLS fault, or an
+    answer that ran out of time, is returned at once. With a memo,
     an answer already fetched in this run is returned without a request."""
     key = (url, kw.get("ua", UA_BROWSER), kw.get("method", "GET"))
     if memo is not None:
@@ -366,7 +462,7 @@ def fetch_steady(url, tries=STEADY_TRIES, *, memo=None, **kw):
                 return memo.got[key]
     for i in range(tries):
         r = fetch(url, **kw)
-        if not transient(r.status) or r.kind in DEFINITE:
+        if not transient(r.status) or r.kind in DEFINITE or r.kind in OUT_OF_TIME:
             break
         if i < tries - 1:
             time.sleep(retry_wait(r, i))
@@ -421,6 +517,10 @@ FAULTS = {
             "something between here and the site interferes with HTTPS", "tls-the-https-handshake-failed"),
     "timeout": ("{host} did not answer within {timeout:g} s on any try (--timeout sets the wait)",
                 "timeout-no-answer-in-time"),
+    "slow": ("{host} kept its answer coming too slowly to finish within {budget:g} s, the most one request may take",
+             "slow-the-answer-never-finished"),
+    "deadline": ("the run reached its {deadline:g} s limit before a page to score came back",
+                 "deadline-the-run-ran-out-of-time"),
     "dropped": ("{host} closed the connection without answering, on every try", "dropped-no_response-no-answer-came-back"),
     "no_response": ("{host} gave no usable HTTP answer", "dropped-no_response-no-answer-came-back"),
     "http": ("every page asked for answered with an HTTP error ({codes})", "http_nnn-the-pages-answered-with-an-http-error"),
@@ -443,12 +543,15 @@ def proxy_for(url):
 def fetch_failure(base, rs, timeout=None):
     """The error for a site that gave no page to score: the first answer's kind, in one plain sentence that names
     it, with the troubleshooting section for it."""
-    kind = rs[0].kind or "no_content"
+    # pages the run's deadline stopped are why there is nothing to score, whatever the first page answered
+    kind = "deadline" if any(r.kind == "deadline" for r in rs) else rs[0].kind or "no_content"
     codes = sorted({r.status for r in rs if r.status and not r.ok})
     host = urllib.parse.urlsplit(base).hostname or base
     text, anchor = FAULTS["http" if kind.startswith("http_") else kind]
-    text = text.format(host=host, timeout=timeout or TIMEOUT, codes=", ".join("HTTP %d" % c for c in codes))
-    via = proxy_for(base) if rs[0].status == 0 and kind != "not_public" else None
+    t = timeout or TIMEOUT
+    text = text.format(host=host, timeout=t, codes=", ".join("HTTP %d" % c for c in codes),
+                       budget=max(FETCH_BUDGET, 2 * t), deadline=RUN_DEADLINE)
+    via = proxy_for(base) if rs[0].status == 0 and kind not in ("not_public", "deadline") else None
     return ScoreError("could not fetch %s (%s): %s%s; see %s" % (
         base, kind, text, "; the request went through the proxy at %s, which may be where it failed" % via if via else "",
         troubleshooting(anchor)), kind, base)
@@ -496,23 +599,157 @@ def pmap(fn, items, workers=8):
         return list(ex.map(fn, items))
 
 # ── html helpers ───────────────────────────────────────────────────────────
-TAGSTRIP = re.compile(r"<(script|style|noscript|template|svg)\b.*?</\1>", re.S | re.I)
+# Every scanner here reads a page in one pass. The regexes they replace, such as
+# <(script|…)\b.*?</\1> and <p\b[^>]*>(.*?)</p>, retried each unclosed opening to the end of the page, so
+# 80 KB of "<script>x " took 1.8 s and the 4 MB a fetch may return would have taken hours: a hostile page
+# could hold a CI job or an MCP worker until it was killed. An opening is found with a compiled search from
+# the current position, and its close once, with str.find on a lower-cased copy.
+_ASCII_LOWER = {c: c + 32 for c in range(ord("A"), ord("Z") + 1)}
+
+
+def _lower(h):
+    """h lower-cased, index for index. str.lower() lengthens a few characters (U+0130 becomes two), which
+    would shift every close found in the copy; then only ASCII letters are lowered, which is all a tag name
+    needs."""
+    low = h.lower()
+    return low if len(low) == len(h) else h.translate(_ASCII_LOWER)
+
+
+def inner_html(h, opening, close, low=None):
+    """The content of each element that `opening` finds (a compiled pattern for "<name\b"), from the end of
+    its tag to the first `close` after it (a lower-case string such as "</p>", or a compiled pattern run on
+    the lower-cased page), in document order: what re.finditer(r"<name\b[^>]*>(.*?)</name>", h, re.S | re.I)
+    yields. An opening with no ">" or no close after it ends the scan, because no later one can have one."""
+    i = 0
+    while True:
+        m = opening.search(h, i)
+        if not m:
+            return
+        gt = h.find(">", m.end())
+        if gt < 0:
+            return
+        if low is None:
+            low = _lower(h)
+        if isinstance(close, str):
+            end = low.find(close, gt + 1)
+            after = end + len(close)
+        else:
+            c = close.search(low, gt + 1)
+            end, after = (c.start(), c.end()) if c else (-1, -1)
+        if end < 0:
+            return
+        yield h[gt + 1:end]
+        i = after
+
+
+def in_tags(pattern, start, h):
+    """pattern.finditer(h), for a pattern that looks inside one tag: it begins with what `start` finds (a
+    compiled pattern) and reaches the rest of its match through [^>]* or [^>]+. The regex alone retries every
+    start inside a tag that never closes, each time to the end of the page; here a start that does not match
+    skips the rest of its tag, where no start can match either."""
+    i = 0
+    while True:
+        a = start.search(h, i)
+        if not a:
+            return
+        m = pattern.match(h, a.start())
+        if m:
+            yield m
+            i = max(m.end(), a.start() + 1)
+            continue
+        gt = h.find(">", a.end())
+        if gt < 0:
+            return
+        i = gt + 1
+
+
+_HIDDEN = re.compile(r"<(script|style|noscript|template|svg)\b", re.I)
+_TAG = re.compile(r"<[^>]+>")
+
+
+def strip_hidden(h):
+    """h with each script, style, noscript, template and svg element replaced by a space. A script, style,
+    noscript or template that is never closed hides the rest of the page, as it does in a browser. An <svg>
+    that is never closed hides nothing, as before: a browser shows the text after it."""
+    out, i, low, open_svg = [], 0, None, False
+    while True:
+        m = _HIDDEN.search(h, i)
+        if not m:
+            out.append(h[i:])
+            return "".join(out)
+        if low is None:
+            low = _lower(h)
+        name = m.group(1).lower()
+        close = "</%s>" % name
+        # once one <svg> has no close, no later one has either: skip the search, which would scan to the end
+        end = -1 if name == "svg" and open_svg else low.find(close, m.end())
+        if end < 0 and name == "svg":
+            open_svg = True
+            out.append(h[i:m.end()])
+            i = m.end()
+            continue
+        out.append(h[i:m.start()])
+        if end < 0:
+            return "".join(out)
+        out.append(" ")
+        i = end + len(close)
+
+
 def visible_text(h):
-    h = TAGSTRIP.sub(" ", h)
-    h = re.sub(r"<[^>]+>", " ", h)
+    h = strip_hidden(h)
+    # nothing after the last ">" can be a tag, and <[^>]+> would scan to the end of the page from every "<" there
+    k = h.rfind(">") + 1
+    h = _TAG.sub(" ", h[:k]) + h[k:]
     return re.sub(r"\s+", " ", html.unescape(h)).strip()
 
+
+_MAIN, _ARTICLE = re.compile(r"<main\b", re.I), re.compile(r"<article\b", re.I)
+
+
 def main_html(h):
-    m = re.search(r"<main\b[^>]*>(.*?)</main>", h, re.S | re.I) or \
-        re.search(r'<article\b[^>]*>(.*?)</article>', h, re.S | re.I)
-    return m.group(1) if m else h
+    """The first <main> element's content, else the first <article>'s, else the whole page."""
+    low = _lower(h)
+    for opening, close in ((_MAIN, "</main>"), (_ARTICLE, "</article>")):
+        body = next(inner_html(h, opening, close, low), None)
+        if body is not None:
+            return body
+    return h
 
 _SURROGATE_ESC = re.compile(r"\\u[dD][89a-fA-F]")
 
+_SCRIPT = re.compile(r"<script", re.I)
+_LD_TYPE = re.compile(r'type=["\']application/ld\+json["\']', re.I)
+
+
+def ld_blocks(h):
+    """The text of each JSON-LD block, as re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>
+    (.*?)</script>', h, re.S | re.I) found them, in one pass. A <script> tag that is not JSON-LD is skipped to
+    its ">", and an unclosed block ends the scan."""
+    i, low = 0, None
+    while True:
+        m = _SCRIPT.search(h, i)
+        if not m:
+            return
+        gt = h.find(">", m.end())
+        if gt < 0:
+            return
+        # the type attribute sits inside the tag, at least one character after "<script"
+        if not _LD_TYPE.search(h, m.end() + 1, gt):
+            i = gt + 1
+            continue
+        if low is None:
+            low = _lower(h)
+        end = low.find("</script>", gt + 1)
+        if end < 0:
+            return
+        yield h[gt + 1:end]
+        i = end + len("</script>")
+
+
 def jsonld(h):
     out = []
-    for m in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', h, re.S | re.I):
-        raw = m.group(1).strip()
+    for block in ld_blocks(h):
+        raw = block.strip()
         try: d = json.loads(raw)
         except Exception:
             try: d = json.loads(re.sub(r",\s*([}\]])", r"\1", raw))
@@ -601,9 +838,100 @@ def iso_date(v):
     return _date(*m.groups()) if m else None
 
 
+# tag-attribute patterns, read with in_tags(pattern, start, page)
+_TIME, _TIME_DATETIME = re.compile(r"<time", re.I), re.compile(r'<time[^>]+datetime=["\']([^"\']+)', re.I)
+_ARTICLE_TIME_PROP = re.compile(r'property=["\']article:(published|modified)_time["\']', re.I)
+_ARTICLE_TIME = re.compile(r'property=["\']article:(published|modified)_time["\'][^>]*content=["\']([^"\']+)', re.I)
+_A = re.compile(r"<a\b", re.I)
+_A_HREF = re.compile(r'<a\b[^>]*href=["\']([^"\'#]+)', re.I)
+_REL_AUTHOR = re.compile(r'rel=["\']author["\']')
+_REL_AUTHOR_NAME = re.compile(r'rel=["\']author["\'][^>]*>\s*([A-Z][\w.\-]+(?:\s+[A-Z][\w.\-]+){0,2})')
+_OG_SITE_PROP = re.compile(r'property=["\']og:site_name["\']', re.I)
+_OG_SITE_NAME = re.compile(r'property=["\']og:site_name["\'][^>]*content=["\']([^"\']+)', re.I)
+_CONTENT_VALUE = re.compile(r'content=["\']([^"\']+)["\']', re.I)
+_OG_SITE_NAME_TAIL = re.compile(r'property=["\']og:site_name', re.I)
+_LINK = re.compile(r"<link", re.I)
+_LINK_REL = re.compile(r'rel=["\'](?:llms|ai-content|alternate)["\']', re.I)
+_LINK_TYPE = re.compile(r'type=["\']text/(?:plain|markdown)', re.I)
+
+
+def geo_link(h):
+    """re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', h,
+    re.I), tag by tag: the two [^>]* runs made the regex quadratic within one long tag, as well as across tags."""
+    i = 0
+    while True:
+        a = _LINK.search(h, i)
+        if not a:
+            return False
+        gt = h.find(">", a.end())
+        end = gt if gt >= 0 else len(h)
+        rel = _LINK_REL.search(h, a.end() + 1, end)
+        if rel and _LINK_TYPE.search(h, rel.end(), end):
+            return True
+        if gt < 0:
+            return False
+        i = gt + 1
+
+
+def og_site_name(h):
+    """What re.search(r'property=["\']og:site_name["\'][^>]*content=["\']([^"\']+)', h, re.I) captures, or else
+    re.search(r'content=["\']([^"\']+)["\'][^>]*property=["\']og:site_name', h, re.I), in one pass each. In the
+    second a content value may itself hold ">", so a tag cannot be skipped whole: a value matches when the first
+    og:site_name after it comes before the first ">" after it."""
+    m = next(in_tags(_OG_SITE_NAME, _OG_SITE_PROP, h), None)
+    if m:
+        return m.group(1)
+    i, gt, prop = 0, -1, -1
+    while True:
+        a = _CONTENT_VALUE.search(h, i)
+        if not a:
+            return None
+        e = a.end()
+        # each value found ends after the one before it, so both positions only move forward
+        if gt < e:
+            gt = h.find(">", e)
+            if gt < 0:
+                gt = len(h)
+        if prop < e:
+            p = _OG_SITE_NAME_TAIL.search(h, e)
+            if not p:
+                return None
+            prop = p.start()
+        if prop < gt:
+            return a.group(1)
+        i = a.start() + 1
+
+
+def has_md_link(t):
+    """re.search(r"\[[^\]]+\]\([^)]+\)", t) in one pass: a "[" whose "]" is not followed by "(…)" skips to
+    that "]", since every "[" before it meets the same "]"."""
+    i = 0
+    while True:
+        a = t.find("[", i)
+        if a < 0:
+            return False
+        b = t.find("]", a + 1)
+        if b < 0:
+            return False
+        if b > a + 1 and t.startswith("(", b + 1):
+            c = t.find(")", b + 2)
+            if c < 0:
+                return False
+            if c > b + 2:
+                return True
+        i = b + 1
+
+
+# A Sitemap: line in robots.txt. [^\S\n]* rather than \s*: \s* crossed newlines, so the regex was tried at every
+# line start of a run of blank lines and scanned the whole run each time (100 KB of newlines took 45 s). The
+# matches are the same, because a match can only begin on the line its "sitemap:" is on or in the blank run
+# before it, and it captures the same URL either way.
+_SITEMAP_DECL = re.compile(r"(?im)^[^\S\n]*sitemap:\s*(\S+)")
+
+
 def visible_dates(page_html):
     """Dates a reader or a crawler can see on the page: <time datetime> and dates written in the text."""
-    out = [iso_date(m.group(1)) for m in re.finditer(r'<time[^>]+datetime=["\']([^"\']+)', page_html, re.I)]
+    out = [iso_date(m.group(1)) for m in in_tags(_TIME_DATETIME, _TIME, page_html)]
     text = visible_text(main_html(page_html))[:3000]
     out += [_date(*m.groups()) for m in _NUM_DATE.finditer(text)]
     out += [_date(m.group(3), _MONTHS[m.group(2).lower()[:3]], m.group(1)) for m in _DMY.finditer(text)]
@@ -617,8 +945,7 @@ def own_dates(page_html, objs):
     header). Not every date on the page: related-story rails, listings and comments carry dates of
     other content."""
     out = [iso_date(x.get("datePublished")) for x in objs]
-    out += [iso_date(m.group(2)) for m in re.finditer(
-        r'property=["\']article:(published|modified)_time["\'][^>]*content=["\']([^"\']+)', page_html, re.I)]
+    out += [iso_date(m.group(2)) for m in in_tags(_ARTICLE_TIME, _ARTICLE_TIME_PROP, page_html)]
     first = first_date(main_html(page_html)[:20000])
     return [d for d in out + [first] if d]
 
@@ -655,16 +982,24 @@ def byline_name(text):
     return None
 
 
+_HEADING, _HEADING_CLOSE = re.compile(r"<h[1-4]\b", re.I), re.compile(r"</h[1-4]>")
+_TITLE, _PARA = re.compile(r"<title\b", re.I), re.compile(r"<p\b", re.I)
+
+
+def title_html(h, low=None):
+    """The first <title> element's content, or None."""
+    return next(inner_html(h, _TITLE, "</title>", low), None)
+
 def headings(h):
-    out = [visible_text(m.group(1))[:200]
-           for m in re.finditer(r"<h[1-4]\b[^>]*>(.*?)</h[1-4]>", h, re.S | re.I)]
-    t = re.search(r"<title\b[^>]*>(.*?)</title>", h, re.S | re.I)
-    if t: out.append(visible_text(t.group(1))[:200])
+    low = _lower(h)
+    # an <h1>–<h4> runs to the first heading close of any level, as the pattern it replaces did
+    out = [visible_text(x)[:200] for x in inner_html(h, _HEADING, _HEADING_CLOSE, low)]
+    t = title_html(h, low)
+    if t is not None: out.append(visible_text(t)[:200])
     return [x for x in out if x]
 
 def paragraphs(h):
-    return [p for p in (visible_text(m.group(1)) for m in
-            re.finditer(r"<p\b[^>]*>(.*?)</p>", main_html(h), re.S | re.I)) if p]
+    return [p for p in (visible_text(x) for x in inner_html(main_html(h), _PARA, "</p>")) if p]
 
 def wc(s):
     cjk = len(re.findall(r"[一-鿿]", s))
@@ -1061,7 +1396,7 @@ def scope_of(base):
         path = path.rsplit("/", 1)[0]
     return origin, path
 
-def discover(base, want=8, verbose=False, *, memo=None, timeout=None):
+def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=None):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
     depends on the sample being representative."""
@@ -1069,7 +1404,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None):
     root = origin + scope
     host = urllib.parse.urlsplit(origin).netloc
     scheme = urllib.parse.urlsplit(origin).scheme
-    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout)
+    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout, deadline=deadline)
     home = steady(root + "/")
     if home.status == 0:
         # no answer at all: every other request to this host would meet the same fault after its own retries,
@@ -1092,7 +1427,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None):
 
     def harvest(text, origin):
         out = []
-        for m in re.finditer(r'<a\b[^>]*href=["\']([^"\'#]+)', text, re.I):
+        for m in in_tags(_A_HREF, _A, text):
             u = same_site(join_link(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/"))
             if not u: continue
             if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
@@ -1108,7 +1443,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None):
     # the same places run() looks for p1.sitemap, including the given path, so a sitemap that is scored
     # is also the one the sample comes from
     # a relative Sitemap: line is invalid but common; resolve it against the origin
-    sm_urls = [join_link(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", rb.text if rb.ok else "")] \
+    sm_urls = [join_link(origin + "/", u) for u in _SITEMAP_DECL.findall(rb.text if rb.ok else "")] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
     sm = next((r for r in pmap(steady, sm_urls[:3]) if is_sitemap(r)), None)
@@ -1212,8 +1547,11 @@ def read_report_urls(path):
     return urls
 
 def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
-    """Score one site. `timeout` is the wait per request (default TIMEOUT, which --timeout sets)."""
+    """Score one site. `timeout` is the wait per request (default TIMEOUT, which --timeout sets). The run takes
+    at most RUN_DEADLINE seconds: after that no request is sent, and the checks that still needed one are not
+    observed; when no sampled page came back by then it raises ScoreError (kind "deadline")."""
     timeout = timeout or TIMEOUT
+    deadline = time.monotonic() + RUN_DEADLINE
     if PREFLIGHT:
         preflight_host(base)
     origin, scope = scope_of(base)
@@ -1224,14 +1562,22 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
 
     # every request that decides the sample or a gate goes through this run's memo: fetched once, retried
     memo = FetchMemo()
-    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout)
-    get = lambda u, **kw: fetch(u, timeout=timeout, **kw)
+    steady = lambda u: fetch_steady(u, memo=memo, timeout=timeout, deadline=deadline)
+    get = lambda u, **kw: fetch(u, timeout=timeout, deadline=deadline, **kw)
+
+    def late(*rs):
+        """True when the run's deadline stopped any of these requests: what they feed was not observed."""
+        return any(r.kind == "deadline" for r in rs)
+
+    def not_reached(cid, what):
+        tier[cid] = None
+        ev[cid] = "The run reached its %g s limit before %s came back; not observed." % (RUN_DEADLINE, what)
     if urls:
         # the caller validated the list and its length (--urls caps at 8, --urls-from at the report's own count)
         urls, sample_source = pin_urls(base, urls, limit=len(urls)), "pinned"
     else:
         say("discovering sample pages…")
-        urls, sample_source = discover(base, sample, verbose, memo=memo, timeout=timeout)
+        urls, sample_source = discover(base, sample, verbose, memo=memo, timeout=timeout, deadline=deadline)
     say("fetching %d pages (sample from %s)…" % (len(urls), sample_source))
     pages = dict(zip(urls, pmap(steady, urls)))
     live = {u: r for u, r in pages.items() if r.ok and r.body}
@@ -1252,7 +1598,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         # crawlers assume a full disallow here; rubric/open-questions.md #10)
         tier["g.robots"] = None
         ev["g.robots"] = ("robots.txt could not be read%s (%s); not observed."
-                          % ("" if rb.kind in DEFINITE else " after %d tries" % STEADY_TRIES, fault_name(rb.err)))
+                          % ("" if rb.kind in DEFINITE or rb.kind in OUT_OF_TIME else " after %d tries" % STEADY_TRIES,
+                             rb.err if rb.kind in OUT_OF_TIME else fault_name(rb.err)))
     elif transient(rb.status):
         tier["g.robots"] = 3
         ev["g.robots"] = ("robots.txt answered HTTP %d on all %d tries. Nothing readable is disallowed, but nothing "
@@ -1267,7 +1614,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     probe = list(live)[:3]
     # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
     # reached the same page moments earlier
-    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2], timeout=timeout)),
+    results = pmap(lambda t: (t[0], fetch_steady(t[1], tries=PROBE_TRIES, ua=t[2], timeout=timeout, deadline=deadline)),
                    [(name, u, ua) for name, ua in RETRIEVAL_UAS for u in probe])
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
@@ -1297,6 +1644,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                                 " Content differed: %s." % ", ".join(differ) if differ else "",
                                 " (Unverified probes: vendor user-agent strings sent from this machine's address.)"
                                 if failed else ""), 480)
+    if late(*(r for _, r in results)):
+        # a probe the deadline stopped says nothing about that crawler: the gate is not observed, never zero
+        not_reached("g.reachable", "every crawler probe")
 
     # ── g.ssr ──
     ssr = sum(1 for r in live.values() if wc(visible_text(main_html(r.text))) >= 120)
@@ -1309,33 +1659,38 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # owner of example.com/docs cannot place a file at example.com. Scoring them zero
     # penalises them for something they do not control (open question #9), so fall
     # back to the path they were given. Origin still wins when both exist.
-    sm_urls = [join_link(origin + "/", u) for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)] \
+    sm_urls = [join_link(origin + "/", u) for u in _SITEMAP_DECL.findall(txt)] \
               or [origin + "/sitemap.xml", origin + "/sitemap_index.xml"] \
               + ([origin + scope + "/sitemap.xml"] if scope else [])
-    sm = next((r for r in pmap(steady, sm_urls[:4]) if is_sitemap(r)), None)
-    if sm and re.search(r"<sitemapindex", sm.text, re.I):
+    # the first sitemap in the order they are looked for, unless the deadline stopped a request before it
+    sm = next((r for r in pmap(steady, sm_urls[:4]) if is_sitemap(r) or late(r)), None)
+    if sm and not late(sm) and re.search(r"<sitemapindex", sm.text, re.I):
         child = re.findall(r"<loc>\s*([^<]+)", sm.text)[:1]
         if child:
             sub = steady(join_link(sm.url, child[0].strip()))
-            if is_sitemap(sub): sm = sub
-    if not sm:
+            if is_sitemap(sub) or late(sub): sm = sub
+    if sm and late(sm):
+        not_reached("p1.sitemap", "the sitemap")
+    elif not sm:
         tier["p1.sitemap"] = 0; ev["p1.sitemap"] = "No sitemap found via robots.txt or the conventional paths."
     else:
         locs = len(re.findall(r"<loc>", sm.text)); mods = len(re.findall(r"<lastmod>", sm.text))
         tier["p1.sitemap"] = 4 if locs and mods >= locs * .5 else 2
         ev["p1.sitemap"] = "Sitemap %s (%s): HTTP 200, %d <loc>, %d <lastmod>." % (
-            "declared in robots.txt" if re.search(r"(?im)^\s*sitemap:", txt) else "at the conventional path",
+            "declared in robots.txt" if _SITEMAP_DECL.search(txt) else "at the conventional path",
             site_text(urllib.parse.urlsplit(sm.url)._replace(query="", fragment="").geturl(), 120)
             if getattr(sm, "url", None) else "—", locs, mods)
 
     # ── p1.llms-txt ──
     lt = get(origin + "/llms.txt")
     lt_at = "/llms.txt"
-    if not text_file(lt) and scope:
+    if not text_file(lt) and scope and not late(lt):
         alt = get(origin + scope + "/llms.txt")
-        if text_file(alt):
+        if text_file(alt) or late(alt):
             lt, lt_at = alt, scope + "/llms.txt"
-    if not text_file(lt):
+    if late(lt):
+        not_reached("p1.llms-txt", lt_at)
+    elif not text_file(lt):
         tier["p1.llms-txt"] = 0
         ev["p1.llms-txt"] = ("/llms.txt %s%s." % (
             "answered 200 with an HTML page (a catch-all route), not a text file" if lt.ok else "returned HTTP %d" % lt.status,
@@ -1346,7 +1701,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         with_links = 0
         parts = re.split(r"(?m)^##\s+.+$", t)[1:]
         for p in parts:
-            if re.search(r"\[[^\]]+\]\([^)]+\)", p): with_links += 1
+            if has_md_link(p): with_links += 1
         has_def = bool(re.search(r"(?m)^>\s+\S", t)) or (len(parts) and wc(parts[0]) > 15) or wc(t.split("##")[0]) > 25
         tier["p1.llms-txt"] = 5 if (has_def and with_links >= 2) else (4 if has_def else 2)
         ev["p1.llms-txt"] = "%s: HTTP 200, %d bytes, %d '##' sections, %d of them containing links, site definition %s.%s" % (
@@ -1371,7 +1726,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # a relative IRI in JSON-LD resolves against the page it sits on, not the site root:
     # "logo.png" on /docs/ is /docs/logo.png
     logo_base = (live[logo_page].url or logo_page) if logo_page in live else root + "/"
-    logo_ok = bool(logo_url) and get(join_link(logo_base, logo_url)).ok
+    logo_r = get(join_link(logo_base, logo_url)) if logo_url else None
+    logo_ok = bool(logo_r and logo_r.ok)
     org_complete = any(o.get("name") and o.get("url") and o.get("logo") for o in orgs)
     if not org_pages and not site_pages:
         tier["p1.organization"] = 0; ev["p1.organization"] = "Neither Organization nor WebSite JSON-LD found on any sampled page."
@@ -1384,6 +1740,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         tier["p1.organization"] = 3
         ev["p1.organization"] = ("Organization and WebSite both present (%d of %d pages), but no Organization carries "
                                  "all of name, url and logo." % (len(org_pages), n))
+    elif logo_r is not None and late(logo_r):
+        not_reached("p1.organization", "the logo")
     elif logo_ok and same:
         tier["p1.organization"] = 6
         ev["p1.organization"] = "Organization + WebSite on %d of %d pages; logo resolves (HTTP 200); %d sameAs declared." % (
@@ -1468,6 +1826,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
 
     # ── p2.sourced-stats ──
     pages_with_nums = pages_sourced = tot_num = cited = 0
+    outbound = re.compile(r'<a\b[^>]+href=["\']https?://(?!%s)' % re.escape(host_stem(root)), re.I)
     for _u, r in live.items():
         body = main_html(r.text)
         vis = visible_text(body)
@@ -1479,7 +1838,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         att = (len(re.findall(r"<(cite|blockquote)\b", body, re.I))
                + len(re.findall(r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|research|surveys?|surveyed|according to)"
                                 r"(?![A-Za-z])|数据来源|资料来源|来源[:：]|据.{0,6}报告", vis, re.I))
-               + len(re.findall(r'<a\b[^>]+href=["\']https?://(?!%s)' % re.escape(host_stem(root)), body, re.I)))
+               + sum(1 for _ in in_tags(outbound, _A, body)))
         tot_num += len(nums); cited += att
         if len(nums) >= 3:
             pages_with_nums += 1
@@ -1509,7 +1868,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             if isinstance(a, dict) and a.get("name"): auth = a; break
             if isinstance(a, str) and a.strip(): auth = {"name": a}; break
         if not auth:
-            m = re.search(r'rel=["\']author["\'][^>]*>\s*([A-Z][\w.\-]+(?:\s+[A-Z][\w.\-]+){0,2})', r.text)
+            m = next(in_tags(_REL_AUTHOR_NAME, _REL_AUTHOR, r.text), None)
             # a byline in the main content, else near the top of the page (an article header outside
             # <main>); never in a footer, where "Powered by …" credits live
             name = m.group(1) if m else (byline_name(visible_text(main_html(r.text)))
@@ -1539,7 +1898,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         # either as dead made the score depend on where and when the tool ran.
         res = pmap(get, sa[:8])
         t, good, dead, unseen = sameas_tier([r.status for r in res])
-        if t is None:
+        if late(*res):
+            not_reached("p3.sameas", "every sameAs profile")
+        elif t is None:
             tier["p3.sameas"] = None
             ev["p3.sameas"] = ("%d sameAs declared; none of the first %d could be checked from this network "
                                "(timeout, block or bot wall), so this check is unobservable rather than zero."
@@ -1585,6 +1946,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         tier["p4.cn-engines"] = 2 if okc2 == len(CN_UAS) and icp else (1 if okc2 else 0)
         ev["p4.cn-engines"] = "%d of %d Chinese crawlers reached the home page; ICP filing %s." % (
             okc2, len(CN_UAS), "shown" if icp else "not shown")
+        if late(*cn):
+            not_reached("p4.cn-engines", "every Chinese crawler's request")
 
     # ── p3.knowledge-graph (Wikidata + Wikipedia, both public APIs, no key) ──
     stem = host_stem(root)
@@ -1594,12 +1957,11 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             v = o.get(k)
             if isinstance(v, list): v = v[0] if v else None
             if isinstance(v, str) and v.strip(): cands.append(v.strip())
-    m = re.search(r'property=["\']og:site_name["\'][^>]*content=["\']([^"\']+)', home_html_early, re.I) \
-        or re.search(r'content=["\']([^"\']+)["\'][^>]*property=["\']og:site_name', home_html_early, re.I)
-    if m: cands.append(html.unescape(m.group(1)).strip())
-    m = re.search(r"<title\b[^>]*>(.*?)</title>", home_html_early, re.S | re.I)
-    if m:
-        title = visible_text(m.group(1))
+    og = og_site_name(home_html_early)
+    if og is not None: cands.append(html.unescape(og).strip())
+    t = title_html(home_html_early)
+    if t is not None:
+        title = visible_text(t)
         # a title is usually "Brand | tagline" or "Page \ Brand" — try every segment,
         # and prefer whichever one the domain itself is named after
         segs = [x.strip() for x in re.split(r"[|｜·•·\\/—–:»<>~]+|\s[-–]\s", title) if x.strip()]
@@ -1614,13 +1976,13 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     brands = brands[:3]
 
     langs = ["zh", "en"] if lo == 50 else ["en"]
-    kg_where, brand, kg_queries, kg_ok = [], brands[0] if brands else stem, 0, 0
+    kg_where, brand, kg_queries, kg_ok, kg_late = [], brands[0] if brands else stem, 0, 0, False
     for cand in brands:
         q = urllib.parse.quote(cand)
         for lg in langs:
             wd = get("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json"
                        "&language=%s&uselang=%s&limit=5&search=%s" % (lg, lg, q))
-            kg_queries += 1; kg_ok += 1 if wd.ok else 0
+            kg_queries += 1; kg_ok += 1 if wd.ok else 0; kg_late = kg_late or late(wd)
             if wd.ok:
                 try:
                     for it in json.loads(wd.text).get("search", []):
@@ -1631,7 +1993,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                 except Exception: pass
             wp = get("https://%s.wikipedia.org/w/api.php?action=query&format=json&list=search"
                        "&srlimit=3&srsearch=%s" % (lg, q))
-            kg_queries += 1; kg_ok += 1 if wp.ok else 0
+            kg_queries += 1; kg_ok += 1 if wp.ok else 0; kg_late = kg_late or late(wp)
             if wp.ok:
                 try:
                     for it in json.loads(wp.text).get("query", {}).get("search", []):
@@ -1644,6 +2006,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     if kt == 4:
         tier["p3.knowledge-graph"] = 4
         ev["p3.knowledge-graph"] = "Brand read as %s%s. Entity found — %s" % (site_text(brand, 60), also, "; ".join(kg_where[:2]))
+    elif kt is None and kg_late:
+        not_reached("p3.knowledge-graph", "every Wikidata and Wikipedia lookup")
     elif kt is None:
         # Absence can only be concluded when every lookup answered. If some timed out
         # (Wikidata and Wikipedia are unreachable from some networks, flaky from others),
@@ -1683,7 +2047,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     at2 = at_origin_or_scope("/.well-known/ai.txt") if not text_file(at) else at
     bon["b.ai-txt"] = 2 if text_file(at2) else 0
     home_html = home_html_early
-    bon["b.geo-link"] = 1 if re.search(r'<link[^>]+rel=["\'](?:llms|ai-content|alternate)["\'][^>]*type=["\']text/(?:plain|markdown)', home_html, re.I) else 0
+    bon["b.geo-link"] = 1 if geo_link(home_html) else 0
     bon["b.speakable"] = 1 if any("SpeakableSpecification" in json.dumps(o) for o in allld.values()) else 0
 
     # Where the request actually landed. A site can hand back a different origin than
