@@ -55,10 +55,12 @@ Amazon's models. The table keeps `Amazonbot` as a retrieval crawler until that c
 is reviewed.
 
 **The probes are unverified.** `g.reachable` sends each vendor's documented user-agent
-string from the auditor's own address, not from the vendor's published IP ranges. A
-firewall that verifies crawlers by IP range or reverse DNS may refuse these probes and
-still serve the real crawler. A refusal therefore reads as "this server refused
-unverified crawler user-agents", not as proof that the vendor's crawler is blocked.
+string from the auditor's own address, not from the vendor's published IP ranges. For
+two of the ten, `Claude-SearchBot` and `Claude-User`, Anthropic documents only the product
+token: their strings are built from it, in the form of `ClaudeBot`'s. A firewall that
+verifies crawlers by IP range or reverse DNS may refuse these probes and still serve the
+real crawler. A refusal therefore reads as "this server refused unverified crawler
+user-agents", not as proof that the vendor's crawler is blocked.
 
 ## Training crawlers — blocking these costs no citations
 
