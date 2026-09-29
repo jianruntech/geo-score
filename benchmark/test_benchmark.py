@@ -442,6 +442,55 @@ class Sensitivity(unittest.TestCase):
         self.assertEqual((same["spearman"], same["band_changes"], same["median_rank_move"], same["top20_overlap"]),
                          (1.0, 0, 0, 20))
 
+    def test_the_study_does_not_depend_on_how_python_adds_floats(self):
+        """From Python 3.12 the builtin sum() compensates float additions, and on this data that moved two sites
+        across a band edge under the evidence-basis weighting, so the committed files depended on the Python that
+        wrote them. The study has to come out the same with a plain left fold (sum() before 3.12) and with a
+        correctly rounded sum."""
+        import math
+        import sensitivity
+        rub, res, sites = sensitivity.load()
+
+        def plain(xs, start=0):
+            for x in xs:
+                start = start + x
+            return start
+
+        def rounded(xs, start=0):
+            xs = list(xs)
+            return start + math.fsum(xs) if any(isinstance(x, float) for x in xs) else plain(xs, start)
+        out = []
+        for add in (plain, rounded):
+            sensitivity.sum = add          # a module global shadows the builtin inside sensitivity.py
+            try:
+                out.append(sensitivity.analyse(rub, res, sites))
+            finally:
+                del sensitivity.sum
+        self.assertEqual(out[0], out[1])
+
+
+class SameOnEveryPython(unittest.TestCase):
+    def test_the_study_files_on_the_oldest_and_newest_python(self):
+        """check.sh runs this file on python3 alone. The generated study files have to come out byte for byte on
+        the oldest and the newest Python the gate tests the CLI on too, found by uv as check.sh finds them."""
+        import re, subprocess
+        if not shutil.which("uv"):
+            self.skipTest("uv not installed: the study files were checked on this Python only")
+        gate = retest._read(os.path.join(HERE, "..", "scripts", "check.sh"))
+        ran = []
+        for v in (re.search(r"^%s=(\S+)" % k, gate, re.M).group(1) for k in ("PY_OLDEST", "PY_NEWEST")):
+            py = subprocess.run(["uv", "python", "find", "--no-project", v], capture_output=True,
+                                universal_newlines=True).stdout.strip()
+            if not py:
+                continue
+            for script in ("sensitivity.py", "percentiles.py", "retest.py"):
+                r = subprocess.run([py, os.path.join(HERE, script), "--check"], capture_output=True,
+                                   universal_newlines=True)
+                self.assertEqual(r.returncode, 0, "python %s: benchmark/%s --check: %s" % (v, script, r.stderr.strip()))
+            ran.append(v)
+        if not ran:
+            self.skipTest("uv finds neither the oldest nor the newest Python the gate names")
+
 
 class Percentiles(unittest.TestCase):
     def test_ranks_cuts_and_rounding(self):

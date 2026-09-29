@@ -75,7 +75,7 @@
   },
   "evidence_basis": {
    "spearman": 0.996,
-   "band_changes": 22,
+   "band_changes": 24,
    "median_rank_move": 4.5,
    "top20_overlap": 19
   }

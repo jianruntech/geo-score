@@ -13,7 +13,7 @@ how each check spreads the field. Seeded: the same data gives the same files byt
 
 Nothing here changes v1.1. The weights stay as published; this is input for v1.2.
 """
-import io, json, os, random, statistics, sys
+import io, json, math, os, random, statistics, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -85,11 +85,13 @@ def scorer(rub, sites):
         b = min(sum(s["points"].get(x) or 0 for x in bonus), rub["bonus_cap"])
         rows.append((obs, b, any(s["points"].get(g) == 0 for g in gates)))
 
+    # the float sums are math.fsum, which is correctly rounded on every Python: from 3.12 the builtin sum()
+    # compensates float additions, so a score near x.5 would round the other way and move a band with the version
     def score(w):
         out = []
         for obs, b, capped in rows:
-            got = sum(w[cid] * f for cid, f in obs)
-            den = sum(w[cid] for cid, _ in obs)
+            got = math.fsum(w[cid] * f for cid, f in obs)
+            den = math.fsum(w[cid] for cid, _ in obs)
             n = min(100, round(100 * (got + b) / den)) if den else 0
             out.append(min(n, rub["gate_cap"]) if capped else n)
         return out
@@ -114,11 +116,11 @@ def ranks(xs):
 
 def pearson(a, b):
     ma, mb = statistics.mean(a), statistics.mean(b)
-    va = sum((x - ma) ** 2 for x in a)
-    vb = sum((y - mb) ** 2 for y in b)
+    va = math.fsum((x - ma) ** 2 for x in a)
+    vb = math.fsum((y - mb) ** 2 for y in b)
     if not va or not vb:
         return None
-    return sum((x - ma) * (y - mb) for x, y in zip(a, b)) / (va * vb) ** 0.5
+    return math.fsum((x - ma) * (y - mb) for x, y in zip(a, b)) / (va * vb) ** 0.5
 
 
 def compare(base, alt, names, rub, base_ranks=None):
@@ -138,7 +140,7 @@ def spread(xs):
 
 
 def to_100(w):
-    t = float(sum(w.values()))
+    t = math.fsum(w.values())
     return {k: 100.0 * v / t for k, v in w.items()}
 
 

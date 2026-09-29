@@ -13,7 +13,7 @@ Each row re-scores all 317 sites and compares them with the published scores: Sp
 | Weighting | Spearman ρ | Band changes | Median rank move | Top-20 overlap |
 |---|:-:|:-:|:-:|:-:|
 | Equal: every scored check weighs 100/21 | 0.991 | 39 (12%) | 6 | 16 |
-| Evidence basis, illustrative: research and vendor-doc checks keep their points, field-observation and convention checks get half | 0.996 | 22 (7%) | 4.5 | 19 |
+| Evidence basis, illustrative: research and vendor-doc checks keep their points, field-observation and convention checks get half | 0.996 | 24 (8%) | 4.5 | 19 |
 | 300 random draws, every weight × U(0.5, 1.5): median (5th–95th percentile) | 0.995 (0.991–0.997) | 26 (18–45) | 4.5 (3–7) | 17 (15–19) |
 
 Across the random draws, 198 sites change band in at least one draw and 1 in half of them or more.
@@ -77,7 +77,7 @@ Over the sites where each check was observed: the share at zero, the share at fu
 ## Input for v1.2
 
 - **Rank order is robust to the weights.** Spearman's ρ is at least 0.988 under every weighting above, and at least 0.991 in 95% of the random draws.
-- **Bands are where the weights matter.** Equal weights change the band of 39 sites (12%), the evidence-basis weighting 22, and the random draws a median of 26 (18–45); 198 sites change band in at least one draw.
+- **Bands are where the weights matter.** Equal weights change the band of 39 sites (12%), the evidence-basis weighting 24, and the random draws a median of 26 (18–45); 198 sites change band in at least one draw.
 - **Most bands move when one of these is left out:** `p2.sourced-stats` (48), `p2.answer-passages` (39), `p1.llms-txt` (34).
 - **One tier holds 90% or more of the sites** for `p3.knowledge-graph`, `b.ai-txt`, `b.geo-link`, `b.speakable`: on this field they carry little information.
 - **Item-rest correlation below 0.2** for `g.robots`, `g.reachable`, `p3.knowledge-graph`: they rank sites differently from the rest of the rubric.
