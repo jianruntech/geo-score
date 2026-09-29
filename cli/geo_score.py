@@ -3334,11 +3334,19 @@ def _write(path, text):
     except OSError as e:
         raise RuntimeError("cannot write %s: %s" % (path, e.strerror or e)) from None
 
-def _watch_module():
-    """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside."""
+# the release's wheel carries geo_score.py and geo_watch.py together, with the geo-score and geo-score-mcp commands
+RELEASE_WHEEL = ("https://github.com/jianruntech/geo-score/releases/download/v%s/geo_score-%s-py3-none-any.whl"
+                 % (__version__, __version__))
+
+def _watch_module(*, what="--ask"):
+    """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside.
+    `what` is what the user typed that needs it: watch, mcp or --ask."""
     import importlib.util
-    need = ("watch and --ask need geo_watch.py %s next to geo_score.py: clone https://github.com/jianruntech/geo-score, "
-            "or download cli/geo_score.py and cli/geo_watch.py from the same release" % __version__)
+    then = {"mcp": "geo-score-mcp", "watch": "geo-score watch …"}.get(what, "geo-score SITE --ask QUESTION")
+    need = ("%s needs geo_watch.py %s next to geo_score.py. The release wheel carries both: `uvx --from %s %s`, or "
+            "`pipx install %s` and then `%s`. Or clone https://github.com/jianruntech/geo-score, or download "
+            "cli/geo_score.py and cli/geo_watch.py from the same release"
+            % (what, __version__, RELEASE_WHEEL, then, RELEASE_WHEEL, then))
     f = globals().get("__file__")
     # piped through `python3 -`, __file__ is "<stdin>": never go looking in the current directory
     here = os.path.dirname(os.path.abspath(f)) if f and os.path.isfile(f) else ""
@@ -3454,25 +3462,62 @@ def error_json(kind, message, target):
     """The --json answer when nothing could be scored (schema/error.v1.json)."""
     return {"error": {"kind": kind, "message": message, "target": target}, "tool": "geo-score-cli/%s" % __version__}
 
+HELP_USAGE = ("%(prog)s [options] URL\n"
+              "       %(prog)s diff BEFORE.json AFTER.json [options]\n"
+              "       %(prog)s watch {init,check,run,ask,report,diff,runs} [options]\n"
+              "       %(prog)s mcp [options]")
+
+# --help stands alone: what to type, the other commands, what each exit code means (as cli/README.md says) and
+# where the rubric and the troubleshooting guide are, pinned to this release. Lines stay within 80 columns.
+HELP_EXAMPLES = [("--brief", "pillar totals and biggest gaps"), ("--explain", "the evidence behind every check"),
+                 ("--compare rival.com", "two sites side by side"), ("--urls-from r.json", "score r.json's pages again"),
+                 ("--json-out r.json --sarif r.sarif", "a JSON report and SARIF, one run")]
+
+def help_epilog(me):
+    """The end of --help, naming the command the user typed."""
+    w = len(me) + 32
+    out = ["Examples:"]
+    for flags, what in HELP_EXAMPLES:
+        cmd = "%s example.com %s" % (me, flags)
+        out.append("  %-*s  %s" % (w, cmd, what) if len(cmd) <= w else "  %s\n  %*s  %s" % (cmd, w, "", what))
+    return "\n".join(out + [
+        "",
+        "Commands:",
+        "  diff BEFORE AFTER  compare two JSON reports check by check",
+        "  watch …            level 3, your API keys: citations week over week",
+        "  mcp                serve all three levels over MCP (stdio)",
+        "  URL --ask Q        level 2, your API keys: a live citation check",
+        "",
+        "Exit codes:",
+        "  0  scored",
+        "  1  below --fail-under, or a failed --fail-on-gate or --assert",
+        "  2  could not fetch or score the site, a usage error, or an internal error",
+        "  4  --fail-on-drop found a drop (with --baseline, or on diff); 1 wins over it",
+        "  watch exits 0 done, 1 configuration error, 2 usage error or no geo_watch.py,",
+        "  3 nothing measured (no key worked), 4 watch diff --fail-on-drop found a drop",
+        "",
+        "The rubric, and what each tier needs:",
+        "  " + RUBRIC_URL,
+        "When a reading looks wrong:",
+        "  " + TROUBLESHOOTING_URL])
+
 def main():
     global TIMEOUT, PREFLIGHT
-    # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
+    # the command the user typed, in usage lines, help and messages: geo_score.py from a checkout or a pipe,
+    # geo-score after pip
     me = "geo-score" if os.path.basename(sys.argv[0]).startswith("geo-score") else "geo_score.py"
     if len(sys.argv) > 1 and sys.argv[1] == "diff":
         # level 1 only: comparing two reports needs nothing from geo_watch.py
         sys.exit(diff_main(sys.argv[2:], prog=me + " diff"))
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
-        w = _watch_module()
+        w = _watch_module(what=sys.argv[1])
         if sys.argv[1] == "watch":
             sys.exit(w.main(sys.argv[2:], prog=me + " watch"))
         sys.exit(w.main(["mcp"] + sys.argv[2:], prog=me))
-    ap = _Parser(prog="geo-score",
-        description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.",
-        epilog="`geo_score.py diff BEFORE.json AFTER.json` compares two reports check by check. "
-               "Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
-               "`geo_score.py watch {init,check,run,report,diff,runs,ask}` tracks a question set week over week; "
-               "`geo_score.py mcp` serves all three levels over MCP.")
-    ap.add_argument("url")
+    ap = _Parser(prog=me, usage=HELP_USAGE, epilog=help_epilog(me), formatter_class=argparse.RawDescriptionHelpFormatter,
+                 description="Score a site 0-100 on whether AI answer engines can find, parse, trust and\ncite it.")
+    ap.add_argument("url", metavar="URL",
+                    help="domain, URL, or URL with a path (example.com, example.com/docs); https is assumed")
     ap.add_argument("--json", action="store_true", help="machine-readable output (schema/report.v2.json)")
     ap.add_argument("--json-out", metavar="FILE", help="also write the JSON report to FILE (one run, several outputs)")
     ap.add_argument("--sarif", metavar="FILE", help="also write SARIF 2.1.0 (code scanning, SARIF viewers) to FILE")
@@ -3522,7 +3567,7 @@ def main():
     ap.add_argument("--brand", metavar="NAME", help="with --ask: the brand name to look for (default: from the domain)")
     ap.add_argument("--domain", metavar="DOMAIN", action="append",
                     help="with --ask: another domain that counts as yours (the scored site always does). Repeatable.")
-    ap.add_argument("--quiet", "-q", action="store_true")
+    ap.add_argument("--quiet", "-q", action="store_true", help="no progress lines on stderr")
     ap.add_argument("--version", action="version", version="geo-score %s (rubric %s)" % (__version__, RUBRIC))
     a = ap.parse_args()
     if (a.brand or a.domain) and not a.ask:

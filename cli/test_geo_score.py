@@ -1474,6 +1474,55 @@ with _warnings.catch_warnings():
     except (SyntaxError, SyntaxWarning, DeprecationWarning) as e:
         fails.append("geo_score.py compiles with a warning: %s" % e)
 
+# ── --help stands alone: the command the user typed, the other commands, examples, exit codes, the docs ──
+# prog was hard-coded "geo-score" while the epilog named geo_score.py, and exit codes lived only in cli/README.md
+for _me in ("geo_score.py", "geo-score"):
+    _saved, _cols, _out = sys.argv, os.environ.get("COLUMNS"), io.StringIO()
+    sys.argv, os.environ["COLUMNS"] = [os.path.join("somewhere", "bin", _me), "--help"], "80"
+    try:
+        with _cl.redirect_stdout(_out):
+            gs.main()
+        _code = 0
+    except SystemExit as e:
+        _code = e.code
+    finally:
+        sys.argv = _saved
+        if _cols is None: del os.environ["COLUMNS"]
+        else: os.environ["COLUMNS"] = _cols
+    _help = _out.getvalue()
+    _lines = _help.splitlines()
+    eq((_code, _lines[0]), (0, "usage: %s [options] URL" % _me), "the usage line names the command typed")
+    ok(all(any(ln.strip().startswith("%s %s " % (_me, _sub)) for ln in _lines[1:4]) for _sub in ("diff", "watch", "mcp")),
+       "the usage lists diff, watch and mcp:\n" + "\n".join(_lines[:4]))
+    _ex = [ln for ln in _lines if " example.com --" in ln]
+    ok(len(_ex) == 5 and all(ln.startswith("  %s example.com --" % _me) for ln in _ex),
+       "five examples, each run as %s: %r" % (_me, _ex))
+    ok("Exit codes:" in _lines and all(any(ln.startswith("  %s  " % _n) for ln in _lines) for _n in "0124"),
+       "exit codes 0, 1, 2 and 4 are listed")
+    ok("  " + gs.RUBRIC_URL in _lines and "  " + gs.TROUBLESHOOTING_URL in _lines
+       and all("/v%s/" % gs.__version__ in _u for _u in (gs.RUBRIC_URL, gs.TROUBLESHOOTING_URL)),
+       "the rubric and the troubleshooting guide, pinned to this release")
+    ok("domain, URL, or URL with a path" in _help and "no progress lines on stderr" in _help, "URL and -q are explained")
+    ok(max(len(ln) for ln in _lines) <= 80, "80 columns: %r" % max(_lines, key=len))
+    other = "geo-score" if _me == "geo_score.py" else "geo_score.py"
+    ok(other + " " not in _help, "never names %s when the user typed %s" % (other, _me))
+
+# piped through `python3 -` there is no geo_watch.py beside the file: the message names what was typed and how to
+# get the release that carries both files
+import subprocess as _sp, tempfile as _tf
+with io.open(os.path.join(HERE, "geo_score.py"), "rb") as _f:
+    _src = _f.read()
+with _tf.TemporaryDirectory() as _d:
+    for _argv, _then in ((["mcp"], "geo-score-mcp"), (["watch", "run"], "geo-score watch …"),
+                         (["x.test", "--ask", "q", "--quiet"], "geo-score SITE --ask QUESTION")):
+        _p = _sp.run([sys.executable, "-"] + _argv, input=_src, capture_output=True, cwd=_d, timeout=60)
+        _err = _p.stderr.decode("utf-8", "replace")
+        _what = "--ask" if "--ask" in _argv else _argv[0]
+        ok(_p.returncode == 2 and _err.startswith("%s needs geo_watch.py %s next to geo_score.py" % (_what, gs.__version__)),
+           "%s: %s" % (_argv, _err))
+        ok("`uvx --from %s %s`" % (gs.RELEASE_WHEEL, _then) in _err and "`pipx install %s`" % gs.RELEASE_WHEEL in _err
+           and _err.index("uvx") < _err.index("clone"), "%s: the wheel's install lines come before clone" % _argv)
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)
