@@ -2612,20 +2612,27 @@ def bar(t, mx, w=18):
     col = c.green if t == mx else (c.amber if t else c.red)
     return col + "█" * f + c.grey + "░" * (w - f) + c.r
 
+BADGE_LABEL = "AIV readiness"
+# the badge's right half follows the band, so a regression is visible at a glance
+BADGE_COLOUR = {"Leading": "#2f8f52", "Solid": "#2f8f52", "Growing": "#a08020", "Early": "#b06b30", "Not started": "#a33"}
+
+def badge_face(res):
+    """(message, colour, normalised, band) for both badges, so the SVG and the shields.io endpoint JSON cannot
+    disagree: the score and band, with ' (gate capped)' when a gate at zero capped the score."""
+    _, _, _, _, norm, bd, capped = score(res)
+    return "%d/100 %s%s" % (norm, bd, " (gate capped)" if capped else ""), BADGE_COLOUR[bd], norm, bd
+
 def write_badge(res, path):
     """An SVG anyone can commit next to their own README. Shields-shaped so it sits
     happily beside the build badges people already have."""
-    _, _, _, _, norm, bd, _ = score(res)
-    col = ("#2f8f52" if norm >= 66 else "#a08020" if norm >= 51 else
-           "#b06b30" if norm >= 31 else "#a33")
-    right = "%d/100 %s" % (norm, bd)
+    right, col, norm, bd = badge_face(res)
     lw = 88                                  # "AIV readiness" at 11px Verdana
     rw = int(6.4 * len(right)) + 16
     w = lw + rw
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="%(w)d" height="20" role="img"'
-        ' aria-label="AIV readiness: %(right)s">'
-        '<title>AIV readiness: %(right)s</title>'
+        ' aria-label="%(label)s: %(right)s">'
+        '<title>%(label)s: %(right)s</title>'
         '<linearGradient id="s" x2="0" y2="100%%">'
         '<stop offset="0" stop-color="#fff" stop-opacity=".7"/>'
         '<stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>'
@@ -2638,13 +2645,24 @@ def write_badge(res, path):
         '<rect width="%(w)d" height="20" fill="url(#s)"/></g>'
         '<g fill="#fff" text-anchor="middle"'
         ' font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="11">'
-        '<text x="%(lx)d" y="15" fill="#010101" fill-opacity=".3">AIV readiness</text>'
-        '<text x="%(lx)d" y="14">AIV readiness</text>'
+        '<text x="%(lx)d" y="15" fill="#010101" fill-opacity=".3">%(label)s</text>'
+        '<text x="%(lx)d" y="14">%(label)s</text>'
         '<text x="%(rx)d" y="15" fill="#010101" fill-opacity=".3">%(right)s</text>'
         '<text x="%(rx)d" y="14">%(right)s</text></g></svg>'
-    ) % dict(w=w, lw=lw, rw=rw, col=col, right=right, lx=lw // 2, rx=lw + rw // 2)
-    io.open(path, "w", encoding="utf-8").write(svg)
+    ) % dict(w=w, lw=lw, rw=rw, col=col, right=right, label=BADGE_LABEL, lx=lw // 2, rx=lw + rw // 2)
+    _write(path, svg)
     return path, norm, bd
+
+def badge_endpoint(res):
+    """The badge as a shields.io endpoint (https://shields.io/badges/endpoint-badge): host this JSON at any URL
+    and https://img.shields.io/endpoint?url=<that URL> draws the SVG's label, message and colour. shields caches
+    it for cacheSeconds (at least 300); a score moves when the site does, so a day is plenty."""
+    message, col, _, _ = badge_face(res)
+    return {"schemaVersion": 1, "label": BADGE_LABEL, "message": message, "color": col, "cacheSeconds": 86400}
+
+def write_badge_json(res, path):
+    _write(path, json.dumps(badge_endpoint(res), ensure_ascii=False) + "\n")
+    return path
 
 def top_gaps(rows, n=3):
     """The gaps every view leads with, in one order (rubric/v1.1.md, Report shape: unlocking fixes come first):
@@ -3168,6 +3186,9 @@ def main():
                     help="print a one-line summary sized for a post, and the badge markdown")
     ap.add_argument("--badge", metavar="FILE", nargs="?", const="aiv-badge.svg",
                     help="also write an embeddable SVG badge (default aiv-badge.svg)")
+    ap.add_argument("--badge-json", metavar="FILE",
+                    help="also write the badge as shields.io endpoint JSON to FILE: host it anywhere and "
+                         "https://img.shields.io/endpoint?url=<its URL> draws the badge")
     ap.add_argument("--sample", type=int, default=8, metavar="N", help="pages to sample (default 8)")
     ap.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, metavar="SECONDS",
                     help="seconds to wait for each request before it counts as unanswered (default %d)" % DEFAULT_TIMEOUT)
@@ -3278,10 +3299,17 @@ def main():
                   "%s(generate it with --badge)%s" % (c.dim, c.r, c.grey, c.r))
             print()
     if a.badge:
-        pth, nrm, bnd = write_badge(res, a.badge)
+        pth = write_badge(res, a.badge)[0]
         if not a.json:
-            print("  %sbadge%s %s  —  %d/100 %s" % (c.brass, c.r, pth, nrm, bnd))
+            print("  %sbadge%s %s  —  %s" % (c.brass, c.r, pth, badge_face(res)[0]))
             print("  %sMarkdown:%s ![AIV readiness](%s)" % (c.grey, c.r, os.path.basename(pth)))
+            print()
+    if a.badge_json:
+        pth = write_badge_json(res, a.badge_json)
+        if not a.json:
+            print("  %sbadge JSON%s %s  —  %s" % (c.brass, c.r, pth, badge_face(res)[0]))
+            print("  %sHost it at a public URL, then:%s ![AIV readiness](https://img.shields.io/endpoint?url=<URL-encoded "
+                  "URL>)" % (c.grey, c.r))
             print()
     failed = False
     if a.fail_under is not None:

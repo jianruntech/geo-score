@@ -26,6 +26,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
+| `--badge-json FILE` | Also write the same badge as [shields.io endpoint](https://shields.io/badges/endpoint-badge) JSON: `schemaVersion`, `label`, `message`, `color` and `cacheSeconds`, with the SVG's text and colour |
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
 | `--fail-on-gate` | Exit 1 when any gate check (`g.*`) scores 0, and name the gate and its evidence on stderr. A gate at zero caps the score at exactly 40, so `--fail-under 40` never fails a capped site; add `--fail-on-gate`. The same as `--assert 'g.*>0'`. An unobservable gate never fails |
@@ -78,9 +79,31 @@ other badge:
 
 It carries the score, the band and an accessible label, and it sits happily beside the
 build badges you already have. Colour follows the band, so a regression is visible at a
-glance. Re-run it in CI to keep it current — the
-[GitHub Action](../action.yml) does this for you if you point `json-out` at a path and
-regenerate from there.
+glance, and a score capped by a gate at zero says `(gate capped)`.
+
+A committed SVG shows the score of the run that wrote it. To keep a badge current without
+committing an image, write the same badge as shields.io endpoint JSON:
+
+```bash
+python3 geo_score.py yoursite.com --badge-json aiv-badge.json
+```
+
+```json
+{"schemaVersion": 1, "label": "AIV readiness", "message": "71/100 Solid", "color": "#2f8f52", "cacheSeconds": 86400}
+```
+
+Publish the file wherever a URL can reach it (a raw file in a repository, a gist, a release
+asset or your own site) and point shields.io at that URL, URL-encoded:
+
+```
+![AIV readiness](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FOWNER%2FREPO%2Fmain%2Faiv-badge.json)
+```
+
+shields.io caches the JSON for `cacheSeconds` (a day). The badge is as current as the last
+run that wrote the file, so re-run it on a schedule or after a deploy. In the
+[GitHub Action](../action.yml), the `badge` input writes either file in the same run as the
+report (a path ending in `.json` gets the endpoint JSON, any other path the SVG) and the
+`badge-path` output says where. Committing or publishing it is a step of your own workflow.
 
 ## What it measures, and what it does not
 
@@ -247,14 +270,16 @@ Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
     json-out: geo-score.json
     sarif: geo-score.sarif      # optional
     junit: geo-score.xml        # optional
+    badge: aiv-badge.json       # optional: shields.io endpoint JSON (.svg for an SVG)
 ```
 
 The action scores the site once. That one run prints the evidence to the log, writes the scored
 table to the job summary, annotates checks at zero (gates as errors, other checks as warnings;
 `annotations: false` turns this off) and writes whichever files you asked for. `fail-on-gate: true`
 fails the job when a gate scores zero, and `assert` takes the same expressions as `--assert`, one per
-line; each failed one is an error annotation. Outputs: `score`,
-`band`, `gate-capped`, `report` and `report-path`. Inputs reach the script as environment
+line; each failed one is an error annotation. `badge: aiv-badge.json` (or
+`.svg`) writes a badge. Outputs: `score`, `band`, `gate-capped`, `report`, `report-path` and,
+with `badge`, `badge-path`. Inputs reach the script as environment
 variables, never pasted into it, so a URL cannot run shell code.
 
 To see the results in the repository's Security tab, upload the SARIF file

@@ -6,7 +6,7 @@
 Hosted Actions have never run on this organisation, so this is the only execution the action gets
 before a release. It reads the `run:` block and the `env:` map out of action.yml (no YAML library),
 serves the `good` fixture from cli/fixtures on 127.0.0.1, and checks the outputs, the job summary,
-the SARIF and JUnit files, the threshold, input validation, and that a crafted URL cannot run shell.
+the SARIF and JUnit files, the badge, the threshold, input validation, and that a crafted URL cannot run shell.
 """
 import io, json, os, re, subprocess, sys, tempfile, xml.dom.minidom
 
@@ -60,7 +60,8 @@ def main():
     try:
         with tempfile.TemporaryDirectory() as tmp:
             print("\n  scoring the good fixture through action.yml")
-            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_SARIF="out/r.sarif", GEO_JUNIT="out/r.xml")
+            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_SARIF="out/r.sarif", GEO_JUNIT="out/r.xml",
+                             GEO_BADGE="out/aiv.json")
             ok(p.returncode == 0, "exit 0 (got %d)%s" % (p.returncode, "" if p.returncode == 0 else ": " + p.stderr[-400:]))
             ok({"score", "band", "gate-capped", "report-path"} <= set(o), "outputs score, band, gate-capped, report-path")
             ok(o.get("score", "").isdigit() and 0 <= int(o["score"]) <= 100, "score is 0-100: %r" % o.get("score"))
@@ -71,11 +72,23 @@ def main():
             ok(True, "JUnit XML parses")
             rep = json.load(io.open(o["report-path"], encoding="utf-8"))
             ok(str(rep["normalised"]) == o.get("score"), "the summary, the outputs and the JSON describe the same run")
+            ok(os.path.isabs(o.get("badge-path", "")) and os.path.realpath(o["badge-path"])
+               == os.path.realpath(os.path.join(tmp, "out", "aiv.json")), "badge-path is its absolute path: %r"
+               % o.get("badge-path"))
+            badge = json.load(io.open(os.path.join(tmp, "out", "aiv.json"), encoding="utf-8"))
+            ok(set(badge) == {"schemaVersion", "label", "message", "color", "cacheSeconds"}
+               and badge["message"] == "%s/100 %s" % (o.get("score"), o.get("band")),
+               "a badge path ending in .json gets the shields.io endpoint JSON: %r" % badge)
 
         with tempfile.TemporaryDirectory() as tmp:
-            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="101", GEO_ANNOTATIONS="false")
+            p, o, summ = run(script, tmp, GEO_URL=srv.origin, GEO_FAIL_UNDER="101", GEO_ANNOTATIONS="false",
+                             GEO_BADGE="-badge.svg")
             ok(p.returncode == 1 and "below the 101 threshold" in p.stdout, "fail-under 101 fails the step with exit 1")
             ok(bool(summ) and "score" in o, "and still writes the summary and outputs first")
+            svg = os.path.join(tmp, "-badge.svg")
+            ok(os.path.isfile(svg) and o.get("badge-path", "").endswith("-badge.svg"),
+               "any other badge path gets the SVG, a leading dash included: %r" % o.get("badge-path"))
+            xml.dom.minidom.parse(svg)
     finally:
         srv.shutdown()
         srv.server_close()

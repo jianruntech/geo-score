@@ -25,7 +25,7 @@ for _k in [k for k in os.environ if k.lower() in ("http_proxy", "https_proxy", "
     del os.environ[_k]
 
 import argparse, atexit, collections, concurrent.futures, contextlib, difflib, gzip, importlib.util, io, json, posixpath
-import re, socket, subprocess, threading, time, traceback, unittest
+import re, socket, subprocess, tempfile, threading, time, traceback, unittest
 import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -876,6 +876,22 @@ class EndToEnd(unittest.TestCase):
                     self.assertNotIn("p2.question-intent", footer)
         # the knowledge-graph lookups follow the page language: Japanese and English, where Chinese and English missed
         self.assertIn("ja.wikipedia", H.result("ja")["res"]["ev"]["p3.knowledge-graph"])
+
+    def test_the_svg_badge_and_the_endpoint_json_agree(self):
+        # a shields.io endpoint JSON beside the SVG: one label, message and colour, so a README cannot show two scores
+        import xml.dom.minidom
+        for name, message in (("good", "100/100 Leading"), ("robots-blocks", "40/100 Early (gate capped)")):
+            with self.subTest(fixture=name), tempfile.TemporaryDirectory() as d:
+                res = H.result(name)["res"]
+                gs.write_badge(res, os.path.join(d, "b.svg"))
+                gs.write_badge_json(res, os.path.join(d, "b.json"))
+                svg = xml.dom.minidom.parse(os.path.join(d, "b.svg")).documentElement
+                with open(os.path.join(d, "b.json"), encoding="utf-8") as f:
+                    got = json.load(f)
+                self.assertEqual(got, {"schemaVersion": 1, "label": "AIV readiness", "message": message,
+                                       "color": svg.getElementsByTagName("rect")[2].getAttribute("fill"),
+                                       "cacheSeconds": 86400})
+                self.assertEqual(svg.getAttribute("aria-label"), "AIV readiness: " + message)
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

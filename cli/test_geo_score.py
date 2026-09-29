@@ -360,6 +360,21 @@ svg = io.open(pth, encoding="utf-8").read()
 xml.dom.minidom.parseString(svg)
 ok("100/100" in svg and "Leading" in svg, "the badge shows the score and the band")
 ok('role="img"' in svg and "<title>" in svg, "the badge is labelled for screen readers")
+# the shields.io endpoint JSON and the SVG come from one helper: the same label, message and colour, gate cap included
+_capped_robots = mk(dict(full, **{"g.robots": 0}))
+for _res, _msg in ((mk(full), "100/100 Leading"), (_capped_robots, "40/100 Early (gate capped)")):
+    _d = tempfile.mkdtemp()
+    gs.write_badge(_res, os.path.join(_d, "b.svg"))
+    gs.write_badge_json(_res, os.path.join(_d, "b.json"))
+    _svg = xml.dom.minidom.parse(os.path.join(_d, "b.svg")).documentElement
+    _bj = json.load(io.open(os.path.join(_d, "b.json"), encoding="utf-8"))
+    eq(sorted((k, type(v).__name__) for k, v in _bj.items()),
+       [("cacheSeconds", "int"), ("color", "str"), ("label", "str"), ("message", "str"), ("schemaVersion", "int")],
+       "the endpoint JSON has shields.io's keys and types")
+    eq((_bj["schemaVersion"], _bj["message"]), (1, _msg), "schemaVersion 1, and the score, band and any cap")
+    eq("%s: %s" % (_bj["label"], _bj["message"]), _svg.getAttribute("aria-label"), "the JSON says what the SVG says")
+    eq(_bj["color"], _svg.getElementsByTagName("rect")[2].getAttribute("fill"), "in the SVG's colour")
+    ok(_bj["cacheSeconds"] >= 300, "cacheSeconds is at least shields.io's minimum of 300")
 
 # ── html helpers ──
 eq(gs.visible_text("<p>a<script>junk()</script>b</p>"), "a b", "scripts are stripped, not read")

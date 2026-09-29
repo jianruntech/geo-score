@@ -34,6 +34,9 @@ inputs:
     description: "true to fail the job when any gate check (g.*) scores zero. A gate at zero caps the score at exactly 40, so fail-under: 40 alone never fails a capped site. The same as the assertion g.*>0."
     required: false
     default: "false"
+  badge:
+    description: "Write the score as a badge to this path: a path ending in .json gets shields.io endpoint JSON (host it and use https://img.shields.io/endpoint?url=<its URL>), any other path an SVG. The action writes the file; committing or publishing it is up to the workflow."
+    required: false
   assert:
     description: "Per-check assertions, one per line, each CHECK OP VALUE: a check id or a glob over them, >=, > or =, and a number or max (for example g.robots=max or p1.llms-txt>=4). A failed one fails the job; a check the run could not observe is skipped."
     required: false
@@ -53,6 +56,9 @@ outputs:
   report-path:
     description: "Where the JSON report was written."
     value: ${{ steps.run.outputs.report-path }}
+  badge-path:
+    description: "Where the badge was written, when the badge input is set."
+    value: ${{ steps.run.outputs.badge-path }}
 runs:
   using: "composite"
   steps:
@@ -71,12 +77,13 @@ runs:
         GEO_ANNOTATIONS: ${{ inputs.annotations }}
         GEO_FAIL_ON_GATE: ${{ inputs.fail-on-gate }}
         GEO_ASSERT: ${{ inputs.assert }}
+        GEO_BADGE: ${{ inputs.badge }}
         GEO_ACTION_PATH: ${{ github.action_path }}
       run: |
         set -euo pipefail
         GEO_URL="${GEO_URL:-}" GEO_FAIL_UNDER="${GEO_FAIL_UNDER:-}" GEO_SAMPLE="${GEO_SAMPLE:-8}"
         GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
-        GEO_FAIL_ON_GATE="${GEO_FAIL_ON_GATE:-false}" GEO_ASSERT="${GEO_ASSERT:-}"
+        GEO_FAIL_ON_GATE="${GEO_FAIL_ON_GATE:-false}" GEO_ASSERT="${GEO_ASSERT:-}" GEO_BADGE="${GEO_BADGE:-}"
         [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
         [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
         if [ -n "$GEO_FAIL_UNDER" ] && ! [[ "$GEO_FAIL_UNDER" =~ ^[0-9]+$ ]]; then
@@ -92,6 +99,12 @@ runs:
         [ -z "$GEO_URLS_FROM" ] || ARGS+=(--urls-from "$GEO_URLS_FROM")
         [ -z "$GEO_SARIF" ] || ARGS+=(--sarif "$GEO_SARIF")
         [ -z "$GEO_JUNIT" ] || ARGS+=(--junit "$GEO_JUNIT")
+        # one = argument, so a path that starts with a dash stays a path
+        case "$GEO_BADGE" in
+          "") ;;
+          *.json|*.JSON) ARGS+=("--badge-json=$GEO_BADGE") ;;
+          *) ARGS+=("--badge=$GEO_BADGE") ;;
+        esac
         # assertions go to the CLI as arguments, one per line of the input, and are never run as shell
         CHECKS=0
         [ "$GEO_FAIL_ON_GATE" != "true" ] || { ARGS+=(--fail-on-gate); CHECKS=1; }
@@ -107,6 +120,7 @@ runs:
           echo "::error title=geo-score::could not score $GEO_URL (see the log above)"; exit 2
         fi
         echo "report-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$OUT")" >> "$GITHUB_OUTPUT"
+        [ -z "$GEO_BADGE" ] || echo "badge-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$GEO_BADGE")" >> "$GITHUB_OUTPUT"
         python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS"
         [ "$RC" -eq 0 ] || python3 "$GEO_ACTION_PATH/action/summary.py" --assertions "$OUT"
         SCORE=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['normalised'])" "$OUT")
