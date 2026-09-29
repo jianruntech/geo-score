@@ -4,8 +4,9 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, queue, re, shutil, subprocess, sys, tempfile, threading
-import time, unittest, urllib.request
+import contextlib, datetime, http.server, inspect, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
+import threading, time, unittest, urllib.request
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -539,33 +540,60 @@ class Reading(Base):
 
 
 # ── the run file ──────────────────────────────────────────────────────────
+# every keyword validate() applies, and the ones that only annotate; a test holds both schemas to this list, so a
+# keyword added to a schema later cannot be skipped here without a word
+VALIDATED = ("$ref", "type", "const", "enum", "pattern", "minLength", "maxLength", "minimum", "maximum", "required",
+             "properties", "additionalProperties", "propertyNames", "items", "minItems", "anyOf", "allOf", "not",
+             "if", "then", "else")
+ANNOTATIONS = ("$schema", "$id", "$defs", "title", "description", "default", "format")
+
+
 def validate(inst, schema, root=None, path="$"):
-    """Enough JSON Schema for our own file: type, const, enum, required, properties, additionalProperties,
-    items, pattern, minimum and local $ref."""
+    """Enough JSON Schema (draft 2020-12) for our own files: the keywords in VALIDATED, with local $ref only. It runs
+    where jsonschema is not installed, so the stdlib-only gate still checks every rule the schemas state."""
     root = root or schema
     errs = []
     if "$ref" in schema:
         node = root
         for part in schema["$ref"].lstrip("#/").split("/"):
             node = node[part]
-        return validate(inst, node, root, path)
+        errs += validate(inst, node, root, path)
     t = schema.get("type")
     if t:
         types = t if isinstance(t, list) else [t]
         ok = any({"object": isinstance(inst, dict), "array": isinstance(inst, list), "string": isinstance(inst, str),
                   "boolean": isinstance(inst, bool), "null": inst is None,
-                  "integer": isinstance(inst, int) and not isinstance(inst, bool),
+                  "integer": isinstance(inst, int) and not isinstance(inst, bool) or
+                             isinstance(inst, float) and inst.is_integer(),
                   "number": isinstance(inst, (int, float)) and not isinstance(inst, bool)}[x] for x in types)
         if not ok:
-            return ["%s: expected %s, got %r" % (path, t, inst)]
+            return errs + ["%s: expected %s, got %r" % (path, t, inst)]
     if "const" in schema and inst != schema["const"]:
         errs.append("%s: expected %r" % (path, schema["const"]))
     if "enum" in schema and inst not in schema["enum"]:
         errs.append("%s: %r not in %r" % (path, inst, schema["enum"]))
-    if "pattern" in schema and isinstance(inst, str) and not re.search(schema["pattern"], inst):
-        errs.append("%s: %r does not match %s" % (path, inst, schema["pattern"]))
-    if "minimum" in schema and isinstance(inst, (int, float)) and inst < schema["minimum"]:
-        errs.append("%s: below minimum" % path)
+    if "anyOf" in schema and all(validate(inst, b, root, path) for b in schema["anyOf"]):
+        errs.append("%s: %r matches no branch of anyOf" % (path, inst))
+    for b in schema.get("allOf", ()):
+        errs += validate(inst, b, root, path)
+    if "not" in schema and not validate(inst, schema["not"], root, path):
+        errs.append("%s: %r matches a schema it must not" % (path, inst))
+    if "if" in schema:
+        branch = schema.get("then" if not validate(inst, schema["if"], root, path) else "else")
+        if branch is not None:
+            errs += validate(inst, branch, root, path)
+    if isinstance(inst, str):
+        if "pattern" in schema and not re.search(schema["pattern"], inst):
+            errs.append("%s: %r does not match %s" % (path, inst, schema["pattern"]))
+        if len(inst) < schema.get("minLength", 0):
+            errs.append("%s: shorter than %d" % (path, schema["minLength"]))
+        if "maxLength" in schema and len(inst) > schema["maxLength"]:
+            errs.append("%s: longer than %d" % (path, schema["maxLength"]))
+    if isinstance(inst, (int, float)) and not isinstance(inst, bool):
+        if "minimum" in schema and inst < schema["minimum"]:
+            errs.append("%s: below minimum" % path)
+        if "maximum" in schema and inst > schema["maximum"]:
+            errs.append("%s: above maximum" % path)
     if isinstance(inst, dict):
         for k in schema.get("required", []):
             if k not in inst:
@@ -573,16 +601,38 @@ def validate(inst, schema, root=None, path="$"):
         props = schema.get("properties", {})
         extra = schema.get("additionalProperties", True)
         for k, v in inst.items():
+            if "propertyNames" in schema:
+                errs += validate(k, schema["propertyNames"], root, "%s.<%s>" % (path, k))
             if k in props:
                 errs += validate(v, props[k], root, path + "." + k)
             elif extra is False:
                 errs.append("%s: unexpected key %s" % (path, k))
             elif isinstance(extra, dict):
                 errs += validate(v, extra, root, path + "." + k)
-    if isinstance(inst, list) and "items" in schema:
-        for i, v in enumerate(inst):
-            errs += validate(v, schema["items"], root, "%s[%d]" % (path, i))
+    if isinstance(inst, list):
+        if len(inst) < schema.get("minItems", 0):
+            errs.append("%s: fewer than %d items" % (path, schema["minItems"]))
+        if "items" in schema:
+            for i, v in enumerate(inst):
+                errs += validate(v, schema["items"], root, "%s[%d]" % (path, i))
     return errs
+
+
+def schema_keywords(node, out=None):
+    """Every keyword a schema uses. The keys under properties and $defs are names, not keywords."""
+    out = set() if out is None else out
+    if isinstance(node, dict):
+        for k, v in node.items():
+            out.add(k)
+            if k in ("properties", "$defs") and isinstance(v, dict):
+                for sub in v.values():
+                    schema_keywords(sub, out)
+            else:
+                schema_keywords(v, out)
+    elif isinstance(node, list):
+        for x in node:
+            schema_keywords(x, out)
+    return out
 
 
 class RunFile(Base):
@@ -631,6 +681,49 @@ class RunFile(Base):
             with self.assertRaises(gw.ConfigError):
                 gw.load_run(cfg, bad)
 
+    def test_half_a_surrogate_pair_from_a_provider_is_saved_and_read_back(self):
+        cfg = self.config()
+        run = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]})
+        run["samples"][0]["answer"] = "half an emoji " + json.loads('"\\ud83d"') + " then 鹿末"
+        path = gw.save_run(cfg, run)
+        self.assertEqual(gw.load_run(cfg, "latest"), json.loads(json.dumps(run)))
+        with io.open(path, "rb") as f:
+            self.assertIn(b"\\ud83d", f.read())               # an escape: the file stays valid UTF-8 JSON
+        out = os.path.join(self.tmp, "report.json")
+        code, _, err = CLI.main(self, "report", "-c", cfg.path, "--format", "json", "-o", out)
+        self.assertEqual(code, 0, err)
+        with io.open(out, encoding="utf-8") as f:
+            self.assertEqual(json.load(f)["samples"][0]["answer"], run["samples"][0]["answer"])
+
+    def test_a_failed_write_leaves_no_file_and_the_latest_run_intact(self):
+        cfg = self.config()
+        gw.save_run(cfg, {"run_id": "20260926T083000Z", "format": gw.RUN_FORMAT})
+
+        def disk_full(fd):
+            raise OSError(28, "No space left on device")
+        with mock.patch.object(os, "fsync", disk_full):
+            with self.assertRaises(OSError):
+                gw.save_run(cfg, {"run_id": "20260927T083000Z", "format": gw.RUN_FORMAT})
+        self.assertEqual(os.listdir(cfg.runs_dir()), ["20260926T083000Z.json"])      # no temporary file either
+        self.assertEqual(gw.load_run(cfg, "latest")["run_id"], "20260926T083000Z")
+
+    def test_one_id_twice_and_a_file_system_without_hard_links(self):
+        cfg = self.config()
+        a, b, c = ({"run_id": "20260926T083000Z", "format": gw.RUN_FORMAT} for _ in range(3))
+        gw.save_run(cfg, a)
+        gw.save_run(cfg, b)
+        self.assertEqual((a["run_id"], b["run_id"]), ("20260926T083000Z", "20260926T083000Z-2"))
+        self.assertEqual(gw.load_run(cfg, "20260926T083000Z-2")["run_id"], "20260926T083000Z-2")   # the file's own id
+
+        def no_links(src, dst):
+            raise PermissionError(1, "Operation not permitted")
+        with mock.patch.object(os, "link", no_links):
+            gw.save_run(cfg, c)
+        self.assertEqual(c["run_id"], "20260926T083000Z-3")
+        self.assertEqual(gw.load_run(cfg, "latest"), c)
+        self.assertEqual(sorted(os.listdir(cfg.runs_dir())), ["20260926T083000Z-2.json", "20260926T083000Z-3.json",
+                                                               "20260926T083000Z.json"])
+
     def test_config_validation(self):
         cfg = self.config({"engines": [{"provider": "nope"}, {"id": "Chat GPT", "provider": "openai"},
                                        {"id": "x", "provider": "openai", "model": "a b"},
@@ -666,6 +759,243 @@ class RunFile(Base):
             with self.assertRaises(gw.ConfigError) as cm:
                 cfg.load_queries()
             self.assertIn(needle, str(cm.exception))
+
+
+# ── the config file: unknown keys and schema/watch-config.v1.json ────────
+def config_schema():
+    with io.open(os.path.join(HERE, "..", "schema", "watch-config.v1.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+try:
+    import jsonschema
+except ImportError:          # the stdlib validator above still runs; the full check needs `pip install jsonschema`
+    jsonschema = None
+
+FULL_CONFIG = {
+    "$schema": gw.CONFIG_SCHEMA_URL,
+    "brand": {"name": "Lumo", "domains": ["lumo.example"], "url_prefixes": ["https://www.amazon.com/stores/Lumo/"],
+              "aliases": ["鹿末"]},
+    "competitors": [{"name": "Pixa", "domains": "pixa.example", "aliases": []}],
+    "queries": "queries.csv",
+    "engines": [{"id": "chatgpt-api", "provider": "openai", "model": "gpt-6-luna", "tool": "web_search",
+                 "key_env": "WORK_OPENAI_KEY", "base_url": "https://proxy.example/v1/responses"},
+                {"id": "gemini-api", "provider": "gemini", "api": "generate_content"},
+                {"id": "claude-api", "provider": "anthropic", "max_tokens": 1024, "max_searches": 3},
+                {"id": "or-api", "provider": "openrouter", "model": "deepseek/deepseek-chat", "max_results": 3},
+                {"id": "local-api", "provider": "perplexity", "base_url": "http://localhost:8080/chat"}],
+    "country": "US",
+    "runs": 2,
+    "max_calls": 50,
+    "budget_usd": 1.5,
+    "prices": {"chatgpt-api": {"input_per_mtok": 0.1, "output_per_mtok": 0.5, "per_search": 0.01, "per_call": 0},
+               "claude-api": {"input_per_mtok": 3, "output_per_mtok": 15}},
+}
+
+
+class ConfigKeys(Base):
+    """A mistyped key used to vanish without a word: "budget" for "budget_usd" silently meant no budget."""
+
+    def write(self, cfg, questions="query_id,query\nq01,best free ai video generator\n"):
+        p = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(p, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(questions)
+        return p
+
+    def main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def init(self):
+        self.assertEqual(self.main("init", "--dir", self.tmp, "--brand", "Lumo", "--domain", "lumo.example",
+                                   "--competitor", "Pixa=pixa.example", "--country", "us")[0], 0)
+        with io.open(os.path.join(self.tmp, gw.CONFIG_NAME), encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_a_mistyped_cap_is_named_with_a_suggestion_everywhere_the_config_is_read(self):
+        cfg = self.init()
+        cfg["budget"] = cfg.pop("budget_usd")
+        cfg["max_call"] = cfg.pop("max_calls")
+        p = self.write(cfg)
+        budget = "unknown key 'budget' (did you mean 'budget_usd'?); it is ignored"
+        max_call = "unknown key 'max_call' (did you mean 'max_calls'?); it is ignored"
+        code, out, _ = self.main("check", "-c", p)
+        self.assertEqual(code, 0, out)                          # a warning, never a failure
+        self.assertIn("! " + budget, out)
+        self.assertIn("! " + max_call, out)
+        code, out, err = self.main("run", "-c", p, "--dry-run")
+        self.assertEqual(code, 0, err)
+        self.assertIn("warning: " + budget, err)
+        self.assertIn("warning: " + max_call, err)
+        srv = gw.MCPServer(p, out=io.StringIO())
+        st = srv.call({"name": "status", "arguments": {}})
+        self.assertIn(budget, st["structuredContent"]["config"]["warnings"])
+        self.assertIn("warning: " + max_call, st["content"][0]["text"])
+        dry = srv.call({"name": "run", "arguments": {"dry_run": True}})
+        self.assertFalse(dry["isError"], dry)
+        self.assertIn(budget, dry["content"][0]["text"])
+
+    def test_every_level_is_checked(self):
+        cfg = gw.Config(self.write({
+            "brand": {"name": "Lumo", "domain": ["lumo.example"]},
+            "competitors": [{"name": "Pixa", "domains": ["pixa.example"], "alias": ["PX"]}],
+            "engines": [{"id": "claude-api", "provider": "anthropic", "max_token": 900}],
+            "prices": {"claude-api": {"input_per_mtok": 3, "output_per_mtok": 15, "per_searches": 0.01},
+                       "claude": {"input_per_mtok": 3, "output_per_mtok": 15}},
+            "zzz": 1}))
+        self.assertEqual(cfg.errors, [])
+        w = "\n".join(cfg.warnings)
+        for needle in ("'brand.domain' (did you mean 'brand.domains'?)",
+                       "'competitors[0].alias' (did you mean 'competitors[0].aliases'?)",
+                       "'engines[0].max_token' (did you mean 'engines[0].max_tokens'?)",
+                       "'prices.claude-api.per_searches' (did you mean 'prices.claude-api.per_search'?)",
+                       "prices.claude names no engine (did you mean 'claude-api'?); it is ignored",
+                       "unknown key 'zzz'; it is ignored"):
+            self.assertIn(needle, w)
+
+    def test_a_fresh_config_names_its_schema_first_and_warns_about_nothing(self):
+        self.assertEqual(list(self.init())[0], "$schema")
+        cfg = gw.Config(os.path.join(self.tmp, gw.CONFIG_NAME))
+        self.assertEqual(cfg.raw["$schema"], gw.CONFIG_SCHEMA_URL)
+        self.assertFalse([w for w in cfg.warnings if "unknown key" in w or "names no engine" in w], cfg.warnings)
+        full = gw.Config(self.write(FULL_CONFIG))
+        self.assertEqual((full.errors, full.warnings), ([], []))
+
+    def test_the_schema_lists_exactly_the_keys_config_reads(self):
+        sc = config_schema()
+        d = sc["$defs"]
+        self.assertEqual(sc["$id"], gw.CONFIG_SCHEMA_URL)
+        self.assertEqual(list(sc["properties"]), list(gw.CONFIG_KEYS))
+        self.assertEqual(list(d["entity"]["properties"]), list(gw.ENTITY_KEYS))
+        self.assertEqual(list(d["engine"]["properties"]), list(gw.ENGINE_KEYS))
+        self.assertEqual(list(d["price"]["properties"]), list(gw.PRICE_KEYS))
+        for node in (sc, d["entity"], d["engine"], d["price"]):
+            self.assertIs(node["additionalProperties"], False)
+        eng = d["engine"]["properties"]
+        self.assertEqual(eng["provider"]["enum"], sorted(gw.PROVIDERS))
+        self.assertEqual(eng["id"]["pattern"], gw.ENGINE_ID_RE.pattern)
+        self.assertEqual(sc["properties"]["prices"]["propertyNames"]["pattern"], gw.ENGINE_ID_RE.pattern)
+        self.assertEqual(eng["model"]["pattern"], gw.MODEL_RE.pattern)
+        self.assertEqual(eng["key_env"]["pattern"], gw.ENV_RE.pattern)
+        self.assertEqual(eng["base_url"]["pattern"], gw.BASE_URL_RE.pattern)
+        # "" is also none: Config reads it as null
+        self.assertEqual(sc["properties"]["country"]["pattern"], "^(%s)?$" % gw.COUNTRY_RE.pattern.strip("^$"))
+        self.assertEqual(sc["properties"]["runs"]["maximum"], gw.MAX_RUNS)
+        self.assertEqual(sc["properties"]["max_calls"]["default"], gw.DEFAULT_MAX_CALLS)
+
+    def test_configs_validate_against_the_schema(self):
+        sc = config_schema()
+        good = [self.init(), FULL_CONFIG, {"brand": {"name": "Lumo", "domains": ["lumo.example"]}},
+                {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
+                 "max_calls": 10},
+                {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None},
+                {"brand": {"name": "Lumo"}, "country": ""},
+                # JSON has one number type: a schema's "integer" takes 2.0, and so does Config
+                {"brand": {"name": "Lumo"}, "runs": 2.0, "max_calls": 50.0,
+                 "engines": [{"provider": "anthropic", "max_tokens": 1024.0, "max_searches": 3.0}]}]
+        typo = dict(good[0], budget=1.0)
+        # validate() always runs, so check.sh (stdlib only) checks every rule; jsonschema, when installed, agrees
+        checks = [lambda c: validate(c, sc)]
+        if jsonschema is not None:
+            v = jsonschema.validators.validator_for(sc)
+            v.check_schema(sc)
+            full = v(sc)
+            checks.append(lambda c: [e.message for e in full.iter_errors(c)])
+        for c in good:
+            self.assertEqual(gw.Config(self.write(c)).errors, [], c)
+            for check in checks:
+                self.assertEqual(check(c), [], c)
+        whole = gw.Config(self.write(good[-1]))            # and the adapters get an int
+        got = (whole.runs, whole.max_calls, whole.engines[0]["max_tokens"], whole.engines[0]["max_searches"])
+        self.assertEqual([(x, type(x)) for x in got], [(2, int), (50, int), (1024, int), (3, int)])
+        self.assertEqual(validate(typo, sc), ["$: unexpected key budget"])
+        base = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}}
+        # what Config refuses, the schema refuses too
+        refused = ({"engines": [{"provider": "openai", "api": "generate_content"}]}, {"engines": []},
+                   {"engines": [{"provider": "nope"}]}, {"engines": [{"provider": "openai", "id": "Chat GPT"}]},
+                   {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
+                   {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
+                   {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
+                   {"runs": 2.5}, {"max_calls": 50.5}, {"runs": True},
+                   {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}},
+                   {"engines": [{"provider": "anthropic", "max_tokens": "lots"}]},
+                   {"engines": [{"provider": "anthropic", "max_searches": 0}]},
+                   {"engines": [{"provider": "openrouter", "max_results": 2.5}]},
+                   {"engines": [{"provider": "openai", "tool": 3}]})
+        for bad in refused:
+            c = dict(base, **bad)
+            self.assertTrue(gw.Config(self.write(c)).errors, bad)
+            for check in checks:
+                self.assertTrue(check(c), bad)
+        # where the schema is stricter: values Config takes as they come
+        for bad in ({"brand": {"name": "Lumo", "domains": 5}}, {"prices": {"Claude": {"per_call": 0.01}}}):
+            for check in checks:
+                self.assertTrue(check(dict(base, **bad)), bad)
+        for check in checks:
+            self.assertTrue(check({"competitors": []}))                     # brand.name is required
+            self.assertTrue(check(typo))
+
+    def test_the_stdlib_validator_knows_every_keyword_the_schemas_use(self):
+        # a keyword validate() skipped would let a broken rule through check.sh, which has no jsonschema
+        for sc in (config_schema(), watch_schema()):
+            self.assertEqual(sorted(schema_keywords(sc) - set(VALIDATED + ANNOTATIONS)), [], sc["$id"])
+        broken = config_schema()
+        broken["$defs"]["strings"] = {"anyOf": [{"type": "integer"}]}          # every real config is now invalid
+        self.assertTrue(validate(FULL_CONFIG, broken))
+
+    def test_a_pasted_api_key_is_pointed_at_the_environment(self):
+        secret = "sk-proj-DO-NOT-ECHO-0123456789"
+        names = ("api_key", "apiKey", "key", "token", "api_token", "bearer_token", "access_token", "openai_key",
+                 "OPENAI_KEY", "secret_key", "access_key", "private_key", "api_secret", "client_secret", "password",
+                 "credentials", "auth", "Authorization")
+        engines = [{"provider": "anthropic", "id": "claude-%d" % i, k: secret} for i, k in enumerate(names)]
+        cfg = gw.Config(self.write({"brand": {"name": "Lumo", "domains": ["lumo.example"], "api_key": secret},
+                                    "OPENAI_API_KEY": secret, "brand_key": secret, "engines": engines}))
+        self.assertEqual(cfg.errors, [])
+        w = "\n".join(cfg.warnings)
+        for k in ["OPENAI_API_KEY", "brand_key", "brand.api_key"] + [
+                "engines[%d].%s" % (i, k) for i, k in enumerate(names)]:
+            self.assertIn("unknown key %r; it is ignored: API keys are read from environment variables, never from "
+                          "this file (an engine's key_env names the variable)" % k, w)
+        # not 'api', the Gemini API selector, nor 'key_env', nor 'max_tokens', which went to int() with the key
+        self.assertNotIn("did you mean", w)
+        self.assertNotIn(secret, w)
+        # a spelling of a real key still gets its suggestion, even one that says "token"
+        for typo in ("max_token", "maxTokens", "max-tokens"):
+            self.assertIn("(did you mean 'engines[0].max_tokens'?)",
+                          "\n".join(gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [
+                              {"provider": "anthropic", typo: 900}]})).warnings), typo)
+
+    def test_a_key_pasted_into_a_tuning_key_is_refused_and_never_echoed(self):
+        # max_tokens went straight to int(); the ValueError, value included, was recorded in the run file
+        secret = "sk-ant-DO-NOT-ECHO-0123456789"
+        for k in ("max_tokens", "max_searches", "max_results"):
+            cfg = gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [{"provider": "anthropic", k: secret}]}))
+            self.assertEqual(cfg.errors, ["engines[0].%s must be a positive integer" % k])
+            self.assertNotIn(k, cfg.engines[0])
+            self.assertNotIn(secret, json.dumps([cfg.errors, cfg.warnings, cfg.engines]))
+            code, out, err = self.main("check", "-c", os.path.join(self.tmp, gw.CONFIG_NAME))
+            self.assertEqual(code, 1, out + err)
+            self.assertNotIn(secret, out + err)
+            code, out, err = self.main("run", "-c", os.path.join(self.tmp, gw.CONFIG_NAME), "--dry-run")
+            self.assertNotEqual(code, 0, out + err)
+            self.assertNotIn(secret, out + err)
+
+    def test_every_key_the_code_reads_is_a_known_key(self):
+        # test_the_schema_lists_exactly_the_keys_config_reads ties the schema to the constants; this ties the
+        # constants to the code, so an adapter that starts reading a new engine key cannot leave every config that
+        # sets it warned about ("it is ignored") and refused by the schema while the tests pass
+        def read(var, *where):
+            src = "\n".join(inspect.getsource(x) for x in where)
+            return set(re.findall(r"\b%s(?:\.get\(|\[)[\"']([^\"']+)[\"']" % var, src))
+        self.assertEqual(read("eng", gw) | read("e", gw.Config.__init__), set(gw.ENGINE_KEYS))
+        self.assertEqual(read("raw", gw), set(gw.CONFIG_KEYS) - {"$schema"})           # $schema is for editors
+        self.assertEqual(read("d", gw.Entity.__init__), set(gw.ENTITY_KEYS))
+        self.assertEqual(read("p", gw.has_price, gw.cost_of), set(gw.PRICE_KEYS))
 
 
 # ── transport, for real, against a local server ───────────────────────────
@@ -789,6 +1119,49 @@ class CLI(Base):
         self.assertEqual(code, 0)
         self.assertIn("perplexity-api (sonar) — cited #1 (https://pixa.example/)", out)
         self.assertIn("chatgpt-api — not measured", out)
+
+    def test_half_a_surrogate_pair_prints_in_every_text_format(self):
+        # a provider can send half an emoji in an answer or a search query: the run is saved (see RunFile), and
+        # the text that follows it must not die on the one character UTF-8 cannot carry
+        half = json.loads('"\\ud83d"')
+        for k in ("PERPLEXITY_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
+            del os.environ[k]
+        self.fake({"api.openai.com": lambda u, h, b: openai_resp(
+            "Lumo " + half + " gives 15 free credits.", [("https://www.lumo.example/free", "Lumo")],
+            ["best " + half + " video tool"])})
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api")}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query\nq01,best free ai video generator\n")
+
+        def main(*argv):
+            # stdout as a terminal or a pipe has it: strict UTF-8, where a StringIO would take anything
+            out, err = io.TextIOWrapper(io.BytesIO(), encoding="utf-8", newline=""), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = gw.main(list(argv))
+            out.flush()
+            return code, out.buffer.getvalue().decode("utf-8"), err.getvalue()
+        for fmt in ("text", "md"):
+            code, out, err = main("run", "-c", cfgp, "--format", fmt, "-q")
+            self.assertEqual(code, 0, err)
+            self.assertIn("saved ", out)
+            gw.NOW = lambda: FIXED_NOW + datetime.timedelta(days=7)
+        self.assertEqual(len(gw.list_run_ids(gw.Config(cfgp))), 2)
+        code, out, err = main("report", "-c", cfgp)
+        self.assertEqual(code, 0, err)
+        self.assertIn("best \\ud83d video tool", out)                 # shown as an escape, never dropped
+        for fmt in ("md", "csv", "json"):
+            code, out, err = main("report", "-c", cfgp, "--format", fmt)
+            self.assertEqual(code, 0, (fmt, err))
+        mdp = os.path.join(self.tmp, "r.md")
+        self.assertEqual(main("report", "-c", cfgp, "--format", "md", "-o", mdp)[0], 0)
+        for fmt in ("text", "md", "json"):
+            self.assertEqual(main("diff", "-c", cfgp, "--format", fmt)[0], 0, fmt)
+        for fmt in ("text", "md", "json"):
+            code, out, err = main("ask", "-c", cfgp, "which AI video tool is free?", "--format", fmt)
+            self.assertEqual(code, 0, (fmt, err))
+            self.assertIn("\\ud83d", out)
 
 
 # ── MCP ───────────────────────────────────────────────────────────────────
@@ -970,6 +1343,9 @@ class MCP(Base):
         self.assertEqual((served["gate_cap"], served["bonus_cap"]), (published["gate_cap"], published["bonus_cap"]))
         err = srv.handle({"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "file:///etc/passwd"}})
         self.assertEqual(err["error"]["code"], -32002)
+        # pinned to the release it came from, as every check's doc_url is
+        self.assertEqual(served["source"], "https://github.com/jianruntech/geo-score/blob/v%s/rubric/v1.1.json"
+                         % gw.__version__)
 
     def test_score_site_arguments_are_checked(self):
         srv = self.server()
@@ -1867,6 +2243,7 @@ class EntryPoint(unittest.TestCase):
         p = self.cli("watch", "--help")
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn(b"geo_score.py watch", p.stdout)
+        self.assertIn(b"installed as geo-score-mcp", b" ".join(p.stdout.split()))
         self.assertEqual(self.cli("watch", "--version").stdout.strip(), b"geo-score watch " + gw.__version__.encode())
 
     def test_versions_match(self):
@@ -1990,6 +2367,46 @@ class ReviewFindings(Base):
             r = srv.call({"name": "score_site", "arguments": {"url": bad}})
             self.assertTrue(r["isError"], bad)
 
+    def test_score_site_says_a_name_does_not_resolve_instead_of_calling_it_private(self):
+        fake = os.path.join(self.tmp, "geo_score.py")
+        with io.open(fake, "w", encoding="utf-8") as f:
+            f.write("ADDRESS_GUARD = False\n"
+                    "def run(url, sample=8):\n    return {'u': url}\n"
+                    "def as_json(res):\n    return {'target': res['u'], 'normalised': 71, 'band': 'Solid', "
+                    "'gate_capped': False, 'tool': 'geo-score-cli/1.4.0', 'rubric_version': 'v1.1', 'checks': []}\n")
+        os.environ["GEO_SCORE_PY"] = fake
+        srv = gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
+        dns = {"nonexistent-host-zz9q.example": socket.gaierror(socket.EAI_NONAME, "nodename nor servname provided"),
+               "intranet.example": [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.5", 0))],
+               "public.example": [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.215.14", 0))]}
+
+        def getaddrinfo(host, *a, **k):
+            if isinstance(dns[host], Exception):
+                raise dns[host]
+            return dns[host]
+
+        def score(url):
+            r = srv.call({"name": "score_site", "arguments": {"url": url}})
+            return r["isError"], r["content"][0]["text"]
+
+        with mock.patch.object(socket, "getaddrinfo", getaddrinfo), \
+                mock.patch.object(urllib.request, "getproxies", lambda: {}):
+            self.assertEqual(score("nonexistent-host-zz9q.example"), (True, "cannot resolve nonexistent-host-zz9q.example: "
+                                                                           "check the spelling, or your DNS/proxy settings"))
+            bad, text = score("https://intranet.example/docs")
+            self.assertTrue(bad)
+            self.assertEqual(text, "url must be on a public host: intranet.example resolves to a private, loopback or "
+                                   "reserved address")
+            self.assertEqual(score("public.example")[0], False)           # resolved, public: scored
+        # behind a proxy the name still has to resolve here, because the address check runs here: the error says so
+        with mock.patch.object(socket, "getaddrinfo", getaddrinfo), \
+                mock.patch.object(urllib.request, "getproxies", lambda: {"https": "http://127.0.0.1:7897"}), \
+                mock.patch.object(urllib.request, "proxy_bypass", lambda host: False):
+            bad, text = score("nonexistent-host-zz9q.example")
+            self.assertTrue(bad)
+            self.assertTrue(text.startswith("cannot resolve nonexistent-host-zz9q.example: check the spelling"), text)
+            self.assertIn("even through a proxy", text)
+
     def test_init_pins_the_models(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
@@ -2020,7 +2437,7 @@ class MergeSeam(Base):
         import geo_score as gs
         full = {c[0]: c[3] for c in gs.SPEC}
         res = dict(root="https://www.lumo.example/", landed="https://www.lumo.example/", urls=["https://www.lumo.example/"],
-                   lang="en", tier=full, ev={k: "" for k in full}, bonus={}, robots_bytes=0)
+                   lang="en", tier=full, ev={k: "observed" for k in full}, bonus={}, robots_bytes=0)
         real_run, real_mod, real_argv = gs.run, gs._watch_module, sys.argv
         gs.run = lambda url, sample=8, verbose=False, urls=None: json.loads(json.dumps(res))
         gw.GEO_SCORE = gs

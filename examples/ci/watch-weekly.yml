@@ -17,16 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # The last step pushes the run file back, so this job keeps the checkout's credentials on purpose.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1  # zizmor: ignore[artipacked]
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
         with: {python-version: "3.12"}
       - name: Fetch geo-score (pinned to a release, checksums verified)
+        id: fetch
         run: |
           rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
           curl -sSfL -o geo_score.py "$rel/geo_score.py"
           curl -sSfL -o geo_watch.py "$rel/geo_watch.py"
           curl -sSfL -o SHA256SUMS "$rel/SHA256SUMS"
-          grep -E ' geo_(score|watch)\.py$' SHA256SUMS | sha256sum -c -
+          # each file's line goes to its own file: a SHA256SUMS without one of them stops the step here
+          # instead of leaving that file unchecked
+          grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
+          grep ' geo_watch\.py$' SHA256SUMS > geo_watch.py.sha256
+          sha256sum -c geo_score.py.sha256 geo_watch.py.sha256
       - name: Run
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -37,7 +43,8 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python3 geo_score.py watch run -c geo-score/geo-score-watch.json -q --format md >> "$GITHUB_STEP_SUMMARY"
       - name: Compare with last week
-        if: always()
+        # also after a failed run, but never with files that did not pass the checksum step
+        if: ${{ !cancelled() && steps.fetch.outcome == 'success' }}
         run: python3 geo_score.py watch diff -c geo-score/geo-score-watch.json --format md >> "$GITHUB_STEP_SUMMARY" || true
       - name: Commit the run
         run: |
