@@ -1297,9 +1297,10 @@ def text_blocks(h):
         start = i = gt + 1
 
 
-# a figure: a percentage, a sum of money, or a number of three or more characters. Latin letters, digits, a point
-# and a "#" before it bound it (so "v1.2.3" holds no "2.3", and "#1928093" is a reference, not a figure); \w would
-# also count Chinese characters, so "占用了61%的" would not be a figure at all
+# a figure: a percentage, a sum of money, or a number of three or more characters, less the prices and identifiers
+# figures() leaves out. Latin letters, digits, a point and a "#" before it bound it (so "v1.2.3" holds no "2.3", and
+# "#1928093" is a reference, not a figure); \w would also count Chinese characters, so "占用了61%的" would not be a
+# figure at all
 _FIGURE = re.compile(r"(?<![A-Za-z0-9_.#-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![A-Za-z0-9_-])")
 # a year, a version number, a dotted date or a run of seven or more bare digits is a number, not a statistic that
 # needs a source. The run is a phone, filing or account number: 13800138000, 沪ICP备14017582号, 小红书号：3152645850
@@ -1308,19 +1309,51 @@ _NOT_A_FIGURE = re.compile(r"(?:19|20)\d\d|\d+(?:\.\d+){2,}|\d{7,}")
 # sites carry these in a <div class="footer"> as often as in a <footer>, where they read as the page's figures
 _ID_BEFORE = re.compile(r"(?:ICP[备证]|公安备|网安备|号)\s*[:：]?\s*$")
 _ID_AFTER = re.compile(r"\s*号")
+# a sum of money: a currency sign or code before the number, or 元 or a code after it
+_MONEY_BEFORE = re.compile(r"(?:[$€£¥￥]|(?<![A-Za-z])(?:USD|EUR|GBP|CNY|RMB|JPY))\s?$")
+_MONEY_AFTER = re.compile(r"\s?(?:元|(?:USD|EUR|GBP|CNY|RMB|JPY)(?![A-Za-z]))")
+# A sum of money is a price, the site's own terms rather than a claim someone measured, when it is written the way
+# only a price is ("$29/mo", "68元/月", "$15 per user", "¥68起"), a price word comes before it ("每月68元",
+# "售价 ¥199") or it is all its block says, with or without a billing period (a pricing card's "$29", a price
+# table's "£12 a month"). Read as figures, the prices on a sampled /pricing page kept that page from ever
+# attributing most of its figures. Any other sum is a figure: "costs a small firm £22,000 a year", "a £90,000
+# threshold", and any sum with a magnitude after it ("$4.5 billion", "3000亿元")
+_PERIOD = (r"(?:mo|mth|month|yr|year|annum|wk|week|day|hr|hour|user|seat|member|person|licen[cs]e|"
+           r"月|年|天|日|人|次|用户|席位|账号)(?![A-Za-z])")
+_PRICE_AFTER = re.compile(r"(?:\s?(?:元|USD|EUR|GBP|CNY|RMB|JPY))?\s*(?:/\s*%s|(?:per|each|a)\s+(?:user|seat|member|"
+                          r"licen[cs]e)(?![A-Za-z])|每(?:月|年|人|用户)|起)" % _PERIOD, re.I)
+_PRICE_WORD = re.compile(r"(?:每月|每年|月费|年费|月付|年付|起价|低至|售价|仅需)\s*[:：]?\s*[$€£¥￥]?\s*$")
+_BARE_MONEY = re.compile(r"[\s$€£¥￥*]*(?:(?:USD|EUR|GBP|CNY|RMB|JPY|US)[\s$€£¥￥*]*)?")
+_PRICE_TAIL = re.compile(r"\s*(?:(?:元|USD|EUR|GBP|CNY|RMB|JPY)\s*)?(?:(?:/|a|an|per|each|every|每)\s*%s|(?:billed\s+)?"
+                         r"(?:monthly|yearly|annually)|起)?[\s.*]*" % _PERIOD, re.I)
+_MAGNITUDE = re.compile(r"[\d.,]*\s?(?:[kmb]n?|thousand|million|billion|trillion|万|亿)(?![A-Za-z])", re.I)
+
+
+def is_price(text, m):
+    """Is the sum of money that match m of _FIGURE found in its block's text a price?"""
+    after = text[m.end():m.end() + 24]
+    if _MAGNITUDE.match(after):
+        return False
+    if _PRICE_AFTER.match(after) or _PRICE_WORD.search(text, max(0, m.start() - 12), m.start()):
+        return True
+    # the whole block, when it is short: a pricing card's figure never shares its block with a sentence
+    return len(text) <= 40 and bool(_BARE_MONEY.fullmatch(text, 0, m.start()) and _PRICE_TAIL.fullmatch(text, m.end()))
 
 
 def figures(text):
     """The figures in a block's text, each without the punctuation after it: "30," in "November 30, 2026" is a
-    day, not a three-character number. Years, versions, dotted dates and identifiers are left out."""
+    day, not a three-character number. Years, versions, dotted dates, identifiers and prices are left out."""
     out = []
     for m in _FIGURE.finditer(text):
         f = m.group(1).rstrip(".,")
         if not (f[:1] in "$€£¥" or f.endswith("%") or len(f) >= 3) or _NOT_A_FIGURE.fullmatch(f):
             continue
-        if f[:1] not in "$€£¥" and not f.endswith("%"):
+        if not f.endswith("%"):
             before, after = text[max(0, m.start() - 12):m.start()], text[m.end():m.end() + 16]
-            if _ID_BEFORE.search(before) or _ID_AFTER.match(after):
+            if f[:1] in "$€£¥" or _MONEY_BEFORE.search(before) or _MONEY_AFTER.match(after):
+                if is_price(text, m):
+                    continue
+            elif _ID_BEFORE.search(before) or _ID_AFTER.match(after):
                 continue
         out.append(f)
     return out

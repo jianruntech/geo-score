@@ -19,7 +19,7 @@ Changes good.report.json → partial.report.json
   p2.answer-passages   Self-contained answer passages        9      7    9  down -2
   p2.question-intent   Headings match how people ask         7      5    7  down -2
   p2.freshness         Freshness signal present              6      3    6  down -3
-  p2.sourced-stats     Statistics carry a source             5      3    7  down -2
+  p2.sourced-stats     Statistics carry a source             7      3    7  down -4
   p2.named-author      Named, verifiable authorship          6      3    6  down -3
   p3.listings          Third-party listings                  —      —    4  unobservable
   p3.mentions          Independent mentions                  —      —    4  unobservable

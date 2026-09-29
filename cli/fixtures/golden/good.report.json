@@ -15,7 +15,7 @@
     "http://127.0.0.1:{PORT}/pricing.html"
   ],
   "sample_source": "sitemap",
-  "readiness": 90,
+  "readiness": 92,
   "observable_max": 86,
   "normalised": 100,
   "band": "Leading",
@@ -124,10 +124,10 @@
     {
       "id": "p2.sourced-stats",
       "state": "scored",
-      "points": 5,
+      "points": 7,
       "max": 7,
-      "evidence": "11 figures on 4 pages; 7 attributed in the same block or the next, 7 of them with a link. Of the 3 pages carrying three or more, 2 attribute most of theirs, 2 with a link.",
-      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most are attributed and the source is clickable and checkable",
+      "evidence": "8 figures on 4 pages; 7 attributed in the same block or the next, 7 of them with a link. Of the 2 pages carrying three or more, 2 attribute most of theirs, 2 with a link.",
+      "tier_reason": "tier 4 of 4 — top tier: most are attributed and the source is clickable and checkable",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
     },
     {

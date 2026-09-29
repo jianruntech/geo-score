@@ -412,7 +412,8 @@ _SCANS = [("visible_text", gs.visible_text, "<script>x "), ("visible_text", gs.v
           ("content_html", gs.content_html, "</div "), ("content_html", gs.content_html, "<!-- "),
           ("text_blocks", gs.text_blocks, "<p "), ("anchors", lambda h: list(gs.anchors(h)), "<a href=x>"),
           ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), "<p>1% <a href=#1>1</a>"),
-          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), ' id="1"> 100 <a href="#1">1</a>')]
+          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), ' id="1"> 100 <a href="#1">1</a>'),
+          ("figures", gs.figures, "$100 "), ("figures", gs.figures, "号 100 ")]
 for _name, _fn, _unit in _SCANS:
     _t1 = _secs(_fn, _unit * (1_000_000 // len(_unit)))
     _t2 = _secs(_fn, _unit * (2_000_000 // len(_unit)))
@@ -774,6 +775,22 @@ eq([gs.site_key(h) for h in ("www.acme.com", "docs.acme.com", "acme.co.uk", "u.g
    ["acme", "acme", "acme", "u.github.io", "127.0.0.1", "localhost"], "the name a site goes by across its hosts")
 eq(gs.figures("In 2025 we shipped 1,240 orders; 38% went abroad for £22,000, on v1.2.3 and 2026.09.01, up 3.5%."),
    ["1,240", "38%", "£22,000", "3.5%"], "a year, a version and a dotted date are not figures")
+# a price is the site's own terms, not a statistic: the good fixture's /pricing table held it to 5 of 7
+eq(gs.figures("Studio US$199/user, ¥199/月, 199元/月, 每月68元, 售价 ￥299, RMB 399 per seat, $29/mo, ¥68起, "
+              "$15 per user per month"), [], "a sum of money written the way only a price is, or after a price word, "
+              "is a price")
+eq([gs.figures(x) for x in ("$29", " US$ 199 ", "￥299", "199元", "$29 *", "£12 a month", "$29 per month", "68元/月",
+                            "€240 billed annually", "RMB 399 monthly")], [[]] * 10,
+   "and so is one that is all its block says, with or without a billing period: a pricing card or a price table")
+eq(gs.figures("Late payment costs a small firm £22,000 a year, and a £90,000 threshold applies; the median load "
+              "paid $2,350, a $4.5 billion market, 3000亿元 in trade, ￥3,000万 raised, USD 120 million, 1.2万元 on average"),
+   ["£22,000", "£90,000", "$2,350", "$4.5", "3000", "3,000", "120", "1.2"], "any other sum of money is a figure")
+eq(gs.figures("$2,350 median"), ["$2,350"], "even at the start of a short block")
+eq(gs.figures("$4 billion a year"), ["$4"], "and a sum with a magnitude is a figure however it is billed")
+eq(gs.stat_reading("<main><table><tr><td>Bench</td><td>£12 a month</td></tr><tr><td>Studio</td><td>£29 a month</td></tr>"
+                   "<tr><td>Works</td><td>£59 a month</td></tr></table><p>VAT is 20%, per "
+                   '<a href="https://tax.test/rates">the tax office</a>.</p></main>', {"acme"}), (1, 1, 1),
+   "a price table carries no figures")
 eq(gs.figures("占用了61%的时间，样本为1,860家"), ["61%", "1,860"], "figures flush against Chinese text count")
 eq(gs.figures("On November 30, 2022, NMLS #1928093 reported 85,000 users and 3.5x growth."), ["85,000"],
    "a day, a year and a reference number are not figures")

@@ -9,7 +9,7 @@
     "audited_at": "{DATE}",
     "sample_source": "sitemap",
     "pages": 8,
-    "readiness": 90,
+    "readiness": 92,
     "observable_max": 86,
     "normalised": 100,
     "band": "Leading",
@@ -153,7 +153,7 @@
     },
     {
       "id": "p2.sourced-stats",
-      "before": 5,
+      "before": 7,
       "after": 3,
       "max": 7,
       "state": "down"
