@@ -119,7 +119,7 @@ class Retest(unittest.TestCase):
     def test_three_runs_and_a_pinned_run_named_by_its_label(self):
         dirs = [write_run(os.path.join(self.tmp, x), self.scores) for x in "abc"]
         res = json.loads(retest._read(os.path.join(dirs[2], "results.json")))
-        res["pinned_from"] = os.path.join(dirs[0], "raw")
+        res["pinned_from"] = run.pin_source(os.path.join(dirs[0], "raw"), dirs[2])      # "../a/raw", as run.py writes it
         with io.open(os.path.join(dirs[2], "results.json"), "w", encoding="utf-8") as f:
             json.dump(res, f)
         doc = json.loads(retest._read(retest.OUT_JSON))
@@ -142,6 +142,17 @@ class Retest(unittest.TestCase):
         self.assertIn("pinned to A's pages", md)
         self.assertEqual(got["study"]["analysis"]["all_runs"]["icc_a1"], 1.0)
         self.assertEqual(got["legacy"]["analysis"]["compared"], 229)
+
+    def test_a_pin_names_a_run_and_never_a_path(self):
+        dirs = [os.path.join(self.tmp, x) for x in "abc"]
+        runs = [{"label": "A", "pinned_from": None},
+                {"label": "B", "pinned_from": os.path.join(dirs[0], "raw")},
+                {"label": "C", "pinned_from": "/Users/operator/geo-runs/old/raw"}]
+        retest.name_pins(runs, dirs)
+        self.assertEqual([r["pinned_from"] for r in runs], [None, "A", retest.OUTSIDE])
+        self.assertEqual(run.pin_source(os.path.join(dirs[0], "raw"), dirs[1]), "../a/raw")
+        self.assertEqual(run.pin_source(os.path.join(HERE, "raw"), HERE), "raw")
+        self.assertIsNone(run.pin_source(None, HERE))
 
     def test_legacy_runs_reproduce_their_published_counts(self):
         doc = retest.derive(json.loads(retest._read(retest.OUT_JSON)))
@@ -283,6 +294,21 @@ class NotScored(unittest.TestCase):
                       "%d/100, %s" % (fix, gs.__version__, row["normalised"], row["gate_reason"]))
         self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge",
                          "the CLI's error no longer starts with %r: %s" % (run.BOT_CHALLENGE, row["error"]))
+
+    def test_a_pinned_report_without_pages_is_a_row_not_a_crash(self):
+        tmp = tempfile.mkdtemp()
+        saved = run.PIN_DIR
+        try:
+            for site, urls in (("x.test", []), ("y.test", ["/relative/page"])):
+                with io.open(os.path.join(tmp, run.raw_name(site)), "w", encoding="utf-8") as f:
+                    json.dump({"sampled_urls": urls}, f)
+            run.PIN_DIR = tmp
+            rows = [run.one({"url": s, "sector": "Test"}) for s in ("x.test", "y.test", "z.test")]
+        finally:
+            run.PIN_DIR = saved
+            shutil.rmtree(tmp)
+        self.assertEqual([r["error"].split(":")[0] for r in rows], ["not pinned"] * 3)
+        self.assertIn("lists no page to re-read", rows[0]["error"])
 
     def test_challenge_qualifier_only_for_data_older_than_the_fix(self):
         self.assertIn("bot-challenge page", build_page.challenge_note("geo-score-cli/1.3.0", "en"))

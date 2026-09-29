@@ -67,7 +67,9 @@ def load_run(path, label, checks):
                            [st.get(cid) for cid in checks]]
     meta = {"label": label, "tool": res.get("tool"), "measured_at": res.get("measured_at"),
             "python": res.get("python"), "measured_from": res.get("measured_from"),
-            "pinned_from": res.get("pinned_from"), "n_listed": len(res["results"]), "n_scored": len(recs)}
+            # run.py writes the pin relative to the run directory; an older, absolute one resolves as itself
+            "pinned_from": os.path.join(path, res["pinned_from"]) if res.get("pinned_from") else None,
+            "n_listed": len(res["results"]), "n_scored": len(recs)}
     return meta, dict(sorted(recs.items()))
 
 
@@ -306,6 +308,19 @@ def headline(doc=None):
             "sem": la["sem"], "band_changes": la["band_changes"]}
 
 
+OUTSIDE = "a run not in this study"
+
+
+def name_pins(runs, dirs):
+    """A run pinned to another run's pages names that run's label, never a path on the operator's disk; a pin to a
+    run outside the study says only that (even a directory's name can be a user name)."""
+    raw_dirs = {os.path.realpath(os.path.join(d, "raw")): r["label"] for d, r in zip(dirs, runs)}
+    for r in runs:
+        if r["pinned_from"]:
+            r["pinned_from"] = raw_dirs.get(os.path.realpath(r["pinned_from"]), OUTSIDE)
+    return runs
+
+
 def main(argv):
     check = "--check" in argv
     args = [a for a in argv if a != "--check"]
@@ -325,11 +340,7 @@ def main(argv):
         for d, lb in zip(args, labels):
             meta, rr = load_run(d, lb, checks)
             runs.append(meta); recs[lb] = rr
-        # a run pinned to another run's pages names that run, not a path on the operator's disk
-        raw_dirs = {os.path.realpath(os.path.join(d, "raw")): lb for d, lb in zip(args, labels)}
-        for r in runs:
-            if r["pinned_from"]:
-                r["pinned_from"] = raw_dirs.get(os.path.realpath(r["pinned_from"]), r["pinned_from"])
+        name_pins(runs, args)
         doc["study"] = {"generated_by": "benchmark/retest.py", "checks": checks, "record_fields": RECORD_FIELDS,
                         "runs": runs, "records": recs}
     derive(doc)

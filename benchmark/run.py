@@ -119,8 +119,12 @@ def one(site):
             pinned = gs.read_report_urls(os.path.join(PIN_DIR, raw_name(site["url"])))
         except RuntimeError as e:
             return dict(site=site["url"], sector=site["sector"], error=("not pinned: %s" % e)[:120])
-        # score the origin those pages were read on, which may be the www host the earlier run landed on
-        p0 = urllib.parse.urlsplit(pinned[0])
+        # score the origin those pages were read on, which may be the www host the earlier run landed on; a report
+        # that lists no page, or no absolute one first, gives this row a reason instead of stopping the whole run
+        p0 = urllib.parse.urlsplit(pinned[0]) if pinned else None
+        if not (p0 and p0.scheme and p0.netloc):
+            return dict(site=site["url"], sector=site["sector"],
+                        error=("not pinned: %s lists no page to re-read" % raw_name(site["url"]))[:120])
         attempts = ["%s://%s%s" % (p0.scheme, p0.netloc, urllib.parse.urlsplit(base).path.rstrip("/"))]
     res = err = None
     for u in attempts:                       # some sites only answer on www
@@ -169,6 +173,16 @@ def one(site):
     except Exception as e:
         return dict(site=site["url"], sector=site["sector"], error=str(e)[:120])
 
+def pin_source(pin_dir, out_dir):
+    """results.json's pinned_from: the pinned directory relative to the run's own, so the file names no path on
+    the operator's disk and retest.py resolves it the same from any working directory."""
+    if not pin_dir:
+        return None
+    try:
+        return os.path.relpath(pin_dir, out_dir).replace(os.sep, "/")
+    except ValueError:                       # another drive on Windows: nothing relative to name
+        return os.path.basename(pin_dir.rstrip(os.sep))
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int); ap.add_argument("--workers", type=int, default=WORKERS)
@@ -191,7 +205,7 @@ def main():
         return
     global RAW, PIN_DIR
     out_dir = os.path.abspath(a.out) if a.out else HERE
-    RAW, PIN_DIR = os.path.join(out_dir, "raw"), a.urls_from_dir
+    RAW, PIN_DIR = os.path.join(out_dir, "raw"), (os.path.abspath(a.urls_from_dir) if a.urls_from_dir else None)
     if PIN_DIR and not os.path.isdir(PIN_DIR):
         ap.error("--urls-from-dir %s is not a directory" % PIN_DIR)
     cfg = _load(os.path.join(HERE, "sites.json"))
@@ -214,7 +228,7 @@ def main():
     payload = dict(rubric_version=gs.RUBRIC, tool="geo-score-cli/%s" % gs.__version__,
                    measured_at=time.strftime("%Y-%m-%d"),
                    # what retest.py needs to tell runs apart: the vantage is declared, not detected
-                   measured_from=a.vantage, python=platform.python_version(), pinned_from=a.urls_from_dir,
+                   measured_from=a.vantage, python=platform.python_version(), pinned_from=pin_source(PIN_DIR, out_dir),
                    stats=stats,
                    sectors={k: dict(n=len(v), median=statistics.median(v)) for k, v in sorted(by_sector.items())},
                    results=ok + [r for r in out if "error" in r])
