@@ -1,5 +1,5 @@
 {
-  "_normalised": 74,
+  "_normalised": 72,
   "_band": "Solid",
   "_gate_capped": false,
   "_lang": "en",
@@ -14,6 +14,9 @@
     "/features/live-tracking.html",
     "/pricing.html"
   ],
+  "_notes": {
+    "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5."
+  },
   "g.robots": 5,
   "g.reachable": 3,
   "g.ssr": 5,
@@ -25,7 +28,7 @@
   "p2.answer-passages": 9,
   "p2.question-intent": 7,
   "p2.freshness": 3,
-  "p2.sourced-stats": 5,
+  "p2.sourced-stats": 3,
   "p2.named-author": 3,
   "p3.listings": null,
   "p3.mentions": null,

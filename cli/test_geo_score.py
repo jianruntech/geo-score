@@ -392,7 +392,12 @@ _SCANS = [("visible_text", gs.visible_text, "<script>x "), ("visible_text", gs.v
           ("own_dates", lambda h: gs.own_dates(h, []), 'property="article:published_time" '),
           ("links", lambda h: list(gs.in_tags(gs._A_HREF, gs._A, h)), "<a "),
           ("geo_link", gs.geo_link, '<link rel="alternate" '), ("og_site_name", gs.og_site_name, 'content="x" '),
-          ("has_md_link", gs.has_md_link, "[a](b "), ("sitemap lines", gs._SITEMAP_DECL.findall, " \n")]
+          ("has_md_link", gs.has_md_link, "[a](b "), ("sitemap lines", gs._SITEMAP_DECL.findall, " \n"),
+          ("content_html", gs.content_html, "<nav>x "), ("content_html", gs.content_html, "<div role=navigation>x "),
+          ("content_html", gs.content_html, "</div "), ("content_html", gs.content_html, "<!-- "),
+          ("text_blocks", gs.text_blocks, "<p "), ("anchors", lambda h: list(gs.anchors(h)), "<a href=x>"),
+          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), "<p>1% <a href=#1>1</a>"),
+          ("stat_reading", lambda h: gs.stat_reading(h, {"x"}), ' id="1"> 100 <a href="#1">1</a>')]
 for _name, _fn, _unit in _SCANS:
     _t1 = _secs(_fn, _unit * (1_000_000 // len(_unit)))
     _t2 = _secs(_fn, _unit * (2_000_000 // len(_unit)))
@@ -672,6 +677,62 @@ _ATT = r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|resear
 ok(gs.re.search(_ATT, "Free resources for teams") is None, "'resources' is not a source")
 ok(gs.re.search(_ATT, "The price index reports a national average") is not None, "'reports' is an attribution")
 ok("sourced|stud(?:y|ies)|reports?" in io.open(gs.__file__, encoding="utf-8").read(), "the test pattern is the scorer's pattern")
+
+# ── p2.sourced-stats: a figure is attributed only by what sits beside it in the content ──
+# Read page-wide, a social icon, a partner logo or a "Research" menu item attributed every figure on the page: the
+# check agreed with 1 of 5 hand audits, and every disagreement was the CLI reading 7.
+_OWN, _PROF = {"acme"}, [gs.profile_of("https://github.com/acme")]
+_src = lambda u: gs.source_link(u, _OWN, _PROF)
+ok(_src("https://www.ons.gov.uk/economy/inflation"), "a link to another site is a source")
+ok(_src("//data.example.org/set"), "so is a protocol-relative one")
+for _u, _why in (("https://acme.com/blog/x", "the site itself"), ("https://docs.acme.co.uk/", "the site under another TLD"),
+                 ("https://twitter.com/acme", "a social profile"), ("https://m.facebook.com/x", "a social host's subdomain"),
+                 ("https://news.example.org/share?u=1", "a share button"), ("https://github.com/acme/data", "the site's own sameAs profile"),
+                 ("mailto:hi@example.org", "not http(s)"), ("/about", "a relative link"), ("https://[::1", "a malformed URL")):
+    ok(not _src(_u), "not a source: %s (%s)" % (_why, _u))
+ok(_src("https://github.com/other-org/data"), "another account on the sameAs profile's host is a source")
+eq([gs.site_key(h) for h in ("www.acme.com", "docs.acme.com", "acme.co.uk", "u.github.io", "127.0.0.1", "localhost")],
+   ["acme", "acme", "acme", "u.github.io", "127.0.0.1", "localhost"], "the name a site goes by across its hosts")
+eq(gs.figures("In 2025 we shipped 1,240 orders; 38% went abroad for £22,000, on v1.2.3 and 2026.09.01, up 3.5%."),
+   ["1,240", "38%", "£22,000", "3.5%"], "a year, a version and a dotted date are not figures")
+eq(gs.figures("占用了61%的时间，样本为1,860家"), ["61%", "1,860"], "figures flush against Chinese text count")
+eq(gs.figures("On November 30, 2022, NMLS #1928093 reported 85,000 users and 3.5x growth."), ["85,000"],
+   "a day, a year and a reference number are not figures")
+eq(list(gs.anchors('<a class=x href="https://a.test/1">one</a> <a href=\'#fn2\'><sup>2</sup></a> <a name=x>no</a>')),
+   [("https://a.test/1", "one"), ("#fn2", "<sup>2</sup>")], "every <a href>, with its text")
+_page = ('<header><a href="https://partner.test/">Partner</a> 51% 52% 53%</header><nav>Research</nav>'
+         '<p>Sales rose 12% to $4,000 on 300 stores.</p><div role="contentinfo"><a href="https://partner.test/">P</a></div>'
+         '<div role="navigation"><div><a href="https://other.test/">x</a></div></div><footer>Source: survey</footer>')
+eq(gs.visible_text(gs.content_html(_page)), "Sales rose 12% to $4,000 on 300 stores.",
+   "with no <main>, the header, nav, footer and role=banner/navigation/contentinfo elements are chrome")
+eq(gs.stat_reading(_page, {"acme"}), (3, 0, 0), "chrome beside a figure attributes nothing")
+_main = ('<header>Source: <a href="https://x.test/">x</a></header><main><p>Up 12%, 15% and 18%.</p>'
+         '<aside>Research: <a href="https://x.test/">x</a></aside><p>Next.</p></main><footer><cite>x</cite></footer>')
+eq(gs.visible_text(gs.content_html(_main)), "Up 12%, 15% and 18%. Next.", "<main> is the content, without any aside in it")
+eq(gs.stat_reading(_main, {"acme"}), (3, 0, 0), "so an aside's link is not the figure's source")
+eq(gs.visible_text(gs.strip_chrome("<nav>a<nav>b</nav>c</nav>d<footer>never closed")), "d never closed",
+   "a nested element closes at its own close; one never closed stays")
+eq(gs.visible_text(gs.content_html("<p>a</p><!-- <nav> --><p>b</p><script>'<footer>'</script><p>c</p>")), "a b c",
+   "comments and scripts cannot open chrome")
+_blocks = lambda h: [t for _, t in gs.text_blocks(h)]
+eq(_blocks("<p>a</p><ul><li>b <em>c</em></li><li>d</li></ul><table><tr><td>e</td><td>f</td></tr></table>x"),
+   ["a", "b c", "d", "e", "f", "x"], "blocks: paragraphs, list items, table cells, and text outside them")
+_read = lambda body: gs.stat_reading("<main>%s</main>" % body, {"acme"})
+eq(_read('<p>Up 12% on 400 farms, per <a href="https://stats.test/">the survey</a>.</p>'), (2, 2, 2), "a link in the block")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Source: <a href="https://stats.test/">stats office</a></p>'), (2, 2, 2),
+   "a link in the next block")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Unrelated.</p><p><a href="https://stats.test/">stats</a></p>'), (2, 0, 0),
+   "a link two blocks away is not beside the figure")
+eq(_read('<p>Up 12% on 400 farms, as <cite>the stats office</cite> says.</p>'), (2, 2, 0), "a <cite> attributes, without a link")
+eq(_read('<p>Up 12% on 400 farms, according to the stats office.</p>'), (2, 2, 0), "so does a source phrase")
+eq(gs.stat_reading('<main><p>Up 12% on 400 farms, according to the stats office.</p></main>', {"acme"}, phrases=False),
+   (2, 0, 0), "unless source phrases are not read")
+eq(_read('<p>Up 12% on 400 farms.</p><p>Read more at <a href="https://acme.com/x">our blog</a> or '
+         '<a href="https://twitter.com/intent/tweet?u=x">share</a>.</p>'), (2, 0, 0), "the site's own links and share buttons are not sources")
+_fn = ('<p>Up 12% on 400 farms<sup><a href="#n1">1</a></sup> and 9%<a href="#n2">[2]</a> and 700<a href="#top">top</a>.</p>'
+       '<h2>More</h2><ol><li id="n1">Stats office, <a href="https://stats.test/">table 4</a>.</li><li id="n2">Our estimate.</li></ol>')
+eq(_read(_fn), (4, 4, 4), "a footnote whose note links out attributes the block, with a link")
+eq(_read(_fn.replace('href="#n1"', 'href="#n2"')), (4, 0, 0), "a footnote whose note has no link does not")
 
 # ── dateModified is compared with the page's own date, not every date on the page ──
 _page = ('<main><p>By Jane Doe · 5 January 2026</p><p>Body.</p>'

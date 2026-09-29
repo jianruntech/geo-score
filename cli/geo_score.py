@@ -1062,6 +1062,291 @@ def is_cjk(s):
     if "<" in s and ">" in s: s = visible_text(s)
     return len(re.findall(r"[一-鿿]", s)) > max(30, len(s) * 0.08)
 
+# ── figures and their sources (p2.sourced-stats) ───────────────────────────
+# The rubric's attributed figure is one whose source sits beside it. A link, a <cite> or a source word anywhere
+# on the page is not that: read page-wide, social icons, partner logos and a "Research" menu item in the chrome
+# attributed every figure on the page. Only p2.sourced-stats reads a page this way, so no other check moves.
+_CHROME_TAGS = ("header", "nav", "footer", "aside")
+_CHROME_ROLES = ("banner", "navigation", "contentinfo", "complementary")
+# a role is honoured on these containers only, so at most these names are ever paired open to close
+_ROLE_HOSTS = {"div", "section", "ul", "ol", "menu", "span", "p", "form", "table"} | set(_CHROME_TAGS)
+_OPEN_TAG = re.compile(r"<([A-Za-z][A-Za-z0-9-]*)")
+_ROLE = re.compile(r"""\brole\s*=\s*["']?\s*(%s)\b""" % "|".join(_CHROME_ROLES), re.I)
+
+
+def strip_comments(h):
+    """h with each HTML comment replaced by a space. One that is never closed hides the rest of the page, as it
+    does in a browser."""
+    out, i = [], 0
+    while True:
+        a = h.find("<!--", i)
+        if a < 0:
+            out.append(h[i:])
+            return "".join(out)
+        out.append(h[i:a])
+        b = h.find("-->", a + 4)
+        if b < 0:
+            return "".join(out)
+        out.append(" ")
+        i = b + 3
+
+
+def _closes(low, name):
+    """{where each <name> opening starts: where the name of its matching </name> ends}, in one pass over the
+    lower-cased page with a stack, so that nested elements of one name pair up. An opening never closed is
+    left out."""
+    out, stack = {}, []
+    for m in re.finditer(r"<(/?)%s\b" % re.escape(name), low):
+        if not m.group(1):
+            stack.append(m.start())
+        elif stack:
+            out[stack.pop()] = m.end()
+    return out
+
+
+def strip_chrome(h, tags=_CHROME_TAGS, roles=_CHROME_ROLES):
+    """h without each element named in `tags`, or whose role is one of `roles`, and everything inside it. An
+    element that is never closed stays, content and all: where a browser would end it is a guess."""
+    low, cut, pairs, i = None, [], {}, 0
+    while True:
+        m = _OPEN_TAG.search(h, i)
+        if not m:
+            break
+        gt = h.find(">", m.end())
+        if gt < 0:
+            break
+        name = m.group(1).lower()
+        chrome = name in tags
+        if not chrome and name in _ROLE_HOSTS:
+            r = _ROLE.search(h, m.end(), gt)
+            chrome = bool(r) and r.group(1).lower() in roles
+        if chrome:
+            if low is None:
+                low = _lower(h)
+            if name not in pairs:
+                pairs[name] = _closes(low, name)
+            end = pairs[name].get(m.start())
+            if end is not None:
+                close = h.find(">", end)
+                i = close + 1 if close >= 0 else len(h)
+                cut.append((m.start(), i))
+                continue
+        i = gt + 1
+    if not cut:
+        return h
+    out, at = [], 0
+    for a, b in cut:
+        out += [h[at:a], " "]
+        at = b
+    out.append(h[at:])
+    return "".join(out)
+
+
+def _content(clean):
+    body = main_html(clean)
+    if body is clean:
+        return strip_chrome(clean)
+    return strip_chrome(body, ("nav", "aside"), ("navigation", "complementary"))
+
+
+def content_html(h):
+    """What p2.sourced-stats reads, and no other check: the first <main>, else the first <article>, without any
+    nav or aside inside it; on a page with neither, the whole page without its header, nav, footer and aside and
+    the elements whose role is banner, navigation, contentinfo or complementary. No script, style, noscript,
+    template, svg or comment either way."""
+    return _content(strip_comments(strip_hidden(h)))
+
+
+# The edges of a block: the elements read as blocks (p, li, tr, td, dd, figcaption, blockquote, caption), and the
+# headings and containers around them, so that text outside all of those does not run on into one long block.
+_BLOCK_EDGE = re.compile(r"</?(?:p|li|tr|td|th|dd|dt|dl|figcaption|blockquote|caption|h[1-6]|div|section|article|"
+                         r"ul|ol|table|thead|tbody|tfoot|figure|header|footer|main|aside|nav|form|details|summary|"
+                         r"pre|hr)\b", re.I)
+
+
+def text_blocks(h):
+    """[(html, visible text)] of each block of h in document order, leaving out those with no visible text."""
+    out, i, start = [], 0, 0
+    while True:
+        m = _BLOCK_EDGE.search(h, i)
+        gt = h.find(">", m.end()) if m else -1
+        piece = h[start:m.start() if gt >= 0 else len(h)]
+        t = visible_text(piece)
+        if t:
+            out.append((piece, t))
+        if gt < 0:
+            return out
+        start = i = gt + 1
+
+
+# a figure: a percentage, a sum of money, or a number of three or more characters. Latin letters, digits, a point
+# and a "#" before it bound it (so "v1.2.3" holds no "2.3", and "#1928093" is a reference, not a figure); \w would
+# also count Chinese characters, so "占用了61%的" would not be a figure at all
+_FIGURE = re.compile(r"(?<![A-Za-z0-9_.#-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![A-Za-z0-9_-])")
+# a year, a version number or a dotted date is a number, not a statistic that needs a source
+_NOT_A_FIGURE = re.compile(r"(?:19|20)\d\d|\d+(?:\.\d+){2,}")
+
+
+def figures(text):
+    """The figures in a block's text, each without the punctuation after it: "30," in "November 30, 2026" is a
+    day, not a three-character number."""
+    out = []
+    for f in (x.rstrip(".,") for x in _FIGURE.findall(text)):
+        if (f[:1] in "$€£¥" or f.endswith("%") or len(f) >= 3) and not _NOT_A_FIGURE.fullmatch(f):
+            out.append(f)
+    return out
+
+
+_HREF_IN_TAG = re.compile(r"""\bhref\s*=\s*["']?\s*([^"'\s>]*)""", re.I)
+
+
+def anchors(h):
+    """(href, the first 300 characters of its text) of each <a href> in h, in document order, in one pass. The
+    text runs to the next </a>."""
+    low, i, close = None, 0, -1
+    while True:
+        a = _A.search(h, i)
+        if not a:
+            return
+        gt = h.find(">", a.end())
+        if gt < 0:
+            return
+        m = _HREF_IN_TAG.search(h, a.end(), gt)
+        if m:
+            if low is None:
+                low = _lower(h)
+            # the first "</a" after an earlier opening is the first after this one too, while this one is before it
+            if close < gt:
+                close = low.find("</a", gt + 1)
+                close = len(h) if close < 0 else close
+            yield m.group(1), h[gt + 1:min(close, gt + 301)]
+        i = gt + 1
+
+
+# second-level labels under a country code: example.co.uk is example's, not co's
+_SLD = {"ac", "co", "com", "edu", "gob", "go", "gov", "ne", "net", "or", "org"}
+# platforms that give each site a subdomain: there the whole host is the site, not the platform's name
+_PLATFORMS = ("github.io", "gitlab.io", "vercel.app", "netlify.app", "pages.dev", "web.app", "firebaseapp.com",
+              "herokuapp.com", "blogspot.com", "wordpress.com", "substack.com", "notion.site", "readthedocs.io",
+              "gitbook.io", "medium.com")
+# social profiles and share buttons: where a site sends its readers, not where its figures come from
+_SOCIAL = ("facebook.com", "fb.com", "twitter.com", "x.com", "t.co", "linkedin.com", "instagram.com", "youtube.com",
+           "youtu.be", "tiktok.com", "pinterest.com", "threads.net", "bsky.app", "t.me", "telegram.me", "wa.me",
+           "whatsapp.com", "discord.gg", "discord.com", "weibo.com", "weixin.qq.com", "douyin.com",
+           "xiaohongshu.com", "bilibili.com")
+_SHARE = re.compile(r"/share|sharer|/intent/|sharearticle|addtoany|addthis|sharethis|/submit\?|/pin/create", re.I)
+
+
+def _host_in(host, domains):
+    return any(host == d or host.endswith("." + d) for d in domains)
+
+
+def site_key(host):
+    """The name a site goes by across its hosts: "example" for www.example.com, docs.example.com and
+    example.co.uk. An IP address, or a host on a platform such as github.io, is its own key."""
+    host = (host or "").lower().rstrip(".")
+    host = host[4:] if host.startswith("www.") else host
+    if not host or ":" in host or re.fullmatch(r"[\d.]+", host) or _host_in(host, _PLATFORMS):
+        return host
+    p = host.split(".")
+    if len(p) >= 3 and p[-2] in _SLD and len(p[-1]) == 2:
+        return p[-3]
+    return p[-2] if len(p) >= 2 else host
+
+
+def profile_of(url):
+    """(host, path) of a sameAs profile, to tell a link to the site's own profile from a source."""
+    try:
+        u = urllib.parse.urlsplit(url.strip())
+        host = (u.hostname or "").lower()
+    except ValueError:
+        return None
+    return (host[4:] if host.startswith("www.") else host, u.path.rstrip("/").lower()) if host else None
+
+
+def source_link(href, own, profiles=()):
+    """Does this href lead to a source? An http(s) link off the site (the site_key of its host is not in `own`),
+    to none of the site's own sameAs profiles ((host, path) pairs from profile_of), and to no social profile or
+    share button."""
+    if href.startswith("//"):
+        href = "https:" + href
+    try:
+        u = urllib.parse.urlsplit(href)
+        host = (u.hostname or "").lower()
+    except ValueError:
+        return False
+    if u.scheme.lower() not in ("http", "https") or not host:
+        return False
+    host = host[4:] if host.startswith("www.") else host
+    if site_key(host) in own or _host_in(host, _SOCIAL) or _SHARE.search(href):
+        return False
+    path = u.path.rstrip("/").lower() + "/"
+    return not any(p and host == p[0] and path.startswith(p[1] + "/") for p in profiles)
+
+
+_CITE = re.compile(r"<cite\b", re.I)
+_SOURCE_PHRASE = re.compile(r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|research|surveys?|"
+                            r"surveyed|according to)(?![A-Za-z])|数据来源|资料来源|来源[:：]|据.{0,6}报告", re.I)
+_FOOTNOTE_REF = re.compile(r"\[?\s*(?:\d{1,3}|[*†‡§])\s*\]?")
+_ID_ATTR = re.compile(r"""\sid\s*=\s*["']?([^"'\s>]+)""", re.I)
+NOTE_SPAN, MAX_NOTES = 1500, 100
+
+
+def stat_reading(h, own, profiles=(), phrases=True):
+    """p2.sourced-stats on one page: (figures, attributed, attributed with a link). A figure is attributed when its
+    block of the content (content_html, text_blocks), or the next block, holds a link to a source (source_link),
+    a <cite>, a source phrase (when `phrases` is set), or a footnote reference whose note on the page links to a
+    source. A link, or a note with one, is the clickable and checkable source the top tier asks for."""
+    clean = strip_comments(strip_hidden(h))
+    blocks = text_blocks(_content(clean))
+    ids, notes, kinds = None, {}, {}
+
+    def note_links(ref):
+        # the note is the element that carries the id, up to its first close; the whole page, chrome and all, is
+        # searched, because notes often sit in a footer or an aside
+        nonlocal ids
+        if ref not in notes:
+            if ids is None:
+                ids = {}
+                for m in _ID_ATTR.finditer(clean):
+                    ids.setdefault(m.group(1), m.end())
+            at = ids.get(ref)
+            if at is None or len(notes) >= MAX_NOTES:
+                return False
+            lt = clean.rfind("<", max(0, at - 300), at)
+            tag = _OPEN_TAG.match(clean, lt) if lt >= 0 else None
+            span = clean[at:at + NOTE_SPAN]
+            end = _lower(span).find("</%s" % tag.group(1).lower()) if tag else -1
+            notes[ref] = any(source_link(u, own, profiles) for u, _ in anchors(span[:end] if end >= 0 else span))
+        return notes[ref]
+
+    def kind(j):
+        if j not in kinds:
+            piece, text = blocks[j]
+            k = None
+            for href, label in anchors(piece):
+                if source_link(href, own, profiles) or (
+                        href.startswith("#") and _FOOTNOTE_REF.fullmatch(visible_text(label))
+                        and note_links(href[1:])):
+                    k = "link"
+                    break
+            if k is None and (_CITE.search(piece) or (phrases and _SOURCE_PHRASE.search(text))):
+                k = "named"
+            kinds[j] = k
+        return kinds[j]
+
+    n = attributed = linked = 0
+    for j, (_piece, text) in enumerate(blocks):
+        k = len(figures(text))
+        if not k:
+            continue
+        near = {kind(j), kind(j + 1) if j + 1 < len(blocks) else None}
+        n += k
+        attributed += k if near - {None} else 0
+        linked += k if "link" in near else 0
+    return n, attributed, linked
+
+
 # ── the rubric ─────────────────────────────────────────────────────────────
 SPEC = [
  ("g.robots","Reachable","Crawlers allowed in robots.txt",5,[0,3,5]),
@@ -1892,33 +2177,28 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         fr, n, dm, (", %d of them earlier than the date the page shows" % stale) if stale else "")
 
     # ── p2.sourced-stats ──
-    pages_with_nums = pages_sourced = tot_num = cited = 0
-    outbound = re.compile(r'<a\b[^>]+href=["\']https?://(?!%s)' % re.escape(host_stem(root)), re.I)
-    for _u, r in live.items():
-        body = main_html(r.text)
-        vis = visible_text(body)
-        # Latin letters and digits bound a figure; \w would also count Chinese characters, so "占用了61%的"
-        # would not be a figure at all
-        nums = re.findall(r"(?<![A-Za-z0-9_-])(\d[\d,.]*\s?%|[$€£¥]\s?\d[\d,.]*|\d[\d,.]{2,})(?![A-Za-z0-9_-])", vis)
-        # attribution near a figure: an outbound link, a cite/blockquote, a footnote marker,
-        # or an explicit source phrase
-        att = (len(re.findall(r"<(cite|blockquote)\b", body, re.I))
-               + len(re.findall(r"(?<![A-Za-z])(?:sources?|sourced|stud(?:y|ies)|reports?|reported|research|surveys?|surveyed|according to)"
-                                r"(?![A-Za-z])|数据来源|资料来源|来源[:：]|据.{0,6}报告", vis, re.I))
-               + sum(1 for _ in in_tags(outbound, _A, body)))
-        tot_num += len(nums); cited += att
-        if len(nums) >= 3:
-            pages_with_nums += 1
-            if att >= 2: pages_sourced += 1
-    if pages_with_nums == 0:
+    # a figure is attributed only by what sits beside it in the content: its own block or the next (stat_reading).
+    # Links to the site itself, to its own sameAs profiles and to social profiles or share buttons are not sources.
+    own = {site_key(urllib.parse.urlsplit(u).hostname) for u in [root] + [r.url or u for u, r in live.items()]}
+    profiles = [p for p in (profile_of(x) for x in (same if isinstance(same, list) else [same])
+                            if isinstance(x, str)) if p]
+    reads = [stat_reading(r.text, own, profiles) for r in live.values()]
+    tot_num, cited, linked = (sum(x[i] for x in reads) for i in range(3))
+    on_pages = sum(1 for x in reads if x[0])
+    bearing = [x for x in reads if x[0] >= 3]
+    if not bearing:
         tier["p2.sourced-stats"] = 3
-        ev["p2.sourced-stats"] = "Few numeric claims in the sample (%d figures), so there is little to attribute." % tot_num
+        ev["p2.sourced-stats"] = ("Few numeric claims in the sample (%d figures on %d pages), so there is little to "
+                                  "attribute." % (tot_num, on_pages))
     else:
-        f = pages_sourced / pages_with_nums
-        tier["p2.sourced-stats"] = 7 if f >= .75 else (5 if f >= .5 else (3 if pages_sourced else 0))
-        ev["p2.sourced-stats"] = ("%d figures across the sample; of the %d pages carrying several, "
-                                  "%d place a source, citation or outbound reference beside them."
-                                  % (tot_num, pages_with_nums, pages_sourced))
+        # a page has most of its figures attributed when more than half are; the top tier asks for a link
+        most = sum(1 for f, a, _ in bearing if 2 * a > f)
+        most_linked = sum(1 for f, _, k in bearing if 2 * k > f)
+        m = len(bearing)
+        tier["p2.sourced-stats"] = 7 if most_linked >= m * .75 else (5 if most >= m * .5 else (3 if cited else 0))
+        ev["p2.sourced-stats"] = ("%d figures on %d pages; %d attributed in the same block or the next, %d of them "
+                                  "with a link. Of the %d pages carrying three or more, %d attribute most of theirs, "
+                                  "%d with a link." % (tot_num, on_pages, cited, linked, m, most, most_linked))
 
     # ── p2.named-author ──
     # a byline that names a role or the organisation is not a person ("editor" was once spelt with

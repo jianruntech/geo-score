@@ -1,0 +1,41 @@
+{
+  "_normalised": 53,
+  "_band": "Growing",
+  "_gate_capped": false,
+  "_lang": "en",
+  "_sample_source": "sitemap",
+  "_sampled": [
+    "/",
+    "/blog/how-yields-compare.html",
+    "/blog/what-soil-carbon-tells-you.html",
+    "/blog/why-fertiliser-prices-swing.html"
+  ],
+  "_notes": {
+    "p2.sourced-stats": "Each figure has its source beside it: a link in its own paragraph, in the next table cell or the next paragraph, or a footnote reference whose note links out. A figure beside a link to the site's own GitHub profile (its sameAs) is not attributed, and one named only by <cite> is attributed without a link: most, not all, of those pages' figures are linked."
+  },
+  "g.robots": 5,
+  "g.reachable": 5,
+  "g.ssr": 5,
+  "p1.sitemap": 4,
+  "p1.llms-txt": 0,
+  "p1.organization": 6,
+  "p1.breadcrumb": 0,
+  "p1.page-type": 0,
+  "p2.answer-passages": 4,
+  "p2.question-intent": 7,
+  "p2.freshness": 0,
+  "p2.sourced-stats": 7,
+  "p2.named-author": 0,
+  "p3.listings": null,
+  "p3.mentions": null,
+  "p3.knowledge-graph": 0,
+  "p3.sameas": 3,
+  "p3.video": 0,
+  "p4.answer-shape": 0,
+  "p4.question-coverage": null,
+  "p4.cn-engines": null,
+  "b.llms-full": 0,
+  "b.ai-txt": 0,
+  "b.geo-link": 0,
+  "b.speakable": 0
+}

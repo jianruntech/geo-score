@@ -1,5 +1,5 @@
 {
-  "_normalised": 77,
+  "_normalised": 74,
   "_band": "Solid",
   "_gate_capped": false,
   "_lang": "en",
@@ -16,7 +16,8 @@
   ],
   "_notes": {
     "g.robots": "Disallow: / for GPTBot, ClaudeBot, CCBot, Google-Extended and Applebot-Extended only, with * Allow: /. Training crawlers and opt-out tokens are not scored (reference/ai-crawlers.md), so full marks and no cap. Before 1.5.0 this read 0 and capped the site at 40.",
-    "_gate_capped": "No retrieval crawler is disallowed, so no gate is at zero."
+    "_gate_capped": "No retrieval crawler is disallowed, so no gate is at zero.",
+    "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5."
   },
   "g.robots": 5,
   "g.reachable": 5,
@@ -29,7 +30,7 @@
   "p2.answer-passages": 9,
   "p2.question-intent": 7,
   "p2.freshness": 3,
-  "p2.sourced-stats": 5,
+  "p2.sourced-stats": 3,
   "p2.named-author": 3,
   "p3.listings": null,
   "p3.mentions": null,

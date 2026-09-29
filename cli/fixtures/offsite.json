@@ -83,7 +83,7 @@
       "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
     },
     {
-      "match": "^https://github\\.com/(fernhollow|tidemark-cli)$",
+      "match": "^https://github\\.com/(fernhollow|tidemark-cli|orchardline)$",
       "status": 200,
       "body": "<!doctype html><html><head><title>Profile</title></head><body><p>Official profile.</p></body></html>"
     },

@@ -195,3 +195,23 @@ file says.
 disallow, which is tier 0 and the gate cap, the way a crawler that follows the RFC treats it?
 Against: one audit sees one moment, while a crawler keeps retrying for much longer before it
 acts on an outage. Nothing changes in v1.1.
+
+---
+
+## 11 · A sample with few figures: 3 of 7, or not applicable? (open, for v1.2)
+
+`p2.sourced-stats` reads the sampled pages that carry three or more figures. From geo-score 1.5.0 a
+figure counts as attributed only when its own block of the content, or the next block, holds a link
+to a source off the site, a `<cite>`, a source phrase, or a footnote reference whose note on the page
+links to a source. The page chrome (header, nav, footer, aside) is not read. A page attributes most of
+its figures when more than half of them are attributed. The top tier needs three quarters of those
+pages to attribute most of their figures with a link, the tier below needs half of them to attribute
+most of their figures in any of these ways, and the lowest tier above zero needs one attributed figure.
+
+When no sampled page carries three figures, the check keeps the 3 points it has always given: there is
+nothing to attribute, so nothing is missing, but nothing is shown either.
+
+**The question for v1.2:** should a sample with no page carrying three figures leave the denominator
+(`not_applicable`), as `p1.breadcrumb` does when no nested page is sampled? For: 3 of 7 for a sample
+without figures is a reading of nothing. Against: a site that states no figures makes no claim a reader
+has to check, and the rubric does not score the absence of a claim as a gap. Nothing changes in v1.1.

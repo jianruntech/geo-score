@@ -1,5 +1,5 @@
 {
-  "_normalised": 77,
+  "_normalised": 74,
   "_band": "Solid",
   "_gate_capped": false,
   "_lang": "en",
@@ -15,7 +15,8 @@
     "/pricing.html"
   ],
   "_notes": {
-    "g.robots": "* Disallow: / plus one group naming all 10 retrieval crawlers with Allow: /. Under RFC 9309 2.2.1 a crawler with a group of its own ignores the * group, so none is blocked and all 10 are explicitly allowed: 5. Before 1.5.0 the * Disallow read as a block: 0 and the cap."
+    "g.robots": "* Disallow: / plus one group naming all 10 retrieval crawlers with Allow: /. Under RFC 9309 2.2.1 a crawler with a group of its own ignores the * group, so none is blocked and all 10 are explicitly allowed: 5. Before 1.5.0 the * Disallow read as a block: 0 and the cap.",
+    "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5."
   },
   "g.robots": 5,
   "g.reachable": 5,
@@ -28,7 +29,7 @@
   "p2.answer-passages": 9,
   "p2.question-intent": 7,
   "p2.freshness": 3,
-  "p2.sourced-stats": 5,
+  "p2.sourced-stats": 3,
   "p2.named-author": 3,
   "p3.listings": null,
   "p3.mentions": null,
