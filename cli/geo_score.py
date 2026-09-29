@@ -2166,15 +2166,19 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # candidate at a time with its lookups at once, stopping at the first that finds the entity, so Wikidata and
     # Wikipedia get no lookup the check would not read. Only a sitemap index's child is asked for after the
     # wave, and discover() has usually fetched it already.
+    # The site's own files and its logo are retried like the sitemaps, and the Chinese crawlers like the retrieval
+    # probes: they share the burst now, and a timeout or a 429 from it would read as a missing llms.txt or a
+    # blocked crawler. Profiles and lookups on other hosts are asked once, as before: their checks already read a
+    # request that got no answer as not measured.
     probe = list(live)[:3]
     plan = {}
     for u, ua, tries in ([(u, UA_BROWSER, STEADY_TRIES) for u in sm_urls[:4]]
-                         + [(base_ + rel, UA_BROWSER, 1) for rel in ("/llms.txt", "/llms-full.txt", "/ai.txt",
-                                                                     "/.well-known/ai.txt")
+                         + [(base_ + rel, UA_BROWSER, STEADY_TRIES) for rel in ("/llms.txt", "/llms-full.txt",
+                                                                                "/ai.txt", "/.well-known/ai.txt")
                             for base_ in [origin] + ([origin + scope] if scope else [])]
-                         + ([(logo_at, UA_BROWSER, 1)] if logo_at is not None else [])
+                         + ([(logo_at, UA_BROWSER, STEADY_TRIES)] if logo_at is not None else [])
                          + [(u, UA_BROWSER, 1) for u in sa[:8]]
-                         + ([(root + "/", ua, 1) for _, ua in CN_UAS] if cjk_site else [])
+                         + ([(root + "/", ua, PROBE_TRIES) for _, ua in CN_UAS] if cjk_site else [])
                          + [(u, ua, PROBE_TRIES) for _, ua in RETRIEVAL_UAS for u in probe]):
         plan.setdefault((u, ua), tries)
     def on_site(u):

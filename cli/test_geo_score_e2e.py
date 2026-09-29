@@ -96,6 +96,8 @@ FAULTS = {
     "robots-blocks, first robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 1}}),
     "robots-blocks, second robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 2}}),
     "good, one 429 per crawler and page": ("good", {"429_once_per_ua": True}),
+    # llms.txt goes out in the same burst as the crawler probes: one dropped request is retried, never a zero
+    "good, first llms.txt request dropped": ("good", {"drop_nth": {"/llms.txt": 1}}),
 }
 
 FIXTURES = sorted(d for d in os.listdir(SITES) if os.path.isfile(os.path.join(SITES, d, "expected.json")))
