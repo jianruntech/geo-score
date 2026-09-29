@@ -568,6 +568,14 @@ never reaches it. Put the proxy in the server's `env` block, or with the Inspect
 **A `run` is cut off.** The client stopped waiting: raise its tool timeout, or ask fewer with
 `limit` and `engines`. See [Timeouts](#timeouts-and-cancelling).
 
+**`cannot resolve <host>`.** The name does not resolve on the machine that runs the server. Check the
+spelling, or that machine's DNS and proxy settings. `score_site` resolves every host itself to check that
+it is public, even when a proxy fetches the page, so behind a proxy the machine still needs working DNS;
+the message says so when a proxy applies. Before 1.5.0 such a host was reported as private.
+
+**`url must be on a public host: <host> resolves to a private, loopback or reserved address`.** The name
+resolves, but to an address `score_site` refuses on purpose. Score such a site with the CLI.
+
 **`url must be an http(s) URL on a public host`.** `score_site` refuses localhost, private and
 reserved addresses on purpose. Score those sites with the CLI.
 

@@ -24,6 +24,10 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    `chore(release): X.Y.Z`. At a minor or major release, also regenerate the README's AIV badge with
    the new CLI (it scores the leaderboard page):
    `python3 cli/geo_score.py https://www.jianruntech.com/leaderboard --badge docs/aiv-badge.svg --json-out docs/aiv-badge.json`.
+   If the leaderboard is re-run for this release, commit the re-run first (`results.json`, `raw/`, then
+   `python3 benchmark/run.py --readme-only`), then rebuild the pages and tag: the page's dataset downloads
+   point at `vX.Y.Z/benchmark/`, so data committed after the tag needs a release of its own. Deploy
+   `docs/` only from a release commit; a page built before the bump links the previous tag's files.
 5. **Preflight:** `python3 scripts/release.py X.Y.Z` must print `ready`. It refuses while any version,
    pin, manifest, changelog section or compare link is out of step, `scripts/mcp_docs.py --check`
    finds a generated MCP block out of date, the tree is dirty, or the tag exists.

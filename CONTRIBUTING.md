@@ -13,17 +13,21 @@ regenerated `results.json` and `README.md`:
 {"url": "example.com", "sector": "Ecommerce"}
 ```
 
-Six files are generated from `results.json` by three scripts, and all of them must be
-regenerated in the same PR — `validate.py` regenerates them and fails on any drift:
+Everything below is generated from `results.json` and `benchmark/raw/`, and all of it must be
+regenerated in the same PR; `validate.py` re-runs the generators and fails on any drift:
 
 ```
-python3 benchmark/run.py            # results.json + benchmark/README.md
-python3 benchmark/build_page.py     # docs/index.html + docs/zh.html
+python3 benchmark/run.py            # scores the sites: results.json, raw/, then the files --readme-only writes
+python3 benchmark/run.py --readme-only   # benchmark/README.md, results.csv, checks.csv (no re-scoring)
+python3 benchmark/stats.py          # stats.json: the intervals and the China-gap breakdown
+python3 benchmark/percentiles.py    # percentiles.json: where the band cuts fall
+python3 benchmark/sensitivity.py    # sensitivity.json, SENSITIVITY.md, SENSITIVITY.zh-CN.md
+python3 benchmark/build_page.py     # docs/index.html, docs/zh.html, docs/llms.txt, docs/sitemap.xml
 python3 benchmark/build_og.py       # docs/og.png + docs/og.zh.png  (needs Chrome)
 ```
 
 If you have no Chrome, say so in the PR and leave the two cards alone — we will
-regenerate them. Do not hand-edit any of the six: the next generator run overwrites it.
+regenerate them. Do not hand-edit a generated file: the next generator run overwrites it.
 
 We especially want **sectors and languages the list is thin on** — non-English sites,
 regulated industries, marketplaces, media. Every site added makes the sector medians
@@ -80,7 +84,9 @@ also requires, for every rubric version, its evidence table in both languages (`
 There is no build step. One script is the gate for every change:
 
 ```bash
-bash scripts/check.sh           # structure, lint, unit and end-to-end tests, the Action; offline, under a minute
+bash scripts/check.sh           # structure, lint, unit and end-to-end tests, the Action; offline, about 1-1.5 min
+bash scripts/check.sh --all     # the CLI suites on every Python uv finds, 3.8 to 3.14
+bash scripts/check.sh --strict  # fail, instead of skip, when 3.8 or the newest Python is missing
 bash scripts/check.sh --live    # also scores example.com (run before a release)
 git config core.hooksPath .githooks   # once per clone: run the gate before every push
 ```

@@ -512,6 +512,13 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
 
 **`run` 被中途切断。** 客户端不等了：调大它的工具超时，或者用 `limit` 和 `engines` 少问一些。见[超时与取消](#超时与取消)。
 
+**`cannot resolve <host>`。** 运行服务的这台机器解析不了这个域名。检查拼写，或者这台机器的 DNS 与代理设置。`score_site`
+会自己解析每个主机、确认它是公网地址，即使页面由代理去抓也是如此，所以在代理后面这台机器仍然需要能用的 DNS；走代理时报错会注明这一点。
+1.5.0 之前，这类主机会被说成私有地址。
+
+**`url must be on a public host: <host> resolves to a private, loopback or reserved address`。** 域名能解析，但解析到的是
+`score_site` 有意拒绝的地址。这类站点请用命令行打分。
+
 **`url must be an http(s) URL on a public host`。** `score_site` 有意拒绝 localhost、私有和保留地址。这类站点请用命令行打分。
 
 **少了某个工具。** 被 `--read-only`、`--toolsets`、`--tools` 或 `--exclude-tools`（从 1.4.0 起）去掉了。

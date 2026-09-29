@@ -231,9 +231,9 @@ def strings(lang, v):
             t_china=("<b>Sites in the %(ncs_en)s China sectors score %(gap)d points lower</b> — median %(cn)s "
                      "against %(row)s for everyone else." % v) + ((
                      " Grouped by the language a site serves instead, Chinese-language sites score %(lgap)d "
-                     "lower; within matched sector families the gap runs from %(flo)d to %(fhi)d points. Up to "
-                     "%(hshare)d%% of it sits in checks the tool reads with a heuristic, so part of it may be "
-                     "the tool reading Chinese pages conservatively rather than the sites." % v) if v["lgap"] is not None else ""),
+                     "lower; within matched sector families the gap runs from %(flo)d to %(fhi)d points. "
+                     "%(hshare)d%% of it sits in checks the tool reads with a heuristic, so at most that much could "
+                     "be the tool reading Chinese pages conservatively rather than the sites." % v) if v["lgap"] is not None else ""),
             t_h2dist="Where everyone lands",
             t_pdist="Bars are counts of sites per ten-point band. The rubric is not graded on a "
                     "curve; this is the distribution that falls out of it.",
@@ -298,7 +298,7 @@ def strings(lang, v):
                 + thin_words(v["njs_thin"], "zh") + challenge_note(v["tool"], "zh"),
         t_china=("<b>%(ncs_zh)s个中国行业的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。" % v) + ((
                 "改按站点面向的语言分组，中文站低 %(lgap)d 分；在相近的行业之间一一对比，差距在 %(flo)d 到 %(fhi)d 分之间。"
-                "其中最多 %(hshare)d%% 落在工具靠启发式判断的检查项上，所以有一部分可能是工具对中文页面判得偏严，"
+                "其中 %(hshare)d%% 落在工具靠启发式判断的检查项上，所以最多这么多可能是工具对中文页面判得偏严，"
                 "而不是网站本身。" % v) if v["lgap"] is not None else ""),
         t_h2dist="大家都落在哪",
         t_pdist="每根柱子是该十分段内的站点数。这套口径不按曲线给分，这就是它跑出来的分布。",
