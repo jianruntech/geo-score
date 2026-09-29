@@ -1462,6 +1462,18 @@ ok(_code == 2 and "not comparable" in _err, "a baseline of another rubric versio
 _evil = dict(_rb, target="https://x.test/\x1b[2J\u202e", sampled_urls=["https://x.test/\x1b]0;pwned\x07"])
 ok(not gs._UNSAFE.search(gs.render_report_diff(gs.diff_reports(_evil, _rb))), "control characters are stripped")
 
+# ── the file compiles without a warning: `curl … | python3 -` compiles it on every run, and on Python 3.12 two
+# regexes quoted in docstrings printed "SyntaxWarning: invalid escape sequence" before every report ──
+import warnings as _warnings
+with io.open(os.path.join(HERE, "geo_score.py"), encoding="utf-8") as _f:
+    _src = _f.read()
+with _warnings.catch_warnings():
+    _warnings.simplefilter("error")
+    try:
+        compile(_src, "geo_score.py", "exec")
+    except (SyntaxError, SyntaxWarning, DeprecationWarning) as e:
+        fails.append("geo_score.py compiles with a warning: %s" % e)
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

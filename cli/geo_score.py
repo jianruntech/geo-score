@@ -777,7 +777,7 @@ _LD_TYPE = re.compile(r'type=["\']application/ld\+json["\']', re.I)
 
 
 def ld_blocks(h):
-    """The text of each JSON-LD block, as re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>
+    r"""The text of each JSON-LD block, as re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>
     (.*?)</script>', h, re.S | re.I) found them, in one pass. A <script> tag that is not JSON-LD is skipped to
     its ">", and an unclosed block ends the scan."""
     i, low = 0, None
@@ -958,7 +958,7 @@ def og_site_name(h):
 
 
 def has_md_link(t):
-    """re.search(r"\[[^\]]+\]\([^)]+\)", t) in one pass: a "[" whose "]" is not followed by "(…)" skips to
+    r"""re.search(r"\[[^\]]+\]\([^)]+\)", t) in one pass: a "[" whose "]" is not followed by "(…)" skips to
     that "]", since every "[" before it meets the same "]"."""
     i = 0
     while True:
