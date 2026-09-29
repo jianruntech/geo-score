@@ -4,7 +4,53 @@
 
 ## [Unreleased]
 
+这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选
+robots.txt 分组，也不再因为一次掉线而变动；人机验证页不再被当成要跑 JavaScript 的页面来评分；每个页面按它自己的语言读；一个数字
+只有来源就在旁边时才算有来源。这些修正会让分数变动，下面每一条都写明检查项和方向。CI 方面有 `--fail-on-gate` 和 `--assert`（门槛
+项得 0 分时总分正好封顶在 40，`--fail-under 40` 从来拦不住），逐项对比两份报告的 `geo-score diff` 和 `--baseline`，以及
+shields.io endpoint 徽章。评不了分的网站很快失败，用一行话说明原因，`--json` 下给出 JSON 格式的错误；一次评分运行也不会再卡住不
+动。CLI 之外：watch 配置有了 schema 和拼错键名的提示，从发布的 wheel 安装、不需要 git，关卡锁定所用工具的版本，CI 示例覆盖
+GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准榜单可以重测、也可以拆开来看。榜单本身仍是 2026-09-27 用 1.3.0 跑的那一轮。
+
+**从 1.4.0 升级。** 第一级的分数只在 1.4.0 读错了网站的地方变动，每一处都列在「修复」下，写明检查项和方向：门槛项（`g.robots`、
+`g.reachable`，以及有人机验证或日文、韩文页面的站的 `g.ssr`）和读页面文字的检查项（`p2.answer-passages`、`p2.question-intent`、
+`p2.sourced-stats`、`p2.named-author`、`p4.answer-shape`、`p4.cn-engines` 和 `p3.knowledge-graph`）。有两种调用的退出码变了：只
+返回人机验证页的网站不再评分、以退出码 2 结束；意料之外的错误以一行信息、退出码 2 结束，不再打印 traceback 并以 1 退出。`diff`
+现在是子命令，名字就叫 `diff` 的主机要写成 `https://diff`。`audience_language` 现在可能是 `en`、`zh-CN` 以外的语言；报告只多了一
+个可选字段 `elapsed_s`。
+
 ### 新增
+- **`--fail-on-gate` 与 `--assert EXPR`**，CLI 和 Action（输入 `fail-on-gate`、`assert`）都有。门槛项得 0 分时分数正好封顶在 40，
+  所以 `--fail-under 40`（`fail-under: 40`）从来拦不住被封顶的站。`--fail-on-gate` 在任一 `g.*` 检查项得 0 分时退出码为 1，并写
+  明是哪个门槛项及其证据，等同于 `--assert 'g.*>0'`。`--assert` 把单个检查项、或用 fnmatch 通配匹配的一组检查项锁定在某个值，例
+  如 `g.robots=max`、`p1.llms-txt>=4`，可重复使用。本次运行观测不到的检查项跳过，不算失败。表达式写错、或通配匹配不到任何检查项
+  时退出码为 2。两个参数都需显式开启，不改变任何分数；结果只写到 stderr，不进入报告。
+- **`geo-score diff BEFORE AFTER [--format text|md|json] [--fail-on-drop]`**：逐项对比两份一级报告。每个检查项列出前后得分、满分
+  和状态：`up`、`down`、`same`、`became unobservable`、`became observable`，两次都没测到的是 `unobservable`。还会列出前后的总分、
+  档位和门槛封顶情况，点名降到 0 分或离开 0 分的门槛项，并列出抽样中新增和移除的页面。两次抽样不同时会明确说明，总分按 ±5 读（benchmark/REPRODUCIBILITY.md），
+  并指出 `g.reachable` 是最不稳定的检查项。变得无法观测的检查项从不显示为掉到 0 分。`--format json` 遵循新增的
+  `schema/diff.v1.json`。两份报告的量表版本不同时退出码为 2；工具版本不同时照常对比，但会给出警告。`diff` 只需要 `geo_score.py`。
+- **`--baseline REPORT`**：评分时重新评基线报告抽过的那些页面（和 `--urls-from` 一样），并在报告之后输出同样的对比。不能和
+  `--urls`、`--urls-from` 同时使用。加 `--json` 时，stdout 只输出报告本身。
+- **`--fail-on-drop`**（配合 `--baseline`，或用于 `diff`）：有检查项丢分、门槛项降到 0 分或档位下降时以退出码 4 退出，每个原因在
+  stderr 输出一行。和 `watch diff --fail-on-drop` 一样需要主动开启，所以现有的调用方式退出码都不变。`--fail-under`、
+  `--fail-on-gate` 或 `--assert` 未通过时，退出码仍然是 1。
+- **Action：** 新增 `baseline` 输入和 `delta`、`dropped-checks` 两个输出，job summary 里增加「Changes since baseline」一节，从基
+  线文件读来的检查项 id 会转义。基线文件可以和 `json-out` 是同一个文件。
+- **能自动保持最新的徽章。** `--badge-json FILE` 把徽章写成 [shields.io endpoint](https://shields.io/badges/endpoint-badge) JSON：
+  `{"schemaVersion": 1, "label": "AIV readiness", "message": "71/100 Solid", "color": "#2f8f52", "cacheSeconds": 86400}`。SVG 和
+  JSON 的文字、颜色出自同一个函数，两者不会对不上。把文件放到任何能访问的地址，`https://img.shields.io/endpoint?url=<它的地址>`
+  就能显示徽章。Action 新增 `badge` 输入：路径以 `.json` 结尾写 endpoint JSON，其他路径写 SVG；新增输出 `badge-path`，给出文件写
+  到了哪里。
+- **出错时给 JSON，而不是什么都没有。** 加 `--json` 时，每一次退出码 2（包括参数错误）都在 stdout 输出
+  `{"error": {"kind", "message", "target"}, "tool": "geo-score-cli/X.Y.Z"}`，以前 stdout 是空的；`diff --format json` 也一样。新
+  增的 `schema/error.v1.json` 列出各种类型：没有任何回应时是 `dns`、`refused`、`tls`、`timeout`、`dropped`、`no_response`；站点
+  有回应时是 `http_<code>`、`no_content`、`slow`、`bot_challenge`；运行超时是 `deadline`；MCP 服务的地址防护拒绝时是
+  `not_public`；此外还有 `usage`、`rubric_mismatch`（传给 `diff` 或 `--baseline` 的两份报告量表版本不同）、`error` 和 `internal`。
+  次版本可以新增类型，读到不认识的类型按 `error` 处理。
+- **`--timeout SECONDS`**（默认 15，与以前相同；最多 300）：每个请求最多等服务器多少秒，超过就算没有回应。
+- **JSON 报告新增 `elapsed_s`**（可选，见 `schema/report.v2.json`）：本次运行在执行它的机器上用了多少秒，页脚也会显示（`· took 23.4 s`）。
+  它描述的是这次运行，不是站点，`diff` 不比较它。
 - **`geo-score-watch.json` 有了 schema，没有任何代码读取的键都会提示。** `schema/watch-config.v1.json`（JSON Schema draft 2020-12）
   描述这个文件，`watch init` 现在把 `"$schema"` 写成第一个键，编辑器可以据此校验和补全。以前写错的键会被悄悄忽略：把
   `budget_usd` 写成 `budget` 等于没有预算上限，把 `max_calls` 写成 `max_call` 则回到默认的 120 次上限。现在 `watch check`
@@ -66,8 +112,45 @@
   范围内（更新日志、benchmark/raw/、dist/、docs/*.html 和 .github/validate.py 除外）；每个发布 wheel 链接里的 tag 和文件名都等于
   `__version__`；validate.yml 安装 check.sh 锁定的 ruff 和 jsonschema 版本，并把 action 锁定到 commit；Dockerfile 的基础镜像锁定了
   digest；pyproject 的分类标签覆盖 3.8 到 3.14，validate.yml 和 RELEASING.md 写的也是这两端。
+  `cli/test_geo_score.py` 新增七个曾让 1.4.0 解析器崩溃的输入，以及一个带种子的属性测试：把 200 个随机页面和 robots.txt 文件送进
+  各个解析器和 `run()`；它还跑了 MCP 地址防护在连接时锁定已检查地址、拒绝重新解析到私有地址的域名、以及经代理访问 HTTPS 时的
+  CONNECT 分支，这些代码以前没有任何测试跑到过。`cli/test_geo_score_e2e.py` 注入故障（连接中断、429、固定状态码、一点一点往外吐
+  的回应），统计 good 夹具发出的每一个请求，并用 golden 文件核对 `diff` 的输出。
 
 ### 变更
+- **报告开头点名门槛项。** 默认视图和 `--brief` 都会点名每个得 0 分的门槛项，并附上其证据的第一句：
+  `GATE AT ZERO — g.ssr: 0 of 8 sampled pages carry substantive body text …; the score cannot exceed 40 while a gate is at zero`。
+  以前只写 `GATE CAPPED — a gate check scored zero`。
+- **所有视图用同一个差距排序。** 默认视图、`--brief` 和 `--share` 的排序相同：先是得 0 分的门槛项，再按升到下一档能加的分从高到
+  低，最后按量表顺序。每一行印的数字就是旁边那个条件对应的分，例如
+  `+4 next tier (+9 to full)  Self-contained answer passages  needs: …`。以前在下一档的条件旁边印的是离满分的差距。`--share` 现
+  在点名门槛项：「robots.txt disallows AI retrieval crawlers」「AI retrieval crawlers are refused」或「crawlers get no
+  server-rendered body text」。以前不管是哪个门槛项，都说爬虫「cannot reach the content at all」。内容差距现在写作
+  `(+N at the next tier)`。
+- **报告页脚。** `Needs judgement:` 拆成两行。`Needs off-site search or judgement:` 列出 p3.listings、p3.mentions、
+  p4.question-coverage；`Not observable this run:` 列出其余各项，每项附一句简短原因，例如
+  `p4.cn-engines (not a Chinese-language site)`。报告和 `--brief` 增加 ✓ ◐ ✗ ⊘ 的图例。量表和排查指南的链接指向本次发版的标签（`blob/v1.5.0/…`），
+  和每个检查项的 `doc_url` 一致。终端排版不属于公开契约。
+- **抽样之后一波发出。** 抽样页面取回后，凡是网址已经确定的请求都一次并发发出，各项检查从本次运行的缓存里读结果：sitemap、
+  `llms.txt`、`llms-full.txt`、`ai.txt` 与 `/.well-known/ai.txt`（给了路径时连同该路径下的同名文件）、Organization 的 logo、最多
+  8 个 `sameAs` 主页、中文搜索引擎爬虫，以及 30 个检索爬虫探测。Wikidata 与 Wikipedia 查询在旁边并行，仍然一次查一个品牌候选，所
+  以发出的查询和以前一样。发往站点的请求仍共用 8 个连接，发往其他主机的另有自己的连接。站点自己的文件和 logo 像 sitemap 一样会重
+  试，中文爬虫像检索爬虫探测一样会重试。在测试夹具上给每个应答加 0.2 秒延迟，一次运行里前后相接的请求从 18–29 轮减到 11–12 轮。
+  分数不变。一次运行发出的请求和以前相同，只有两处例外：`/.well-known/ai.txt` 现在即使 `/ai.txt` 存在也会请求；遇到超时、429 或
+  5xx 时会重试。
+- **`--help` 自成一体。** 它写出你实际运行的命令（`geo_score.py` 或 `geo-score`），在用法行里列出 `diff`、`watch`、`mcp`，并解释
+  URL 参数和 `-q`。末尾有五个示例、退出码（含 watch 的），以及本版本评分标准和排障指南的链接。缺少 `geo_watch.py` 时，`mcp`、
+  `watch`、`--ask` 会说明是哪一个需要它，并先给出发布版 wheel 的 `uvx` 与 `pipx` 命令，再给出 clone。
+- 门槛封顶时，SVG 徽章显示 `40/100 Early (gate capped)`，与 endpoint JSON 一致。
+- `diff` 现在是子命令，和 `watch`、`mcp` 一样。要评分一个名字就叫 `diff` 的主机，请写成 `https://diff`。
+- **评分器的文档。** guide/troubleshooting.md（中英文）为每种错误类型各设一节，CLI 的报错信息按发布标签链接到对应小节；新增「分
+  数为什么变了」一节；「中文站按字数算，英文站按词数算」一节改为「每个页面按它自己的语言读」。rubric/v1.1.md（中英文）在
+  `g.robots` 和 `g.reachable` 下写明读的是哪 10 个爬虫、怎么读，在 `g.ssr` 下写明人机验证页不算抽样页面，也永远不会被读成 0 分；
+  这些都是澄清，档位和分值不变。reference/ai-crawlers.md（2026-09-28 核对）写明 `RETRIEVAL_UAS` 按它的检索爬虫表测试，探测用的是
+  厂商公布的 UA 字符串、从审计方自己的地址发出、未经身份验证，Claude-SearchBot 和 Claude-User 的字符串是按 Anthropic 公布的产品
+  标识拼出来的，以及在 Amazon 对 Amazonbot 的新描述复核之前，它仍算检索爬虫。rubric/open-questions.md（中英文）为 v1.2 新开两个
+  问题：第 10 条，每次都返回 5xx 的 robots.txt 是否算全站禁止；第 11 条，样本里没有一页带三个数字时，`p2.sourced-stats` 是退出分
+  母，还是给 3 分。
 - **从发布的 wheel 包安装。** uvx、pipx 和 MCP 的安装命令改为下载
   `https://github.com/jianruntech/geo-score/releases/download/vX.Y.Z/geo_score-X.Y.Z-py3-none-any.whl`，不需要 git，也没有构建步骤。
   涉及：README 的安装说明、Cursor / VS Code / VS Code Insiders / LM Studio 按钮、Claude Code 命令、标准 `mcpServers` 配置、
@@ -113,6 +196,92 @@
   链接了档位分析。
 
 ### 修复
+- **`g.robots` 与 `g.reachable` 只对 `reference/ai-crawlers.md` 列出的 10 个检索爬虫计分。** 补上 Claude-User、Googlebot、
+  Amazonbot，去掉 GPTBot、ClaudeBot 和一个杜撰的 Google-Extended 探测。每个爬虫都用厂商公布的 UA 字符串。`g.robots` 按 RFC 9309
+  第 2.2.1 节为每个爬虫选规则：有点名它的组，就不再看 `*` 组。文件开头的字节顺序标记不再吞掉第一组。分数变动有三个方向：
+  - **上升**：只挡训练爬虫或选择退出令牌的站。榜单上（2026-09-28 实测）together.ai、lonelyplanet.com、loom.com、
+    stackoverflow.blog、webmd.com、airbnb.com、khanacademy.org 的 `g.robots` 不再是 0。airbnb.com 对所有爬虫 UA 都返回 403，仍因
+    `g.reachable` 被封顶。
+  - **上升**：`*` 组 Disallow、同时为检索爬虫逐个具名 Allow 的站。
+  - **下降**：挡了 Claude-User、Googlebot 或 Amazonbot 的站，以及字节顺序标记藏住了禁止组的站。healthline.com 仍是 0，原因变为挡
+    了 Amazonbot。
+
+  证据现在写明被挡的爬虫及挡住它的组；按名字禁止的训练爬虫与选择退出令牌列为「不计分」；`g.reachable` 的证据列出没探测成功的 UA。
+- **偶发的网络故障不再改变门槛项结果。** robots.txt、首页和 sitemap 每次运行只抓一次，并带重试。`g.reachable` 的探测在无响应、
+  429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。重试 3 次仍读不到的 robots.txt 现在记为「不可观测」、退出分母，不再当
+  作「没有 robots.txt」。每次都返回 429 或 5xx 的，仍给第 3 档并在证据中写明。方向两边都有：一次 robots.txt 抓取失败曾藏住
+  Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。榜单上有五行的 `g.robots` 来自失败的抓取（「No robots.txt
+  (HTTP 0)」）：clickpaas.com、codecademy.com、continue.dev、helium10.com、xcmg.com。
+- **人机验证页不再评分。** 反爬服务（AWS WAF、Akamai、Cloudflare、Fastly、PerimeterX、DataDome 或 Imperva）给 CLI 的浏览器 UA 返
+  回人机验证页、而不是页面本身时，这一页和抓取失败的页面一样移出样本。只返回验证页的网站过去会被记为 `g.ssr` 0 分并封顶 40，榜单
+  上写成「正文需要 JavaScript」。现在这类网站不评分，以退出码 2 结束，报错为
+  `bot challenge served to a browser user-agent (<厂商>): a static fetch cannot measure this site`；加 `--json` 时给出错误类型
+  `bot_challenge`。方向：这类网站的 `g.ssr` 从 0 分变为不评分（实测：booking.com，AWS WAF；ups.com，Akamai；两者在榜单上分别是
+  20 分和 16 分，均被封顶）。openai.com 在榜单上记为「all requests returned 403」，它返回的是 Cloudflare 的验证页，现在得到的是
+  人机验证的报错。只是加载了某家反爬探针脚本的 JavaScript 空壳仍记 `g.ssr` 0 分。gzip 压缩的 HTTP 错误页现在会先解压，压缩过的验
+  证页也能认出来。
+- **少于抽样页数的报告会写明。** 有页面被移出时，`notes` 增加一条
+  `Scored on N of M sampled pages; K returned errors, J were bot challenges`；发现的页面少于要求的数量时，增加一条
+  `Sampled N of the 8 pages asked for: no more were found (sample source: …)`。`schema/report.v2.json`（`sampled_urls`）一直这样
+  要求。终端报告也打印同样的内容。分数不变。
+- **`p2.sourced-stats` 只认数字旁边的来源。** 一个数字只有在它所在的内容块（段落、列表项、表格单元格、定义、图注或引文）或下一个
+  块里有指向站外来源的链接、`<cite>`、来源措辞，或一个脚注引用且该脚注链接到来源时，才算有来源。内容指第一个 `<main>` 或
+  `<article>`，没有的话就是去掉页眉、导航、页脚和侧栏之后的页面。指向站点自己的域名、它自己的 `sameAs` 主页、社交主页或分享按钮
+  的链接都不算来源。1.4.0 只要一个页面的主体 HTML 里任意位置有两个站外链接、`<cite>`、`<blockquote>` 或来源用语，就把它们当作页
+  面上所有数字的来源，所以一个社交图标、一个合作方 logo 或一个「Research」菜单项就够了。算作数字的东西也少了：年份、版本号、用点
+  分隔的日期、几号、`#` 编号、编号（七位及以上的连续数字，或前面是 ICP备、ICP证、公安备、网安备、号，或后面跟着号的数字：备案号、
+  账号、电话号码），以及价格（按价格写法写的金额，如 `$29/mo`、`68元/月`、`$15 per user`、`¥68起`；跟在每月、售价、起价、低至这
+  类价格用语后面的金额；单独成为一块的金额，如价格卡片上的 `$29`）。其他金额仍算数字，后面带量级的金额也算（`$4.5 billion`、
+  `3000亿元`）。档位仍按页面比例：7 分要求带三个及以上数字的页面中有四分之三为多数数字给出链接来源，5 分要求一半给出任何来源，3
+  分要求至少有一个数字有来源；样本里没有这种页面时仍给 3 分。证据里给出各项计数。方向是下降。2026-09-30 用 1.5.0 在榜单报告抽过
+  的页面上重评：sentry.io、seeyon.com、airwallex.com、fanuc.co.jp 为 3 分（榜单上 7 分），mingdao.com 为 0 分（7 分；按新规则它
+  唯一有来源的数字原本是备案号，备案号链接到 beian.miit.gov.cn，现在不再算数字）；mistral.ai 的页面是法文，这一项不评分（榜单上
+  5 分，见下面的页面语言）。五个人工审计过的站当天在审计页面上重评，CLI 与审计者档位一致的有 4 个，VALIDITY.md（用 1.3.0 测）里
+  是 1 个，当时另外四个 CLI 都判得更高；mingdao.com 现在 CLI 判 0 分，审计者是 3 分。
+- **每个页面按它自己的语言读。** 抽样页面的语言先看 `<html lang>`，没有就看 `Content-Language` 响应头，除非可见文字与之矛盾。两
+  者都没有时按文字判断（有假名是日文，有谚文是韩文，只有汉字是中文），拉丁字母的文字再按几个常用词区分英文、德文、法文、西班牙文
+  和葡萄牙文。判断时不读代码示例（`<pre>`、`<code>`）；声明为中文、日文或韩文的页面，只要带 30 个及以上这类字符，就保留声明。
+  1.4.x 及以前，一个中文页就让整次运行的所有页面都按中文阈值判定，日文站被标成 `zh-CN`，德文、法文标题用英文词表来读。受影响的检
+  查项及方向：
+  - `p2.answer-passages` 上升。每页按自己的单位数：中文、日文、韩文页面按字（50–200），其他页面按词（25–120）。首页是中文的样本
+    里，英文页现在按词数读（airwallex.com 的英文页此前 8 页得 0 页），假名和谚文也算作字。证据写明多少页用了哪种单位。
+  - `g.ssr` 在日文、韩文页面上上升：假名和谚文计入 120 的下限（一个日文样例站由 0 分、总分因此封顶 40，变为 5 分）。正文里有超过
+    20 个汉字（例如语言菜单）的英文页面也上升。「正文要跑 JavaScript」的判断同向变化。
+  - `p2.question-intent`：没有标题词表的语言（CLI 只有英文和中文）的页面不参与计数。一个页面都不剩的站记为未测（「no
+    question-intent lexicon for ja」），不再用英文词表去读。中文的任务、说明和对比类标题（创建你的第一个应用、工作流的工作原理、
+    价格与版本对比）开始计入，管理团队、处理器这类名词，以及对比度、原理图这类产品参数不算；英文的对比类标题（compare、vs、
+    versus、compared）也开始计入。方向上升。
+  - `p2.sourced-stats` 和 `p2.named-author` 趋向未测。来源措辞和文字署名「By …」只在英文和中文页面上读；来源链接、`<cite>`、脚注，
+    以及结构化数据或 `rel="author"` 里的作者，任何语言都读。两种情况下该项移出分母，而不是记 0 分：带数字的页面没有一页能读来源
+    措辞且读数低于 5 分，或者没有一页能读署名。
+  - `p4.cn-engines` 在日文、韩文站上移出分母：抽到中文页面或域名在 `.cn` 下时才可测，不再因为页面汉字多就可测。
+  - `p4.answer-shape` 在部分页面上下降，因为段落长度上限改为按页设定：首页是中文的样本里，英文页重新按 90 词判定，日文段落把假名
+    也计入。
+  - `p3.knowledge-graph`：Wikidata 和 Wikipedia 用英文和英文以外最常见的页面语言查询（Wikipedia 有该语言的大型版本时）。日文站不
+    再用中文查。每个品牌名仍最多查两种语言。
+- **`audience_language` 取最常见的页面语言**，写作 BCP 47 主标签（`en`、`ja`、`de`……）。中文仍写 `zh-CN`；`und` 表示没有一个页面
+  能判断出语言。中文首页加英文页面的样本现在是 `en`。这个字段本来就是 BCP 47 字符串，schema/report.v2.json 的说明现在写明了它的
+  含义。
+- **连不上的网站很快失败，并说明原因。** 以前一个拼错的域名或一台停机的主机要等 20 秒到 4 分钟，最后给出一段原始的 urllib 文字。
+  现在 CLI 在运行前先解析一次主机名（请求经代理发出时跳过，因为由代理来解析），不存在的域名立即失败，报
+  `cannot resolve <host>: check the spelling, or your DNS/proxy settings (HTTPS_PROXY)`。解析不了的域名、被拒绝的连接和失败的
+  TLS 握手都不重试。最后的报错是一句话，写明失败的类型、经过的代理（只写主机和端口，从不写凭据）以及排障指南里对应的小节，链接固
+  定到发布标签。不是带主机名的 http 或 https 网址的输入（含空白字符、其他协议、端口不在 1–65535 之间）按参数错误处理，退出码 2；
+  localhost、IP 地址和不带点的内网主机名照常评分。有回应的网站评分和以前完全一样。
+- **慢吞吞的服务器不再能拖住一次运行。** `--timeout` 限制的是每一次读取，而不是总和：一台每隔几秒才发一个字节的服务器，能把一次
+  抓取、连同 CI 任务或 MCP 工作线程拖上几个小时。现在一个请求（含跳转）最多用 30 秒或 `--timeout` 的两倍，取较长者，超过就记为
+  `slow` 类型，不再重试。一次评分运行最多 300 秒：到时不再发起新请求，进行中的请求以 `deadline` 类型停止，需要它的检查项记为不可
+  观测（门槛项也一样），而不是 0 分。原来会把每个没闭合的标签一直重试到页尾的 HTML 扫描（80 KB 的 `<script>x ` 要 1.8 秒，4 MB
+  的页面要几个小时）改为一遍扫完，结果不变。在这些限制内有回应的网站，评分和以前一样。
+- **格式错误的标记不再让运行崩溃。** `{"@type": {"@id": …}}`、像 `http://[::1` 这样的链接、Sitemap 行或 logo 地址、JSON-LD 名称
+  里落单的代理项转义，或嵌套 2000 层的 JSON-LD，以前会让运行打印 traceback 并以退出码 1 结束，CI 会把它读成「低于 `--fail-under`」。
+  现在只有字符串才算类型名，格式错误的链接当作没有链接，落单的代理项变成 `?`（emoji 仍完整保留），JSON-LD 改用不递归的方式展开。
+  其他意料之外的错误输出 `geo-score internal error (<Type>) while scoring <url>; please report it at …/issues` 并以退出码 2 结束；
+  `GEO_SCORE_DEBUG=1` 会显示 traceback。分数不变。
+- `--sample` 小于 1 改为参数错误（退出码 2）。此前 0 会崩溃，负数会悄悄少抽页面。Action 的 `sample` 输入只接受 1 及以上的整数。
+- cli/README.md 原来写着 GitHub Action「只要把 `json-out` 指向一个路径」就会重新生成徽章，其实 Action 从来没有这个功能。这一节现
+  在只介绍确实存在的东西：`--badge`、`--badge-json`、Action 的 `badge` 输入，以及 shields.io 的用法。
+- 报告和 `--brief` 里离下一档的距离写作 `1 point to Solid`，不再写成 `1 points to Solid`。
 - **保存付费的运行结果，要么完整，要么不留。** 回答里如果有半个代理对（半个 emoji，服务商有时会返回这种字符），保存会在中途失败，
   留下一个截断的运行文件：已经付费的这次运行丢了，而且在手动删掉这个文件之前，`watch report`、`watch diff` 和 MCP 工具读取最新一次
   运行都会报错。现在先把完整内容写进隐藏的临时文件、刷到磁盘，再以一个没有被占用的运行 id 链接到位（id 已被占用时顺延为

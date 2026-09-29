@@ -5,7 +5,76 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+A release about reading sites the way the rubric says, and about failing CI for the right reason. The two
+crawler gates now read only the ten retrieval crawlers, choose each crawler's robots.txt group as RFC
+9309 does and no longer move on a dropped connection; a bot-challenge page is no longer scored as a page
+that needs JavaScript; every page is read in its own language; and a figure counts as sourced only when
+its source sits beside it. These fixes move scores, and each one below names its check and its direction.
+For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at exactly 40, which
+`--fail-under 40` never caught), `geo-score diff` and `--baseline` to compare two reports check by check,
+and a shields.io endpoint badge. A site that cannot be scored fails fast and says why in one line, in
+JSON under `--json`, and a scoring run can no longer hang. Around the CLI: a schema and typo warnings for
+the watch config, installs from the release wheel without git, a gate that pins its tools, CI examples
+beyond GitHub, forms for disputing a leaderboard row, and a benchmark that can be re-measured and taken
+apart. The leaderboard itself is still the 1.3.0 run of 2026-09-27.
+
+**Upgrading from 1.4.0.** Level-1 scores move only where 1.4.0 read a site wrong, and every such fix is
+under Fixed with its check and direction: the gates (`g.robots`, `g.reachable`, and `g.ssr` for sites
+behind a bot challenge or with Japanese or Korean pages) and the checks that read page text
+(`p2.answer-passages`, `p2.question-intent`, `p2.sourced-stats`, `p2.named-author`, `p4.answer-shape`,
+`p4.cn-engines` and `p3.knowledge-graph`). Two invocations exit differently: a site that serves only
+bot-challenge pages exits 2 instead of being scored, and an unexpected error exits 2 in one line instead
+of a traceback that exited 1. `diff` is now a subcommand, so a host named `diff` is written
+`https://diff`. `audience_language` can hold languages other than `en` and `zh-CN`, and the report gains
+only the optional `elapsed_s`.
+
 ### Added
+- **`--fail-on-gate` and `--assert EXPR`**, in the CLI and as the Action inputs `fail-on-gate` and
+  `assert`. A gate at zero caps the score at exactly 40, so `--fail-under 40` (`fail-under: 40`) never
+  failed a capped site. `--fail-on-gate` exits 1 when any `g.*` check scores 0, and names the gate and
+  its evidence; it is the same as `--assert 'g.*>0'`. `--assert` holds one check, or an fnmatch glob of
+  checks, to a value, e.g. `g.robots=max` or `p1.llms-txt>=4`, and is repeatable. A check the run could
+  not observe is skipped, never failed. A malformed expression, or a glob that names no check, exits 2.
+  Both are opt-in and change no score, and their results go to stderr, never into the report.
+- **`geo-score diff BEFORE AFTER [--format text|md|json] [--fail-on-drop]`** compares two level-1 reports
+  check by check. Each check shows its points before and after, its max, and a state: `up`, `down`,
+  `same`, `became unobservable`, `became observable`, or `unobservable` when neither report observed it.
+  The comparison also shows the score, band and gate cap before and after, names each gate that reached
+  or left 0, and lists the pages added to or removed from the sample. When the two samples differ, it
+  says so, reads the totals as ±5 (benchmark/REPRODUCIBILITY.md) and names `g.reachable` as the least
+  stable check. A check that became unobservable is never shown as a drop to 0. `--format json` follows
+  the new `schema/diff.v1.json`. Two reports of different rubric versions exit 2, and reports from
+  different releases are compared with a warning. `diff` needs only `geo_score.py`.
+- **`--baseline REPORT`** on a scoring run scores the baseline's pages again (as `--urls-from` does) and
+  prints the same comparison after the report. It cannot be combined with `--urls` or `--urls-from`.
+  Under `--json`, stdout carries only the report.
+- **`--fail-on-drop`** (with `--baseline`, or on `diff`) exits 4 when a check lost points, a gate reached
+  0 or the band fell, and prints one stderr line per reason. It is opt-in, as `watch diff --fail-on-drop`
+  is, so no existing invocation changes its exit code. A failed `--fail-under`, `--fail-on-gate` or
+  `--assert` still exits 1.
+- **Action:** a `baseline` input, `delta` and `dropped-checks` outputs, and a "Changes since baseline"
+  section in the job summary, with the check ids read from the baseline escaped. The baseline may be the
+  same file as `json-out`.
+- **A badge that stays current.** `--badge-json FILE` writes the badge as [shields.io
+  endpoint](https://shields.io/badges/endpoint-badge) JSON:
+  `{"schemaVersion": 1, "label": "AIV readiness", "message": "71/100 Solid", "color": "#2f8f52", "cacheSeconds": 86400}`.
+  The SVG and the JSON take their message and colour from one helper, so the two cannot disagree. Host
+  the file anywhere and `https://img.shields.io/endpoint?url=<its URL>` draws the badge. The Action gets
+  a `badge` input: a path ending in `.json` gets the endpoint JSON, and any other path gets the SVG. A
+  `badge-path` output says where the file went.
+- **A JSON error instead of nothing.** Under `--json`, every exit 2, usage errors included, prints
+  `{"error": {"kind", "message", "target"}, "tool": "geo-score-cli/X.Y.Z"}` on stdout, where stdout used
+  to be empty; `diff --format json` does the same. The new `schema/error.v1.json` names the kinds: `dns`,
+  `refused`, `tls`, `timeout`, `dropped` and `no_response` when nothing answered; `http_<code>`,
+  `no_content`, `slow` and `bot_challenge` when the site answered; `deadline` when the run ran out of
+  time; `not_public` under the MCP server's address guard; and `usage`, `rubric_mismatch` (reports of two
+  rubric versions given to `diff` or `--baseline`), `error` and `internal`. A minor release may add
+  kinds; read an unknown one as `error`.
+- **`--timeout SECONDS`** (default 15, as before; up to 300): how long each request may wait for the
+  server before it counts as unanswered.
+- **`elapsed_s` in the JSON report** (optional, `schema/report.v2.json`): how many seconds the run took
+  on the machine that ran it. The footer prints it too (`· took 23.4 s`). It describes the run, not the
+  site, and `diff` ignores it.
 - **A schema for `geo-score-watch.json`, and a warning for every key nothing reads.**
   `schema/watch-config.v1.json` (JSON Schema draft 2020-12) describes the file, and `watch init` now
   writes `"$schema"` as its first key, so an editor checks and completes it. A mistyped key used to
@@ -101,8 +170,62 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   equal `__version__`, that validate.yml installs the ruff and jsonschema versions check.sh pins and
   pins its actions by commit, that the Dockerfile's base is pinned by digest, and that the pyproject
   classifiers cover 3.8 to 3.14 while validate.yml and RELEASING.md name the same two ends.
+  `cli/test_geo_score.py` adds seven inputs that crashed 1.4.0's parsers and a seeded property test that
+  sends 200 random pages and robots.txt files through the parsers and `run()`, and it runs the MCP
+  address guard's connect-time pinning, its refusal of a name that rebinds to a private address and its
+  CONNECT branch for HTTPS through a proxy, code no test had run before. `cli/test_geo_score_e2e.py`
+  injects faults (dropped connections, 429, fixed statuses, answers that trickle in), counts every
+  request the good fixture makes, and holds `diff` to golden files.
 
 ### Changed
+- **The headline names the gate.** Each gate at zero is named with the first sentence of its evidence, in
+  the default view and in `--brief`:
+  `GATE AT ZERO — g.ssr: 0 of 8 sampled pages carry substantive body text …; the score cannot exceed 40 while a gate is at zero`.
+  It used to say only `GATE CAPPED — a gate check scored zero`.
+- **One order of gaps in every view.** The default view, `--brief` and `--share` rank gaps the same way:
+  gates at zero first, then the points the next tier adds, then rubric order. Each row prints the number
+  that belongs to the condition beside it, for example
+  `+4 next tier (+9 to full)  Self-contained answer passages  needs: …`. Before, it printed the full
+  headroom next to the next tier's condition. `--share` now names the gate: "robots.txt disallows AI
+  retrieval crawlers", "AI retrieval crawlers are refused" or "crawlers get no server-rendered body
+  text". Before, it said a crawler "cannot reach the content at all", whichever gate it was. A content
+  gap now reads `(+N at the next tier)`.
+- **The report footer.** `Needs judgement:` is split in two. `Needs off-site search or judgement:` lists
+  p3.listings, p3.mentions and p4.question-coverage. `Not observable this run:` lists the rest, each with
+  a short reason, for example `p4.cn-engines (not a Chinese-language site)`. The report and `--brief`
+  print a legend for ✓ ◐ ✗ ⊘. The rubric and troubleshooting links point at this release's tag
+  (`blob/v1.5.0/…`), as each check's `doc_url` already did. The terminal layout is not a contract.
+- **One fetch wave after the sample.** Once the sampled pages are in, every request whose URL is known
+  goes out at once and the checks read the answers from the run's memo: the sitemaps, `llms.txt`,
+  `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt` (and the same files under a given path), the
+  Organization logo, up to 8 `sameAs` profiles, the Chinese crawlers and the 30 retrieval probes. The
+  Wikidata and Wikipedia lookups run beside them, one brand candidate at a time as before, so they get
+  the same lookups. Requests to the site still share 8 connections; other hosts get their own. The site's
+  files and the logo are retried like the sitemaps, and the Chinese crawlers like the retrieval probes.
+  On the test fixtures, with 0.2 s added to every answer, a run went from 18–29 rounds of requests one
+  after another to 11–12. No score changes. A run sends the same requests as before, except
+  `/.well-known/ai.txt`, which is now requested even when `/ai.txt` exists, and retries after a timeout,
+  429 or 5xx.
+- **`--help` stands alone.** It names the command you ran (`geo_score.py` or `geo-score`), lists `diff`,
+  `watch` and `mcp` in the usage line, and explains the URL argument and `-q`. It ends with five
+  examples, the exit codes (watch's too) and links to the rubric and the troubleshooting guide for this
+  release. Without `geo_watch.py`, `mcp`, `watch` and `--ask` say which of them needs it, and show the
+  release wheel's `uvx` and `pipx` commands before the clone option.
+- The SVG badge of a gate-capped score reads `40/100 Early (gate capped)`, as the endpoint JSON does.
+- `diff` is now a subcommand, like `watch` and `mcp`. To score a host literally named `diff`, write
+  `https://diff`.
+- **The scorer's documents.** guide/troubleshooting.md (EN and zh) has a section for each error kind,
+  which the CLI's messages link to at the release tag, a "Why did my score move" section, and "Each page
+  is read in its own language" in place of the section on Chinese characters and English words.
+  rubric/v1.1.md (EN and zh) says under `g.robots` and `g.reachable` which ten crawlers are read and how,
+  and under `g.ssr` that a bot-challenge page is not a sampled page and never reads as tier 0; these are
+  clarifications, and no tier or points change. reference/ai-crawlers.md (verified 2026-09-28) says that
+  `RETRIEVAL_UAS` is tested against its retrieval table, that the probes are unverified vendor strings
+  sent from the auditor's address, that the Claude-SearchBot and Claude-User strings are built from
+  Anthropic's documented product token, and that Amazonbot stays a retrieval crawler until Amazon's new
+  description of it is reviewed. rubric/open-questions.md (EN and zh) opens two questions for v1.2: #10,
+  whether a robots.txt that answers 5xx on every try is a full disallow, and #11, whether a sample with
+  no page carrying three figures should leave `p2.sourced-stats` out rather than score 3.
 - **Install from the release wheel.** The uvx, pipx and MCP install lines download
   `https://github.com/jianruntech/geo-score/releases/download/vX.Y.Z/geo_score-X.Y.Z-py3-none-any.whl`,
   so they need neither git nor a build step: the README install bullet, the Cursor, VS Code, VS Code
@@ -171,6 +294,143 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   the bands analysis.
 
 ### Fixed
+- **`g.robots` and `g.reachable` score the 10 retrieval crawlers of `reference/ai-crawlers.md`, and only
+  those.** Claude-User, Googlebot and Amazonbot are added. GPTBot, ClaudeBot and a made-up
+  Google-Extended probe are removed. Each crawler is sent with its vendor-documented user-agent string.
+  `g.robots` now chooses each crawler's rules as RFC 9309 2.2.1 says: a crawler's own group replaces `*`.
+  A leading byte-order mark no longer hides the first group. Scores move in three ways:
+  - **Up** for sites that block only training crawlers or opt-out tokens. On the leaderboard, measured
+    2026-09-28: together.ai, lonelyplanet.com, loom.com, stackoverflow.blog, webmd.com, airbnb.com and
+    khanacademy.org leave `g.robots` 0. airbnb.com stays capped by `g.reachable`, because it returns 403
+    to every crawler user-agent.
+  - **Up** for a `*` Disallow alongside named Allows for the retrieval crawlers.
+  - **Down** where a site blocks Claude-User, Googlebot or Amazonbot, or where a byte-order mark hid a
+    blocking group. healthline.com stays at 0, now for Amazonbot.
+
+  Evidence now names the blocked crawlers and their group. Training crawlers and opt-out tokens
+  disallowed by name are listed as "not scored". `g.reachable` evidence lists the agents it did not
+  reach.
+- **A transient fault no longer moves a gate.** robots.txt, the homepage and the sitemap are fetched once
+  per run, with retries. `g.reachable` probes retry once on no answer, 429 or 5xx, and honour Retry-After
+  up to 5 s. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
+  denominator, instead of reading as "No robots.txt". One that answers 429 or 5xx on every try keeps tier
+  3 and says so. The direction is either way: down where a dropped robots.txt fetch hid a Disallow, up
+  where a transient 429 or reset on a crawler probe read as a block. Five leaderboard rows took their
+  `g.robots` from a failed fetch ("No robots.txt (HTTP 0)"): clickpaas.com, codecademy.com, continue.dev,
+  helium10.com and xcmg.com.
+- **A bot-challenge page is not scored.** When a bot-protection service (AWS WAF, Akamai, Cloudflare,
+  Fastly, PerimeterX, DataDome or Imperva) sends the CLI's browser user-agent a challenge page instead of
+  the page, that page is dropped from the sample like a failed fetch. A site that serves nothing but
+  challenges used to be scored `g.ssr` 0 and capped at 40, and the leaderboard published that as "content
+  needs JavaScript". It is now not scored: it exits 2 with
+  `bot challenge served to a browser user-agent (<vendor>): a static fetch cannot measure this site`, and
+  under `--json` it gives the error kind `bot_challenge`. Direction: `g.ssr` goes from 0 to not scored
+  for such sites (live: booking.com, AWS WAF, and ups.com, Akamai, which the leaderboard shows at 20 and
+  16, capped). openai.com, which the leaderboard lists as "all requests returned 403", answers with a
+  Cloudflare challenge and now gets the bot-challenge error. A JavaScript shell that only loads a
+  vendor's sensor script still scores `g.ssr` 0. HTTP error pages are now decompressed when gzipped, so a
+  gzipped challenge is recognised.
+- **A report scored on fewer pages says so.** `notes` gains
+  `Scored on N of M sampled pages; K returned errors, J were bot challenges` when pages were dropped.
+  When discovery found fewer pages than asked for, it gains
+  `Sampled N of the 8 pages asked for: no more were found (sample source: …)`. `schema/report.v2.json`
+  (`sampled_urls`) has always asked for this. The terminal report prints the same lines. No score
+  changes.
+- **`p2.sourced-stats` counts a source only beside its figure.** A figure is attributed only when its own
+  block of the content (a paragraph, list item, table cell, definition, caption or quotation), or the
+  next block, holds a link to a source off the site, a `<cite>`, a source phrase, or a footnote reference
+  whose note links to a source. The content is the first `<main>` or `<article>`, or else the page
+  without its header, navigation, footer and asides. Links to the site's own hosts, to its own `sameAs`
+  profiles and to social profiles or share buttons are not sources. 1.4.0 took any two outbound links,
+  `<cite>` or `<blockquote>` elements or source words anywhere in a page's main HTML as the source of all
+  its figures, so a social icon, a partner logo or a "Research" menu item did it. Fewer things are
+  figures: a year, a version number, a dotted date, a day of the month, a `#` reference, an identifier
+  (seven or more digits in a row, or a number that `ICP备`, `ICP证`, `公安备`, `网安备` or `号`
+  introduces, or that `号` follows: filing, account and phone numbers), and a price (a sum written the
+  way only a price is, such as `$29/mo`, `68元/月`, `$15 per user` or `¥68起`, one after a price word
+  such as `每月`, `售价`, `起价` or `低至`, or one that is all its block says, such as a pricing card's
+  `$29`). Any other sum of money is still a figure, and so is one with a magnitude after it
+  (`$4.5 billion`, `3000亿元`). The tiers keep their page-fraction structure: 7 needs three quarters of
+  the pages that carry three or more figures to attribute most of them with a link, 5 needs half with any
+  attribution, 3 any attributed figure; a sample with no such page keeps 3. The evidence gives the
+  counts. The direction is down. Re-scored with 1.5.0 on 2026-09-30 on the pages their leaderboard
+  reports sampled, sentry.io, seeyon.com, airwallex.com and fanuc.co.jp read 3 (7 on the leaderboard) and
+  mingdao.com 0 (7; under the new rule its one attributed figure had been its filing number, which links
+  to beian.miit.gov.cn and is no longer a figure); mistral.ai, whose pages are French, is not measured
+  (5; see page language below). On the five hand-audited sites, re-scored on their audited pages the same
+  day, the CLI now matches the auditor's tier on 4 of 5, against 1 of 5 in VALIDITY.md (measured with
+  1.3.0, when it read higher on the other four); on mingdao.com it reads 0 against the auditor's 3.
+- **Each page is read in its own language.** A sampled page's language comes from its `<html lang>`, or
+  else its `Content-Language` header, unless the visible text contradicts it. With neither, it comes from
+  the script (kana is Japanese, hangul Korean, Han alone Chinese) and, for Latin-script text, from a few
+  common words (English, German, French, Spanish, Portuguese). Code samples (`<pre>`, `<code>`) are not
+  read for this, and a page declared Chinese, Japanese or Korean keeps its declaration while it carries
+  30 or more such characters. Through 1.4.x one Chinese page switched every page of a run to the Chinese
+  thresholds, a Japanese site was labelled `zh-CN`, and German or French headings were read with the
+  English lexicon. The checks that move, and which way:
+  - `p2.answer-passages` goes up. Each page is counted in its own unit: characters (50–200) on Chinese,
+    Japanese and Korean pages, words (25–120) everywhere else. English pages in a sample whose homepage
+    is Chinese are now counted in words (airwallex.com's had scored 0 of 8), and kana and hangul now
+    count as characters. The evidence says which unit applied to how many pages.
+  - `g.ssr` goes up on Japanese and Korean pages, whose kana and hangul now count toward the 120 floor (a
+    Japanese fixture went from 0, which capped its score at 40, to 5). It also goes up on English pages
+    whose main text carries more than 20 Han characters, such as a language menu. The "content needs
+    JavaScript" reading moves the same way.
+  - `p2.question-intent`: pages in a language without a heading lexicon (the CLI has English and Chinese)
+    leave the count. A site with no page left is not measured ("no question-intent lexicon for ja")
+    instead of being read with the English lexicon. It goes up for Chinese task, explanation and
+    comparison headings (`创建你的第一个应用`, `工作流的工作原理`, `价格与版本对比`), with noun compounds
+    such as `管理团队` and `处理器` and the product specs `对比度` (contrast ratio) and `原理图`
+    (schematic) left out, and for English comparison headings (compare, vs, versus, compared).
+  - `p2.sourced-stats` and `p2.named-author` move toward not measured. Source phrases and written "By …"
+    bylines are read only on English and Chinese pages. A link, a `<cite>`, a footnote, and an author in
+    structured data or `rel="author"` are read in any language. The check leaves the denominator instead
+    of scoring 0 in two cases: no page carrying figures could be read for a source phrase and the reading
+    is below 5, or no page could be read for a byline.
+  - `p4.cn-engines` leaves the denominator on Japanese and Korean sites. It is observed when a sampled
+    page is Chinese or the host is under `.cn`, no longer on any page heavy with Han characters.
+  - `p4.answer-shape` goes down on some pages because the paragraph-length limit is now set per page.
+    English pages in a sample with a Chinese homepage are held to 90 words again, and Japanese paragraphs
+    count their kana.
+  - `p3.knowledge-graph`: Wikidata and Wikipedia are searched in English and in the most common page
+    language other than English, when Wikipedia has a large edition in it. Japanese sites are no longer
+    searched in Chinese. A brand name is still searched in two languages at most.
+- **`audience_language` is the most common page language**, as a BCP 47 primary tag (`en`, `ja`, `de`, …).
+  Chinese stays `zh-CN`, and `und` means no page's language could be told. A sample with a Chinese
+  homepage and English pages is now `en`. The field was already a BCP 47 string. The description in
+  schema/report.v2.json now says what it holds.
+- **An unreachable site fails fast and says why.** A typo or a dead host took from 20 seconds to 4
+  minutes and ended in raw urllib text. The CLI now resolves the host once before a run (not when a proxy
+  carries the request, since the proxy resolves it), and a name that does not exist fails at once with
+  `cannot resolve <host>: check the spelling, or your DNS/proxy settings (HTTPS_PROXY)`. A name that does
+  not resolve, a refused connection and a failed TLS handshake are not retried. The final error is one
+  sentence that names the kind of failure, the proxy when one carried the request (host and port, never
+  credentials) and the troubleshooting section for it, pinned to the release tag. Input that is not an
+  http or https URL with a host (whitespace, another scheme, a port outside 1–65535) is a usage error,
+  exit 2; localhost, IP literals and dotless intranet names are still scored. A site that answers is
+  scored exactly as before.
+- **A slow server can no longer hold a run.** `--timeout` limits each read, not their sum: a server that
+  sent one byte every few seconds held a fetch, and a CI job or an MCP worker with it, for hours. One
+  request, redirects included, now takes at most 30 s or twice `--timeout`, whichever is longer, and then
+  counts as kind `slow`, without a retry. One scoring run takes at most 300 s: after that no request
+  starts, one in flight stops as kind `deadline`, and the checks that needed it are not observed, a gate
+  included, rather than scored 0. The HTML scanners that retried every unclosed tag to the end of the
+  page (80 KB of `<script>x ` took 1.8 s, and a 4 MB page would have taken hours) read a page in one
+  pass, with the same results. A site that answers within these limits scores as before.
+- **Malformed markup can no longer crash a run.** `{"@type": {"@id": …}}`, a link, Sitemap line or logo
+  URL such as `http://[::1`, a lone surrogate escape in a JSON-LD name, or JSON-LD nested 2000 deep ended
+  a run with a traceback and exit 1, which CI reads as "below `--fail-under`". Only a string names a type
+  now, a malformed link reads as no link, a lone surrogate becomes `?` (an emoji still comes through
+  whole), and JSON-LD is flattened without recursion. Any other unexpected error prints
+  `geo-score internal error (<Type>) while scoring <url>; please report it at …/issues` and exits 2;
+  `GEO_SCORE_DEBUG=1` shows the traceback. No score changes.
+- `--sample` below 1 is now a usage error (exit 2). Before, 0 crashed and a negative value silently
+  scored fewer pages. The Action's `sample` input takes a whole number of 1 or more.
+- cli/README.md said the GitHub Action regenerates the badge "if you point `json-out` at a path". It
+  never did. The section now describes only what exists: `--badge`, `--badge-json`, the Action's `badge`
+  input and the shields.io recipe.
+- The distance to the next band reads `1 point to Solid`, not `1 points to Solid`, in the report and in
+  `--brief`.
 - **Saving a paid run is all or nothing.** An answer holding half a surrogate pair (half an emoji, which
   a provider can send) stopped the save half way and left a truncated run file: the paid run was lost,
   and `watch report`, `watch diff` and the MCP tools failed on the latest run until the file was deleted
