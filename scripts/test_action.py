@@ -6,7 +6,8 @@
 Hosted Actions have never run on this organisation, so this is the only execution the action gets
 before a release. It reads the `run:` block and the `env:` map out of action.yml (no YAML library),
 serves the `good` fixture from cli/fixtures on 127.0.0.1, and checks the outputs, the job summary,
-the SARIF and JUnit files, the badge, the threshold, input validation, and that a crafted URL cannot run shell.
+the SARIF and JUnit files, the badge, a baseline comparison, the threshold, input validation, and
+that a crafted URL cannot run shell.
 """
 import io, json, os, re, subprocess, sys, tempfile, xml.dom.minidom
 
@@ -133,6 +134,34 @@ def main():
             ok(p.returncode == 0 and "skipped" in p.stderr, "passing and unobservable assertions pass the step (%d)" % p.returncode)
             p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_FAIL_ON_GATE="yes")
             ok(p.returncode == 2 and "true or false" in p.stdout, "fail-on-gate other than true or false is refused")
+
+            print("\n  robots-blocks against a baseline in which its robots.txt gate was open")
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_JSON_OUT="now.json", GEO_ANNOTATIONS="false")
+            base = json.load(io.open(os.path.join(tmp, "now.json"), encoding="utf-8"))
+            pts = {"g.robots": 5, "p2.freshness": 1}
+            base.update(normalised=83, band="Leading", gate_capped=False,
+                        checks=[dict(c, points=pts.get(c["id"], c.get("points"))) for c in base["checks"]])
+            io.open(os.path.join(tmp, "base.json"), "w", encoding="utf-8").write(json.dumps(base))
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and "Changes base.json → this run" in p.stdout,
+               "baseline prints the comparison in the log (%d)%s" % (p.returncode, "" if p.returncode == 0 else ": " + p.stderr[-400:]))
+            ok(o.get("delta") == "-43" and o.get("dropped-checks") == "g.robots",
+               "outputs delta and dropped-checks: %r, %r" % (o.get("delta"), o.get("dropped-checks")))
+            ok("### Changes since baseline" in summ and "**83 → 40** (-43)" in summ and "| up +2 |" in summ
+               and "gate capped: no → yes" in summ, "the job summary has a 'Changes since baseline' section")
+            ok("Both reports scored the same 8 pages" in summ, "and says the pages were the same")
+            rep = json.load(io.open(o["report-path"], encoding="utf-8"))
+            ok(rep["sample_source"] == "pinned", "the baseline's pages were scored again")
+            p, o, summ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_JSON_OUT="base.json",
+                             GEO_ANNOTATIONS="false")
+            ok(p.returncode == 0 and o.get("delta") == "-43" and "**83 → 40** (-43)" in summ,
+               "a baseline that is also the json-out path is compared as it was before the run: %r" % o.get("delta"))
+            p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ANNOTATIONS="false")
+            ok("delta" not in o and "dropped-checks" not in o, "without a baseline there is no delta output")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="missing.json")
+            ok(p.returncode == 2 and "is not a file" in p.stdout, "a baseline that is not a file is refused")
+            p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_URLS_FROM="base.json")
+            ok(p.returncode == 2 and "drop urls-from" in p.stdout, "baseline with urls-from is refused")
     finally:
         blocked.shutdown()
         blocked.server_close()

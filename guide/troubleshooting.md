@@ -13,6 +13,34 @@ spread is about ±5 points; see [REPRODUCIBILITY.md](../benchmark/REPRODUCIBILIT
 `--urls-from before.json`. The second run reads exactly the same pages, so a difference comes from
 the site. In CI, keep `--fail-under` at least five points below the usual score.
 
+## Why did my score move
+
+**Cause.** A score moves for four reasons, and a comparison of the two reports tells them apart:
+
+- **Different pages.** The two runs sampled different pages. Every content check counts out of the
+  sampled pages, so movement mixes change on the site with sampling. Read a total that moved by 5 or
+  less as noise: that is the measured run-to-run spread
+  ([REPRODUCIBILITY.md](../benchmark/REPRODUCIBILITY.md)).
+- **A gate answered differently.** `g.reachable` is the least stable check: it records how the site
+  answered retrieval crawlers at that moment, and some sites' bot protection answers differently from
+  one minute to the next. A gate at 0 caps the score at 40, so a gate that flips moves the score a
+  long way.
+- **A check was observed in one run and not the other.** A check the run could not observe (an
+  off-site lookup that did not answer, a page in a language the lexicon does not read) leaves the
+  denominator. The same points then weigh more or less, and the score moves though no check lost a
+  point. That is not a drop to 0.
+- **A different release.** A release can read some checks differently; the changelog names them, and
+  every report states its `tool`.
+
+**What to do.** Compare the reports check by check. `geo_score.py diff before.json after.json` shows
+each check's points before and after with a state (`up`, `down`, `same`, `became unobservable`,
+`became observable`), the score, band and gate cap before and after, and the pages added to or
+removed from the sample, and it says which of the causes above apply. To take sampling out, re-score
+the same pages: `geo_score.py yoursite.com --baseline before.json` scores the pages `before.json`
+sampled and prints the same comparison. In CI, `--fail-on-drop` exits 4 only when a check lost
+points, a gate reached 0 or the band fell, so a site that already exists can gate on regressions
+rather than on an absolute score.
+
 ## A check shows `—` instead of a score
 
 **Cause.** `—` means *not measured*, and a check that is not measured leaves the denominator

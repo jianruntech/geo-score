@@ -24,6 +24,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--timeout SECONDS` | How long each request may wait for the server before it counts as unanswered (default 15, at most 300). A site that cannot be reached fails fast and says why: a name that does not resolve, a refused connection or a failed TLS handshake is not retried |
 | `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
 | `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |
+| `--baseline REPORT` | Score the pages an earlier JSON report sampled, as `--urls-from` does, then print what changed since that report, check by check (see [Comparing two reports](#comparing-two-reports)). Not with `--urls` or `--urls-from`. Under `--json` stdout stays the report alone |
+| `--fail-on-drop` | With `--baseline`: exit 4 when any check lost points, a gate reached 0 or the band fell since the baseline, one line per reason on stderr. A check that became unobservable is not a drop |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
 | `--badge-json FILE` | Also write the same badge as [shields.io endpoint](https://shields.io/badges/endpoint-badge) JSON: `schemaVersion`, `label`, `message`, `color` and `cacheSeconds`, with the SVG's text and colour |
@@ -41,13 +43,16 @@ When a reading looks wrong, see [troubleshooting](../guide/troubleshooting.md).
 
 Exit codes. Level 1: `0` scored, `1` below `--fail-under`, a gate at zero under `--fail-on-gate`, or a
 failed `--assert`, `2` the site could not be fetched or served only bot-challenge pages, a pinned URL
-list was refused, a usage error (a malformed `--assert` included), or an internal error, reported in one
-line with where to file it (`GEO_SCORE_DEBUG=1` shows the traceback). When the site could not be
+list was refused, a usage error (a malformed `--assert` included), a `--baseline` or `diff` file that is
+not a report or was scored against another rubric version, or an internal error, reported in one
+line with where to file it (`GEO_SCORE_DEBUG=1` shows the traceback), `4` a drop found by
+`--fail-on-drop` (with `--baseline`, or on `diff`), when nothing else exited 1. When the site could not be
 fetched, the message names the kind of failure, such as `dns`, `timeout` or `http_403`, and links to
 [its section in troubleshooting](../guide/troubleshooting.md#could-not-fetch--and-exit-code-2). A site
 that served only bot-challenge pages says `bot challenge served to a browser user-agent (…)`, kind
-`bot_challenge`. With `--json`, an exit 2 prints a JSON error on stdout instead of a report
-([`schema/error.v1.json`](../schema/error.v1.json)), with the same kind in `error.kind`. Assertions on
+`bot_challenge`. With `--json` (or `diff --format json`), an exit 2 prints a JSON error on stdout
+instead of a report ([`schema/error.v1.json`](../schema/error.v1.json)), with the same kind in
+`error.kind`; reports of two rubric versions are kind `rubric_mismatch`. Assertions on
 the heuristic checks listed under *How far to trust each check* carry the same run-to-run noise as the
 score: pin the pages with `--urls-from` when you assert on them. Levels 2 and 3 (`watch …`): `0` done,
 `1` configuration error, `2` usage error or `geo_watch.py` missing, `3` nothing could be measured (no
@@ -63,6 +68,35 @@ Both sites are scored the same way and printed check by check, with a `›` mark
 row where they differ and a closing list of where the other site is ahead. That list is
 the useful part: it is the difference between two real sites, not a checklist in the
 abstract.
+
+## Comparing two reports
+
+```bash
+python3 geo_score.py yoursite.com --json-out before.json
+# … the site changes …
+python3 geo_score.py yoursite.com --baseline before.json          # re-score the same pages and compare
+python3 geo_score.py diff before.json after.json [--format text|md|json] [--fail-on-drop]
+```
+
+`diff` compares two saved reports; `--baseline` scores the site again on the baseline's pages and
+prints the same comparison after the report. Both show:
+
+- every check with its points before and after, its max and a state: `up`, `down`, `same`,
+  `became unobservable`, `became observable`, or `unobservable` when neither report observed it. A
+  check that became unobservable left the denominator; it is never shown as a drop to 0;
+- the score and band before and after, and whether a gate cap started or ended, naming each gate
+  that reached or left 0;
+- the pages added to or removed from the sample. When the pages differ, the comparison says that
+  movement on a check mixes change on the site with sampling, reads a total that moved by 5 or less
+  as within the measured spread ([REPRODUCIBILITY.md](../benchmark/REPRODUCIBILITY.md)), and notes
+  that `g.reachable` is the least stable check. On the same pages, a difference comes from the site.
+
+`--format json` follows [`schema/diff.v1.json`](../schema/diff.v1.json). Two reports of different
+rubric versions are not comparable: `diff` exits 2. Reports written by different releases are
+compared with a warning, because a release can move a score on its own (the changelog names the
+checks). `--fail-on-drop` exits 4 when any check lost points, a gate reached 0 or the band fell, as
+`watch diff --fail-on-drop` does for citations; without it, `diff` exits 0 whatever moved. `diff`
+needs only `geo_score.py`.
 
 ## A badge for your own README
 
@@ -278,8 +312,12 @@ table to the job summary, annotates checks at zero (gates as errors, other check
 `annotations: false` turns this off) and writes whichever files you asked for. `fail-on-gate: true`
 fails the job when a gate scores zero, and `assert` takes the same expressions as `--assert`, one per
 line; each failed one is an error annotation. `badge: aiv-badge.json` (or
-`.svg`) writes a badge. Outputs: `score`, `band`, `gate-capped`, `report`, `report-path` and,
-with `badge`, `badge-path`. Inputs reach the script as environment
+`.svg`) writes a badge. `baseline: before.json` scores the pages of an earlier report (from
+`json-out`) and compares, as `--baseline` does: the comparison goes to the log, a *Changes since
+baseline* section to the job summary, and the outputs `delta` (the score minus the baseline's) and
+`dropped-checks` (the checks that lost points or, for a gate, reached 0, comma-separated) let a later
+step fail on a regression alone. Outputs: `score`, `band`, `gate-capped`, `report`, `report-path`
+and, with `badge`, `badge-path`; with `baseline`, `delta` and `dropped-checks`. Inputs reach the script as environment
 variables, never pasted into it, so a URL cannot run shell code.
 
 To see the results in the repository's Security tab, upload the SARIF file

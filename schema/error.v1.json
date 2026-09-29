@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/error.v1.json",
   "title": "geo-score CLI error",
-  "description": "What `geo-score URL --json` prints on stdout instead of a report when it exits 2: the site gave nothing to score, the arguments were refused, or the tool failed. The same message goes to stderr. A pipeline that parses stdout reads this, never an empty file.",
+  "description": "What `geo-score URL --json` prints on stdout instead of a report when it exits 2: the site gave nothing to score, the arguments were refused, or the tool failed. `geo-score diff BEFORE AFTER --format json` prints it too when it exits 2 (since 1.5.0). The same message goes to stderr. A pipeline that parses stdout reads this, never an empty file.",
   "type": "object",
   "additionalProperties": false,
   "required": ["error", "tool"],
@@ -15,7 +15,7 @@
         "kind": {
           "type": "string",
           "pattern": "^[a-z][a-z0-9_]*$",
-          "description": "Why, as a stable token; match on this, not on the message. When nothing answered: dns (the name does not resolve), refused (the connection was refused), tls (the HTTPS handshake failed), timeout (no answer within --timeout), dropped (the connection closed without an answer) or no_response (the answer was not HTTP). When the site answered: http_<code> (every page asked for answered an HTTP error, e.g. http_403, named by the first page's code), no_content (an empty page) or bot_challenge (no page came back but bot-protection challenge pages, which a static fetch cannot pass; added in 1.5.0). Under the MCP server's address guard: not_public. Otherwise: usage (the arguments or the URL were refused), error (another refusal, such as a pinned URL list or a file that cannot be written) or internal (a bug; please report it). A minor release may add kinds: read an unknown one as error."
+          "description": "Why, as a stable token; match on this, not on the message. When nothing answered: dns (the name does not resolve), refused (the connection was refused), tls (the HTTPS handshake failed), timeout (no answer within --timeout), dropped (the connection closed without an answer) or no_response (the answer was not HTTP). When the site answered: http_<code> (every page asked for answered an HTTP error, e.g. http_403, named by the first page's code), no_content (an empty page) or bot_challenge (no page came back but bot-protection challenge pages, which a static fetch cannot pass; added in 1.5.0). Under the MCP server's address guard: not_public. Otherwise: usage (the arguments or the URL were refused, or a file given to diff or --baseline is not a report), rubric_mismatch (diff or --baseline was given reports of two rubric versions, which are not comparable; added in 1.5.0), error (another refusal, such as a pinned URL list or a file that cannot be written) or internal (a bug; please report it). A minor release may add kinds: read an unknown one as error."
         },
         "message": {
           "type": "string",
@@ -23,7 +23,7 @@
         },
         "target": {
           "type": ["string", "null"],
-          "description": "The URL being scored, or null when the arguments were refused before a URL was read."
+          "description": "The URL being scored, or null when the arguments were refused before a URL was read, and for diff."
         }
       }
     },

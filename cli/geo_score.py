@@ -13,7 +13,7 @@ Levels 2 and 3 live in geo_watch.py next to this file.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, datetime, fnmatch, html, io, json, os, re, sys, threading, time, zlib
+import argparse, concurrent.futures as cf, datetime, fnmatch, html, io, json, os, re, sys, textwrap, threading, time, zlib
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 try:
     import ssl
@@ -3033,6 +3033,237 @@ def check_assertions(rep, asserts):
             out.append((expr, cid, got, mx, got >= want if op == ">=" else got > want if op == ">" else got == want))
     return out
 
+# ── comparing two reports ─────────────────────────────────────────────────
+DIFF_FORMAT = "geo-score/diff.v1"
+# a check's state between two reports (schema/diff.v1.json). A check that stopped being observed is never a drop to
+# zero: it left the denominator, and the report that could not observe it has no points for it
+DIFF_STATES = ("up", "down", "same", "became unobservable", "became observable", "unobservable")
+SPREAD = 5      # benchmark/REPRODUCIBILITY.md: read one site's score as ±5 between runs that sampled different pages
+
+def _clean(s, n=500):
+    """A string from a report file, safe to print: a report is data, and a crafted one must not steer a terminal."""
+    return " ".join(_UNSAFE.sub("", str(s)).split())[:n]
+
+def _whole(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+def load_report(path, what="report"):
+    """A level-1 JSON report (schema/report.v2.json) read from path, checked for every field a comparison reads.
+    Anything else is a ScoreError: exit 2."""
+    def refuse(why):
+        return ScoreError("%s %s is not a geo-score report (schema/report.v2.json): %s; pass a report written by "
+                          "--json or --json-out" % (what, path, why), kind="usage")
+    try:
+        with io.open(path, encoding="utf-8-sig") as f:
+            d = json.load(f)
+    except OSError as e:
+        raise ScoreError("cannot read %s %s: %s" % (what, path, e.strerror or e), kind="usage") from None
+    except ValueError:
+        raise refuse("it is not JSON") from None
+    if isinstance(d, list):
+        raise refuse("it holds %d reports (written with --compare); pass one" % len(d))
+    if not isinstance(d, dict):
+        raise refuse("it is not a JSON object")
+    rv = d.get("rubric_version")
+    if not isinstance(rv, str) or not re.match(r"^v1\.[1-9]\d*$", rv):
+        raise refuse("its rubric_version is %s, where report.v2 needs v1.1 or later"
+                     % (_clean(json.dumps(rv), 40) if rv is not None else "missing"))
+    for k, t in (("target", str), ("band", str), ("gate_capped", bool), ("sampled_urls", list), ("checks", list)):
+        if not isinstance(d.get(k), t):
+            raise refuse("it has no %s" % k)
+    for k in ("readiness", "observable_max", "normalised"):
+        if not _whole(d.get(k)) or d[k] < 0:
+            raise refuse("it has no whole-number %s" % k)
+    if d["normalised"] > 100:
+        raise refuse("its normalised score is above 100")
+    if not all(isinstance(u, str) for u in d["sampled_urls"]):
+        raise refuse("its sampled_urls holds something other than URLs")
+    for x in d["checks"]:
+        if not isinstance(x, dict) or not isinstance(x.get("id"), str) or not isinstance(x.get("state"), str):
+            raise refuse("a check has no id or state")
+        if x["state"] == "scored" and not (_whole(x.get("points")) and _whole(x.get("max"))
+                                           and 0 <= x["points"] <= x["max"] and x["max"] >= 1):
+            raise refuse("the scored check %s has no points from 0 to its max" % _clean(x["id"], 40))
+    return d
+
+def same_rubric(before, after, before_name, after_name):
+    """Scores from different rubric versions are not comparable: exit 2 rather than compare them."""
+    if before["rubric_version"] != after["rubric_version"]:
+        raise ScoreError("%s was scored against rubric %s and %s against rubric %s; scores from different rubric "
+                         "versions are not comparable" % (before_name, _clean(before["rubric_version"], 20), after_name,
+                                                          _clean(after["rubric_version"], 20)), kind="rubric_mismatch")
+
+def tool_note(before_tool, after_tool):
+    """The warning when two reports come from different releases, or None."""
+    if before_tool == after_tool:
+        return None
+    return ("The reports were written by different releases (%s, then %s). A release can move a score on its own, "
+            "and the changelog names the checks it changed, so part of this difference may be the tool."
+            % (before_tool or "tool not stated", after_tool or "tool not stated"))
+
+def diff_reports(before, after, before_name=None, after_name=None):
+    """Two reports of one rubric version, check by check (schema/diff.v1.json). Every SPEC and BONUS id gets a row,
+    then any other id a report carries. --fail-on-drop reads `regressed`: a check that lost points, a gate that
+    reached zero, or a band that fell. A check that became unobservable is none of these."""
+    by = ({x["id"]: x for x in before["checks"]}, {x["id"]: x for x in after["checks"]})
+    ids = [spec[0] for spec in SPEC] + [b[0] for b in BONUS]
+    maxes = dict([(spec[0], spec[3]) for spec in SPEC] + [(b[0], b[2]) for b in BONUS])
+    for cid in list(by[0]) + list(by[1]):
+        if cid not in ids:
+            ids.append(cid)
+
+    def points(side, cid):
+        x = by[side].get(cid) or {}
+        return x["points"] if x.get("state") == "scored" else None
+    checks = []
+    for cid in ids:
+        pb, pa = points(0, cid), points(1, cid)
+        mx = (by[1].get(cid) or {}).get("max") or (by[0].get(cid) or {}).get("max") or maxes.get(cid)
+        if pb is None and pa is None:
+            state = "unobservable"
+        elif pa is None:
+            state = "became unobservable"
+        elif pb is None:
+            state = "became observable"
+        else:
+            state = "up" if pa > pb else "down" if pa < pb else "same"
+        checks.append(dict(id=_clean(cid, 60), before=pb, after=pa, max=mx if _whole(mx) else None, state=state))
+    zero = [[x["id"] for x in checks if x["id"].startswith("g.") and x[k] == 0] for k in ("before", "after")]
+    lost = [x["id"] for x in checks if x["state"] == "down"]
+    reached = [g for g in zero[1] if g not in zero[0]]
+    nb, na = before["normalised"], after["normalised"]
+    rank = {n: i for i, (_t, n) in enumerate(BANDS)}          # 0 is the top band
+    band_fell = rank[band(max(0, min(100, na)))] > rank[band(max(0, min(100, nb)))]
+    keys = [{u.rstrip("/") for u in r["sampled_urls"]} for r in (before, after)]
+    added = [_clean(u) for u in after["sampled_urls"] if u.rstrip("/") not in keys[0]]
+    removed = [_clean(u) for u in before["sampled_urls"] if u.rstrip("/") not in keys[1]]
+    same_pages = not added and not removed
+
+    def side(r, name, gates):
+        opt = lambda k, n: _clean(r[k], n) if isinstance(r.get(k), str) else None
+        return dict(file=_clean(name) if name else None, target=_clean(r["target"]), tool=opt("tool", 120),
+                    audited_at=opt("audited_at", 40), sample_source=opt("sample_source", 80),
+                    pages=len(r["sampled_urls"]), readiness=r["readiness"], observable_max=r["observable_max"],
+                    normalised=r["normalised"], band=_clean(r["band"], 40), gate_capped=r["gate_capped"],
+                    gates_at_zero=gates)
+    b, a = side(before, before_name, zero[0]), side(after, after_name, zero[1])
+    notes = [n for n in [tool_note(b["tool"], a["tool"])] if n]
+    if b["target"] != a["target"]:
+        notes.append("The reports scored different targets: %s, then %s." % (b["target"], a["target"]))
+    if not same_pages:
+        notes.append("Different pages were sampled, so movement on a check mixes change on the site with sampling. "
+                     "Read each total as ±%d, the run-to-run spread measured in benchmark/REPRODUCIBILITY.md. "
+                     "g.reachable is the least stable check: some sites answer crawlers differently from one minute "
+                     "to the next. Re-score the same pages (--urls-from, or --baseline) to see the site alone." % SPREAD)
+    else:
+        notes.append("Both reports scored the same %d page%s, so a difference comes from the site, not from sampling."
+                     % (a["pages"], "" if a["pages"] == 1 else "s"))
+        if next(x for x in checks if x["id"] == "g.reachable")["state"] not in ("same", "unobservable"):
+            notes.append("g.reachable reads how the site answered crawlers at that moment; some sites answer "
+                         "differently from one minute to the next.")
+    return {"format": DIFF_FORMAT, "tool": "geo-score-cli/%s" % __version__,
+            "rubric_version": _clean(after["rubric_version"], 20), "before": b, "after": a,
+            "normalised_delta": na - nb, "within_spread": not same_pages and abs(na - nb) <= SPREAD,
+            "band_fell": band_fell, "same_pages": same_pages, "pages_added": added, "pages_removed": removed,
+            "gates_reached_zero": reached, "gates_left_zero": [g for g in zero[0] if g not in zero[1]],
+            "lost_points": lost, "regressed": bool(lost or reached or band_fell), "checks": checks, "notes": notes}
+
+def dropped_checks(d):
+    """The checks behind a regression, in rubric order: each that lost points, and each gate that reached zero."""
+    hit = set(d["lost_points"]) | set(d["gates_reached_zero"])
+    return [x["id"] for x in d["checks"] if x["id"] in hit]
+
+def drop_lines(d):
+    """One line per reason --fail-on-drop fails, for stderr."""
+    out = []
+    for x in d["checks"]:
+        if x["id"] in d["lost_points"]:
+            lost = x["before"] - x["after"]
+            out.append("%s lost %d point%s (%d/%s → %d/%s)%s" % (
+                x["id"], lost, "" if lost == 1 else "s", x["before"], x["max"], x["after"], x["max"],
+                "; a gate at 0 caps the score at %d" % GATE_CAP if x["id"] in d["gates_reached_zero"] else ""))
+        elif x["id"] in d["gates_reached_zero"]:
+            out.append("%s is at 0 and was not observed before; a gate at 0 caps the score at %d" % (x["id"], GATE_CAP))
+    if d["band_fell"]:
+        out.append("the band fell from %s to %s (%d → %d)" % (d["before"]["band"], d["after"]["band"],
+                                                              d["before"]["normalised"], d["after"]["normalised"]))
+    return out
+
+def render_report_diff(d, fmt="text"):
+    """The comparison as text or Markdown; the JSON form is d itself."""
+    names = dict([(spec[0], spec[2]) for spec in SPEC] + [(b[0], b[1]) for b in BONUS])
+    b, a = d["before"], d["after"]
+    md = fmt == "md"
+    title = "Changes %s → %s" % (b["file"] or "before", a["file"] or "this run")
+    L = ["# " + title if md else title, ""]
+    for label, s in (("before", b), ("after", a)):
+        what = "%s · %s · %s · %d page%s (%s)" % (s["target"], s["audited_at"] or "date not stated",
+                                                  s["tool"] or "tool not stated", s["pages"],
+                                                  "" if s["pages"] == 1 else "s", s["sample_source"] or "source not stated")
+        L.append("- %s: %s" % (label, what) if md else "  %-10s %s" % (label, what))
+    L.append("")
+    delta = d["normalised_delta"]
+    moved = ("%+d" % delta if delta else "no change") + (", within the measured spread" if d["within_spread"] and delta
+                                                          else "")
+    gates = ["%s reached 0" % g for g in d["gates_reached_zero"]] + ["%s left 0" % g for g in d["gates_left_zero"]]
+    for k, v in (("score", "%d → %d / 100 (%s) · %s" % (b["normalised"], a["normalised"], moved, b["band"]
+                                                         if b["band"] == a["band"] else "%s → %s" % (b["band"], a["band"]))),
+                 ("observable", "%d → %d points in the denominator" % (b["observable_max"], a["observable_max"])),
+                 ("gate cap", "%s → %s%s" % ("yes" if b["gate_capped"] else "no", "yes" if a["gate_capped"] else "no",
+                                             ": " + ", ".join(gates) if gates else ""))):
+        L.append("- %s: %s" % (k, v) if md else "  %-10s %s" % (k, v))
+    L.append("")
+    rows = []
+    for x in d["checks"]:
+        rows.append((x["id"], names.get(x["id"], ""), "—" if x["before"] is None else str(x["before"]),
+                     "—" if x["after"] is None else str(x["after"]), "—" if x["max"] is None else str(x["max"]),
+                     x["state"] + (" %+d" % (x["after"] - x["before"]) if x["state"] in ("up", "down") else "")))
+    head = ("check", "name", "before", "after", "max", "change")
+    if md:
+        L += ["| %s |" % " | ".join(head), "|---|---|--:|--:|--:|---|"]
+        L += ["| `%s` | %s | %s | %s | %s | %s |" % r for r in rows]
+    else:
+        L += ["  %-20s %-32s %6s %6s %4s  %s" % ((r[0], r[1][:32]) + r[2:]) for r in [head] + rows]
+    for label, urls in (("Pages added", d["pages_added"]), ("Pages removed", d["pages_removed"])):
+        if urls:
+            L += ["", "## %s (%d)" % (label, len(urls)) if md else "  %s (%d)" % (label, len(urls))]
+            L += [("- " if md else "    ") + u for u in urls]
+    L.append("")
+    for n in d["notes"]:
+        L += ["Note: " + n] if md else textwrap.wrap("Note: " + n, 100, initial_indent="  ", subsequent_indent="        ")
+    return "\n".join(L) + "\n"
+
+def diff_main(argv, prog="geo-score diff"):
+    """`geo_score.py diff BEFORE AFTER`: two level-1 reports compared check by check. Exits 0, or 4 when
+    --fail-on-drop finds a drop; a file that is not a report, or two rubric versions, exit 2."""
+    # under --format json an exit 2 answers in JSON on stdout too (schema/error.v1.json), usage errors included
+    fmt = next((x.split("=", 1)[1] for x in argv if x.startswith("--format=")), None) or \
+        (argv[argv.index("--format") + 1] if "--format" in argv[:-1] else "text")
+    _CLI.update(json=fmt == "json")
+    ap = _Parser(prog=prog, description="Compare two level-1 JSON reports (schema/report.v2.json) check by check: "
+                                        "points before and after, the score and band, the gates and the pages sampled.")
+    ap.add_argument("before", metavar="BEFORE", help="the earlier report, written by --json or --json-out")
+    ap.add_argument("after", metavar="AFTER", help="the later report")
+    ap.add_argument("--format", choices=["text", "md", "json"], default="text",
+                    help="text (default), md, or json (schema/diff.v1.json)")
+    ap.add_argument("--fail-on-drop", action="store_true",
+                    help="exit 4 when any check lost points, a gate reached 0 or the band fell. A check that became "
+                         "unobservable is not a drop")
+    a = ap.parse_args(argv)
+    before, after = load_report(a.before, "BEFORE"), load_report(a.after, "AFTER")
+    same_rubric(before, after, a.before, a.after)
+    d = diff_reports(before, after, a.before, a.after)
+    warn = tool_note(d["before"]["tool"], d["after"]["tool"])
+    if warn:
+        print("%swarning: %s%s" % (c.amber, warn, c.r), file=sys.stderr)
+    sys.stdout.write(json.dumps(d, ensure_ascii=False, indent=2) + "\n" if a.format == "json"
+                     else render_report_diff(d, a.format))
+    if a.fail_on_drop and d["regressed"]:
+        for ln in drop_lines(d):
+            print("%sgeo-score diff --fail-on-drop: %s%s" % (c.red, ln, c.r), file=sys.stderr)
+        return 4
+    return 0
+
 def _write(path, text):
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -3153,7 +3384,7 @@ def target_url(raw):
 class _Parser(argparse.ArgumentParser):
     """argparse, but a usage error under --json also prints the JSON error on stdout, as every other exit 2 does."""
     def error(self, message):
-        if "--json" in sys.argv[1:]:
+        if "--json" in sys.argv[1:] or _CLI["json"]:
             print(json.dumps(error_json("usage", message, None), ensure_ascii=False))
         argparse.ArgumentParser.error(self, message)
 
@@ -3163,16 +3394,20 @@ def error_json(kind, message, target):
 
 def main():
     global TIMEOUT, PREFLIGHT
+    # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
+    me = "geo-score" if os.path.basename(sys.argv[0]).startswith("geo-score") else "geo_score.py"
+    if len(sys.argv) > 1 and sys.argv[1] == "diff":
+        # level 1 only: comparing two reports needs nothing from geo_watch.py
+        sys.exit(diff_main(sys.argv[2:], prog=me + " diff"))
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
         w = _watch_module()
-        # usage lines name the command the user typed: geo_score.py from a checkout, geo-score after pip
-        me = "geo-score" if os.path.basename(sys.argv[0]).startswith("geo-score") else "geo_score.py"
         if sys.argv[1] == "watch":
             sys.exit(w.main(sys.argv[2:], prog=me + " watch"))
         sys.exit(w.main(["mcp"] + sys.argv[2:], prog=me))
     ap = _Parser(prog="geo-score",
         description="Score a site 0-100 on whether AI answer engines can find, parse, trust and cite it.",
-        epilog="Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
+        epilog="`geo_score.py diff BEFORE.json AFTER.json` compares two reports check by check. "
+               "Levels 2 and 3 (your API keys): --ask QUESTION adds a live citation check to this report; "
                "`geo_score.py watch {init,check,run,report,diff,runs,ask}` tracks a question set week over week; "
                "`geo_score.py mcp` serves all three levels over MCP.")
     ap.add_argument("url")
@@ -3197,9 +3432,15 @@ def main():
                      help="score exactly these pages (one URL per line, up to 8) instead of drawing a sample")
     pin.add_argument("--urls-from", metavar="REPORT",
                      help="score the pages an earlier JSON report sampled, so the re-score reads the same pages")
+    pin.add_argument("--baseline", metavar="REPORT",
+                     help="score the pages an earlier JSON report sampled (as --urls-from does), then print what "
+                          "changed since that report, check by check")
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
+    ap.add_argument("--fail-on-drop", action="store_true",
+                    help="with --baseline: exit 4 when any check lost points, a gate reached 0 or the band fell since "
+                         "the baseline. A check that became unobservable is not a drop")
     ap.add_argument("--fail-on-gate", action="store_true",
                     help="exit 1 if any gate check (g.*) scores 0. A gate at zero caps the score at exactly 40, so "
                          "--fail-under 40 alone never fails a capped site. The same as --assert 'g.*>0'")
@@ -3224,6 +3465,9 @@ def main():
     a = ap.parse_args()
     if (a.brand or a.domain) and not a.ask:
         ap.error("--brand and --domain only apply with --ask")
+    if a.fail_on_drop and not a.baseline:
+        ap.error("--fail-on-drop needs --baseline REPORT (or compare two saved reports with `diff BEFORE AFTER "
+                 "--fail-on-drop`)")
     if a.ask:
         qs = [q.strip() for q in a.ask if q.strip()]
         if not 1 <= len(qs) <= 5 or len(qs) != len(a.ask) or any(len(q) > 500 for q in qs):
@@ -3243,13 +3487,20 @@ def main():
         raise RuntimeError("--ask works with one site at a time; drop --compare")
     if (a.json_out or a.sarif or a.junit) and len(targets) > 1:
         raise RuntimeError("--json-out, --sarif and --junit work with one site at a time; drop --compare")
-    pinned = None
-    if a.urls or a.urls_from:
+    pinned = baseline = drift = None
+    if a.urls or a.urls_from or a.baseline:
         if len(targets) > 1:
-            raise RuntimeError("--urls and --urls-from work with one site at a time; drop --compare")
-        got = read_url_list(a.urls) if a.urls else read_report_urls(a.urls_from)
+            raise RuntimeError("--urls, --urls-from and --baseline work with one site at a time; drop --compare")
+        if a.baseline:
+            # read and checked before anything is fetched: a baseline that cannot be compared fails fast
+            baseline = load_report(a.baseline, "--baseline")
+            if baseline["rubric_version"] != RUBRIC:
+                raise ScoreError("--baseline %s was scored against rubric %s and this tool scores rubric %s; scores "
+                                 "from different rubric versions are not comparable"
+                                 % (a.baseline, _clean(baseline["rubric_version"], 20), RUBRIC), kind="rubric_mismatch")
+        got = read_url_list(a.urls) if a.urls else baseline["sampled_urls"] if baseline else read_report_urls(a.urls_from)
         # a report written with --sample above 8 pins as many pages as it sampled
-        pinned = pin_urls(url, got, limit=len(got) if a.urls_from else None)
+        pinned = pin_urls(url, got, limit=None if a.urls else len(got))
     watch = _watch_module() if a.ask else None
     if len(targets) > 1:
         done = pmap(lambda u: (u, _try(u, a.sample)), targets, workers=min(4, len(targets)))
@@ -3278,6 +3529,13 @@ def main():
             report(res, a)
         if watch and not a.json:
             citation_report(crun, res["citation"], watch)
+        if baseline is not None:
+            drift = diff_reports(baseline, as_json(res), a.baseline, None)
+            warn = tool_note(drift["before"]["tool"], drift["after"]["tool"])
+            if warn:
+                print("%swarning: %s%s" % (c.amber, warn, c.r), file=sys.stderr)
+            if not a.json:
+                sys.stdout.write(render_report_diff(drift) + "\n")
         report_text = json.dumps(as_json(res), ensure_ascii=False, indent=2) + "\n"
         if a.json_out:
             _write(a.json_out, report_text)
@@ -3333,8 +3591,14 @@ def main():
                     print("%sgeo-score %s: %s is %d/%d, failed — %s%s" % (c.red, label, cid, got, mx,
                           " ".join(clip(ev.get(cid, ""), 240).split()), c.r), file=sys.stderr)
                     failed = True
+    dropped = a.fail_on_drop and drift is not None and drift["regressed"]
+    for ln in drop_lines(drift) if dropped else []:
+        print("%sgeo-score --fail-on-drop: %s%s" % (c.red, ln, c.r), file=sys.stderr)
+    # exit 4 is opt-in, and a threshold or an assertion that failed keeps its exit 1
     if failed:
         sys.exit(1)
+    if dropped:
+        sys.exit(4)
 
 ISSUES_URL = "https://github.com/jianruntech/geo-score/issues"
 _CLI = {"target": None, "json": False}      # what main() is scoring, and whether it answers in JSON

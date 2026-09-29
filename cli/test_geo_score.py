@@ -1379,6 +1379,89 @@ ok(str(_e).startswith("could not fetch https://x.test (deadline): the run reache
 _e = gs.fetch_failure("https://x.test", [gs.Resp("https://x.test/", 0, err="exceeded 40 s total", kind="slow")], 20)
 ok("(slow): x.test kept its answer coming too slowly to finish within 40 s" in str(_e), str(_e))
 
+# ── diff: two level-1 reports, check by check ──
+# 两份报告逐项对比：变得无法观测的检查项不能算成掉到 0 分，--fail-on-drop 只在真的丢分、门槛归零或档位下降时退出 4
+def _diff_files(*reps):
+    d = tempfile.mkdtemp()
+    paths = []
+    for i, r in enumerate(reps):
+        paths.append(os.path.join(d, "r%d.json" % i))
+        io.open(paths[-1], "w", encoding="utf-8").write(r if isinstance(r, str) else json.dumps(r))
+    return paths
+def _state(d, cid):
+    return next(x["state"] for x in d["checks"] if x["id"] == cid)
+_rb = gs.as_json(mk(full))
+_ru = gs.as_json(mk(dict(full, **{"p2.freshness": None})))
+_dd = gs.diff_reports(_rb, _ru)
+eq(_state(_dd, "p2.freshness"), "became unobservable", "a check the later run could not observe says so")
+eq([x for x in _dd["checks"] if x["id"] == "p2.freshness"][0]["after"], None, "and has no points, never 0")
+eq((_dd["lost_points"], _dd["gates_reached_zero"], _dd["band_fell"], _dd["regressed"]), ([], [], False, False),
+   "a check that became unobservable is not a drop")
+eq([x["id"] for x in _dd["checks"]], [c[0] for c in gs.SPEC] + [b[0] for b in gs.BONUS], "every SPEC and BONUS id, in order")
+eq(_state(gs.diff_reports(_ru, _rb), "p2.freshness"), "became observable", "and the other way round")
+_dsch = json.load(io.open(os.path.join(HERE, "..", "schema", "diff.v1.json"), encoding="utf-8"))
+eq(_dsch["properties"]["checks"]["items"]["properties"]["state"]["enum"], list(gs.DIFF_STATES),
+   "schema/diff.v1.json names every state the comparison uses")
+eq(sorted(_dsch["required"]), sorted(_dd), "and requires every field the comparison prints")
+eq(sorted(_dsch["$defs"]["side"]["required"]), sorted(_dd["before"]), "on each side too")
+ok(_dd["same_pages"] and "same 1 page" in _dd["notes"][0], "the same pages: a difference comes from the site")
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, _ru) + ["--fail-on-drop"])
+eq(_code, 0, "--fail-on-drop passes a check that became unobservable: %s" % _err)
+_rl = gs.as_json(mk(dict(full, **{"p2.freshness": 3})))
+_out = io.StringIO()
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, _rl) + ["--fail-on-drop"], out=_out)
+eq(_code, 4, "a check that lost points exits 4 under --fail-on-drop")
+ok("geo-score diff --fail-on-drop: p2.freshness lost 3 points (6/6 → 3/6)" in _err, _err)
+ok("p2.freshness" in _out.getvalue() and "down -3" in _out.getvalue(), "the text names the check and the change")
+eq(_cli_exit(["diff"] + _diff_files(_rb, _rl))[0], 0, "without --fail-on-drop a drop still exits 0")
+# a gate that was not observed and now is at zero caps the score: that is a drop, though no points were lost
+_gd = gs.diff_reports(gs.as_json(mk(dict(full, **{"g.reachable": None}))), gs.as_json(mk(dict(full, **{"g.reachable": 0}))))
+eq((_state(_gd, "g.reachable"), _gd["lost_points"], _gd["gates_reached_zero"], _gd["regressed"]),
+   ("became observable", [], ["g.reachable"], True), "a gate reaching zero is a drop")
+eq(gs.dropped_checks(_gd), ["g.reachable"], "and is among the dropped checks")
+# checks that become observable at zero lower the score without losing a point; a band that falls is a drop
+_few = {k: None for k in ("p2.answer-passages", "p2.question-intent", "p2.freshness")}
+_bd = gs.diff_reports(gs.as_json(mk(dict(full, **_few))), gs.as_json(mk(dict(full, **{k: 0 for k in _few}))))
+eq((_bd["normalised_delta"], _bd["lost_points"], _bd["band_fell"], _bd["regressed"]), (-22, [], True, True),
+   "a band drop alone is a drop")
+eq(gs.drop_lines(_bd), ["the band fell from Leading to Solid (100 → 78)"], "and says so in one line")
+# pages: added and removed, and the ±5 header when they differ
+_rp = dict(_rl, sampled_urls=["https://x.test/", "https://x.test/new"])
+_pd = gs.diff_reports(_rb, _rp)
+eq((_pd["pages_added"], _pd["pages_removed"], _pd["same_pages"]), (["https://x.test/new"], [], False), "a page added")
+ok("±5" in _pd["notes"][-1] and "g.reachable is the least stable check" in _pd["notes"][-1], _pd["notes"])
+_small = gs.diff_reports(_rb, dict(gs.as_json(mk(dict(full, **{"p1.breadcrumb": 0}))), sampled_urls=["https://x.test/a"]))
+ok(_small["within_spread"] and "within the measured spread" in gs.render_report_diff(_small),
+   "a total that moved by 5 or less on different pages is within the measured spread")
+ok(not gs.diff_reports(_rb, _rl)["within_spread"], "never on the same pages")
+# different releases warn; different rubric versions are refused
+_code, _err = _cli_exit(["diff"] + _diff_files(dict(_rb, tool="geo-score-cli/1.3.0"), _rb))
+ok(_code == 0 and "warning: The reports were written by different releases (geo-score-cli/1.3.0, then" in _err, _err)
+_out = io.StringIO()
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, dict(_rb, rubric_version="v1.2")) + ["--format", "json"], out=_out)
+eq(_code, 2, "reports of two rubric versions exit 2")
+ok("scores from different rubric versions are not comparable" in _err, _err)
+eq(json.loads(_out.getvalue())["error"]["kind"], "rubric_mismatch", "and under --format json say so in JSON")
+for _bad, _says in (("{not json", "not JSON"), (json.dumps([_rb, _rb]), "holds 2 reports"),
+                    (json.dumps(dict(_rb, rubric_version="v1.0")), "v1.1 or later"),
+                    (json.dumps({k: v for k, v in _rb.items() if k != "checks"}), "no checks"),
+                    (json.dumps(dict(_rb, checks=[{"id": "g.robots", "state": "scored", "points": 9, "max": 5}])),
+                     "no points from 0 to its max")):
+    _code, _err = _cli_exit(["diff"] + _diff_files(_bad, _rb))
+    ok(_code == 2 and "is not a geo-score report" in _err and _says in _err, "%s: %s" % (_says, _err))
+_code, _err = _cli_exit(["diff", "/nonexistent/before.json", "/nonexistent/after.json"])
+ok(_code == 2 and "cannot read BEFORE" in _err, _err)
+# --baseline: exclusive with --urls and --urls-from; --fail-on-drop needs it
+_b = _diff_files(_rb)[0]
+eq(_cli_exit(["https://x.test", "--baseline", _b, "--urls-from", _b])[0], 2, "--baseline with --urls-from is refused")
+_code, _err = _cli_exit(["https://x.test", "--fail-on-drop"])
+ok(_code == 2 and "--fail-on-drop needs --baseline" in _err, _err)
+_code, _err = _cli_exit(["https://x.test", "--baseline", _diff_files(dict(_rb, rubric_version="v1.2"))[0], "--quiet"])
+ok(_code == 2 and "not comparable" in _err, "a baseline of another rubric version fails before any fetch: %s" % _err)
+# a crafted report cannot steer the terminal through the comparison
+_evil = dict(_rb, target="https://x.test/\x1b[2J\u202e", sampled_urls=["https://x.test/\x1b]0;pwned\x07"])
+ok(not gs._UNSAFE.search(gs.render_report_diff(gs.diff_reports(_evil, _rb))), "control characters are stripped")
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)

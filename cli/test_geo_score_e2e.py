@@ -3,7 +3,7 @@
 
     python3 cli/test_geo_score_e2e.py                    # every fixture, a few seconds
     python3 cli/test_geo_score_e2e.py -v                 # plus a per-fixture score table
-    UPDATE_GOLDEN=1 python3 cli/test_geo_score_e2e.py    # rewrite fixtures/golden/good.report.json
+    UPDATE_GOLDEN=1 python3 cli/test_geo_score_e2e.py    # rewrite the golden files in fixtures/golden/
 
 Each folder in fixtures/sites is one site, served from 127.0.0.1 on its own port. Its
 expected.json names the tier every check must reach there (null = unobservable), and the
@@ -33,6 +33,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FIX = os.path.join(HERE, "fixtures")
 SITES = os.path.join(FIX, "sites")
 GOLDEN = os.path.join(FIX, "golden", "good.report.json")
+GOLDEN_DIFF = os.path.join(FIX, "golden", "good-to-partial.diff")     # .txt and .json
 VERBOSE = any(a in ("-v", "--verbose") for a in sys.argv[1:])
 
 _spec = importlib.util.spec_from_file_location("geo_score_e2e", os.path.join(HERE, "geo_score.py"))
@@ -911,6 +912,83 @@ class EndToEnd(unittest.TestCase):
                                                 "golden/good.report.json", "as_json(good)"))
             self.fail("the good fixture's report drifted from the golden file "
                       "(UPDATE_GOLDEN=1 rewrites it if the change is intended):\n" + diff)
+
+    def test_diff_of_good_and_partial_matches_the_golden_files(self):
+        # `geo_score.py diff` on two fixture reports: every check with its state, the score and band, the pages.
+        # partial's knowledge graph is not observed, which must read as that and never as a drop to zero
+        d = gs.diff_reports(report_for("good"), report_for("partial"), "good.report.json", "partial.report.json")
+        by = {x["id"]: x for x in d["checks"]}
+        self.assertEqual((by["p3.knowledge-graph"]["state"], by["p3.knowledge-graph"]["after"]), ("became unobservable", None))
+        self.assertNotIn("p3.knowledge-graph", d["lost_points"] + gs.dropped_checks(d))
+        self.assertEqual((d["normalised_delta"], d["band_fell"], d["same_pages"], d["regressed"]), (-39, True, False, True))
+        with open(os.path.join(HERE, "..", "schema", "diff.v1.json"), encoding="utf-8") as f:
+            schema = json.load(f)
+        try:
+            import jsonschema
+            jsonschema.validate(d, schema)
+        except ImportError:
+            pass
+        for ext, text in (("txt", gs.render_report_diff(d)), ("json", json.dumps(d, ensure_ascii=False, indent=2) + "\n")):
+            text = text.replace(gs.__version__, "{VERSION}")
+            path = GOLDEN_DIFF + "." + ext
+            if os.environ.get("UPDATE_GOLDEN"):
+                with open(path, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(text)
+                continue
+            with open(path, encoding="utf-8") as f:
+                want = f.read()
+            if text != want:
+                self.fail("the good-to-partial diff drifted from %s (UPDATE_GOLDEN=1 rewrites it if the change is "
+                          "intended):\n%s" % (os.path.basename(path), "".join(difflib.unified_diff(
+                              want.splitlines(True), text.splitlines(True), os.path.basename(path), "diff_reports"))))
+
+    def test_baseline_rescores_its_pages_and_fails_on_a_drop(self):
+        # --baseline as CI runs it: the baseline's pages are scored again, the comparison follows the report, and
+        # --fail-on-drop exits 4 on a gate that reached zero. Off-site lookups fail at once here (a dead proxy), so the
+        # knowledge graph the baseline observed is not observed: that is not a drop
+        dead = "http://127.0.0.1:9"
+        env = {k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}
+        env.update(HTTPS_PROXY=dead, HTTP_PROXY=dead, https_proxy=dead, http_proxy=dead, NO_COLOR="1",
+                   NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost")
+        # a server of its own: the harness's servers count their requests for other tests
+        srv = start_server("robots-blocks")
+        base = json.loads(json.dumps(report_for("robots-blocks", masked=False)).replace(
+            H.servers["robots-blocks"].origin, srv.origin))
+        pts = {"g.robots": 5, "p2.freshness": 1}
+        base = dict(base, tool="geo-score-cli/1.3.0", normalised=83, band="Leading", gate_capped=False,
+                    checks=[dict(x, points=pts.get(x["id"], x.get("points"))) for x in base["checks"]])
+        origin = srv.origin
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "base.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(base, f)
+            run = lambda *args: subprocess.run([sys.executable, os.path.join(HERE, "geo_score.py"), origin, "--quiet",
+                                                "--baseline", path] + list(args),
+                                               capture_output=True, text=True, timeout=120, env=env)
+            try:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+                    plain, strict, js = ex.map(lambda a: run(*a), [(), ("--fail-on-drop",), ("--json", "--fail-on-drop")])
+            finally:
+                srv.shutdown()
+                srv.server_close()
+        self.assertEqual(plain.returncode, 0, plain.stderr[-600:])
+        out = plain.stdout
+        self.assertIn("Changes %s → this run" % path, out)
+        self.assertIn("Both reports scored the same 8 pages", out)
+        row = lambda cid: next(ln for ln in out.splitlines() if ln.startswith("  %s " % cid))
+        self.assertTrue(row("g.robots").endswith("down -5"), row("g.robots"))
+        self.assertTrue(row("p2.freshness").endswith("up +2"), row("p2.freshness"))
+        self.assertTrue(row("p3.knowledge-graph").endswith("became unobservable"), row("p3.knowledge-graph"))
+        self.assertIn("gate cap   no → yes: g.robots reached 0", out)
+        self.assertIn("warning: The reports were written by different releases (geo-score-cli/1.3.0, then", plain.stderr)
+        self.assertEqual(strict.returncode, 4, strict.stderr[-600:])
+        lines = [ln for ln in strict.stderr.splitlines() if ln.startswith("geo-score --fail-on-drop: ")]
+        self.assertEqual(lines, ["geo-score --fail-on-drop: g.robots lost 5 points (5/5 → 0/5); a gate at 0 caps the "
+                                 "score at 40", "geo-score --fail-on-drop: the band fell from Leading to Early (83 → 40)"])
+        self.assertEqual(js.returncode, 4, js.stderr[-600:])
+        rep = json.loads(js.stdout)
+        self.assertEqual((rep["sample_source"], sorted(rep["sampled_urls"])), ("pinned", sorted(base["sampled_urls"])),
+                         "under --json stdout is the report alone, on the baseline's pages")
 
     def test_every_report_conforms_to_the_published_schema(self):
         # the good fixture once scored 107 of 100 and nothing noticed: check the contract, not only the tiers

@@ -20,6 +20,9 @@ inputs:
   urls-from:
     description: "Score the pages an earlier JSON report sampled instead of drawing a new sample, so two runs compare the same pages."
     required: false
+  baseline:
+    description: "An earlier JSON report (json-out) to compare with: the action scores the pages it sampled, as urls-from does, prints what changed check by check, adds a 'Changes since baseline' section to the job summary and sets the delta and dropped-checks outputs. Not with urls-from."
+    required: false
   sarif:
     description: "Write SARIF 2.1.0 to this path, for github/codeql-action/upload-sarif or any SARIF viewer. Each result points at its check's line in the JSON report (json-out, or geo-score-report.json in the workspace)."
     required: false
@@ -59,6 +62,12 @@ outputs:
   badge-path:
     description: "Where the badge was written, when the badge input is set."
     value: ${{ steps.run.outputs.badge-path }}
+  delta:
+    description: "With baseline: the score minus the baseline's, e.g. -5."
+    value: ${{ steps.run.outputs.delta }}
+  dropped-checks:
+    description: "With baseline: the checks that lost points or, for a gate, reached zero since the baseline, comma-separated in rubric order; empty when none did."
+    value: ${{ steps.run.outputs.dropped-checks }}
 runs:
   using: "composite"
   steps:
@@ -72,6 +81,7 @@ runs:
         GEO_SAMPLE: ${{ inputs.sample }}
         GEO_JSON_OUT: ${{ inputs.json-out }}
         GEO_URLS_FROM: ${{ inputs.urls-from }}
+        GEO_BASELINE: ${{ inputs.baseline }}
         GEO_SARIF: ${{ inputs.sarif }}
         GEO_JUNIT: ${{ inputs.junit }}
         GEO_ANNOTATIONS: ${{ inputs.annotations }}
@@ -82,7 +92,7 @@ runs:
       run: |
         set -euo pipefail
         GEO_URL="${GEO_URL:-}" GEO_FAIL_UNDER="${GEO_FAIL_UNDER:-}" GEO_SAMPLE="${GEO_SAMPLE:-8}"
-        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
+        GEO_JSON_OUT="${GEO_JSON_OUT:-}" GEO_URLS_FROM="${GEO_URLS_FROM:-}" GEO_BASELINE="${GEO_BASELINE:-}" GEO_SARIF="${GEO_SARIF:-}" GEO_JUNIT="${GEO_JUNIT:-}" GEO_ANNOTATIONS="${GEO_ANNOTATIONS:-true}"
         GEO_FAIL_ON_GATE="${GEO_FAIL_ON_GATE:-false}" GEO_ASSERT="${GEO_ASSERT:-}" GEO_BADGE="${GEO_BADGE:-}"
         [ -n "$GEO_URL" ] || { echo "::error title=geo-score::the url input is empty"; exit 2; }
         [[ "$GEO_SAMPLE" =~ ^[0-9]+$ ]] || { echo "::error title=geo-score::sample must be a whole number, got '$GEO_SAMPLE'"; exit 2; }
@@ -90,6 +100,17 @@ runs:
           echo "::error title=geo-score::fail-under must be a whole number from 0 to 100, got '$GEO_FAIL_UNDER'"; exit 2
         fi
         case "$GEO_FAIL_ON_GATE" in true|false) ;; *) echo "::error title=geo-score::fail-on-gate must be true or false, got '$GEO_FAIL_ON_GATE'"; exit 2 ;; esac
+        if [ -n "$GEO_BASELINE" ] && [ -n "$GEO_URLS_FROM" ]; then
+          echo "::error title=geo-score::baseline already scores the baseline's pages; drop urls-from"; exit 2
+        fi
+        # the summary compares against a copy taken before the run, so a baseline that is also the json-out path
+        # is compared as it was, not with the report that replaced it
+        BASE_COPY=""
+        if [ -n "$GEO_BASELINE" ]; then
+          [ -f "$GEO_BASELINE" ] || { echo "::error title=geo-score::the baseline $GEO_BASELINE is not a file"; exit 2; }
+          BASE_COPY="${RUNNER_TEMP:-/tmp}/geo-score-baseline.json"
+          cp -- "$GEO_BASELINE" "$BASE_COPY"
+        fi
         # code scanning locates each SARIF result in a file of the checkout, so with sarif the report is
         # written into the workspace; otherwise it goes to the runner's temp directory
         if [ -n "$GEO_JSON_OUT" ]; then OUT="$GEO_JSON_OUT"
@@ -97,6 +118,7 @@ runs:
         else OUT="${RUNNER_TEMP:-/tmp}/geo-score-report.json"; fi
         ARGS=(--sample "$GEO_SAMPLE" --explain --json-out "$OUT")
         [ -z "$GEO_URLS_FROM" ] || ARGS+=(--urls-from "$GEO_URLS_FROM")
+        [ -z "$GEO_BASELINE" ] || ARGS+=("--baseline=$GEO_BASELINE")
         [ -z "$GEO_SARIF" ] || ARGS+=(--sarif "$GEO_SARIF")
         [ -z "$GEO_JUNIT" ] || ARGS+=(--junit "$GEO_JUNIT")
         # one = argument, so a path that starts with a dash stays a path
@@ -121,7 +143,7 @@ runs:
         fi
         echo "report-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$OUT")" >> "$GITHUB_OUTPUT"
         [ -z "$GEO_BADGE" ] || echo "badge-path=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$GEO_BADGE")" >> "$GITHUB_OUTPUT"
-        python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS"
+        python3 "$GEO_ACTION_PATH/action/summary.py" "$OUT" "$GEO_ANNOTATIONS" "$BASE_COPY"
         [ "$RC" -eq 0 ] || python3 "$GEO_ACTION_PATH/action/summary.py" --assertions "$OUT"
         SCORE=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['normalised'])" "$OUT")
         if [ -n "$GEO_FAIL_UNDER" ] && [ "$SCORE" -lt "$GEO_FAIL_UNDER" ]; then
