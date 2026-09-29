@@ -2882,6 +2882,11 @@ def sample_notes(res):
     return out
 
 
+def to_next_band(gap):
+    """How far the score is from the next band up, gap being (points, band): "12 points to Leading", "1 point to
+    Solid"."""
+    return "%d point%s to %s" % (gap[0], "" if gap[0] == 1 else "s", gap[1])
+
 def brief(res):
     """Pillar totals and the three biggest gaps. What fits in a screenshot."""
     rows, total, den, b, norm, bd, capped = score(res)
@@ -2894,7 +2899,7 @@ def brief(res):
     if _ln: print("  %s%s%s" % (c.amber, _ln, c.r))
     print(c.grey + "─" * 58 + c.r)
     print("  %s%s%d / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.b, big, bd, c.r)
-          + ("%s          %d points to %s%s" % (c.grey, gap[0], gap[1], c.r) if gap else ""))
+          + ("%s          %s%s" % (c.grey, to_next_band(gap), c.r) if gap else ""))
     gl = gate_line(rows)
     if gl: print("  %s%s%s" % (c.red, gl, c.r))
     print()
@@ -2925,7 +2930,7 @@ def report(res, args):
     print(c.grey + "─" * W + c.r)
     big = c.green if norm >= 66 else (c.amber if norm >= 31 else c.red)
     print("  %s%s%d%s%s / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.grey, c.r, c.b, big, bd, c.r))
-    if gap: print("  %s%d points to %s%s" % (c.grey, gap[0], gap[1], c.r))
+    if gap: print("  %s%s%s" % (c.grey, to_next_band(gap), c.r))
     gl = gate_line(rows)
     if gl: print("  %s%s%s" % (c.red, gl, c.r))
     _ln = landed_note(res)

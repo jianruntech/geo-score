@@ -258,6 +258,8 @@ eq(gs.gate_line(gs.score(_capped)[0]),
    "g.ssr: 0 of 8 sampled pages carry substantive body text in the HTML response; "
    "the score cannot exceed 40 while a gate is at zero", "the cap line names every gate at zero, with its evidence")
 eq(gs.gate_line(gs.score(mk(gate_mid))[0]), None, "a gate at a middle tier caps nothing and gets no line")
+eq((gs.to_next_band((1, "Solid")), gs.to_next_band((12, "Leading"))), ("1 point to Solid", "12 points to Leading"),
+   "the distance to the next band: one point, and several")
 for view in ("report", "brief"):
     out = _shown(_capped, view)
     ok(gs.gate_line(gs.score(_capped)[0]) in out, "%s prints the cap line" % view)
