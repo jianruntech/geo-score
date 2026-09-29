@@ -6,7 +6,7 @@ build_page.py, stats.py and validity.py that turn committed data into published 
 
 No network. Synthetic runs are written to a temporary directory; nothing in the repository is modified.
 """
-import contextlib, io, json, os, shutil, sys, tempfile, unittest
+import contextlib, io, json, os, re, shutil, sys, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -36,6 +36,30 @@ def write_run(root, scores, capped=(), unobservable=(), tool="geo-score-cli/1.5.
         json.dump({"tool": tool, "measured_at": "2026-10-01", "python": "3.12.0", "measured_from": "test bench",
                    "pinned_from": pinned_from, "results": rows}, f)
     return root
+
+
+@contextlib.contextmanager
+def fake_web(fetch):
+    """The CLI fetches through `fetch` and never the network, and run.one writes its raw report to a temporary
+    directory instead of benchmark/raw/."""
+    gs = run.gs
+    saved = gs.fetch, getattr(gs, "preflight_host", None), run.time.sleep, run.RAW
+    tmp = tempfile.mkdtemp()
+    gs.fetch, run.time.sleep, run.RAW = fetch, (lambda s: None), os.path.join(tmp, "raw")
+    if saved[1]:
+        gs.preflight_host = lambda *a, **k: None          # the test hosts have no DNS; fetch never leaves the process
+    try:
+        yield
+    finally:
+        gs.fetch, run.time.sleep, run.RAW = saved[0], saved[2], saved[3]
+        if saved[1]:
+            gs.preflight_host = saved[1]
+        shutil.rmtree(tmp)
+
+
+def cli_predates(fix):
+    """The CLI's version when it is older than `fix`, the release a published sentence says has a fix, else None."""
+    return build_page.old_crawler_reading(run.gs.__version__, fix)
 
 
 def study(dirs, labels):
@@ -233,13 +257,11 @@ class NotScored(unittest.TestCase):
         self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge")
 
     def test_the_cli_error_carries_the_prefix_run_py_matches(self):
-        """The string contract with the CLI: a site that serves every page as an AWS WAF challenge (202 with a
-        challenge body) is not scored, and its row files under "bot challenge". Skipped while the CLI does not
-        tell challenge pages apart; once it does, a reworded error fails here instead of landing under "other"."""
+        """The string contract with the CLI, and the claim the published qualifier makes: a site that serves every
+        page as an AWS WAF challenge (202 with a challenge body) is not scored, and its row files under "bot
+        challenge". Skipped while the CLI is older than build_page.CHALLENGE_FIX and still scores such a site; from
+        that version on, a CLI that scores it, or words its error differently, fails here."""
         gs = run.gs
-        with io.open(os.path.join(HERE, "..", "cli", "geo_score.py"), encoding="utf-8") as f:
-            if "bot challenge" not in f.read().lower():
-                self.skipTest("this CLI does not tell bot-challenge pages apart yet")
         page = (b'<html><head><title>Human Verification</title><script>window.awsWafCookieDomainList = [];'
                 b'window.gokuProps = {};</script><script src="https://x.token.awswaf.com/challenge.js"></script>'
                 b'</head><body><div id="challenge-container"></div><script>AwsWafIntegration.checkForceRefresh()'
@@ -249,17 +271,16 @@ class NotScored(unittest.TestCase):
             if run.urllib.parse.urlsplit(url).path.endswith((".txt", ".xml")):
                 return gs.Resp(url, 404, b"", {})
             return gs.Resp(url, 202, page, {"content-type": "text/html; charset=utf-8"})
-        saved = gs.fetch, getattr(gs, "preflight_host", None), run.time.sleep
-        gs.fetch, run.time.sleep = fake_fetch, lambda s: None
-        if saved[1]:
-            gs.preflight_host = lambda *a, **k: None          # challenge.test has no DNS; fetch never leaves the process
-        try:
+        with fake_web(fake_fetch):
             row = run.one({"url": "challenge.test", "sector": "Test"})
-        finally:
-            gs.fetch, run.time.sleep = saved[0], saved[2]
-            if saved[1]:
-                gs.preflight_host = saved[1]
-        self.assertIn("error", row, "the CLI scored a site that serves only challenge pages: %s" % row.get("normalised"))
+        fix = build_page._v(build_page.CHALLENGE_FIX)
+        if "error" not in row:
+            older = cli_predates(build_page.CHALLENGE_FIX)
+            if older:
+                self.skipTest("the %s CLI still scores a challenge page (%d/100, %s); the qualifier dates the fix to %s"
+                              % (older, row["normalised"], row["gate_reason"], fix))
+            self.fail("the published qualifier says %s tells a bot-challenge page apart, and the %s CLI scored one: "
+                      "%d/100, %s" % (fix, gs.__version__, row["normalised"], row["gate_reason"]))
         self.assertEqual(run.not_scored_reason(row["error"]), "bot challenge",
                          "the CLI's error no longer starts with %r: %s" % (run.BOT_CHALLENGE, row["error"]))
 
@@ -268,6 +289,48 @@ class NotScored(unittest.TestCase):
         self.assertIn("人机验证", build_page.challenge_note("geo-score-cli/1.4.0", "zh"))
         for tool in ("geo-score-cli/1.5.0", "geo-score-cli/2.0.0", None):
             self.assertEqual(build_page.challenge_note(tool, "en"), "")
+
+
+class ChineseLexicon(unittest.TestCase):
+    """rubric/v1.1.json's note on p2.question-intent says which release adds the Chinese task and explanation
+    headings to the CLI's lexicon. From that release on, a Chinese site whose headings take only those forms earns
+    the check's points; before it, the test is skipped."""
+    HOST = "zh-headings.test"
+    NOTE = re.compile(r"(\d+)\.(\d+)\.(\d+) adds those forms")
+
+    def points(self, heading):
+        """p2.question-intent's points for a Chinese site whose every sampled page has this one heading."""
+        gs = run.gs
+        text = "这是一个用来测试标题意图的中文段落，内容足够长，读起来也像正文。" * 6
+        body = ('<html lang="zh-CN"><head><title>标题测试</title></head><body><main><h2>%s</h2><p>%s</p></main>'
+                "</body></html>" % (heading, text)).encode("utf-8")
+
+        def fake_fetch(url, ua=gs.UA_BROWSER, *a, **kw):
+            u = run.urllib.parse.urlsplit(url)
+            if u.netloc != self.HOST or u.path.endswith((".txt", ".xml")):
+                return gs.Resp(url, 404, b"", {})
+            return gs.Resp(url, 200, body, {"content-type": "text/html; charset=utf-8"})
+        urls = ["https://%s/docs/page-%d" % (self.HOST, i) for i in range(run.SAMPLE)]
+        with fake_web(fake_fetch):
+            res = gs.run("https://" + self.HOST, run.SAMPLE, urls=urls)
+        return next(r[3] for r in gs.score(res)[0] if r[0] == "p2.question-intent")
+
+    def test_task_and_explanation_headings_count(self):
+        note = next(c for c in retest._rubric()["checks"] if c["id"] == "p2.question-intent")["evidence"]["note"]
+        m = self.NOTE.search(note)
+        self.assertIsNotNone(m, "the p2.question-intent note no longer says which release adds the Chinese forms")
+        fix = tuple(int(x) for x in m.groups())
+        # the harness on every CLI: a question heading earns the points, a keyword string does not
+        self.assertEqual(self.points("如何创建第一个应用"), 7)
+        self.assertEqual(self.points("企业级云服务器"), 0)
+        # the note's own examples, 'create your first app' and 'how workflows work', with no question word
+        missed = [h for h in ("创建你的第一个应用", "工作流的工作原理") if self.points(h) != 7]
+        older = cli_predates(fix)
+        if missed and older:
+            self.skipTest("the %s CLI does not count %s yet; rubric/v1.1.json dates that to %s"
+                          % (older, "、".join(missed), m.group(0).split()[0]))
+        self.assertEqual(missed, [], "rubric/v1.1.json says %s, and the %s CLI does not count these headings"
+                         % (m.group(0), run.gs.__version__))
 
 
 class FetchBudget(unittest.TestCase):
@@ -473,7 +536,7 @@ class SameOnEveryPython(unittest.TestCase):
     def test_the_study_files_on_the_oldest_and_newest_python(self):
         """check.sh runs this file on python3 alone. The generated study files have to come out byte for byte on
         the oldest and the newest Python the gate tests the CLI on too, found by uv as check.sh finds them."""
-        import re, subprocess
+        import subprocess
         if not shutil.which("uv"):
             self.skipTest("uv not installed: the study files were checked on this Python only")
         gate = retest._read(os.path.join(HERE, "..", "scripts", "check.sh"))

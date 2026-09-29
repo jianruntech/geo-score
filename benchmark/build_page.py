@@ -62,8 +62,12 @@ def _hosted(text):
 CRAWLER_FIX = (1, 5, 0)
 # 1.5.0 also tells a bot-challenge page from a JavaScript shell: a site that serves a browser user-agent a
 # challenge is not scored, where it used to read as g.ssr 0. Older data files such sites under "content needs
-# JavaScript", so that group carries its own qualifier on the same terms.
+# JavaScript", so that group carries its own qualifier on the same terms. The qualifiers name these versions,
+# and test_benchmark.py fails once cli/geo_score.py reaches CHALLENGE_FIX without telling a challenge apart.
 CHALLENGE_FIX = (1, 5, 0)
+
+def _v(fix):
+    return ".".join(str(x) for x in fix)
 
 def old_crawler_reading(tool, fix=CRAWLER_FIX):
     """The version in results.json's tool string ('geo-score-cli/1.3.0' gives '1.3.0') when it predates the
@@ -79,13 +83,13 @@ def crawler_note(tool, lang):
         return ""
     if lang == "short":
         return ("counted with the %s reading, which treated GPTBot, ClaudeBot and Google-Extended as retrieval "
-                "crawlers; fixed in 1.5.0, re-run pending" % v)
+                "crawlers; fixed in %s, re-run pending" % (v, _v(CRAWLER_FIX)))
     if lang == "en":
         return ("The %s reading counted GPTBot, ClaudeBot and Google-Extended as retrieval crawlers, so this "
-                "count includes sites that block only training crawlers or an opt-out token (fixed in 1.5.0, "
-                "re-run pending)." % v)
+                "count includes sites that block only training crawlers or an opt-out token (fixed in %s, "
+                "re-run pending)." % (v, _v(CRAWLER_FIX)))
     return ("%s 版的读法把 GPTBot、ClaudeBot 和 Google-Extended 也算作检索爬虫，所以这个数里包括只屏蔽训练爬虫"
-            "或只声明退出令牌的站（1.5.0 已修正，榜单待重跑）。" % v)
+            "或只声明退出令牌的站（%s 已修正，榜单待重跑）。" % (v, _v(CRAWLER_FIX)))
 
 def challenge_note(tool, lang):
     """The qualifier on the "content needs JavaScript" group ("en", "zh", or "short" for llms.txt), or "" when
@@ -95,13 +99,13 @@ def challenge_note(tool, lang):
         return ""
     if lang == "short":
         return ("counted with the %s reading, which could not tell a bot-challenge page from a JavaScript shell; "
-                "fixed in 1.5.0, re-run pending" % v)
+                "fixed in %s, re-run pending" % (v, _v(CHALLENGE_FIX)))
     if lang == "en":
         return ("The %s reading could not tell a bot-challenge page from a JavaScript shell, so this group can "
-                "include sites that served a challenge page instead of their content (fixed in 1.5.0, re-run "
-                "pending)." % v)
+                "include sites that served a challenge page instead of their content (fixed in %s, re-run "
+                "pending)." % (v, _v(CHALLENGE_FIX)))
     return ("%s 版的读法分不出人机验证页和 JavaScript 空壳，所以这一组里可能有返回人机验证页、而不是正文的站"
-            "（1.5.0 已修正，榜单待重跑）。" % v)
+            "（%s 已修正，榜单待重跑）。" % (v, _v(CHALLENGE_FIX)))
 
 def thin_words(n_thin, lang):
     """How many rows of a group rest on a thin sample, as a sentence, or "" when none does."""
