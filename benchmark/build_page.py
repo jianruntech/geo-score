@@ -23,7 +23,10 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
 REPO = "https://github.com/jianruntech/geo-score"
 # the page is rebuilt at every release (RELEASING.md step 4), so its downloads point at that release's tag: a file
 # at a tag never moves, where a blob/main link moves with every run. The tool version recorded in results.json
-# would be the wrong tag, because the data can predate the release that publishes it.
+# would be the wrong tag, because the data can predate the release that publishes it. The same rule orders a
+# re-run: its results land before the tag that publishes them, or ship in a release of their own. A page rebuilt
+# from a re-run under an existing tag would offer that tag's older files as its data, and a page built before
+# the bump links files the previous tag may not have.
 with io.open(os.path.join(ROOT, "cli", "geo_score.py"), encoding="utf-8") as _f:
     VERSION = re.search(r'^__version__ = "([^"]+)"', _f.read(), re.M).group(1)
 DOWNLOAD = "https://raw.githubusercontent.com/jianruntech/geo-score/v%s/benchmark/" % VERSION
