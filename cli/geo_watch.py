@@ -125,6 +125,13 @@ def _num(x):
     return float(x)
 
 
+def _whole(x):
+    """A JSON integer, 2 or 2.0 (JSON has one number type, and a schema's "integer" takes both); None otherwise."""
+    if isinstance(x, bool) or not isinstance(x, (int, float)) or (isinstance(x, float) and not x.is_integer()):
+        return None
+    return int(x)
+
+
 def _strs(x):
     if isinstance(x, str):
         return [x]
@@ -784,10 +791,22 @@ ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
 ENGINE_KEYS = ("provider", "id", "model", "base_url", "api", "key_env", "tool", "max_tokens", "max_searches",
                "max_results")
 PRICE_KEYS = ("input_per_mtok", "output_per_mtok", "per_search", "per_call")
-# names a pasted API key goes by, lower case with the separators taken out: "did you mean 'api'?" would point at
-# the Gemini API selector
-SECRET_KEYS = ("key", "apikey", "token", "accesstoken", "authtoken", "secret", "clientsecret", "password",
-               "authorization", "bearer")
+# what a pasted API key is called, lower case with the separators taken out: api_key, OPENAI_KEY, api_token,
+# client_secret, credentials. Such a name never gets a "did you mean": the nearest known key can be 'api', the
+# Gemini API selector, or 'max_tokens', a number.
+SECRET_WORDS = ("token", "secret", "password", "passwd", "credential", "bearer", "authorization")
+
+
+def _norm_key(k):
+    return re.sub(r"[^a-z]", "", str(k).lower())
+
+
+def _secret_like(k, known):
+    """True for the name of a pasted key, unless it is a spelling of a known key (max_token for max_tokens)."""
+    norm = _norm_key(k)
+    if not (norm == "auth" or norm.endswith(("key", "keys")) or any(w in norm for w in SECRET_WORDS)):
+        return False
+    return not any(difflib.SequenceMatcher(None, norm, _norm_key(x)).ratio() >= 0.85 for x in known)
 
 
 def _unknown_keys(d, known, where=""):
@@ -797,8 +816,7 @@ def _unknown_keys(d, known, where=""):
     for k in (d if isinstance(d, dict) else ()):
         if k in known:
             continue
-        norm = re.sub(r"[^a-z]", "", str(k).lower())
-        if norm in SECRET_KEYS or norm.endswith("apikey"):
+        if _secret_like(k, known):
             out.append("unknown key %r; it is ignored: API keys are read from environment variables, never from "
                        "this file (an engine's key_env names the variable)" % (where + k))
             continue
@@ -889,6 +907,18 @@ class Config(object):
             ke = e.get("key_env")
             if ke is not None and not (isinstance(ke, str) and ENV_RE.match(ke)):
                 err("engines[%d].key_env must name an environment variable" % i)
+            if e.get("tool") is not None and not isinstance(e["tool"], str):
+                err("engines[%d].tool must be a string" % i)
+            for k in ("max_tokens", "max_searches", "max_results"):
+                if e.get(k) is None:
+                    continue
+                n = _whole(e[k])
+                if n is None or n < 1:
+                    # never the value, and never let it reach int(): a key pasted here would be in the error
+                    err("engines[%d].%s must be a positive integer" % (i, k))
+                    del eng[k]
+                else:
+                    eng[k] = n
             seen.add(eng["id"])
             self.engines.append(eng)
         if not self.engines:
@@ -897,12 +927,12 @@ class Config(object):
         self.country = raw.get("country") or None
         if self.country is not None and not (isinstance(self.country, str) and COUNTRY_RE.match(self.country)):
             err("country must be a two-letter ISO code such as US, or null")
-        self.runs = raw.get("runs", 1)
-        if isinstance(self.runs, bool) or not isinstance(self.runs, int) or not 1 <= self.runs <= MAX_RUNS:
+        self.runs = _whole(raw.get("runs", 1))
+        if self.runs is None or not 1 <= self.runs <= MAX_RUNS:
             err("runs must be an integer from 1 to %d" % MAX_RUNS)
             self.runs = 1
-        self.max_calls = raw.get("max_calls", DEFAULT_MAX_CALLS)
-        if isinstance(self.max_calls, bool) or not isinstance(self.max_calls, int) or self.max_calls < 1:
+        self.max_calls = _whole(raw.get("max_calls", DEFAULT_MAX_CALLS))
+        if self.max_calls is None or self.max_calls < 1:
             err("max_calls must be a positive integer")
             self.max_calls = DEFAULT_MAX_CALLS
         self.budget_usd = raw.get("budget_usd")

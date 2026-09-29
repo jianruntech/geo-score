@@ -4,7 +4,7 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
+import contextlib, datetime, http.server, inspect, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
 import threading, time, unittest, urllib.request
 from unittest import mock
 
@@ -563,7 +563,8 @@ def validate(inst, schema, root=None, path="$"):
         types = t if isinstance(t, list) else [t]
         ok = any({"object": isinstance(inst, dict), "array": isinstance(inst, list), "string": isinstance(inst, str),
                   "boolean": isinstance(inst, bool), "null": inst is None,
-                  "integer": isinstance(inst, int) and not isinstance(inst, bool),
+                  "integer": isinstance(inst, int) and not isinstance(inst, bool) or
+                             isinstance(inst, float) and inst.is_integer(),
                   "number": isinstance(inst, (int, float)) and not isinstance(inst, bool)}[x] for x in types)
         if not ok:
             return errs + ["%s: expected %s, got %r" % (path, t, inst)]
@@ -892,7 +893,10 @@ class ConfigKeys(Base):
                 {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api", "perplexity-api"),
                  "max_calls": 10},
                 {"brand": {"name": "Lumo"}, "competitors": None, "engines": None, "prices": None, "country": None},
-                {"brand": {"name": "Lumo"}, "country": ""}]
+                {"brand": {"name": "Lumo"}, "country": ""},
+                # JSON has one number type: a schema's "integer" takes 2.0, and so does Config
+                {"brand": {"name": "Lumo"}, "runs": 2.0, "max_calls": 50.0,
+                 "engines": [{"provider": "anthropic", "max_tokens": 1024.0, "max_searches": 3.0}]}]
         typo = dict(good[0], budget=1.0)
         # validate() always runs, so check.sh (stdlib only) checks every rule; jsonschema, when installed, agrees
         checks = [lambda c: validate(c, sc)]
@@ -905,6 +909,9 @@ class ConfigKeys(Base):
             self.assertEqual(gw.Config(self.write(c)).errors, [], c)
             for check in checks:
                 self.assertEqual(check(c), [], c)
+        whole = gw.Config(self.write(good[-1]))            # and the adapters get an int
+        got = (whole.runs, whole.max_calls, whole.engines[0]["max_tokens"], whole.engines[0]["max_searches"])
+        self.assertEqual([(x, type(x)) for x in got], [(2, int), (50, int), (1024, int), (3, int)])
         self.assertEqual(validate(typo, sc), ["$: unexpected key budget"])
         base = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}}
         # what Config refuses, the schema refuses too
@@ -913,17 +920,19 @@ class ConfigKeys(Base):
                    {"engines": [{"provider": "openai", "base_url": "http://evil.example/v1"}]},
                    {"engines": [{"provider": "openai", "key_env": "lower-case"}]},
                    {"country": "usa"}, {"runs": 0}, {"runs": gw.MAX_RUNS + 1}, {"max_calls": 0},
-                   {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}})
+                   {"runs": 2.5}, {"max_calls": 50.5}, {"runs": True},
+                   {"budget_usd": -1}, {"queries": ""}, {"prices": {"chatgpt-api": {"input_per_mtok": "cheap"}}},
+                   {"engines": [{"provider": "anthropic", "max_tokens": "lots"}]},
+                   {"engines": [{"provider": "anthropic", "max_searches": 0}]},
+                   {"engines": [{"provider": "openrouter", "max_results": 2.5}]},
+                   {"engines": [{"provider": "openai", "tool": 3}]})
         for bad in refused:
             c = dict(base, **bad)
             self.assertTrue(gw.Config(self.write(c)).errors, bad)
             for check in checks:
                 self.assertTrue(check(c), bad)
         # where the schema is stricter: values Config takes as they come
-        for bad in ({"brand": {"name": "Lumo", "domains": 5}}, {"prices": {"Claude": {"per_call": 0.01}}},
-                    {"engines": [{"provider": "anthropic", "max_tokens": "lots"}]},
-                    {"engines": [{"provider": "anthropic", "max_searches": 0}]},
-                    {"engines": [{"provider": "openai", "tool": 3}]}):
+        for bad in ({"brand": {"name": "Lumo", "domains": 5}}, {"prices": {"Claude": {"per_call": 0.01}}}):
             for check in checks:
                 self.assertTrue(check(dict(base, **bad)), bad)
         for check in checks:
@@ -940,21 +949,53 @@ class ConfigKeys(Base):
 
     def test_a_pasted_api_key_is_pointed_at_the_environment(self):
         secret = "sk-proj-DO-NOT-ECHO-0123456789"
-        cfg = gw.Config(self.write({"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "OPENAI_API_KEY": secret,
-                                    "engines": [{"provider": "openai", "api_key": secret},
-                                                {"provider": "anthropic", "apiKey": secret},
-                                                {"provider": "perplexity", "key": secret},
-                                                {"provider": "gemini", "token": secret}]}))
+        names = ("api_key", "apiKey", "key", "token", "api_token", "bearer_token", "access_token", "openai_key",
+                 "OPENAI_KEY", "secret_key", "access_key", "private_key", "api_secret", "client_secret", "password",
+                 "credentials", "auth", "Authorization")
+        engines = [{"provider": "anthropic", "id": "claude-%d" % i, k: secret} for i, k in enumerate(names)]
+        cfg = gw.Config(self.write({"brand": {"name": "Lumo", "domains": ["lumo.example"], "api_key": secret},
+                                    "OPENAI_API_KEY": secret, "brand_key": secret, "engines": engines}))
         self.assertEqual(cfg.errors, [])
         w = "\n".join(cfg.warnings)
-        for k in ("OPENAI_API_KEY", "engines[0].api_key", "engines[1].apiKey", "engines[2].key", "engines[3].token"):
+        for k in ["OPENAI_API_KEY", "brand_key", "brand.api_key"] + [
+                "engines[%d].%s" % (i, k) for i, k in enumerate(names)]:
             self.assertIn("unknown key %r; it is ignored: API keys are read from environment variables, never from "
                           "this file (an engine's key_env names the variable)" % k, w)
-        self.assertNotIn("did you mean", w)          # not 'api', the Gemini API selector, nor 'key_env'
+        # not 'api', the Gemini API selector, nor 'key_env', nor 'max_tokens', which went to int() with the key
+        self.assertNotIn("did you mean", w)
         self.assertNotIn(secret, w)
-        self.assertIn("(did you mean 'engines[0].max_tokens'?)",
-                      "\n".join(gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [
-                          {"provider": "anthropic", "max_token": 900}]})).warnings))
+        # a spelling of a real key still gets its suggestion, even one that says "token"
+        for typo in ("max_token", "maxTokens", "max-tokens"):
+            self.assertIn("(did you mean 'engines[0].max_tokens'?)",
+                          "\n".join(gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [
+                              {"provider": "anthropic", typo: 900}]})).warnings), typo)
+
+    def test_a_key_pasted_into_a_tuning_key_is_refused_and_never_echoed(self):
+        # max_tokens went straight to int(); the ValueError, value included, was recorded in the run file
+        secret = "sk-ant-DO-NOT-ECHO-0123456789"
+        for k in ("max_tokens", "max_searches", "max_results"):
+            cfg = gw.Config(self.write({"brand": {"name": "Lumo"}, "engines": [{"provider": "anthropic", k: secret}]}))
+            self.assertEqual(cfg.errors, ["engines[0].%s must be a positive integer" % k])
+            self.assertNotIn(k, cfg.engines[0])
+            self.assertNotIn(secret, json.dumps([cfg.errors, cfg.warnings, cfg.engines]))
+            code, out, err = self.main("check", "-c", os.path.join(self.tmp, gw.CONFIG_NAME))
+            self.assertEqual(code, 1, out + err)
+            self.assertNotIn(secret, out + err)
+            code, out, err = self.main("run", "-c", os.path.join(self.tmp, gw.CONFIG_NAME), "--dry-run")
+            self.assertNotEqual(code, 0, out + err)
+            self.assertNotIn(secret, out + err)
+
+    def test_every_key_the_code_reads_is_a_known_key(self):
+        # test_the_schema_lists_exactly_the_keys_config_reads ties the schema to the constants; this ties the
+        # constants to the code, so an adapter that starts reading a new engine key cannot leave every config that
+        # sets it warned about ("it is ignored") and refused by the schema while the tests pass
+        def read(var, *where):
+            src = "\n".join(inspect.getsource(x) for x in where)
+            return set(re.findall(r"\b%s(?:\.get\(|\[)[\"']([^\"']+)[\"']" % var, src))
+        self.assertEqual(read("eng", gw) | read("e", gw.Config.__init__), set(gw.ENGINE_KEYS))
+        self.assertEqual(read("raw", gw), set(gw.CONFIG_KEYS) - {"$schema"})           # $schema is for editors
+        self.assertEqual(read("d", gw.Entity.__init__), set(gw.ENTITY_KEYS))
+        self.assertEqual(read("p", gw.has_price, gw.cost_of), set(gw.PRICE_KEYS))
 
 
 # ── transport, for real, against a local server ───────────────────────────
