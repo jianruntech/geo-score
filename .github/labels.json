@@ -1,0 +1,27 @@
+{
+  "_note": "The repository's labels. scripts/sync_labels.py creates or updates them on GitHub and never deletes one; scripts/test_repo_meta.py checks that every label an issue form applies is listed here.",
+  "labels": [
+    {"name": "bug", "color": "d73a4a", "description": "Something isn't working"},
+    {"name": "accessibility", "color": "f143ab", "description": "Barrier affecting people with disabilities"},
+    {"name": "documentation", "color": "0075ca", "description": "Improvements or additions to documentation"},
+    {"name": "duplicate", "color": "cfd3d7", "description": "This issue or pull request already exists"},
+    {"name": "enhancement", "color": "a2eeef", "description": "New feature or request"},
+    {"name": "good first issue", "color": "7057ff", "description": "Good for newcomers"},
+    {"name": "help wanted", "color": "008672", "description": "Extra attention is needed"},
+    {"name": "invalid", "color": "e4e669", "description": "This doesn't seem right"},
+    {"name": "question", "color": "d876e3", "description": "Further information is requested"},
+    {"name": "wontfix", "color": "ffffff", "description": "This will not be worked on"},
+
+    {"name": "rubric", "color": "a9854c", "description": "A proposal or open question about the rubric's checks, weights or tiers"},
+    {"name": "benchmark", "color": "1e5c46", "description": "The public leaderboard: site nominations and benchmark data"},
+    {"name": "correction", "color": "b60205", "description": "A disputed leaderboard row: score, gate reason, label or not-scored reason"},
+    {"name": "engine", "color": "5319e7", "description": "Levels 2 and 3: an engine adapter, citation matching or watch numbers"},
+    {"name": "cli", "color": "1d76db", "description": "The geo-score command line"},
+    {"name": "mcp", "color": "0e8a16", "description": "The MCP server, its tools and the client installs"},
+    {"name": "action", "color": "fbca04", "description": "The GitHub Action and the CI examples"},
+    {"name": "needs-info", "color": "c5def5", "description": "Waiting on the reporter for a version, command or output"},
+    {"name": "accepted", "color": "2f8f52", "description": "Agreed and ready to work on"},
+    {"name": "declined", "color": "bfd4f2", "description": "Considered and closed with reasons, kept as the record"},
+    {"name": "out-of-scope", "color": "e99695", "description": "Remediation or fix requests: this repository only measures"}
+  ]
+}

@@ -25,15 +25,46 @@ use a private repository, or replace the commit step with `actions/upload-artifa
 ## Anything else
 
 Level 1 is a single file with no dependencies and a machine-readable mode, so any CI
-works:
+works. Download the CLI and the checksums from a pinned release, check the file, then score once:
 
 ```bash
-curl -sLO https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_score.py
-python3 geo_score.py "$SITE_URL" --json --quiet > geo-score.json
-python3 geo_score.py "$SITE_URL" --fail-under 40 --quiet
+rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
+curl -sSfLO "$rel/geo_score.py"
+curl -sSfLO "$rel/SHA256SUMS"
+grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256 && sha256sum -c geo_score.py.sha256 &&
+python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under 40
 ```
 
-Exit code is 1 when the score is below `--fail-under`, 0 otherwise.
+The `&&` chain is what keeps an unchecked file from running. Some CI shells, Azure Pipelines' script
+step among them, do not stop at a failed command, so a check on a line of its own would print `FAILED`
+and score anyway. The line goes to its own file rather than through a pipe because some `sha256sum`
+builds (macOS) pass empty input. On a machine without `sha256sum`, `shasum -a 256 -c geo_score.py.sha256`
+reads the same file.
+
+One run writes the report, writes the test file and applies the threshold. Two runs fetch the site
+twice and can print two different scores, so the report you keep would not be the run that passed or
+failed the build. Exit code is 1 when the score is below `--fail-under`, 2 when the site could not be
+fetched, and 0 otherwise; a file that does not match `SHA256SUMS` stops the step before scoring.
+
+### GitLab CI
+
+[`gitlab-ci.yml`](gitlab-ci.yml) is the same download, check and single run as a GitLab job on
+`python:3.12-slim`. It runs on schedules and on pushes to the default branch, keeps `geo-score.json` as
+an artifact, and hands `geo-score.xml` to GitLab as a JUnit report. Each check is a test case, so a
+check at zero shows as a failed test in the pipeline's Tests tab, and in the merge request widget when
+you also run the job in merge request pipelines (the file has the rule to uncomment).
+
+### Other CIs
+
+`--junit` writes one test case per check, a check at zero as a failure and a check the CLI cannot
+observe as skipped. Each of these CIs needs one directive to show it:
+
+| CI | What picks up `geo-score.xml` |
+|---|---|
+| Bitbucket Pipelines | Write it into a `test-results/` directory (`--junit test-results/geo-score.xml`); Pipelines reads that directory by itself |
+| Azure Pipelines | A `PublishTestResults@2` task with `testResultsFormat: JUnit`, `testResultsFiles: geo-score.xml` and `condition: succeededOrFailed()` |
+| Jenkins | The `junit` step, `junit 'geo-score.xml'`, in a `post { always { … } }` block |
+| CircleCI | A `store_test_results` step whose `path` is the file or the directory that holds it |
 
 ## Tracking the score over time
 
