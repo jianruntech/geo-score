@@ -158,6 +158,19 @@ def main():
                "a baseline that is also the json-out path is compared as it was before the run: %r" % o.get("delta"))
             p, o, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_ANNOTATIONS="false")
             ok("delta" not in o and "dropped-checks" not in o, "without a baseline there is no delta output")
+            # a baseline is any file: a check id in it that closes the code span must not render as Markdown
+            evil = "x` ![i](https://e.invalid/p.png) `"
+            base["checks"].append(dict(id=evil, state="scored", points=1, max=1))
+            io.open(os.path.join(tmp, "evil.json"), "w", encoding="utf-8").write(json.dumps(base))
+            summ_path = os.path.join(tmp, "evil-summary")
+            io.open(summ_path, "w").close()
+            q = subprocess.run([sys.executable, os.path.join(ROOT, "action", "summary.py"), "now.json", "false",
+                                "evil.json"], cwd=tmp, capture_output=True, text=True, timeout=60,
+                               env=dict(os.environ, GITHUB_STEP_SUMMARY=summ_path))
+            summ = io.open(summ_path, encoding="utf-8").read()
+            row = [line for line in summ.splitlines() if "e.invalid" in line]
+            ok(q.returncode == 0 and len(row) == 1 and "\\`" in row[0] and "\\!\\[i\\]" in row[0]
+               and "`p2.freshness`" in summ, "a baseline's check id cannot close its code span: %r" % row)
             p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="missing.json")
             ok(p.returncode == 2 and "is not a file" in p.stdout, "a baseline that is not a file is refused")
             p, _, _ = run(script, tmp, GEO_URL=blocked.origin, GEO_BASELINE="base.json", GEO_URLS_FROM="base.json")

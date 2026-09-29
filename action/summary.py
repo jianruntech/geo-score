@@ -41,6 +41,17 @@ def _md(s):
     return re.sub(r"([\\`*_\[\]()!|<>#~])", r"\\\1", s)
 
 
+# a check id as the tool writes it: g.robots, p2.sourced-stats, b.llms-full
+_ID = re.compile(r"[a-z0-9][a-z0-9.-]*")
+
+
+def _check_id(cid):
+    """A check id as a code span. A baseline file is not the tool's own output: an id in it that is not a plain id
+    is escaped outside a code span, where a backtick could otherwise close the span and render Markdown."""
+    cid = str(cid)
+    return "`%s`" % cid if _ID.fullmatch(cid) else _md(cid)
+
+
 def main(path, annotate, baseline=None):
     d = json.load(open(path, encoding="utf-8"))
     url, norm, band = d["target"], d["normalised"], d["band"]
@@ -87,7 +98,7 @@ def main(path, annotate, baseline=None):
     for c in checks:
         s = "%d/%d" % (c["points"], c["max"]) if c["state"] == "scored" else "—"
         why = _md(_cut(c.get("evidence") or c.get("reason") or "", 150))
-        lines.append("| %s `%s` | %s | %s |" % (NAMES.get(c["id"], ""), c["id"], s, why))
+        lines.append("| %s %s | %s | %s |" % (NAMES.get(c["id"], ""), _check_id(c["id"]), s, why))
     lines += ["", "— means the CLI cannot observe the check; it leaves the denominator instead of scoring 0.",
               "Scored against the open [AIV rubric %s](https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md)."
               % (d["rubric_version"], d["rubric_version"]), ""]
@@ -112,7 +123,7 @@ def baseline_section(diff):
         for x in moved:
             before, after = ("—" if v is None else "%d/%s" % (v, x["max"]) for v in (x["before"], x["after"]))
             change = x["state"] + (" %+d" % (x["after"] - x["before"]) if x["state"] in ("up", "down") else "")
-            lines.append("| %s `%s` | %s | %s | %s |" % (NAMES.get(x["id"], ""), x["id"], before, after, change))
+            lines.append("| %s %s | %s | %s | %s |" % (NAMES.get(x["id"], ""), _check_id(x["id"]), before, after, change))
     else:
         lines.append("No check moved.")
     lines.append("")
