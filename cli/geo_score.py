@@ -59,7 +59,8 @@ CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www
 # Chinese forms match the same kinds of heading (test_geo_score.py holds them to it): "Create your first app"
 # and "创建你的第一个应用", "How workflows work" and "工作流的工作原理", "Plans compared" and "版本对比".
 # Chinese has no word boundary, so a task verb that opens a noun is excluded by what follows it: 管理团队 is a
-# team, 处理器 a processor, 集成电路 a chip, 使用条款 the terms of use.
+# team, 处理器 a processor, 集成电路 a chip, 使用条款 the terms of use. So are two product specs: 对比度 is a contrast
+# ratio, 原理图 a schematic.
 QP_INTENT = re.compile(r"\b(how|what|why|when|where|which|who)\b|[?？]"
                     r"|^(get|getting|set|setting|add|adding|build|building|create|creating|use|using|"
                     r"install|installing|deploy|deploying|configure|connect|accept|send|manage|migrate|"
@@ -68,7 +69,7 @@ QP_INTENT = re.compile(r"\b(how|what|why|when|where|which|who)\b|[?？]"
                     r"|怎么|如何|什么|为什么|是否|多少|入门|教程|指南"
                     r"|^(创建|新建|设置|配置|安装|部署|使用|添加|连接|接入|集成|管理|迁移|选择|处理|自定义|编写|运行|"
                     r"测试|构建|搭建|发送|接收|开始|导入|导出|获取|开通|启用)(?!器|员|层|者|团队|电路|条款|协议)"
-                    r"|原理|运作方式|对比|区别|哪个好", re.I)
+                    r"|原理(?!图)|运作方式|对比(?!度)|区别|哪个好", re.I)
 # Short nav-like labels are not headings. \w matches CJK in Python, so the short-label branch must not
 # swallow real CJK headings: "怎么定价" (4 chars) is a question heading, "价格" is a nav label.
 NAV_LABEL = re.compile(r"^\s*(\w+\s*[|｜·]\s*\w+|[A-Za-z0-9_]{1,12}|[\u4e00-\u9fff]{1,3})\s*$")

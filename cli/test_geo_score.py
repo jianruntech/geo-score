@@ -430,6 +430,10 @@ ok(not _intent("价格"), "a bare Chinese nav label does not count")
 ok(not _intent("怎么买"), "a 3-char Chinese label is still treated as nav")
 ok(not _intent("Pricing"), "a single latin word is still a nav label")
 ok(not _intent("首页 · 价格"), "an a · b nav pattern does not count")
+for _h in ("超高动态对比度", "对比度与色域", "电路原理图下载"):
+    ok(not _intent(_h), "a product spec is not an explanation or a comparison: %s" % _h)
+for _h in ("工作流的工作原理", "版本对比", "两种方案的对比", "原理与实现"):
+    ok(_intent(_h), "an explanation or a comparison still counts: %s" % _h)
 
 # ── is_cjk judges the visible text, not the markup ──
 _zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>" + ("var a=1;" * 400) + "</script></head><body><p>" + ("见润科技面向跨境电商与出海企业提供人工智能落地服务。" * 6) + "</p></body></html>"
