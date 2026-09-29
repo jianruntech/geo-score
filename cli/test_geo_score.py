@@ -1332,8 +1332,12 @@ eq((_e.kind, _e.target), ("http_403", "https://x.test"), "HTTP errors take the f
 ok("(http_403): every page asked for answered with an HTTP error (HTTP 403, HTTP 404); see https://" in str(_e), str(_e))
 _tr = io.open(os.path.join(HERE, "..", "guide", "troubleshooting.md"), encoding="utf-8").read()
 _tslugs = {_re.sub(r"[^\w\- ]", "", h.strip().lower()).replace(" ", "-") for h in _re.findall(r"^#{1,6} (.+?)\s*$", _tr, _re.M)}
+_kinds = json.load(io.open(os.path.join(HERE, "..", "schema", "error.v1.json"), encoding="utf-8"))
+_kinds = _kinds["properties"]["error"]["properties"]["kind"]["description"]
 for _k, (_text, _anchor) in gs.FAULTS.items():
     ok(_anchor in _tslugs, "the %s error links to #%s, a heading in guide/troubleshooting.md" % (_k, _anchor))
+    ok(_re.search(r"(?<!\w)%s(?!\w)" % _re.escape("http_<code>" if _k == "http" else _k), _kinds),
+       "schema/error.v1.json names the %s kind" % _k)
 # --timeout: seconds per request, above 0 and no longer than a whole run may take
 for _t in ("0", "-1", "nan", "inf", "301"):
     _code, _err = _cli_exit(["x.test", "--timeout", _t])
