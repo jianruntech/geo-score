@@ -25,13 +25,18 @@ instead of scoring 0. There are two kinds:
   page was nested, or the site is not a Chinese-language site.
 
 **What to do.** Nothing, for the first kind. For the second, re-run from a network that can reach
-Wikidata and Wikipedia (see *Proxies* below). The report's `reason` field says which case applies.
+Wikidata and Wikipedia (see *Proxies* below). The report's `reason` field says which case applies, and the
+terminal report's footer lists the two kinds on separate lines: `Needs off-site search or judgement:` and
+`Not observable this run:`, each check there with a short reason.
 
 ## The score is capped at 40 (a gate scored zero)
 
 **Cause.** One of the three gate checks (`g.robots`, `g.reachable`, `g.ssr`) scored zero, which
 means a retrieval crawler cannot get the content at all. The cap applies only at zero; a middle tier
 is an ordinary deduction.
+
+The report's first lines name each gate at zero with the first sentence of its evidence
+(`GATE AT ZERO — g.ssr: …`), and the gate leads the *Biggest gaps*.
 
 **What to do.** Read the gate's evidence with `--explain`. `g.reachable` is the least stable check:
 a firewall or bot-protection service can answer the ten retrieval user-agents differently from one

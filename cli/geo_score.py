@@ -1312,6 +1312,17 @@ def tier_reason(cid, t, mx):
     nxt = ts[idx + 1]
     return "%s — tier %d (+%d) needs: %s" % (here, idx + 2, nxt[0] - t, nxt[1])
 
+def next_tier(cid, t, mx):
+    """(points the next tier up adds, what it needs), from the same tier conditions as tier_reason(). At the top
+    tier (0, ""); for a check with no tier table, the full headroom and no condition."""
+    ts = TIERS.get(cid)
+    if t >= mx:
+        return 0, ""
+    if not ts:
+        return mx - t, ""
+    nxt = next(p for p in ts if p[0] > t)
+    return nxt[0] - t, nxt[1]
+
 # ── sampling ───────────────────────────────────────────────────────────────
 def depth_in_scope(url, scope):
     """How deep a URL sits inside the scope the user gave, not inside the origin.
@@ -2177,21 +2188,73 @@ def write_badge(res, path):
     io.open(path, "w", encoding="utf-8").write(svg)
     return path, norm, bd
 
+def top_gaps(rows, n=3):
+    """The gaps every view leads with, in one order (rubric/v1.1.md, Report shape: unlocking fixes come first):
+    gates at zero, since they cap the score; then the most points the next tier up adds; then rubric order.
+    Each is (cid, name, next-tier gain, gain to full marks, what the next tier needs)."""
+    order = {spec[0]: i for i, spec in enumerate(SPEC)}
+    gaps = []
+    for cid, _pil, name, t, mx, _e in rows:
+        if t is None or t >= mx:
+            continue
+        gain, needs = next_tier(cid, t, mx)
+        gaps.append((not (cid.startswith("g.") and t == 0), -gain, order.get(cid, len(order)),
+                     (cid, name, gain, mx - t, needs)))
+    return [g[-1] for g in sorted(gaps, key=lambda g: g[:3])][:n]
+
+def first_sentence(text):
+    """The first sentence of a check's evidence, without its full stop."""
+    text = " ".join(str(text or "").split())
+    m = re.match(r"(.+?[.!?])(?=\s|$)", text)
+    return (m.group(1) if m else text).rstrip(".")
+
+def gate_line(rows):
+    """The headline when a gate is at zero: each gate at zero, the first sentence of its evidence, and the cap.
+    None when no gate is."""
+    zero = [(cid, e) for cid, _pil, _name, t, _mx, e in rows if cid.startswith("g.") and t == 0]
+    if not zero:
+        return None
+    return "GATE AT ZERO — %s; the score cannot exceed %d while a gate is at zero" % (
+        "; ".join("%s: %s" % (cid, clip(first_sentence(e), 200)) for cid, e in zero), GATE_CAP)
+
+# what a gate at zero means, in the words a shared line can carry
+GATE_SHARE = {"g.robots": "robots.txt disallows AI retrieval crawlers",
+              "g.reachable": "AI retrieval crawlers are refused",
+              "g.ssr": "crawlers get no server-rendered body text"}
+
 def share_line(res):
     """One line someone can paste somewhere. Short enough for a post, specific enough
     to mean something — the score, the band, and the single biggest gap."""
     rows, total, den, b, norm, bd, capped = score(res)
     host = urllib.parse.urlsplit(res["root"]).netloc.replace("www.", "") + \
            urllib.parse.urlsplit(res["root"]).path
-    gaps = sorted([(mx - t, name) for _, _, name, t, mx, _ in rows
-                   if t is not None and t < mx], reverse=True)
-    top = gaps[0] if gaps else None
+    top = top_gaps(rows, 1)
     line = "%s scores %d/100 (%s) for AI answer-engine readiness." % (host, norm, bd)
     if capped:
-        line += " Gate-capped — a retrieval crawler cannot reach the content at all."
+        zero = [cid for cid, _pil, _name, t, _mx, _e in rows if cid.startswith("g.") and t == 0]
+        line += " Gate-capped — %s." % "; ".join(GATE_SHARE.get(cid, "%s is at zero" % cid) for cid in zero)
     elif top:
-        line += " Biggest gap: %s (+%d)." % (top[1].lower(), top[0])
+        line += " Biggest gap: %s (+%d at the next tier)." % (top[0][1].lower(), top[0][2])
     return line + " Measured with the open AIV rubric — github.com/jianruntech/geo-score"
+
+# why a check that can be observed was not this run, in a few words for the report's footer; the evidence
+# carries the whole sentence
+UNOBSERVED = {"p1.breadcrumb": "no nested page sampled", "p4.cn-engines": "not a Chinese-language site",
+              "p3.sameas": "no profile answered from this network",
+              "p3.knowledge-graph": "Wikidata and Wikipedia did not all answer",
+              "g.robots": "robots.txt could not be read"}
+
+def unobserved_reason(cid, ev):
+    """A few words on why this run did not observe a check, from its evidence."""
+    ev = str(ev or "")
+    if ev.startswith("The run reached its"):
+        return "the run's time limit came first"
+    if cid in UNOBSERVED:
+        return UNOBSERVED[cid]
+    why = clip(re.split(r"\s+—\s+|[;:]\s|\.(?:\s|$)", ev.strip(), maxsplit=1)[0], 60)
+    return why[:1].lower() + why[1:] if why[1:2].islower() else why
+
+LEGEND = "✓ full · ◐ partial · ✗ zero · ⊘ not measured (left the denominator)"
 
 def landed_note(res):
     """A one-line note when the site handed back a different origin than the one asked
@@ -2236,7 +2299,8 @@ def brief(res):
     print(c.grey + "─" * 58 + c.r)
     print("  %s%s%d / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.b, big, bd, c.r)
           + ("%s          %d points to %s%s" % (c.grey, gap[0], gap[1], c.r) if gap else ""))
-    if capped: print("  %sGATE CAPPED — a gate check scored zero%s" % (c.red, c.r))
+    gl = gate_line(rows)
+    if gl: print("  %s%s%s" % (c.red, gl, c.r))
     print()
     for pil in dict.fromkeys(r[1] for r in rows):
         rs = [r for r in rows if r[1] == pil]
@@ -2246,13 +2310,13 @@ def brief(res):
                         (c.green + "✓" + c.r if r[3] == r[4] else
                          (c.red + "✗" + c.r if r[3] == 0 else c.amber + "◐" + c.r)) for r in rs)
         print("  %-20s %s%6s%s   %s" % (pil, c.dim, ("%d/%d" % (got, mx)) if mx else "—", c.r, marks))
-    gaps = sorted([(mx - t, name) for _, _, name, t, mx, _ in rows
-                   if t is not None and t < mx], reverse=True)[:3]
+    print("  %s%s%s" % (c.grey, LEGEND, c.r))
+    gaps = top_gaps(rows)
     if gaps:
         print()
         print("  %sBiggest gaps%s" % (c.b, c.r))
-        for d, name in gaps:
-            print("   %s+%-2d%s  %s" % (c.brass, d, c.r, name))
+        for _cid, name, gain, full, _needs in gaps:
+            print("   %s+%d next tier (+%d to full)%s  %s" % (c.brass, gain, full, c.r, name))
     print()
 
 def report(res, args):
@@ -2266,7 +2330,8 @@ def report(res, args):
     big = c.green if norm >= 66 else (c.amber if norm >= 31 else c.red)
     print("  %s%s%d%s%s / 100%s   %s%s%s%s" % (c.b, big, norm, c.r, c.grey, c.r, c.b, big, bd, c.r))
     if gap: print("  %s%d points to %s%s" % (c.grey, gap[0], gap[1], c.r))
-    if capped: print("  %sGATE CAPPED — a gate check scored zero%s" % (c.red, c.r))
+    gl = gate_line(rows)
+    if gl: print("  %s%s%s" % (c.red, gl, c.r))
     _ln = landed_note(res)
     if _ln: print("  %s%s%s" % (c.amber, _ln, c.r))
     print()
@@ -2287,14 +2352,14 @@ def report(res, args):
                 if tr: print("      %s%s%s" % (c.brass, clip(tr, 112), c.r))
             if e: print("      %s%s%s" % (c.dim, clip(e, 112), c.r))
             if t is not None and t < mx: print("      %s%s%s" % (c.grey, doc_url(cid), c.r))
-    gaps = sorted([(mx - t, cid, name, tier_reason(cid, t, mx))
-                   for cid, pil, name, t, mx, e in rows if t is not None and t < mx],
-                  reverse=True)[:3]
+    print("  %s%s%s" % (c.grey, LEGEND, c.r))
+    print()
+    gaps = top_gaps(rows)
     if gaps:
         print("  %sBiggest gaps%s" % (c.b, c.r))
-        for d, _cid, name, tr in gaps:
-            need = tr.split("needs: ", 1)[-1] if "needs: " in tr else ""
-            print("   %s+%-2d%s  %-32s %s%s%s" % (c.brass, d, c.r, name, c.grey, need[:60], c.r))
+        for _cid, name, gain, full, needs in gaps:
+            print("   %s+%d next tier (+%d to full)%s  %-32s %s%s%s" % (
+                c.brass, gain, full, c.r, name, c.grey, (" needs: " + clip(needs, 72)) if needs else "", c.r))
         print()
     if b: print("  %s+%d bonus%s (outside the denominator)" % (c.brass, b, c.r))
     skipped = [r for r in rows if r[3] is None]
@@ -2302,15 +2367,20 @@ def report(res, args):
           % (c.grey, total, den, len(skipped), RUBRIC, c.r))
     for note in sample_notes(res):
         print("  %s%s%s" % (c.grey, note, c.r))
-    if skipped:
-        print("  %sNeeds judgement: %s%s" % (c.grey, ", ".join(r[0] for r in skipped), c.r))
+    judged = [r[0] for r in skipped if r[0] in NEEDS_JUDGEMENT]
+    unseen = ["%s (%s)" % (r[0], unobserved_reason(r[0], r[5])) for r in skipped if r[0] not in NEEDS_JUDGEMENT]
+    if judged:
+        print("  %sNeeds off-site search or judgement: %s%s" % (c.grey, ", ".join(judged), c.r))
+    if unseen:
+        print("  %sNot observable this run: %s%s" % (c.grey, ", ".join(unseen), c.r))
     print()
     print("  %sFull rubric and what each tier means:%s" % (c.grey, c.r))
-    print("  %shttps://github.com/jianruntech/geo-score%s" % (c.brass, c.r))
+    print("  %s%s%s" % (c.brass, RUBRIC_URL, c.r))
     print("  %sScore moved, or a check shows —? %s%s" % (c.grey, TROUBLESHOOTING_URL, c.r))
     print()
 
-TROUBLESHOOTING_URL = "https://github.com/jianruntech/geo-score/blob/main/guide/troubleshooting.md"
+# pinned to this release's tag, like doc_url(): the page explains the scorer that printed the link
+TROUBLESHOOTING_URL = "https://github.com/jianruntech/geo-score/blob/v%s/guide/troubleshooting.md" % __version__
 
 def as_json(res):
     rows, total, den, b, norm, bd, capped = score(res)
@@ -2332,7 +2402,7 @@ def as_json(res):
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
                "Checks needing off-site search or human judgement left the denominator."] + sample_notes(res))
 
-RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md" % RUBRIC
+RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/v%s/rubric/%s.md" % (__version__, RUBRIC)
 # GitHub heading anchors in rubric/v1.1.md; test_geo_score.py checks every one still exists
 DOC_ANCHOR = {
     "g.robots": "retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots",
@@ -2577,8 +2647,8 @@ def compare(pairs, args):
             for d, nm in behind:
                 print("   %s+%-2d%s  %s" % (c.brass, d, c.r, nm))
             print()
-    print("  %s%s scored with rubric %s · https://github.com/jianruntech/geo-score%s"
-          % (c.grey, "Both" if len(cols) == 2 else "All", RUBRIC, c.r))
+    print("  %s%s scored with rubric %s · %s%s"
+          % (c.grey, "Both" if len(cols) == 2 else "All", RUBRIC, RUBRIC_URL, c.r))
     print()
 
 def target_url(raw):

@@ -224,8 +224,62 @@ ok(len(sl) < 260, "it fits in a post, got %d chars" % len(sl))
 gapped = dict(full); gapped["p2.answer-passages"] = 0
 ok("biggest gap" in gs.share_line(mk(gapped)).lower(), "a site with a gap names its biggest one")
 capline = gs.share_line(mk(gate_zero))
-ok("cannot reach" in capline, "a gate-capped site says why, instead of naming a content gap")
+ok("server-rendered" in capline and "cannot reach" not in capline,
+   "a gate-capped site says which gate, instead of claiming every crawler is shut out: %r" % capline)
 ok("Biggest gap" not in capline, "and does not also claim a content gap — the cap is the story")
+_two = dict(full); _two["g.robots"] = 0; _two["g.reachable"] = 0
+ok("robots.txt disallows AI retrieval crawlers; AI retrieval crawlers are refused." in gs.share_line(mk(_two)),
+   "every gate at zero is named, in rubric order")
+ok("(+4 at the next tier)" in gs.share_line(mk(gapped)), "the share line's number is the next tier's, not the headroom")
+
+# ── the headline and the gaps: gates at zero first, then the next tier's gain, then rubric order ──
+import argparse as _ap, contextlib as _ctx
+def _shown(res, view):
+    buf = io.StringIO()
+    with _ctx.redirect_stdout(buf):
+        gs.report(res, _ap.Namespace(explain=False)) if view == "report" else gs.brief(res)
+    return buf.getvalue()
+_mixed = dict(full, **{"g.reachable": 0, "p2.answer-passages": 0, "p1.llms-txt": 0, "p2.question-intent": 3,
+                       "p1.organization": 3, "g.robots": 3})
+_rows = gs.score(mk(_mixed))[0]
+eq([g[:4] for g in gs.top_gaps(_rows, 5)],
+   [("g.reachable", "Reachable to retrieval agents", 3, 5), ("p2.answer-passages", "Self-contained answer passages", 4, 9),
+    ("g.robots", "Crawlers allowed in robots.txt", 2, 2), ("p1.llms-txt", "llms.txt present and structured", 2, 5),
+    ("p1.organization", "Organization + WebSite schema", 2, 3)],
+   "a gate at zero leads; then the next tier's gain; ties in rubric order; a gate at a middle tier is an ordinary gap")
+eq(gs.top_gaps(gs.score(mk(full))[0]), [], "full marks: no gaps")
+eq(gs.next_tier("p2.answer-passages", 4, 9), (3, gs.TIERS["p2.answer-passages"][2][1]), "next_tier reads the tier table")
+_ev = dict((k, "") for k in full)
+_ev["g.ssr"] = "0 of 8 sampled pages carry substantive body text in the HTML response. More detail."
+_ev["g.robots"] = "robots.txt (40 bytes): a Disallow: / applies to 10 of the 10 retrieval crawlers — all 10. It also…"
+_capped = mk(dict(full, **{"g.ssr": 0, "g.robots": 0})); _capped["ev"] = _ev
+eq(gs.gate_line(gs.score(_capped)[0]),
+   "GATE AT ZERO — g.robots: robots.txt (40 bytes): a Disallow: / applies to 10 of the 10 retrieval crawlers — all 10; "
+   "g.ssr: 0 of 8 sampled pages carry substantive body text in the HTML response; "
+   "the score cannot exceed 40 while a gate is at zero", "the cap line names every gate at zero, with its evidence")
+eq(gs.gate_line(gs.score(mk(gate_mid))[0]), None, "a gate at a middle tier caps nothing and gets no line")
+for view in ("report", "brief"):
+    out = _shown(_capped, view)
+    ok(gs.gate_line(gs.score(_capped)[0]) in out, "%s prints the cap line" % view)
+    ok(gs.LEGEND in out, "%s explains its marks" % view)
+_foot = mk(dict(full, **{"p1.breadcrumb": None, "p3.listings": None, "p3.mentions": None,
+                         "p4.question-coverage": None, "p2.question-intent": None}))
+_foot["ev"]["p1.breadcrumb"] = "No nested pages in the sample — the check leaves the denominator."
+_foot["ev"]["p2.question-intent"] = "No question-intent lexicon for ja — the check leaves the denominator."
+_out = _shown(_foot, "report")
+ok("  Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage\n" in _out,
+   "the judgement line lists only the checks that need off-site search or judgement")
+ok("  Not observable this run: p1.breadcrumb (no nested page sampled), p2.question-intent (no question-intent "
+   "lexicon for ja)\n" in _out, "the rest are not observed this run, each with its reason: %r" % _out[-700:])
+eq(gs.unobserved_reason("p3.sameas", "The run reached its 300 s limit before every sameAs profile came back; not observed."),
+   "the run's time limit came first", "a check the deadline stopped says so")
+# links in the footer name the release that printed them, as doc_url() does
+for _u in (gs.RUBRIC_URL, gs.TROUBLESHOOTING_URL):
+    ok("/blob/v%s/" % gs.__version__ in _u and _u in _out, "the footer links to this release's tag: %s" % _u)
+import tokenize as _tk
+with open(os.path.join(HERE, "geo_score.py"), "rb") as _f:
+    _code = [t.string for t in _tk.tokenize(_f.readline) if t.type != _tk.COMMENT]
+eq([x for x in _code if "blob/main" in x], [], "geo_score.py links nowhere that moves with the main branch")
 
 
 # ── 路径型站点：前缀不是层级 ──

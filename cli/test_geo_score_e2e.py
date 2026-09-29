@@ -24,8 +24,8 @@ import sys
 for _k in [k for k in os.environ if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "ftp_proxy")]:
     del os.environ[_k]
 
-import atexit, collections, concurrent.futures, difflib, gzip, importlib.util, json, posixpath, re, socket, subprocess
-import threading, time, traceback, unittest
+import argparse, atexit, collections, concurrent.futures, contextlib, difflib, gzip, importlib.util, io, json, posixpath
+import re, socket, subprocess, threading, time, traceback, unittest
 import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -427,6 +427,36 @@ def injection_sites(rep):
     return found
 
 
+def views(name):
+    """The default report, --brief and --share of one fixture, as a terminal shows them (colour is off)."""
+    res = H.result(name)["res"]
+    out = {}
+    for key, show in (("report", lambda: gs.report(res, argparse.Namespace(explain=False))),
+                      ("brief", lambda: gs.brief(res))):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            show()
+        out[key] = buf.getvalue()
+    out["share"] = gs.share_line(res)
+    return res, out
+
+
+GAP_ROW = re.compile(r"^   \+(\d+) next tier \(\+(\d+) to full\)  (.+?)(?:\s+needs: .*)?$")
+
+
+def gap_rows(text):
+    """(check id, next-tier gain, gain to full) for each row under a printed view's "Biggest gaps"."""
+    ids = {spec[2]: spec[0] for spec in gs.SPEC}
+    lines = text.splitlines()
+    rows = []
+    for line in lines[lines.index("  Biggest gaps") + 1:] if "  Biggest gaps" in lines else []:
+        m = GAP_ROW.match(line)
+        if not m:
+            break
+        rows.append((ids[m.group(3).strip()], int(m.group(1)), int(m.group(2))))
+    return rows
+
+
 # ── tests ───────────────────────────────────────────────────────────────────
 def setUpModule():
     H.start()
@@ -764,6 +794,68 @@ class EndToEnd(unittest.TestCase):
         self.assertIn("Sampled 4 of the 8 pages asked for: no more were found (sample source: sitemap).",
                       hostile_report()["notes"])
         self.assertEqual(len(report_for("good", masked=False)["notes"]), 1, "a full sample adds no note")
+
+    def test_the_headline_names_the_gate_at_zero(self):
+        # the headline once read "GATE CAPPED — a gate check scored zero" and named no gate, the gaps left the gate
+        # out, and --share said a crawler "cannot reach the content" of a site whose g.reachable was 5/5
+        for name, gate, says in (("js-shell", "g.ssr", "crawlers get no server-rendered body text"),
+                                 ("robots-blocks", "g.robots", "robots.txt disallows AI retrieval crawlers"),
+                                 ("bot-wall", "g.reachable", "AI retrieval crawlers are refused")):
+            with self.subTest(fixture=name):
+                res, v = views(name)
+                ev = res["ev"][gate].split(". ")[0].rstrip(".")
+                head = "  GATE AT ZERO — %s: %s; the score cannot exceed %d while a gate is at zero" % (
+                    gate, ev, gs.GATE_CAP)
+                for view in ("report", "brief"):
+                    self.assertIn(head, v[view].splitlines(), "%s names the gate and its evidence" % view)
+                    self.assertEqual(gap_rows(v[view])[0][0], gate, "%s lists the gate first" % view)
+                self.assertIn("Gate-capped — %s." % says, v["share"])
+                self.assertNotIn("cannot reach", v["share"])
+                self.assertNotIn("Biggest gap", v["share"], "the cap is the story, not a content gap")
+        self.assertNotIn("GATE", "".join(views("partial")[1].values()), "no gate at zero, no gate line")
+
+    def test_every_view_leads_with_the_same_gaps(self):
+        # the default view and --brief sorted their three gaps differently, and each printed the full headroom
+        # beside the next tier's condition; every view now shares top_gaps(), each row's number is that tier's
+        for name in ("good", "partial", "js-shell", "robots-blocks", "bare", "cjk"):
+            with self.subTest(fixture=name):
+                res, v = views(name)
+                rows = {r[0]: r for r in gs.score(res)[0]}
+                want = [(cid, gain, full) for cid, _n, gain, full, _needs in gs.top_gaps(gs.score(res)[0])]
+                self.assertEqual(gap_rows(v["report"]), want)
+                self.assertEqual(gap_rows(v["brief"]), want)
+                for cid, gain, full in want:
+                    _, _, _, t, mx, _ = rows[cid]
+                    self.assertIn("(+%d) needs: " % gain, gs.tier_reason(cid, t, mx), cid)
+                    self.assertEqual(full, mx - t, cid)
+                if not want:
+                    self.assertNotIn("gap", v["share"].lower())
+                elif not want[0][0].startswith("g.") or rows[want[0][0]][3] != 0:
+                    self.assertIn("Biggest gap: %s (+%d at the next tier)." % (rows[want[0][0]][2].lower(), want[0][1]),
+                                  v["share"])
+                for view in ("report", "brief"):
+                    self.assertIn("  " + gs.LEGEND, v[view].splitlines())
+
+    def test_the_footer_tells_judgement_from_not_observed(self):
+        # "Needs judgement" listed p4.cn-engines, which is simply not a Chinese site, beside the three checks that do
+        # need off-site search or judgement
+        for name in FIXTURES:
+            with self.subTest(fixture=name):
+                res, v = views(name)
+                lines = v["report"].splitlines()
+                none = [cid for cid in SPEC_IDS if res["tier"].get(cid) is None]
+                judged = [x for x in lines if x.startswith("  Needs off-site search or judgement: ")]
+                unseen = [x for x in lines if x.startswith("  Not observable this run: ")]
+                want = [cid for cid in none if cid in gs.NEEDS_JUDGEMENT]
+                self.assertEqual([x.split(": ", 1)[1].split(", ") for x in judged], [want] if want else [])
+                rest = ["%s (%s)" % (cid, gs.unobserved_reason(cid, res["ev"][cid]))
+                        for cid in none if cid not in gs.NEEDS_JUDGEMENT]
+                self.assertEqual([x.split(": ", 1)[1] for x in unseen], [", ".join(rest)] if rest else [])
+                self.assertNotIn("Needs judgement:", v["report"])
+                for url in (gs.RUBRIC_URL, gs.TROUBLESHOOTING_URL):
+                    self.assertIn(url, v["report"])
+                    self.assertIn("/blob/v%s/" % gs.__version__, url)
+        self.assertIn("p4.cn-engines (not a Chinese-language site)", views("good")[1]["report"])
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)
