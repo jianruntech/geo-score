@@ -349,7 +349,8 @@ EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECUR
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
-EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md"]
+EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
+               "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
@@ -381,7 +382,14 @@ for pth in _g3.glob("**/*.md", recursive=True):
         check(os.path.exists(tgt), f"{pth}: 链接指向不存在的 {t!r}")
 
 # 16 · 公开榜单页必须与 benchmark/results.json 同步 —— 页面是生成的，不该手改
+# the pages' default host is defined once, in build_page.py; rules 17 and 30 read it from there
+_bp = io.open("benchmark/build_page.py", encoding="utf-8").read() if os.path.exists("benchmark/build_page.py") else ""
+_m = re.search(r'^DEFAULT_SITE = "([^"]+)"', _bp, re.M)
+SITE_DEFAULT = _m.group(1) if _m else ""
+_m = re.search(r'^ZH_PATH = "([^"]+)"', _bp, re.M)
+SITE_ZH_PATH = _m.group(1) if _m else ""
 if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
+    check(bool(SITE_DEFAULT and SITE_ZH_PATH), "benchmark/build_page.py: DEFAULT_SITE or ZH_PATH not found")
     import subprocess
     # llms.txt 和 sitemap.xml 也是生成的。llms.txt 是 AI 爬虫唯一真会读的那个文件，
     # 上面的旧数字就是直接递给每个引擎的错答案 —— 它必须和 results.json 一起动。
@@ -430,7 +438,7 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
               f"docs/{card} 不存在 —— 跑一遍 python3 benchmark/build_og.py 并提交")
         check('name="twitter:card" content="summary_large_image"' in t,
               f"docs/{f}: 缺 twitter:card，X 上只会显示一条窄链接")
-        _base = os.environ.get("GEO_SITE_BASE", "https://jianruntech.github.io/geo-score").rstrip("/")
+        _base = os.environ.get("GEO_SITE_BASE", SITE_DEFAULT).rstrip("/")
         check(f'og:image" content="{_base}/{card}"' in t,
               f"docs/{f}: og:image 没指向 {card}")
         check("rel=\"canonical\"" in t, f"docs/{f}: 缺 canonical")
@@ -523,7 +531,9 @@ def _cal_facts(p):
     t = re.sub(r"\]\([^)]*\)", "]", io.open(p, encoding="utf-8").read())
     return (len(re.findall(r"^## ", t, re.M)),
             {int(x) for x in re.findall(r"(?<![\w.])(\d{2,})(?![\w])", t) if int(x) >= 10})
-for base in ("rubric/calibration-v1.1",):
+for base in ("rubric/calibration-v1.1", "rubric/bands-analysis"):
+    if not os.path.exists(base + ".md"):
+        continue
     (se, ne), (sz, nz) = _cal_facts(base + ".md"), _cal_facts(base + ".zh-CN.md")
     check(se == sz, "%s 中英章节数不同：%d vs %d" % (base, se, sz))
     check(ne == nz, "%s 中英数字不一致 —— 只在英文：%s；只在中文：%s"
@@ -599,6 +609,16 @@ if os.path.exists("benchmark/validity.json"):
     wz = {"%d%%" % round(100 * vj["exact_tier_agreement"]), "%.1f" % -vj["normalised_difference"]["mean"],
           "%d 对" % vj["n_check_pairs"]}
     check(all(w in tz for w in wz), f"README.zh-CN.md: 与人工审计一致度的数字必须等于 benchmark/validity.json：{sorted(wz)}")
+    # the like-for-like headline (checks both scored) must be the arithmetic of the per-site rows it summarises
+    cc = vj.get("common_checks")
+    check(bool(cc), "benchmark/validity.json: no common_checks block (python3 benchmark/validity.py)")
+    if cc:
+        dd = [s["common_checks_cli_pct"] - s["common_checks_human_pct"] for s in vj["sites"]
+              if s.get("common_checks_cli_pct") is not None and s.get("common_checks_human_pct") is not None]
+        got = {"n": len(dd), "mean": round(sum(dd) / len(dd), 1) if dd else None, "min": min(dd, default=None),
+               "max": max(dd, default=None), "mean_abs": round(sum(abs(x) for x in dd) / len(dd), 1) if dd else None}
+        check(all(cc.get(k) == v for k, v in got.items()),
+              f"benchmark/validity.json: common_checks {({k: cc.get(k) for k in got})} is not what its sites give {got}")
     for f in (f for f in ("README.md", "README.zh-CN.md", "cli/README.md") if os.path.exists(f)):
         t = io.open(f, encoding="utf-8").read()
         check("5 to 15 points" not in t and "低 5 到 15 分" not in t,
@@ -686,6 +706,229 @@ if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json"):
         check(raw.get("normalised") == r["normalised"],
               f"benchmark/raw/{fn} scores {raw.get('normalised')}, results.json says {r['normalised']}")
     check(len(names) == len(scored), f"benchmark/raw has {len(names)} files for {len(scored)} scored sites")
+
+# ── 30. The leaderboard's canonical URLs are the ones the READMEs link ──
+# The Pages copy kept declaring itself canonical long after it stopped updating, so engines were told
+# the stale page was the real one. Each page's canonical must be the leaderboard link its README gives,
+# and every leaderboard link in that README must be that canonical.
+for page, readme in (("docs/index.html", "README.md"), ("docs/zh.html", "README.zh-CN.md")):
+    if not (os.path.exists(page) and os.path.exists(readme)):
+        continue
+    m = re.search(r'<link rel="canonical" href="([^"]+)">', io.open(page, encoding="utf-8").read())
+    canon = m.group(1) if m else None
+    links = set(re.findall(r'\]\((https?://[^)\s]*/leaderboard[^)\s]*)\)', io.open(readme, encoding="utf-8").read()))
+    check(canon in links, f"{page}: canonical {canon} is not the leaderboard URL {readme} links ({sorted(links)})")
+    check(links <= {canon}, f"{readme}: links the leaderboard as {sorted(links - {canon})}, but {page} declares {canon}")
+    want = os.environ.get("GEO_SITE_BASE", SITE_DEFAULT).rstrip("/") + (SITE_ZH_PATH if page.endswith("zh.html") else "")
+    check(canon == want, f"{page}: canonical {canon} is not {want}, the base build_page.py builds for "
+                         f"(python3 benchmark/build_page.py)")
+
+# ── 31. The China-gap block in benchmark/README.md quotes stats.json ──
+# "Sites built for the Chinese market score 20 points lower" was one sentence over a sector label. The block that
+# replaced it states the definition, the language gap, the matched families and the heuristic bound; each of its
+# figures has to be the one stats.json holds (python3 benchmark/run.py --readme-only rewrites both).
+if os.path.exists("benchmark/stats.json") and os.path.exists("benchmark/README.md"):
+    sj3 = json.load(io.open("benchmark/stats.json", encoding="utf-8"))
+    m = re.search(r"<!-- china-gap:.*?-->(.*?)<!-- /china-gap -->", io.open("benchmark/README.md", encoding="utf-8").read(), re.S)
+    check(bool(m), "benchmark/README.md: no generated China-gap block (python3 benchmark/run.py --readme-only)")
+    g, d = sj3["china_gap"], sj3.get("china_gap_detail")
+    if m:
+        blk = " ".join(m.group(1).split())
+        want = ["score %d points lower** (95%% CI %d–%d): median %d against %d for the other %d scored sites"
+                % (g["gap"], g["ci"][0], g["ci"][1], g["median_china"], g["median_rest"], g["n_rest"])]
+        if d:
+            lg, x, f, mt, kg = d["by_language"], d["crosstab"], d["families"], d["by_method"], d["knowledge_graph"]["by_language"]
+            want += ["the %d Chinese-language sites score %d points lower than the %d others (95%% CI %d–%d)"
+                     % (lg["n_group"], lg["gap"], lg["n_vs"], lg["ci"][0], lg["ci"][1]),
+                     "%d of the %d China-sector sites" % (x["china"]["other"], x["china"]["zh"] + x["china"]["other"]),
+                     "%d sites in other sectors serve Chinese" % x["rest"]["zh"],
+                     "on %d of %d Chinese-language sites against %d of %d others"
+                     % (kg["zh"]["unobservable"], kg["zh"]["n"], kg["other"]["unobservable"], kg["other"]["n"]),
+                     "the gap would be %s points" % " or ".join(str(d["kg_imputed"][k]["gap"])
+                                                                for k in sorted(d["kg_imputed"], key=int))]
+            if f["range"]:
+                want += ["gap runs from %d points (" % f["range"][0], ") to %d (" % f["range"][1]]
+            if mt["heuristic_share_pct"] is not None:
+                want += ["the gap is %.1f points, and %.1f of them" % (mt["total"], mt["heuristic"]),
+                         "at most %d%% of the gap" % mt["heuristic_share_pct"]]
+        missing = [w for w in want if w not in blk]
+        check(not missing, f"benchmark/README.md: the China-gap block does not match benchmark/stats.json; missing {missing} "
+                           f"(python3 benchmark/run.py --readme-only)")
+
+# ── 32. The reproducibility tables are what retest.py derives from the committed records ──
+# The ±5 figure was once compared by a `python3 -c "..."` step nobody committed. retest.py now derives every
+# figure in reproducibility.json and every table in REPRODUCIBILITY.md from the records in that file.
+if os.path.exists("benchmark/retest.py") and os.path.exists("benchmark/reproducibility.json"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/retest.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/reproducibility.json or REPRODUCIBILITY.md is not what retest.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+
+# ── 33. The sample the benchmark README describes is the one raw/ records ──
+# "The same eight-page sample" was printed over 55 rows scored on a single page. The opening sentence counts the rows
+# scored on fewer than stats.py's THIN_N pages, and the Every-site table marks each of them with its page count.
+if os.path.isdir("benchmark/raw") and os.path.exists("benchmark/results.json") and os.path.exists("benchmark/stats.py"):
+    _m = re.search(r"^THIN_N = (\d+)", io.open("benchmark/stats.py", encoding="utf-8").read(), re.M)
+    check(bool(_m), "benchmark/stats.py: THIN_N not found")
+    brd_raw = io.open("benchmark/README.md", encoding="utf-8").read()
+    if _m:
+        thin_n, sn = int(_m.group(1)), {}
+        for r in json.load(io.open("benchmark/results.json", encoding="utf-8"))["results"]:
+            if r.get("normalised") is None:
+                continue
+            fn = os.path.join("benchmark/raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
+            if r.get("sample_n") is not None:
+                sn[r["site"]] = r["sample_n"]
+            elif os.path.exists(fn):
+                sn[r["site"]] = len(json.load(io.open(fn, encoding="utf-8")).get("sampled_urls") or [])
+        thin_sites = {x for x, k in sn.items() if k < thin_n}
+        want = ("on up to eight pages per site; %d sites were scored on fewer than %d pages (%d of them on a single page)"
+                % (len(thin_sites), thin_n, sum(1 for k in sn.values() if k == 1)))
+        check(want in " ".join(brd_raw.split()),
+              f"benchmark/README.md: the sample sentence must read '{want}', as raw/ gives (python3 benchmark/run.py --readme-only)")
+        check("eight-page sample" not in brd_raw, "benchmark/README.md: 'the same eight-page sample' is back; raw/ says otherwise")
+        marked = dict(re.findall(r"^\| \d+ \| (\S+) \*\(thin sample: (\d+) pages?\)\* \|", brd_raw, re.M))
+        check(set(marked) == thin_sites,
+              "benchmark/README.md: the rows marked thin sample are not the ones raw/ gives; unmarked %s, marked in error %s"
+              % (sorted(thin_sites - set(marked))[:5], sorted(set(marked) - thin_sites)[:5]))
+        check(all(int(k) == sn.get(x) for x, k in marked.items()),
+              "benchmark/README.md: a thin-sample page count differs from raw/: %s"
+              % sorted(x for x, k in marked.items() if int(k) != sn.get(x))[:5])
+
+# ── 34. The leaderboard's Dataset markup describes the data it links ──
+# It once called `readiness` the 0-100 score (that is `normalised`; readiness is raw points) and pointed its download
+# at a blob/main page that moves with every run. Every variableMeasured name must be a key of every scored row, and
+# every download must be a file in benchmark/ at the tag of the CLI version the page was built with.
+if os.path.exists("benchmark/results.json") and os.path.exists("cli/geo_score.py"):
+    _rows = [r for r in json.load(io.open("benchmark/results.json", encoding="utf-8"))["results"]
+             if r.get("normalised") is not None]
+    _ver = re.search(r'^__version__ = "([^"]+)"', io.open("cli/geo_score.py", encoding="utf-8").read(), re.M).group(1)
+    for page in ("docs/index.html", "docs/zh.html"):
+        if not os.path.exists(page):
+            continue
+        _m = re.search(r'<script type="application/ld\+json">(.*?)</script>', io.open(page, encoding="utf-8").read(), re.S)
+        try:
+            _ld = json.loads(_m.group(1)) if _m else None
+        except ValueError as e:
+            _ld = None
+            check(False, f"{page}: the JSON-LD block does not parse ({e})")
+        _ds = [x for x in (_ld or {}).get("@graph", []) if x.get("@type") == "Dataset"]
+        check(len(_ds) == 1, f"{page}: expected one Dataset in the JSON-LD, found {len(_ds)}")
+        if not _ds:
+            continue
+        names = [v.get("name") for v in _ds[0].get("variableMeasured", [])]
+        bad = sorted({n for n in names if any(n not in r for r in _rows)})
+        check(names and not bad, f"{page}: variableMeasured names {bad or names} are not keys of every scored row "
+                                 f"in benchmark/results.json")
+        for d in _ds[0].get("distribution", []):
+            u = d.get("contentUrl", "")
+            m2 = re.match(r"^https://raw\.githubusercontent\.com/jianruntech/geo-score/v([\d.]+)/(benchmark/[\w.-]+)$", u)
+            check(bool(m2) and m2.group(1) == _ver,
+                  f"{page}: download {u} is not pinned to v{_ver}/benchmark/ (python3 benchmark/build_page.py)")
+            if m2:
+                check(os.path.exists(m2.group(2)), f"{page}: download {u} names {m2.group(2)}, which does not exist")
+
+# ── 35. results.csv and checks.csv are results.json and raw/, flattened ──
+# The per-check points used to exist only in 317 nested reports. The flat files are generated with the README
+# (python3 benchmark/run.py --readme-only); each cell has to be what results.json and raw/ hold for that site.
+if os.path.exists("benchmark/results.json") and os.path.isdir("benchmark/raw"):
+    import csv as _csv
+    for f in ("benchmark/results.csv", "benchmark/checks.csv"):
+        check(os.path.exists(f), f"{f} missing (python3 benchmark/run.py --readme-only)")
+    if os.path.exists("benchmark/results.csv") and os.path.exists("benchmark/checks.csv"):
+        rj5 = json.load(io.open("benchmark/results.json", encoding="utf-8"))
+        ids5 = [c["id"] for c in json.load(io.open("rubric/v1.1.json", encoding="utf-8"))["checks"]]
+
+        def _cell(v):
+            return "" if v is None else ("true" if v is True else "false" if v is False else str(v))
+        with io.open("benchmark/results.csv", encoding="utf-8", newline="") as f:
+            rows5 = list(_csv.DictReader(f))
+        with io.open("benchmark/checks.csv", encoding="utf-8", newline="") as f:
+            long5 = list(_csv.reader(f))
+        check([r["site"] for r in rows5] == sorted(r["site"] for r in rj5["results"]),
+              "benchmark/results.csv: not one row per site in results.json, sorted by site (python3 benchmark/run.py --readme-only)")
+        by5, bad5, want_long = {r["site"]: r for r in rj5["results"]}, [], []
+        for row in rows5:
+            r = by5.get(row["site"])
+            if r is None:
+                continue
+            if r.get("normalised") is None:
+                exp = {"sector": r["sector"], "error": r.get("error"), "normalised": None}
+                exp.update({c: None for c in ids5})
+            else:
+                fn = os.path.join("benchmark/raw", re.sub(r"[^A-Za-z0-9.\-]+", "__", r["site"].strip("/")) + ".json")
+                if not os.path.exists(fn):
+                    continue                                   # rule 29 reports the missing report
+                rep = json.load(io.open(fn, encoding="utf-8"))
+                st5 = {c["id"]: c for c in rep["checks"]}
+                exp = {k: r.get(k) for k in ("sector", "normalised", "readiness", "observable_max", "band",
+                                             "gate_reason", "resolved_to", "tool_version")}
+                exp.update(gate_capped=bool(r.get("gate_capped")), measured_at=rep.get("audited_at"),
+                           sample_n=len(rep.get("sampled_urls") or []), sample_source=rep.get("sample_source"), error=None)
+                exp.update({c: st5[c].get("points") if c in st5 and st5[c].get("state") == "scored" else None for c in ids5})
+                for c in ids5:
+                    if c in st5:
+                        sc = st5[c].get("state") == "scored"
+                        want_long.append([r["site"], c, st5[c].get("state"), _cell(st5[c].get("points") if sc else None),
+                                          _cell(st5[c].get("max") if sc else None)])
+            diff5 = [k for k, v in exp.items() if row.get(k) != _cell(v)]
+            if diff5:
+                bad5.append("%s (%s)" % (row["site"], ", ".join(diff5[:3])))
+        check(not bad5, f"benchmark/results.csv differs from results.json and raw/ for {len(bad5)} sites: {bad5[:3]} "
+                        f"(python3 benchmark/run.py --readme-only)")
+        check(long5[:1] == [["site", "check_id", "state", "points", "max"]] and long5[1:] == want_long,
+              "benchmark/checks.csv is not the checks in raw/, one row per scored site and check "
+              "(python3 benchmark/run.py --readme-only)")
+
+# ── 36. The weight-sensitivity study is what sensitivity.py derives from results.json and raw/ ──
+# It first recomputes every published score from the per-check points and stops on any mismatch, so this rule also
+# fails when a raw report and results.json disagree on the arithmetic.
+if os.path.exists("benchmark/sensitivity.py"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/sensitivity.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/sensitivity.json or SENSITIVITY*.md is not what sensitivity.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+
+# ── 37. Where the band cuts fall: percentiles.json, the README table and the dated bands analysis agree ──
+# The cuts were borrowed from a vendor ladder and never set against the benchmark. percentiles.py places them in the
+# field; the README table between the markers must quote it, and rubric/bands-analysis.md (+zh), a record of the run
+# it names, must quote the same shares while percentiles.json still describes that run.
+if os.path.exists("benchmark/percentiles.py"):
+    import subprocess
+    r = subprocess.run([sys.executable, "benchmark/percentiles.py", "--check"], capture_output=True, text=True)
+    check(r.returncode == 0, "benchmark/percentiles.json is not what percentiles.py derives: "
+                             + ((r.stderr or r.stdout).strip()[-300:] or "exit %d" % r.returncode))
+if os.path.exists("benchmark/percentiles.json"):
+    pj = json.load(io.open("benchmark/percentiles.json", encoding="utf-8"))
+    o7, f7, g7 = pj["overall"], pj["uncapped"], pj["gate_cap"]
+
+    def _pc(n, of):
+        return "%d%%" % round(100.0 * n / of)
+    m = re.search(r"<!-- bands:.*?-->(.*?)<!-- /bands -->", io.open("benchmark/README.md", encoding="utf-8").read(), re.S)
+    check(bool(m), "benchmark/README.md: no generated band-cut block (python3 benchmark/run.py --readme-only)")
+    rows7 = ["| %s | %s | %d of %d | %s | %s |" % (pj["cuts"][c], c, o7["at_or_above"][c]["n"], o7["n"],
+                                                  _pc(o7["at_or_above"][c]["n"], o7["n"]),
+                                                  _pc(f7["at_or_above"][c]["n"], f7["n"])) for c in pj["cuts"]]
+    if m:
+        blk = " ".join(m.group(1).split())
+        want = rows7 + ["%d sites score exactly %d, %d of them" % (g7["at_cap"], g7["score"], g7["at_cap_capped"]),
+                        "band holds %d sites, %d of them capped" % (g7["band_n"], g7["band_capped"])]
+        missing = [w for w in want if w not in blk]
+        check(not missing, f"benchmark/README.md: the band-cut block does not match benchmark/percentiles.json; missing "
+                           f"{missing[:3]} (python3 benchmark/run.py --readme-only)")
+    for f in ("rubric/bands-analysis.md", "rubric/bands-analysis.zh-CN.md"):
+        if not os.path.exists(f):
+            continue
+        t = " ".join(io.open(f, encoding="utf-8").read().split())
+        if pj["source"]["measured_at"] not in t:
+            continue                          # a record of an earlier run: its figures describe that run
+        want = ["| %s |" % c for c in pj["cuts"]] + ["%d" % o7["n"], "%d" % f7["n"]]
+        want += ["%d" % o7["at_or_above"][c]["n"] for c in pj["cuts"]] + [_pc(o7["at_or_above"][c]["n"], o7["n"])
+                                                                         for c in pj["cuts"]]
+        want += ["%d" % pj["noise"]["near_any_cut"], "%s" % pj["noise"]["sem"], "%d" % g7["band_capped"]]
+        missing = [w for w in want if w not in t]
+        check(not missing, f"{f}: quotes the {pj['source']['measured_at']} run, but not these benchmark/percentiles.json "
+                           f"figures: {missing[:5]}")
 
 if fail:
     print("FAIL")

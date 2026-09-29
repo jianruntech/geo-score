@@ -1,0 +1,371 @@
+site,sector,measured_at,tool_version,normalised,readiness,observable_max,band,gate_capped,gate_reason,resolved_to,sample_n,sample_source,not_scored_reason,error,g.robots,g.reachable,g.ssr,p1.sitemap,p1.llms-txt,p1.organization,p1.breadcrumb,p1.page-type,p2.answer-passages,p2.question-intent,p2.freshness,p2.sourced-stats,p2.named-author,p3.listings,p3.mentions,p3.knowledge-graph,p3.sameas,p3.video,p4.answer-shape,p4.question-coverage,p4.cn-engines,b.llms-full,b.ai-txt,b.geo-link,b.speakable
+01.ai,China / AI,2026-09-27,1.3.0,40,43,79,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,4,0,6,,2,7,5,0,3,3,,,,3,0,2,,,0,0,0,0
+4px.com,Logistics / Freight,2026-09-27,1.3.0,13,11,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,0,0,0,0,,,0,0,0,0
+abb.com,Manufacturing / Industrial,2026-09-27,1.3.0,33,26,79,Early,true,serves crawlers an error,,1,sitemap,,,3,0,5,4,0,0,,0,9,0,0,3,0,,,,0,0,2,,,0,0,0,0
+accenture.com,Professional services,2026-09-27,1.3.0,70,60,86,Solid,false,,,8,sitemap,,,3,3,5,2,0,3,0,2,9,7,3,7,3,,,4,2,3,4,,,0,0,0,0
+adyen.com,Payments / Fintech,2026-09-27,1.3.0,70,60,86,Solid,false,,,8,sitemap,,,3,5,5,4,5,3,2,0,4,5,3,7,3,,,4,3,0,4,,,0,0,0,0
+aftership.com,Cross-border services,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.aftership.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+agoda.com,Travel,2026-09-27,1.3.0,23,19,83,Not started,true,content needs JavaScript,,1,sitemap,,,3,3,0,4,0,0,,0,0,0,0,3,0,,,4,0,2,0,,,0,0,0,0
+ahrefs.com,Marketing / CRM,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,sitemap,,,3,3,5,2,0,6,2,0,0,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+aider.chat,AI,2026-09-27,1.3.0,57,49,86,Growing,false,,,8,sitemap,,,3,5,3,2,0,0,0,4,9,5,3,7,0,,,4,0,2,2,,,0,0,0,0
+airbnb.com,Travel,2026-09-27,1.3.0,22,19,86,Not started,true,blocks crawlers,,8,homepage and section links (no sitemap reachable),,,0,0,0,0,0,3,0,0,0,3,0,7,0,,,4,0,0,2,,,0,0,0,0
+airtable.com,SaaS / Productivity,2026-09-27,1.3.0,40,34,86,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,4,0,0,2,2,0,3,0,7,0,,,4,0,2,2,,,0,0,0,0
+airwallex.com,Payments / Fintech,2026-09-27,1.3.0,67,59,88,Solid,false,,,8,sitemap,,,5,5,5,2,4,3,3,0,0,7,0,7,3,,,4,3,2,4,,2,0,0,0,0
+alibabagroup.com,China / enterprise,2026-09-27,1.3.0,52,42,81,Growing,false,,,8,sitemap,,,5,5,5,4,0,0,,0,4,3,3,7,0,,,,0,2,2,,2,0,0,0,0
+aliexpress.com,China / consumer,2026-09-27,1.3.0,19,15,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,4,0,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+aliwork.com,China / no-code,2026-09-27,1.3.0,22,19,85,Not started,false,,,2,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,0,0,0,0,,,4,0,0,0,,2,0,0,0,0
+aliyun.com,China / cloud,2026-09-27,1.3.0,43,34,79,Early,false,,alibabacloud.com,1,homepage and section links (no sitemap reachable),,,3,3,5,0,0,0,,0,0,7,0,7,3,,,,0,2,4,,,0,0,0,0
+allegro.pl,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.allegro.pl — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+amazon.com,Ecommerce,2026-09-27,1.3.0,12,10,83,Not started,true,blocks crawlers,,1,homepage and section links (no sitemap reachable),,,0,3,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+anker.com,China / consumer,2026-09-27,1.3.0,78,67,86,Solid,false,,,8,sitemap,,,3,3,5,4,5,3,3,4,4,5,3,7,3,,,4,3,2,4,,,2,0,0,0
+anthropic.com,AI,2026-09-27,1.3.0,57,49,86,Growing,false,,,5,sitemap,,,5,5,5,4,0,0,0,0,9,0,3,5,3,,,4,0,2,4,,,0,0,0,0
+aosom.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.aosom.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+arc.net,SaaS / Productivity,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,3,5,5,4,0,0,0,0,9,3,3,7,3,,,4,0,2,0,,,0,0,0,0
+arstechnica.com,Media / Publishing,2026-09-27,1.3.0,40,61,86,Early,true,blocks crawlers,,8,sitemap,,,0,5,5,4,0,5,0,4,9,5,6,7,3,,,4,0,2,2,,,0,0,0,0
+asana.com,SaaS / Productivity,2026-09-27,1.3.0,71,61,86,Solid,false,,,8,sitemap,,,3,5,5,2,5,6,2,2,7,3,3,3,3,,,4,3,2,2,,,0,0,1,0
+astro.build,Developer tools,2026-09-27,1.3.0,59,48,82,Growing,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,7,5,3,7,3,,,,0,2,4,,,0,0,0,0
+attio.com,Marketing / CRM,2026-09-27,1.3.0,69,59,86,Solid,false,,,8,sitemap,,,5,5,3,4,5,6,0,2,4,5,6,5,0,,,0,3,2,2,,,2,0,0,0
+axiom.co,Cloud & DevOps,2026-09-27,1.3.0,87,75,86,Leading,false,,,8,sitemap,,,5,5,5,4,5,6,3,4,7,7,3,7,3,,,4,3,0,4,,,0,0,0,0
+baichuan-ai.com,China / AI,2026-09-27,1.3.0,16,13,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,5,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+baidubce.com,China / cloud,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.baidubce.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+bambulab.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.bambulab.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+baseten.co,AI,2026-09-27,1.3.0,66,57,86,Solid,false,,,8,sitemap,,,3,5,5,4,5,0,0,2,4,7,3,7,6,,,0,0,2,4,,,0,0,0,0
+baseus.com,China / consumer,2026-09-27,1.3.0,74,61,82,Solid,false,,,8,sitemap,,,3,3,5,2,5,5,3,2,7,5,3,7,3,,,,0,2,4,,,2,0,0,0
+bcg.com,Professional services,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.bcg.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+beehiiv.com,Marketing / CRM,2026-09-27,1.3.0,84,69,82,Leading,false,,,8,sitemap,,,5,3,3,4,5,6,2,4,7,7,3,5,3,,,,3,2,4,,,2,0,0,1
+betterstack.com,Cloud & DevOps,2026-09-27,1.3.0,59,48,82,Growing,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,7,7,0,7,3,,,,0,2,4,,,0,0,1,0
+bigcommerce.com,Ecommerce,2026-09-27,1.3.0,59,51,86,Growing,false,,,2,sitemap,,,3,5,3,4,4,6,3,0,0,5,0,7,0,,,4,3,2,2,,,0,0,0,0
+bigmodel.cn,China / AI,2026-09-27,1.3.0,15,12,81,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,1,0,0,0,0
+biomejs.dev,Developer tools,2026-09-27,1.3.0,49,42,86,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,7,3,3,7,3,,,4,0,2,2,,,0,0,0,0
+booking.com,Travel,2026-09-27,1.3.0,20,17,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,3,0,4,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+braze.com,Marketing / CRM,2026-09-27,1.3.0,73,60,82,Solid,false,,,8,sitemap,,,5,5,3,4,5,3,2,2,7,7,3,7,3,,,,0,0,4,,,0,0,0,0
+brex.com,Payments / Fintech,2026-09-27,1.3.0,73,63,86,Solid,false,,,8,sitemap,,,3,5,3,2,5,3,2,2,7,7,3,7,3,,,4,0,2,2,,,2,0,1,0
+brilliant.org,Education,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,3,5,5,2,5,0,0,4,9,7,6,7,3,,,4,0,0,4,,,0,0,0,0
+browserbase.com,AI,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,5,3,5,4,5,3,0,0,4,7,3,3,0,,,0,0,2,4,,,0,0,0,0
+bun.sh,Developer tools,2026-09-27,1.3.0,88,76,86,Leading,false,,,8,sitemap,,,5,5,3,2,5,6,3,4,7,5,3,7,6,,,4,3,2,4,,,2,0,0,0
+buttondown.com,Marketing / CRM,2026-09-27,1.3.0,79,65,82,Solid,false,,,7,sitemap,,,3,5,5,4,4,5,3,4,9,7,3,0,6,,,,3,0,4,,,0,0,0,0
+bytedance.com,China / enterprise,2026-09-27,1.3.0,29,24,83,Not started,false,,,2,sitemap,,,3,5,5,4,0,0,,0,0,0,0,0,3,,,4,0,0,0,,,0,0,0,0
+cal.com,SaaS / Productivity,2026-09-27,1.3.0,72,59,82,Solid,false,,,6,sitemap,,,3,5,5,2,4,5,2,2,4,7,6,7,3,,,,0,2,2,,,0,0,0,0
+calendly.com,SaaS / Productivity,2026-09-27,1.3.0,78,67,86,Solid,false,,,8,sitemap,,,3,3,5,4,5,5,0,2,9,7,3,5,3,,,4,3,2,4,,,0,0,0,0
+checkout.com,Payments / Fintech,2026-09-27,1.3.0,81,70,86,Solid,false,,,8,sitemap,,,3,5,5,4,5,3,0,2,7,7,3,7,6,,,4,3,2,4,,,0,0,0,0
+chegg.com,Education,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.chegg.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+cider.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.cider.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostn,,,,,,,,,,,,,,,,,,,,,,,,,
+clerk.com,Developer tools,2026-09-27,1.3.0,85,73,86,Leading,false,,,8,sitemap,,,5,5,5,2,5,6,2,2,7,7,6,3,3,,,4,3,2,4,,,2,0,0,0
+clevelandclinic.org,Healthcare,2026-09-27,1.3.0,40,40,83,Early,true,content needs JavaScript,my.clevelandclinic.org,1,sitemap,,,5,5,0,4,4,3,,0,0,7,0,3,0,,,4,3,2,0,,,0,0,0,0
+clickhouse.com,Cloud & DevOps,2026-09-27,1.3.0,85,70,82,Leading,false,,,8,sitemap,,,5,5,3,4,5,5,2,4,7,7,6,7,6,,,,0,0,4,,,0,0,0,0
+clickpaas.com,China / no-code,2026-09-27,1.3.0,42,35,84,Early,false,,,6,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,0,7,3,7,0,,,,0,0,4,,1,0,0,0,0
+clickup.com,SaaS / Productivity,2026-09-27,1.3.0,88,76,86,Leading,false,,,8,sitemap,,,5,5,5,2,5,6,3,2,7,7,3,7,6,,,4,3,0,4,,,2,0,0,0
+clio.com,Professional services,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.clio.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+cloudflare.com,Cloud & DevOps,2026-09-27,1.3.0,85,73,86,Leading,false,,,8,sitemap,,,5,5,5,4,5,6,0,0,9,7,3,7,3,,,4,3,0,4,,,2,0,1,0
+clubfactory.com,China / consumer,2026-09-27,1.3.0,18,14,79,Not started,true,serves crawlers an error,,1,sitemap,,,5,0,0,2,4,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+cma-cgm.com,Logistics / Freight,2026-09-27,1.3.0,33,28,86,Early,true,serves crawlers an error,auth.cma-cgm.com,7,homepage and section links (no sitemap reachable),,,3,0,3,0,0,0,0,0,4,0,3,7,0,,,4,0,2,2,,,0,0,0,0
+coda.io,SaaS / Productivity,2026-09-27,1.3.0,49,42,86,Early,false,,,8,sitemap,,,3,5,5,2,0,0,0,0,0,7,0,7,3,,,4,0,2,4,,,0,0,0,0
+codecademy.com,Education,2026-09-27,1.3.0,58,50,86,Growing,false,,,8,sitemap,,,3,3,5,2,0,3,0,2,4,5,0,7,3,,,4,3,2,4,,,0,0,0,0
+cohere.com,AI,2026-09-27,1.3.0,40,39,86,Early,true,content needs JavaScript,,8,sitemap,,,5,5,0,4,4,3,0,0,0,3,3,3,3,,,4,0,2,0,,,0,0,0,0
+continue.dev,AI,2026-09-27,1.3.0,40,40,83,Early,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,3,0,0,0,6,,0,9,7,0,3,0,,,4,3,0,2,,,0,0,0,0
+coupang.com,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.coupang.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+coursera.org,Education,2026-09-27,1.3.0,67,58,86,Solid,false,,,8,sitemap,,,5,3,3,2,5,3,3,4,0,7,3,7,0,,,4,3,2,4,,,0,0,0,0
+creality.com,China / consumer,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,sitemap,,,3,5,3,4,0,6,2,4,0,3,3,7,3,,,4,3,2,2,,,0,0,0,0
+crewai.com,AI,2026-09-27,1.3.0,70,60,86,Solid,false,,,8,sitemap,,,5,5,3,4,5,3,0,0,7,3,3,7,0,,,4,3,2,4,,,2,0,0,0
+css-tricks.com,Media / Publishing,2026-09-27,1.3.0,40,68,86,Early,true,serves crawlers an error,,8,sitemap,,,5,0,5,0,4,6,0,4,9,7,6,7,3,,,4,2,2,4,,,0,0,0,0
+ctyun.cn,China / cloud,2026-09-27,1.3.0,28,25,88,Not started,false,,,6,homepage and section links (no sitemap reachable),,,3,3,3,0,0,0,0,0,4,0,0,7,0,,,0,0,0,4,,1,0,0,0,0
+cubiitek.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.cubiitek.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+cursor.com,AI,2026-09-27,1.3.0,78,67,86,Solid,false,,,8,sitemap,,,5,5,3,4,4,6,2,2,7,7,3,5,3,,,4,3,2,2,,,0,0,0,0
+customer.io,Marketing / CRM,2026-09-27,1.3.0,59,51,86,Growing,false,,,8,sitemap,,,5,3,5,4,5,3,0,0,0,7,0,3,3,,,4,3,2,4,,,0,0,0,0
+dagster.io,Cloud & DevOps,2026-09-27,1.3.0,72,62,86,Solid,false,,,8,sitemap,,,5,3,5,4,5,3,0,0,9,7,3,7,3,,,0,2,2,4,,,0,0,0,0
+datacamp.com,Education,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.datacamp.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+datadoghq.com,Cloud & DevOps,2026-09-27,1.3.0,57,49,86,Growing,false,,,3,sitemap,,,3,3,5,4,5,0,0,0,4,5,3,7,0,,,4,0,2,4,,,0,0,0,0
+datahawk.co,Cross-border services,2026-09-27,1.3.0,40,48,82,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,4,0,5,3,4,0,7,3,7,3,,,,0,2,2,,,0,0,0,0
+deepmind.google,AI,2026-09-27,1.3.0,74,61,82,Solid,false,,,8,sitemap,,,5,5,5,4,5,0,0,0,9,7,3,7,3,,,,0,2,4,,,2,0,0,0
+deepseek.com,China / AI,2026-09-27,1.3.0,55,48,88,Growing,false,,,8,sitemap,,,5,5,5,4,0,0,0,0,9,0,3,7,0,,,4,0,0,4,,2,0,0,0,0
+deloitte.com,Professional services,2026-09-27,1.3.0,62,53,86,Growing,false,,,8,sitemap,,,3,3,5,4,0,0,0,4,4,7,3,7,3,,,4,0,2,4,,,0,0,0,0
+delta.com,Travel,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.delta.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+deno.com,Developer tools,2026-09-27,1.3.0,56,46,82,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,9,5,3,7,3,,,,0,2,4,,,0,0,0,0
+dhl.com,Logistics / Freight,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.dhl.com — The read operation timed out,,,,,,,,,,,,,,,,,,,,,,,,,
+dianxiaomi.com,Cross-border services,2026-09-27,1.3.0,56,47,84,Growing,false,,,7,sitemap,,,3,5,3,4,0,6,0,0,4,3,3,7,0,,,,3,2,2,,2,0,0,0,0
+digitalocean.com,Cloud & DevOps,2026-09-27,1.3.0,52,45,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,5,3,5,2,0,0,0,0,0,7,3,7,3,,,4,0,2,4,,,0,0,0,0
+dingtalk.com,China / enterprise,2026-09-27,1.3.0,15,12,81,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,1,0,0,0,0
+dji.com,China / consumer,2026-09-27,1.3.0,44,37,84,Early,false,,,2,homepage and section links (no sitemap reachable),,,3,3,5,4,0,0,0,0,7,0,0,7,0,,,,0,2,4,,2,0,0,0,0
+docusign.com,Professional services,2026-09-27,1.3.0,79,68,86,Solid,false,,,8,sitemap,,,3,5,5,4,0,6,3,2,4,7,3,7,6,,,4,3,2,4,,,0,0,0,0
+doximity.com,Healthcare,2026-09-27,1.3.0,45,39,86,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,3,3,0,0,0,0,0,4,5,3,5,3,,,4,0,2,4,,,0,0,0,0
+dreame.tech,China / consumer,2026-09-27,1.3.0,16,14,85,Not started,false,,,1,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,0,0,0,0,,,0,0,0,0,,1,0,0,0,0
+drizzle.team,Developer tools,2026-09-27,1.3.0,14,11,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+drugs.com,Healthcare,2026-09-27,1.3.0,40,49,86,Early,true,blocks crawlers,,8,homepage and section links (no sitemap reachable),,,0,0,5,0,0,6,3,2,7,3,3,7,0,,,4,3,2,4,,,0,0,0,0
+dsv.com,Logistics / Freight,2026-09-27,1.3.0,64,55,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,4,0,0,3,0,9,7,3,5,3,,,4,0,2,4,,,0,0,0,0
+duckdb.org,Cloud & DevOps,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,5,5,5,2,5,3,0,4,9,3,3,7,3,,,4,0,2,4,,,0,0,0,0
+duolingo.com,Education,2026-09-27,1.3.0,18,15,83,Not started,true,content needs JavaScript,,1,sitemap,,,3,3,0,2,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+ebay.com,Ecommerce,2026-09-27,1.3.0,36,31,86,Early,true,blocks crawlers,,7,homepage and section links (no sitemap reachable),,,0,0,3,4,0,0,0,0,4,5,0,7,0,,,4,0,0,4,,,0,0,0,0
+ecoflow.com,China / consumer,2026-09-27,1.3.0,40,46,82,Early,true,serves crawlers an error,us.ecoflow.com,8,sitemap,,,3,0,3,0,0,6,3,0,4,7,3,7,3,,,,3,2,2,,,0,0,0,0
+edx.org,Education,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,3,3,5,4,4,6,2,4,4,3,6,7,0,,,4,3,2,2,,,0,2,0,0
+effect.website,Developer tools,2026-09-27,1.3.0,58,50,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,9,5,3,7,3,,,4,0,2,4,,,0,0,0,0
+elegoo.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.elegoo.com — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+elevenlabs.io,AI,2026-09-27,1.3.0,83,68,82,Leading,false,,,8,sitemap,,,5,5,5,4,5,6,2,4,4,7,3,7,3,,,,2,2,4,,,0,0,0,0
+elysiajs.com,Developer tools,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,4,0,0,0,7,5,3,7,3,,,4,0,2,4,,,2,0,0,0
+etsy.com,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.etsy.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+exercism.org,Education,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.exercism.org — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+expedia.com,Travel,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.expedia.com — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+expeditors.com,Logistics / Freight,2026-09-27,1.3.0,55,47,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,3,5,0,0,0,0,0,9,7,0,7,3,,,4,0,2,4,,,0,0,0,0
+ey.com,Professional services,2026-09-27,1.3.0,70,60,86,Solid,false,,,6,sitemap,,,5,3,5,4,0,3,0,2,9,5,3,7,3,,,4,0,3,4,,,0,0,0,0
+fanruan.com,China / no-code,2026-09-27,1.3.0,20,16,81,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,3,,0,0,0,0,3,0,,,,0,0,0,,2,0,0,0,0
+fanuc.co.jp,Manufacturing / Industrial,2026-09-27,1.3.0,53,47,88,Growing,false,,,8,sitemap,,,5,5,5,4,0,0,2,2,0,3,3,7,0,,,4,0,2,4,,1,0,0,0,0
+fathom.ai,Marketing / CRM,2026-09-27,1.3.0,66,54,82,Solid,false,,,8,sitemap,,,5,5,5,4,5,0,3,4,9,7,0,5,0,,,,0,0,2,,,0,0,0,0
+fedex.com,Logistics / Freight,2026-09-27,1.3.0,31,26,83,Early,false,,,1,sitemap,,,5,3,5,2,0,0,,0,0,0,0,3,0,,,4,0,0,4,,,0,0,0,0
+feishu.cn,China / no-code,2026-09-27,1.3.0,20,16,81,Not started,true,content needs JavaScript,,1,sitemap,,,5,5,0,2,0,0,,0,0,0,0,3,0,,,,0,0,0,,1,0,0,0,0
+figma.com,SaaS / Productivity,2026-09-27,1.3.0,40,44,83,Early,true,blocks crawlers,,1,sitemap,,,0,5,5,4,0,3,,0,0,7,0,7,0,,,4,3,2,4,,,0,0,0,0
+fireworks.ai,AI,2026-09-27,1.3.0,80,69,86,Solid,false,,,8,sitemap,,,5,5,5,4,0,6,0,2,9,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+flexport.com,Logistics / Freight,2026-09-27,1.3.0,79,65,82,Solid,false,,,8,sitemap,,,3,3,5,4,5,6,2,2,9,5,3,7,0,,,,3,3,4,,,0,0,1,0
+fly.io,Developer tools,2026-09-27,1.3.0,90,77,86,Leading,false,,,8,sitemap,,,5,5,3,4,5,6,3,4,7,5,3,7,6,,,4,3,2,4,,,0,0,1,0
+freecodecamp.org,Education,2026-09-27,1.3.0,23,19,83,Not started,true,content needs JavaScript,,1,sitemap,,,5,5,0,2,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+ge.com,Manufacturing / Industrial,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.ge.com — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+getyourguide.com,Travel,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.getyourguide.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+ghost.org,Marketing / CRM,2026-09-27,1.3.0,76,62,82,Solid,false,,,8,sitemap,,,5,5,5,4,0,3,0,2,9,7,3,7,6,,,,0,2,4,,,0,0,0,0
+govee.com,China / consumer,2026-09-27,1.3.0,51,44,86,Growing,false,,us.govee.com,8,sitemap,,,3,5,3,4,0,3,0,2,4,3,0,7,3,,,0,3,2,2,,,0,0,0,0
+grafana.com,Cloud & DevOps,2026-09-27,1.3.0,83,68,82,Leading,false,,,8,sitemap,,,5,5,5,4,5,3,0,4,9,7,3,7,3,,,,0,2,4,,,2,0,0,0
+gree.com,Manufacturing / Industrial,2026-09-27,1.3.0,27,23,85,Not started,false,,,1,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,0,0,0,0,,,4,0,0,4,,2,0,0,0,0
+groq.com,AI,2026-09-27,1.3.0,49,40,82,Early,false,,,8,sitemap,,,3,5,3,4,0,0,0,0,9,3,3,5,3,,,,0,0,2,,,0,0,0,0
+hackaday.com,Media / Publishing,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,3,3,5,2,0,0,0,0,9,3,3,7,3,,,4,0,2,4,,,0,0,0,0
+haier.com,Manufacturing / Industrial,2026-09-27,1.3.0,46,38,82,Early,false,,,7,sitemap,,,3,5,5,4,2,0,0,0,4,3,3,7,0,,,,0,2,0,,,0,0,0,0
+hapag-lloyd.com,Logistics / Freight,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.hapag-lloyd.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+hashicorp.com,Cloud & DevOps,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.hashicorp.com — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+healthline.com,Healthcare,2026-09-27,1.3.0,40,58,86,Early,true,blocks crawlers,,6,sitemap,,,0,3,5,2,0,0,0,4,9,7,6,7,3,,,4,0,2,4,,,0,2,0,0
+height.app,SaaS / Productivity,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.height.app — <urlopen error _ssl.c:1112: The handshake operation timed out>,,,,,,,,,,,,,,,,,,,,,,,,,
+helium10.com,Cross-border services,2026-09-27,1.3.0,73,63,86,Solid,false,,,8,sitemap,,,3,5,5,4,0,6,3,4,4,7,6,7,0,,,0,3,2,4,,,0,0,0,0
+hilton.com,Travel,2026-09-27,1.3.0,40,50,86,Early,true,serves crawlers an error,,6,sitemap,,,3,0,5,2,0,3,0,0,9,7,3,7,3,,,4,0,0,4,,,0,0,0,0
+hims.com,Healthcare,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.hims.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+hioscar.com,Healthcare,2026-09-27,1.3.0,40,46,86,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,2,5,5,2,4,0,7,3,3,3,,,4,0,0,0,,,0,0,0,0
+hisense.com,China / consumer,2026-09-27,1.3.0,27,24,88,Not started,false,,,3,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,0,0,3,5,0,,,4,0,0,0,,1,0,0,0,0
+hiwonder.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.hiwonder.com — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+honeywell.com,Manufacturing / Industrial,2026-09-27,1.3.0,40,46,86,Early,true,serves crawlers an error,,8,sitemap,,,3,0,5,4,0,3,0,4,0,3,3,7,3,,,4,3,2,2,,,0,0,0,0
+hono.dev,Developer tools,2026-09-27,1.3.0,58,50,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,0,5,0,0,0,9,7,3,3,3,,,4,0,0,2,,,2,0,1,0
+huawei.com,China / enterprise,2026-09-27,1.3.0,39,32,82,Early,false,,,8,sitemap,,,3,5,5,2,0,0,0,0,0,3,0,7,3,,,,0,0,4,,,0,0,0,0
+huaweicloud.com,China / cloud,2026-09-27,1.3.0,41,33,81,Early,false,,,1,sitemap,,,3,5,5,4,0,0,,0,0,0,3,7,0,,,,0,0,4,,2,0,0,0,0
+hubspot.com,Marketing / CRM,2026-09-27,1.3.0,80,63,79,Solid,false,,,1,sitemap,,,3,3,5,4,5,6,,2,9,7,0,7,3,,,,3,2,4,,,0,0,0,0
+huggingface.co,AI,2026-09-27,1.3.0,40,36,82,Early,true,content needs JavaScript,,8,sitemap,,,5,5,0,2,0,0,0,0,4,5,3,5,3,,,,0,0,4,,,0,0,0,0
+huoban.com,China / no-code,2026-09-27,1.3.0,39,33,84,Early,true,content needs JavaScript,,8,sitemap,,,3,5,0,4,0,0,0,0,4,3,3,5,0,,,,0,2,2,,2,0,0,0,0
+ideogram.ai,AI,2026-09-27,1.3.0,81,70,86,Solid,false,,,6,sitemap,,,5,5,5,2,4,3,0,4,9,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+iflytek.com,China / AI,2026-09-27,1.3.0,39,32,83,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,3,0,0,0,0,3,7,0,,,4,,2,0,,,0,0,0,0
+inngest.com,Developer tools,2026-09-27,1.3.0,74,61,82,Solid,false,,,8,sitemap,,,5,5,3,4,5,6,0,4,9,3,0,7,0,,,,2,0,4,,,2,2,0,0
+insta360.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.insta360.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+intercom.com,Marketing / CRM,2026-09-27,1.3.0,83,71,86,Leading,false,,,8,sitemap,,,3,5,5,2,5,5,3,4,9,7,3,7,0,,,4,3,2,4,,,0,0,0,0
+ironcladapp.com,Professional services,2026-09-27,1.3.0,85,73,86,Leading,false,,,8,sitemap,,,3,5,5,4,0,6,3,4,7,7,6,7,3,,,4,3,2,4,,,0,0,0,0
+jdcloud.com,China / cloud,2026-09-27,1.3.0,40,38,85,Early,true,blocks crawlers,,1,sitemap,,,0,5,5,4,0,0,,0,0,7,0,7,0,,,4,0,0,4,,2,0,0,0,0
+jiandaoyun.com,China / no-code,2026-09-27,1.3.0,50,42,84,Early,false,,,8,sitemap,,,3,3,3,2,0,3,0,2,7,5,3,7,0,,,,0,0,2,,2,0,0,0,0
+jtexpress.com,Logistics / Freight,2026-09-27,1.3.0,38,33,88,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,4,0,3,7,0,,,4,0,0,2,,2,0,0,0,0
+jumia.com,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.jumia.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+june.so,Marketing / CRM,2026-09-27,1.3.0,36,31,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,3,4,0,0,0,0,0,3,0,7,3,,,4,0,2,2,,,0,0,0,0
+junglescout.com,Cross-border services,2026-09-27,1.3.0,84,72,86,Leading,false,,,8,sitemap,,,3,5,5,4,5,5,3,0,9,7,6,7,3,,,4,0,2,4,,,0,0,0,0
+jushuitan.com,Cross-border services,2026-09-27,1.3.0,13,11,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,0,0,0,0,,,0,0,0,0
+kayak.com,Travel,2026-09-27,1.3.0,92,79,86,Leading,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,4,5,6,3,4,9,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+keepa.com,Cross-border services,2026-09-27,1.3.0,11,9,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,3,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+khanacademy.org,Education,2026-09-27,1.3.0,19,16,83,Not started,true,blocks crawlers,,1,sitemap,,,0,5,0,4,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+kingdee.com,China / enterprise,2026-09-27,1.3.0,73,59,81,Solid,false,,,4,sitemap,,,5,5,5,4,5,6,,0,7,3,3,7,0,,,,3,2,2,,2,0,0,0,0
+klarna.com,Payments / Fintech,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,sitemap,,,3,3,5,2,5,0,0,4,4,7,3,7,3,,,4,0,0,4,,,0,0,0,0
+klaviyo.com,Marketing / CRM,2026-09-27,1.3.0,81,70,86,Solid,false,,,8,sitemap,,,5,3,5,2,5,5,3,2,7,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+klook.com,Travel,2026-09-27,1.3.0,57,47,83,Growing,false,,,2,homepage and section links (no sitemap reachable),,,3,5,5,0,5,0,,0,9,7,0,3,0,,,4,0,2,2,,,2,0,0,0
+koyeb.com,Cloud & DevOps,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,3,5,5,2,0,0,0,0,9,7,3,7,3,,,0,0,0,4,,,0,0,0,0
+kpmg.com,Professional services,2026-09-27,1.3.0,80,69,86,Solid,false,,,8,sitemap,,,5,3,5,4,5,5,3,2,9,5,3,7,3,,,4,0,2,4,,,0,0,0,0
+kuehne-nagel.com,Logistics / Freight,2026-09-27,1.3.0,40,55,86,Early,true,blocks crawlers,,8,sitemap,,,0,5,5,4,0,6,0,4,7,5,3,7,0,,,0,3,2,4,,,0,0,0,0
+kuka.com,Manufacturing / Industrial,2026-09-27,1.3.0,79,68,86,Solid,false,,,8,sitemap,,,3,3,3,4,0,6,3,4,9,5,6,7,3,,,4,2,2,4,,,0,0,0,0
+laifen.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.laifen.com — <urlopen error _ssl.c:1112: The handshake operation timed out>,,,,,,,,,,,,,,,,,,,,,,,,,
+langchain.com,AI,2026-09-27,1.3.0,64,55,86,Growing,false,,,8,sitemap,,,3,5,5,4,0,0,0,2,9,7,0,7,3,,,4,0,2,4,,,0,0,0,0
+langfuse.com,AI,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,sitemap,,,5,5,5,4,5,0,0,0,9,5,3,7,0,,,0,0,2,4,,,0,0,0,0
+lazada.com,China / consumer,2026-09-27,1.3.0,41,35,86,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,4,3,3,3,3,,,4,0,0,2,,,0,0,0,0
+lenovo.com,China / consumer,2026-09-27,1.3.0,33,28,85,Early,true,serves crawlers an error,lenovo.com.cn,1,sitemap,,,5,0,5,2,5,0,,0,0,0,0,7,0,,,4,0,0,0,,0,0,0,0,0
+lexisnexis.com,Professional services,2026-09-27,1.3.0,40,52,86,Early,true,blocks crawlers,,6,sitemap,,,0,3,3,4,0,6,0,0,7,5,3,7,3,,,4,3,2,2,,,0,0,0,0
+lianlianpay.com,Cross-border services,2026-09-27,1.3.0,16,13,81,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,2,0,0,0,0
+linear.app,SaaS / Productivity,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,3,3,5,4,0,0,0,0,7,5,3,5,3,,,4,0,2,4,,,0,0,0,0
+llamaindex.ai,AI,2026-09-27,1.3.0,70,60,86,Solid,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,0,0,6,0,2,4,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+lonelyplanet.com,Travel,2026-09-27,1.3.0,40,64,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,5,2,0,5,3,2,7,7,6,7,6,,,4,3,0,4,,,0,0,0,0
+loom.com,SaaS / Productivity,2026-09-27,1.3.0,40,51,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,5,2,4,3,0,0,4,7,0,7,3,,,4,3,2,4,,,0,0,0,0
+lumalabs.ai,AI,2026-09-27,1.3.0,94,81,86,Leading,false,,,8,sitemap,,,5,3,5,4,5,6,3,4,9,3,6,7,6,,,4,3,3,4,,,0,0,1,0
+lwn.net,Media / Publishing,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.lwn.net — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+m19.com,Cross-border services,2026-09-27,1.3.0,62,51,82,Growing,false,,,8,sitemap,,,3,5,5,4,0,0,0,4,9,7,0,7,3,,,,0,2,2,,,0,0,0,0
+mabangerp.com,Cross-border services,2026-09-27,1.3.0,40,32,81,Early,false,,,1,sitemap,,,5,5,5,4,0,0,,0,0,0,0,7,0,,,,0,0,4,,2,0,0,0,0
+maersk.com,Logistics / Freight,2026-09-27,1.3.0,40,56,86,Early,true,serves crawlers an error,,8,sitemap,,,3,0,3,4,4,3,3,0,9,7,0,7,0,,,4,3,2,4,,,0,0,0,0
+mailchimp.com,Marketing / CRM,2026-09-27,1.3.0,55,45,82,Growing,false,,,8,sitemap,,,3,5,5,2,5,0,0,0,7,7,0,5,0,,,,0,2,4,,,0,0,0,0
+marqeta.com,Payments / Fintech,2026-09-27,1.3.0,77,66,86,Solid,false,,,8,sitemap,,,5,5,5,4,0,6,2,2,4,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+marriott.com,Travel,2026-09-27,1.3.0,40,39,86,Early,true,serves crawlers an error,,7,sitemap,,,3,0,3,2,0,0,0,0,9,3,3,7,3,,,4,0,0,2,,,0,0,0,0
+materialize.com,Cloud & DevOps,2026-09-27,1.3.0,63,52,82,Growing,false,,,8,sitemap,,,5,5,5,2,5,5,0,0,4,7,3,7,0,,,,0,0,4,,,0,0,0,0
+mayoclinic.org,Healthcare,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.mayoclinic.org — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+mckinsey.com,Professional services,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.mckinsey.com — The read operation timed out,,,,,,,,,,,,,,,,,,,,,,,,,
+medlineplus.gov,Healthcare,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.medlineplus.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+megvii.com,China / AI,2026-09-27,1.3.0,18,15,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+mercadolibre.com,Ecommerce,2026-09-27,1.3.0,12,10,83,Not started,true,blocks crawlers,,1,homepage and section links (no sitemap reachable),,,0,3,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+mercury.com,Payments / Fintech,2026-09-27,1.3.0,59,51,86,Growing,false,,,8,sitemap,,,3,5,3,4,0,6,0,0,4,3,0,7,3,,,4,3,2,4,,,0,0,0,0
+midea.com,Manufacturing / Industrial,2026-09-27,1.3.0,33,28,86,Early,false,,midea.com.cn,8,sitemap,,,3,5,5,4,0,0,0,0,0,0,0,7,0,,,4,0,0,0,,,0,0,0,0
+midjourney.com,AI,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.midjourney.com — <urlopen error [SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol ver,,,,,,,,,,,,,,,,,,,,,,,,,
+mingdao.com,China / no-code,2026-09-27,1.3.0,62,52,84,Growing,false,,,8,sitemap,,,5,5,5,4,5,5,0,0,4,3,0,7,3,,,,0,2,2,,2,0,0,0,0
+minimaxi.com,China / AI,2026-09-27,1.3.0,76,64,84,Solid,false,,minimax.cn,8,sitemap,,,5,5,5,4,0,6,3,4,9,3,6,5,0,,,,2,2,4,,1,0,0,0,0
+miniso.com,China / consumer,2026-09-27,1.3.0,32,26,82,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,3,3,0,0,0,0,0,0,0,3,7,3,,,,0,0,4,,,0,0,0,0
+miro.com,SaaS / Productivity,2026-09-27,1.3.0,67,58,86,Solid,false,,,8,sitemap,,,3,5,3,4,0,6,2,2,4,7,0,7,3,,,4,3,3,2,,,0,0,0,0
+mistral.ai,AI,2026-09-27,1.3.0,79,68,86,Solid,false,,,8,sitemap,,,5,5,5,4,5,6,0,4,4,3,6,5,3,,,4,3,2,4,,,0,0,0,0
+modal.com,AI,2026-09-27,1.3.0,73,60,82,Solid,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,0,5,3,0,0,9,7,3,7,3,,,,0,2,4,,,2,0,0,0
+monday.com,SaaS / Productivity,2026-09-27,1.3.0,72,62,86,Solid,false,,,8,sitemap,,,5,5,5,2,5,6,2,2,4,5,3,5,0,,,4,3,2,4,,,0,0,0,0
+moonshot.cn,China / AI,2026-09-27,1.3.0,47,40,85,Early,false,,,2,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,7,0,3,7,0,,,4,0,2,2,,2,0,0,0,0
+motherduck.com,Cloud & DevOps,2026-09-27,1.3.0,84,72,86,Leading,false,,,8,sitemap,,,3,5,3,4,5,6,3,4,7,5,3,7,3,,,4,3,2,2,,,2,0,1,0
+moz.com,Marketing / CRM,2026-09-27,1.3.0,66,54,82,Solid,false,,,8,sitemap,,,3,5,3,4,0,3,3,0,7,7,3,7,0,,,,3,2,4,,,0,0,0,0
+narwal.com,China / consumer,2026-09-27,1.3.0,18,15,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+neon.com,Developer tools,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,5,3,3,4,5,3,0,4,7,7,0,5,3,,,4,3,2,4,,,2,0,0,0
+netlify.com,Cloud & DevOps,2026-09-27,1.3.0,85,70,82,Leading,false,,,8,sitemap,,,5,3,5,4,5,6,3,4,7,7,3,7,0,,,,3,2,4,,,0,0,1,1
+nextjs.org,Developer tools,2026-09-27,1.3.0,74,61,82,Solid,false,,,8,sitemap,,,3,3,3,4,5,3,0,4,7,7,6,7,3,,,,3,0,2,,,0,0,1,0
+nhs.uk,Healthcare,2026-09-27,1.3.0,70,60,86,Solid,false,,,8,sitemap,,,3,5,5,4,0,0,0,0,9,7,6,7,6,,,4,0,0,4,,,0,0,0,0
+nih.gov,Healthcare,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.nih.gov — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+nitro.build,Developer tools,2026-09-27,1.3.0,52,45,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,5,5,3,0,4,0,0,0,7,3,3,5,0,,,4,0,0,4,,,2,0,0,0
+noon.com,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.noon.com — The read operation timed out,,,,,,,,,,,,,,,,,,,,,,,,,
+nostarch.com,Education,2026-09-27,1.3.0,48,41,86,Early,false,,,8,sitemap,,,3,3,3,4,0,0,0,0,4,3,3,7,3,,,4,0,2,2,,,0,0,0,0
+notion.com,SaaS / Productivity,2026-09-27,1.3.0,56,46,82,Growing,false,,,8,sitemap,,,5,3,5,2,5,0,0,0,7,5,0,7,3,,,,0,0,4,,,0,0,0,0
+nuxt.com,Developer tools,2026-09-27,1.3.0,80,69,86,Solid,false,,,8,sitemap,,,5,3,5,2,5,6,3,4,7,5,3,7,0,,,4,3,0,4,,,2,0,1,0
+obsidian.md,SaaS / Productivity,2026-09-27,1.3.0,40,36,86,Early,true,content needs JavaScript,,8,homepage and section links (no sitemap reachable),,,5,3,0,0,0,0,0,0,4,3,3,7,3,,,4,0,2,2,,,0,0,0,0
+oceanpayment.com,Cross-border services,2026-09-27,1.3.0,35,29,82,Early,false,,,8,homepage and section links (no sitemap reachable),,,5,5,3,0,0,0,0,0,4,5,3,0,0,,,,0,0,4,,,0,0,0,0
+oceanwing.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.oceanwing.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+oclean.com,China / consumer,2026-09-27,1.3.0,62,53,86,Growing,false,,,8,sitemap,,,5,5,3,2,5,0,0,2,7,5,3,3,3,,,4,0,2,2,,,2,0,0,0
+openai.com,AI,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.openai.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+openrouter.ai,AI,2026-09-27,1.3.0,90,77,86,Leading,false,,,8,sitemap,,,5,5,5,2,5,6,3,4,4,7,6,7,3,,,4,3,2,4,,,2,0,0,0
+orm.drizzle.team,Developer tools,2026-09-27,1.3.0,53,46,86,Growing,false,,,8,sitemap,,,5,3,5,2,5,0,0,0,9,0,3,3,3,,,4,0,0,2,,,2,0,0,0
+ozon.ru,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.ozon.ru — all requests returned 307,,,,,,,,,,,,,,,,,,,,,,,,,
+panda-css.com,Developer tools,2026-09-27,1.3.0,57,49,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,4,0,0,0,9,7,3,7,0,,,0,0,0,4,,,2,0,0,0
+payoneer.cn,Cross-border services,2026-09-27,1.3.0,30,25,84,Not started,true,content needs JavaScript,,8,sitemap,,,5,5,0,2,0,5,0,0,0,3,0,3,0,,,,0,0,0,,2,0,0,0,0
+payoneer.com,Payments / Fintech,2026-09-27,1.3.0,86,68,79,Leading,false,,,1,sitemap,,,3,3,5,4,5,6,,0,9,7,6,7,3,,,,3,3,4,,,0,0,0,0
+perpetua.io,Cross-border services,2026-09-27,1.3.0,32,26,82,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,2,0,0,0,0,4,3,0,5,0,,,,0,2,2,,,0,0,0,0
+perplexity.ai,AI,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.perplexity.ai — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+phoronix.com,Media / Publishing,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.phoronix.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+pika.art,AI,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,5,5,3,2,4,6,2,4,4,5,3,7,3,,,4,3,2,2,,,0,0,0,0
+pinecone.io,AI,2026-09-27,1.3.0,83,71,86,Leading,false,,,8,sitemap,,,3,3,5,4,5,6,0,2,7,7,3,7,6,,,4,3,2,4,,,0,0,0,0
+pingpongx.com,Cross-border services,2026-09-27,1.3.0,44,36,82,Early,false,,,8,sitemap,,,5,5,3,2,0,0,0,0,4,5,3,7,0,,,,0,0,2,,,0,0,0,0
+plaid.com,Payments / Fintech,2026-09-27,1.3.0,58,50,86,Growing,false,,,8,sitemap,,,3,5,3,4,5,0,2,0,4,7,3,3,3,,,4,0,2,2,,,0,0,0,0
+planetscale.com,Developer tools,2026-09-27,1.3.0,89,73,82,Leading,false,,,8,sitemap,,,5,5,3,4,5,6,2,2,9,7,6,7,3,,,,3,2,4,,,0,0,0,0
+plausible.io,Marketing / CRM,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,3,5,5,4,0,3,2,4,9,7,6,5,3,,,4,0,0,4,,,0,0,0,0
+pluralsight.com,Education,2026-09-27,1.3.0,64,55,86,Growing,false,,,8,sitemap,,,3,3,5,4,0,3,0,0,4,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+porter.run,Cloud & DevOps,2026-09-27,1.3.0,62,53,86,Growing,false,,,8,sitemap,,,5,3,5,4,4,0,0,2,4,7,3,7,3,,,4,0,0,2,,,0,0,0,0
+posthog.com,Marketing / CRM,2026-09-27,1.3.0,57,47,82,Growing,false,,,8,sitemap,,,3,5,3,2,5,3,0,2,4,7,3,3,0,,,,3,0,4,,,0,0,0,0
+pragprog.com,Education,2026-09-27,1.3.0,53,46,86,Growing,false,,,8,sitemap,,,3,5,3,4,0,0,0,0,7,7,3,7,3,,,0,0,0,4,,,0,0,0,0
+prefect.io,Cloud & DevOps,2026-09-27,1.3.0,68,56,82,Solid,false,,,8,sitemap,,,5,3,3,4,5,3,0,4,4,5,3,7,3,,,,3,2,2,,,0,0,0,0
+prisma.io,Developer tools,2026-09-27,1.3.0,71,58,82,Solid,false,,,8,sitemap,,,5,3,3,4,5,6,0,0,7,3,3,7,3,,,,3,0,4,,,2,0,0,0
+productboard.com,SaaS / Productivity,2026-09-27,1.3.0,78,67,86,Solid,false,,,8,sitemap,,,3,3,3,4,5,3,3,4,4,7,6,7,3,,,4,2,2,4,,,0,0,0,0
+pulumi.com,Cloud & DevOps,2026-09-27,1.3.0,99,85,86,Leading,false,,,8,sitemap,,,3,5,5,4,5,6,3,4,9,7,6,7,6,,,4,3,2,4,,,0,0,1,1
+pwc.com,Professional services,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.pwc.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+qcloud.com,China / cloud,2026-09-27,1.3.0,16,14,85,Not started,true,blocks crawlers,cloud.tencent.com,1,homepage and section links (no sitemap reachable),,,0,5,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,2,0,0,0,0
+qiniu.com,China / cloud,2026-09-27,1.3.0,49,41,84,Early,false,,,8,sitemap,,,3,5,3,4,5,0,0,0,4,3,3,7,0,,,,0,0,2,,2,0,0,0,0
+qwik.dev,Developer tools,2026-09-27,1.3.0,60,52,86,Growing,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,9,5,3,7,3,,,4,0,0,4,,,0,0,0,0
+radix-ui.com,Developer tools,2026-09-27,1.3.0,45,37,82,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,4,3,3,7,3,,,,0,0,4,,,0,0,0,0
+railway.com,Developer tools,2026-09-27,1.3.0,73,60,82,Solid,false,,,8,sitemap,,,3,5,3,2,5,6,2,4,4,5,3,7,3,,,,3,2,2,,,0,0,1,0
+rakuten.com,Ecommerce,2026-09-27,1.3.0,40,38,86,Early,true,content needs JavaScript,,8,sitemap,,,3,3,0,4,0,3,0,0,0,7,0,7,3,,,4,0,2,2,,,0,0,0,0
+ramp.com,Payments / Fintech,2026-09-27,1.3.0,73,63,86,Solid,false,,,6,sitemap,,,3,5,5,2,0,3,3,4,7,7,3,7,6,,,4,0,0,4,,,0,0,0,0
+raycast.com,SaaS / Productivity,2026-09-27,1.3.0,59,51,86,Growing,false,,,8,sitemap,,,5,3,5,4,0,0,0,0,4,7,3,7,3,,,4,0,2,4,,,0,0,0,0
+readwise.io,SaaS / Productivity,2026-09-27,1.3.0,67,58,86,Solid,false,,,8,sitemap,,,5,5,3,2,0,3,0,2,7,7,3,7,3,,,4,3,0,4,,,0,0,0,0
+remix.run,Developer tools,2026-09-27,1.3.0,55,45,82,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,9,7,3,7,0,,,,0,2,4,,,0,0,0,0
+render.com,Cloud & DevOps,2026-09-27,1.3.0,86,74,86,Leading,false,,,8,sitemap,,,5,5,5,4,5,6,0,2,7,7,3,7,3,,,4,3,2,4,,,2,0,0,0
+replicate.com,AI,2026-09-27,1.3.0,67,58,86,Solid,false,,,8,sitemap,,,5,5,5,4,4,0,0,0,7,7,3,7,3,,,4,0,0,4,,,0,0,0,0
+resend.com,Developer tools,2026-09-27,1.3.0,99,81,82,Leading,false,,,8,sitemap,,,5,5,5,4,5,6,3,4,7,7,6,7,6,,,,3,2,4,,,2,0,0,0
+revolut.com,Payments / Fintech,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.revolut.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+ro.co,Healthcare,2026-09-27,1.3.0,58,50,86,Growing,false,,,8,sitemap,,,3,5,5,4,0,3,0,2,0,7,3,7,3,,,4,0,0,4,,,0,0,0,0
+roadmap.sh,Education,2026-09-27,1.3.0,60,52,86,Growing,false,,,8,sitemap,,,3,5,5,4,0,0,2,2,7,7,3,0,6,,,4,0,0,4,,,0,0,0,0
+roborock.com,China / consumer,2026-09-27,1.3.0,18,15,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+rockwellautomation.com,Manufacturing / Industrial,2026-09-27,1.3.0,48,40,83,Early,false,,,8,sitemap,,,3,3,3,4,5,3,,0,0,3,0,0,3,,,4,3,2,4,,,0,0,0,0
+runway.com,AI,2026-09-27,1.3.0,90,77,86,Leading,false,,,8,sitemap,,,5,3,5,4,5,6,3,4,9,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+sany.com,Manufacturing / Industrial,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.sany.com — <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self s,,,,,,,,,,,,,,,,,,,,,,,,,
+se.com,Manufacturing / Industrial,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.se.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+seeyon.com,China / enterprise,2026-09-27,1.3.0,49,41,84,Early,false,,,8,sitemap,,,3,5,5,4,5,3,0,0,0,3,0,7,0,,,,0,0,4,,2,0,0,0,0
+sellersprite.com,Cross-border services,2026-09-27,1.3.0,40,51,82,Early,true,content needs JavaScript,,8,sitemap,,,5,3,0,4,5,6,0,2,4,3,3,7,3,,,,0,2,2,,,2,0,0,0
+semrush.com,Marketing / CRM,2026-09-27,1.3.0,67,58,86,Solid,false,,,8,sitemap,,,3,3,3,2,5,3,0,0,9,7,0,7,3,,,4,3,2,4,,,0,0,0,0
+sensetime.com,China / AI,2026-09-27,1.3.0,52,44,84,Growing,false,,,8,sitemap,,,3,5,3,4,0,5,3,2,4,3,3,5,0,,,,0,0,2,,2,0,0,0,0
+sentry.io,Cloud & DevOps,2026-09-27,1.3.0,73,60,82,Solid,false,,,8,sitemap,,,5,3,5,2,5,3,0,4,9,7,3,7,0,,,,3,2,2,,,0,0,0,0
+sf-express.com,Logistics / Freight,2026-09-27,1.3.0,13,11,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,0,0,0,0,,,0,0,0,0
+shadcn.com,Developer tools,2026-09-27,1.3.0,29,23,79,Not started,false,,,2,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,,0,7,0,0,3,0,,,,0,0,2,,,0,0,0,0
+shein.com,China / consumer,2026-09-27,1.3.0,26,22,86,Not started,true,content needs JavaScript,us.shein.com,8,homepage and section links (no sitemap reachable),,,3,3,0,0,5,0,0,0,0,0,0,7,0,,,4,0,0,0,,,0,0,0,0
+shopee.com,Ecommerce,2026-09-27,1.3.0,27,22,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,3,,0,0,0,0,3,0,,,4,0,0,4,,,0,0,0,0
+shopify.com,Ecommerce,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,3,5,5,4,5,3,0,0,4,7,3,7,3,,,4,3,2,4,,,2,0,0,0
+shoplazza.com,Ecommerce,2026-09-27,1.3.0,37,29,79,Early,false,,,1,sitemap,,,3,5,5,4,0,0,,0,0,0,0,7,3,,,,0,2,0,,,0,0,0,0
+shopline.com,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.shopline.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+siemens.com,Manufacturing / Industrial,2026-09-27,1.3.0,65,56,86,Growing,false,,,8,sitemap,,,3,3,5,4,5,0,0,0,9,7,0,7,3,,,4,0,2,4,,,0,0,0,0
+siliconflow.cn,China / AI,2026-09-27,1.3.0,68,57,84,Solid,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,5,3,4,9,3,6,5,3,,,,0,2,2,,2,0,0,0,0
+simonwillison.net,Media / Publishing,2026-09-27,1.3.0,56,46,82,Growing,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,9,3,3,7,3,,,,0,0,4,,,0,0,0,0
+skillshare.com,Education,2026-09-27,1.3.0,56,48,86,Growing,false,,,3,sitemap,,,3,5,5,2,0,6,0,2,4,5,0,7,0,,,4,3,0,2,,,0,0,0,0
+skyscanner.net,Travel,2026-09-27,1.3.0,18,15,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,5,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+slack.com,SaaS / Productivity,2026-09-27,1.3.0,60,52,86,Growing,false,,,8,sitemap,,,3,3,5,2,5,0,0,0,7,7,0,7,3,,,4,0,2,4,,,0,0,0,0
+smashingmagazine.com,Media / Publishing,2026-09-27,1.3.0,57,45,79,Growing,false,,,1,sitemap,,,3,5,5,4,0,0,,0,9,7,3,7,0,,,,0,0,2,,,0,0,0,0
+solidjs.com,Developer tools,2026-09-27,1.3.0,19,15,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,5,3,0,4,0,0,,0,0,0,0,3,0,,,,0,0,0,,,0,0,0,0
+sonoff.tech,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.sonoff.tech — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+squarespace.com,Ecommerce,2026-09-27,1.3.0,73,63,86,Solid,false,,,8,sitemap,,,5,3,5,4,5,3,0,4,0,7,6,7,3,,,4,3,0,4,,,0,0,0,0
+stackoverflow.blog,Media / Publishing,2026-09-27,1.3.0,40,43,82,Early,true,blocks crawlers,,8,sitemap,,,0,5,3,4,0,0,0,0,9,7,3,5,3,,,,0,2,2,,,0,0,0,0
+stepfun.com,China / AI,2026-09-27,1.3.0,25,21,83,Not started,true,content needs JavaScript,,1,sitemap,,,5,5,0,4,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+stratechery.com,Media / Publishing,2026-09-27,1.3.0,40,45,82,Early,true,serves crawlers an error,,8,sitemap,,,3,0,3,4,0,0,0,0,9,7,3,7,3,,,,0,2,4,,,0,0,0,0
+stripe.com,Payments / Fintech,2026-09-27,1.3.0,72,62,86,Solid,false,,,8,sitemap,,,3,5,3,2,5,6,0,2,9,3,3,7,3,,,4,3,2,2,,,0,0,0,0
+suno.com,AI,2026-09-27,1.3.0,80,69,86,Solid,false,,,8,sitemap,,,5,5,5,2,4,6,0,4,7,5,3,7,3,,,4,3,2,4,,,0,0,0,0
+supabase.com,Developer tools,2026-09-27,1.3.0,79,68,86,Solid,false,,,8,sitemap,,,5,3,5,4,5,6,3,2,4,7,3,5,0,,,4,3,2,4,,,2,0,1,0
+superhuman.com,SaaS / Productivity,2026-09-27,1.3.0,57,49,86,Growing,false,,,8,sitemap,,,5,3,5,4,0,0,0,0,9,5,0,7,3,,,4,0,2,2,,,0,0,0,0
+svelte.dev,Developer tools,2026-09-27,1.3.0,66,57,86,Solid,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,0,5,0,0,0,9,5,3,7,3,,,4,0,0,4,,,2,0,0,0
+tability.io,SaaS / Productivity,2026-09-27,1.3.0,51,44,86,Growing,false,,,8,sitemap,,,5,5,5,4,0,0,0,0,7,7,0,7,0,,,0,0,2,2,,,0,0,0,0
+tailwindcss.com,Developer tools,2026-09-27,1.3.0,52,45,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,9,7,3,7,0,,,4,0,0,4,,,0,0,0,0
+tanstack.com,Developer tools,2026-09-27,1.3.0,84,69,82,Leading,false,,,8,sitemap,,,5,5,5,2,5,6,0,2,7,5,3,7,6,,,,3,2,4,,,2,0,0,0
+tapd.cn,China / enterprise,2026-09-27,1.3.0,30,25,84,Not started,false,,,2,sitemap,,,5,3,5,4,0,0,0,0,0,0,0,7,0,,,,0,0,0,,1,0,0,0,0
+tcl.com,China / consumer,2026-09-27,1.3.0,74,65,88,Solid,false,,,8,sitemap,,,5,5,5,2,0,3,0,4,9,7,6,7,0,,,4,0,2,4,,2,0,0,0,0
+teambition.com,China / no-code,2026-09-27,1.3.0,37,30,81,Early,false,,,8,sitemap,,,5,5,3,2,0,0,,0,4,0,3,5,0,,,,0,0,2,,1,0,0,0,0
+techcrunch.com,Media / Publishing,2026-09-27,1.3.0,40,73,86,Early,true,blocks crawlers,,8,sitemap,,,0,5,5,4,0,5,3,4,9,5,6,7,6,,,4,3,2,4,,,0,0,0,1
+teladochealth.com,Healthcare,2026-09-27,1.3.0,73,63,86,Solid,false,,,8,sitemap,,,5,5,5,4,0,3,0,4,9,7,0,7,0,,,4,3,3,4,,,0,0,0,0
+temporal.io,Cloud & DevOps,2026-09-27,1.3.0,74,64,86,Solid,false,,,8,sitemap,,,3,5,5,4,5,3,0,2,4,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+temu.com,China / consumer,2026-09-27,1.3.0,29,24,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,3,0,0,0,5,,2,0,0,0,3,0,,,4,2,2,0,,,0,0,0,0
+tencent.com,China / enterprise,2026-09-27,1.3.0,68,57,84,Solid,false,,,8,sitemap,,,5,5,5,4,0,3,3,0,4,5,6,7,3,,,,0,2,4,,1,0,0,0,0
+theinformation.com,Media / Publishing,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.theinformation.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+theregister.com,Media / Publishing,2026-09-27,1.3.0,40,58,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,3,4,0,3,0,4,7,7,6,7,6,,,4,0,2,2,,,0,0,0,0
+theverge.com,Media / Publishing,2026-09-27,1.3.0,40,63,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,5,2,0,6,3,4,4,3,6,7,6,,,4,3,2,4,,,0,0,0,1
+thomsonreuters.com,Professional services,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,sitemap,,,3,5,5,4,0,3,0,0,0,7,0,7,0,,,4,3,3,4,,,0,0,0,0
+tigerbeetle.com,Cloud & DevOps,2026-09-27,1.3.0,60,52,86,Growing,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,9,3,3,7,3,,,4,0,2,4,,,0,0,0,0
+tigerdata.com,Cloud & DevOps,2026-09-27,1.3.0,63,54,86,Growing,false,,,8,sitemap,,,5,3,3,4,5,3,0,2,0,7,3,7,6,,,0,0,2,2,,,2,0,0,0
+together.ai,AI,2026-09-27,1.3.0,40,63,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,5,4,5,6,3,4,4,5,3,7,3,,,4,3,0,4,,,0,0,0,0
+tongtool.com,Cross-border services,2026-09-27,1.3.0,38,32,84,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,0,0,4,3,0,7,0,,,,0,0,4,,1,0,0,0,0
+treelab.com.cn,China / no-code,2026-09-27,1.3.0,,,,,,,,,,connection failed,could not fetch https://www.treelab.com.cn — <urlopen error EOF occurred in violation of protocol (_ssl.c:1129)>,,,,,,,,,,,,,,,,,,,,,,,,,
+trendyol.com,Ecommerce,2026-09-27,1.3.0,36,31,86,Early,true,serves crawlers an error,,1,sitemap,,,3,0,5,2,5,3,0,0,0,0,0,7,0,,,4,0,0,2,,,0,0,0,0
+trigger.dev,Developer tools,2026-09-27,1.3.0,90,74,82,Leading,false,,,8,sitemap,,,5,5,5,2,5,5,2,4,9,7,6,7,6,,,,0,0,4,,,2,0,0,0
+trip.com,Travel,2026-09-27,1.3.0,51,44,86,Growing,false,,,7,homepage and section links (no sitemap reachable),,,3,5,3,0,5,0,0,0,4,3,3,7,3,,,4,0,2,2,,,0,0,0,0
+tripadvisor.com,Travel,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.tripadvisor.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+turso.tech,Developer tools,2026-09-27,1.3.0,40,47,82,Early,true,content needs JavaScript,,7,sitemap,,,5,5,0,4,4,3,0,0,4,3,3,7,0,,,,3,2,2,,,2,0,0,0
+twilio.com,Cloud & DevOps,2026-09-27,1.3.0,85,73,86,Leading,false,,,8,sitemap,,,3,3,5,4,5,6,0,4,9,7,3,7,3,,,4,3,3,4,,,0,0,0,0
+typeform.com,SaaS / Productivity,2026-09-27,1.3.0,84,72,86,Leading,false,,,8,sitemap,,,3,5,5,4,5,3,0,2,9,7,3,7,6,,,4,3,2,4,,,0,0,0,0
+ucloud.cn,China / cloud,2026-09-27,1.3.0,35,30,85,Early,false,,,2,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,0,0,7,0,,,4,0,0,4,,2,0,0,0,0
+udemy.com,Education,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.udemy.com — all requests returned 403,,,,,,,,,,,,,,,,,,,,,,,,,
+ueeshop.com,Cross-border services,2026-09-27,1.3.0,30,24,81,Not started,false,,,4,sitemap,,,3,3,3,2,0,0,,0,0,3,0,7,0,,,,0,0,2,,1,0,0,0,0
+ugreen.com,China / consumer,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.ugreen.com — all requests returned 429,,,,,,,,,,,,,,,,,,,,,,,,,
+unisound.com,China / AI,2026-09-27,1.3.0,74,62,84,Solid,false,,,8,sitemap,,,5,5,5,4,4,5,3,4,9,3,6,3,0,,,,0,0,2,,2,2,0,0,0
+united.com,Travel,2026-09-27,1.3.0,,,,,,,,,,timed out,could not fetch https://www.united.com — The read operation timed out,,,,,,,,,,,,,,,,,,,,,,,,,
+unocss.dev,Developer tools,2026-09-27,1.3.0,50,41,82,Early,false,,,8,homepage and section links (no sitemap reachable),,,5,5,3,0,4,0,0,0,7,3,3,5,0,,,,0,0,4,,,2,0,0,0
+ups.com,Logistics / Freight,2026-09-27,1.3.0,16,13,83,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,3,3,0,0,0,0,,0,0,0,0,3,0,,,4,0,0,0,,,0,0,0,0
+upstash.com,Cloud & DevOps,2026-09-27,1.3.0,85,70,82,Leading,false,,,8,sitemap,,,5,5,3,4,5,6,2,4,7,7,3,7,3,,,,3,0,4,,,2,0,0,0
+upyun.com,China / cloud,2026-09-27,1.3.0,33,28,84,Early,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,0,0,0,7,0,,,,0,0,2,,2,0,0,0,0
+valibot.dev,Developer tools,2026-09-27,1.3.0,56,46,82,Growing,false,,,8,sitemap,,,5,3,3,2,5,0,0,0,7,3,3,7,0,,,,0,2,4,,,2,0,0,0
+veeva.com,Healthcare,2026-09-27,1.3.0,86,74,86,Leading,false,,,8,homepage and section links (no sitemap reachable),,,3,5,5,4,5,5,3,2,9,7,6,7,3,,,4,0,2,4,,,0,0,0,0
+vercel.com,Cloud & DevOps,2026-09-27,1.3.0,78,67,86,Solid,false,,,8,sitemap,,,5,5,5,4,5,6,2,2,4,7,3,3,3,,,4,3,2,4,,,0,0,0,0
+vevor.com,China / consumer,2026-09-27,1.3.0,56,48,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,4,0,3,0,2,4,3,3,7,3,,,4,0,2,2,,,0,0,0,0
+viator.com,Travel,2026-09-27,1.3.0,40,44,83,Early,true,serves crawlers an error,,1,sitemap,,,5,0,5,4,4,3,,0,0,7,0,0,3,,,4,3,2,4,,,0,0,0,0
+vika.cn,China / no-code,2026-09-27,1.3.0,50,42,84,Early,false,,,8,sitemap,,,3,5,3,4,0,3,0,0,4,5,6,0,3,,,,0,2,2,,2,0,0,0,0
+vite.dev,Developer tools,2026-09-27,1.3.0,65,56,86,Growing,false,,,8,sitemap,,,3,3,5,2,4,0,0,0,9,7,3,7,3,,,4,0,0,4,,,2,0,0,0
+vitest.dev,Developer tools,2026-09-27,1.3.0,63,52,82,Growing,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,0,4,0,0,0,9,5,3,7,3,,,,0,0,4,,,2,0,0,0
+volcengine.com,China / cloud,2026-09-27,1.3.0,25,21,84,Not started,false,,,2,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,0,0,0,7,0,,,,0,0,2,,1,0,0,0,0
+vuejs.org,Developer tools,2026-09-27,1.3.0,66,57,86,Solid,false,,,8,sitemap,,,5,5,5,2,4,0,0,0,9,7,3,7,0,,,4,0,0,4,,,2,0,0,0
+walmart.com,Ecommerce,2026-09-27,1.3.0,34,29,86,Early,true,content needs JavaScript,,8,homepage and section links (no sitemap reachable),,,3,3,0,0,0,5,0,0,0,7,0,7,0,,,4,0,0,0,,,0,0,0,0
+weaviate.io,AI,2026-09-27,1.3.0,40,62,82,Early,true,content needs JavaScript,,8,sitemap,,,5,5,0,4,5,6,0,2,9,5,3,7,3,,,,3,2,2,,,0,0,1,0
+webflow.com,Ecommerce,2026-09-27,1.3.0,76,65,86,Solid,false,,,8,sitemap,,,3,5,5,2,5,6,0,2,7,7,0,7,3,,,4,3,2,4,,,0,0,0,0
+webmd.com,Healthcare,2026-09-27,1.3.0,40,39,83,Early,true,blocks crawlers,,1,homepage and section links (no sitemap reachable),,,0,3,5,0,0,0,,0,9,7,0,7,0,,,4,0,0,4,,,0,0,0,0
+weichai.com,Manufacturing / Industrial,2026-09-27,1.3.0,37,31,84,Early,false,,,8,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,4,0,3,7,0,,,,0,0,4,,2,0,0,0,0
+who.int,Healthcare,2026-09-27,1.3.0,55,47,86,Growing,false,,,8,homepage and section links (no sitemap reachable),,,3,3,3,4,0,3,3,0,7,5,3,5,0,,,4,0,2,2,,,0,0,0,0
+wildberries.ru,Ecommerce,2026-09-27,1.3.0,,,,,,,,,,refused,could not fetch https://www.wildberries.ru — all requests returned 498,,,,,,,,,,,,,,,,,,,,,,,,,
+windsurf.com,AI,2026-09-27,1.3.0,40,40,86,Early,true,content needs JavaScript,devin.ai,7,sitemap,,,5,5,0,2,0,0,2,2,4,3,3,3,3,,,4,0,2,2,,,0,0,0,0
+wired.com,Media / Publishing,2026-09-27,1.3.0,40,49,86,Early,true,blocks crawlers,,8,sitemap,,,0,3,5,4,0,5,0,0,4,7,3,5,3,,,4,0,2,4,,,0,0,0,0
+wise.com,Payments / Fintech,2026-09-27,1.3.0,59,51,86,Growing,false,,,8,sitemap,,,3,3,3,2,0,3,0,0,4,7,3,7,3,,,4,3,2,4,,,0,0,0,0
+wiseasy.com,Cross-border services,2026-09-27,1.3.0,40,33,82,Early,false,,,8,sitemap,,,3,5,5,4,0,0,0,0,0,3,0,7,0,,,,0,2,4,,,0,0,0,0
+wix.com,Ecommerce,2026-09-27,1.3.0,55,47,86,Growing,false,,,2,sitemap,,,3,3,3,4,5,3,0,2,0,5,0,7,0,,,4,3,3,2,,,0,0,0,0
+woocommerce.com,Ecommerce,2026-09-27,1.3.0,81,70,86,Solid,false,,,6,sitemap,,,3,3,3,4,5,6,3,2,9,7,6,5,3,,,4,3,0,4,,,0,0,0,0
+worldfirst.com,Cross-border services,2026-09-27,1.3.0,81,70,86,Solid,false,,,8,sitemap,,,5,3,5,4,5,5,3,0,7,7,6,7,3,,,4,0,2,4,,,0,0,0,0
+wps.cn,China / enterprise,2026-09-27,1.3.0,17,14,81,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,5,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,0,,1,0,0,0,0
+xcmg.com,Manufacturing / Industrial,2026-09-27,1.3.0,27,22,81,Not started,false,,,1,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,0,0,7,0,,,,0,0,0,,2,0,0,0,0
+xiaomi.com,China / consumer,2026-09-27,1.3.0,33,28,85,Early,true,content needs JavaScript,mi.com,1,sitemap,,,3,5,0,4,0,3,,0,0,0,0,7,0,,,4,0,0,0,,2,0,0,0,0
+xtransfer.com,Cross-border services,2026-09-27,1.3.0,78,64,82,Solid,false,,,8,sitemap,,,5,5,3,2,5,6,3,2,4,7,3,5,3,,,,3,2,4,,,2,0,0,0
+yonyou.com,China / enterprise,2026-09-27,1.3.0,40,34,84,Early,false,,,8,sitemap,,,5,3,5,4,0,0,0,0,4,0,3,7,0,,,,0,0,2,,1,0,0,0,0
+yuncang.com,Cross-border services,2026-09-27,1.3.0,33,27,81,Early,false,,,1,homepage and section links (no sitemap reachable),,,3,5,5,0,0,0,,0,0,7,0,3,0,,,,0,0,2,,2,0,0,0,0
+yunexpress.com,Logistics / Freight,2026-09-27,1.3.0,40,34,86,Early,false,,,8,sitemap,,,5,5,5,2,0,0,0,0,4,3,3,5,0,,,0,0,0,2,,,0,0,0,0
+yunzhijia.com,China / no-code,2026-09-27,1.3.0,32,27,84,Early,false,,,6,homepage and section links (no sitemap reachable),,,3,5,3,0,0,0,0,0,0,0,3,7,0,,,,0,0,4,,2,0,0,0,0
+yuque.com,China / no-code,2026-09-27,1.3.0,19,15,79,Not started,true,content needs JavaScript,,1,homepage and section links (no sitemap reachable),,,5,5,0,0,0,0,,0,0,0,0,3,0,,,,0,0,2,,,0,0,0,0
+zapier.com,SaaS / Productivity,2026-09-27,1.3.0,88,76,86,Leading,false,,,8,sitemap,,,5,3,5,4,5,6,3,4,7,5,3,7,3,,,4,2,3,4,,,2,0,1,0
+zhipuai.cn,China / AI,2026-09-27,1.3.0,35,31,88,Early,false,,,8,sitemap,,,5,5,3,4,0,0,0,0,0,0,3,3,0,,,4,0,0,2,,2,0,0,0,0
+zocdoc.com,Healthcare,2026-09-27,1.3.0,58,48,83,Growing,false,,,1,homepage and section links (no sitemap reachable),,,3,5,5,0,0,5,,0,9,7,0,3,3,,,4,0,0,4,,,0,0,0,0
+zod.dev,Developer tools,2026-09-27,1.3.0,52,43,82,Growing,false,,,8,homepage and section links (no sitemap reachable),,,5,5,5,0,5,0,0,0,4,3,3,7,0,,,,0,0,4,,,2,0,0,0

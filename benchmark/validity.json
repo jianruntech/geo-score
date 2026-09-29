@@ -10,6 +10,39 @@
   "min": -10,
   "max": 6
  },
+ "common_checks": {
+  "what": "per site, common_checks_cli_pct minus common_checks_human_pct",
+  "n": 5,
+  "mean": -0.4,
+  "min": -6,
+  "max": 9,
+  "mean_abs": 5.2,
+  "bland_altman": {
+   "label": "n=5",
+   "n": 5,
+   "bias": -0.4,
+   "sd": 6.3,
+   "loa_95": [
+    -12.8,
+    12.0
+   ]
+  }
+ },
+ "validation_set": {
+  "n": 5,
+  "calibration_sites": 5,
+  "held_out": false,
+  "hand_score_range": [
+   69,
+   87
+  ],
+  "audience_languages": {
+   "en": 4,
+   "zh-CN": 1
+  },
+  "gate_capped": 0,
+  "rater_recorded": 0
+ },
  "caveats": [
   "n=5 sites, each hand-scored once by one auditor; this is a first measurement, not a validation study",
   "the hand audits are dated; the CLI re-scored the live pages later, so site changes are inside every difference",

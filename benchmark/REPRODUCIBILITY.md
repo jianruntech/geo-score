@@ -4,27 +4,48 @@ The leaderboard says the benchmark is reproducible and invites you to re-run it.
 invitation is worth nothing without a number attached, so here is the number.
 
 We ran the whole benchmark twice on the same day with the same code, and compared every
-site. [`reproducibility.json`](reproducibility.json) has the raw per-site pairs.
+site. [`reproducibility.json`](reproducibility.json) has the raw per-site pairs, and
+[`retest.py`](retest.py) derives every table on this page from it.
 
-**The band below was measured on the 266-listed / 229-scored version of the list**, before
-it grew to its current size and before the 308 fix described further down. It measures the
-method, not that particular dataset, so it still applies — but the counts in the table are
-that measurement's counts, not today's totals.
+**The band below was measured on 2026-09-09 on 229 sites with a 1.1.x build, before the
+1.1.2 variance fixes** (sameAs, knowledge-graph lookups and sampling retries; see the
+[changelog](../CHANGELOG.md)). It has not been re-measured with the current tool, and the
+list has grown since, so the counts in the table are that measurement's counts, not today's
+totals. It still describes the method's main sources of variance, but the size of the band
+for the current tool is an open measurement: [A retest with the current tool](#a-retest-with-the-current-tool)
+records it once it has been run.
 
 ## The measured band
 
+<!-- retest:legacy-band -->
+
 | | |
 |---|---|
+| Measured | 2026-09-09, a 1.1.x build, before the 1.1.2 variance fixes |
 | Sites in both runs | **229** |
 | Identical score | **103** (45.0%) |
 | Within ±2 | **179** (78.2%) |
 | Within ±5 | **219** (95.6%) |
 | Moved more than 5 | **10** (4.4%) |
+| Band changed | **18** (7.9%) |
 | Gate-cap state flipped | **5** |
+| ICC(A,1) | **0.974** |
+| SEM | **3.09** points |
+
+Medians 57 → 57.5, means 56.6 → 56.3 across the two runs.
+
+<!-- /retest:legacy-band -->
 
 **Read a single site's number as ±5, not as exact.** Read the median, the sector
-medians and the distribution as stable: the median moved 57 → 57.5 and the mean
-56.6 → 56.3 across the two runs.
+medians and the distribution as stable.
+
+## A retest with the current tool
+
+<!-- retest:study -->
+
+No retest with the current tool is recorded yet. The runs cost nothing but time and are the maintainer's to make (see [Reproducing this](#reproducing-this)); until then the only measured band is the one above, and it describes a 1.1.x build.
+
+<!-- /retest:study -->
 
 ## Why it moves
 
@@ -42,6 +63,8 @@ to the tool.
 right now, and some sites answer differently minute to minute. Five sites flipped
 between the two runs:
 
+<!-- retest:legacy-flips -->
+
 | Site | Run 1 | Run 2 |
 |---|---|---|
 | booking.com | capped — content needs JavaScript | not capped |
@@ -49,6 +72,8 @@ between the two runs:
 | slack.com | not capped | capped — serves crawlers an error |
 | together.ai | not capped | capped — blocks crawlers |
 | xtransfer.com | not capped | capped — blocks crawlers |
+
+<!-- /retest:legacy-flips -->
 
 Three of the large movers land exactly on 40 because that is the gate cap. During the
 second run the log also caught live rate limiting — `ugreen.com` and `hiwonder.com`
@@ -110,12 +135,28 @@ Read a China-sector score with that field in view.
 ## Reproducing this
 
 ```
-python3 benchmark/run.py                      # writes benchmark/results.json
-python3 benchmark/run.py                      # again, to a copy
-python3 -c "..."                              # compare — see reproducibility.json
+python3 benchmark/run.py --out ~/geo-runs/a --vantage "LABEL"         # run A
+python3 benchmark/run.py --out ~/geo-runs/b --vantage "LABEL"         # run B: same day, same place
+python3 benchmark/run.py --out ~/geo-runs/c --vantage "LABEL" \
+    --urls-from-dir ~/geo-runs/a/raw                                   # run C: A's pages
+python3 benchmark/retest.py ~/geo-runs/a ~/geo-runs/b ~/geo-runs/c    # reproducibility.json + the tables above
 ```
 
-`benchmark/results.json` publishes run 1. Run 2 is kept only inside
-`reproducibility.json`; the public pages, the cards and the README are all synced to
-run 1, so every published number comes from one internally consistent run rather than
-a blend of two.
+A run with `--out` writes its `results.json` and `raw/` there and leaves the published files
+alone.
+
+Each pair isolates something. A against B is the whole run-to-run variance a reader of the
+leaderboard sees. A against C reads the same pages, so what is left is the sites and the
+network rather than the sample. A fourth run from a second place (a different `--vantage`)
+shows what the vantage adds: a network that cannot reach Wikidata, LinkedIn or a WAF-fronted
+host scores those checks differently. `--vantage` is a label the operator declares; nothing
+looks an address up. Every run also records its tool version and Python version.
+
+`python3 benchmark/retest.py` with no arguments re-derives every figure from the records in
+`reproducibility.json`, and `.github/validate.py` fails when this page or that file differs
+from what it gives.
+
+`benchmark/results.json` publishes one run. The others are kept only inside
+`reproducibility.json`; the public pages, the cards and the README are all synced to the
+published run, so every published number comes from one internally consistent run rather
+than a blend of two.

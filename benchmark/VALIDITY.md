@@ -9,8 +9,9 @@ Each of the 5 published hand audits in [examples/audits/v1.1](../examples/audits
 
 ## Result
 
+- **On the checks both of them scored, the CLI read 0.4 points lower on average.** Per site, the CLI's share of those checks' points minus the auditor's ranged from 6 lower to 9 higher (mean absolute difference 5.2). Bland-Altman (n=5): bias -0.4, 95% limits of agreement -12.8 to +12.0.
+- **On the full normalised score the CLI read 3.6 points lower on average**, ranging from 10 lower to 6 higher. The two figures differ because the auditor also scored p3.listings, p3.mentions and p4.question-coverage, which the CLI leaves out of its denominator.
 - **Same tier on 79% of check pairs.** Checks read by rule agreed on 95% (41 pairs); checks the CLI approximates with a heuristic agreed on 64% (45 pairs). The 3 judgement checks are never scored by the CLI.
-- **The CLI's normalised score was 3.6 points lower on average**, ranging from 10 lower to 6 higher.
 
 ## Read this before quoting it
 
@@ -18,6 +19,9 @@ Each of the 5 published hand audits in [examples/audits/v1.1](../examples/audits
 - The hand audits are dated; the CLI re-scored the live pages later, so site changes are inside every difference.
 - The CLI samples only the audited host; hand-sampled pages on other hosts were dropped.
 - The three judgement checks (p3.listings, p3.mentions, p4.question-coverage) are never scored by the CLI and are not compared; p4.cn-engines is compared only where both the CLI and the auditor scored it.
+- The 5 sites are the ones whose v1.0 audits calibrated v1.1 ([calibration record](../rubric/calibration-v1.1.md)), so this is development data, not a held-out set.
+- The hand scores run from 69 to 87; 1 of the 5 sites is Chinese-language and 0 are gate-capped, so low-scoring and capped sites are not represented.
+- The audit files do not record who scored them, or whether the scorer had seen the CLI's output.
 
 ## By site
 

@@ -19,8 +19,8 @@ TPL = '''<!doctype html>
 <meta name="twitter:description" content="%(t_ogdesc)s">
 <meta name="twitter:image" content="%(ogimg)s">
 <link rel="canonical" href="%(canon)s">
-<link rel="alternate" hreflang="en" href="https://jianruntech.github.io/geo-score/">
-<link rel="alternate" hreflang="zh" href="https://jianruntech.github.io/geo-score/zh.html">
+<link rel="alternate" hreflang="en" href="%(url_en)s">
+<link rel="alternate" hreflang="zh" href="%(url_zh)s">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>%(css)s</style>
@@ -68,7 +68,7 @@ TPL = '''<!doctype html>
 <div class="toolbar">
 <input id="q" type="search" placeholder="%(l_search)s" autocomplete="off">
 <select id="sec"><option value="">%(l_allsec)s</option>%(secopts)s</select>
-<select id="fil"><option value="">%(l_allsites)s</option><option value="cap">%(l_fcap)s</option><option value="top">%(l_ftop)s</option><option value="low">%(l_flow)s</option></select>
+<select id="fil"><option value="">%(l_allsites)s</option><option value="cap">%(l_fcap)s</option><option value="top">%(l_ftop)s</option><option value="low">%(l_flow)s</option><option value="thin">%(l_fthin)s</option></select>
 </div>
 <div class="tw"><table id="t"><thead><tr>
 <th data-k="s">%(l_site)s</th><th data-k="n" class="num">%(l_score)s</th><th></th>
@@ -86,13 +86,14 @@ TPL = '''<!doctype html>
 const D=%(data)s;
 const BAND=%(bandmap)s;
 const bandCol=%(bandcol)s;
+const THIN=%(thin_n)d;
 let sortK="n",sortD=-1;
 const tb=document.getElementById("tb"),q=document.getElementById("q"),sec=document.getElementById("sec"),fil=document.getElementById("fil"),cnt=document.getElementById("count");
 const CNT=%(l_count)s;
 function rows(){
   const t=q.value.trim().toLowerCase(),sv=sec.value,fv=fil.value;
   let r=D.filter(d=>(!t||d.s.toLowerCase().includes(t)||d.k.toLowerCase().includes(t))&&(!sv||d.k===sv)
-    &&(!fv||(fv==="cap"?d.c:fv==="top"?d.n>=66:d.n!==null&&d.n<50)));
+    &&(!fv||(fv==="cap"?d.c:fv==="top"?d.n>=66:fv==="thin"?d.t!==null&&d.t<THIN:d.n!==null&&d.n<50)));
   r.sort((a,b)=>{const x=a[sortK],y=b[sortK];
     if(x===null)return 1; if(y===null)return -1;
     return (typeof x==="number"?x-y:String(x).localeCompare(String(y)))*sortD;});
@@ -102,7 +103,8 @@ function draw(){
   const r=rows();
   tb.innerHTML=r.map(d=>{
     const w=d.n===null?0:d.n, cls=w>=66?"hi":w<40?"lo":"";
-    return `<tr><td>${d.s}${d.c?' <span class="pill">%(l_pill)s</span>':''}</td>`+
+    return `<tr><td>${d.s}${d.c?' <span class="pill">%(l_pill)s</span>':''}`+
+      `${d.t!==null&&d.t<THIN?' <span class="pill" style="border-color:var(--mute);color:var(--dim)" title="'+d.t+' / 8">%(l_thin)s</span>':''}</td>`+
       `<td class="num" style="color:${bandCol[d.b]}">${d.n===null?"\\u2014":d.n}</td>`+
       `<td class="bar"><i class="${cls}" style="width:${w}%%"></i></td>`+
       `<td class="band" style="color:${bandCol[d.b]}">${BAND[d.b]||d.b}</td>`+
