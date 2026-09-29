@@ -20,6 +20,8 @@ geo-score:
     # piping it, so a SHA256SUMS without that line stops the job here, pipefail or not
     - grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
     - sha256sum -c geo_score.py.sha256
+    # geo-score 1.5.0 and later: add --fail-on-gate to also fail the job when a gate scores zero. A gate at zero
+    # caps the score at exactly 40, which --fail-under 40 lets through; an older release rejects the flag
     - python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under "$GEO_SCORE_FAIL_UNDER"
   artifacts:
     when: always                      # keep the report when the threshold fails the job

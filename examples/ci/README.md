@@ -11,6 +11,8 @@ you do not use code scanning; for a test-report tool, use the `junit` input inst
 
 `fail-under` is optional. Leave it out while you are establishing a baseline; add it
 once you know your number, so a regression fails the build instead of going unnoticed.
+`fail-on-gate: true` also fails the build when a gate check scores zero: a gate at zero caps the
+score at exactly 40, so `fail-under: 40` alone never fails a capped site.
 
 ## Weekly citation tracking (level 3)
 
@@ -45,6 +47,9 @@ One run writes the report, writes the test file and applies the threshold. Two r
 twice and can print two different scores, so the report you keep would not be the run that passed or
 failed the build. Exit code is 1 when the score is below `--fail-under`, 2 when the site could not be
 fetched, and 0 otherwise; a file that does not match `SHA256SUMS` stops the step before scoring.
+From geo-score 1.5.0, `--fail-on-gate` on the same run also exits 1 when a gate check scores zero: a
+gate at zero caps the score at exactly 40, which `--fail-under 40` lets through. Add it when the
+release you pin has it; an older release rejects the flag with exit 2.
 
 ### GitLab CI
 

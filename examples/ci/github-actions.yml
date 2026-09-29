@@ -22,6 +22,7 @@ jobs:
         with:
           url: https://example.com
           fail-under: 40           # remove this to report without failing the build
+          fail-on-gate: true       # a gate at zero caps the score at exactly 40, which fail-under: 40 lets through
           json-out: geo-score.json
           sarif: geo-score.sarif   # optional: drop this and the upload-sarif step if you do not use code scanning
       - run: echo "Scored $SCORE ($BAND)"
