@@ -57,7 +57,7 @@ body:
     attributes:
       label: Tool version
       description: The output of `geo-score --version` (or `python3 geo_score.py --version`).
-      placeholder: "geo-score 1.4.0 (rubric v1.1)"
+      placeholder: "geo-score X.Y.Z (rubric vA.B)"
     validations: { required: true }
   - type: dropdown
     id: relationship

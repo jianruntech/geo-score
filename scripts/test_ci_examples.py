@@ -10,7 +10,9 @@ file against SHA256SUMS before running it, and calls geo_score.py exactly once. 
 for a local copy of cli/geo_score.py and a generated SHA256SUMS and runs the commands with bash against the
 fixture server from cli/test_geo_score_e2e.py, as scripts/test_action.py does for action.yml. Each runs in the
 weakest shell its CI promises: the README block without errexit or pipefail (an Azure Pipelines script step),
-the GitLab job with errexit only, so a check that only holds under `set -e` or pipefail fails here.
+the GitLab job with errexit only, so a check that only holds under `set -e` or pipefail fails here. The
+workflows that fetch release files themselves (watch-weekly.yml) have their checksum step run the same way,
+once per fetched file with that file altered and once with its SHA256SUMS line missing.
 """
 import hashlib, io, json, os, re, shutil, subprocess, sys, tempfile, xml.dom.minidom
 
@@ -113,6 +115,27 @@ def steps(text):
     return re.split(r"^%s  - " % m.group(1), text[m.end():], flags=re.M)[1:] if m else []
 
 
+def run_block(step):
+    """The commands of a step's `run: |` block, comment lines dropped."""
+    lines = step.split("\n")
+    for i, ln in enumerate(lines):
+        m = re.match(r"^(\s*)run: \|[-+]?\s*$", ln)
+        if m:
+            body = []
+            for b in lines[i + 1:]:
+                if b.strip() and len(b) - len(b.lstrip()) <= len(m.group(1)):
+                    break
+                body.append(b.strip())
+            return [b for b in body if b and not b.startswith("#")]
+    return []
+
+
+def fetch_steps():
+    """(workflow, step) for each step in examples/ci's workflows that verifies downloaded release files."""
+    return [(f, s) for f in sorted(x for x in os.listdir(CI) if x.endswith(".yml") and x != "gitlab-ci.yml")
+            for s in steps(rd(os.path.join("examples", "ci", f))) if re.search(r"\bsha256sum -c\b", s)]
+
+
 def gated_checks():
     """A step whose if: runs it after a failure (always(), !cancelled(), failure()) also runs after a failed
     checksum step, so if it runs the downloaded geo_score.py it must also require that step's success."""
@@ -161,7 +184,7 @@ def local_script(lines, fail_under=None):
     for ln in lines:
         if DOWNLOAD.search(ln):
             if not copied:
-                out.append('cp "$GEO_TEST_SRC/geo_score.py" "$GEO_TEST_SRC/SHA256SUMS" .')
+                out.append('cp "$GEO_TEST_SRC"/* .')
                 copied = True
             continue
         if fail_under is not None and RUN.search(ln):
@@ -170,19 +193,20 @@ def local_script(lines, fail_under=None):
     return "\n".join(out) + "\n"
 
 
-def make_src(tmp, case=None):
-    """A release-shaped folder: geo_score.py and a SHA256SUMS that also lists a file the CI does not fetch,
-    so the grep that picks the one line has to work. case "tampered" changes geo_score.py after it was summed;
-    "unlisted" leaves its line out of SHA256SUMS, so the grep finds nothing."""
+def make_src(tmp, case=None, files=("geo_score.py",), target="geo_score.py"):
+    """A release-shaped folder: the fetched files and a SHA256SUMS that lists both geo_score.py and
+    geo_watch.py, so a grep that picks one line has to work. case "tampered" changes target after it was
+    summed; "unlisted" leaves target's line out of SHA256SUMS, so the grep finds nothing."""
     src = os.path.join(tmp, "release")
     os.makedirs(src)
     sums = []
     for f in ("geo_score.py", "geo_watch.py"):
         body = io.open(os.path.join(ROOT, "cli", f), "rb").read()
-        if not (f == "geo_score.py" and case == "unlisted"):
+        if not (f == target and case == "unlisted"):
             sums.append("%s  %s\n" % (hashlib.sha256(body).hexdigest(), f))
-        if f == "geo_score.py":
-            io.open(os.path.join(src, f), "wb").write(body + (b"# not the released file\n" if case == "tampered" else b""))
+        if f in files:
+            extra = b"# not the released file\n" if f == target and case == "tampered" else b""
+            io.open(os.path.join(src, f), "wb").write(body + extra)
     io.open(os.path.join(src, "SHA256SUMS"), "w", encoding="utf-8").write("".join(sums))
     return src
 
@@ -252,6 +276,29 @@ def execute(name, shell, lines, env, good, blocked, tmp):
             ok(r["normalised"] <= 40 and r.get("gate_capped") is True, "%s on %s: gate capped (%d)" % (name, case, r["normalised"]))
 
 
+def execute_fetch(name, lines, tmp):
+    """The checksum step alone: it passes on the release as published, and stops on each fetched file that
+    was altered or that SHA256SUMS does not list, so a later step never runs an unchecked file."""
+    got = sorted(set(re.findall(r"\bgeo_\w+\.py\b", " ".join(ln for ln in lines if DOWNLOAD.search(ln)))))
+    ok(bool(got), "%s: the checksum step downloads release files (%s)" % (name, ", ".join(got) or "none"))
+    base = os.path.join(tmp, re.sub(r"\W", "_", name))
+    bindir = shims(base)
+    cases = [("good", None)] + [(c, f) for f in got for c in ("tampered", "unlisted")]
+    for case, target in cases:
+        work = os.path.join(base, "%s-%s" % (case, target or "all"))
+        os.makedirs(work)
+        src = make_src(work, case if target else None, files=got, target=target)
+        # a run: step with no shell: key runs as bash -e {0} on Linux runners: errexit, no pipefail
+        p = run(["bash", "-e"], local_script(lines), work, src, bindir, {})
+        if target is None:
+            ok(p.returncode == 0, "%s: passes the release as published (exit %d)%s"
+               % (name, p.returncode, "" if p.returncode == 0 else ": " + p.stdout[-400:]))
+        else:
+            what = "an altered %s" % target if case == "tampered" else "a SHA256SUMS without a %s line" % target
+            ok(p.returncode != 0, "%s: %s fails the step (exit %d)%s"
+               % (name, what, p.returncode, "" if p.returncode else ": " + p.stdout[-400:]))
+
+
 def main():
     print("static: the examples pin a release, verify it, and score once")
     snippet = readme_snippet()
@@ -275,6 +322,12 @@ def main():
     ok(len(allpins) == 1, "every example in examples/ci pins the same release (%s)" % ", ".join(sorted(allpins)))
     pinning_checks()
     gated_checks()
+    fetches = fetch_steps()
+    ok("watch-weekly.yml" in [f for f, _ in fetches], "watch-weekly.yml has a checksum step, so the checks below cover it")
+    for f, step in fetches:
+        text = "\n".join(run_block(step))
+        ok(not re.search(r"^\s*shell:", step, re.M), "%s: the checksum step runs in the default shell (bash -e)" % f)
+        ok(not re.search(r"\|\s*(?:sha256sum|shasum)\b", text), "%s: the checksum line is not piped into sha256sum" % f)
     with tempfile.TemporaryDirectory() as tmp:
         pinned_flags_check("README 'Anything else'", snippet, readme_pins, tmp)
         pinned_flags_check("gitlab-ci.yml", script, gitlab_pins, tmp)
@@ -283,7 +336,7 @@ def main():
                           ("Jenkins", "junit 'geo-score.xml'"), ("CircleCI", "store_test_results")):
         ok(directive in table, "README: the JUnit table gives %s's directive (%s)" % (ci, directive))
 
-    print("\n  running both with bash against the fixture sites")
+    print("\n  running the examples with bash against the fixture sites")
     good, blocked = e2e.start_server("good"), e2e.start_server("robots-blocks")
     try:
         with tempfile.TemporaryDirectory() as tmp:
@@ -291,6 +344,8 @@ def main():
             execute("README", ["bash"], snippet, {}, good.origin, blocked.origin, tmp)
             # the GitLab runner sets errexit, and pipefail only when the job's shell has it
             execute("gitlab-ci.yml", ["bash", "-e"], script, variables, good.origin, blocked.origin, tmp)
+            for f, step in fetches:
+                execute_fetch(f, run_block(step), tmp)
     finally:
         for s in (good, blocked):
             s.shutdown()

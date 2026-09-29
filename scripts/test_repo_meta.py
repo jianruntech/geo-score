@@ -6,11 +6,15 @@
 These files only work together, and nothing else notices when they drift apart:
 - the issue forms and .github/labels.json: GitHub drops a label a form applies when the repository does not
   have it, so the issue arrives unlabelled (scripts/sync_labels.py carries labels.json to GitHub);
-- what each form asks: a report without the tool version cannot be reproduced;
+- what each form asks: a report without the tool version cannot be reproduced, and a placeholder that names a
+  release goes stale, because scripts/release.py does not bump it;
 - docs/aiv-badge.svg and docs/aiv-badge.json: the badge must be the run the report records;
-- the issue chooser, SUPPORT.md and the PR template: every link resolves, and none is relative, because a
-  PR body or an issue resolves ../README.md against /pull/N and serves a 404;
-- CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires.
+- the issue chooser, the forms, SUPPORT.md and the PR template: every absolute link into this repository
+  resolves, and every anchor names a heading there. The chooser, the forms and the PR template carry no relative
+  link, because a PR body or an issue resolves ../README.md against /pull/N and serves a 404; SUPPORT.md is
+  rendered in the repository, so its relative links are right (.github/validate.py checks that their files exist);
+- CONTRIBUTING.md and the PR template: a new rubric version names every file .github/validate.py requires, and
+  the version CONTRIBUTING.md tells contributors to add is the next one, not one already in rubric/.
 The forms are read without a YAML library.
 """
 import importlib.util, io, json, os, re, subprocess, sys, tempfile
@@ -65,6 +69,8 @@ def form_fields(text):
 
 # forms whose reports cannot be reproduced without knowing which release produced them
 NEED_VERSION = ("bug_report.yml", "engine_bug.yml", "benchmark_correction.yml", "tool_problem.yml")
+# forms whose placeholder still names a release; drop an entry once that form's placeholder is version-free
+STALE_PLACEHOLDER = ("bug_report.yml",)
 SURFACES = ["CLI", "GitHub Action", "MCP server", "Install via pip, pipx or uvx", "MCPB bundle (Claude Desktop)",
             "Claude Code plugin", "Gemini CLI extension", "Docker"]
 BLOB = "https://github.com/jianruntech/geo-score/blob/main/"
@@ -113,6 +119,15 @@ def check_forms():
             continue
         fields = form_fields(rd(os.path.join(".github", "ISSUE_TEMPLATE", f)))
         ok(fields.get("tool_version") == ("input", True), "%s asks for tool_version, required" % f)
+    # scripts/release.py moves pinned links to the new release but not an example in a form, so a placeholder
+    # that names a release asks for reports against an old one
+    for f in have:
+        text = rd(os.path.join(".github", "ISSUE_TEMPLATE", f))
+        stale = re.findall(r"^\s*placeholder:.*?\b(geo-score \d+\.\d+\.\d+)", text, re.M)
+        if stale and f in STALE_PLACEHOLDER:
+            print("  skip  %s: its placeholder still names %s (left for a separate change)" % (f, stale[0]))
+            continue
+        ok(not stale, "%s: no placeholder names a release%s" % (f, (": " + ", ".join(stale)) if stale else ""))
     corr = rd(".github/ISSUE_TEMPLATE/benchmark_correction.yml")
     fields = form_fields(corr)
     ok(sorted(form_labels(corr)) == ["benchmark", "correction"], "benchmark_correction.yml applies benchmark and correction")
@@ -264,6 +279,15 @@ def check_rubric_steps():
     miss = [f for f in names if "`%s`" % f not in sec]
     ok(bool(names) and not miss, "CONTRIBUTING.md 'Changing the rubric' names %s%s"
        % (", ".join(names) or "a next version", (": not " + ", ".join(miss)) if miss else ""))
+    # the section tells contributors to add that version, so it must be the one after the newest released
+    # rubric: naming a released one asks them to edit it in place, and the line goes stale when it ships
+    released = sorted(tuple(int(x) for x in m.groups()) for m in
+                      (re.match(r"^v(\d+)\.(\d+)\.md$", f) for f in os.listdir(os.path.join(ROOT, "rubric"))) if m)
+    newest = released[-1] if released else (0, 0)
+    named = tuple(int(x) for x in ver.group(1).split(".")) if ver else None
+    ok(named in ((newest[0], newest[1] + 1), (newest[0] + 1, 0)),
+       "CONTRIBUTING.md's next version, v%s, follows the newest in rubric/ (v%d.%d) and is not released yet"
+       % (ver.group(1) if ver else "?", newest[0], newest[1]))
     pr = rd(".github/PULL_REQUEST_TEMPLATE.md")
     line = pr[pr.index("New version files:"):].split("\n\n", 1)[0]
     miss = [f.replace("V", "___") for f in RUBRIC_FILES if "`%s`" % f.replace("V", "___") not in line]

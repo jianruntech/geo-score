@@ -34,7 +34,7 @@ body:
       description: >
         The output of `geo-score --version` (or `python3 geo_score.py --version`). For the MCP server,
         the version the `status` tool reports; for the Action, the ref you use (for example `@v1`).
-      placeholder: "geo-score 1.4.0 (rubric v1.1)"
+      placeholder: "geo-score X.Y.Z (rubric vA.B)"
     validations: { required: true }
   - type: input
     id: environment
