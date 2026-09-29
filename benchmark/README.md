@@ -528,13 +528,13 @@ the table.
 ## How the benchmark fetches
 
 Each site is measured by the CLI in this repository, which [run.py](run.py) runs in-process, 4 sites at a
-time and up to 8 requests at a time within a site. Per site it sends at most **67 requests to the site**
+time and up to 8 requests at a time within a site. Per site it sends at most **66 requests to the site**
 and **20 elsewhere**, counted before redirects and before retries: a request that times out or gets a
 429 or a 5xx is tried at most two more times:
 
 | Requests | At most | User-agent |
 |---|:-:|---|
-| The homepage, and `robots.txt` twice (to find sitemaps, then for `g.robots`) | 3 | browser |
+| The homepage and `robots.txt`, each fetched once and shared by every check | 2 | browser |
 | Sitemaps: up to 3 candidates and 2 child sitemaps while sampling, up to 4 and 1 for `p1.sitemap` | 10 | browser |
 | Section index pages (`/blog`, `/news`, …) while sampling | 8 | browser |
 | Sampled pages, the homepage first | 8 | browser |
@@ -543,7 +543,7 @@ and **20 elsewhere**, counted before redirects and before retries: a request tha
 | `llms.txt`, `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt` | 4 | browser |
 | The Organization logo | 1 | browser |
 | The `sameAs` profiles the site declares, up to 8 | 8 | browser, to other hosts |
-| Wikidata and Wikipedia searches: up to 3 brand names, in Chinese and English for a Chinese-language site and in English otherwise | 12 | browser, to other hosts |
+| Wikidata and Wikipedia searches: up to 3 brand names, in English and in the sampled pages' most common other language when Wikipedia has a large edition in it | 12 | browser, to other hosts |
 
 A site that fails outright is tried once more on its `www` host. The crawler user-agents are sent from
 the operator's own address, not from the addresses their vendors publish, so a server that verifies

@@ -33,7 +33,7 @@ CORRECTION_FORM = "https://github.com/jianruntech/geo-score/issues/new?template=
 def fetch_budget():
     """Rows of (key, what, requests, user-agent) sent to the site, then (key, what, requests) sent elsewhere."""
     r, cn = len(gs.RETRIEVAL_UAS), len(gs.CN_UAS)
-    site = [("home_robots", "The homepage, and `robots.txt` twice (to find sitemaps, then for `g.robots`)", 3, "browser"),
+    site = [("home_robots", "The homepage and `robots.txt`, each fetched once and shared by every check", 2, "browser"),
             ("sitemaps", "Sitemaps: up to 3 candidates and 2 child sitemaps while sampling, up to 4 and 1 for "
                          "`p1.sitemap`", 10, "browser"),
             ("sections", "Section index pages (`/blog`, `/news`, …) while sampling", SECTION_INDEXES, "browser"),
@@ -45,8 +45,9 @@ def fetch_budget():
             ("text_files", "`llms.txt`, `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt`", 4, "browser"),
             ("logo", "The Organization logo", 1, "browser")]
     elsewhere = [("sameas", "The `sameAs` profiles the site declares, up to %d" % SAMEAS_MAX, SAMEAS_MAX),
-                 ("kg", "Wikidata and Wikipedia searches: up to %d brand names, in Chinese and English for a "
-                        "Chinese-language site and in English otherwise" % KG_NAMES, KG_NAMES * 2 * 2)]
+                 ("kg", "Wikidata and Wikipedia searches: up to %d brand names, in English and in the sampled pages' "
+                        "most common other language when Wikipedia has a large edition in it" % KG_NAMES,
+                 KG_NAMES * 2 * 2)]
     return site, elsewhere
 
 def _fetch_block():
