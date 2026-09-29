@@ -1087,6 +1087,10 @@ def is_cjk(s):
 # Each page is read in its own language: an English page on a site whose homepage came back in Chinese is
 # still read in words, and a Japanese or German page is not read with the English or Chinese lexicon.
 CJK_LANGS = ("zh", "ja", "ko")
+# code samples: in no natural language, so never read to tell a page's
+_CODE_TAGS = ("pre", "code")
+# the Chinese, Japanese or Korean characters a page declared in one of those languages keeps its declaration with
+CJK_FLOOR = 30
 # languages this file has heading, source-phrase and byline lexicons for; "und" is a page whose language could
 # not be told, which is read with them as every page was before
 LEXICON_LANGS = ("en", "zh", "und")
@@ -1147,12 +1151,16 @@ def page_lang(resp):
     """The language a page is written in, as a lower-case primary tag (zh, ja, ko, en, de, fr, es, pt, or any
     other tag the page declares), or "und". <html lang>, else the Content-Language header, says which, unless
     the text contradicts it: a page declared in a Latin-script language whose visible text is Chinese, Japanese
-    or Korean is read in that language, and a page declared Chinese, Japanese or Korean with none of that text
-    is told by its words. With no declaration the script decides, and Latin-script text is told apart by a few
-    common words."""
-    text = visible_text(resp.text)
+    or Korean is read in that language, and a page declared Chinese, Japanese or Korean with next to none of
+    that text (under CJK_FLOOR characters) is told by its words. With no declaration the script decides, and
+    Latin-script text is told apart by a few common words. Code (<pre>, <code>) is in no natural language and
+    is not read: a docs page's samples, with their English comments, made a Chinese page read as English."""
+    text = visible_text(strip_chrome(strip_comments(strip_hidden(resp.text)), _CODE_TAGS, ()))
     script, declared = script_lang(text), declared_lang(resp)
     if declared and (declared in CJK_LANGS) == bool(script):
+        return declared
+    if declared in CJK_LANGS and cjk_chars(text) >= CJK_FLOOR:
+        # a declared Chinese, Japanese or Korean page with that much of its text is one, whatever else it carries
         return declared
     if script:
         return script

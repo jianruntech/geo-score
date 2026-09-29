@@ -181,6 +181,8 @@ Some checks are judgements the rubric describes in prose, and the CLI approximat
 - **Page language** — each sampled page's language comes from its `<html lang>` or
   `Content-Language` header unless its text contradicts it, else from its script (kana is
   Japanese, hangul Korean, Han alone Chinese) and a few common words for Latin-script text.
+  A page declared Chinese, Japanese or Korean keeps its declaration while it carries 30 or
+  more such characters. Code samples (`<pre>`, `<code>`) are not read.
   The report's `audience_language` is the most common page language.
 - **Answer passages** — takes the first six paragraphs of the main content and looks for
   one of 25–120 words (50–200 characters on a Chinese, Japanese or Korean page) that ends in

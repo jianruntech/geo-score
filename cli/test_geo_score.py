@@ -459,6 +459,14 @@ eq(_lang(_DE, "de-DE"), "de", "a declared German page is German")
 eq(_lang("Hi", "pt-BR"), "pt", "and a page with little text keeps its declaration")
 eq(_lang(_ZH, "en"), "zh", "a page declared English whose text is Chinese is Chinese (a template's default lang)")
 eq(_lang(_EN, "zh-CN"), "en", "a page declared Chinese whose text is English is English")
+eq(_lang(_EN + "简体中文 日本語 한국어 沪ICP备14017582号", "zh-CN"), "en", "and so is one with a language menu and a filing number")
+# a Chinese docs page whose code sample, English comments and all, outweighs its paragraphs: 161 Han characters in
+# 2,700 of text read it as English, and each 55-character paragraph counted as one word
+_para = "<p>工作流由触发器和一连串节点组成，每个节点完成一步操作，上一步的输出就是下一步的输入，出错时会停在出错的那一步。</p>"
+_code = "# send the event to the next step and return the result to the caller\ndef handler(event, context):\n    return 200\n"
+eq(_lang(_para * 3 + "<pre><code>%s</code></pre>" % (_code * 20), "zh-CN"), "zh", "code is not read: a declared Chinese page stays Chinese")
+eq(_lang(_para * 3 + "<div>%s</div>" % (_code * 20), "zh-CN"), "zh", "and 30 or more Chinese characters keep the declaration")
+eq(_lang(_para * 3 + "<pre>%s</pre>" % (_code * 20)), "zh", "undeclared, code does not outweigh the Chinese text either")
 eq(_lang(_JA, "ja"), "ja", "a declared Japanese page is Japanese")
 eq(_lang("Bonjour", headers={"content-language": "fr-CA, en"}), "fr", "Content-Language, when <html> declares nothing")
 eq(_lang("Hallo", "de", headers={"content-language": "fr"}), "de", "<html lang> before Content-Language")
