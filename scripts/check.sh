@@ -41,10 +41,12 @@ step() { printf '\n== %s\n' "$*"; }
 
 # Which Pythons the tests run on, decided first so that --strict stops before anything else runs.
 # NEED must be found (under --strict); WANT is tried and skipped with a note when it is missing.
+# NEXT, under --all, is the minor after PY_NEWEST: not supported yet, so it is tested only when it is installed.
+NEXT=""
 if [ "$ALL" = 1 ]; then
   NEED="" m=${PY_OLDEST#3.}
   while [ "$m" -le "${PY_NEWEST#3.}" ]; do NEED="${NEED:+$NEED }3.$m"; m=$((m + 1)); done
-  WANT="$NEED 3.$m"
+  NEXT="3.$m" WANT="$NEED 3.$m"
 else
   NEED="$PY_OLDEST $PY_NEWEST" WANT="$PY_OLDEST 3.12 $PY_NEWEST"
 fi
@@ -57,6 +59,7 @@ if command -v uv >/dev/null 2>&1; then
     p="$(uv python find --no-project "$v" 2>/dev/null || true)"
     if [ -n "$p" ]; then PYS+=("$p"); echo "python $v: $p"
     elif [ "$STRICT" = 1 ] && needed "$v"; then missing="$missing $v"
+    elif [ "$v" = "$NEXT" ]; then echo "python $v (optional, newer than PY_NEWEST=$PY_NEWEST) not found by uv: skipped"
     else echo "python $v not found by uv: skipped (uv python install $v)"; fi
   done
   if [ -n "$missing" ]; then
@@ -65,6 +68,8 @@ if command -v uv >/dev/null 2>&1; then
   fi
 elif [ "$STRICT" = 1 ]; then
   echo "--strict needs uv to find each Python (https://docs.astral.sh/uv/)"; exit 1
+elif [ "$ALL" = 1 ]; then
+  echo "--all needs uv to find each Python (https://docs.astral.sh/uv/): the tests run on python3 only"
 fi
 # without uv, test whatever python3 is
 [ ${#PYS[@]} -gt 0 ] || PYS=("python3")
@@ -78,12 +83,19 @@ python3 scripts/mcp_docs.py --check
 step "lint: ruff $RUFF_VERSION (E9, F, B)"
 LINT="cli benchmark .github action scripts"
 path_ruff="$(command -v ruff >/dev/null 2>&1 && ruff --version 2>/dev/null || true)"
-# uvx is used only when it can fetch the pinned ruff (offline it needs the cache), so that an offline gate falls
-# back to the PATH ruff, as it did before the pin, while lint findings from either ruff still fail it
+# the PATH ruff runs when it is the pinned one; otherwise uvx runs the pinned ruff, from uv's cache when it is
+# there (--offline never waits on a network that drops packets) and fetched only when it is not; when it can do
+# neither (offline, cold cache) the gate falls back to the PATH ruff, as it did before the pin, while lint
+# findings from either ruff still fail it
+uvx_ruff=""
+if [ "$path_ruff" != "ruff $RUFF_VERSION" ] && command -v uvx >/dev/null 2>&1; then
+  if uvx --offline "ruff@$RUFF_VERSION" --version >/dev/null 2>&1; then uvx_ruff="uvx --offline ruff@$RUFF_VERSION"
+  elif uvx "ruff@$RUFF_VERSION" --version >/dev/null 2>&1; then uvx_ruff="uvx ruff@$RUFF_VERSION"; fi
+fi
 if [ "$path_ruff" = "ruff $RUFF_VERSION" ]; then
   echo "using $path_ruff from PATH"; ruff check $LINT
-elif command -v uvx >/dev/null 2>&1 && uvx "ruff@$RUFF_VERSION" --version >/dev/null 2>&1; then
-  echo "using uvx ruff@$RUFF_VERSION${path_ruff:+ (PATH has $path_ruff)}"; uvx "ruff@$RUFF_VERSION" check $LINT
+elif [ -n "$uvx_ruff" ]; then
+  echo "using $uvx_ruff${path_ruff:+ (PATH has $path_ruff)}"; $uvx_ruff check $LINT
 elif [ -n "$path_ruff" ]; then
   echo "warning: $path_ruff is not the pinned $RUFF_VERSION, and uvx is missing or could not fetch it (offline?);" \
     "its rules may differ"
@@ -99,13 +111,19 @@ for py in "${PYS[@]}"; do
 done
 
 # the end-to-end suite validates every report against schema/report.v2.json when jsonschema is importable;
-# SCHEMA_PY is the Python that has it (the --live report check below uses it too)
-JS="jsonschema==$JSONSCHEMA_VERSION" SCHEMA_PY=""
-if command -v uv >/dev/null 2>&1 && uv run --no-project --with "$JS" python -c "import jsonschema" >/dev/null 2>&1; then
-  SCHEMA_PY="uv run --no-project --with $JS python" SCHEMA_WITH="jsonschema $JSONSCHEMA_VERSION via uv"
-elif have="$(python3 -c 'import importlib.metadata as m; print(m.version("jsonschema"))' 2>/dev/null)"; then
+# SCHEMA_PY is the Python that has it (the --live report check below uses it too). The pinned jsonschema comes
+# from python3 when it has that version, else from uv's cache, and only then from the network, so a warm machine
+# never waits on one; failing all three, python3's own jsonschema is used, as it was before the pin
+JS="jsonschema==$JSONSCHEMA_VERSION" SCHEMA_PY="" SCHEMA_WITH=""
+have="$(python3 -c 'import importlib.metadata as m; print(m.version("jsonschema"))' 2>/dev/null || true)"
+if [ "$have" = "$JSONSCHEMA_VERSION" ]; then
   SCHEMA_PY="python3" SCHEMA_WITH="jsonschema $have"
-  [ "$have" = "$JSONSCHEMA_VERSION" ] || SCHEMA_WITH="$SCHEMA_WITH, not the pinned $JSONSCHEMA_VERSION"
+elif command -v uv >/dev/null 2>&1 && uv run --offline --no-project --with "$JS" python -c "import jsonschema" >/dev/null 2>&1; then
+  SCHEMA_PY="uv run --offline --no-project --with $JS python" SCHEMA_WITH="jsonschema $JSONSCHEMA_VERSION via uv, cached"
+elif command -v uv >/dev/null 2>&1 && uv run --no-project --with "$JS" python -c "import jsonschema" >/dev/null 2>&1; then
+  SCHEMA_PY="uv run --no-project --with $JS python" SCHEMA_WITH="jsonschema $JSONSCHEMA_VERSION via uv"
+elif [ -n "$have" ]; then
+  SCHEMA_PY="python3" SCHEMA_WITH="jsonschema $have, not the pinned $JSONSCHEMA_VERSION"
 fi
 if [ -n "$SCHEMA_PY" ]; then
   step "reports against the published schema ($SCHEMA_WITH)"; $SCHEMA_PY cli/test_geo_score_e2e.py
