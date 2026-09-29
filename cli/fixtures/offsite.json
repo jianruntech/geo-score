@@ -43,6 +43,20 @@
       }
     },
     {
+      "match": "^https://ja\\.wikipedia\\.org/w/api\\.php\\?.*[?&]srsearch=ソラノ会計$",
+      "status": 200,
+      "json": {
+        "query": {
+          "search": [
+            {
+              "title": "ソラノ会計",
+              "pageid": 990003
+            }
+          ]
+        }
+      }
+    },
+    {
       "match": "^https://en\\.wikipedia\\.org/w/api\\.php\\?.*[?&]srsearch=Ridgeline Supply$",
       "status": 0,
       "err": "timed out"

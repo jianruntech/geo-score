@@ -420,6 +420,70 @@ _zh_page = "<html><head><style>" + ("body{margin:0}" * 400) + "</style><script>"
 ok(gs.is_cjk(_zh_page), "a Chinese page stays Chinese even when its HTML is mostly CSS/JS")
 ok(not gs.is_cjk("<html><body><p>" + ("An English page with a 中文 word. " * 20) + "</p></body></html>"), "a stray CJK word does not make a page Chinese")
 
+# ── page language: each page is read in its own language ──
+# The site-wide switch held every page to the character range once one page was Chinese (airwallex.com's English
+# pages scored 0 of 8), labelled a Japanese site zh-CN, and read German and French headings with the English lexicon.
+def _lang(body, lang=None, headers=None):
+    attr = ' lang="%s"' % lang if lang else ""
+    return gs.page_lang(gs.Resp("u", 200, ("<html%s><body><p>%s</p></body></html>" % (attr, body)).encode("utf-8"),
+                                headers or {}))
+_EN = "The monthly close takes an afternoon when every payment is matched to the invoice it settles, and this is how. " * 3
+_DE = "Der Monatsabschluss ist nicht schwer, wenn die Zahlungen mit den Rechnungen abgeglichen sind und wir sie auch prüfen. " * 3
+_FR = "Le rapprochement est plus simple quand vous avez les factures et les paiements dans une seule liste, avec les dates. " * 3
+_ES = "El cierre del mes es más fácil con las facturas y los pagos en una sola lista, pero muy pocos lo hacen así. " * 3
+_PT = "O fechamento do mês é mais fácil com as faturas e os pagamentos em uma lista, mas você não precisa de mais. " * 3
+_JA = "月末の締めとは、その月の入出金をすべて請求書と照らし合わせる作業のことです。" * 3
+_ZH = "月末结账就是把当月的每一笔收付款都和发票对上，确认账面与银行余额一致。" * 3
+_KO = "월말 결산은 그달의 모든 입출금을 청구서와 맞추는 작업입니다. 은행 잔액과 장부가 일치하는지 확인합니다." * 3
+for _body, _want in ((_EN, "en"), (_DE, "de"), (_FR, "fr"), (_ES, "es"), (_PT, "pt"), (_JA, "ja"), (_ZH, "zh"),
+                     (_KO, "ko"), ("Sign in", "und")):
+    eq(_lang(_body), _want, "undeclared, the script and a few common words tell the language: %s" % _want)
+eq(_lang(_EN, "en-US"), "en", "<html lang> gives the primary tag")
+eq(_lang(_DE, "de-DE"), "de", "a declared German page is German")
+eq(_lang("Hi", "pt-BR"), "pt", "and a page with little text keeps its declaration")
+eq(_lang(_ZH, "en"), "zh", "a page declared English whose text is Chinese is Chinese (a template's default lang)")
+eq(_lang(_EN, "zh-CN"), "en", "a page declared Chinese whose text is English is English")
+eq(_lang(_JA, "ja"), "ja", "a declared Japanese page is Japanese")
+eq(_lang("Bonjour", headers={"content-language": "fr-CA, en"}), "fr", "Content-Language, when <html> declares nothing")
+eq(_lang("Hallo", "de", headers={"content-language": "fr"}), "de", "<html lang> before Content-Language")
+eq(gs.page_lang(gs.Resp("u", 200, ('<html data-lang="fr" lang="de"><body>%s</body></html>' % _DE).encode("utf-8"))), "de",
+   "data-lang is not lang")
+eq([gs.audience_language(x) for x in (["zh"] + ["en"] * 7, ["zh", "zh", "en"], ["ja"] * 7 + ["en"], ["und", "und"],
+                                      ["ja", "de"], ["und", "de"])],
+   ["en", "zh-CN", "ja", "und", "ja", "de"], "audience_language: the most common page language; Chinese stays zh-CN")
+eq(gs.wc("ひらがなとカタカナだけでかかれたぶんしょうはこれでさんじゅうもじです"), 34, "kana counts as characters")
+ok(gs.wc(_KO) > 50, "and so does hangul")
+# airwallex.com's English pages carry a language menu: once kana and hangul counted, its 24 characters stood for the
+# page's 1,651 words and g.ssr read every page as thin
+_MENU = "English 简体中文 繁體中文 日本語 한국어 Deutsch Français Español Nederlands 中文（香港） 한국어（대한민국） "
+eq(gs.wc(_MENU + "word " * 300), 300 + len(_MENU.split()), "a language menu does not turn an English page's words into characters")
+eq(gs.wc(_ZH), gs.cjk_chars(_ZH), "Chinese text is still counted in characters")
+ok(gs.is_cjk(_JA) and not gs.is_cjk(_DE), "a Japanese page is written in a CJK script, a German one is not")
+eq(gs.lexicon_gap(["en", "ja", "zh", "de", "ja", "und"]), ["ja", "de"], "the page languages no lexicon here reads")
+
+# ── p2.question-intent: the English and the Chinese lexicons match the same kinds of heading ──
+# The Chinese forms of "create your first app" and "how workflows work" did not count, so Chinese sites read lower
+# on this check (rubric/v1.1.json dates the fix to 1.5.0).
+_PARITY = [("question", "How do I reset my password?", "如何重置密码"),
+           ("question", "What is a virtual account", "什么是虚拟账户"),
+           ("task", "Create your first app", "创建你的第一个应用"),
+           ("task", "Install the command-line tool", "安装命令行工具"),
+           ("task", "Configure webhook alerts", "配置 Webhook 通知"),
+           ("task", "Migrate your old data", "迁移旧版数据"),
+           ("task", "Use webhooks to receive events", "使用 Webhook 接收事件"),
+           ("explanation", "How workflows work", "工作流的工作原理"),
+           ("comparison", "Stripe vs Adyen", "Stripe 与 Adyen 对比"),
+           ("comparison", "Plans compared", "价格与版本对比"),
+           ("none", "Enterprise cloud servers", "企业级云服务器"),
+           ("none", "Management team", "管理团队"),
+           ("none", "Processor lineup", "处理器产品线"),
+           ("none", "Integrated circuits", "集成电路"),
+           ("none", "Terms of use", "使用条款"),
+           ("none", "Our customers", "我们的客户"),
+           ("none", "Pricing", "价格")]
+for _kind, _en, _zh in _PARITY:
+    eq((_intent(_en), _intent(_zh)), (_kind != "none",) * 2, "%s heading, in both lexicons: %r / %r" % (_kind, _en, _zh))
+
 # ── the CLI's embedded rubric must equal the published rubric/v1.1.json ──
 # 「CLI 实现的就是公开量表」这句话以前只是口头承诺：两份表今天一致，但没有任何东西保证明天也一致。
 _rub = json.load(io.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rubric", "v1.1.json"), encoding="utf-8"))
@@ -872,13 +936,14 @@ finally:
 import random as _random
 _PROP = "https://prop.test"
 
-def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None):
+def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None, offsite=None):
     """run() on an in-memory site: `page(path)` gives each page's HTML. fetch and fetch_steady are stubbed, so
-    nothing is sent; anything off the site gets no answer."""
+    nothing is sent; anything off the site gets no answer, and its URL is appended to `offsite` when given."""
     saved = (gs.fetch, gs.fetch_steady, gs.time.sleep)
     def fetch(url, ua=None, timeout=15, method="GET", **kw):
         url = str(url)
         if not url.startswith(_PROP + "/"):
+            if offsite is not None: offsite.append(url)
             return gs.Resp(url, 0, b"", err="offline")
         path = url[len(_PROP):]
         if path == "/robots.txt":
@@ -1016,6 +1081,66 @@ for _seed in range(200):
         _at = _tb.extract_tb(e.__traceback__)[-1]
         _crashed.append("seed %d: %s at line %d (%s): %s" % (_seed, type(e).__name__, _at.lineno, _at.name, str(e)[:100]))
 eq(_crashed, [], "no random page, date, byline or robots.txt raises out of the parsers or run()")
+
+# ── run(): each page is read in its own language ──
+# A lexicon reads only the pages in its language; a check with no page left to read is not observed, never zero.
+# Structured data and links are read in any language.
+_LANG_PATHS = ["/"] + ["/docs/p%d" % i for i in range(1, 8)]
+_LANG_MAP = "<urlset>%s</urlset>" % "".join("<url><loc>%s%s</loc></url>" % (_PROP, p) for p in _LANG_PATHS)
+
+def _lang_run(page_of):
+    """run() on an eight-page site, `page_of(path)` giving (lang attribute, heading, paragraph, extra body); returns
+    the result and the off-site URLs it asked for."""
+    def page(path):
+        lang, h, p, extra = page_of(path)
+        return ('<html lang="%s"><head><title>Prop</title></head><body><main><h2>%s</h2><p>%s</p>%s</main>'
+                "</body></html>" % (lang, h, p, extra))
+    off = []
+    res = _run_site(page, sitemap=_LANG_MAP, offsite=off)
+    eq(sorted(u[len(_PROP):] for u in res["urls"]), sorted(_LANG_PATHS), "the language site is sampled in full")
+    return res, off
+
+_BYLINE_EN = "<p>By Jane Doe</p>"
+# six English pages with a task heading and a written byline, two German pages with neither
+_r, _off = _lang_run(lambda p: ("de", "Unsere Preise", _DE, "") if p in ("/docs/p6", "/docs/p7")
+                     else ("en", "Create your first invoice", _EN, _BYLINE_EN))
+eq(_r["lang"], "en", "the most common page language is the audience language")
+eq(_r["tier"]["p2.question-intent"], 7, "the six English pages are read, the two German ones leave the count")
+ok("2 pages in de not read" in _r["ev"]["p2.question-intent"], _r["ev"]["p2.question-intent"])
+eq(_r["tier"]["p2.named-author"], 3, "a written byline on an English page is read")
+ok("A written byline on the 2 pages in de was not read" in _r["ev"]["p2.named-author"], _r["ev"]["p2.named-author"])
+eq(sorted({gs.urllib.parse.urlsplit(u).netloc for u in _off if "wikipedia" in u}), ["de.wikipedia.org", "en.wikipedia.org"],
+   "knowledge-graph lookups go to the other page language's Wikipedia and to English")
+
+# every page Japanese: no lexicon reads the headings, the source phrases or a written byline
+_JA_FIGS = "<p>導入店舗は1,240店、そのうち38%が一日で締め、平均で4.5時間を減らしました（出典：当社調べ）。</p>"
+_r, _off = _lang_run(lambda p: ("ja", "請求書を取り込む", _JA, _JA_FIGS + "<p>By Jane Doe</p>"))
+eq(_r["lang"], "ja", "a Japanese site is ja, no longer zh-CN")
+eq([_r["tier"][k] for k in ("p2.question-intent", "p2.sourced-stats", "p2.named-author", "p4.cn-engines")],
+   [None] * 4, "question intent, source phrases and written bylines have no Japanese lexicon; nor is it a Chinese site")
+ok(_r["ev"]["p2.question-intent"].startswith("No question-intent lexicon for ja"), _r["ev"]["p2.question-intent"])
+eq(gs.unobserved_reason("p2.question-intent", _r["ev"]["p2.question-intent"]), "no question-intent lexicon for ja",
+   "the footer says why the check was not observed")
+ok(_r["ev"]["p2.sourced-stats"].startswith("No source-phrase lexicon for ja"), _r["ev"]["p2.sourced-stats"])
+ok(_r["ev"]["p2.named-author"].startswith("No byline lexicon for ja"), _r["ev"]["p2.named-author"])
+ok("50–200 characters" in _r["ev"]["p2.answer-passages"], "Japanese passages are read in characters")
+ok(any("language=ja&" in u for u in _off) and any(u.startswith("https://ja.wikipedia.org/") for u in _off)
+   and not any("zh.wikipedia" in u or "language=zh" in u for u in _off), "and looked up in Japanese, not Chinese")
+
+# the same Japanese pages with a linked source and an author in JSON-LD: both are read in any language
+_JA_LD = ('<script type="application/ld+json">{"@type": "Article", "author": {"@type": "Person", "name": "山田 花子", '
+          '"url": "https://prop.test/team/yamada"}}</script>')
+_JA_LINKED = _JA_FIGS.replace("（出典：当社調べ）", '（<a href="https://stats.example.org/2026">出典</a>）')
+_r, _off = _lang_run(lambda p: ("ja", "請求書を取り込む", _JA, _JA_LINKED + _JA_LD))
+eq((_r["tier"]["p2.sourced-stats"], _r["tier"]["p2.named-author"]), (7, 6),
+   "a linked source and a structured author are read on a Japanese page")
+
+# a page's own lang tag never names a host: a tag Wikipedia has no edition for is looked up in English only
+_r, _off = _lang_run(lambda p: ("xq", "Lorem ipsum", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3, ""))
+eq(_r["lang"], "xq", "a declared tag the text does not contradict is the page's language")
+eq(sorted({gs.urllib.parse.urlsplit(u).netloc for u in _off if "wikipedia" in u}), ["en.wikipedia.org"],
+   "no lookup goes to xq.wikipedia.org")
+ok(not any("language=xq" in u for u in _off), "nor asks Wikidata in that language")
 
 # the CLI on a live site whose only JSON-LD is {"@type": {"@id": "Organization"}}: it scores and exits 0. Off-site
 # lookups go to a proxy port nothing listens on, so they fail at once and nothing leaves the machine.

@@ -857,6 +857,26 @@ class EndToEnd(unittest.TestCase):
                     self.assertIn("/blob/v%s/" % gs.__version__, url)
         self.assertIn("p4.cn-engines (not a Chinese-language site)", views("good")[1]["report"])
 
+    def test_each_page_is_read_in_its_own_language(self):
+        # One Chinese page held every page to the character range (airwallex.com's English pages scored 0 of 8), a
+        # Japanese site was labelled zh-CN, and German headings were read with the English lexicon
+        want = {"ja": ("ja", "8 of 8 pages open with a self-contained passage of 50–200 characters.", "ja"),
+                "de": ("de", "6 of 6 pages open with a self-contained passage of 25–120 words.", "de"),
+                "mixed-en-zh": ("en", "8 of 8 pages open with a self-contained passage of 25–120 words on the 7 pages "
+                                      "read in words, 50–200 characters on the 1 read in characters.", None)}
+        for name, (lang, passages, no_lexicon) in want.items():
+            with self.subTest(fixture=name):
+                res, v = views(name)
+                self.assertEqual(report_for(name)["audience_language"], lang)
+                self.assertTrue(res["ev"]["p2.answer-passages"].startswith(passages), res["ev"]["p2.answer-passages"])
+                footer = next((x for x in v["report"].splitlines() if x.startswith("  Not observable this run: ")), "")
+                if no_lexicon:
+                    self.assertIn("p2.question-intent (no question-intent lexicon for %s)" % no_lexicon, footer)
+                else:
+                    self.assertNotIn("p2.question-intent", footer)
+        # the knowledge-graph lookups follow the page language: Japanese and English, where Chinese and English missed
+        self.assertIn("ja.wikipedia", H.result("ja")["res"]["ev"]["p3.knowledge-graph"])
+
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)
         self.assertLess(secs, 20, "fixture runs took %.1fs; a retry sleep or a timeout is hiding somewhere" % secs)

@@ -23,6 +23,9 @@ instead of scoring 0. There are two kinds:
 - `p3.knowledge-graph`, `p3.sameas`, `p1.breadcrumb` and `p4.cn-engines` are `—` when this run could
   not observe them: Wikidata or Wikipedia did not answer, the profile links timed out, no sampled
   page was nested, or the site is not a Chinese-language site.
+- `p2.question-intent`, `p2.sourced-stats` and `p2.named-author` are `—` when the sampled pages are in a
+  language the CLI has no heading, source-phrase or byline lexicon for (it has English and Chinese; see
+  *Each page is read in its own language* below).
 
 **What to do.** Nothing, for the first kind. For the second, re-run from a network that can reach
 Wikidata and Wikipedia (see *Proxies* below). The report's `reason` field says which case applies, and the
@@ -216,14 +219,31 @@ the job summary.
 **What to do.** Read the job summary, or upload the SARIF file to code scanning, which has no such
 limit. `upload-sarif` needs `security-events: write` in the job's permissions.
 
-## A Chinese site is judged by characters, an English one by words
+## Each page is read in its own language
 
-**Cause.** If any sampled page's visible text is mostly Chinese, the whole run switches its length
-thresholds from words to characters (for example 50–200 characters for an answer passage instead of
-25–120 words), and `p4.cn-engines` becomes observable. One Chinese page is enough, so a bilingual site
-whose sample includes a single Chinese page is judged by the Chinese thresholds on every page. The
-report's `audience_language` says which branch was used.
+**Cause.** Since 1.5.0 the CLI tells each sampled page's language apart: from its `<html lang>`, else
+its `Content-Language` header, unless the visible text contradicts it (a page declared English whose
+text is Chinese is read as Chinese). With no declaration the script decides (kana means Japanese,
+hangul Korean, Han alone Chinese), and Latin-script text is told apart by a few common words (English,
+German, French, Spanish, Portuguese). Then:
 
-**What to do.** Check which pages were sampled (`sampled_urls`). To score the English edition of a
-bilingual site by the English thresholds, pin English pages only with `--urls`; to score the Chinese
-edition, pin Chinese pages.
+- **Answer passages** are counted in each page's own unit: 50–200 characters on Chinese, Japanese and
+  Korean pages, 25–120 words on every other page. A bilingual site whose homepage is Chinese has its
+  English pages read in words. The evidence says which unit applied to how many pages.
+- **The heading, source-phrase and byline lexicons are English and Chinese.** `p2.question-intent`
+  reads only pages in those languages and scores over them. Source phrases and written bylines are
+  read only there too; a linked source, a `<cite>`, a footnote, and an author in structured data or
+  `rel="author"` are read in any language. A check with no page left to read shows `—` with
+  "no … lexicon for ja" (or de, fr, …), because not measured is never zero.
+- **`p4.cn-engines`** is observed when a sampled page is Chinese or the host is under `.cn`: a Japanese
+  site is not a Chinese-language site.
+- **Knowledge-graph lookups** go to Wikidata and Wikipedia in the most common page language other than
+  English, when Wikipedia has a large edition in it, and in English.
+
+The report's `audience_language` is the most common page language; Chinese is written `zh-CN`, as it
+was when the field could only be that or `en`. Before 1.5.0, one Chinese page switched every page of
+the run to characters, a Japanese site was labelled `zh-CN`, and German or French headings were read
+with the English lexicon.
+
+**What to do.** Check which pages were sampled (`sampled_urls`) and read the evidence of the checks
+above. To score one language edition of a multilingual site on its own, pin its pages with `--urls`.

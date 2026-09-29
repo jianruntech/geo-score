@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/payments.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/transfers.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/cards.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/blog/how-fx-fees-add-up.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/blog/what-a-virtual-account-is.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/docs/open-an-account.html</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/en-us/docs/send-a-transfer.html</loc><lastmod>2026-09-01</lastmod></url>
+</urlset>

@@ -55,12 +55,20 @@ CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www
           ("PetalBot", "Mozilla/5.0 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)")]
 
 # A heading matches question intent if a person would phrase their question that way — a question,
-# a task or an explanation — not merely if it carries a question mark.
+# a task, an explanation or a comparison — not merely if it carries a question mark. The English and the
+# Chinese forms match the same kinds of heading (test_geo_score.py holds them to it): "Create your first app"
+# and "创建你的第一个应用", "How workflows work" and "工作流的工作原理", "Plans compared" and "版本对比".
+# Chinese has no word boundary, so a task verb that opens a noun is excluded by what follows it: 管理团队 is a
+# team, 处理器 a processor, 集成电路 a chip, 使用条款 the terms of use.
 QP_INTENT = re.compile(r"\b(how|what|why|when|where|which|who)\b|[?？]"
                     r"|^(get|getting|set|setting|add|adding|build|building|create|creating|use|using|"
                     r"install|installing|deploy|deploying|configure|connect|accept|send|manage|migrate|"
-                    r"write|writing|run|running|test|testing|choose|handle|customi[sz]e)\b"
-                    r"|怎么|如何|什么|为什么|是否|多少|入门|教程|指南", re.I)
+                    r"write|writing|run|running|test|testing|choose|handle|customi[sz]e|compare|comparing)\b"
+                    r"|\b(vs|versus|compared)\b"
+                    r"|怎么|如何|什么|为什么|是否|多少|入门|教程|指南"
+                    r"|^(创建|新建|设置|配置|安装|部署|使用|添加|连接|接入|集成|管理|迁移|选择|处理|自定义|编写|运行|"
+                    r"测试|构建|搭建|发送|接收|开始|导入|导出|获取|开通|启用)(?!器|员|层|者|团队|电路|条款|协议)"
+                    r"|原理|运作方式|对比|区别|哪个好", re.I)
 # Short nav-like labels are not headings. \w matches CJK in Python, so the short-label branch must not
 # swallow real CJK headings: "怎么定价" (4 chars) is a question heading, "价格" is a nav label.
 NAV_LABEL = re.compile(r"^\s*(\w+\s*[|｜·]\s*\w+|[A-Za-z0-9_]{1,12}|[\u4e00-\u9fff]{1,3})\s*$")
@@ -1048,19 +1056,129 @@ def headings(h):
 def paragraphs(h):
     return [p for p in (visible_text(x) for x in inner_html(main_html(h), _PARA, "</p>")) if p]
 
+# Chinese, Japanese and Korean characters: Han, kana (hiragana, katakana, half-width katakana) and hangul
+_KANA = "\u3040-\u30ff\u31f0-\u31ff\uff66-\uff9f"
+_HANGUL = "\uac00-\ud7af\u1100-\u11ff\u3130-\u318f"
+_CJK = re.compile("[\u4e00-\u9fff%s%s]" % (_KANA, _HANGUL))
+
+
+def cjk_chars(s):
+    return len(_CJK.findall(s))
+
+
 def wc(s):
-    cjk = len(re.findall(r"[一-鿿]", s))
-    return cjk if cjk > 20 else len(s.split())
+    """Words, or characters for text past 20 Chinese, Japanese or Korean characters that outnumber its words: an
+    English page's language menu (日本語, 한국어, 简体中文 …) does not make its 1,600 words read as 24 characters."""
+    cjk, words = cjk_chars(s), len(s.split())
+    return cjk if cjk > 20 and cjk >= words else words
 
 def host_stem(root):
     parts = urllib.parse.urlsplit(root).netloc.replace("www.", "").split(".")
     return parts[0].lower()
 
 def is_cjk(s):
-    """Does this page address a CJK audience? Judged on what a reader sees, not on raw markup —
+    """Is this page written in Chinese, Japanese or Korean? Judged on what a reader sees, not on raw markup —
     a Chinese page whose HTML is mostly CSS/JS would otherwise fall under the 8% threshold."""
     if "<" in s and ">" in s: s = visible_text(s)
-    return len(re.findall(r"[一-鿿]", s)) > max(30, len(s) * 0.08)
+    return script_lang(s) is not None
+
+
+# ── page language ──────────────────────────────────────────────────────────
+# Each page is read in its own language: an English page on a site whose homepage came back in Chinese is
+# still read in words, and a Japanese or German page is not read with the English or Chinese lexicon.
+CJK_LANGS = ("zh", "ja", "ko")
+# languages this file has heading, source-phrase and byline lexicons for; "und" is a page whose language could
+# not be told, which is read with them as every page was before
+LEXICON_LANGS = ("en", "zh", "und")
+_HTML_OPEN = re.compile(r"<html\b", re.I)
+_LANG_ATTR = re.compile(r"""(?<![\w:.-])(?:xml:)?lang\s*=\s*["']?\s*([A-Za-z]{2,3})(?![A-Za-z])""", re.I)
+_LANG_TAG = re.compile(r"\s*([A-Za-z]{2,3})(?![A-Za-z])")
+# a few words common in each language and rare in the others, to tell Latin-script text apart
+_STOPWORDS = {
+    "en": "the and of to is are for with that this you your it be by from",
+    "de": "der die das und ist nicht mit ein eine für sie auf den von dem wir ihr ihre sich auch im zu",
+    "fr": "le les et est une pour avec dans sur pas vous qui nous au aux ce cette",
+    "es": "el los las y una con del su sus más pero muy",
+    "pt": "os e é uma com não em você seu sua mas",
+}
+_STOPWORDS = {k: set(v.split()) for k, v in _STOPWORDS.items()}
+_LATIN_WORD = re.compile(r"[a-zà-öø-ÿ]+")
+
+
+def declared_lang(resp):
+    """The primary tag of the page's <html lang>, else of its Content-Language header, lower-cased; or None."""
+    h = resp.text
+    m = _HTML_OPEN.search(h)
+    gt = h.find(">", m.end()) if m else -1
+    a = _LANG_ATTR.search(h, m.end(), gt) if gt >= 0 else None
+    if a:
+        return a.group(1).lower()
+    c = _LANG_TAG.match(resp.headers.get("content-language", ""))
+    return c.group(1).lower() if c else None
+
+
+def script_lang(text):
+    """ja, ko or zh when the text is written in Chinese, Japanese or Korean (kana is Japanese, hangul Korean,
+    Han alone Chinese); None otherwise."""
+    han = len(re.findall("[\u4e00-\u9fff]", text))
+    kana = len(re.findall("[%s]" % _KANA, text))
+    hangul = len(re.findall("[%s]" % _HANGUL, text))
+    total = han + kana + hangul
+    if total <= max(30, len(text) * 0.08):
+        return None
+    if hangul * 2 >= total:
+        return "ko"
+    return "ja" if kana >= max(10, total * 0.05) else "zh"
+
+
+def latin_lang(text):
+    """en, de, fr, es or pt, told by common words, when one language clearly leads; else "und"."""
+    counts = dict.fromkeys(_STOPWORDS, 0)
+    for w in _LATIN_WORD.findall(text[:20000].lower()):
+        for k, words in _STOPWORDS.items():
+            if w in words:
+                counts[k] += 1
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])
+    (best, n), (_, second) = ranked[0], ranked[1]
+    return best if n >= 5 and n >= 2 * second else "und"
+
+
+def page_lang(resp):
+    """The language a page is written in, as a lower-case primary tag (zh, ja, ko, en, de, fr, es, pt, or any
+    other tag the page declares), or "und". <html lang>, else the Content-Language header, says which, unless
+    the text contradicts it: a page declared in a Latin-script language whose visible text is Chinese, Japanese
+    or Korean is read in that language, and a page declared Chinese, Japanese or Korean with none of that text
+    is told by its words. With no declaration the script decides, and Latin-script text is told apart by a few
+    common words."""
+    text = visible_text(resp.text)
+    script, declared = script_lang(text), declared_lang(resp)
+    if declared and (declared in CJK_LANGS) == bool(script):
+        return declared
+    if script:
+        return script
+    latin = latin_lang(text)
+    return latin if latin != "und" else (declared or "und")
+
+
+def audience_language(langs):
+    """The report's audience_language: the most common page language, ties to the page sampled first, as a
+    BCP 47 primary tag. Chinese stays "zh-CN", as it was when the field could only be that or "en". "und" when
+    no page's language could be told."""
+    known = [x for x in langs if x != "und"]
+    if not known:
+        return "und"
+    best = max(dict.fromkeys(known), key=known.count)
+    return "zh-CN" if best == "zh" else best
+
+
+# Wikipedia editions, besides English, that a knowledge-graph lookup may go to: the larger ones
+WIKI_LANGS = frozenset("ar bg ca cs da de el es et fa fi fr he hi hr hu id it ja ko lt lv ms nl no pl pt ro ru sk sl "
+                       "sr sv th tr uk vi zh".split())
+
+
+def lexicon_gap(langs):
+    """The page languages, in order, that have no lexicon here."""
+    return list(dict.fromkeys(x for x in langs if x not in LEXICON_LANGS))
 
 # ── figures and their sources (p2.sourced-stats) ───────────────────────────
 # The rubric's attributed figure is one whose source sits beside it. A link, a <cite> or a source word anywhere
@@ -1938,6 +2056,8 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                    pinned=sample_source == "pinned")
 
     home_html_early = live.get(root + "/", list(live.values())[0]).text
+    # each page's language decides its passage unit and whether a lexicon can read it
+    langs_of = {u: page_lang(r) for u, r in live.items()}
 
     # ── g.robots ──
     # read once per run, retries included: discover() fetched it through the memo, or it is fetched here
@@ -2132,28 +2252,50 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                           "%d of them with real field values." % (len(hit | art), n, len(real)))
 
     # ── p2.answer-passages ──
-    lo, hi = (50, 200) if any(is_cjk(r.text) for r in live.values()) else (25, 120)
-    passed, examples = 0, []
+    # each page in its own language's unit: 50–200 characters for Chinese, Japanese and Korean, 25–120 words for
+    # everything else. One Chinese page no longer holds a site's English pages to the character range.
+    passed, examples, in_chars = 0, [], 0
     for u, r in live.items():
+        chars = langs_of[u] in CJK_LANGS
+        in_chars += chars
+        lo, hi = (50, 200) if chars else (25, 120)
         for p in paragraphs(r.text)[:6]:
-            if lo <= wc(p) <= hi and re.search(r"[.。!?！？]", p):
-                passed += 1; examples.append((u, wc(p), p)); break
+            k = cjk_chars(p) if chars else len(p.split())
+            if lo <= k <= hi and re.search(r"[.。!?！？]", p):
+                passed += 1; examples.append((u, k, p)); break
     tier["p2.answer-passages"] = 9 if passed >= n * .75 else (7 if passed >= n * .5 else (4 if passed else 0))
-    ev["p2.answer-passages"] = "%d of %d pages open with a self-contained passage of %d–%d %s.%s" % (
-        passed, n, lo, hi, "characters" if lo == 50 else "words",
-        (" e.g. %s" % site_text(examples[0][2], 90)) if examples else "")
+    if in_chars in (0, n):
+        unit = "50–200 characters" if in_chars else "25–120 words"
+    else:
+        unit = ("25–120 words on the %d pages read in words, 50–200 characters on the %d read in characters"
+                % (n - in_chars, in_chars))
+    ev["p2.answer-passages"] = "%d of %d pages open with a self-contained passage of %s.%s" % (
+        passed, n, unit, (" e.g. %s" % site_text(examples[0][2], 90)) if examples else "")
 
     # ── p2.question-intent ──
     # a heading matches question intent if a person would phrase their question that way:
     # a question, a task, or an explanation. Not whether it carries a question mark.
     QP, NAV = QP_INTENT, NAV_LABEL
 
+    # the lexicon is English and Chinese: a page in another language is not read, and with none left the check
+    # is not observed, never zero
+    readable = [u for u in live if langs_of[u] in LEXICON_LANGS]
+    gap = lexicon_gap(langs_of[u] for u in live)
     qi = 0
-    for _u, r in live.items():
-        hs = [h for h in headings(r.text) if 3 <= len(h) <= 120]
+    for u in readable:
+        hs = [h for h in headings(live[u].text) if 3 <= len(h) <= 120]
         if any(QP.search(h) and not NAV.match(h) for h in hs): qi += 1
-    tier["p2.question-intent"] = 7 if qi >= n * .75 else (5 if qi >= n * .5 else (3 if qi else 0))
-    ev["p2.question-intent"] = "%d of %d pages carry at least one heading phrased as a question, a task or an explanation." % (qi, n)
+    nq = len(readable)
+    if not nq:
+        tier["p2.question-intent"] = None
+        ev["p2.question-intent"] = ("No question-intent lexicon for %s — the check leaves the denominator: the "
+                                    "heading lexicon is English and Chinese." % ", ".join(gap))
+    else:
+        tier["p2.question-intent"] = 7 if qi >= nq * .75 else (5 if qi >= nq * .5 else (3 if qi else 0))
+        ev["p2.question-intent"] = ("%d of %d pages carry at least one heading phrased as a question, a task or an "
+                                    "explanation.%s" % (qi, nq, " %d page%s in %s not read: no question-intent lexicon "
+                                                        "for that language." % (n - nq, "s" if n - nq > 1 else "",
+                                                                                ", ".join(gap)) if gap else ""))
 
     # ── p2.freshness ──
     fr = dm = stale = 0
@@ -2182,10 +2324,15 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     own = {site_key(urllib.parse.urlsplit(u).hostname) for u in [root] + [r.url or u for u, r in live.items()]}
     profiles = [p for p in (profile_of(x) for x in (same if isinstance(same, list) else [same])
                             if isinstance(x, str)) if p]
-    reads = [stat_reading(r.text, own, profiles) for r in live.values()]
+    # source phrases are English and Chinese: on a page in another language a link, a <cite> or a footnote still
+    # attributes a figure, and a phrase is not read
+    lexed = [langs_of[u] in LEXICON_LANGS for u in live]
+    reads = [stat_reading(r.text, own, profiles, phrases=p) for r, p in zip(live.values(), lexed)]
     tot_num, cited, linked = (sum(x[i] for x in reads) for i in range(3))
     on_pages = sum(1 for x in reads if x[0])
     bearing = [x for x in reads if x[0] >= 3]
+    # the languages of the pages carrying three or more figures whose source phrases were not read
+    unread = lexicon_gap(langs_of[u] for u, x, p in zip(live, reads, lexed) if x[0] >= 3 and not p)
     if not bearing:
         tier["p2.sourced-stats"] = 3
         ev["p2.sourced-stats"] = ("Few numeric claims in the sample (%d figures on %d pages), so there is little to "
@@ -2199,6 +2346,17 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         ev["p2.sourced-stats"] = ("%d figures on %d pages; %d attributed in the same block or the next, %d of them "
                                   "with a link. Of the %d pages carrying three or more, %d attribute most of theirs, "
                                   "%d with a link." % (tot_num, on_pages, cited, linked, m, most, most_linked))
+        n_unread = sum(1 for x, p in zip(reads, lexed) if x[0] >= 3 and not p)
+        if n_unread == m and tier["p2.sourced-stats"] < 5:
+            # a source phrase could lift the lower tiers (the top one asks for a link, which is read in any
+            # language), and no page carrying figures could be read for one: not measured, never zero
+            tier["p2.sourced-stats"] = None
+            ev["p2.sourced-stats"] = ("No source-phrase lexicon for %s — the check leaves the denominator: %s, and "
+                                      "a source named in words in that language cannot be read." % (
+                                          ", ".join(unread), ev["p2.sourced-stats"].split(";")[0]))
+        elif n_unread:
+            ev["p2.sourced-stats"] += (" Source phrases on the %d of them in %s were not read: no lexicon for that "
+                                       "language." % (n_unread, ", ".join(unread)))
 
     # ── p2.named-author ──
     # a byline that names a role or the organisation is not a person ("editor" was once spelt with
@@ -2206,7 +2364,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     BRANDY = re.compile(r"^(team|staff|editors?|editorial( team| staff)?|admin|administrator|support|webmaster|"
                         r"the .+ team|.*官方|.*团队|.*小编|编辑部)$", re.I)
     org_names = {str(o.get("name")).strip().lower() for o in orgs if o.get("name")}
-    named, linked = 0, 0
+    named, linked, skipped = 0, 0, []
     for u, r in live.items():
         auth = None
         for x in allld.get(u, []):
@@ -2217,9 +2375,15 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         if not auth:
             m = next(in_tags(_REL_AUTHOR_NAME, _REL_AUTHOR, r.text), None)
             # a byline in the main content, else near the top of the page (an article header outside
-            # <main>); never in a footer, where "Powered by …" credits live
-            name = m.group(1) if m else (byline_name(visible_text(main_html(r.text)))
-                                         or byline_name(visible_text(r.text)[:4000]))
+            # <main>); never in a footer, where "Powered by …" credits live. A written byline is read only in a
+            # language the byline lexicon has
+            if m:
+                name = m.group(1)
+            elif langs_of[u] in LEXICON_LANGS:
+                name = byline_name(visible_text(main_html(r.text))) or byline_name(visible_text(r.text)[:4000])
+            else:
+                name = None
+                skipped.append(langs_of[u])
             if name: auth = {"name": name}
         name = str(auth.get("name") or "").strip() if auth else ""
         if name and not BRANDY.match(name) and name.lower() not in org_names:
@@ -2227,6 +2391,17 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             if auth.get("url") or auth.get("sameAs"): linked += 1
     tier["p2.named-author"] = 6 if linked >= max(1, named * .5) and named else (3 if named else 0)
     ev["p2.named-author"] = "%d of %d pages carry a personal byline; %d link that name to a verifiable identity page." % (named, n, linked)
+    if skipped and len(skipped) == n:
+        # no page names an author in markup, and none is in a language whose written byline can be read: not
+        # measured, never zero
+        tier["p2.named-author"] = None
+        ev["p2.named-author"] = ("No byline lexicon for %s — the check leaves the denominator: no page names an "
+                                 "author in its structured data or a rel=author link, and a written byline in that "
+                                 "language cannot be read." % ", ".join(lexicon_gap(skipped)))
+    elif skipped:
+        ev["p2.named-author"] += (" A written byline on the %d page%s in %s was not read: no byline lexicon for "
+                                  "that language." % (len(skipped), "s" if len(skipped) > 1 else "",
+                                                      ", ".join(lexicon_gap(skipped))))
 
     # ── p3.sameas ──
     declared = same if isinstance(same, list) else ([same] if same else [])
@@ -2276,13 +2451,13 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         tb = len(re.findall(r"<table\b", b, re.I))
         ps = [wc(p) for p in paragraphs(r.text)] or [0]
         avg = sum(ps) / len(ps)
-        if hs >= 2 and (li >= 3 or tb) and avg <= (160 if lo == 50 else 90): shaped += 1
+        if hs >= 2 and (li >= 3 or tb) and avg <= (160 if langs_of[_u] in CJK_LANGS else 90): shaped += 1
         elif hs >= 2: shaped += 0.5
     tier["p4.answer-shape"] = 4 if shaped >= n * .6 else (2 if shaped else 0)
     ev["p4.answer-shape"] = "%.0f of %d pages carry subheadings plus lists or tables, with paragraphs of workable length." % (shaped, n)
 
     # ── p4.cn-engines ──
-    cjk_site = any(is_cjk(r.text) for r in live.values()) or ".cn" in root
+    cjk_site = "zh" in langs_of.values() or ".cn" in root
     if not cjk_site:
         tier["p4.cn-engines"] = None
         ev["p4.cn-engines"] = "Site does not address the Chinese market — the check leaves the denominator."
@@ -2322,7 +2497,10 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         seen_c.add(k); brands.append(x)
     brands = brands[:3]
 
-    langs = ["zh", "en"] if lo == 50 else ["en"]
+    # in the most common page language besides English, and in English: two languages at most, as before. Only a
+    # Wikipedia edition that exists: a page's own lang tag never names the host a lookup goes to
+    other = [x for x in langs_of.values() if x in WIKI_LANGS]
+    langs = ([max(dict.fromkeys(other), key=other.count)] if other else []) + ["en"]
     kg_where, brand, kg_queries, kg_ok, kg_late = [], brands[0] if brands else stem, 0, 0, False
     for cand in brands:
         q = urllib.parse.quote(cand)
@@ -2407,7 +2585,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     ev = {k: _UNSAFE.sub("", v) if isinstance(v, str) else v for k, v in ev.items()}
     landed = _UNSAFE.sub("", landed) if isinstance(landed, str) else landed
     return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
-                lang="zh-CN" if lo == 50 else "en", robots_bytes=len(rb.body), sampled=sampled)
+                lang=audience_language(langs_of.values()), robots_bytes=len(rb.body), sampled=sampled)
 
 # ── scoring & output ───────────────────────────────────────────────────────
 def score(res):

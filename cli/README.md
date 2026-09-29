@@ -121,15 +121,23 @@ them.
 
 Some checks are judgements the rubric describes in prose, and the CLI approximates them:
 
+- **Page language** — each sampled page's language comes from its `<html lang>` or
+  `Content-Language` header unless its text contradicts it, else from its script (kana is
+  Japanese, hangul Korean, Han alone Chinese) and a few common words for Latin-script text.
+  The report's `audience_language` is the most common page language.
 - **Answer passages** — takes the first six paragraphs of the main content and looks for
-  one of 25–120 words (50–200 characters on a Chinese-language site) that ends in
+  one of 25–120 words (50–200 characters on a Chinese, Japanese or Korean page) that ends in
   sentence punctuation. A human reader judges whether it truly stands alone.
-- **Question intent** — pattern-matches headings for questions, task verbs and
-  explanatory forms, excluding navigation labels and brand strings.
+- **Question intent** — pattern-matches headings for questions, task verbs,
+  explanatory and comparison forms, in English and in Chinese, excluding navigation labels
+  and brand strings. Pages in other languages are not read; with none left, the check is
+  not measured.
 - **Sourced statistics** — counts figures per page against citation elements, source
-  phrases and outbound references near them.
+  phrases and outbound references near them. Source phrases are read in English and Chinese
+  only.
 - **Named authorship** — reads the `author` field from JSON-LD, then falls back to
-  `rel="author"` and byline patterns, and rejects team and brand names.
+  `rel="author"` and byline patterns (read in English and Chinese pages only), and rejects
+  team and brand names.
 - **Page-type schema** — besides the types the rubric names (Product + Offer, HowTo, FAQPage),
   the CLI also counts SoftwareApplication, Course, Recipe, Event, JobPosting, Dataset, and
   Article with its subtypes as page-type markup.

@@ -39,7 +39,7 @@
     },
     "audience_language": {
       "type": "string",
-      "description": "BCP 47. Drives the answer-passage length rule: 25–120 words for English, 50–200 characters for Chinese."
+      "description": "BCP 47 primary tag of the most common language among the sampled pages (en, ja, de, …), ties going to the page sampled first; Chinese is written zh-CN, as it was when the field was either that or en, and und means no page's language could be told. Each page is read in its own language: answer passages in characters (50–200) for Chinese, Japanese and Korean pages and in words (25–120) for all others, and the heading, source-phrase and byline lexicons (English and Chinese) read only pages in their languages."
     },
     "sampled_urls": {
       "type": "array",
