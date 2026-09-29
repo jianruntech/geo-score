@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![AIV readiness](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
+[![榜单页的 AIV 就绪度，2026-09-28 用 geo-score 1.4.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
@@ -214,7 +214,8 @@ Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp
 | 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
 
 档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
-所以四十几分是常态，不是警报。
+所以四十几分是常态，不是警报。本仓库自己的基准榜单里，317 个站中 85% 达到起步期，10% 达到领先
+（[档位线落在哪里](benchmark/README.md#where-the-band-cuts-fall)）。
 
 ## 317 个站点，公开打分
 
@@ -222,9 +223,10 @@ Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp
 23 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
 amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 JavaScript 跑完之后才存在**，
 内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
-还有 13 个直接给爬虫报错。
+还有 13 个站，服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）。
 
 中位数 **56**（95% 置信区间 52–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 99。
+其中 69 个站实际评分的页面不足 4 个，去掉它们后中位数是 62。
 
 | 站点 | 分数 | 档 |
 |---|:-:|---|
@@ -238,17 +240,20 @@ amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 J
 | mercadolibre.com | 12 | 未起步 |
 | keepa.com | 11 | 未起步 |
 
-**[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
+**[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [CSV](benchmark/results.csv) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
 
-另外两个值得点进去看的发现。面向中文市场的站比其余站**低 20 分**（95% 置信区间 16–28；中位 39 对 59；此前用 1.1.0
-的几次取样测得的差距在 16 到 23 分之间）。逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
+另外两个值得点进去看的发现。五个中国行业的站比其余站**低 20 分**（95% 置信区间 16–28；中位 39 对 59；此前用 1.1.0
+的几次取样测得的差距在 16 到 23 分之间）。改按站点面向的语言分组，50 个中文站比其余 267 个站低 20 分（95% 置信区间 13–25）；
+相近行业一一对比，差距在 6 到 30 分之间；其中最多 68% 落在 CLI 靠启发式判断的检查项上（[拆解见此](benchmark/README.md)）。
+逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
 而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
 另外，「具名、可核实的作者署名」和「一段能独立成立的开头」在超过一半的站上都排进了最大的三个缺口。
 
 **中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
 
-每个数字都能用页首那条命令复现（榜单是 2026-09-27 用 1.3.0 跑的）——而且我们把「能复现到什么程度」也测了。
-用同一版本的工具把整个榜单跑两遍、逐站比对：**96% 的站落在 ±5 以内，45% 完全一致。**
+每个数字都能用页首那条命令复现（榜单是 2026-09-27 用 1.3.0 跑的）——而且我们把「能复现到什么程度」也测了，
+不过用的是旧版本：2026-09-09 用 1.1.2 修正波动之前的 1.1.x 版本把整个榜单跑两遍、逐站比对：**96% 的站落在 ±5 以内，
+45% 完全一致**（ICC 0.97，SEM 3.1）。当前版本还没有重测，[benchmark/retest.py](benchmark/retest.py) 是提交进仓库、可以重跑的重测脚本。
 所以单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
 不稳的是门槛检查——两次之间有五个站翻转，因为它们的 bot 防护对爬虫的答复变了。
 精度区间、对照实验和逐站配对都在
@@ -288,8 +293,10 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 ```
 
 CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，86 对检查项里有 79% 与审计者档位一致
-（按规则读取的项 95%，靠启发式近似判断的项 64%），归一化分平均低 3.6 分，范围从低 10 分到高 6 分。
-样本只有 5 个站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
+（按规则读取的项 95%，靠启发式近似判断的项 64%）。只看两边都打了分的检查项，CLI 平均低 0.4 分
+（逐站从低 6 分到高 9 分，平均绝对差 5.2 分）；按完整的归一化分算平均低 3.6 分，范围从低 10 分到高 6 分，
+因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
+样本只有 5 个站，而且都是当初用来校准的站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
 **MCP 服务**（三级都有）—— `geo-score-mcp`，或者在克隆的仓库里 `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见 [MCP 服务](#mcp-服务)。
 
@@ -521,7 +528,7 @@ Read this before quoting the numbers
 - **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务的 `score_site` 只连接公网地址，Key 从不写进任何文件。
   威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
-**为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，实测波动 ±5
+**为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，用 1.1.x 版本实测的波动是 ±5
 （[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--urls-from last.json` 重评同一批页面。
 **为什么某项显示 `—`？** 它没有被测到，所以移出了分母，而不是记 0 分。更多问题见[排查指南](guide/troubleshooting.zh-CN.md)。
 
@@ -549,6 +556,7 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 ## 参与贡献
 
 最有价值的贡献是**关于权重的证据**。见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+分数不对、对榜单某一行有异议、工具用不了，各自用哪张 issue 表单，见 [SUPPORT.md](SUPPORT.md)。
 
 ## 引用
 

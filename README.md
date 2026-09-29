@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![AIV readiness](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
+[![AIV readiness of the leaderboard page, measured 2026-09-28 with geo-score 1.4.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
@@ -223,7 +223,9 @@ change has any effect.
 | Not started | Early | Growing | Solid | Leading |
 
 Band names describe a **stage, not a verdict**. External benchmarks put most business
-sites in the 30–55 range, so a score in the forties is ordinary, not alarming.
+sites in the 30–55 range, so a score in the forties is ordinary, not alarming. In this repository's
+own benchmark, 85% of 317 sites reach Early and 10% reach Leading
+([where the cuts fall](benchmark/README.md#where-the-band-cuts-fall)).
 
 ## 317 sites, scored in public
 
@@ -232,9 +234,11 @@ AI retrieval crawler cannot get the content, so it has nothing of theirs to quot
 `robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 12
 for exactly this reason. **47 serve a page whose body only exists after JavaScript runs.**
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
-almost certainly did not choose it. A further 13 hand a crawler an outright error.
+almost certainly did not choose it. At a further 13 the server refuses crawler user-agents (unverified
+probes from the auditor's address).
 
-Median **56** (95% CI 52–58, [stats.py](benchmark/stats.py)). Range 11 to 99.
+Median **56** (95% CI 52–58, [stats.py](benchmark/stats.py)). Range 11 to 99. 69 sites were scored on
+fewer than four pages; without them the median is 62.
 
 | Site | Score | Band |
 |---|:-:|---|
@@ -248,21 +252,26 @@ Median **56** (95% CI 52–58, [stats.py](benchmark/stats.py)). Range 11 to 99.
 | mercadolibre.com | 12 | Not started |
 | keepa.com | 11 | Not started |
 
-**[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
+**[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [CSV](benchmark/results.csv) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
 
-Two more findings worth the click. Sites built for the Chinese market score **20 points
+Two more findings worth the click. Sites in the five China sectors score **20 points
 lower** than everyone else (95% CI 16–28; median 39 against 59; earlier samples measured with 1.1.0
-put the gap between 16 and 23 points). The largest per-check differences are two heuristics,
-question-shaped headings and self-contained answer passages, which the CLI also read lower than a
-human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md), so part of the
-gap may be the tool reading Chinese pages conservatively. And a named, verifiable byline and an
+put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 50
+Chinese-language sites score 20 points lower than the 267 others (95% CI 13–25), and within matched
+sector families the gap runs from 6 to 30 points. At most 68% of it sits in checks the CLI reads with a
+heuristic. The two largest per-check differences, question-shaped headings and self-contained answer
+passages, are heuristics the CLI also read lower than a human on the one Chinese site in the
+[hand-audit comparison](benchmark/VALIDITY.md), so part of the gap may be the tool reading Chinese pages
+conservatively ([the breakdown](benchmark/README.md)). And a named, verifiable byline and an
 opening paragraph that stands on its own are among the three largest gaps on more than half the sites.
 
 Every number here is reproducible with the command at the top of this page (the benchmark
-was run with 1.3.0 on 2026-09-27) — and we measured how reproducible. Running the whole benchmark
-twice with the same tool and comparing every site:
-**96% land within ±5, 45% land identically.** Read one site's score as ±5 rather than as
-exact; medians are stable. The unstable part is the gate checks, where five sites flipped
+was run with 1.3.0 on 2026-09-27) — and we measured how reproducible, though with an older tool.
+Running the whole benchmark twice on 2026-09-09 with a 1.1.x build, before the 1.1.2 variance fixes,
+and comparing every site: **96% landed within ±5, 45% identically** (ICC 0.97, SEM 3.1). It has not
+been re-measured with the current tool yet; [benchmark/retest.py](benchmark/retest.py) is the committed
+study that will. Read one site's score as ±5 rather than as exact; medians are stable. The unstable
+part is the gate checks, where five sites flipped
 between runs because their bot protection answered a crawler differently.
 The band, the control experiment and the per-site pairs are in
 [benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md).
@@ -304,8 +313,11 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
 the five published hand audits on the same pages, it matched the auditor's tier on 79% of
-86 check pairs (95% where it reads a rule, 64% where it approximates a judgement) and read
-3.6 points lower on average, from 10 lower to 6 higher. n=5 is small:
+86 check pairs (95% where it reads a rule, 64% where it approximates a judgement). On the checks
+both scored it read 0.4 points lower on average (per site from 6 lower to 9 higher; mean absolute
+difference 5.2). Its full normalised score read 3.6 points lower on average, from 10 lower to 6
+higher, because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`,
+which the CLI leaves out. n=5, all of them calibration sites:
 [VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
 
 **MCP server** (all three levels) — `geo-score-mcp`, or `python3 cli/geo_score.py mcp` from a clone,
@@ -569,7 +581,7 @@ this repo deliberately excludes.
   [SECURITY.md](SECURITY.md).
 
 **Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the
-measured spread is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
+spread measured with a 1.1.x build is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
 after a change, re-score the same pages with `--urls-from last.json`.
 **Why does a check show `—`?** It was not measured, so it left the denominator instead of scoring 0.
 More answers: [troubleshooting](guide/troubleshooting.md).
@@ -587,7 +599,8 @@ consulting work. You do not need our permission, and there is no separate commer
 ## Contributing
 
 The most valuable contribution is evidence about the weights.
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Which issue form takes a wrong score, a disputed leaderboard
+row or a tool that does not work: [SUPPORT.md](SUPPORT.md).
 
 ## Citation
 

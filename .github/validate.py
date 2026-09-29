@@ -619,6 +619,17 @@ if os.path.exists("benchmark/validity.json"):
                "max": max(dd, default=None), "mean_abs": round(sum(abs(x) for x in dd) / len(dd), 1) if dd else None}
         check(all(cc.get(k) == v for k, v in got.items()),
               f"benchmark/validity.json: common_checks {({k: cc.get(k) for k in got})} is not what its sites give {got}")
+        # both root READMEs lead with that like-for-like figure (cli/README.md still quotes the full score only)
+        en_cc = ["%.1f points %s on average" % (abs(cc["mean"]), "lower" if cc["mean"] < 0 else "higher"),
+                 "per site from %d lower to %d %s" % (-cc["min"], abs(cc["max"]), "higher" if cc["max"] > 0 else "lower"),
+                 "mean absolute difference %.1f" % cc["mean_abs"]]
+        zh_cc = ["平均%s %.1f 分" % ("低" if cc["mean"] < 0 else "高", abs(cc["mean"])),
+                 "逐站从低 %d 分到%s %d 分" % (-cc["min"], "高" if cc["max"] > 0 else "低", abs(cc["max"])),
+                 "平均绝对差 %.1f 分" % cc["mean_abs"]]
+        te = " ".join(io.open("README.md", encoding="utf-8").read().split())
+        miss = [w for w in en_cc if w not in te] + [w for w in zh_cc if w not in tz]
+        check(not miss, f"README.md / README.zh-CN.md: the checks-both-scored figures must be validity.json's "
+                        f"common_checks; missing {miss}")
     for f in (f for f in ("README.md", "README.zh-CN.md", "cli/README.md") if os.path.exists(f)):
         t = io.open(f, encoding="utf-8").read()
         check("5 to 15 points" not in t and "低 5 到 15 分" not in t,
@@ -929,6 +940,33 @@ if os.path.exists("benchmark/percentiles.json"):
         missing = [w for w in want if w not in t]
         check(not missing, f"{f}: quotes the {pj['source']['measured_at']} run, but not these benchmark/percentiles.json "
                            f"figures: {missing[:5]}")
+
+# ── 38. The root READMEs quote the China-gap decomposition from benchmark/stats.json ──
+# They once quoted the sector-label gap alone. Now they give its definition, the gap by the language a site serves,
+# the range within matched sector families and the heuristic share, and each figure must be the one stats.json holds.
+if os.path.exists("benchmark/stats.json"):
+    d8 = json.load(io.open("benchmark/stats.json", encoding="utf-8"))
+    g8, x8 = d8["china_gap"], d8.get("china_gap_detail")
+    en8 = ["five China sectors score **%d points lower** than everyone else (95%% CI %d–%d; median %d against %d"
+           % (g8["gap"], g8["ci"][0], g8["ci"][1], g8["median_china"], g8["median_rest"])]
+    zh8 = ["五个中国行业的站比其余站**低 %d 分**（95%% 置信区间 %d–%d；中位 %d 对 %d"
+           % (g8["gap"], g8["ci"][0], g8["ci"][1], g8["median_china"], g8["median_rest"])]
+    if x8:
+        lg8, fr8, hs8 = x8["by_language"], x8["families"]["range"], x8["by_method"]["heuristic_share_pct"]
+        en8.append("the %d Chinese-language sites score %d points lower than the %d others (95%% CI %d–%d)"
+                   % (lg8["n_group"], lg8["gap"], lg8["n_vs"], lg8["ci"][0], lg8["ci"][1]))
+        zh8.append("%d 个中文站比其余 %d 个站低 %d 分（95%% 置信区间 %d–%d）"
+                   % (lg8["n_group"], lg8["n_vs"], lg8["gap"], lg8["ci"][0], lg8["ci"][1]))
+        if fr8:
+            en8.append("the gap runs from %d to %d points" % tuple(fr8))
+            zh8.append("差距在 %d 到 %d 分之间" % tuple(fr8))
+        if hs8 is not None:
+            en8.append("At most %d%% of it" % hs8)
+            zh8.append("其中最多 %d%%" % hs8)
+    for f, want in (("README.md", en8), ("README.zh-CN.md", zh8)):
+        t8 = " ".join(io.open(f, encoding="utf-8").read().split())
+        missing = [w for w in want if w not in t8]
+        check(not missing, f"{f}: the China-gap figures must be benchmark/stats.json's; missing {missing}")
 
 if fail:
     print("FAIL")

@@ -4,6 +4,150 @@
 
 ## [Unreleased]
 
+### 新增
+- **`geo-score-watch.json` 有了 schema，没有任何代码读取的键都会提示。** `schema/watch-config.v1.json`（JSON Schema draft 2020-12）
+  描述这个文件，`watch init` 现在把 `"$schema"` 写成第一个键，编辑器可以据此校验和补全。以前写错的键会被悄悄忽略：把
+  `budget_usd` 写成 `budget` 等于没有预算上限，把 `max_calls` 写成 `max_call` 则回到默认的 120 次上限。现在 `watch check`
+  会逐层（顶层、`brand`、`competitors[i]`、`engines[i]`、`prices.<id>`）列出每个未知的键，有相近的已知键时一并给出，例如
+  `unknown key 'budget' (did you mean 'budget_usd'?); it is ignored`；`prices` 里写了不存在的引擎也会提示。`watch run` 和其他
+  读取配置的命令把同样的警告写到 stderr；MCP 的 `status` 工具会列出它们，`run` 工具在计划里和保存运行结果之后都会显示。名字像
+  凭据的键（`api_key`、`OPENAI_KEY`、`api_token`、`client_secret`、`credentials` 等）会被提示改用环境变量，值从不打印。只是警告，
+  退出码不变。
+- **GitHub 之外的 CI。** `examples/ci/gitlab-ci.yml` 是基于 `python:3.12-slim` 的 GitLab 任务：从固定版本的 release 下载
+  `geo_score.py`，用 `SHA256SUMS` 校验，只打一次分，把 `geo-score.json` 存为 artifact，并把 `geo-score.xml` 作为 JUnit 报告交给
+  GitLab，得 0 分的检查项显示为失败的测试。`examples/ci/README.md` 列出 Bitbucket Pipelines、Azure Pipelines、Jenkins 和
+  CircleCI 各自读取 `--junit` 文件所需的那一条配置。
+- **什么问题找哪里。** *Benchmark correction*（榜单更正）表单用来对某一行的分数、门槛原因、标签或未打分原因提出异议，附一份新的
+  `--json-out` 报告和工具版本；*Tool problem*（工具问题）表单覆盖 CLI、Action、MCP 服务、pip/pipx/uvx、MCPB 安装包、Claude Code
+  插件、Gemini CLI 扩展和 Docker。Issue 选择页链接排障指南和 MCP 排障章节，新增的 `SUPPORT.md` 说明什么问题用哪张表单。原来的表单
+  会打上仓库里并不存在的 `benchmark`、`engine`、`rubric` 标签，这些 issue 实际上没有标签：现在 `.github/labels.json` 列出全部标签，
+  由 `scripts/sync_labels.py` 同步到 GitHub（默认只演练；`--apply` 才创建和更新，`--check` 在缺标签时退出码为 1，且从不删除标签）。
+  它只打印代理的主机和端口，不输出 `HTTPS_PROXY` 里的凭据。
+- **基准榜单：可以重跑的重测研究。** `benchmark/retest.py` 输入两个或更多运行目录（results.json 加 raw/），记录每次运行的工具版本、
+  日期、Python 版本、声明的测量位置以及是否固定页面。每一对运行报告完全一致、±2 以内、±5 以内的比例，ICC(A,1) 与 SEM，档位变化与
+  门槛封顶翻转，以及逐项的档位翻转和每次运行各检查项测不到的比例。它逐站逐次保存记录，所以每个数字都能重算；`--check` 核对提交的
+  文件（`validate.py` 第 32 条）。`benchmark/run.py` 新增 `--out DIR`（为重测跑一轮，不动公开的文件）、`--urls-from-dir DIR`
+  （通过 CLI 的 `--urls-from` 读取器，让每个站重读上一次运行抽到的页面）和 `--vantage LABEL`，后者记为 results.json 的
+  `measured_from`，与 `python`、`pinned_from` 并列。标签由运行者声明，不查询任何地址。
+- **基准榜单：把中文市场的差距拆开。** `benchmark/stats.json` 新增 `china_gap_detail`，在已有的 bootstrap 之后用同一个种子继续抽样，
+  所以已发布的区间一个都不动。内容包括：按受众语言分组的差距，与按行业标签的差距并列，附交叉表（37/27/13/240）；四组相近行业的
+  一一对比，不足 10 站不给数；原始分差距按规则读取与启发式检查拆开（启发式占 68%，这是启发式误读最多能解释的比例）；
+  `p3.knowledge-graph` 在 50 个中文站里有 33 个测不到，其余 267 个站里是 76 个；这一项补成 0 分时差距为 20 分，补成 4 分时为 19 分。
+- **基准榜单：扁平下载文件。** `benchmark/results.csv` 每个上榜站一行（该行各字段、`sample_n`、`sample_source`、未打分原因和报错，
+  之后每个检查项一列、写分数，观测不到的留空）；`benchmark/checks.csv` 每个已打分站的每个检查项一行。`run.py`（包括
+  `--readme-only`）生成这两个文件，榜单页的 Dataset 标记和 llms.txt 都链接它们，`validate.py` 第 35 条逐格核对 results.json 和
+  raw/。raw/ 没有记录每个 user-agent 拿到的状态，所以暂不提供 robots.csv。
+- **基准榜单：每一行靠的是什么。** 每行的真实样本数（`sample_n`、`sample_source`）都公开，已提交的数据从 raw/ 读取。实际评分不足
+  4 个页面的 69 行，在基准榜单 README 和中英两个页面上都标为「样本少」，页面上可以按它筛选；stats.json 把去掉这些行后的中位数
+  （62）放在主数字 56 旁边（`validate.py` 第 33 条）。另有一张从 raw/ 算出的表，说明各项做法有多普遍：317 个站中 137 个提供
+  `llms.txt`，98 个的 Organization 与 WebSite 标记齐全，251 个有内页的站中 82 个的内页有 BreadcrumbList，161 个的 sitemap 带
+  `lastmod`，67 个至少一半页面有个人署名。旁边附 Web Almanac 2025 的 `llms.txt` 数字，并说明两边统计的站点群体不同。
+- **基准榜单：怎么抓取，以及怎么更正一行。** 「怎么抓取」一节写明每站的请求上限，由 CLI 自己的 user-agent 列表和常量算出（发往该站
+  最多 67 个请求，发往其他地方最多 20 个，不含跳转和重试），并说明爬虫 user-agent 是从运营者自己的地址发出的，不是厂商的地址。
+  「更正」一节链接榜单更正表单：确认是工具错误的，以补丁版本修复；已发布的分数只在重新测量时才会变。`run.py` 把以
+  `bot challenge served to a browser user-agent` 开头的 CLI 报错单独归为一种未打分原因，未打分列表按原因分组。
+- **权重敏感性分析**（`benchmark/sensitivity.py`、`SENSITIVITY.md` 及中文版）。先从 raw/ 重算全部 317 个分数（0 处不一致），再在
+  等权、按证据依据加权（示意）、逐项拿掉一个检查项、300 次带种子的随机抽样这几种情况下重新打分。名次很稳：各种情况下 Spearman
+  ρ 都 ≥ 0.988；档位没那么稳：等权让 39 个站换档，按证据依据加权是 24 个，随机抽样的中位数是 26 个。之后是各检查项的分档分布和
+  项目-其余相关，结尾列出给 v1.2 的输入。它用 `math.fsum` 累加，任何 Python 版本写出的文件都相同。v1.1 权重不变。`validate.py`
+  第 36 条。
+- **档位线落在哪里**（`benchmark/percentiles.py`、`percentiles.json`、基准榜单 README 里的表、`rubric/bands-analysis.md` 及中文版）。
+  317 个站中达到起步期、成长期、基础扎实、领先的比例依次是 85%、58%、34%、10%。分析用三条标准检验 v1.1 的档位线（按 Core Web
+  Vitals 的定义衡量可达成性：达到领先的是 10%，没有余量；317 个站里 168 个离某条档位线在重测 SEM 的噪声以内；起步期 88 个站里
+  48 个是被门槛封顶的），并列出 v1.2 的候选档位线。v1.1 的档位线不变。`validate.py` 第 37 条。
+- **关卡覆盖每个 Python 版本。** `scripts/check.sh --all` 在 3.8 到 3.14 的每个 Python 版本上跑测试，装了 3.15 也会跑；`--strict`
+  在缺少需要的解释器时直接失败并提示 `uv python install X`，不再跳过。两者都可以和 `--live` 组合，参数不认识时退出码为 2。关卡会
+  运行所有 `scripts/test_*.py` 和 `benchmark/test_*.py`，新的测试文件按名字自动加入；`--live` 下，装了 `gh` 且已登录时还会运行
+  `scripts/sync_labels.py --check`。
+- **新的测试。** `scripts/test_ci_examples.py` 用 bash 对着本地夹具站点跑可复制的 CI 示例。`scripts/test_repo_meta.py` 检查表单与
+  标签是否一致、README 徽章与它记录的那次运行是否一致，以及选择页、表单、`SUPPORT.md` 和 PR 模板里的链接。
+  `benchmark/test_benchmark.py` 离线测试 retest.py、限定语、canonical 地址、中国差距的小样本抑制、样本数、抓取请求上限、两个 CSV、
+  敏感性与分位数的算术以及效度数字。`scripts/test_packaging.py` 新增检查：每个写了发布版本号的受版本控制文件都在 `release.py --bump` 会改写的
+  范围内（更新日志、benchmark/raw/、dist/、docs/*.html 和 .github/validate.py 除外）；每个发布 wheel 链接里的 tag 和文件名都等于
+  `__version__`；validate.yml 安装 check.sh 锁定的 ruff 和 jsonschema 版本，并把 action 锁定到 commit；Dockerfile 的基础镜像锁定了
+  digest；pyproject 的分类标签覆盖 3.8 到 3.14，validate.yml 和 RELEASING.md 写的也是这两端。
+
+### 变更
+- **从发布的 wheel 包安装。** uvx、pipx 和 MCP 的安装命令改为下载
+  `https://github.com/jianruntech/geo-score/releases/download/vX.Y.Z/geo_score-X.Y.Z-py3-none-any.whl`，不需要 git，也没有构建步骤。
+  涉及：README 的安装说明、Cursor / VS Code / VS Code Insiders / LM Studio 按钮、Claude Code 命令、标准 `mcpServers` 配置、
+  guide/mcp.zh-CN.md 里各客户端的配置，以及 MCPB 的 watch init 提示。从 git 安装（`git+https://github.com/jianruntech/geo-score@vX.Y.Z`）
+  保留为标注「从源码安装（需要 git）」的一行。`release.py --bump` 除了改 tag，也改 wheel 文件名里的版本号。
+- **关卡与发布。** 关卡默认找 Python 3.8、3.12 和 3.14 来测（以前找的是 3.8、3.12、3.13，从来不测 3.14），uv 找不到的版本
+  跳过并给出安装提示；`--strict` 要求 3.8 和 3.14 都在。
+  关卡锁定 ruff 0.15.15 和 jsonschema 4.23.0（仍能装在 Python 3.8 上的最新 jsonschema）：PATH 上的 ruff 正好是锁定版本时才用它，
+  否则用 `uvx ruff@0.15.15`，先找 uv 缓存再联网；python3 自带的 jsonschema 正是锁定版本时直接用它。离线且缓存为空时，退回 PATH
+  上的 ruff 和 python3 的 jsonschema，与锁定之前一样。`--all` 下，比最新受支持版本更新的那个 Python 标为可选；没有 uv 时，`--all`
+  会说明只在 python3 上跑测试。`release.py --execute` 先确认 `gh` 已登录，否则立即停止；
+  随后运行 `check.sh --live --strict`（以前是 `--live`）；构建出的 wheel 文件名如果和安装命令里下载的不一致，也会停止。
+- **validate.yml** 设置 `permissions: {contents: read}`，把 actions/checkout v7.0.1 和 actions/setup-python v7.0.0 锁定到 commit SHA，
+  设置 `persist-credentials: false`，安装同样锁定版本的 ruff 和 jsonschema，测试 3.8 和 3.14，并运行在 `ubuntu-24.04` 上，这是
+  setup-python 仍为 3.8 构建的最新镜像。Dockerfile 的基础镜像 `python:3.12-slim` 按镜像索引 digest 锁定（3.12.14-slim-trixie，
+  2026-09-28）。pyproject.toml 增加 Python 3.8 到 3.14 的分类标签，以及 "3 :: Only"。
+- **可复制的 CI 示例。** `examples/ci/github-actions.yml` 把 `actions/checkout`、`actions/upload-artifact`、
+  `github/codeql-action/upload-sarif` 固定到提交 SHA，并在注释里写明对应版本；设置 `persist-credentials: false`；步骤输出经 `env:`
+  传入；并说明怎样让 Action 在两次运行之间保持不变（固定到某个发布 tag，或更严格地固定到它的 commit）。
+  `examples/ci/watch-weekly.yml` 同样固定 `actions/checkout` 与 `actions/setup-python`，它要推送运行文件，所以保留凭据。
+- **README 徽章是一次记录在案的运行。** 它由榜单页的一次运行生成，记录在 `docs/aiv-badge.json`（2026-09-28，geo-score 1.4.0）：
+  93/100 Leading，替代文字写明这个日期和版本。原来的徽章是手工提交的 87。打分代码没有变化。
+- **参与贡献。** PR 模板要求贴出 `bash scripts/check.sh` 的最后几行、更新中英两份更新日志、中英文同步、重新生成榜单产物、披露雇主
+  的站点，且只用绝对链接。它和 CONTRIBUTING.md 都列出新量表版本需要的全部文件：下一个版本的中英量表和 JSON、中英证据表，以及一份
+  用它打分的公开审计。CONTRIBUTING.md 还列出了两个新的测试文件。
+- **榜单只有一个地址。** 榜单的 canonical、og:url、og:image、hreflang、llms.txt 与 sitemap 地址改指向在维护的镜像
+  https://www.jianruntech.com/leaderboard 与 /leaderboard/zh，不再指向停在 229 站的 GitHub Pages 旧副本；`GEO_SITE_BASE` 仍可覆盖。
+  `scripts/check_live.py` 默认检查镜像，并直接从页面读站点数、中位数与日期。`validate.py` 第 30 条。
+- **CLI 与人工审计的对照改为同口径比较。** 只看两边都打了分的检查项，CLI 平均低 0.4 分（逐站从低 6 分到高 9 分，平均绝对差 5.2；
+  Bland-Altman 偏差 −0.4，95% 一致性界限 −12.8 到 +12.0，n=5），记在 `benchmark/validity.json` 的 `common_checks` 里，旁边另有
+  `validation_set`。按完整分数的「低 3.6 分」放第二位：人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，
+  CLI 不打这三项。VALIDITY 中英两版新增三条说明：这 5 个站就是 v1.0→v1.1 的校准站，属于开发数据；人工分都在 69–87 之间，只有 1 个
+  中文站，没有被封顶的站；审计文件没有记录打分人。两份 README 都先引用同口径的数字，`validate.py` 第 23 条核对它和
+  `common_checks` 都等于逐站数据。1.3.0 的条目保持发布时原样。
+- **中文市场的差距不再只报一个数**，benchmark/README.md、榜单页和两份 README 都拆开来说：「低 20 分」写明定义（五个中国行业）、按
+  语言分组的差距（20 分，95% 置信区间 13–25）、相近行业对比的范围（6 到 30 分）和启发式占比上限（68%）。`validate.py` 第 31 条和
+  第 38 条。
+- **REPRODUCIBILITY.md 写明 ±5 / 96% 是怎么测的：** 2026-09-09 用 1.1.2 修正波动之前的 1.1.x 版本、在 229 个站上测得。新增
+  ICC(A,1) 0.974、SEM 3.09 与 18 个档位变化，表格由 retest.py 生成。`reproducibility.json` 改为 format 2，旧的两次运行保存在
+  `legacy` 下。页面页脚和两份 README 都写明日期与版本。
+- **证据说明，只补元数据**（不改权重和档位）：`p2.question-intent` 注明 1.4.x 及以前 CLI 的中文标题词表缺少英文词表能匹配的任务型
+  与解释型写法；`p3.knowledge-graph` 注明 CLI 只查维基数据与维基百科，不查百度百科。量表 README 和证据表链接了敏感性分析，校准记录
+  链接了档位分析。
+
+### 修复
+- **保存付费的运行结果，要么完整，要么不留。** 回答里如果有半个代理对（半个 emoji，服务商有时会返回这种字符），保存会在中途失败，
+  留下一个截断的运行文件：已经付费的这次运行丢了，而且在手动删掉这个文件之前，`watch report`、`watch diff` 和 MCP 工具读取最新一次
+  运行都会报错。现在先把完整内容写进隐藏的临时文件、刷到磁盘，再以一个没有被占用的运行 id 链接到位（id 已被占用时顺延为
+  `<id>-2` 等），保存失败既不留下半个文件，也不动之前的运行。UTF-8 装不下的文本存成 `\u` 转义，读回来还是同样的文字。
+- **半个代理对不再让 `watch run`、`watch report`、`watch ask`、`watch diff` 崩溃。** 文本输出把它显示为 `\u` 转义，stdout 和 `-o`
+  文件都一样；`watch report --format json` 和 `watch ask --format json` 也能输出这类回答。
+- **引擎的调优键会被检查。** `max_tokens`、`max_searches`、`max_results` 必须是正整数，`tool` 必须是字符串；`watch check` 以及所有
+  读取配置的命令现在都拒绝其他值，包括 1.4.0 接受的 `"2048"` 这样的字符串。以前误填进 `max_tokens` 的值会被送进 `int()`，保存在
+  运行文件里的错误信息会带上它；新的报错从不显示这个值。`runs`、`max_calls` 和调优键接受 `2.0`，与 JSON Schema 一致。
+- **MCP 的 `score_site` 说清楚为什么拒绝一个主机。** 解析不了的域名返回
+  `cannot resolve <host>: check the spelling, or your DNS/proxy settings`，走代理时还会注明 `score_site` 在运行服务的机器上解析每个
+  主机名来确认它是公网地址；以前这样的主机会被说成私有地址。解析到私有、回环或保留地址的主机返回
+  `url must be on a public host: <host> resolves to a private, loopback or reserved address`。
+- MCP 量表资源的 `source` 链接指向发布标签下的量表，不再指向 `main`；`geo_score.py watch --help` 里 `mcp` 一项写明安装后的命令名
+  `geo-score-mcp`。
+- **安装不再需要 git。** 文档里的 `uvx`、`pipx` 安装方式和一键 MCP 按钮，在装了 uv 但没有 git 的机器上不再失败（"Git operation
+  failed"），第一次启动也不再从源码构建。guide/mcp.md 中英两版删掉了没有实测依据的「`score_site` 大约 20 秒」。
+- **「Anything else」CI 片段**原来把 CLI 跑两次，保存下来的报告可能与决定退出码的那次运行不同，而且下载后不校验。现在从固定版本的
+  release 下载 `geo_score.py` 和 `SHA256SUMS`，用 `--json-out`、`--junit`、`--fail-under` 只跑一次。校验与打分用 `&&` 串联，即使
+  shell 没开 `set -e`（如 Azure Pipelines 的 script 步骤）或 `pipefail`，文件对不上也会在打分前停下。GitLab 任务和每周 watch 工作流
+  逐个文件对照它在 `SHA256SUMS` 里的那一行校验，校验失败后每周对比步骤不再运行。
+- PR 模板里 Scope 的链接是相对路径，在 PR 正文里会变成 404。CONTRIBUTING.md 让量表贡献者新增 `rubric/v1.1.md`，而这个版本已经发布，
+  现在改为写下一个版本。
+- **榜单的分组只说 1.3.0 的数据撑得住的话。** 只要 results.json 的测量工具早于 1.5.0，「robots.txt 屏蔽」一组就带限定语：1.3.0 的
+  读法把 GPTBot、ClaudeBot 和 Google-Extended 也算作检索爬虫，所以这 23 个里包括只屏蔽训练爬虫或只声明退出令牌的站。「正文要跑
+  JavaScript」一组也带一句：那时的读法分不出人机验证页和 JavaScript 空壳。两句都出现在 benchmark/README.md、中英两个页面和
+  llms.txt 里，用 1.5.0 或更新的版本重跑榜单后自动消失。403 一组改为「服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经
+  爬虫身份验证）」；页面也不再说中国差距「不是内容质量，是 llms.txt、Organization 结构化数据……」：逐项差得最多的两项是启发式判断。
+- 基准榜单 README 不再说「每个站同样抽 8 个页面」，改为每个站最多 8 个页面，并说明 69 个站实际评分的页面不足 4 个（其中 55 个只有
+  1 页）。
+- **榜单页的 Dataset 标记。** 原来把 `readiness` 写成「0-100 的归一化分数」，实际上它是原始分，`normalised` 才是百分比。
+  `variableMeasured` 现在列出 normalised、readiness、observable_max、band 和 gate_capped；下载链接原来指向 blob/main 的页面，现在
+  改为 raw.githubusercontent.com 上 `v<版本号>` 的文件，旁边加上两个 CSV。许可证暂时仍是 MIT。`validate.py` 第 34 条。
+- 以上基准榜单的条目都没有重新打分：results.json 仍是 2026-09-27 用 1.3.0 跑的那一轮，检查项的 id 和读法也没有因此改变。
+
 ## [1.4.0] — 2026-09-28
 
 MCP 服务成为使用 geo-score 的正式方式：README 里有独立章节和一键安装按钮，每个客户端都有配置说明，有一键安装包，

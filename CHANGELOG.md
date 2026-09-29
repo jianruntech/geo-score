@@ -5,6 +5,226 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **A schema for `geo-score-watch.json`, and a warning for every key nothing reads.**
+  `schema/watch-config.v1.json` (JSON Schema draft 2020-12) describes the file, and `watch init` now
+  writes `"$schema"` as its first key, so an editor checks and completes it. A mistyped key used to
+  vanish without a word: `budget` for `budget_usd` meant no budget, and `max_call` for `max_calls` the
+  default cap of 120. `watch check` names every unknown key at every level (top, `brand`,
+  `competitors[i]`, `engines[i]`, `prices.<id>`), with the nearest known key when one is close, as in
+  `unknown key 'budget' (did you mean 'budget_usd'?); it is ignored`, and flags a `prices` entry that
+  names no engine. `watch run` and the other commands that read the config print the same warnings on
+  stderr; the MCP `status` tool lists them, and `run` shows them with its plan and after a saved run. A
+  key named like a credential (`api_key`, `OPENAI_KEY`, `api_token`, `client_secret`, `credentials` …)
+  is pointed at environment variables instead, and its value is never printed. Warnings only: no exit
+  code changes.
+- **CI beyond GitHub.** `examples/ci/gitlab-ci.yml` is a GitLab job on `python:3.12-slim`: it downloads
+  `geo_score.py` from a pinned release, checks it against `SHA256SUMS`, scores once, keeps
+  `geo-score.json` as an artifact and hands `geo-score.xml` to GitLab as a JUnit report, so a check at
+  zero shows as a failed test. `examples/ci/README.md` gives the one directive that Bitbucket Pipelines,
+  Azure Pipelines, Jenkins and CircleCI each need to show the `--junit` file.
+- **Where to report what.** A *Benchmark correction* form disputes a leaderboard row's score, gate
+  reason, label or not-scored reason, with a fresh `--json-out` report and the tool version; a *Tool
+  problem* form covers the CLI, the Action, the MCP server, pip/pipx/uvx, the MCPB bundle, the Claude
+  Code plugin, the Gemini CLI extension and Docker. The issue chooser links the troubleshooting guide and
+  the MCP troubleshooting section, and a new `SUPPORT.md` says which form takes what. The forms applied
+  `benchmark`, `engine` and `rubric`, labels the repository did not have, so those issues arrived
+  unlabelled: `.github/labels.json` now lists every label, and `scripts/sync_labels.py` carries the list
+  to GitHub (a dry run by default; `--apply` creates and updates, `--check` exits 1 when a label is
+  missing, and it never deletes one). It prints a proxy's host and port, never the credentials in
+  `HTTPS_PROXY`.
+- **Benchmark: a re-runnable retest study.** `benchmark/retest.py` takes two or more run directories
+  (results.json plus raw/) and records each run's tool, date, Python, declared vantage and pinning. For
+  each pair it reports the shares identical, within ±2 and within ±5, ICC(A,1) and SEM, band changes and
+  gate-cap flips, and per check the tier flips and the unobservable rate in each run. It keeps one record
+  per site per run, so every figure can be recomputed; `--check` verifies the committed files
+  (`validate.py` rule 32). `benchmark/run.py` gains `--out DIR` (a run for the study that leaves the
+  published files alone), `--urls-from-dir DIR` (each site re-reads an earlier run's pages, through the
+  CLI's `--urls-from` reader) and `--vantage LABEL`, recorded in results.json as `measured_from` beside
+  `python` and `pinned_from`. The operator declares the label; nothing looks an address up.
+- **Benchmark: the Chinese-market gap, taken apart.** `benchmark/stats.json` gains `china_gap_detail`,
+  drawn after the existing bootstraps from the same seed, so no published interval moves: the gap by
+  audience language beside the sector-label gap, with their cross-tab (37/27/13/240); four matched sector
+  families, with no figure below 10 sites; the raw-point gap split into rule-read and heuristic checks
+  (68% heuristic, an upper bound on what a heuristic misreading could explain); `p3.knowledge-graph`
+  unobservable on 33 of 50 Chinese-language sites against 76 of 267 others; and the gap with that check
+  imputed as 0 (20 points) or as 4 (19 points).
+- **Benchmark: flat downloads.** `benchmark/results.csv` has one row per listed site (its fields,
+  `sample_n`, `sample_source`, the not-scored reason and the error, then one column per check holding its
+  points, blank where the check was not observable); `benchmark/checks.csv` has one row per scored site
+  and check. `run.py` writes both, `--readme-only` included; the leaderboard's Dataset markup and
+  llms.txt link them; `validate.py` rule 35 checks every cell against results.json and raw/. There is no
+  robots.csv yet: raw/ does not record the status each user-agent got.
+- **Benchmark: what each row rests on.** Every row's real sample size (`sample_n`, `sample_source`) is
+  published, read from raw/ for the committed rows. The 69 rows scored on fewer than 4 pages are marked
+  *thin sample* in the benchmark README and on both pages, which can filter on them, and stats.json puts
+  the median without them (62) beside the headline 56 (`validate.py` rule 33). A table computed from
+  raw/ shows how common each practice is: `llms.txt` served on 137 of 317 sites, complete Organization
+  and WebSite markup on 98, BreadcrumbList on a nested page on 82 of 251, a sitemap with `lastmod` on
+  161, a personal byline on at least half the pages on 67. The Web Almanac 2025 `llms.txt` figure sits
+  beside it, with a line saying the populations differ.
+- **Benchmark: how it fetches, and how to correct a row.** "How the benchmark fetches" states the
+  per-site request budget, computed from the CLI's own user-agent lists and constants (at most 67
+  requests to the site and 20 elsewhere, counted before redirects and retries), and says that crawler
+  user-agents are sent from the operator's address, not the vendors'. "Corrections" links the correction
+  form: a confirmed tool error ships as a patch release, and published scores change only when a site is
+  measured again. `run.py` files a CLI error that starts with
+  `bot challenge served to a browser user-agent` under a not-scored reason of its own, and the Not
+  scored list is grouped by reason.
+- **Weight sensitivity** (`benchmark/sensitivity.py`, `SENSITIVITY.md` + zh). It first recomputes all 317
+  scores from raw/ (0 mismatches), then re-scores them under equal weights, an illustrative
+  evidence-basis weighting, each check left out, and 300 seeded draws. The rank order holds (Spearman
+  ρ ≥ 0.988 under every weighting); the bands move more: equal weights change 39 sites' bands, the
+  evidence-basis weighting 24, the draws a median of 26. Per-check tier spreads and item-rest
+  correlations follow, and it ends with input for v1.2. It adds with `math.fsum`, so every Python writes
+  the same files. No v1.1 weight changes. `validate.py` rule 36.
+- **Where the band cuts fall** (`benchmark/percentiles.py`, `percentiles.json`, a table in the benchmark
+  README, `rubric/bands-analysis.md` + zh). Of the 317 sites, 85%, 58%, 34% and 10% reach Early,
+  Growing, Solid and Leading. The analysis sets the v1.1 cuts against three criteria (achievable as Core
+  Web Vitals defines it: Leading is reached by 10%, with no margin; 168 of 317 sites sit within the
+  retest SEM's noise of a cut; 48 of Early's 88 sites are gate-capped) and lists candidates for v1.2. The
+  v1.1 cuts are unchanged. `validate.py` rule 37.
+- **The gate on every Python.** `scripts/check.sh --all` runs the tests on every Python from 3.8 to 3.14,
+  and on 3.15 when it is installed; `--strict` fails with `uv python install X` when a needed Python is
+  missing instead of skipping it. Both combine with `--live`, and an unknown argument exits 2. The gate
+  runs every `scripts/test_*.py` and `benchmark/test_*.py`, so a new suite joins it by its name, and
+  under `--live` it runs `scripts/sync_labels.py --check` when `gh` is installed and logged in.
+- **New tests.** `scripts/test_ci_examples.py` runs the copyable CI examples with bash against fixture
+  sites. `scripts/test_repo_meta.py` checks the forms against the labels, the README badge against its
+  recorded run, and the links in the chooser, the forms, `SUPPORT.md` and the PR template.
+  `benchmark/test_benchmark.py` tests retest.py, the qualifiers, the canonical URLs, the China-gap
+  suppression, the sample sizes, the fetch budget, the CSVs, the sensitivity and percentile arithmetic
+  and the validity figures, offline. `scripts/test_packaging.py` now checks that every tracked file
+  naming a release is one `release.py --bump` rewrites (the changelogs, benchmark/raw/, dist/,
+  docs/*.html and .github/validate.py are exempt), that every release-wheel URL's tag and file name
+  equal `__version__`, that validate.yml installs the ruff and jsonschema versions check.sh pins and
+  pins its actions by commit, that the Dockerfile's base is pinned by digest, and that the pyproject
+  classifiers cover 3.8 to 3.14 while validate.yml and RELEASING.md name the same two ends.
+
+### Changed
+- **Install from the release wheel.** The uvx, pipx and MCP install lines download
+  `https://github.com/jianruntech/geo-score/releases/download/vX.Y.Z/geo_score-X.Y.Z-py3-none-any.whl`,
+  so they need neither git nor a build step: the README install bullet, the Cursor, VS Code, VS Code
+  Insiders and LM Studio buttons, the Claude Code line, the standard `mcpServers` config, every
+  per-client block in guide/mcp.md and the MCPB watch-init hint. The git install
+  (`git+https://github.com/jianruntech/geo-score@vX.Y.Z`) stays on a line labelled "From source (needs
+  git)". `release.py --bump` rewrites the version in the wheel's file name as well as the tag.
+- **The gate and the release.** By default the gate looks for Python 3.8, 3.12 and 3.14 (it used to look
+  for 3.8, 3.12 and 3.13, never 3.14) and skips one uv cannot find, with its install hint; `--strict`
+  requires 3.8 and 3.14. It pins ruff 0.15.15 and jsonschema 4.23.0 (the newest jsonschema that installs
+  on Python 3.8): the PATH ruff runs only when it is the pinned version, otherwise `uvx ruff@0.15.15`,
+  from uv's cache before the network, and python3's own jsonschema is used when it is the pinned
+  version. Offline with a cold cache it falls back to the PATH ruff and python3's jsonschema, as before
+  the pin. Under `--all`, the Python after the newest supported one is reported as optional, and `--all`
+  without uv says that only python3 runs.
+  `release.py --execute` stops at once unless `gh` is logged in, runs `check.sh --live --strict` (it ran
+  `--live` before), and stops when the built wheel's file name differs from the one the install lines
+  download.
+- **validate.yml** sets `permissions: {contents: read}`, pins actions/checkout v7.0.1 and
+  actions/setup-python v7.0.0 by commit SHA, sets `persist-credentials: false`, installs the pinned ruff
+  and jsonschema, tests 3.8 and 3.14, and runs on `ubuntu-24.04`, the newest image setup-python still
+  builds 3.8 for. The Dockerfile's base image is `python:3.12-slim` pinned by its image-index digest
+  (3.12.14-slim-trixie, 2026-09-28). pyproject.toml has classifiers for Python 3.8 to 3.14 and
+  "3 :: Only".
+- **Copyable CI.** `examples/ci/github-actions.yml` pins `actions/checkout`, `actions/upload-artifact` and
+  `github/codeql-action/upload-sarif` to commit SHAs with the release as a comment, sets
+  `persist-credentials: false`, passes step outputs through `env:`, and says how to hold the Action
+  still between runs (a release tag, or that release's commit). `examples/ci/watch-weekly.yml` pins
+  `actions/checkout` and `actions/setup-python` the same way and keeps its credentials, because it
+  pushes the run file.
+- **The README badge is a recorded run.** It is regenerated from one run on the leaderboard page, kept
+  in `docs/aiv-badge.json` (2026-09-28, geo-score 1.4.0): 93/100 Leading, and its alt text names that
+  date and version. The old badge read 87 and was committed by hand. The scorer did not change.
+- **Contributing.** The pull request template asks for the last lines of `bash scripts/check.sh`, both
+  changelogs, English and Chinese kept in step, the benchmark regeneration and disclosure of an
+  employer's site, and uses only absolute links. It and CONTRIBUTING.md name every file a new rubric
+  version needs: the next version's rubric in both languages and as JSON, both evidence tables and a
+  public audit scored with it. CONTRIBUTING.md also lists the two new test suites.
+- **The leaderboard has one address.** Its canonical, og:url, og:image, hreflang, llms.txt and sitemap
+  URLs point at the maintained mirror, https://www.jianruntech.com/leaderboard and /leaderboard/zh,
+  instead of the GitHub Pages copy frozen at 229 sites; `GEO_SITE_BASE` still overrides.
+  `scripts/check_live.py` defaults to the mirror and reads the site count, median and date from the page
+  itself. `validate.py` rule 30.
+- **The CLI-vs-hand-audit headline compares like with like.** On the checks both scored, the CLI reads
+  0.4 points lower on average (per site from 6 lower to 9 higher, mean absolute difference 5.2;
+  Bland-Altman bias −0.4, 95% limits −12.8 to +12.0, n=5), kept in `benchmark/validity.json` as
+  `common_checks` beside a `validation_set` block. The full-score figure, 3.6 points lower, comes second:
+  the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`, which the CLI
+  leaves out. VALIDITY.md (EN + zh) adds three caveats: the five sites are the v1.0→v1.1 calibration
+  sites, so this is development data; they score 69–87, with one Chinese site and none capped; and the
+  audit files do not record the rater. Both READMEs lead with the like-for-like figure, and
+  `validate.py` rule 23 holds it and `common_checks` to the per-site rows. The 1.3.0 entry stays as
+  released.
+- **The Chinese-market gap is decomposed** rather than quoted whole, in benchmark/README.md, on the
+  leaderboard pages and in both READMEs: the 20-point gap states its definition (the five China
+  sectors), the language gap (20 points, 95% CI 13–25), the range within matched sector families (6 to
+  30 points) and the heuristic upper bound (68%). `validate.py` rules 31 and 38.
+- **REPRODUCIBILITY.md says what the ±5 / 96% was measured with:** 229 sites on 2026-09-09, with a 1.1.x
+  build before the 1.1.2 variance fixes. It adds ICC(A,1) 0.974, SEM 3.09 and 18 band changes, and its
+  tables are generated by retest.py. `reproducibility.json` moves to format 2 and keeps those runs under
+  `legacy`. The pages' footer and both READMEs name the date and the build.
+- **Evidence notes, metadata only** (no weight or tier changes): `p2.question-intent` records that
+  through 1.4.x the CLI's Chinese heading lexicon lacked the task and explanation forms its English
+  lexicon matches, and `p3.knowledge-graph` that the CLI queries Wikidata and Wikipedia but not Baidu
+  Baike. The rubric README and the evidence table link the sensitivity study, and the calibration record
+  the bands analysis.
+
+### Fixed
+- **Saving a paid run is all or nothing.** An answer holding half a surrogate pair (half an emoji, which
+  a provider can send) stopped the save half way and left a truncated run file: the paid run was lost,
+  and `watch report`, `watch diff` and the MCP tools failed on the latest run until the file was deleted
+  by hand. A run is now written in full to a hidden temporary file, synced to disk and only then linked
+  into place under a run id no other file has (`<id>-2` and on when the id is taken), so a failed save
+  leaves no partial file and the earlier runs as they were. Text UTF-8 cannot carry is stored as `\u`
+  escapes, which load back as the same text.
+- **Half a surrogate pair no longer crashes `watch run`, `watch report`, `watch ask` or `watch diff`.**
+  Text output shows it as a `\u` escape, on stdout and in an `-o` file alike, and
+  `watch report --format json` and `watch ask --format json` print such answers.
+- **The engines' tuning keys are checked.** `max_tokens`, `max_searches` and `max_results` must be
+  positive integers and `tool` a string; `watch check`, and every command that reads the config, now
+  refuses anything else, including a string such as `"2048"`, which 1.4.0 accepted. A value pasted into
+  `max_tokens` used to reach `int()`, and the error saved in the run file quoted it; the new error never
+  shows the value. `runs`, `max_calls` and the tuning keys accept `2.0`, as JSON Schema does.
+- **MCP `score_site` says why it refuses a host.** A name that does not resolve gets
+  `cannot resolve <host>: check the spelling, or your DNS/proxy settings`, with a note, when a proxy
+  applies, that `score_site` resolves every host on the machine running the server to check it is
+  public; such a host used to be called private. A host that resolves to a private, loopback or reserved
+  address gets `url must be on a public host: <host> resolves to a private, loopback or reserved address`.
+- The MCP rubric resource's `source` links to the rubric at the release tag instead of `main`, and the
+  `mcp` entry in `geo_score.py watch --help` names the installed command, `geo-score-mcp`.
+- **Installing needs no git.** The documented `uvx` and `pipx` routes and the one-click MCP buttons no
+  longer fail on a machine that has uv but no git ("Git operation failed"), and no longer build from
+  source on first start. guide/mcp.md (EN + zh) no longer says `score_site` takes about 20 seconds, a
+  figure that was never measured.
+- **The 'Anything else' CI snippet** ran the CLI twice, so the report you kept could differ from the run
+  that set the exit code, and it did not verify the download. It now downloads `geo_score.py` and
+  `SHA256SUMS` from a pinned release and scores once with `--json-out`, `--junit` and `--fail-under`.
+  The checksum and the run are chained with `&&`, so a file that does not match stops the step before
+  scoring even in a shell without `set -e` (Azure Pipelines script steps) or `pipefail`. The GitLab job
+  and the weekly watch workflow check each file against its own `SHA256SUMS` line, and the weekly
+  compare step no longer runs after a failed checksum.
+- The pull request template's Scope link was relative, which gives a 404 in a PR body. CONTRIBUTING.md
+  told rubric contributors to add `rubric/v1.1.md`, the version already released; it now names the next
+  one.
+- **The leaderboard's groups claim only what the 1.3.0 data supports.** While results.json was measured
+  with a tool older than 1.5.0, the robots.txt group carries a qualifier: the 1.3.0 reading counted
+  GPTBot, ClaudeBot and Google-Extended as retrieval crawlers, so the 23 include sites that block only
+  training crawlers or an opt-out token. The JavaScript group carries one too: that reading could not
+  tell a bot-challenge page from a JavaScript shell. Both appear in benchmark/README.md, on both pages
+  and in llms.txt, and drop out by themselves once the leaderboard is re-run with 1.5.0 or later. The
+  403 group now reads "the server refuses crawler user-agents (unverified probes from the auditor's
+  address)", and the pages no longer say the China gap "is not content quality. It is llms.txt,
+  Organization schema…": its two largest per-check differences are heuristics.
+- The benchmark README no longer claims "the same eight-page sample": it says up to eight pages per
+  site, and that 69 sites were scored on fewer than 4 pages (55 of them on a single page).
+- **Leaderboard Dataset markup.** `readiness` was described as the "0-100 normalised score"; it is raw
+  points, and `normalised` is the percentage. `variableMeasured` lists normalised, readiness,
+  observable_max, band and gate_capped, and the download, which pointed at a blob/main page, is
+  raw.githubusercontent.com pinned to `v<version>`, with the two CSVs beside it. The licence stays MIT
+  for now. `validate.py` rule 34.
+- None of the benchmark entries above re-scores a site: results.json is still the 1.3.0 run of
+  2026-09-27, and no check id or check reading changes with them.
+
 ## [1.4.0] — 2026-09-28
 
 The MCP server becomes a first-class way to use geo-score: its own README section with install
