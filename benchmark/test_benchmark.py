@@ -291,6 +291,45 @@ class NotScored(unittest.TestCase):
         self.assertEqual(row.get("error_kind"), "timeout")
         self.assertEqual(run.not_scored_reason(row["error"], row["error_kind"]), "timed out")
 
+    def _one_with(self, site, errors):
+        """run.one on `site` with gs.run raising errors[url] for each URL it is given; returns (row, URLs tried)."""
+        calls = []
+
+        def fake_run(url, sample, **kw):
+            calls.append(url)
+            raise errors[url]
+        saved = (run.gs.run, run.time.sleep)
+        run.gs.run, run.time.sleep = fake_run, lambda s: None
+        try:
+            return run.one({"url": site, "sector": "Test"}), calls
+        finally:
+            run.gs.run, run.time.sleep = saved
+
+    def test_the_bare_host_error_stays_unless_www_got_further(self):
+        gs = run.gs
+        e403 = gs.ScoreError("could not fetch https://x.test (http_403): every page asked for answered with an HTTP "
+                             "error (HTTP 403)", "http_403", "https://x.test")
+        e404 = gs.ScoreError("could not fetch https://www.x.test (http_404): every page asked for answered with an "
+                             "HTTP error (HTTP 404)", "http_404", "https://www.x.test")
+        dns = lambda h: gs.ScoreError("cannot resolve %s: check the spelling, or your DNS/proxy settings" % h, "dns",
+                                      "https://" + h)
+        for errors, kept in (({"https://x.test": e403, "https://www.x.test": e404}, "http_403"),
+                             ({"https://x.test": e403, "https://www.x.test": dns("www.x.test")}, "http_403"),
+                             ({"https://x.test": dns("x.test"), "https://www.x.test": e403}, "http_403")):
+            row, calls = self._one_with("x.test", errors)
+            self.assertEqual(calls, ["https://x.test", "https://www.x.test"])
+            self.assertEqual(row["error_kind"], kept, row["error"])
+        row, _ = self._one_with("x.test", {"https://x.test": e403, "https://www.x.test": dns("www.x.test")})
+        self.assertTrue(row["error"].startswith("could not fetch https://x.test (http_403)"), row["error"])
+
+    def test_an_address_is_not_retried_on_www(self):
+        gs = run.gs
+        for site, url in (("127.0.0.1:9", "https://127.0.0.1:9"), ("[2001:db8::1]", "https://[2001:db8::1]")):
+            refused = gs.ScoreError("could not fetch %s (refused): refused" % url, "refused", url)
+            row, calls = self._one_with(site, {url: refused})
+            self.assertEqual(calls, [url])
+            self.assertEqual(run.not_scored_reason(row["error"], row["error_kind"]), "connection failed")
+
     def test_a_bot_challenge_on_the_bare_host_is_what_the_row_keeps(self):
         calls = []
 

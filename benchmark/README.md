@@ -545,8 +545,9 @@ and **20 elsewhere**, counted before redirects and before retries: a request tha
 | The `sameAs` profiles the site declares, up to 8 | 8 | browser, to other hosts |
 | Wikidata and Wikipedia searches: up to 3 brand names, in English and in the sampled pages' most common other language when Wikipedia has a large edition in it | 12 | browser, to other hosts |
 
-A site that fails outright is tried once more on its `www` host. The crawler user-agents are sent from
-the operator's own address, not from the addresses their vendors publish, so a server that verifies
+A site that fails outright is tried once more on its `www` host (an IP address is not), and its row
+keeps the error of the attempt that got further. The crawler user-agents are sent from the operator's own
+address, not from the addresses their vendors publish, so a server that verifies
 crawlers by IP range or reverse DNS sees an unverified client. That is why a 403 to those probes is
 reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.
 

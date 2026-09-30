@@ -150,7 +150,9 @@ only the optional `elapsed_s`.
   scored list is grouped by reason. A row measured with 1.5.0 or later keeps the CLI's error kind
   (`error_kind` in results.json) and is filed by it: `http_*` as refused, `timeout`, `slow` and `deadline`
   as timed out, and `dns`, `refused`, `tls`, `dropped` and `no_response` as connection failed. Rows
-  measured with 1.3.0 are still filed by their message.
+  measured with 1.3.0 are still filed by their message. When a site and its `www` host both fail, the row
+  keeps the error of the attempt that got further (it kept the `www` host's), and an IP address is not
+  retried on `www`.
 - **Weight sensitivity** (`benchmark/sensitivity.py`, `SENSITIVITY.md` + zh). It first recomputes all 317
   scores from raw/ (0 mismatches), then re-scores them under equal weights, an illustrative
   evidence-basis weighting, each check left out, and 300 seeded draws. The rank order holds (Spearman

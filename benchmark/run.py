@@ -11,7 +11,7 @@ numbers; every result records the date it was measured, the tool and Python vers
 and the vantage the operator declared.
 """
 import urllib.parse
-import argparse, concurrent.futures as cf, csv, importlib.util, inspect, io, json, os, platform, re, statistics, sys, time
+import argparse, concurrent.futures as cf, csv, importlib.util, inspect, io, ipaddress, json, os, platform, re, statistics, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("gs", os.path.join(HERE, "..", "cli", "geo_score.py"))
 gs = importlib.util.module_from_spec(spec); spec.loader.exec_module(gs)
@@ -67,8 +67,9 @@ def _fetch_block():
          "| Requests | At most | User-agent |", "|---|:-:|---|"]
     L += ["| %s | %d | %s |" % (what, n, ua) for _, what, n, ua in site]
     L += ["| %s | %d | browser, to other hosts |" % (what, n) for _, what, n in elsewhere]
-    L += ["\nA site that fails outright is tried once more on its `www` host. The crawler user-agents are sent from",
-          "the operator's own address, not from the addresses their vendors publish, so a server that verifies",
+    L += ["\nA site that fails outright is tried once more on its `www` host (an IP address is not), and its row",
+          "keeps the error of the attempt that got further. The crawler user-agents are sent from the operator's own",
+          "address, not from the addresses their vendors publish, so a server that verifies",
           "crawlers by IP range or reverse DNS sees an unverified client. That is why a 403 to those probes is",
           "reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.\n"]
     return "\n".join(L)
@@ -127,6 +128,25 @@ def not_scored_reason(error, kind=None):
         return "connection failed"
     return "other"
 
+def _reach(e):
+    """How far a failed attempt got: 0 its name did not resolve, 1 no HTTP answer, 2 an HTTP answer, 3 a bot
+    challenge; -1 for an error that says none of these (a usage or internal error)."""
+    msg, kind = str(e), getattr(e, "kind", None)
+    k = error_kind(msg, kind if isinstance(kind, str) else None)
+    if k == "dns":
+        return 0
+    if k == "no_content":
+        return 2
+    return {"bot challenge": 3, "refused": 2, "timed out": 1, "connection failed": 1}.get(not_scored_reason(msg, k), -1)
+
+def _ip_literal(url):
+    """True for http://192.0.2.1 or http://[2001:db8::1]: no www host stands beside an address."""
+    try:
+        ipaddress.ip_address(urllib.parse.urlsplit(url).hostname or "")
+        return True
+    except ValueError:
+        return False
+
 def raw_name(site_url):
     """benchmark/raw/<site>.json; a site given with a path keeps it, with / as __."""
     return re.sub(r"[^A-Za-z0-9.\-]+", "__", site_url.strip("/")) + ".json"
@@ -134,7 +154,7 @@ def raw_name(site_url):
 def one(site):
     base = site["url"] if "://" in site["url"] else "https://" + site["url"]
     host = base.split("://", 1)[1]
-    attempts = [base] + ([("https://www." + host)] if not host.startswith("www.") else [])
+    attempts = [base] + ([("https://www." + host)] if not host.startswith("www.") and not _ip_literal(base) else [])
     pinned = None
     if PIN_DIR:
         # sampling is the largest source of run-to-run variance; a pinned run leaves the site and the network
@@ -154,8 +174,10 @@ def one(site):
         try:
             res = gs.run(u, SAMPLE, urls=pinned) if pinned else gs.run(u, SAMPLE); break
         except Exception as e:
-            # a bot challenge on the bare host says more than whatever the www host answers after it
-            if err is None or not str(err).startswith(BOT_CHALLENGE):
+            # the www host's error replaces the bare host's only when it got further: a bare name that does not
+            # resolve gives way to what www answered, but a 403 or a bot challenge on the bare host is not replaced
+            # by www's 404 or "cannot resolve www.…"
+            if err is None or _reach(e) > _reach(err):
                 err = e
             time.sleep(1)
     try:
