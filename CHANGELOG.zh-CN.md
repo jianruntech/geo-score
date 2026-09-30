@@ -5,7 +5,7 @@
 ## [Unreleased]
 
 这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选
-robots.txt 分组，也不再因为一次掉线而变动；人机验证页不再被当成要跑 JavaScript 的页面来评分；每个页面按它自己的语言读；一个数字
+robots.txt 分组，遇到掉线先重试再下结论；人机验证页不再被当成要跑 JavaScript 的页面来评分；每个页面按它自己的语言读；一个数字
 只有来源就在旁边时才算有来源。这些修正会让分数变动，下面每一条都写明检查项和方向。CI 方面有 `--fail-on-gate` 和 `--assert`（门槛
 项得 0 分时总分封顶 40，本来能得 40 分及以上的站正好停在 40，`--fail-under 40` 会放它通过），逐项对比两份报告的
 `geo-score diff` 和 `--baseline`，以及 shields.io endpoint 徽章。评不了分的网站很快失败，用一行话说明原因，`--json` 下给出 JSON
@@ -209,8 +209,9 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
     了 Amazonbot。
 
   证据现在写明被挡的爬虫及挡住它的组；按名字禁止的训练爬虫与选择退出令牌列为「不计分」；`g.reachable` 的证据列出没探测成功的 UA。
-- **偶发的网络故障不再改变门槛项结果。** robots.txt、首页和 sitemap 每次运行只抓一次，并带重试。`g.reachable` 的探测在无响应、
-  429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。重试 3 次仍读不到的 robots.txt 现在记为「不可观测」、退出分母，不再当
+- **偶发的网络故障先重试，再影响门槛项。** robots.txt、首页和 sitemap 每次运行只抓一次，并带重试。`g.reachable` 的探测在无响
+  应、429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。重试后仍无响应的探测算作没访问成功，所以网络或代理不稳时
+  `g.reachable` 仍可能降到 3 分，十个爬虫里有六个及以上没有响应时降到 0 分。重试 3 次仍读不到的 robots.txt 现在记为「不可观测」、退出分母，不再当
   作「没有 robots.txt」。每次都返回 429 或 5xx 的，仍给第 3 档并在证据中写明。方向两边都有：一次 robots.txt 抓取失败曾藏住
   Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。榜单上有五行的 `g.robots` 来自失败的抓取（「No robots.txt
   (HTTP 0)」）：clickpaas.com、codecademy.com、continue.dev、helium10.com、xcmg.com。

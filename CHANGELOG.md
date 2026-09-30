@@ -7,9 +7,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 A release about reading sites the way the rubric says, and about failing CI for the right reason. The two
 crawler gates now read only the ten retrieval crawlers, choose each crawler's robots.txt group as RFC
-9309 does and no longer move on a dropped connection; a bot-challenge page is no longer scored as a page
-that needs JavaScript; every page is read in its own language; and a figure counts as sourced only when
-its source sits beside it. These fixes move scores, and each one below names its check and its direction.
+9309 does and retry a request that got no answer before they count it; a bot-challenge page is no longer
+scored as a page that needs JavaScript; every page is read in its own language; and a figure counts as
+sourced only when its source sits beside it. These fixes move scores, and each one below names its check and its direction.
 For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at 40, and a site that would
 otherwise score 40 or more reads exactly 40, which `--fail-under 40` lets through), `geo-score diff` and
 `--baseline` to compare two reports check by check, and a shields.io endpoint badge. A site that cannot
@@ -315,9 +315,11 @@ only the optional `elapsed_s`.
   Evidence now names the blocked crawlers and their group. Training crawlers and opt-out tokens
   disallowed by name are listed as "not scored". `g.reachable` evidence lists the agents it did not
   reach.
-- **A transient fault no longer moves a gate.** robots.txt, the homepage and the sitemap are fetched once
-  per run, with retries. `g.reachable` probes retry once on no answer, 429 or 5xx, and honour Retry-After
-  up to 5 s. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
+- **A transient fault is retried before it moves a gate.** robots.txt, the homepage and the sitemap are
+  fetched once per run, with retries. `g.reachable` probes retry once on no answer, 429 or 5xx, and honour
+  Retry-After up to 5 s. A probe still unanswered after its retry counts as not reached, so a flaky
+  network or proxy can still take `g.reachable` to 3, or to 0 when six or more of the ten crawlers go
+  unanswered. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
   denominator, instead of reading as "No robots.txt". One that answers 429 or 5xx on every try keeps tier
   3 and says so. The direction is either way: down where a dropped robots.txt fetch hid a Disallow, up
   where a transient 429 or reset on a crawler probe read as a block. Five leaderboard rows took their
