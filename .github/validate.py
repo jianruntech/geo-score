@@ -664,6 +664,12 @@ if os.path.exists("AGENTS.md"):
     cited = {int(n) for grp in re.findall(r"rules? ([\d, and]+)", ag) for n in re.findall(r"\d+", grp)}
     have = {int(n) for n in re.findall(r"^\s*# (?:── )?(\d+)[ .·]", vsrc, re.M)}
     check(cited <= have, f"AGENTS.md cites validate.py rules that do not exist: {sorted(cited - have)}")
+    # the request budget it quotes is the one the e2e test holds the good fixture to
+    _gr = re.search(r"^GOOD_REQUESTS = \((\d+), (\d+)\)", io.open("cli/test_geo_score_e2e.py", encoding="utf-8").read(), re.M)
+    check(bool(_gr), "cli/test_geo_score_e2e.py no longer defines GOOD_REQUESTS = (site, elsewhere)")
+    if _gr:
+        want24 = "`GOOD_REQUESTS` (%s to the site, %s elsewhere" % _gr.groups()
+        check(want24 in ag, f"AGENTS.md must quote the e2e request budget as {want24!r}")
 else:
     check(False, "AGENTS.md missing: contributors and coding agents need the invariants and the gate")
 
@@ -1003,6 +1009,28 @@ if os.path.exists("benchmark/stats.json"):
         t8 = " ".join(io.open(f, encoding="utf-8").read().split())
         missing = [w for w in want if w not in t8]
         check(not missing, f"{f}: the China-gap figures must be benchmark/stats.json's; missing {missing}")
+
+# ── 39. Where a README or the troubleshooting guide says which tool and day measured the leaderboard, it is results.json's ──
+# "the leaderboard above was measured with 1.3.0" is true until the leaderboard is re-run; a sentence that names the
+# tool must then change with it, not be found stale by a reader.
+if os.path.exists("benchmark/results.json"):
+    rj9 = json.load(io.open("benchmark/results.json", encoding="utf-8"))
+    tool9 = (rj9.get("tool") or "").rsplit("/", 1)[-1]
+    day9, n9 = rj9.get("measured_at"), sum(1 for r in rj9["results"] if "error" not in r)
+    V9, D9 = r"(?P<v>\d+\.\d+\.\d+)", r"(?P<d>\d{4}-\d\d-\d\d)"
+    said9 = {"README.md": [r"leaderboard above was measured with " + V9, r"benchmark was run with %s on %s" % (V9, D9)],
+             "README.zh-CN.md": [r"上面的榜单是用 ?%s ?测的" % V9, r"榜单是 ?%s ?用 ?%s ?跑的" % (D9, V9)],
+             "guide/troubleshooting.md": [r"the current run scored (?P<n>\d+) sites on %s with tool %s" % (D9, V9)],
+             "guide/troubleshooting.zh-CN.md": [r"当前这一轮是 ?%s ?用 ?%s ?跑的，(?P<n>\d+) ?站有分" % (D9, V9)]}
+    for f, pats in said9.items():
+        if not os.path.exists(f): continue
+        t9 = " ".join(io.open(f, encoding="utf-8").read().split())
+        for pat in pats:
+            for m in re.finditer(pat, t9):
+                g = m.groupdict()
+                check(g["v"] == tool9, f"{f}: says the leaderboard was measured with {g['v']}; results.json's tool is {tool9}")
+                check(g.get("d") in (None, day9), f"{f}: dates the leaderboard {g.get('d')}; results.json says {day9}")
+                check(g.get("n") in (None, str(n9)), f"{f}: says {g.get('n')} sites were scored; results.json has {n9}")
 
 if fail:
     print("FAIL")

@@ -214,7 +214,7 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
   应、429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。重试后仍无响应的探测算作没访问成功，所以网络或代理不稳时
   `g.reachable` 仍可能降到 3 分，十个爬虫里有六个及以上没有响应时降到 0 分。重试 3 次仍读不到的 robots.txt 现在记为「不可观测」、退出分母，不再当
   作「没有 robots.txt」。每次都返回 429 或 5xx 的，仍给第 3 档并在证据中写明。方向两边都有：一次 robots.txt 抓取失败曾藏住
-  Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。榜单上有五行的 `g.robots` 来自失败的抓取（「No robots.txt
+  Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。1.3.0 榜单上有五行的 `g.robots` 来自失败的抓取（「No robots.txt
   (HTTP 0)」）：clickpaas.com、codecademy.com、continue.dev、helium10.com、xcmg.com。
 - **偶发故障不再被读成文件、logo 或中文爬虫不存在。** 1.4.0 对 `llms.txt`、`llms-full.txt`、`ai.txt`、Organization 的 logo，
   以及各中文爬虫访问首页的请求都只发一次，所以一次超时、连接重置、429 或 5xx 就被读成文件不存在、logo 打不开或爬虫没访问成功。现在

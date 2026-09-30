@@ -324,7 +324,7 @@ only the optional `elapsed_s`.
   unanswered. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
   denominator, instead of reading as "No robots.txt". One that answers 429 or 5xx on every try keeps tier
   3 and says so. The direction is either way: down where a dropped robots.txt fetch hid a Disallow, up
-  where a transient 429 or reset on a crawler probe read as a block. Five leaderboard rows took their
+  where a transient 429 or reset on a crawler probe read as a block. Five rows of the 1.3.0 leaderboard took their
   `g.robots` from a failed fetch ("No robots.txt (HTTP 0)"): clickpaas.com, codecademy.com, continue.dev,
   helium10.com and xcmg.com.
 - **A transient fault no longer reads as a missing file, logo or Chinese crawler.** 1.4.0 asked once
