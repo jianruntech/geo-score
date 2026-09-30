@@ -22,7 +22,7 @@
 
   <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" letter-spacing="1.6" fill="#5F6761">
     <text x="72" y="492">21 TIERED CHECKS · 100 POINTS · VERSIONED</text>
-    <text x="72" y="518">PYTHON, ZERO DEPENDENCIES, 20 SECONDS</text>
+    <text x="72" y="518">PYTHON 3.8+, ZERO DEPENDENCIES, NO ACCOUNT</text>
     <text x="72" y="544" fill="#4FAE80">curl -sL .../geo_score.py | python3 - yoursite.com</text>
   </g>
 

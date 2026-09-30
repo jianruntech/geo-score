@@ -309,7 +309,9 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
 - MCP 量表资源的 `source` 链接指向发布标签下的量表，不再指向 `main`；`geo_score.py watch --help` 里 `mcp` 一项写明安装后的命令名
   `geo-score-mcp`。
 - **安装不再需要 git。** 文档里的 `uvx`、`pipx` 安装方式和一键 MCP 按钮，在装了 uv 但没有 git 的机器上不再失败（"Git operation
-  failed"），第一次启动也不再从源码构建。guide/mcp.md 中英两版删掉了没有实测依据的「`score_site` 大约 20 秒」。
+  failed"），第一次启动也不再从源码构建。guide/mcp.md 中英两版删掉了没有实测依据的「`score_site` 大约 20 秒」，
+  榜单页（「大约二十秒」）、README 封面图和演示图的说明文字也删掉了同样的说法。一次运行要多久取决于网站和网络，报告里的
+  `elapsed_s` 记下了实际用时。
 - **「Anything else」CI 片段**原来把 CLI 跑两次，保存下来的报告可能与决定退出码的那次运行不同，而且下载后不校验。现在从固定版本的
   release 下载 `geo_score.py` 和 `SHA256SUMS`，用 `--json-out`、`--junit`、`--fail-under` 只跑一次。校验与打分用 `&&` 串联，即使
   shell 没开 `set -e`（如 Azure Pipelines 的 script 步骤）或 `pipefail`，文件对不上也会在打分前停下。GitLab 任务和每周 watch 工作流

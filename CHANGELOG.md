@@ -478,7 +478,9 @@ only the optional `elapsed_s`.
 - **Installing needs no git.** The documented `uvx` and `pipx` routes and the one-click MCP buttons no
   longer fail on a machine that has uv but no git ("Git operation failed"), and no longer build from
   source on first start. guide/mcp.md (EN + zh) no longer says `score_site` takes about 20 seconds, a
-  figure that was never measured.
+  figure that was never measured, and neither do the leaderboard pages ("about twenty seconds"), the
+  README cover image or the demo image's description. How long a run takes depends on the site and the
+  network, and the report's `elapsed_s` records it.
 - **The 'Anything else' CI snippet** ran the CLI twice, so the report you kept could differ from the run
   that set the exit code, and it did not verify the download. It now downloads `geo_score.py` and
   `SHA256SUMS` from a pinned release and scores once with `--json-out`, `--junit` and `--fail-under`.

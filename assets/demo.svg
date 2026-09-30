@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 748 441" width="748" height="441" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" role="img" aria-labelledby="dt dd">
 <title id="dt">geo-score scoring stripe.com from the command line</title>
-<desc id="dd">One command, about twenty seconds. stripe.com scores 71 out of 100, band Solid, 12 points below Leading. Its three biggest gaps are headings matching how people ask, named verifiable authorship, and a freshness signal.</desc>
+<desc id="dd">One command. stripe.com scores 71 out of 100, band Solid, 12 points below Leading. Its three biggest gaps are headings matching how people ask, named verifiable authorship, and a freshness signal.</desc>
 <rect width="748" height="441" rx="7" fill="#0B120E"/>
 <path d="M0 7a7 7 0 0 1 7-7h734 a7 7 0 0 1 7 7v35 H0Z" fill="#101913"/>
 <rect y="42" width="748" height="1" fill="#2C3B33"/>

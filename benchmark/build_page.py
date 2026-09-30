@@ -238,7 +238,7 @@ def strings(lang, v):
             t_pdist="Bars are counts of sites per ten-point band. The rubric is not graded on a "
                     "curve; this is the distribution that falls out of it.",
             t_h2check="Check your own site",
-            t_pcheck="No install, no dependencies, no account. Python 3.8+ and about twenty seconds.",
+            t_pcheck="No install, no dependencies, no account: Python 3.8+ is all it needs.",
             t_flags='Add <code style="color:var(--brass)">--explain</code> for the evidence behind '
                     "every check and what the next tier asks for, or "
                     '<code style="color:var(--brass)">--compare competitor.com</code> to see the two '
@@ -303,7 +303,7 @@ def strings(lang, v):
         t_h2dist="大家都落在哪",
         t_pdist="每根柱子是该十分段内的站点数。这套口径不按曲线给分，这就是它跑出来的分布。",
         t_h2check="测测你自己的站",
-        t_pcheck="不用装、无依赖、不用注册。Python 3.8+，大约二十秒。",
+        t_pcheck="不用装、无依赖、不用注册，有 Python 3.8+ 就行。",
         t_flags='加 <code style="color:var(--brass)">--explain</code> 看每一项背后的证据'
                 '与上一档的要求，或 <code style="color:var(--brass)">--compare competitor.com</code> '
                 "和竞品并排比。",
