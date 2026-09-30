@@ -367,11 +367,9 @@ only the optional `elapsed_s`.
   (`$4.5 billion`, `3000亿元`). The tiers keep their page-fraction structure: 7 needs three quarters of
   the pages that carry three or more figures to attribute most of them with a link, 5 needs half with any
   attribution, 3 any attributed figure; a sample with no such page keeps 3. The evidence gives the
-  counts. The direction is down. Re-scored with 1.5.0 on 2026-09-30 on the pages their leaderboard
-  reports sampled, sentry.io, seeyon.com, airwallex.com and fanuc.co.jp read 3 (7 on the leaderboard) and
-  mingdao.com 0 (7; under the new rule its one attributed figure had been its filing number, which links
-  to beian.miit.gov.cn and is no longer a figure); mistral.ai, whose pages are French, is not measured
-  (5; see page language below). On the five hand-audited sites, re-scored on their audited pages the same
+  counts. The direction is down. Re-scored with 1.5.0 on 2026-09-30 on the pages their 1.3.0 leaderboard
+  reports sampled, sentry.io and seeyon.com read 3 (7 on the 1.3.0 leaderboard) and mingdao.com 0 (7);
+  mistral.ai, whose pages are French, is not measured (5; see page language below). On the five hand-audited sites, re-scored on their audited pages the same
   day, the CLI now matches the auditor's tier on 4 of 5, against 1 of 5 in VALIDITY.md (measured with
   1.3.0, when it read higher on the other four); on mingdao.com it reads 0 against the auditor's 3.
 - **Each page is read in its own language.** A sampled page's language comes from its `<html lang>`, or
