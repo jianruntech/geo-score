@@ -24,7 +24,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--timeout SECONDS` | How long each request may wait for the server before it counts as unanswered (default 15, at most 300). A site that cannot be reached fails fast and says why: a name that does not resolve, a refused connection or a failed TLS handshake is not retried |
 | `--urls FILE` | Score exactly these pages instead of drawing a sample: one URL per line (or a path such as `/pricing`), `#` comments allowed, up to 8, all on the site being scored. The report says `sample_source: pinned` |
 | `--urls-from REPORT` | Score the pages an earlier JSON report sampled (its `sampled_urls`). Re-score with the same pages to see whether the site changed, without sampling noise |
-| `--baseline REPORT` | Score the pages an earlier JSON report sampled, as `--urls-from` does, then print what changed since that report, check by check (see [Comparing two reports](#comparing-two-reports)). Not with `--urls` or `--urls-from`. Under `--json` stdout stays the report alone |
+| `--baseline REPORT` | Score the pages an earlier JSON report sampled, as `--urls-from` does, then print what changed since that report, check by check (see [Comparing two reports](#comparing-two-reports)). Not with `--urls` or `--urls-from`. Under `--json` stdout stays the report alone and the comparison is not printed: write the report with `--json-out` and run `diff` on the two files |
 | `--fail-on-drop` | With `--baseline`: exit 4 when any check lost points, a gate reached 0 or the band fell since the baseline, one line per reason on stderr. A check that became unobservable is not a drop |
 | `--compare URL` | Score another site too and print them side by side. Repeatable. Not with `--json-out`, `--sarif` or `--junit`, which take one site |
 | `--badge [FILE]` | Also write an embeddable SVG badge (default `aiv-badge.svg`) |
@@ -99,7 +99,7 @@ prints the same comparison after the report. Both show:
 `--format json` follows [`schema/diff.v1.json`](../schema/diff.v1.json). Two reports of different
 rubric versions are not comparable: `diff` exits 2. Reports written by different releases are
 compared with a warning, because a release can move a score on its own (the changelog names the
-checks). `--fail-on-drop` exits 4 when any check lost points, a gate reached 0 or the band fell, as
+checks), and so are reports of two different targets, whose difference is not a change. `--fail-on-drop` exits 4 when any check lost points, a gate reached 0 or the band fell, as
 `watch diff --fail-on-drop` does for citations; without it, `diff` exits 0 whatever moved. `diff`
 needs only `geo_score.py`.
 

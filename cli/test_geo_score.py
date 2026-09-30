@@ -1508,6 +1508,13 @@ ok(not gs.diff_reports(_rb, _rl)["within_spread"], "never on the same pages")
 # different releases warn; different rubric versions are refused
 _code, _err = _cli_exit(["diff"] + _diff_files(dict(_rb, tool="geo-score-cli/1.3.0"), _rb))
 ok(_code == 0 and "warning: The reports were written by different releases (geo-score-cli/1.3.0, then" in _err, _err)
+# two different sites are compared, but the comparison says so on stderr, as a change of release does, and in its notes
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, dict(_rb, target="https://other.test")))
+ok(_code == 0 and "warning: The reports scored different targets: https://x.test, then https://other.test." in _err, _err)
+_code, _err = _cli_exit(["diff"] + _diff_files(_rb, _rb))
+ok(_code == 0 and "warning" not in _err, "no warning for one target and one release: %r" % _err)
+ok("The reports scored different targets: https://x.test, then https://other.test." in
+   gs.diff_reports(_rb, dict(_rb, target="https://other.test"))["notes"], "and the notes carry it")
 _out = io.StringIO()
 _code, _err = _cli_exit(["diff"] + _diff_files(_rb, dict(_rb, rubric_version="v1.2")) + ["--format", "json"], out=_out)
 eq(_code, 2, "reports of two rubric versions exit 2")

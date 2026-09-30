@@ -3237,6 +3237,17 @@ def tool_note(before_tool, after_tool):
             "and the changelog names the checks it changed, so part of this difference may be the tool."
             % (before_tool or "tool not stated", after_tool or "tool not stated"))
 
+def target_note(before_target, after_target):
+    """The warning when two reports scored different targets, or None: a comparison of two sites is no change."""
+    if before_target == after_target:
+        return None
+    return "The reports scored different targets: %s, then %s." % (before_target, after_target)
+
+def diff_warnings(d):
+    """What diff and --baseline print on stderr before the comparison: a change of release, and of target."""
+    return [w for w in (tool_note(d["before"]["tool"], d["after"]["tool"]),
+                        target_note(d["before"]["target"], d["after"]["target"])) if w]
+
 def diff_reports(before, after, before_name=None, after_name=None):
     """Two reports of one rubric version, check by check (schema/diff.v1.json). Every SPEC and BONUS id gets a row,
     then any other id a report carries. --fail-on-drop reads `regressed`: a check that lost points, a gate that
@@ -3283,9 +3294,7 @@ def diff_reports(before, after, before_name=None, after_name=None):
                     normalised=r["normalised"], band=_clean(r["band"], 40), gate_capped=r["gate_capped"],
                     gates_at_zero=gates)
     b, a = side(before, before_name, zero[0]), side(after, after_name, zero[1])
-    notes = [n for n in [tool_note(b["tool"], a["tool"])] if n]
-    if b["target"] != a["target"]:
-        notes.append("The reports scored different targets: %s, then %s." % (b["target"], a["target"]))
+    notes = [n for n in [tool_note(b["tool"], a["tool"]), target_note(b["target"], a["target"])] if n]
     if not same_pages:
         notes.append("Different pages were sampled, so movement on a check mixes change on the site with sampling. "
                      "Read each total as ±%d, the run-to-run spread measured in benchmark/REPRODUCIBILITY.md. "
@@ -3389,8 +3398,7 @@ def diff_main(argv, prog="geo-score diff"):
     before, after = load_report(a.before, "BEFORE"), load_report(a.after, "AFTER")
     same_rubric(before, after, a.before, a.after)
     d = diff_reports(before, after, a.before, a.after)
-    warn = tool_note(d["before"]["tool"], d["after"]["tool"])
-    if warn:
+    for warn in diff_warnings(d):
         print("%swarning: %s%s" % (c.amber, warn, c.r), file=sys.stderr)
     sys.stdout.write(json.dumps(d, ensure_ascii=False, indent=2) + "\n" if a.format == "json"
                      else render_report_diff(d, a.format))
@@ -3615,7 +3623,8 @@ def main():
                      help="score the pages an earlier JSON report sampled, so the re-score reads the same pages")
     pin.add_argument("--baseline", metavar="REPORT",
                      help="score the pages an earlier JSON report sampled (as --urls-from does), then print what "
-                          "changed since that report, check by check")
+                          "changed since that report, check by check. Under --json stdout is the report alone: "
+                          "write it with --json-out and run diff on the two files for the comparison")
     ap.add_argument("--compare", metavar="URL", action="append",
                     help="also score this site and show the two side by side. Repeatable.")
     ap.add_argument("--fail-under", type=int, metavar="N", help="exit 1 if the score is below N (for CI)")
@@ -3715,8 +3724,7 @@ def main():
             citation_report(crun, res["citation"], watch)
         if baseline is not None:
             drift = diff_reports(baseline, as_json(res), a.baseline, None)
-            warn = tool_note(drift["before"]["tool"], drift["after"]["tool"])
-            if warn:
+            for warn in diff_warnings(drift):
                 print("%swarning: %s%s" % (c.amber, warn, c.r), file=sys.stderr)
             if not a.json:
                 sys.stdout.write(render_report_diff(drift) + "\n")

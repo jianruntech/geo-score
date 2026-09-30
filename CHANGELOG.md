@@ -49,10 +49,13 @@ only the optional `elapsed_s`.
   says so, reads the totals as ±5 (benchmark/REPRODUCIBILITY.md) and names `g.reachable` as the least
   stable check. A check that became unobservable is never shown as a drop to 0. `--format json` follows
   the new `schema/diff.v1.json`. Two reports of different rubric versions exit 2, and reports from
-  different releases are compared with a warning. `diff` needs only `geo_score.py`.
+  different releases, or of two different targets, are compared with a warning on stderr. `diff` needs
+  only `geo_score.py`.
 - **`--baseline REPORT`** on a scoring run scores the baseline's pages again (as `--urls-from` does) and
   prints the same comparison after the report. It cannot be combined with `--urls` or `--urls-from`.
-  Under `--json`, stdout carries only the report.
+  Under `--json`, stdout carries only the report and the comparison is not printed: write the report
+  with `--json-out` and run `geo-score diff` on the two files to see it. `--fail-on-drop` still exits 4
+  and names each drop on stderr.
 - **`--fail-on-drop`** (with `--baseline`, or on `diff`) exits 4 when a check lost points, a gate reached
   0 or the band fell, and prints one stderr line per reason. It is opt-in, as `watch diff --fail-on-drop`
   is, so no existing invocation changes its exit code. A failed `--fail-under`, `--fail-on-gate` or

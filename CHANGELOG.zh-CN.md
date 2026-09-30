@@ -31,9 +31,11 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
   和状态：`up`、`down`、`same`、`became unobservable`、`became observable`，两次都没测到的是 `unobservable`。还会列出前后的总分、
   档位和门槛封顶情况，点名降到 0 分或离开 0 分的门槛项，并列出抽样中新增和移除的页面。两次抽样不同时会明确说明，总分按 ±5 读（benchmark/REPRODUCIBILITY.md），
   并指出 `g.reachable` 是最不稳定的检查项。变得无法观测的检查项从不显示为掉到 0 分。`--format json` 遵循新增的
-  `schema/diff.v1.json`。两份报告的量表版本不同时退出码为 2；工具版本不同时照常对比，但会给出警告。`diff` 只需要 `geo_score.py`。
+  `schema/diff.v1.json`。两份报告的量表版本不同时退出码为 2；工具版本不同、或评的是两个不同目标时照常对比，但会在 stderr
+  给出警告。`diff` 只需要 `geo_score.py`。
 - **`--baseline REPORT`**：评分时重新评基线报告抽过的那些页面（和 `--urls-from` 一样），并在报告之后输出同样的对比。不能和
-  `--urls`、`--urls-from` 同时使用。加 `--json` 时，stdout 只输出报告本身。
+  `--urls`、`--urls-from` 同时使用。加 `--json` 时，stdout 只输出报告本身，不打印对比：用 `--json-out` 写出报告，再对两个文件运行
+  `geo-score diff` 才能看到。`--fail-on-drop` 仍会以退出码 4 结束，并在 stderr 写明每一处下降。
 - **`--fail-on-drop`**（配合 `--baseline`，或用于 `diff`）：有检查项丢分、门槛项降到 0 分或档位下降时以退出码 4 退出，每个原因在
   stderr 输出一行。和 `watch diff --fail-on-drop` 一样需要主动开启，所以现有的调用方式退出码都不变。`--fail-under`、
   `--fail-on-gate` 或 `--assert` 未通过时，退出码仍然是 1。
