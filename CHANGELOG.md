@@ -339,11 +339,14 @@ only the optional `elapsed_s`.
   needs JavaScript". It is now not scored: it exits 2 with
   `bot challenge served to a browser user-agent (<vendor>): a static fetch cannot measure this site`, and
   under `--json` it gives the error kind `bot_challenge`. Direction: `g.ssr` goes from 0 to not scored
-  for such sites (live: booking.com, AWS WAF, and ups.com, Akamai, which the leaderboard shows at 20 and
-  16, capped). openai.com, which the leaderboard lists as "all requests returned 403", answers with a
-  Cloudflare challenge and now gets the bot-challenge error. A JavaScript shell that only loads a
-  vendor's sensor script still scores `g.ssr` 0. HTTP error pages are now decompressed when gzipped, so a
-  gzipped challenge is recognised.
+  for such sites: live on 2026-09-30, ups.com (Akamai), which the 1.3.0 leaderboard shows at 16, capped,
+  got the bot-challenge error. A site that serves challenges on only some pages is scored on the real
+  pages left, and its notes count the challenges: booking.com (AWS WAF, 20 and capped on the 1.3.0
+  leaderboard) got the bot-challenge error on one run on 2026-09-30, and on two others that day was
+  scored on the pages left. openai.com, which the 1.3.0 leaderboard lists as "all requests returned
+  403", answers with a Cloudflare challenge and now gets the bot-challenge error. A JavaScript shell that
+  only loads a vendor's sensor script still scores `g.ssr` 0. HTTP error pages are now decompressed when
+  gzipped, so a gzipped challenge is recognised.
 - **A report scored on fewer pages says so.** `notes` gains
   `Scored on N of M sampled pages; K returned errors, J were bot challenges` when pages were dropped.
   When discovery found fewer pages than asked for, it gains

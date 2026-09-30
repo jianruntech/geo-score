@@ -223,10 +223,11 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
   回人机验证页、而不是页面本身时，这一页和抓取失败的页面一样移出样本。只返回验证页的网站过去会被记为 `g.ssr` 0 分并封顶 40，榜单
   上写成「正文需要 JavaScript」。现在这类网站不评分，以退出码 2 结束，报错为
   `bot challenge served to a browser user-agent (<厂商>): a static fetch cannot measure this site`；加 `--json` 时给出错误类型
-  `bot_challenge`。方向：这类网站的 `g.ssr` 从 0 分变为不评分（实测：booking.com，AWS WAF；ups.com，Akamai；两者在榜单上分别是
-  20 分和 16 分，均被封顶）。openai.com 在榜单上记为「all requests returned 403」，它返回的是 Cloudflare 的验证页，现在得到的是
-  人机验证的报错。只是加载了某家反爬探针脚本的 JavaScript 空壳仍记 `g.ssr` 0 分。gzip 压缩的 HTTP 错误页现在会先解压，压缩过的验
-  证页也能认出来。
+  `bot_challenge`。方向：这类网站的 `g.ssr` 从 0 分变为不评分：2026-09-30 实测，ups.com（Akamai，1.3.0 榜单上 16 分、被封顶）得到
+  人机验证的报错。只在部分页面返回验证页的网站，用剩下的真实页面评分，`notes` 里写明有几页是验证页：booking.com（AWS WAF，1.3.0
+  榜单上 20 分、被封顶）2026-09-30 有一次运行得到人机验证的报错，同一天另外两次运行用剩下的页面评了分。openai.com 在 1.3.0 榜单上
+  记为「all requests returned 403」，它返回的是 Cloudflare 的验证页，现在得到的是人机验证的报错。只是加载了某家反爬探针脚本的
+  JavaScript 空壳仍记 `g.ssr` 0 分。gzip 压缩的 HTTP 错误页现在会先解压，压缩过的验证页也能认出来。
 - **少于抽样页数的报告会写明。** 有页面被移出时，`notes` 增加一条
   `Scored on N of M sampled pages; K returned errors, J were bot challenges`；发现的页面少于要求的数量时，增加一条
   `Sampled N of the 8 pages asked for: no more were found (sample source: …)`。`schema/report.v2.json`（`sampled_urls`）一直这样
