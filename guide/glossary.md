@@ -142,9 +142,10 @@ checks are never in it.
 ### Diff
 
 A comparison of two saved results. `geo_score.py diff BEFORE AFTER` compares two level 1 JSON reports
-check by check (`up`, `down`, `same`, `became unobservable`, `became observable`), and
-`watch diff [A] [B]` compares two watch runs, by default the latest two, with a paired test and a
-verdict: `change`, `within noise`, `too few questions to tell` or `not measured`.
+check by check (`up`, `down`, `same`, `became unobservable`, `became observable`, or `unobservable`
+when neither report observed the check), and `watch diff [A] [B]` compares two watch runs, by default
+the latest two, with a paired test and a verdict: `change`, `within noise`, `too few questions to tell`
+or `not measured`.
 
 **Where:** `diff --format text|md|json` (the JSON follows `schema/diff.v1.json`); `watch diff`; the MCP
 tool `diff`, for watch runs. With `--fail-on-drop`, either exits 4 on a drop.
@@ -209,8 +210,9 @@ and the paper [GEO: Generative Engine Optimization (KDD 2024)](https://arxiv.org
 
 ### Hand audit
 
-A score of all 21 checks by a person following the rubric, with the evidence behind each tier. The
-published hand audits are what the CLI's agreement figures are measured against.
+A reading of all 21 checks by a person following the rubric, with the evidence behind each tier; a
+check that does not apply to the site is marked `not_applicable`. The published hand audits are what
+the CLI's agreement figures are measured against.
 
 **Where:** `examples/audits/v1.1/`; the README's comparison of the CLI with the hand audits.
 **More:** [VALIDITY.md](../benchmark/VALIDITY.md)
@@ -268,9 +270,9 @@ offered only when the tools it calls are on.
 
 ### MCP resource
 
-Data the MCP server lets a client read: `geo-score://rubric/v1.1` holds every check with its points
-and tiers, the bands and the caps, as the scorer applies them. With the `report` tool on, the template
-`geo-score://runs/{run_id}` reads the summary of a saved run.
+Data the MCP server lets a client read. With the `score_site` tool on, `geo-score://rubric/v1.1` holds
+every check with its points and tiers, the bands and the caps, as the scorer applies them. With the
+`report` tool on, the template `geo-score://runs/{run_id}` reads the summary of a saved run.
 
 **Where:** `resources/list`; the prompt `explain_check` attaches the rubric resource.
 **More:** [MCP guide](mcp.md)
@@ -317,7 +319,8 @@ times 100, rounded and never above 100. When a gate is at zero, it is also cappe
 A check the run could not observe: it shows `—` (⊘), has the state `unobservable` with a `reason`, and
 leaves the denominator instead of scoring 0. The CLI never observes `p3.listings`, `p3.mentions` and
 `p4.question-coverage`, which need off-site search or judgement; other checks go unobserved in a given
-run, for example when Wikidata does not answer or no sampled page is nested.
+run, for example when Wikidata does not answer, no sampled page is nested, or fewer than half of the
+ten retrieval crawlers get any answer to their probes.
 
 **Where:** the footer lines `Needs off-site search or judgement:` and `Not observable this run:`.
 `--assert` skips such a check, JUnit marks it skipped, and `diff` shows `became unobservable`, never a
@@ -375,13 +378,19 @@ bonus checks' to 6. A run gives a check the points of the tier it reached.
 ### Probe
 
 A live request that `g.reachable` sends with a retrieval crawler's user-agent string: each of the ten,
-on up to three sampled pages. Probes are unverified: they come from the auditor's own address (the
-machine running geo-score), not from the vendor's published IP ranges, so a firewall that verifies
-crawlers may refuse a probe and still serve the real crawler.
+on up to three sampled pages, and a timeout, a dropped connection, a 429 or a 5xx is tried once more. A
+crawler refused with an HTTP error on any of those pages (a 403, or a 429 or 5xx that outlasts the
+retry) counts as blocked; a crawler that gets no answer at all on any page is not counted, and when
+fewer than half of the ten get any answer the check is not observed. Only refusals bring the gate to
+zero: it reads 0 when more than half of the ten are refused. Probes are unverified: they come from the
+auditor's own address (the machine running geo-score), not from the vendor's published IP ranges, so a
+firewall that verifies crawlers by IP range or reverse DNS may refuse a probe and still serve the real
+crawler.
 
-**Where:** the `g.reachable` evidence, which says
-`Unverified probes: vendor user-agent strings sent from this machine's address` when a probe was
-refused or went unanswered.
+**Where:** the `g.reachable` evidence, which names the crawlers refused (`Not reached — …`) and those
+with no answer on any page (`No answer on any page, so not counted: …`), then adds
+`(Unverified probes: vendor user-agent strings sent from this machine's address.)`; when too few
+answered, its reason starts `Only N of 10 retrieval user-agents got an answer`.
 **More:** [AI crawler user-agents](../reference/ai-crawlers.md), [rubric v1.1, `g.reachable`](../rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable)
 
 ## R
@@ -430,7 +439,8 @@ sample can move the score by a few points.
 ### Sample source
 
 Where a run's sample came from: `sitemap`, `homepage and section links (no sitemap reachable)`, or
-`pinned` when the pages were given. Two runs that sampled different pages usually differ here.
+`pinned` when the pages were given. It says how the pages were chosen, not which ones: two runs with the
+same source can still sample different pages.
 
 **Where:** the JSON field `sample_source`; the note
 `Sampled N of the M pages asked for: no more were found (sample source: …)`. **More:** [schema/report.v2.json](../schema/report.v2.json)

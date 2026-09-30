@@ -122,8 +122,9 @@ GitHub Action 的 `baseline` 输入，以及 `delta`、`dropped-checks` 两个�
 ### Diff（对比）
 
 把两次保存下来的结果放在一起比。`geo_score.py diff BEFORE AFTER` 逐项对比两份第一级 JSON 报告（状态有 `up`、`down`、
-`same`、`became unobservable`、`became observable`）；`watch diff [A] [B]` 对比两次追踪运行，默认取最近两次，
-做配对检验并给出结论：`change`、`within noise`、`too few questions to tell` 或 `not measured`。
+`same`、`became unobservable`、`became observable`，两份报告都没观测到的检查项则是 `unobservable`）；
+`watch diff [A] [B]` 对比两次追踪运行，默认取最近两次，做配对检验并给出结论：`change`、`within noise`、
+`too few questions to tell` 或 `not measured`。
 
 **出现在：** `diff --format text|md|json`（JSON 遵循 `schema/diff.v1.json`）；`watch diff`；MCP 工具 `diff`（对比追踪运行）。
 两者加上 `--fail-on-drop`，发现下降时都以退出码 4 退出。
@@ -178,7 +179,8 @@ Copilot 这类生成答案的 AI 引擎在回答里引用你的网站。和地�
 
 ### Hand audit（人工审计）
 
-由人按量表给全部 21 个检查项打分，每一档都附上证据。CLI 和人工结果的一致度，就是拿已发布的人工审计来测的。
+由人按量表逐一判读全部 21 个检查项，每一档都附上证据；不适用于该站的检查项标为 `not_applicable`。
+CLI 和人工结果的一致度，就是拿已发布的人工审计来测的。
 
 **出现在：** `examples/audits/v1.1/`；README 里 CLI 和人工审计的对比数字。**详见：** [VALIDITY.zh-CN.md](../benchmark/VALIDITY.zh-CN.md)
 
@@ -215,7 +217,7 @@ geo-score 的三种用法：第一级按量表给就绪度打分，免费、不�
 第三级每周追踪一组固定的问题。第二、三级测的是引用，从不加进分数。
 
 **出现在：** `geo_score.py URL`（第一级）；`--ask QUESTION` 和 `watch ask`（第二级）；`watch run`、`watch report`、
-`watch diff`（第三级）；MCP 工具表里的「Level」一列。第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起。
+`watch diff`（第三级）；MCP 工具表里的「级别」一列。第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起。
 **详见：** [README · 一个工具，三级用法](../README.zh-CN.md#一个工具三级用法)
 
 ## M
@@ -229,8 +231,8 @@ MCP 服务预先写好、由你自己发起的工作流，比如在 Claude Code 
 
 ### MCP resource（MCP 资源）
 
-MCP 服务开放给客户端读取的数据：`geo-score://rubric/v1.1` 里是打分器实际执行的每个检查项及其分值和档、分数段和封顶规则。
-开着 `report` 工具时，还有资源模板 `geo-score://runs/{run_id}`，用来读某次保存的运行的摘要。
+MCP 服务开放给客户端读取的数据。开着 `score_site` 工具时，`geo-score://rubric/v1.1` 里是打分器实际执行的每个检查项
+及其分值和档、分数段和封顶规则；开着 `report` 工具时，还有资源模板 `geo-score://runs/{run_id}`，用来读某次保存的运行的摘要。
 
 **出现在：** `resources/list`；提示词 `explain_check` 会附上量表资源。**详见：** [MCP 指南](mcp.zh-CN.md)
 
@@ -269,7 +271,7 @@ MCP 服务让 Agent 调用的功能：`score_site`（第一级，免费）、`as
 
 本次运行观测不到的检查项：显示为 `—`（⊘），状态是 `unobservable` 并附 `reason`，它移出分母，而不是记 0 分。
 `p3.listings`、`p3.mentions`、`p4.question-coverage` 需要站外搜索或人工判断，CLI 从不给它们打分；其他检查项可能某一次观测不到，
-比如 Wikidata 没有回应，或者抽到的页面都不是嵌套页。
+比如 Wikidata 没有回应、抽到的页面都不是嵌套页，或者十个检索爬虫里得到任何应答的不到一半。
 
 **出现在：** 报告页脚的 `Needs off-site search or judgement:` 和 `Not observable this run:` 两行。`--assert` 会跳过这类检查项，
 JUnit 记为跳过，`diff` 显示为 `became unobservable`，从不算下降。量表的第三种状态 `not_applicable`（不适用）同样移出分母；
@@ -319,11 +321,17 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 
 ### Probe（探测）
 
-`g.reachable` 用检索爬虫的 user-agent 字符串发出的实时请求：十个 UA 各发一遍，最多测三个抽样页面。探测没有经过身份验证：
-它从审计方自己的地址（也就是运行 geo-score 的那台机器）发出，而不是从厂商公布的 IP 段发出，所以按 IP 核验爬虫的防火墙可能拒绝探测，却照常放行真正的爬虫。
+`g.reachable` 用检索爬虫的 user-agent 字符串发出的实时请求：十个 UA 各发一遍，最多测三个抽样页面；
+遇到超时、断连、429 或 5xx 会再试一次。某个爬虫在其中任一页面上被 HTTP 错误拒绝（403，或重试后仍是 429、5xx），
+就算被拦；在所有页面上都完全没有应答的爬虫不计入；十个里得到任何应答的不到一半时，这一项记为未测。
+只有被拒绝才会让这个门槛项得 0 分：十个里有超过一半被拒绝时，它才记 0 分。
+探测没有经过身份验证：它从审计方自己的地址（也就是运行 geo-score 的那台机器）发出，而不是从厂商公布的 IP 段发出，
+所以按 IP 段或反向 DNS 核验爬虫的防火墙可能拒绝探测，却照常放行真正的爬虫。
 
-**出现在：** `g.reachable` 的证据；有探测被拒绝或没有回应时，证据里会写
-`Unverified probes: vendor user-agent strings sent from this machine's address`。
+**出现在：** `g.reachable` 的证据：被拒绝的爬虫列在 `Not reached — …` 里，所有页面都没有应答的列在
+`No answer on any page, so not counted: …` 里，后面再加一句
+`(Unverified probes: vendor user-agent strings sent from this machine's address.)`；应答的太少时，`reason` 以
+`Only N of 10 retrieval user-agents got an answer` 开头。
 **详见：** [AI 爬虫 user-agent 一览](../reference/ai-crawlers.md)（英文）、[量表 v1.1 · 检索 UA 实测可达](../rubric/v1.1.zh-CN.md#检索-ua-实测可达--5--greachable)
 
 ## R
@@ -365,7 +373,7 @@ Applebot、Amazonbot。
 ### Sample source（抽样来源）
 
 这次抽样从哪里来：`sitemap`；`homepage and section links (no sitemap reachable)`，即拿不到 sitemap，改从首页和栏目页的链接里抽；
-或者 `pinned`，即页面是指定的。两次运行抽到的页面不一样时，这一项通常也不一样。
+或者 `pinned`，即页面是指定的。它说的是页面怎么选出来的，不是选了哪些：来源相同的两次运行，抽到的页面照样可能不同。
 
 **出现在：** JSON 的 `sample_source` 字段；注释 `Sampled N of the M pages asked for: no more were found (sample source: …)`。
 **详见：** [schema/report.v2.json](../schema/report.v2.json)

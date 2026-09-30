@@ -174,7 +174,7 @@ CLI 不打这三项。
 有些检查项是量表用文字描述的判断，CLI 只能近似：
 
 - **页面语言** —— 每个抽样页面的语言取自它的 `<html lang>` 或 `Content-Language` 响应头，除非正文与之矛盾；
-  没有声明时按文字判断（有假名是日文，有谚文是韩文，只有汉字是中文），拉丁字母的文字再看几个常用词。
+  没有声明或声明与正文矛盾时，按文字判断（有假名是日文，有谚文是韩文，只有汉字是中文），拉丁字母的文字再看几个常用词。
   声明为中文、日文或韩文的页面，只要带有 30 个及以上这类字符，就保留声明的语言。代码示例（`<pre>`、`<code>`）不读。
   报告里的 `audience_language` 是最常见的页面语言。
 - **答案段落** —— 取正文的前六段，找一段 25–120 词（中文、日文、韩文页面为 50–200 字）、以句末标点结尾的。
@@ -218,7 +218,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
 | `watch runs` | 保存过的运行，以及各自的标题引用率 |
-| `watch ask "question" [--brand NAME] [--domain D]` | 不打分的第二级：一个问题马上问遍所有引擎，不保存 |
+| `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | 不打分的第二级：一个问题马上问遍所有引擎（或 `--engines` 指定的那些），不保存 |
 | `mcp` | 通过 MCP（stdio）提供打分和追踪；见 [guide/mcp.zh-CN.md](../guide/mcp.zh-CN.md) |
 
 除了 `watch init`（它用 `--dir` 指定写到哪个目录），每个 `watch` 命令都用 `-c PATH` 指定配置文件
@@ -300,7 +300,7 @@ Action 只给网站打一次分。这一次运行把证据打印到日志，把�
 在门槛项得 0 分时让任务失败；`assert` 接受和 `--assert` 相同的表达式，每行一条，每条不成立的都会成为一条 error 注释。
 `badge: aiv-badge.json`（或 `.svg`）写出徽章。`baseline: before.json` 评一份旧报告（来自 `json-out`）抽过的页面并对比，
 和 `--baseline` 一样：对比写进日志，任务摘要里多一节 *Changes since baseline*，输出 `delta`（分数减去基线的分数）和
-`dropped-checks`（丢了分的检查项，门槛项则是降到 0 的，用逗号分隔）让后面的步骤可以只在退步时失败。输出有 `score`、`band`、
+`dropped-checks`（丢了分的检查项，以及降到 0 的门槛项，用逗号分隔）让后面的步骤可以只在退步时失败。输出有 `score`、`band`、
 `gate-capped`、`report`、`report-path`；有 `badge` 时还有 `badge-path`；有 `baseline` 时还有 `delta` 和 `dropped-checks`。
 输入以环境变量的形式交给脚本，从不直接拼进脚本，所以 URL 执行不了 shell 代码。
 
