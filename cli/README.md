@@ -1,3 +1,5 @@
+<p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
+
 # geo-score CLI
 
 Score a site against the [AIV rubric v1.1](../rubric/v1.1.md), and, with your own API keys,
