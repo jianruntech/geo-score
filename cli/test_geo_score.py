@@ -993,16 +993,16 @@ finally:
 import random as _random
 _PROP = "https://prop.test"
 
-def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None, offsite=None):
+def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None, offsite=None, site=_PROP):
     """run() on an in-memory site: `page(path)` gives each page's HTML. fetch and fetch_steady are stubbed, so
     nothing is sent; anything off the site gets no answer, and its URL is appended to `offsite` when given."""
     saved = (gs.fetch, gs.fetch_steady, gs.time.sleep)
     def fetch(url, ua=None, timeout=15, method="GET", **kw):
         url = str(url)
-        if not url.startswith(_PROP + "/"):
+        if not url.startswith(site + "/"):
             if offsite is not None: offsite.append(url)
             return gs.Resp(url, 0, b"", err="offline")
-        path = url[len(_PROP):]
+        path = url[len(site):]
         if path == "/robots.txt":
             return gs.Resp(url, 200, robots.encode("utf-8", "replace"), {"content-type": "text/plain"})
         if path.endswith((".xml", ".txt")):
@@ -1012,7 +1012,7 @@ def _run_site(page, robots="User-agent: *\nAllow: /\n", sitemap=None, offsite=No
     gs.fetch, gs.fetch_steady = fetch, (lambda u, tries=3, memo=None, **kw: fetch(u, **kw))
     gs.time.sleep = lambda s: None
     try:
-        return gs.run(_PROP)
+        return gs.run(site)
     finally:
         gs.fetch, gs.fetch_steady, gs.time.sleep = saved
 
@@ -1138,6 +1138,20 @@ for _seed in range(200):
         _at = _tb.extract_tb(e.__traceback__)[-1]
         _crashed.append("seed %d: %s at line %d (%s): %s" % (_seed, type(e).__name__, _at.lineno, _at.name, str(e)[:100]))
 eq(_crashed, [], "no random page, date, byline or robots.txt raises out of the parsers or run()")
+
+# ── p4.cn-engines: a host under .cn, not a host whose name contains ".cn" ──
+# the scope test was `".cn" in root` (from 1.4.0), so a user who typed www.cnn.com or www.cnbc.com got the Chinese
+# crawlers probed and p4.cn-engines in the denominator of an English site
+for _u, _want in (("https://www.cnn.com", False), ("https://www.cnbc.com/world", False), ("https://example.cn", True),
+                  ("https://www.example.com.cn/", True), ("https://EXAMPLE.CN.", True), ("https://xn--fsq.cn", True),
+                  ("https://example.com/.cn", False), ("https://cn.example.com", False), ("http://[::1", False)):
+    eq(gs.under_cn(_u), _want, "under_cn(%r)" % _u)
+_EN_ONLY = lambda path: ('<html lang="en"><head><title>Prop</title></head><body><main><h2>Pricing</h2><p>%s</p></main>'
+                         "</body></html>" % _EN)
+for _site, _observed in (("https://www.cnbc.test", False), ("https://prop.cn", True)):
+    _r = _run_site(_EN_ONLY, site=_site)
+    eq(_r["tier"]["p4.cn-engines"] is not None, _observed,
+       "p4.cn-engines on an English site at %s: observed only for a host under .cn" % _site)
 
 # ── run(): each page is read in its own language ──
 # A lexicon reads only the pages in its language; a check with no page left to read is not observed, never zero.

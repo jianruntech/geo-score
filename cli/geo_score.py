@@ -1938,6 +1938,15 @@ def scope_of(base):
         path = path.rsplit("/", 1)[0]
     return origin, path
 
+def under_cn(url):
+    """True when the URL's host is under the .cn country domain (example.cn, example.com.cn). A substring test read
+    www.cnn.com and www.cnbc.com as Chinese sites."""
+    try:
+        host = (urllib.parse.urlsplit(url).hostname or "").rstrip(".")
+    except ValueError:
+        return False
+    return host.endswith(".cn")
+
 def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=None):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
@@ -2179,7 +2188,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     declared = same if isinstance(same, list) else ([same] if same else [])
     # only http(s) URLs can be checked; a bare "www.x.com/acme", an empty string or null is not one
     sa = [x.strip() for x in declared if isinstance(x, str) and re.match(r"https?://", x.strip(), re.I)]
-    cjk_site = "zh" in langs_of.values() or ".cn" in root
+    cjk_site = "zh" in langs_of.values() or under_cn(root)
 
     # the brand, for p3.knowledge-graph: the Organization's names, og:site_name, then the home page's title
     stem = host_stem(root)

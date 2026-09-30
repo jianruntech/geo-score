@@ -159,7 +159,7 @@ Four checks are **left out of the denominator** rather than guessed:
 | `p3.listings` | Needs to know your industry and search its directories |
 | `p3.mentions` | Needs off-site search for independent coverage |
 | `p4.question-coverage` | Needs the ten questions people actually ask in your market |
-| `p4.cn-engines` | Left out unless a sampled page is in Chinese or the host is under `.cn` |
+| `p4.cn-engines` | Left out unless a sampled page is in Chinese or the host name ends in `.cn` |
 
 The [Claude Code skill](../SKILL.md) scores all 21.
 

@@ -393,7 +393,10 @@ only the optional `elapsed_s`.
     of scoring 0 in two cases: no page carrying figures could be read for a source phrase and the reading
     is below 5, or no page could be read for a byline.
   - `p4.cn-engines` leaves the denominator on Japanese and Korean sites. It is observed when a sampled
-    page is Chinese or the host is under `.cn`, no longer on any page heavy with Han characters.
+    page is Chinese or the host name ends in `.cn`, no longer on any page heavy with Han characters. It
+    also leaves the denominator on a site with no Chinese page whose address merely contains `.cn`, such
+    as `www.cnn.com` or `www.cnbc.com`: 1.4.0 tested for `.cn` anywhere in the address. No leaderboard
+    site is one of these.
   - `p4.answer-shape` goes down on some pages because the paragraph-length limit is now set per page.
     English pages in a sample with a Chinese homepage are held to 90 words again, and Japanese paragraphs
     count their kana.
