@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-30
+
 这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选
 robots.txt 分组，遇到掉线先重试再下结论；人机验证页不再被当成要跑 JavaScript 的页面来评分；每个页面按它自己的语言读；一个数字
 只有来源就在旁边时才算有来源。这些修正会让分数变动，下面每一条都写明检查项和方向。CI 方面有 `--fail-on-gate` 和 `--assert`（门槛
@@ -22,6 +24,8 @@ git，关卡锁定所用工具的版本，CI 示例覆盖 GitHub 之外的平台
 个可选字段 `elapsed_s`。
 
 ### 新增
+- **术语表与中文版 CLI 说明。** 新增 `guide/glossary.zh-CN.md`（英文版 `guide/glossary.md`），解释 README、报告和各篇指南里
+  用到的 49 个术语，每条写明在哪里出现、去哪一页看详细说明；新增 `cli/README.zh-CN.md`，即 CLI 说明的简体中文版，两个版本顶部都有语言切换。
 - **`--fail-on-gate` 与 `--assert EXPR`**，CLI 和 Action（输入 `fail-on-gate`、`assert`）都有。门槛项得 0 分时分数封顶 40：
   本来能得 40 分及以上的站正好停在 40，能通过 `--fail-under 40`（`fail-under: 40`）。`--fail-on-gate` 会让任何被封顶的站失败：
   任一 `g.*` 检查项得 0 分时退出码为 1，并写明是哪个门槛项及其证据，等同于 `--assert 'g.*>0'`。`--assert` 把单个检查项、或用
@@ -203,6 +207,11 @@ git，关卡锁定所用工具的版本，CI 示例覆盖 GitHub 之外的平台
   链接了档位分析。
 
 ### 修复
+- **握手进行到一半被断开，算作连接断开。** 握手过程中的 SSL EOF 现在记为 `dropped` 并会重试，不再记为不重试的 `tls`。
+  如果运行 CLI 的 Python 其 TLS 库不支持 TLS 1.3，`tls` 报错会写明这一点：macOS 自带的 `/usr/bin/python3` 基于 LibreSSL 2.8，
+  而很多网站要求 TLS 1.3。
+- **榜单对网络失败再试一次。** `benchmark/run.py` 在整轮结束后，对因网络故障（连接断开、超时、TLS 错误、429 或 5xx）失败的站
+  再试一次。1.5.0 的榜单用 Python 3.12 运行：先在系统自带的 Python 上跑的一轮，有 68 个站因 TLS 错误没能评分。
 - **`g.robots` 与 `g.reachable` 只对 `reference/ai-crawlers.md` 列出的 10 个检索爬虫计分。** 补上 Claude-User、Googlebot、
   Amazonbot，去掉 GPTBot、ClaudeBot 和一个杜撰的 Google-Extended 探测。每个爬虫都用厂商公布的 UA 字符串。`g.robots` 按 RFC 9309
   第 2.2.1 节为每个爬虫选规则：有点名它的组，就不再看 `*` 组。文件开头的字节顺序标记不再吞掉第一组。分数变动有三个方向：
@@ -215,8 +224,14 @@ git，关卡锁定所用工具的版本，CI 示例覆盖 GitHub 之外的平台
 
   证据现在写明被挡的爬虫及挡住它的组；按名字禁止的训练爬虫与选择退出令牌列为「不计分」；`g.reachable` 的证据列出没探测成功的 UA。
 - **偶发的网络故障先重试，再影响门槛项。** robots.txt、首页和 sitemap 每次运行只抓一次，并带重试。`g.reachable` 的探测在无响
-  应、429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。重试后仍无响应的探测算作没访问成功，所以网络或代理不稳时
-  `g.reachable` 仍可能降到 3 分，十个爬虫里有六个及以上没有响应时降到 0 分。重试 3 次仍读不到的 robots.txt 现在记为「不可观
+  应、429 或 5xx 时重试一次，并遵守不超过 5 秒的 Retry-After。在所有页面上都没有应答（每次都超时或连接被断开）的爬虫不计入：
+  从一个地址发出时，这多半是网络问题，否则就是防火墙丢弃了从非厂商地址发来的爬虫 UA，真正的爬虫不会遇到。档位按有应答的爬虫来判；
+  0 分那一档（「多数检索 UA 被拦」）要求十个里超过一半以 HTTP 明确拒绝；有应答的不到一半时，该项记为不可观测。在部分页面有应答的爬虫算访问成功。
+  这条规则来自 1.5.0 第一次重跑榜单：那次把没有应答当成拒绝，让浏览器和多数爬虫都能访问的 31 个站被门槛封顶（pulumi.com 从 99 分降到 40 分）；
+  在五个人工审计站上，`g.reachable` 的档位完全一致率由 0.4 升到 0.8。
+- **首页抓不到，不等于没有实体标记。** 首页在样本里却抓取失败时，如果其他页面上没有 Organization，`p1.organization`、`p3.sameas`、
+  `p3.knowledge-graph` 记为不可观测而不是 0 分，因为它通常就放在首页。方向：首页失败的运行中由 0 分变为不可观测（nextjs.org 的人工对照曾因一次
+  抓取失败，把这三项都读成 0 分）。重试 3 次仍读不到的 robots.txt 现在记为「不可观
   测」、退出分母，不再当作「没有 robots.txt」。每次都返回 429 或 5xx 的，仍给第 3 档并在证据中写明。方向两边都有：一次 robots.txt 抓取失败曾藏住
   Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。1.3.0 榜单上有五行的 `g.robots` 来自失败的抓取
   （「No robots.txt (HTTP 0)」）：clickpaas.com、codecademy.com、continue.dev、helium10.com、xcmg.com。
@@ -605,7 +620,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/jianruntech/geo-score/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jianruntech/geo-score/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jianruntech/geo-score/compare/v1.1.2...v1.2.0

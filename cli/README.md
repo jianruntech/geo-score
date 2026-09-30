@@ -8,7 +8,7 @@ install. Level 1 is `geo_score.py` alone; levels 2 and 3 need `geo_watch.py` fro
 release beside it.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_score.py \
   | python3 - yoursite.com
 ```
 
@@ -249,11 +249,11 @@ measured" and the readiness report is unchanged.
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
 | `watch runs` | Saved runs and their headline rate |
-| `watch ask "question" [--brand NAME] [--domain D]` | Level 2 without the score: one question to every engine, now, not saved |
+| `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | Level 2 without the score: one question to every engine, now, not saved |
 | `mcp` | Score and watch over MCP (stdio); see [guide/mcp.md](../guide/mcp.md) |
 
-Every `watch` command takes `-c PATH` for the config (default `./geo-score-watch.json`, or
-`$GEO_SCORE_WATCH_CONFIG`).
+Every `watch` command except `watch init` takes `-c PATH` for the config (default `./geo-score-watch.json`,
+or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 
 `geo-score-watch.json` (the prices below are an example; copy current ones from your provider):
 

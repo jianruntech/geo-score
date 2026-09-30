@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-30
+
 A release about reading sites the way the rubric says, and about failing CI for the right reason. The two
 crawler gates now read only the ten retrieval crawlers, choose each crawler's robots.txt group as RFC 9309
 does and retry a request that got no answer before they count it; a bot-challenge page is no longer scored
@@ -33,6 +35,9 @@ pages on a negative value. `diff` is now a subcommand, so a host named `diff` is
 only the optional `elapsed_s`.
 
 ### Added
+- **A glossary and a Chinese CLI reference.** `guide/glossary.md` (and `guide/glossary.zh-CN.md`) defines the 49
+  terms the README, the reports and the guides use, each with where it appears and which page goes deeper;
+  `cli/README.zh-CN.md` is the CLI reference in Simplified Chinese, with a language switch at the top of both.
 - **`--fail-on-gate` and `--assert EXPR`**, in the CLI and as the Action inputs `fail-on-gate` and
   `assert`. A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads
   exactly 40 and passes `--fail-under 40` (`fail-under: 40`). `--fail-on-gate` fails any capped site: it
@@ -309,6 +314,12 @@ only the optional `elapsed_s`.
   the bands analysis.
 
 ### Fixed
+- **A handshake cut off in the middle is a dropped connection.** An SSL EOF during the handshake is now kind
+  `dropped` and is retried, not `tls`, which is not. A `tls` error on a Python whose TLS library cannot speak
+  TLS 1.3 says so: macOS's `/usr/bin/python3` is built on LibreSSL 2.8, and many sites require TLS 1.3.
+- **The leaderboard tries network failures again.** `benchmark/run.py` tries a site whose failure was a network
+  fault (a dropped connection, a timeout, a TLS error, a 429 or a 5xx) once more at the end of the run. The
+  1.5.0 leaderboard is run on Python 3.12: a first pass on the system Python lost 68 sites to TLS errors.
 - **`g.robots` and `g.reachable` score the 10 retrieval crawlers of `reference/ai-crawlers.md`, and only
   those.** Claude-User, Googlebot and Amazonbot are added. GPTBot, ClaudeBot and a made-up
   Google-Extended probe are removed. Each crawler is sent with its vendor-documented user-agent string.
@@ -327,9 +338,19 @@ only the optional `elapsed_s`.
   reach.
 - **A transient fault is retried before it moves a gate.** robots.txt, the homepage and the sitemap are
   fetched once per run, with retries. `g.reachable` probes retry once on no answer, 429 or 5xx, and honour
-  Retry-After up to 5 s. A probe still unanswered after its retry counts as not reached, so a flaky
-  network or proxy can still take `g.reachable` to 3, or to 0 when six or more of the ten crawlers go
-  unanswered. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
+  Retry-After up to 5 s. A crawler that gets no answer on any page (a timeout or a dropped connection on
+  every try) is not counted: from one address that is mostly the network, or a firewall dropping a crawler
+  user-agent sent from an address its vendor does not use, which the real crawler never meets. The tier is
+  read over the crawlers that answered; tier 0 ("most retrieval user-agents are blocked") needs HTTP
+  refusals from more than half of all ten; with fewer than half answering, the check is not observed. A crawler answered
+  on some pages counts as reached. This rule came from 1.5.0's first leaderboard run, which read silence as
+  refusal and gate-capped 31 sites that a browser and most crawlers reached (pulumi.com went from 99 to 40);
+  on the five hand audits it takes `g.reachable`'s exact agreement from 0.4 to 0.8.
+- **A homepage that cannot be fetched is not a missing entity.** When the homepage is in the sample but
+  fails, `p1.organization`, `p3.sameas` and `p3.knowledge-graph` read not observed instead of 0 if the
+  other pages lack the entity: it usually sits on the homepage. Direction: 0 to not observed, on runs
+  where the homepage failed (nextjs.org's hand-audit comparison had read all three as 0 after one failed
+  fetch). A robots.txt that cannot be read after 3 tries is now not observed and leaves the
   denominator, instead of reading as "No robots.txt". One that answers 429 or 5xx on every try keeps tier
   3 and says so. The direction is either way: down where a dropped robots.txt fetch hid a Disallow, up
   where a transient 429 or reset on a crawler probe read as a block. Five rows of the 1.3.0 leaderboard
@@ -960,7 +981,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/jianruntech/geo-score/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jianruntech/geo-score/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jianruntech/geo-score/compare/v1.1.2...v1.2.0

@@ -18,7 +18,7 @@ RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
 MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", "gemini-extension.json"]
 # files whose one-line install or download is pinned to a release tag
 # (scripts/test_packaging.py fails when a tracked file names a release and is not listed here)
-PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
+PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "cli/README.zh-CN.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
           "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md",
           "STABILITY.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
           "guide/mcp.zh-CN.md"] + MANIFESTS

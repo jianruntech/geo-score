@@ -166,4 +166,4 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 
 - 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，以及每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
-- 命令与参数：[cli/README.md](../cli/README.md)。
+- 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。
