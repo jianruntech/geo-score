@@ -91,7 +91,8 @@ BEHAVIOUR = {
 # status_for {path: code} answers every request for that path with that code; drip {path: seconds} sends the
 # headers at once and then one byte of the body every that many seconds, so no single read times out and the
 # answer never finishes; drip_ua {user-agent substring: seconds} does the same to every request whose user-agent
-# carries that substring. Every gate in FAULTS must read as it does without the fault.
+# carries that substring; drop_ua (user-agent substrings) closes every such request without an answer. Every
+# gate in FAULTS must read as it does without the fault.
 FAULTS = {
     "robots-blocks, first robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 1}}),
     "robots-blocks, second robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 2}}),
@@ -132,7 +133,8 @@ class FixtureHandler(BaseHTTPRequestHandler):
             srv.seen.add((ua, at))
             srv.requests[(self.command, at, ua)] += 1
         drop = srv.faults.get("drop_nth", {}).get(at)
-        if nth == drop or (isinstance(drop, tuple) and nth in drop):
+        if nth == drop or (isinstance(drop, tuple) and nth in drop) or \
+                any(part.lower() in ua.lower() for part in srv.faults.get("drop_ua", ())):
             srv.drops[at] += 1
             self.close_connection = True        # no status line at all: the client reads a dropped connection
             return
@@ -767,6 +769,26 @@ class EndToEnd(unittest.TestCase):
         rep = gs.as_json(res)
         self.assertEqual([c["state"] for c in rep["checks"] if c["id"] == "g.robots"], ["unobservable"])
         self.assertFalse(rep["gate_capped"])
+
+    def test_crawlers_that_get_no_answer_are_not_a_block(self):
+        # A probe that never gets an answer is not a refusal: six silent crawlers take g.reachable to 3, never to
+        # the gate, and ten silent crawlers leave it unobserved. Six HTTP refusals are still the gate
+        H.start()
+        names = [name for name, _ in gs.RETRIEVAL_UAS]
+        cases = [({"drop_ua": tuple(names[:6])}, 3, "no answer"),
+                 ({"drop_ua": tuple(names)}, None, "not observed"),
+                 ({"deny_ua_extra": tuple(names[:6])}, 0, "HTTP 403")]
+        for faults, want, word in cases:
+            srv = start_server("good", faults)
+            if "deny_ua_extra" in faults:
+                srv.rules = dict(srv.rules, deny_ua=faults["deny_ua_extra"])
+            try:
+                res = gs.run(srv.origin, 8, timeout=1)
+            finally:
+                srv.shutdown()
+                srv.server_close()
+            self.assertEqual(res["tier"]["g.reachable"], want, (faults, res["ev"]["g.reachable"]))
+            self.assertIn(word, res["ev"]["g.reachable"])
 
     def test_the_run_deadline(self):
         # After the sample every request goes out in one wave. Here llms.txt and every retrieval crawler's request

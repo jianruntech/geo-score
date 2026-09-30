@@ -20,7 +20,7 @@ try:
 except ImportError:         # a Python built without OpenSSL: https fails, and says so
     ssl = None
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 RUBRIC = "v1.1"
 UA_BROWSER = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
@@ -2284,7 +2284,10 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
 
     # ── g.reachable ──
     # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
-    # reached the same page moments earlier
+    # reached the same page moments earlier. A probe that never gets an answer at all (a timeout or a dropped
+    # connection on every try) is not a refusal: from one address that can be the network, or a firewall that
+    # drops a crawler's user-agent sent from an address its vendor does not use. It is "not reached", it can
+    # take the tier to 3, but only HTTP refusals make "most retrieval user-agents are blocked" (the gate)
     results = [(name, get(u, ua=ua, tries=PROBE_TRIES)) for name, ua in RETRIEVAL_UAS for u in probe]
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
@@ -2298,7 +2301,14 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         consistent += 1 if good else 0
         if not good: differ.append(name)
     nua = len(RETRIEVAL_UAS)
-    tier["g.reachable"] = 5 if okc == nua and consistent == nua else (0 if okc < 5 else 3)
+    refused = [name for name, rs in per.items() if any(x.status and not x.ok for x in rs)]
+    silent = [name for name, rs in per.items() if not all(x.ok for x in rs) and name not in refused]
+    if okc == nua and consistent == nua:
+        tier["g.reachable"] = 5
+    elif len(silent) == nua:
+        tier["g.reachable"] = None           # no probe got an answer: nothing was observed about any crawler
+    else:
+        tier["g.reachable"] = 0 if len(refused) > nua // 2 else 3
     # which agents failed and how, grouped by what they got, so a reading at zero can be audited
     failed = {}
     for name, rs in per.items():
@@ -2314,6 +2324,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
                                 " Content differed: %s." % ", ".join(differ) if differ else "",
                                 " (Unverified probes: vendor user-agent strings sent from this machine's address.)"
                                 if failed else ""), 480)
+    if tier["g.reachable"] is None:
+        ev["g.reachable"] = clip("No retrieval user-agent probe got an answer (%s), so nothing was observed about any "
+                                 "crawler; not observed. A browser reached the same pages." % "; ".join(failed), 480)
     if late(*(r for _, r in results)):
         # a probe the deadline stopped says nothing about that crawler: the gate is not observed, never zero
         not_reached("g.reachable", "every crawler probe")
