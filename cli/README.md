@@ -31,7 +31,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.4.0/cli/geo_
 | `--badge-json FILE` | Also write the same badge as [shields.io endpoint](https://shields.io/badges/endpoint-badge) JSON: `schemaVersion`, `label`, `message`, `color` and `cacheSeconds`, with the SVG's text and colour |
 | `--share` | Print a one-line summary sized for a post, plus the badge markdown |
 | `--fail-under N` | Exit 1 when the score is below N — for CI |
-| `--fail-on-gate` | Exit 1 when any gate check (`g.*`) scores 0, and name the gate and its evidence on stderr. A gate at zero caps the score at exactly 40, so `--fail-under 40` never fails a capped site; add `--fail-on-gate`. The same as `--assert 'g.*>0'`. An unobservable gate never fails |
+| `--fail-on-gate` | Exit 1 when any gate check (`g.*`) scores 0, and name the gate and its evidence on stderr. A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads exactly 40 and passes `--fail-under 40`, and `--fail-on-gate` fails any capped site. The same as `--assert 'g.*>0'`. An unobservable gate never fails |
 | `--assert EXPR` | Exit 1 unless `CHECK OP VALUE` holds: a check id or an fnmatch glob over the ids, then `>=`, `>` or `=`, then a whole number or `max`, e.g. `g.robots=max` or `p1.llms-txt>=4`. Repeatable. A check the run could not observe prints `not measured, skipped` and never fails. A malformed expression, or a glob that names no check, is a usage error (exit 2). Results go to stderr, never into the report |
 | `--quiet`, `-q` | Suppress progress lines on stderr |
 | `--version` | Print the tool's version and the rubric version it scores |
@@ -328,7 +328,7 @@ Run files follow [schema/watch.v1.json](../schema/watch.v1.json). Tests:
   with:
     url: https://example.com
     fail-under: 40
-    fail-on-gate: true          # a gate at zero caps the score at exactly 40, which fail-under 40 cannot catch
+    fail-on-gate: true          # a gate at zero caps the score at 40; a capped site at exactly 40 passes fail-under 40
     json-out: geo-score.json
     sarif: geo-score.sarif      # optional
     junit: geo-score.xml        # optional

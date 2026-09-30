@@ -34,7 +34,7 @@ inputs:
     required: false
     default: "true"
   fail-on-gate:
-    description: "true to fail the job when any gate check (g.*) scores zero. A gate at zero caps the score at exactly 40, so fail-under: 40 alone never fails a capped site. The same as the assertion g.*>0."
+    description: "true to fail the job when any gate check (g.*) scores zero. A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads exactly 40 and passes fail-under: 40; fail-on-gate fails any capped site. The same as the assertion g.*>0."
     required: false
     default: "false"
   badge:

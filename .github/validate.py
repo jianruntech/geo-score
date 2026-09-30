@@ -524,6 +524,22 @@ for f in _cap_files:
         check(any(m in x.lower() for m in ZERO_MARK),
               "%s 说门槛封顶 40，但没说只在得 0 分时触发（v1.1 修掉的规则）：%s" % (f, x[:160]))
 
+# 封顶是上限（min(norm, 40)），不是把分数定在 40：被封顶的站可以低于 40（js-shell 样例站 15 分），--fail-under 40 照样
+# 拦得住。1.5.0 的草稿在 help、action.yml、两份 README、CI 示例和排障指南里写成「正好封顶在 40，所以 --fail-under 40 永远
+# 拦不住被封顶的站」。这条扫所有文档、CI 示例、action.yml 和 CLI 的 help 文字。
+EXACT_CAP_RE = re.compile(r"\bcaps? (?:a |the |its )?(?:score |result )?at exactly 40|正好封顶"
+                          r"|never fails? a capped site|never failed a capped site|拦不住被封顶", re.I)
+_exact_cap_files = ["action.yml", "cli/geo_score.py", "cli/geo_watch.py"]
+for root_, dirs_, files_ in os.walk("."):
+    dirs_[:] = [d for d in dirs_ if d not in SKIP_DIRS + (".github", "raw")]
+    _exact_cap_files += [os.path.join(root_, f)[2:] for f in files_ if f.endswith((".md", ".yml", ".html"))]
+for f in sorted(set(_exact_cap_files)):
+    if not os.path.exists(f): continue
+    flat = re.sub(r"\*\*|`", "", re.sub(r"\s+", " ", io.open(f, encoding="utf-8").read()))
+    for m in EXACT_CAP_RE.finditer(flat):
+        check(False, "%s 说门槛封顶把分数定在 40、--fail-under 40 拦不住被封顶的站；封顶是上限，被封顶的站可以低于 40：…%s…"
+              % (f, flat[max(0, m.start() - 60):m.end() + 60]))
+
 # ── 21. 校准记录中英两份：同样多的章节，同一组数字 ──
 # 中文版曾漏掉「60 KB 服务端渲染正文」和 Foglift 的上四分位。比集合不比次数：
 # 同一个数字中文多提一遍是行文习惯，少了一个数字才是少了一条事实。

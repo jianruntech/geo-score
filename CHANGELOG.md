@@ -10,10 +10,11 @@ crawler gates now read only the ten retrieval crawlers, choose each crawler's ro
 9309 does and no longer move on a dropped connection; a bot-challenge page is no longer scored as a page
 that needs JavaScript; every page is read in its own language; and a figure counts as sourced only when
 its source sits beside it. These fixes move scores, and each one below names its check and its direction.
-For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at exactly 40, which
-`--fail-under 40` never caught), `geo-score diff` and `--baseline` to compare two reports check by check,
-and a shields.io endpoint badge. A site that cannot be scored fails fast and says why in one line, in
-JSON under `--json`, and a scoring run can no longer hang. Around the CLI: a schema and typo warnings for
+For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at 40, and a site that would
+otherwise score 40 or more reads exactly 40, which `--fail-under 40` lets through), `geo-score diff` and
+`--baseline` to compare two reports check by check, and a shields.io endpoint badge. A site that cannot
+be scored fails fast and says why in one line, in JSON under `--json`, and a scoring run can no longer
+hang. Around the CLI: a schema and typo warnings for
 the watch config, installs from the release wheel without git, a gate that pins its tools, CI examples
 beyond GitHub, forms for disputing a leaderboard row, and a benchmark that can be re-measured and taken
 apart. The leaderboard itself is still the 1.3.0 run of 2026-09-27.
@@ -30,11 +31,12 @@ only the optional `elapsed_s`.
 
 ### Added
 - **`--fail-on-gate` and `--assert EXPR`**, in the CLI and as the Action inputs `fail-on-gate` and
-  `assert`. A gate at zero caps the score at exactly 40, so `--fail-under 40` (`fail-under: 40`) never
-  failed a capped site. `--fail-on-gate` exits 1 when any `g.*` check scores 0, and names the gate and
-  its evidence; it is the same as `--assert 'g.*>0'`. `--assert` holds one check, or an fnmatch glob of
-  checks, to a value, e.g. `g.robots=max` or `p1.llms-txt>=4`, and is repeatable. A check the run could
-  not observe is skipped, never failed. A malformed expression, or a glob that names no check, exits 2.
+  `assert`. A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads
+  exactly 40 and passes `--fail-under 40` (`fail-under: 40`). `--fail-on-gate` fails any capped site: it
+  exits 1 when any `g.*` check scores 0, and names the gate and its evidence; it is the same as
+  `--assert 'g.*>0'`. `--assert` holds one check, or an fnmatch glob of checks, to a value, e.g.
+  `g.robots=max` or `p1.llms-txt>=4`, and is repeatable. A check the run could not observe is skipped,
+  never failed. A malformed expression, or a glob that names no check, exits 2.
   Both are opt-in and change no score, and their results go to stderr, never into the report.
 - **`geo-score diff BEFORE AFTER [--format text|md|json] [--fail-on-drop]`** compares two level-1 reports
   check by check. Each check shows its points before and after, its max, and a state: `up`, `down`,

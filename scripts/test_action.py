@@ -111,7 +111,8 @@ def main():
     finally:
         bare.shutdown()
         bare.server_close()
-    # a gate at zero caps the score at exactly 40: fail-under 40 cannot catch it, fail-on-gate and assert can
+    # a gate at zero caps the score at 40, and robots-blocks reads exactly 40: fail-under 40 lets it through,
+    # fail-on-gate and assert catch it
     blocked = e2e.start_server("robots-blocks")
     try:
         with tempfile.TemporaryDirectory() as tmp:

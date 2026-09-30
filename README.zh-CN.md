@@ -295,7 +295,7 @@ python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # C
     fail-on-gate: true
 ```
 
-门槛项得 0 分时分数正好封顶在 40，所以只写 `fail-under: 40` 永远拦不住被封顶的站；加上 `fail-on-gate: true` 才行。
+门槛项得 0 分时分数封顶 40：本来能得 40 分及以上的站正好停在 40，能通过 `fail-under: 40`；`fail-on-gate: true` 会让任何被封顶的站失败。
 
 **Claude Code 技能** —— CLI 只能测静态抓取看得见的东西。
 有四项需要站外检索或人的判断，技能把这些也做了。

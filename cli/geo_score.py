@@ -3614,8 +3614,9 @@ def main():
                     help="with --baseline: exit 4 when any check lost points, a gate reached 0 or the band fell since "
                          "the baseline. A check that became unobservable is not a drop")
     ap.add_argument("--fail-on-gate", action="store_true",
-                    help="exit 1 if any gate check (g.*) scores 0. A gate at zero caps the score at exactly 40, so "
-                         "--fail-under 40 alone never fails a capped site. The same as --assert 'g.*>0'")
+                    help="exit 1 if any gate check (g.*) scores 0. A gate at zero caps the score at 40: a site that would "
+                         "otherwise score 40 or more reads exactly 40 and passes --fail-under 40, and this fails any "
+                         "capped site. The same as --assert 'g.*>0'")
 
     def assertion(expr):
         try:

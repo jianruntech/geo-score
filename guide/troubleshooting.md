@@ -75,8 +75,9 @@ minute to the next, so re-run before drawing a conclusion. Its probes send each 
 string from your own address, so a firewall that verifies crawlers by IP range may refuse them and
 still serve the real crawler ([reference/ai-crawlers.md](../reference/ai-crawlers.md)).
 
-**In CI.** A gate at zero caps the score at exactly 40, so `--fail-under 40` (`fail-under: 40` in the
-Action) never fails a capped site; add `--fail-on-gate` (`fail-on-gate: true`). `--assert` holds a
+**In CI.** A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads
+exactly 40 and passes `--fail-under 40` (`fail-under: 40` in the Action). `--fail-on-gate`
+(`fail-on-gate: true`) fails any capped site. `--assert` holds a
 single check to a tier, such as `g.robots=max`. Assertions on heuristic checks carry the same
 run-to-run noise as the score, so pin the pages with `--urls-from` when you assert on them.
 

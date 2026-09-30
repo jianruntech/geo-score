@@ -7,9 +7,9 @@
 这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选
 robots.txt 分组，也不再因为一次掉线而变动；人机验证页不再被当成要跑 JavaScript 的页面来评分；每个页面按它自己的语言读；一个数字
 只有来源就在旁边时才算有来源。这些修正会让分数变动，下面每一条都写明检查项和方向。CI 方面有 `--fail-on-gate` 和 `--assert`（门槛
-项得 0 分时总分正好封顶在 40，`--fail-under 40` 从来拦不住），逐项对比两份报告的 `geo-score diff` 和 `--baseline`，以及
-shields.io endpoint 徽章。评不了分的网站很快失败，用一行话说明原因，`--json` 下给出 JSON 格式的错误；一次评分运行也不会再卡住不
-动。CLI 之外：watch 配置有了 schema 和拼错键名的提示，从发布的 wheel 安装、不需要 git，关卡锁定所用工具的版本，CI 示例覆盖
+项得 0 分时总分封顶 40，本来能得 40 分及以上的站正好停在 40，`--fail-under 40` 会放它通过），逐项对比两份报告的
+`geo-score diff` 和 `--baseline`，以及 shields.io endpoint 徽章。评不了分的网站很快失败，用一行话说明原因，`--json` 下给出 JSON
+格式的错误；一次评分运行也不会再卡住不动。CLI 之外：watch 配置有了 schema 和拼错键名的提示，从发布的 wheel 安装、不需要 git，关卡锁定所用工具的版本，CI 示例覆盖
 GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准榜单可以重测、也可以拆开来看。榜单本身仍是 2026-09-27 用 1.3.0 跑的那一轮。
 
 **从 1.4.0 升级。** 第一级的分数只在 1.4.0 读错了网站的地方变动，每一处都列在「修复」下，写明检查项和方向：门槛项（`g.robots`、
@@ -20,10 +20,10 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
 个可选字段 `elapsed_s`。
 
 ### 新增
-- **`--fail-on-gate` 与 `--assert EXPR`**，CLI 和 Action（输入 `fail-on-gate`、`assert`）都有。门槛项得 0 分时分数正好封顶在 40，
-  所以 `--fail-under 40`（`fail-under: 40`）从来拦不住被封顶的站。`--fail-on-gate` 在任一 `g.*` 检查项得 0 分时退出码为 1，并写
-  明是哪个门槛项及其证据，等同于 `--assert 'g.*>0'`。`--assert` 把单个检查项、或用 fnmatch 通配匹配的一组检查项锁定在某个值，例
-  如 `g.robots=max`、`p1.llms-txt>=4`，可重复使用。本次运行观测不到的检查项跳过，不算失败。表达式写错、或通配匹配不到任何检查项
+- **`--fail-on-gate` 与 `--assert EXPR`**，CLI 和 Action（输入 `fail-on-gate`、`assert`）都有。门槛项得 0 分时分数封顶 40：
+  本来能得 40 分及以上的站正好停在 40，能通过 `--fail-under 40`（`fail-under: 40`）。`--fail-on-gate` 会让任何被封顶的站失败：
+  任一 `g.*` 检查项得 0 分时退出码为 1，并写明是哪个门槛项及其证据，等同于 `--assert 'g.*>0'`。`--assert` 把单个检查项、或用
+  fnmatch 通配匹配的一组检查项锁定在某个值，例如 `g.robots=max`、`p1.llms-txt>=4`，可重复使用。本次运行观测不到的检查项跳过，不算失败。表达式写错、或通配匹配不到任何检查项
   时退出码为 2。两个参数都需显式开启，不改变任何分数；结果只写到 stderr，不进入报告。
 - **`geo-score diff BEFORE AFTER [--format text|md|json] [--fail-on-drop]`**：逐项对比两份一级报告。每个检查项列出前后得分、满分
   和状态：`up`、`down`、`same`、`became unobservable`、`became observable`，两次都没测到的是 `unobservable`。还会列出前后的总分、

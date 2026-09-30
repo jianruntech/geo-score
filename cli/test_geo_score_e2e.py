@@ -661,8 +661,8 @@ class EndToEnd(unittest.TestCase):
                     self.assertEqual([c["state"] for c in rep["checks"] if c["id"] == "g.robots"], ["unobservable"])
 
     def test_fail_on_gate_and_assert(self):
-        # the CLI as CI runs it: a gate at zero caps the score at exactly 40, so --fail-under 40 cannot catch
-        # it and --fail-on-gate must. Off-site lookups go to a proxy port nothing listens on: they fail at once,
+        # the CLI as CI runs it: a gate at zero caps the score at 40, so a capped site that reads exactly 40
+        # passes --fail-under 40 and --fail-on-gate must catch it; one that reads below 40 (js-shell, 15) fails both. Off-site lookups go to a proxy port nothing listens on: they fail at once,
         # read as not measured, and nothing leaves the machine
         dead = "http://127.0.0.1:9"
         env = {k: v for k, v in os.environ.items() if not k.lower().endswith("_proxy")}
@@ -674,7 +674,9 @@ class EndToEnd(unittest.TestCase):
             ("good", ("--fail-on-gate", "--assert", "p3.listings>=1", "--assert", "g.*=max"), 0),
             ("good", ("--assert", "x.nope>0"), 2),
             ("good", ("--assert", "g.robots>max"), 1),
-            ("robots-blocks", ("--fail-under", "40"), 0)]
+            ("robots-blocks", ("--fail-under", "40"), 0),
+            # the cap is a ceiling, not a floor: a capped site can read below 40, and --fail-under 40 fails it
+            ("js-shell", ("--fail-under", "40"), 1)]
         servers = {n: start_server(n) for n in {c[0] for c in cases}}
 
         def cli(case):

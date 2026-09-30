@@ -317,7 +317,7 @@ schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
     fail-on-gate: true
 ```
 
-A gate at zero caps the score at exactly 40, so `fail-under: 40` alone never fails a capped site; `fail-on-gate: true` does.
+A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads exactly 40 and passes `fail-under: 40`. `fail-on-gate: true` fails any capped site.
 
 **Claude Code skill** — the CLI measures what a static fetch can see. Four checks need
 off-site search or human judgement, and the skill does those too.
