@@ -68,7 +68,9 @@ def _fetch_block():
     L += ["| %s | %d | %s |" % (what, n, ua) for _, what, n, ua in site]
     L += ["| %s | %d | browser, to other hosts |" % (what, n) for _, what, n in elsewhere]
     L += ["\nA site that fails outright is tried once more on its `www` host (an IP address is not), and its row",
-          "keeps the error of the attempt that got further. The crawler user-agents are sent from the operator's own",
+          "keeps the error of the attempt that got further. A site whose failure was a network fault (a dropped",
+          "connection, a timeout, a TLS error, a 429 or a 5xx) is tried once more at the end of the run, two at a",
+          "time. The crawler user-agents are sent from the operator's own",
           "address, not from the addresses their vendors publish, so a server that verifies",
           "crawlers by IP range or reverse DNS sees an unverified client. That is why a 403 to those probes is",
           "reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.\n"]
@@ -267,6 +269,17 @@ def main():
             out.append(r)
             print("  %2d/%d  %-20s %s" % (i, len(sites), r["site"],
                   r.get("error") or "%3d  %s" % (r["normalised"], r["band"])), file=sys.stderr)
+    # a site that failed on the network (a dropped connection, a timeout, a TLS error, a 429 or a 5xx) is tried
+    # once more at the end, two at a time: one bad minute on the operator's line is not a reading of the site
+    again = [i for i, r in enumerate(out) if retry_worthy(r.get("error_kind"))]
+    if again:
+        print("trying %d sites again…" % len(again), file=sys.stderr)
+        with cf.ThreadPoolExecutor(max_workers=2) as ex:
+            for i, r in zip(again, ex.map(one, [sites[i] for i in again])):
+                if "error" not in r:
+                    out[i] = r
+                print("  again  %-20s %s" % (r["site"], r.get("error") or "%3d  %s" % (r["normalised"], r["band"])),
+                      file=sys.stderr)
     ok = [r for r in out if "error" not in r]
     ok.sort(key=lambda r: -r["normalised"])
     scores = [r["normalised"] for r in ok]
@@ -290,6 +303,11 @@ def main():
         return
     write_readme(payload)
     print("next: python3 benchmark/build_page.py   (regenerates the public pages)", file=sys.stderr)
+
+def retry_worthy(kind):
+    """An error kind the end-of-run pass tries again: a fault of the network between here and the site."""
+    return bool(kind) and (kind in ("dropped", "no_response", "timeout", "slow", "tls", "http_429")
+                           or (kind.startswith("http_5") and len(kind) == 8))
 
 def _load(path):
     with io.open(path, encoding="utf-8") as f:

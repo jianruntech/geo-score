@@ -439,6 +439,16 @@ class ChineseLexicon(unittest.TestCase):
                          % (m.group(0), run.gs.__version__))
 
 
+class RetryPass(unittest.TestCase):
+    """The end-of-run pass tries again what the network may have caused, never what the site decided."""
+
+    def test_network_faults_are_tried_again_and_the_sites_answers_are_not(self):
+        for kind in ("dropped", "no_response", "timeout", "slow", "tls", "http_429", "http_503"):
+            self.assertTrue(run.retry_worthy(kind), kind)
+        for kind in ("dns", "refused", "not_public", "http_403", "http_404", "bot_challenge", "deadline", None, ""):
+            self.assertFalse(run.retry_worthy(kind), kind)
+
+
 class FetchBudget(unittest.TestCase):
     """The README's per-site request budget against what the CLI actually sends, on a synthetic site built to
     take every branch that fetches: a sitemap index, section indexes, Chinese text, an Organization with a logo

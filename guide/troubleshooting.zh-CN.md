@@ -93,7 +93,9 @@
 有些代理先接受连接，连不上目标主机时再把连接关掉。
 
 **怎么办。** 报错里写了代理时，先检查拼写。然后在同一台机器上用浏览器打开网站。CLI 用 Python 自己的证书库核验证书，
-它可能和浏览器用的不一样。
+它可能和浏览器用的不一样。如果报错说这个 Python 的 TLS 库不支持 TLS 1.3，请换一个较新的 Python 运行：macOS 自带的
+`/usr/bin/python3` 基于 LibreSSL 2.8，不支持；从 python.org、Homebrew 或 `uv` 装的 Python 都支持。握手进行到一半被断开不属于
+这种错误：它记为 `dropped`，会重试。
 
 ### timeout：没有按时回应
 
@@ -177,8 +179,8 @@ CLI 使用 Python 的标准代理设置：`HTTPS_PROXY`、`HTTP_PROXY` 和 `NO_P
 而且从不加载当前目录下的 `geo_watch.py`。
 
 **怎么办。** 从发布的 wheel 安装工具
-（`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.4.0/geo_score-1.4.0-py3-none-any.whl`；
-从源码安装需要 git：`pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`），或者克隆仓库，
+（`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl`；
+从源码安装需要 git：`pipx install git+https://github.com/jianruntech/geo-score@v1.5.0`），或者克隆仓库，
 或者从同一个版本下载 `cli/geo_score.py` 和 `cli/geo_watch.py` 放在同一个文件夹。两个文件的版本必须一致。
 
 ## `watch run` 退出码 3

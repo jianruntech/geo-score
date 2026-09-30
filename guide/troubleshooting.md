@@ -126,7 +126,10 @@ close it when they cannot reach the host.
 
 **What to do.** Check the spelling first when the message names a proxy. Then open the site in a
 browser on the same machine. The CLI checks certificates against Python's own certificate store, which
-can differ from the browser's.
+can differ from the browser's. If the message says this Python's TLS library cannot speak TLS 1.3, run
+the CLI with a newer Python: macOS's `/usr/bin/python3` is built on LibreSSL 2.8, which cannot, and a
+Python from python.org, Homebrew or `uv` can. A handshake cut off in the middle is not this error: it is
+`dropped`, and it is retried.
 
 ### timeout: no answer in time
 
@@ -225,8 +228,8 @@ pages with `--urls-from` on it.
 level 1 only, and never loads a `geo_watch.py` from the current directory.
 
 **What to do.** Install the tool from the release wheel
-(`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.4.0/geo_score-1.4.0-py3-none-any.whl`;
-from source, which needs git: `pipx install git+https://github.com/jianruntech/geo-score@v1.4.0`), or
+(`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl`;
+from source, which needs git: `pipx install git+https://github.com/jianruntech/geo-score@v1.5.0`), or
 clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release into
 one folder. The two files must carry the same version.
 

@@ -495,15 +495,18 @@ def fault_kind(e):
             return "dns"
         if isinstance(x, ConnectionRefusedError):
             return "refused"
+        if ssl is not None and isinstance(x, (ssl.SSLEOFError, ssl.SSLZeroReturnError)):
+            return "dropped"        # the connection was cut in the middle of the handshake: a drop, retried
         if ssl is not None and isinstance(x, ssl.SSLError):      # certificate failures included
-            return "tls"
+            return "tls" if "UNEXPECTED_EOF" not in str(x) else "dropped"
         if isinstance(x, (ConnectionError, http.client.IncompleteRead)):
             return "dropped"
         e = why if isinstance(why, str) else str(x)
     e = (e or "").lower()
     for keys, kind in ((("timed out", "timeout"), "timeout"), (("refused:",), "not_public"),
                        (("cannot resolve", "getaddrinfo", "nodename", "name or service", "name resolution"), "dns"),
-                       (("refused",), "refused"), (("ssl", "certificate", "tls"), "tls"),
+                       (("refused",), "refused"), (("unexpected_eof", "eof occurred in violation"), "dropped"),
+                       (("ssl", "certificate", "tls"), "tls"),
                        (("reset", "closed connection", "remote end closed", "broken pipe", "eof"), "dropped")):
         if any(k in e for k in keys):
             return kind
@@ -563,6 +566,10 @@ def fetch_failure(base, rs, timeout=None):
     t = timeout or TIMEOUT
     text = text.format(host=host, timeout=t, codes=", ".join("HTTP %d" % c for c in codes),
                        budget=max(FETCH_BUDGET, 2 * t), deadline=RUN_DEADLINE)
+    if kind == "tls" and ssl is not None and not getattr(ssl, "HAS_TLSv1_3", True):
+        # macOS's /usr/bin/python3 is built on LibreSSL 2.8, which cannot speak TLS 1.3; many sites require it
+        text += ("; this Python's TLS library (%s) cannot speak TLS 1.3, which many sites require, so run the CLI "
+                 "with a newer Python" % ssl.OPENSSL_VERSION)
     via = proxy_for(base) if rs[0].status == 0 and kind not in ("not_public", "deadline") else None
     return ScoreError("could not fetch %s (%s): %s%s; see %s" % (
         base, kind, text, "; the request went through the proxy at %s, which may be where it failed" % via if via else "",

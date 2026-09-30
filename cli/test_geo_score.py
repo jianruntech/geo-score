@@ -1282,7 +1282,12 @@ for _e, _kind in ((_ue.URLError(_sock.gaierror(_sock.EAI_NONAME, "nodename nor s
                   (_ue.URLError(ConnectionRefusedError(61, "Connection refused")), "refused"),
                   (_ue.URLError(_sock.timeout("timed out")), "timeout"), (_sock.timeout("The read operation timed out"), "timeout"),
                   (_ue.URLError(_ssl.SSLCertVerificationError(1, "certificate verify failed")), "tls"),
-                  (_ue.URLError(_ssl.SSLEOFError(8, "EOF occurred in violation of protocol")), "tls"),
+                  # a handshake cut off in the middle is a dropped connection, retried like one; a refused protocol
+                  # version or a bad certificate is the handshake failing, which the next try meets again
+                  (_ue.URLError(_ssl.SSLEOFError(8, "EOF occurred in violation of protocol")), "dropped"),
+                  (_ue.URLError(_ssl.SSLError(1, "[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol")), "dropped"),
+                  (_ue.URLError(_ssl.SSLError(1, "[SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol version")), "tls"),
+                  (OSError("<urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol>"), "dropped"),
                   (_hcl.RemoteDisconnected("Remote end closed connection without response"), "dropped"),
                   (_ue.URLError(ConnectionResetError(54, "Connection reset by peer")), "dropped"),
                   (OSError("refused: x.test does not resolve to a public address"), "not_public"),
