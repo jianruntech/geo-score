@@ -130,7 +130,8 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
   `+4 next tier (+9 to full)  Self-contained answer passages  needs: …`。以前在下一档的条件旁边印的是离满分的差距。`--share` 现
   在点名门槛项：「robots.txt disallows AI retrieval crawlers」「AI retrieval crawlers are refused」或「crawlers get no
   server-rendered body text」。以前不管是哪个门槛项，都说爬虫「cannot reach the content at all」。内容差距现在写作
-  `(+N at the next tier)`。
+  `(+N at the next tier)`。MCP 的 `score_site` 摘要也一样：有门槛项得 0 分时用同一句开头，最多六个差距按同样的顺序列出，每项写明升到
+  下一档能加几分。以前它列的是得分比例最低的六项，其中还有加分项。
 - **报告页脚。** `Needs judgement:` 拆成两行。`Needs off-site search or judgement:` 列出 p3.listings、p3.mentions、
   p4.question-coverage；`Not observable this run:` 列出其余各项，每项附一句简短原因，例如
   `p4.cn-engines (not a Chinese-language site)`。报告和 `--brief` 增加 ✓ ◐ ✗ ⊘ 的图例。量表和排查指南的链接指向本次发版的标签（`blob/v1.5.0/…`），

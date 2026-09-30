@@ -1363,6 +1363,29 @@ class MCP(Base):
         self.assertFalse(r["isError"], r)
         self.assertIn("cited #1 (https://pixa.example/)", r["content"][0]["text"])
 
+    def test_score_site_leads_with_the_gate_and_the_cli_gap_order(self):
+        # score_site listed the lowest shares of points, bonus checks among them (3 of 6 on kingdee.com), and neither
+        # named a gate at zero nor followed the order every CLI view uses
+        gs = gw.load_geo_score()
+        tiers = {c[0]: c[3] for c in gs.SPEC}
+        tiers.update({"g.ssr": 0, "p2.freshness": 0, "p1.breadcrumb": 0, "p3.video": 0})
+        ev = {k: "" for k in tiers}
+        ev["g.ssr"] = "0 of 8 sampled pages carry substantive body text. The rest is script."
+        res = dict(root="https://x.test", urls=["https://x.test/"], lang="en", tier=tiers, ev=ev,
+                   bonus={b[0]: 0 for b in gs.BONUS}, robots_bytes=0)
+        text = gw.score_summary(gs, res, gs.as_json(res))
+        self.assertIn("GATE AT ZERO — g.ssr: 0 of 8 sampled pages carry substantive body text;", text)
+        ids = re.findall(r"^- `([^`]+)`", text, re.M)
+        self.assertEqual(ids, [g[0] for g in gs.top_gaps(gs.score(res)[0], n=6)])
+        self.assertEqual(ids[0], "g.ssr")
+        self.assertEqual([i for i in ids if i.startswith("b.")], [])
+        # a scorer from before 1.5.0 has no top_gaps: the lowest shares, still without the bonus checks
+        old = type("OldScorer", (), {})()
+        j = {"target": "https://x.test", "normalised": 40, "band": "Early", "tool": "geo-score-cli/1.4.0",
+             "rubric_version": "v1.1", "checks": [{"id": "b.ai-txt", "state": "scored", "points": 0, "max": 2},
+                                                   {"id": "p1.sitemap", "state": "scored", "points": 1, "max": 4}]}
+        self.assertEqual(re.findall(r"^- `([^`]+)`", gw.score_summary(old, {}, j), re.M), ["p1.sitemap"])
+
     def test_score_site_is_listed_only_when_geo_score_is_found(self):
         real = gw.load_geo_score
         gw.load_geo_score = lambda: None

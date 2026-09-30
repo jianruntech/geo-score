@@ -2474,6 +2474,36 @@ def _rid(v):
     return (type(v).__name__, v) if isinstance(v, (str, int)) and not isinstance(v, bool) else None
 
 
+def score_summary(gs, res, j):
+    """score_site's text: the score, the headline that names a gate at zero, and the gaps in the order every CLI view
+    uses (geo_score.top_gaps: gates at zero, then the most points the next tier adds, then rubric order; bonus checks
+    are not gaps). A geo_score.py from before 1.5.0 has no top_gaps: its checks with the lowest share of their points,
+    bonus checks left out."""
+    by_id = {c.get("id"): c for c in j.get("checks", [])}
+    headline, ordered = None, all(callable(getattr(gs, f, None)) for f in ("score", "top_gaps", "gate_line"))
+    if ordered:
+        rows = gs.score(res)[0]
+        headline = gs.gate_line(rows)
+        gaps = [(g[0], g[2]) for g in gs.top_gaps(rows, n=6)]
+    else:
+        weak = sorted((c for c in by_id.values() if c.get("state") == "scored" and c.get("max")
+                       and not str(c.get("id")).startswith("b.")), key=lambda c: c["points"] / float(c["max"]))[:6]
+        gaps = [(c["id"], None) for c in weak]
+    L = ["# AIV readiness: %s" % j["target"], "",
+         "**%s / 100 · %s**%s (%s, rubric %s)" % (
+             j["normalised"], j["band"], " · gate-capped" if j.get("gate_capped") else "",
+             j["tool"], j["rubric_version"]), ""]
+    if headline:
+        L += [_cut(headline, 600), ""]
+    L.append("Gaps, gates at zero first, then the most points the next tier adds:" if ordered else "Weakest checks:")
+    for cid, gain in gaps:
+        c = by_id.get(cid, {})
+        L.append("- `%s` %s/%s%s — %s" % (cid, c.get("points"), c.get("max"),
+                                          ", +%d at the next tier" % gain if gain else "",
+                                          _cut(c.get("evidence", ""), 140)))
+    L.append("\nReadiness says whether AI *can* cite the site; `run` measures whether it *does*.")
+    return "\n".join(L) + "\n"
+
 class MCPServer(object):
     def __init__(self, config_path, out=None, enabled=None):
         self.config_path = config_path
@@ -3096,15 +3126,7 @@ class MCPServer(object):
         with contextlib.redirect_stdout(sys.stderr):
             res = gs.run(url, sample, urls=urls) if urls else gs.run(url, sample)
             j = gs.as_json(res)
-        weak = sorted((c for c in j["checks"] if c.get("state") == "scored" and c.get("max")),
-                      key=lambda c: c["points"] / float(c["max"]))[:6]
-        L = ["# AIV readiness: %s" % j["target"], "",
-             "**%s / 100 · %s**%s (%s, rubric %s)" % (
-                 j["normalised"], j["band"], " · gate-capped" if j.get("gate_capped") else "",
-                 j["tool"], j["rubric_version"]), "", "Weakest checks:"]
-        L += ["- `%s` %s/%s — %s" % (c["id"], c["points"], c["max"], _cut(c.get("evidence", ""), 140)) for c in weak]
-        L.append("\nReadiness says whether AI *can* cite the site; `run` measures whether it *does*.")
-        return "\n".join(L) + "\n", j
+        return score_summary(gs, res, j), j
 
     def _spawn(self, msg):
         """A tools/call runs on a worker thread, so the loop keeps reading: ping, cancellation, other calls."""

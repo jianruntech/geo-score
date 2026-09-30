@@ -197,7 +197,10 @@ only the optional `elapsed_s`.
   headroom next to the next tier's condition. `--share` now names the gate: "robots.txt disallows AI
   retrieval crawlers", "AI retrieval crawlers are refused" or "crawlers get no server-rendered body
   text". Before, it said a crawler "cannot reach the content at all", whichever gate it was. A content
-  gap now reads `(+N at the next tier)`.
+  gap now reads `(+N at the next tier)`. The MCP `score_site` summary follows too: it opens with the same
+  headline when a gate is at zero and lists up to six gaps in the same order, each with what the next
+  tier adds. It used to list the six checks with the lowest share of their points, bonus checks among
+  them.
 - **The report footer.** `Needs judgement:` is split in two. `Needs off-site search or judgement:` lists
   p3.listings, p3.mentions and p4.question-coverage. `Not observable this run:` lists the rest, each with
   a short reason, for example `p4.cn-engines (not a Chinese-language site)`. The report and `--brief`
