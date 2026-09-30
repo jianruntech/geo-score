@@ -67,14 +67,15 @@ change in any release).
 
 - `--fail-on-gate` and `--assert` are opt-in flags that exit 1 as `--fail-under` does, or 2 on a
   malformed expression; `--timeout`, `--badge-json`, `--baseline`, `--fail-on-drop` and `diff` are new too.
-  Existing invocations keep their exit codes, apart from the two corrections below.
+  Existing invocations keep their exit codes, apart from the three corrections below.
 - Exit 2 also covers a site that served only bot-challenge pages. 1.4.0 scored such a site (`g.ssr` 0,
   capped at 40) and exited 0 or 1, which was wrong, so the change falls under the patch rule: the check
   is `g.ssr`, the direction 0 to not scored. A site that answered 403 with a Cloudflare challenge now
   gets kind `bot_challenge`.
 - An unexpected error exits 2 in one line (`GEO_SCORE_DEBUG=1` shows the traceback). In 1.4.0 the
   traceback ended the process with exit 1, which CI read as a failed threshold.
-- `--sample N` with N below 1 is refused as a usage error (exit 2; kind `usage` under `--json`).
+- `--sample N` with N below 1 is refused as a usage error (exit 2; kind `usage` under `--json`). In
+  1.4.0, 0 ended in a traceback and a negative N scored fewer pages and exited as any run does.
   `run(url, sample)` raises ValueError when it gets no pinned `urls` and `sample` is not a whole number
   of 1 or more; its signature is unchanged.
 - `g.robots` can be `unobservable` when robots.txt could not be read after 3 tries, where 1.4.0 read

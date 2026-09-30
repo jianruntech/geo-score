@@ -21,12 +21,14 @@ apart. The leaderboard itself is still the 1.3.0 run of 2026-09-27.
 
 **Upgrading from 1.4.0.** Level-1 scores move only where 1.4.0 read a site wrong, and every such fix is
 under Fixed with its check and direction: the gates (`g.robots`, `g.reachable`, and `g.ssr` for sites
-behind a bot challenge or with Japanese or Korean pages), the checks that read page text
-(`p2.answer-passages`, `p2.question-intent`, `p2.sourced-stats`, `p2.named-author`, `p4.answer-shape`,
-`p4.cn-engines` and `p3.knowledge-graph`), and the checks whose file, logo or crawler request is now
-retried (`p1.llms-txt`, `b.llms-full`, `b.ai-txt`, `p1.organization` and `p4.cn-engines`). Two invocations exit differently: a site that serves only
-bot-challenge pages exits 2 instead of being scored, and an unexpected error exits 2 in one line instead
-of a traceback that exited 1. `diff` is now a subcommand, so a host named `diff` is written
+behind a bot challenge, with Japanese or Korean pages, or with English pages that carry more than 20 Han
+characters), the checks that read page text (`p2.answer-passages`, `p2.question-intent`,
+`p2.sourced-stats`, `p2.named-author`, `p4.answer-shape`, `p4.cn-engines` and `p3.knowledge-graph`), and
+the checks whose file, logo or crawler request is now retried (`p1.llms-txt`, `b.llms-full`, `b.ai-txt`,
+`p1.organization` and `p4.cn-engines`). Three invocations exit differently: a site that serves only
+bot-challenge pages exits 2 instead of being scored; an unexpected error exits 2 in one line instead of
+a traceback that exited 1; and `--sample` below 1 exits 2, where 1.4.0 crashed on 0 and scored fewer
+pages on a negative value. `diff` is now a subcommand, so a host named `diff` is written
 `https://diff`. `audience_language` can hold languages other than `en` and `zh-CN`, and the report gains
 only the optional `elapsed_s`.
 

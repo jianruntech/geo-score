@@ -13,10 +13,11 @@ robots.txt 分组，遇到掉线先重试再下结论；人机验证页不再被
 GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准榜单可以重测、也可以拆开来看。榜单本身仍是 2026-09-27 用 1.3.0 跑的那一轮。
 
 **从 1.4.0 升级。** 第一级的分数只在 1.4.0 读错了网站的地方变动，每一处都列在「修复」下，写明检查项和方向：门槛项（`g.robots`、
-`g.reachable`，以及有人机验证或日文、韩文页面的站的 `g.ssr`）、读页面文字的检查项（`p2.answer-passages`、`p2.question-intent`、
-`p2.sourced-stats`、`p2.named-author`、`p4.answer-shape`、`p4.cn-engines` 和 `p3.knowledge-graph`），以及文件、logo 或爬虫请求现在
-会重试的检查项（`p1.llms-txt`、`b.llms-full`、`b.ai-txt`、`p1.organization` 和 `p4.cn-engines`）。有两种调用的退出码变了：只
-返回人机验证页的网站不再评分、以退出码 2 结束；意料之外的错误以一行信息、退出码 2 结束，不再打印 traceback 并以 1 退出。`diff`
+`g.reachable`，以及有人机验证、有日文或韩文页面、或英文页面带 20 个以上汉字的站的 `g.ssr`）、读页面文字的检查项
+（`p2.answer-passages`、`p2.question-intent`、`p2.sourced-stats`、`p2.named-author`、`p4.answer-shape`、`p4.cn-engines` 和
+`p3.knowledge-graph`），以及文件、logo 或爬虫请求现在会重试的检查项（`p1.llms-txt`、`b.llms-full`、`b.ai-txt`、`p1.organization`
+和 `p4.cn-engines`）。有三种调用的退出码变了：只返回人机验证页的网站不再评分、以退出码 2 结束；意料之外的错误以一行信息、退出码 2
+结束，不再打印 traceback 并以 1 退出；`--sample` 小于 1 时以退出码 2 结束，1.4.0 遇到 0 会崩溃，遇到负数会少抽页面。`diff`
 现在是子命令，名字就叫 `diff` 的主机要写成 `https://diff`。`audience_language` 现在可能是 `en`、`zh-CN` 以外的语言；报告只多了一
 个可选字段 `elapsed_s`。
 
