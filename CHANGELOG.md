@@ -6,18 +6,18 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 A release about reading sites the way the rubric says, and about failing CI for the right reason. The two
-crawler gates now read only the ten retrieval crawlers, choose each crawler's robots.txt group as RFC
-9309 does and retry a request that got no answer before they count it; a bot-challenge page is no longer
-scored as a page that needs JavaScript; every page is read in its own language; and a figure counts as
-sourced only when its source sits beside it. These fixes move scores, and each one below names its check and its direction.
-For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at 40, and a site that would
-otherwise score 40 or more reads exactly 40, which `--fail-under 40` lets through), `geo-score diff` and
-`--baseline` to compare two reports check by check, and a shields.io endpoint badge. A site that cannot
-be scored fails fast and says why in one line, in JSON under `--json`, and a scoring run can no longer
-hang. Around the CLI: a schema and typo warnings for
-the watch config, installs from the release wheel without git, a gate that pins its tools, CI examples
-beyond GitHub, forms for disputing a leaderboard row, and a benchmark that can be re-measured and taken
-apart. The leaderboard itself is still the 1.3.0 run of 2026-09-27.
+crawler gates now read only the ten retrieval crawlers, choose each crawler's robots.txt group as RFC 9309
+does and retry a request that got no answer before they count it; a bot-challenge page is no longer scored
+as a page that needs JavaScript; every page is read in its own language; and a figure counts as sourced
+only when its source sits beside it. These fixes move scores, and each one below names its check and its
+direction. For CI there are `--fail-on-gate` and `--assert` (a gate at zero caps a score at 40, and a site
+that would otherwise score 40 or more reads exactly 40, which `--fail-under 40` lets through),
+`geo-score diff` and `--baseline` to compare two reports check by check, and a shields.io endpoint badge.
+A site that cannot be scored fails fast and says why in one line, in JSON under `--json`, and a scoring
+run can no longer hang. Around the CLI: a schema and typo warnings for the watch config, installs from the
+release wheel without git, a gate that pins its tools, CI examples beyond GitHub, forms for disputing a
+leaderboard row, and a benchmark that can be re-measured and taken apart. The leaderboard itself is still
+the 1.3.0 run of 2026-09-27.
 
 **Upgrading from 1.4.0.** Level-1 scores move only where 1.4.0 read a site wrong, and every such fix is
 under Fixed with its check and direction: the gates (`g.robots`, `g.reachable`, and `g.ssr` for sites
@@ -332,18 +332,18 @@ only the optional `elapsed_s`.
   unanswered. A robots.txt that cannot be read after 3 tries is now not observed and leaves the
   denominator, instead of reading as "No robots.txt". One that answers 429 or 5xx on every try keeps tier
   3 and says so. The direction is either way: down where a dropped robots.txt fetch hid a Disallow, up
-  where a transient 429 or reset on a crawler probe read as a block. Five rows of the 1.3.0 leaderboard took their
-  `g.robots` from a failed fetch ("No robots.txt (HTTP 0)"): clickpaas.com, codecademy.com, continue.dev,
-  helium10.com and xcmg.com.
-- **A transient fault no longer reads as a missing file, logo or Chinese crawler.** 1.4.0 asked once
-  for `llms.txt`, `llms-full.txt`, `ai.txt`, the Organization logo and the home page as each Chinese
-  crawler, so one timeout, reset, 429 or 5xx read as a file that is not there, a logo that does not
-  resolve or a crawler that was not reached. The files and the logo are now retried like the sitemaps
-  (up to 3 tries) and the Chinese crawlers like the retrieval probes (one retry); a definite answer is
-  still asked once, so a healthy site gets no extra request. Direction: up, where a transient fault used
-  to read as absent, in `p1.llms-txt`, `b.llms-full`, `b.ai-txt`, the logo part of `p1.organization`
-  and `p4.cn-engines`. Two of seven live runs through a proxy had lost `p1.llms-txt` to a single
-  timeout.
+  where a transient 429 or reset on a crawler probe read as a block. Five rows of the 1.3.0 leaderboard
+  took their `g.robots` from a failed fetch ("No robots.txt (HTTP 0)"): clickpaas.com, codecademy.com,
+  continue.dev, helium10.com and xcmg.com.
+- **The site's files, the Organization logo and the Chinese crawlers are retried.** 1.4.0 asked once for
+  `llms.txt`, `llms-full.txt`, `ai.txt`, the logo and the home page as each Chinese crawler, so one
+  timeout, reset, 429 or 5xx read as a file that is not there, a logo that does not resolve or a crawler
+  that was not reached. The files and the logo are now retried like the sitemaps (up to 3 tries) and the
+  Chinese crawlers like the retrieval probes (one retry); a request still unanswered after its tries reads
+  as before, and a definite answer is asked once, so a healthy site gets no extra request. Direction: up,
+  where a transient fault used to read as absent, in `p1.llms-txt`, `b.llms-full`, `b.ai-txt`, the logo
+  part of `p1.organization` and `p4.cn-engines`. Two of seven live runs through a proxy had lost
+  `p1.llms-txt` to a single timeout.
 - **A bot-challenge page is not scored.** When a bot-protection service (AWS WAF, Akamai, Cloudflare,
   Fastly, PerimeterX, DataDome or Imperva) sends the CLI's browser user-agent a challenge page instead of
   the page, that page is dropped from the sample like a failed fetch. A site that serves nothing but
@@ -366,27 +366,27 @@ only the optional `elapsed_s`.
   (`sampled_urls`) has always asked for this. The terminal report prints the same lines. No score
   changes.
 - **`p2.sourced-stats` counts a source only beside its figure.** A figure is attributed only when its own
-  block of the content (a paragraph, list item, table cell, definition, caption or quotation), or the
-  next block, holds a link to a source off the site, a `<cite>`, a source phrase, or a footnote reference
-  whose note links to a source. The content is the first `<main>` or `<article>`, or else the page
-  without its header, navigation, footer and asides. Links to the site's own hosts, to its own `sameAs`
-  profiles and to social profiles or share buttons are not sources. 1.4.0 took any two outbound links,
-  `<cite>` or `<blockquote>` elements or source words anywhere in a page's main HTML as the source of all
-  its figures, so a social icon, a partner logo or a "Research" menu item did it. Fewer things are
-  figures: a year, a version number, a dotted date, a day of the month, a `#` reference, an identifier
-  (seven or more digits in a row, or a number that `ICP备`, `ICP证`, `公安备`, `网安备` or `号`
-  introduces, or that `号` follows: filing, account and phone numbers), and a price (a sum written the
-  way only a price is, such as `$29/mo`, `68元/月`, `$15 per user` or `¥68起`, one after a price word
-  such as `每月`, `售价`, `起价` or `低至`, or one that is all its block says, such as a pricing card's
-  `$29`). Any other sum of money is still a figure, and so is one with a magnitude after it
-  (`$4.5 billion`, `3000亿元`). The tiers keep their page-fraction structure: 7 needs three quarters of
-  the pages that carry three or more figures to attribute most of them with a link, 5 needs half with any
-  attribution, 3 any attributed figure; a sample with no such page keeps 3. The evidence gives the
-  counts. The direction is down. Re-scored with 1.5.0 on 2026-09-30 on the pages their 1.3.0 leaderboard
-  reports sampled, sentry.io and seeyon.com read 3 (7 on the 1.3.0 leaderboard) and mingdao.com 0 (7);
-  mistral.ai, whose pages are French, is not measured (5; see page language below). On the five hand-audited sites, re-scored on their audited pages the same
-  day, the CLI now matches the auditor's tier on 4 of 5, against 1 of 5 in VALIDITY.md (measured with
-  1.3.0, when it read higher on the other four); on mingdao.com it reads 0 against the auditor's 3.
+  block of the content (a paragraph, list item, table cell, definition, caption or quotation), or the next
+  block, holds a link to a source off the site, a `<cite>`, a source phrase, or a footnote reference whose
+  note links to a source. The content is the first `<main>` or `<article>`, or else the page without its
+  header, navigation, footer and asides. Links to the site's own hosts, to its own `sameAs` profiles and
+  to social profiles or share buttons are not sources. 1.4.0 took any two outbound links, `<cite>` or
+  `<blockquote>` elements or source words anywhere in a page's main HTML as the source of all its figures,
+  so a social icon, a partner logo or a "Research" menu item did it. Fewer things are figures: a year, a
+  version number, a dotted date, a day of the month, a `#` reference, an identifier (seven or more digits
+  in a row, or a number that `ICP备`, `ICP证`, `公安备`, `网安备` or `号` introduces, or that `号` follows: filing,
+  account and phone numbers), and a price (a sum written the way only a price is, such as `$29/mo`,
+  `68元/月`, `$15 per user` or `¥68起`, one after a price word such as `每月`, `售价`, `起价` or `低至`, or one that
+  is all its block says, such as a pricing card's `$29`). Any other sum of money is still a figure, and so
+  is one with a magnitude after it (`$4.5 billion`, `3000亿元`). The tiers keep their page-fraction
+  structure: 7 needs three quarters of the pages that carry three or more figures to attribute most of
+  them with a link, 5 needs half with any attribution, 3 any attributed figure; a sample with no such page
+  keeps 3. The evidence gives the counts. The direction is down. Re-scored with 1.5.0 on 2026-09-30 on the
+  pages their 1.3.0 leaderboard reports sampled, sentry.io and seeyon.com read 3 (7 on the 1.3.0
+  leaderboard) and mingdao.com 0 (7); mistral.ai, whose pages are French, is not measured (5; see page
+  language below). On the five hand-audited sites, re-scored on their audited pages the same day, the CLI
+  now matches the auditor's tier on 4 of 5, against 1 of 5 in VALIDITY.md (measured with 1.3.0, when it
+  read higher on the other four); on mingdao.com it reads 0 against the auditor's 3.
 - **Each page is read in its own language.** A sampled page's language comes from its `<html lang>`, or
   else its `Content-Language` header, unless the visible text contradicts it. With neither, it comes from
   the script (kana is Japanese, hangul Korean, Han alone Chinese) and, for Latin-script text, from a few
