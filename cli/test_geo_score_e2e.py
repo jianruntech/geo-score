@@ -771,13 +771,16 @@ class EndToEnd(unittest.TestCase):
         self.assertFalse(rep["gate_capped"])
 
     def test_crawlers_that_get_no_answer_are_not_a_block(self):
-        # A probe that never gets an answer is not a refusal: six silent crawlers take g.reachable to 3, never to
-        # the gate, and ten silent crawlers leave it unobserved. Six HTTP refusals are still the gate
+        # A probe that never gets an answer is not a refusal. Crawlers with no answer on any page leave the count:
+        # three of them leave seven that answered, all with 200, which reads 5; six of them leave fewer than half,
+        # which is not observed, never the gate. Six HTTP refusals are still the gate, and four read 3
         H.start()
         names = [name for name, _ in gs.RETRIEVAL_UAS]
-        cases = [({"drop_ua": tuple(names[:6])}, 3, "no answer"),
+        cases = [({"drop_ua": tuple(names[:3])}, 5, "not counted"),
+                 ({"drop_ua": tuple(names[:6])}, None, "not observed"),
                  ({"drop_ua": tuple(names)}, None, "not observed"),
-                 ({"deny_ua_extra": tuple(names[:6])}, 0, "HTTP 403")]
+                 ({"deny_ua_extra": tuple(names[:6])}, 0, "HTTP 403"),
+                 ({"deny_ua_extra": tuple(names[:4])}, 3, "HTTP 403")]
         for faults, want, word in cases:
             srv = start_server("good", faults)
             if "deny_ua_extra" in faults:
@@ -789,6 +792,22 @@ class EndToEnd(unittest.TestCase):
                 srv.server_close()
             self.assertEqual(res["tier"]["g.reachable"], want, (faults, res["ev"]["g.reachable"]))
             self.assertIn(word, res["ev"]["g.reachable"])
+
+    def test_a_homepage_that_cannot_be_fetched_is_not_a_missing_entity(self):
+        # partial carries its Organization only on the homepage. When the homepage is in the sample but answers
+        # 503 on every try, the other pages lack the entity, and that is not evidence the site lacks it: the
+        # Organization, sameAs and knowledge-graph readings are not observed, never zero
+        H.start()
+        srv = start_server("partial", {"status_for": {"/": 503}})
+        try:
+            res = gs.run(srv.origin, urls=["/", "/pricing.html", "/about.html"], timeout=1)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        for cid in ("p1.organization", "p3.sameas"):
+            self.assertIsNone(res["tier"][cid], (cid, res["ev"][cid]))
+            self.assertIn("The homepage, where this usually sits, could not be fetched", res["ev"][cid])
+        self.assertNotEqual(res["tier"]["p3.knowledge-graph"], 0, res["ev"]["p3.knowledge-graph"])
 
     def test_the_run_deadline(self):
         # After the sample every request goes out in one wave. Here llms.txt and every retrieval crawler's request

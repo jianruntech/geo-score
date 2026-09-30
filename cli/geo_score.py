@@ -2284,49 +2284,54 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
 
     # ── g.reachable ──
     # a dropped connection or a 429 is retried; a persistent refusal still counts, because a browser
-    # reached the same page moments earlier. A probe that never gets an answer at all (a timeout or a dropped
-    # connection on every try) is not a refusal: from one address that can be the network, or a firewall that
-    # drops a crawler's user-agent sent from an address its vendor does not use. It is "not reached", it can
-    # take the tier to 3, but only HTTP refusals make "most retrieval user-agents are blocked" (the gate)
+    # reached the same page moments earlier. A probe that never gets an answer (a timeout or a dropped
+    # connection on every try) is not a refusal: from one address it is mostly the network, and otherwise a
+    # firewall dropping a crawler's user-agent sent from an address its vendor does not use, which the real
+    # crawler never meets. A crawler with no answer on any page therefore leaves the count; one answered on
+    # some pages is reached. The tier is read over the crawlers that answered, and with fewer than half of
+    # them answering nothing is observed. Only HTTP refusals make "most retrieval user-agents are blocked"
     results = [(name, get(u, ua=ua, tries=PROBE_TRIES)) for name, ua in RETRIEVAL_UAS for u in probe]
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
-    okc = sum(1 for name, rs in per.items() if all(x.ok for x in rs))
-    base_len = {u: len(visible_text(live[u].text)) for u in probe}
-    consistent, differ = 0, []
-    for name, rs in per.items():
-        if not all(x.ok for x in rs): continue
-        good = all(abs(len(visible_text(r.text)) - base_len[u]) <= max(400, base_len[u] * .25)
-                   for u, r in zip(probe, rs))
-        consistent += 1 if good else 0
-        if not good: differ.append(name)
     nua = len(RETRIEVAL_UAS)
     refused = [name for name, rs in per.items() if any(x.status and not x.ok for x in rs)]
-    silent = [name for name, rs in per.items() if not all(x.ok for x in rs) and name not in refused]
-    if okc == nua and consistent == nua:
+    silent = [name for name, rs in per.items() if name not in refused and not any(x.ok for x in rs)]
+    reached = [name for name in per if name not in refused and name not in silent]
+    okc = len(reached)
+    base_len = {u: len(visible_text(live[u].text)) for u in probe}
+    consistent, differ = 0, []
+    for name in reached:
+        good = all(abs(len(visible_text(r.text)) - base_len[u]) <= max(400, base_len[u] * .25)
+                   for u, r in zip(probe, per[name]) if r.ok)
+        consistent += 1 if good else 0
+        if not good: differ.append(name)
+    if okc + len(refused) < (nua + 1) // 2:
+        tier["g.reachable"] = None           # fewer than half the crawlers answered: too little was observed
+    elif len(refused) > nua // 2:
+        tier["g.reachable"] = 0
+    elif not refused and consistent == okc:
         tier["g.reachable"] = 5
-    elif len(silent) == nua:
-        tier["g.reachable"] = None           # no probe got an answer: nothing was observed about any crawler
     else:
-        tier["g.reachable"] = 0 if len(refused) > nua // 2 else 3
-    # which agents failed and how, grouped by what they got, so a reading at zero can be audited
+        tier["g.reachable"] = 3
+    # which agents were refused and how, grouped by what they got, so a reading at zero can be audited
     failed = {}
-    for name, rs in per.items():
-        if not all(x.ok for x in rs):
-            got = "/".join("HTTP %d" % st if st else "no answer" for st in sorted({x.status for x in rs if not x.ok}))
-            failed.setdefault(got, []).append(name)
+    for name in refused:
+        got = "/".join("HTTP %d" % st if st else "no answer" for st in sorted({x.status for x in per[name] if not x.ok}))
+        failed.setdefault(got, []).append(name)
     ev["g.reachable"] = clip("%d of %d retrieval user-agents returned 200 on %d sampled pages; "
-                             "%d of those served content matching what a browser receives.%s%s%s"
+                             "%d of those served content matching what a browser receives.%s%s%s%s"
                              % (okc, nua, len(probe), consistent,
                                 " Not reached — %s." % "; ".join(
                                     "%s: %s" % (got, "all %d" % nua if len(names) == nua else ", ".join(names))
                                     for got, names in failed.items()) if failed else "",
+                                " No answer on any page, so not counted: %s." % ", ".join(silent) if silent else "",
                                 " Content differed: %s." % ", ".join(differ) if differ else "",
                                 " (Unverified probes: vendor user-agent strings sent from this machine's address.)"
-                                if failed else ""), 480)
+                                if failed or silent else ""), 480)
     if tier["g.reachable"] is None:
-        ev["g.reachable"] = clip("No retrieval user-agent probe got an answer (%s), so nothing was observed about any "
-                                 "crawler; not observed. A browser reached the same pages." % "; ".join(failed), 480)
+        ev["g.reachable"] = clip("Only %d of %d retrieval user-agents got an answer on any sampled page (no answer: %s), "
+                                 "so too little was observed; not observed. A browser reached the same pages."
+                                 % (okc + len(refused), nua, ", ".join(silent)), 480)
     if late(*(r for _, r in results)):
         # a probe the deadline stopped says nothing about that crawler: the gate is not observed, never zero
         not_reached("g.reachable", "every crawler probe")
@@ -2689,6 +2694,17 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         ev["p3.knowledge-graph"] = ("Brand read as %s%s. No entity whose label matches exactly, in Wikidata "
                                     "or Wikipedia (%s); %d of %d lookups answered."
                                     % (site_text(brand, 60), also, "/".join(langs), kg_ok, kg_queries))
+
+    # ── a homepage that could not be fetched ──
+    # The Organization entity, its sameAs and the brand name the knowledge-graph lookup starts from usually sit
+    # on the homepage. When it was in the sample but could not be fetched, not finding them on the other pages
+    # says nothing about the site: those zeros are not observed
+    if root + "/" in urls and root + "/" not in live:
+        for cid in ("p1.organization", "p3.sameas", "p3.knowledge-graph"):
+            if tier.get(cid) == 0:
+                tier[cid] = None
+                ev[cid] = clip("%s The homepage, where this usually sits, could not be fetched this run, so this is "
+                               "not observed." % ev.get(cid, ""), 480)
 
     # ── judgement-bound checks ──
     for k in NEEDS_JUDGEMENT:
