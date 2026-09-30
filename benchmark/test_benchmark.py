@@ -250,6 +250,47 @@ class NotScored(unittest.TestCase):
                                                "violation of protocol (_ssl.c:1129)>"), "connection failed")
         self.assertEqual({k for k, _ in run.NOT_SCORED} >= {"bot challenge", "refused", "timed out", "other"}, True)
 
+    def test_every_cli_fault_kind_files_under_its_reason(self):
+        """From 1.5.0 the CLI words a failed fetch "could not fetch URL (kind): …", which 1.3.0's patterns filed as
+        "other" for every kind. Each kind the CLI can give files under its reason, from the kind one() keeps and,
+        for a row without one, from the message as the row stores it (cut at 120 characters)."""
+        gs = run.gs
+        want = {"dns": "connection failed", "refused": "connection failed", "tls": "connection failed",
+                "dropped": "connection failed", "no_response": "connection failed",
+                "timeout": "timed out", "slow": "timed out", "deadline": "timed out",
+                "http_403": "refused", "http_429": "refused", "http_500": "refused",
+                "no_content": "other", "not_public": "other"}
+        kinds = {k for k in gs.FAULTS if k != "http"} | {"http_403", "http_429", "http_500"}
+        self.assertEqual(kinds - set(want), set(), "a fault kind of the CLI's that run.py files nowhere")
+        base = "https://www.x.test"
+        for kind in sorted(kinds):
+            if kind.startswith("http_"):
+                resp = gs.Resp(base + "/", int(kind[5:]), b"", {})
+            elif kind == "no_content":
+                resp = gs.Resp(base + "/", 200, b"", {})
+            else:
+                resp = gs.Resp(base + "/", 0, b"", {}, err="x", kind=kind)
+            e = gs.fetch_failure(base, [resp])
+            self.assertEqual(e.kind, kind)
+            self.assertEqual(run.not_scored_reason(str(e)[:120], e.kind), want[kind], kind)
+            self.assertEqual(run.not_scored_reason(str(e)[:120]), want[kind], "%s, from the message alone" % kind)
+        self.assertEqual(run.not_scored_reason("cannot resolve x.test: check the spelling, or your DNS/proxy settings"),
+                         "connection failed")
+        self.assertEqual(run.not_scored_reason("anything at all", "bot_challenge"), "bot challenge")
+        self.assertEqual(run.not_scored_reason("anything at all", "internal"), "other")
+
+    def test_the_row_keeps_the_cli_error_kind(self):
+        def fake_run(url, sample, **kw):
+            raise run.gs.ScoreError("could not fetch %s (timeout): %s did not answer" % (url, url), "timeout", url)
+        saved = (run.gs.run, run.time.sleep)
+        run.gs.run, run.time.sleep = fake_run, lambda s: None
+        try:
+            row = run.one({"url": "x.test", "sector": "Test"})
+        finally:
+            run.gs.run, run.time.sleep = saved
+        self.assertEqual(row.get("error_kind"), "timeout")
+        self.assertEqual(run.not_scored_reason(row["error"], row["error_kind"]), "timed out")
+
     def test_a_bot_challenge_on_the_bare_host_is_what_the_row_keeps(self):
         calls = []
 

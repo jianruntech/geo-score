@@ -139,7 +139,10 @@ only the optional `elapsed_s`.
   form: a confirmed tool error ships as a patch release, and published scores change only when a site is
   measured again. `run.py` files a CLI error that starts with
   `bot challenge served to a browser user-agent` under a not-scored reason of its own, and the Not
-  scored list is grouped by reason.
+  scored list is grouped by reason. A row measured with 1.5.0 or later keeps the CLI's error kind
+  (`error_kind` in results.json) and is filed by it: `http_*` as refused, `timeout`, `slow` and `deadline`
+  as timed out, and `dns`, `refused`, `tls`, `dropped` and `no_response` as connection failed. Rows
+  measured with 1.3.0 are still filed by their message.
 - **Weight sensitivity** (`benchmark/sensitivity.py`, `SENSITIVITY.md` + zh). It first recomputes all 317
   scores from raw/ (0 mismatches), then re-scores them under equal weights, an illustrative
   evidence-basis weighting, each check left out, and 300 seeded draws. The rank order holds (Spearman

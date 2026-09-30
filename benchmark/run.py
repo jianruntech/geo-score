@@ -92,11 +92,33 @@ NOT_SCORED = [("bot challenge", "**Bot challenge** — a browser user-agent was 
               ("connection failed", "**Connection failed** — a TLS or network error before any answer"),
               ("other", "Other")]
 
-def not_scored_reason(error):
-    """The reason a listed site has no score, from the error run.py recorded for it."""
+# The CLI's error kinds (schema/error.v1.json) under the reason each is filed as. A CLI from 1.5.0 on words every
+# failed fetch as "could not fetch URL (kind): …" and raises it with the kind, which one() records as error_kind. The
+# message patterns at the end of not_scored_reason() are 1.3.0's wording, which the committed rows still carry.
+KIND_REASONS = {"bot_challenge": "bot challenge",
+                "timeout": "timed out", "slow": "timed out", "deadline": "timed out",
+                "dns": "connection failed", "refused": "connection failed", "tls": "connection failed",
+                "dropped": "connection failed", "no_response": "connection failed"}
+_KIND_IN_MESSAGE = re.compile(r"could not fetch \S+ \(([a-z][a-z0-9_]*)\):")
+
+def error_kind(error, kind=None):
+    """The CLI's kind for a recorded error: the one the row kept, else the one its message names, else None."""
+    if kind:
+        return kind
     e = error or ""
-    if e.startswith(BOT_CHALLENGE):
-        return "bot challenge"
+    m = _KIND_IN_MESSAGE.match(e)
+    if m:
+        return m.group(1)
+    if e.startswith("cannot resolve "):              # the CLI's DNS preflight, before any fetch
+        return "dns"
+    return "bot_challenge" if e.startswith(BOT_CHALLENGE) else None
+
+def not_scored_reason(error, kind=None):
+    """The reason a listed site has no score, from the error run.py recorded for it and, from 1.5.0 on, its kind."""
+    e = error or ""
+    k = error_kind(e, kind)
+    if k:
+        return "refused" if k.startswith("http_") else KIND_REASONS.get(k, "other")
     if "all requests returned" in e:
         return "refused"
     if "timed out" in e:
@@ -172,7 +194,12 @@ def one(site):
                                  sum(r[4] for r in rows if r[1] == p and r[3] is not None)]
                              for p in dict.fromkeys(r[1] for r in rows)})
     except Exception as e:
-        return dict(site=site["url"], sector=site["sector"], error=str(e)[:120])
+        row = dict(site=site["url"], sector=site["sector"], error=str(e)[:120])
+        # the CLI's kind files the row under its reason; the message is cut at 120 characters and is no contract
+        kind = getattr(e, "kind", None)
+        if isinstance(kind, str) and kind:
+            row["error_kind"] = kind
+        return row
 
 def pin_source(pin_dir, out_dir):
     """results.json's pinned_from: the pinned directory relative to the run's own, so the file names no path on
@@ -371,7 +398,7 @@ def write_csvs(p, reports, out_dir=HERE):
         rep = reports.get(r["site"])
         if rep is None:
             res.append([r["site"], r["sector"], p["measured_at"], r.get("tool_version") or tool] + [None] * 9
-                       + [not_scored_reason(r.get("error")) if "error" in r else None, r.get("error")] + [None] * len(ids))
+                       + [not_scored_reason(r.get("error"), r.get("error_kind")) if "error" in r else None, r.get("error")] + [None] * len(ids))
             continue
         st = {c["id"]: c for c in rep["checks"]}
         pts = [st[c].get("points") if c in st and st[c].get("state") == "scored" else None for c in ids]
@@ -564,7 +591,7 @@ def write_readme(p):
     if errs:
         A("\n### Not scored\n")
         why = {}
-        for r in errs: why.setdefault(not_scored_reason(r["error"]), []).append(r)
+        for r in errs: why.setdefault(not_scored_reason(r["error"], r.get("error_kind")), []).append(r)
         A("| Why | Sites |"); A("|---|:-:|")
         for k, label in NOT_SCORED:
             if k in why:
