@@ -21,9 +21,10 @@ apart. The leaderboard itself is still the 1.3.0 run of 2026-09-27.
 
 **Upgrading from 1.4.0.** Level-1 scores move only where 1.4.0 read a site wrong, and every such fix is
 under Fixed with its check and direction: the gates (`g.robots`, `g.reachable`, and `g.ssr` for sites
-behind a bot challenge or with Japanese or Korean pages) and the checks that read page text
+behind a bot challenge or with Japanese or Korean pages), the checks that read page text
 (`p2.answer-passages`, `p2.question-intent`, `p2.sourced-stats`, `p2.named-author`, `p4.answer-shape`,
-`p4.cn-engines` and `p3.knowledge-graph`). Two invocations exit differently: a site that serves only
+`p4.cn-engines` and `p3.knowledge-graph`), and the checks whose file, logo or crawler request is now
+retried (`p1.llms-txt`, `b.llms-full`, `b.ai-txt`, `p1.organization` and `p4.cn-engines`). Two invocations exit differently: a site that serves only
 bot-challenge pages exits 2 instead of being scored, and an unexpected error exits 2 in one line instead
 of a traceback that exited 1. `diff` is now a subcommand, so a host named `diff` is written
 `https://diff`. `audience_language` can hold languages other than `en` and `zh-CN`, and the report gains
@@ -205,12 +206,11 @@ only the optional `elapsed_s`.
   `llms-full.txt`, `ai.txt` and `/.well-known/ai.txt` (and the same files under a given path), the
   Organization logo, up to 8 `sameAs` profiles, the Chinese crawlers and the 30 retrieval probes. The
   Wikidata and Wikipedia lookups run beside them, one brand candidate at a time as before, so they get
-  the same lookups. Requests to the site still share 8 connections; other hosts get their own. The site's
-  files and the logo are retried like the sitemaps, and the Chinese crawlers like the retrieval probes.
-  On the test fixtures, with 0.2 s added to every answer, a run went from 18–29 rounds of requests one
-  after another to 11–12. No score changes. A run sends the same requests as before, except
-  `/.well-known/ai.txt`, which is now requested even when `/ai.txt` exists, and retries after a timeout,
-  429 or 5xx.
+  the same lookups. Requests to the site still share 8 connections; other hosts get their own. On the
+  test fixtures, with 0.2 s added to every answer, a run went from 18–29 rounds of requests one after
+  another to 11–12. The wave itself moves no score and asks for the same URLs as 1.4.0, except
+  `/.well-known/ai.txt`, which is now requested even when `/ai.txt` exists. The retries it adds for the
+  site's files, the logo and the Chinese crawlers do move scores, and are under Fixed.
 - **`--help` stands alone.** It names the command you ran (`geo_score.py` or `geo-score`), lists `diff`,
   `watch` and `mcp` in the usage line, and explains the URL argument and `-q`. It ends with five
   examples, the exit codes (watch's too) and links to the rubric and the troubleshooting guide for this
@@ -323,6 +323,15 @@ only the optional `elapsed_s`.
   where a transient 429 or reset on a crawler probe read as a block. Five leaderboard rows took their
   `g.robots` from a failed fetch ("No robots.txt (HTTP 0)"): clickpaas.com, codecademy.com, continue.dev,
   helium10.com and xcmg.com.
+- **A transient fault no longer reads as a missing file, logo or Chinese crawler.** 1.4.0 asked once
+  for `llms.txt`, `llms-full.txt`, `ai.txt`, the Organization logo and the home page as each Chinese
+  crawler, so one timeout, reset, 429 or 5xx read as a file that is not there, a logo that does not
+  resolve or a crawler that was not reached. The files and the logo are now retried like the sitemaps
+  (up to 3 tries) and the Chinese crawlers like the retrieval probes (one retry); a definite answer is
+  still asked once, so a healthy site gets no extra request. Direction: up, where a transient fault used
+  to read as absent, in `p1.llms-txt`, `b.llms-full`, `b.ai-txt`, the logo part of `p1.organization`
+  and `p4.cn-engines`. Two of seven live runs through a proxy had lost `p1.llms-txt` to a single
+  timeout.
 - **A bot-challenge page is not scored.** When a bot-protection service (AWS WAF, Akamai, Cloudflare,
   Fastly, PerimeterX, DataDome or Imperva) sends the CLI's browser user-agent a challenge page instead of
   the page, that page is dropped from the sample like a failed fetch. A site that serves nothing but

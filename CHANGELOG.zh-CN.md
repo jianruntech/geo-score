@@ -13,8 +13,9 @@ robots.txt 分组，也不再因为一次掉线而变动；人机验证页不再
 GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准榜单可以重测、也可以拆开来看。榜单本身仍是 2026-09-27 用 1.3.0 跑的那一轮。
 
 **从 1.4.0 升级。** 第一级的分数只在 1.4.0 读错了网站的地方变动，每一处都列在「修复」下，写明检查项和方向：门槛项（`g.robots`、
-`g.reachable`，以及有人机验证或日文、韩文页面的站的 `g.ssr`）和读页面文字的检查项（`p2.answer-passages`、`p2.question-intent`、
-`p2.sourced-stats`、`p2.named-author`、`p4.answer-shape`、`p4.cn-engines` 和 `p3.knowledge-graph`）。有两种调用的退出码变了：只
+`g.reachable`，以及有人机验证或日文、韩文页面的站的 `g.ssr`）、读页面文字的检查项（`p2.answer-passages`、`p2.question-intent`、
+`p2.sourced-stats`、`p2.named-author`、`p4.answer-shape`、`p4.cn-engines` 和 `p3.knowledge-graph`），以及文件、logo 或爬虫请求现在
+会重试的检查项（`p1.llms-txt`、`b.llms-full`、`b.ai-txt`、`p1.organization` 和 `p4.cn-engines`）。有两种调用的退出码变了：只
 返回人机验证页的网站不再评分、以退出码 2 结束；意料之外的错误以一行信息、退出码 2 结束，不再打印 traceback 并以 1 退出。`diff`
 现在是子命令，名字就叫 `diff` 的主机要写成 `https://diff`。`audience_language` 现在可能是 `en`、`zh-CN` 以外的语言；报告只多了一
 个可选字段 `elapsed_s`。
@@ -136,10 +137,9 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
 - **抽样之后一波发出。** 抽样页面取回后，凡是网址已经确定的请求都一次并发发出，各项检查从本次运行的缓存里读结果：sitemap、
   `llms.txt`、`llms-full.txt`、`ai.txt` 与 `/.well-known/ai.txt`（给了路径时连同该路径下的同名文件）、Organization 的 logo、最多
   8 个 `sameAs` 主页、中文搜索引擎爬虫，以及 30 个检索爬虫探测。Wikidata 与 Wikipedia 查询在旁边并行，仍然一次查一个品牌候选，所
-  以发出的查询和以前一样。发往站点的请求仍共用 8 个连接，发往其他主机的另有自己的连接。站点自己的文件和 logo 像 sitemap 一样会重
-  试，中文爬虫像检索爬虫探测一样会重试。在测试夹具上给每个应答加 0.2 秒延迟，一次运行里前后相接的请求从 18–29 轮减到 11–12 轮。
-  分数不变。一次运行发出的请求和以前相同，只有两处例外：`/.well-known/ai.txt` 现在即使 `/ai.txt` 存在也会请求；遇到超时、429 或
-  5xx 时会重试。
+  以发出的查询和以前一样。发往站点的请求仍共用 8 个连接，发往其他主机的另有自己的连接。在测试夹具上给每个应答加 0.2 秒延迟，一次
+  运行里前后相接的请求从 18–29 轮减到 11–12 轮。这一波本身不改变分数，请求的网址也和 1.4.0 相同，只有一处例外：
+  `/.well-known/ai.txt` 现在即使 `/ai.txt` 存在也会请求。它为站点文件、logo 和中文爬虫加上的重试会让分数变动，写在「修复」下。
 - **`--help` 自成一体。** 它写出你实际运行的命令（`geo_score.py` 或 `geo-score`），在用法行里列出 `diff`、`watch`、`mcp`，并解释
   URL 参数和 `-q`。末尾有五个示例、退出码（含 watch 的），以及本版本评分标准和排障指南的链接。缺少 `geo_watch.py` 时，`mcp`、
   `watch`、`--ask` 会说明是哪一个需要它，并先给出发布版 wheel 的 `uvx` 与 `pipx` 命令，再给出 clone。
@@ -214,6 +214,11 @@ GitHub 之外的平台，有了对榜单某一行提出异议的表单，基准�
   作「没有 robots.txt」。每次都返回 429 或 5xx 的，仍给第 3 档并在证据中写明。方向两边都有：一次 robots.txt 抓取失败曾藏住
   Disallow 的站下降；爬虫探测偶遇 429 或连接重置而被当成拦截的站上升。榜单上有五行的 `g.robots` 来自失败的抓取（「No robots.txt
   (HTTP 0)」）：clickpaas.com、codecademy.com、continue.dev、helium10.com、xcmg.com。
+- **偶发故障不再被读成文件、logo 或中文爬虫不存在。** 1.4.0 对 `llms.txt`、`llms-full.txt`、`ai.txt`、Organization 的 logo，
+  以及各中文爬虫访问首页的请求都只发一次，所以一次超时、连接重置、429 或 5xx 就被读成文件不存在、logo 打不开或爬虫没访问成功。现在
+  这些文件和 logo 像 sitemap 一样重试（最多 3 次），中文爬虫像检索爬虫探测一样重试（重试一次）；明确的应答仍只请求一次，健康的站
+  不会多收请求。方向：上升，涉及以前把偶发故障读成「没有」的 `p1.llms-txt`、`b.llms-full`、`b.ai-txt`、`p1.organization` 里 logo
+  那一部分，以及 `p4.cn-engines`。经代理的七次实测里，有两次因为一次超时丢了 `p1.llms-txt`。
 - **人机验证页不再评分。** 反爬服务（AWS WAF、Akamai、Cloudflare、Fastly、PerimeterX、DataDome 或 Imperva）给 CLI 的浏览器 UA 返
   回人机验证页、而不是页面本身时，这一页和抓取失败的页面一样移出样本。只返回验证页的网站过去会被记为 `g.ssr` 0 分并封顶 40，榜单
   上写成「正文需要 JavaScript」。现在这类网站不评分，以退出码 2 结束，报错为
