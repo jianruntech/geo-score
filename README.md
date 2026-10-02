@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![AIV readiness of the leaderboard page, measured 2026-09-28 with geo-score 1.4.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
+[![AIV readiness of the leaderboard page, measured 2026-10-03 with geo-score 1.5.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
@@ -34,19 +34,19 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
 ```
   AIV READINESS  https://stripe.com
 ──────────────────────────────────────────────────────────────────────────
-  65 / 100   Growing
-  1 point to Solid
+  72 / 100   Solid
+  11 points to Leading
 
-  Reachable 9/15
+  Reachable 13/15
    ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
-   ◐ Reachable to retrieval agents    ███████████░░░░░░░  3/5
-   ◐ Main content server-rendered     ███████████░░░░░░░  3/5
-  Understandable 15/22
+   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ✓ Main content server-rendered     ██████████████████  5/5
+  Understandable 17/22
    ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
    ✓ llms.txt present and structured  ██████████████████  5/5
    ✓ Organization + WebSite schema    ██████████████████  6/6
    ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
-   ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
+   ✓ Page-type schema (Product, FAQ…) ██████████████████  4/4
   Content Citability 21/35
    ✓ Self-contained answer passages   ██████████████████  9/9
    ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
@@ -70,7 +70,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
    +3 next tier (+3 to full)  Named, verifiable authorship      needs: and the name links to a verifiable identity page
    +2 next tier (+2 to full)  Crawlers allowed in robots.txt    needs: mainstream retrieval user-agents explicitly allowed
 
-  Scored 56 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 136.9 s
+  Scored 62 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 91.5 s
   Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage
   Not observable this run: p4.cn-engines (not a Chinese-language site)
 
@@ -79,14 +79,14 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-09-30 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0.</sub>
+<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0.</sub>
 
 </details>
 
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
 a score against a **published, versioned rubric** — not a black box.
 
-**[See how 317 well-known sites score →](https://www.jianruntech.com/leaderboard)**  ·  a quarter of them are unreadable to AI crawlers.
+**[See how 324 well-known sites score →](https://www.jianruntech.com/leaderboard)**  ·  a quarter of them are unreadable to AI crawlers.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
@@ -230,53 +230,52 @@ change has any effect.
 
 Band names describe a **stage, not a verdict**. External benchmarks put most business
 sites in the 30–55 range, so a score in the forties is ordinary, not alarming. In this repository's
-own benchmark, 85% of 317 sites reach Early and 10% reach Leading
+own benchmark, 85% of 324 sites reach Early and 6% reach Leading
 ([where the cuts fall](benchmark/README.md#where-the-band-cuts-fall)).
 
-## 317 sites, scored in public
+## 324 sites, scored in public
 
-**A quarter of them are unreadable to AI crawlers.** 83 sites have a gate check at zero — an
-AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 23 block AI crawlers by name in
-`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 12
-for exactly this reason. **47 serve a page whose body only exists after JavaScript runs.**
+**A quarter of them are unreadable to AI crawlers.** 73 sites have a gate check at zero — an
+AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 20 block AI crawlers by name in
+`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 17
+for exactly this reason. **41 serve a page whose body only exists after JavaScript runs.**
 Their content is there, a browser sees it, and a crawler gets an empty shell. That group
-almost certainly did not choose it. At a further 13 the server refuses crawler user-agents (unverified
+almost certainly did not choose it. At a further 12 the server refuses crawler user-agents (unverified
 probes from the auditor's address).
 
-Median **56** (95% CI 52–58, [stats.py](benchmark/stats.py)). Range 11 to 99. 69 sites were scored on
-fewer than four pages; without them the median is 62.
+Median **55** (95% CI 51–58, [stats.py](benchmark/stats.py)). Range 11 to 96. 66 sites were scored on
+fewer than four pages; without them the median is 59.
 
 | Site | Score | Band |
 |---|:-:|---|
-| pulumi.com | **99** | Leading |
-| resend.com | **99** | Leading |
-| lumalabs.ai | **94** | Leading |
-| kayak.com | **92** | Leading |
-| openrouter.ai | **90** | Leading |
+| resend.com | **96** | Leading |
+| pulumi.com | **94** | Leading |
+| supabase.com | **93** | Leading |
+| elevenlabs.io | **91** | Leading |
+| lumalabs.ai | **90** | Leading |
 | … | | |
-| amazon.com | 12 | Not started |
+| qcloud.com | 12 | Not started |
 | mercadolibre.com | 12 | Not started |
 | keepa.com | 11 | Not started |
 
 **[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [CSV](benchmark/results.csv) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
 
-Two more findings worth the click. Sites in the five China sectors score **20 points
-lower** than everyone else (95% CI 16–28; median 39 against 59; earlier samples measured with 1.1.0
-put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 50
-Chinese-language sites score 20 points lower than the 267 others (95% CI 13–25), and within matched
-sector families the gap runs from 6 to 30 points. Counted check by check in raw points, 68% of the gap
+Two more findings worth the click. Sites in the five China sectors score **22 points
+lower** than everyone else (95% CI 16–30; median 36 against 58; earlier samples measured with 1.1.0
+put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 54
+Chinese-language sites score 26 points lower than the 270 others (95% CI 22–32), and within matched
+sector families the gap runs from -8 to 27 points. Counted check by check in raw points, 69% of the gap
 sits in checks the CLI reads with a heuristic, so at most that share could be the tool misreading
 Chinese pages ([the breakdown](benchmark/README.md#what-the-spread-shows)). The two largest per-check
 differences, question-shaped headings and self-contained answer passages, are heuristics the CLI also
 read lower than a human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md),
 so part of the gap may be the tool reading Chinese pages conservatively. From 1.5.0 the CLI reads each
 page in its own language and counts Chinese task, explanation and comparison headings; the leaderboard
-above was measured with 1.3.0. And a named, verifiable
-byline and an opening paragraph that stands on its own are among the three largest gaps on more than
-half the sites.
+above was measured with 1.5.0, so its figures include that change. And statistics that carry a source
+and a named, verifiable byline are among the three largest gaps on more than half the sites.
 
 Every number here is reproducible with the command at the top of this page (the benchmark
-was run with 1.3.0 on 2026-09-27) — and we measured how reproducible, though with an older tool.
+was run with 1.5.0 on 2026-10-02) — and we measured how reproducible, though with an older tool.
 Running the whole benchmark twice on 2026-09-09 with a 1.1.x build, before the 1.1.2 variance fixes,
 and comparing every site: **96% landed within ±5, 45% identically** (ICC 0.97, SEM 3.1). It has not
 been re-measured with the current tool yet; [benchmark/retest.py](benchmark/retest.py) is the committed
@@ -328,10 +327,10 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 ```
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
-the five published hand audits on the same pages, it matched the auditor's tier on 79% of
-86 check pairs (95% where it reads a rule, 64% where it approximates a judgement). On the checks
-both scored it read 0.4 points lower on average (per site from 6 lower to 9 higher; mean absolute
-difference 5.2). Its full normalised score read 3.6 points lower on average, from 10 lower to 6
+the five published hand audits on the same pages, it matched the auditor's tier on 80% of
+84 check pairs (92% where it reads a rule, 69% where it approximates a judgement). On the checks
+both scored it read 2.4 points lower on average (per site from 12 lower to 10 higher; mean absolute
+difference 8.8). Its full normalised score read 5.2 points lower on average, from 16 lower to 7
 higher, because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`,
 which the CLI leaves out. n=5, all of them calibration sites:
 [VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.

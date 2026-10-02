@@ -12,7 +12,7 @@
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![榜单页的 AIV 就绪度，2026-09-28 用 geo-score 1.4.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
+[![榜单页的 AIV 就绪度，2026-10-03 用 geo-score 1.5.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
@@ -34,19 +34,19 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
 ```
   AIV READINESS  https://stripe.com
 ──────────────────────────────────────────────────────────────────────────
-  65 / 100   Growing
-  1 point to Solid
+  72 / 100   Solid
+  11 points to Leading
 
-  Reachable 9/15
+  Reachable 13/15
    ◐ Crawlers allowed in robots.txt   ███████████░░░░░░░  3/5
-   ◐ Reachable to retrieval agents    ███████████░░░░░░░  3/5
-   ◐ Main content server-rendered     ███████████░░░░░░░  3/5
-  Understandable 15/22
+   ✓ Reachable to retrieval agents    ██████████████████  5/5
+   ✓ Main content server-rendered     ██████████████████  5/5
+  Understandable 17/22
    ◐ Sitemap discoverable and fresh   █████████░░░░░░░░░  2/4
    ✓ llms.txt present and structured  ██████████████████  5/5
    ✓ Organization + WebSite schema    ██████████████████  6/6
    ✗ BreadcrumbList on nested pages   ░░░░░░░░░░░░░░░░░░  0/3
-   ◐ Page-type schema (Product, FAQ…) █████████░░░░░░░░░  2/4
+   ✓ Page-type schema (Product, FAQ…) ██████████████████  4/4
   Content Citability 21/35
    ✓ Self-contained answer passages   ██████████████████  9/9
    ◐ Headings match how people ask    ████████░░░░░░░░░░  3/7
@@ -70,7 +70,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
    +3 next tier (+3 to full)  Named, verifiable authorship      needs: and the name links to a verifiable identity page
    +2 next tier (+2 to full)  Crawlers allowed in robots.txt    needs: mainstream retrieval user-agents explicitly allowed
 
-  Scored 56 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 136.9 s
+  Scored 62 / 86 observable · 4 checks left the denominator · rubric v1.1 · took 91.5 s
   Needs off-site search or judgement: p3.listings, p3.mentions, p4.question-coverage
   Not observable this run: p4.cn-engines (not a Chinese-language site)
 
@@ -79,14 +79,14 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`，2026-09-30 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。</sub>
+<sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。</sub>
 
 </details>
 
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
-**[看 317 个知名站点的公开榜单 →](https://www.jianruntech.com/leaderboard/zh)**  ·  其中四分之一，AI 爬虫读不到。
+**[看 324 个知名站点的公开榜单 →](https://www.jianruntech.com/leaderboard/zh)**  ·  其中四分之一，AI 爬虫读不到。
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。
@@ -220,45 +220,45 @@ Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp
 | 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
 
 档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
-所以四十几分是常态，不是警报。本仓库自己的基准榜单里，317 个站中 85% 达到起步期，10% 达到领先
+所以四十几分是常态，不是警报。本仓库自己的基准榜单里，324 个站中 85% 达到起步期，6% 达到领先
 （[档位线落在哪里](benchmark/README.md#where-the-band-cuts-fall)）。
 
-## 317 个站点，公开打分
+## 324 个站点，公开打分
 
-**其中四分之一，AI 爬虫读不到。** 83 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
-23 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
-amazon.com 只有 12 分正是这个原因。**另有 47 个站的正文只在 JavaScript 跑完之后才存在**，
+**其中四分之一，AI 爬虫读不到。** 73 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
+20 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
+amazon.com 只有 17 分正是这个原因。**另有 41 个站的正文只在 JavaScript 跑完之后才存在**，
 内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
-还有 13 个站，服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）。
+还有 12 个站，服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）。
 
-中位数 **56**（95% 置信区间 52–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 99。
-其中 69 个站实际评分的页面不足 4 个，去掉它们后中位数是 62。
+中位数 **55**（95% 置信区间 51–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 96。
+其中 66 个站实际评分的页面不足 4 个，去掉它们后中位数是 59。
 
 | 站点 | 分数 | 档 |
 |---|:-:|---|
-| pulumi.com | **99** | 领先 |
-| resend.com | **99** | 领先 |
-| lumalabs.ai | **94** | 领先 |
-| kayak.com | **92** | 领先 |
-| openrouter.ai | **90** | 领先 |
+| resend.com | **96** | 领先 |
+| pulumi.com | **94** | 领先 |
+| supabase.com | **93** | 领先 |
+| elevenlabs.io | **91** | 领先 |
+| lumalabs.ai | **90** | 领先 |
 | … | | |
-| amazon.com | 12 | 未起步 |
+| qcloud.com | 12 | 未起步 |
 | mercadolibre.com | 12 | 未起步 |
 | keepa.com | 11 | 未起步 |
 
 **[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [CSV](benchmark/results.csv) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
 
-另外两个值得点进去看的发现。五个中国行业的站比其余站**低 20 分**（95% 置信区间 16–28；中位 39 对 59；此前用 1.1.0
-的几次取样测得的差距在 16 到 23 分之间）。改按站点面向的语言分组，50 个中文站比其余 267 个站低 20 分（95% 置信区间 13–25）；
-相近行业一一对比，差距在 6 到 30 分之间。按逐项原始分算，差距的 68% 落在 CLI 靠启发式判断的检查项上，所以最多只有这么大一部分可能是工具误读了中文页面（[拆解见此](benchmark/README.md#what-the-spread-shows)）。
+另外两个值得点进去看的发现。五个中国行业的站比其余站**低 22 分**（95% 置信区间 16–30；中位 36 对 58；此前用 1.1.0
+的几次取样测得的差距在 16 到 23 分之间）。改按站点面向的语言分组，54 个中文站比其余 270 个站低 26 分（95% 置信区间 22–32）；
+相近行业一一对比，差距在 -8 到 27 分之间。按逐项原始分算，差距的 69% 落在 CLI 靠启发式判断的检查项上，所以最多只有这么大一部分可能是工具误读了中文页面（[拆解见此](benchmark/README.md#what-the-spread-shows)）。
 逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
 而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
-从 1.5.0 起，CLI 按每个页面自己的语言来读，中文的任务、说明和对比类标题也计入提问意图；上面的榜单是用 1.3.0 测的。
-另外，「具名、可核实的作者署名」和「一段能独立成立的开头」在超过一半的站上都排进了最大的三个缺口。
+从 1.5.0 起，CLI 按每个页面自己的语言来读，中文的任务、说明和对比类标题也计入提问意图；上面的榜单是用 1.5.0 测的，数字里已经包含了这一改动。
+另外，「统计数据注明出处」和「具名、可核实的作者署名」在超过一半的站上都排进了最大的三个缺口。
 
 **中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
 
-每个数字都能用页首那条命令复现（榜单是 2026-09-27 用 1.3.0 跑的）——而且我们把「能复现到什么程度」也测了，
+每个数字都能用页首那条命令复现（榜单是 2026-10-02 用 1.5.0 跑的）——而且我们把「能复现到什么程度」也测了，
 不过用的是旧版本：2026-09-09 用 1.1.2 修正波动之前的 1.1.x 版本把整个榜单跑两遍、逐站比对：**96% 的站落在 ±5 以内，
 45% 完全一致**（ICC 0.97，SEM 3.1）。当前版本还没有重测，[benchmark/retest.py](benchmark/retest.py) 是提交进仓库、可以重跑的重测脚本。
 所以单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
@@ -305,9 +305,9 @@ git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
 # 然后：/geo-score audit https://example.com
 ```
 
-CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，86 对检查项里有 79% 与审计者档位一致
-（按规则读取的项 95%，靠启发式近似判断的项 64%）。只看两边都打了分的检查项，CLI 平均低 0.4 分
-（逐站从低 6 分到高 9 分，平均绝对差 5.2 分）；按完整的归一化分算平均低 3.6 分，范围从低 10 分到高 6 分，
+CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
+（按规则读取的项 92%，靠启发式近似判断的项 69%）。只看两边都打了分的检查项，CLI 平均低 2.4 分
+（逐站从低 12 分到高 10 分，平均绝对差 8.8 分）；按完整的归一化分算平均低 5.2 分，范围从低 16 分到高 7 分，
 因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
 样本只有 5 个站，而且都是当初用来校准的站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 

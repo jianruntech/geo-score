@@ -8,7 +8,7 @@ geo-score:
   variables:
     SITE_URL: https://example.com
     GEO_SCORE_FAIL_UNDER: "40"        # the job fails below this score; drop --fail-under to only report
-    GEO_SCORE_RELEASE: https://github.com/jianruntech/geo-score/releases/download/v1.4.0
+    GEO_SCORE_RELEASE: https://github.com/jianruntech/geo-score/releases/download/v1.5.0
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"          # CI/CD > Schedules, e.g. weekly
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -20,9 +20,9 @@ geo-score:
     # piping it, so a SHA256SUMS without that line stops the job here, pipefail or not
     - grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256
     - sha256sum -c geo_score.py.sha256
-    # geo-score 1.5.0 and later: add --fail-on-gate to also fail the job when a gate scores zero. A gate at zero
-    # caps the score at 40, and a capped site at exactly 40 passes --fail-under 40; an older release rejects the flag
-    - python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under "$GEO_SCORE_FAIL_UNDER"
+    # --fail-on-gate also fails the job when a gate scores zero: a gate at zero caps the score at 40, and a capped
+    # site at exactly 40 passes --fail-under 40 (the flag is new in 1.5.0; an older release rejects it)
+    - python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under "$GEO_SCORE_FAIL_UNDER" --fail-on-gate
   artifacts:
     when: always                      # keep the report when the threshold fails the job
     paths: [geo-score.json]

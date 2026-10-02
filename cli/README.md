@@ -167,23 +167,25 @@ The [Claude Code skill](../SKILL.md) scores all 21.
 
 ### How far to trust each check
 
-Re-scoring the five published hand audits on the same pages with 1.3.0
-([VALIDITY.md](../benchmark/VALIDITY.md)), the CLI matched the auditor's tier on 79% of 86 check
-pairs. On the checks both scored it read 0.4 points lower on average (per site from 6 lower
-to 9 higher; mean absolute difference 5.2). Its full normalised score read 3.6 points lower on average,
+Re-scoring the five published hand audits on the same pages with 1.5.0
+([VALIDITY.md](../benchmark/VALIDITY.md)), the CLI matched the auditor's tier on 80% of 84 check
+pairs. On the checks both scored it read 2.4 points lower on average (per site from 12 lower
+to 10 higher; mean absolute difference 8.8). Its full normalised score read 5.2 points lower on average,
 because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`, which the
 CLI leaves out.
 
 | How the CLI reads it | Checks | Same tier as the hand audit |
 |---|---|--:|
-| **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 95% of 41 pairs |
-| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 64% of 45 pairs |
+| **By rule**: parses a file, a status code or markup and applies the rubric's count | `g.robots`, `p1.*`, `p3.knowledge-graph`, `p3.sameas`, `p4.cn-engines` | 92% of 39 pairs |
+| **By heuristic**: approximates a judgement the rubric describes in prose | `g.reachable`, `g.ssr`, `p2.*`, `p3.video`, `p4.answer-shape` | 69% of 45 pairs |
 | **Not at all**: needs off-site search or human judgement | `p3.listings`, `p3.mentions`, `p4.question-coverage` | left out of the denominator |
 
-The weakest agreement was `p2.sourced-stats` (the CLI scored higher than the auditor on 4 of 5
-sites), then `p2.named-author` (2 of 5 agree). From 1.5.0 a figure's source must sit beside it;
-re-scored on the audited pages on 2026-09-30, `p2.sourced-stats` matched the auditor on 4 of the 5 sites
-and read lower on the fifth. Read both with `--explain` before acting on them.
+The weakest agreement is `p2.named-author` (1 of 5 sites agree: the CLI scored two higher than the
+auditor and two lower), then `p1.page-type`, `p2.answer-passages`, `p2.freshness` and `p3.video`
+(3 of 5 each). With 1.3.0 the weakest was `p2.sourced-stats` (the CLI scored higher than the auditor
+on 4 of 5 sites); from 1.5.0 a figure's source must sit beside it, and `p2.sourced-stats` now matches
+the auditor on 4 of the 5 sites and reads lower on the fifth. Read these with `--explain` before acting
+on them.
 
 ## Heuristics, stated plainly
 

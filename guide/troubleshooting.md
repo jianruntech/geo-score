@@ -213,8 +213,8 @@ are read at the origin because that is where the specifications put them.
 
 ## My score differs from the public leaderboard
 
-**Cause.** The leaderboard is a dated measurement: the current run scored 317 sites on 2026-09-27
-with tool 1.3.0. A site's page can change after that date, the sample differs between runs, and
+**Cause.** The leaderboard is a dated measurement: the current run scored 324 sites on 2026-10-02
+with tool 1.5.0. A site's page can change after that date, the sample differs between runs, and
 reports made with an older tool read some checks differently (see the changelog). Every report
 states the tool version (`tool`), and each site's full report from the run is in `benchmark/raw/`.
 

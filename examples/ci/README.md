@@ -31,11 +31,11 @@ Level 1 is a single file with no dependencies and a machine-readable mode, so an
 works. Download the CLI and the checksums from a pinned release, check the file, then score once:
 
 ```bash
-rel=https://github.com/jianruntech/geo-score/releases/download/v1.4.0
+rel=https://github.com/jianruntech/geo-score/releases/download/v1.5.0
 curl -sSfLO "$rel/geo_score.py"
 curl -sSfLO "$rel/SHA256SUMS"
 grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256 && sha256sum -c geo_score.py.sha256 &&
-python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under 40
+python3 geo_score.py "$SITE_URL" --quiet --json-out geo-score.json --junit geo-score.xml --fail-under 40 --fail-on-gate
 ```
 
 The `&&` chain is what keeps an unchecked file from running. Some CI shells, Azure Pipelines' script
@@ -48,9 +48,9 @@ One run writes the report, writes the test file and applies the threshold. Two r
 twice and can print two different scores, so the report you keep would not be the run that passed or
 failed the build. Exit code is 1 when the score is below `--fail-under`, 2 when the site could not be
 fetched, and 0 otherwise; a file that does not match `SHA256SUMS` stops the step before scoring.
-From geo-score 1.5.0, `--fail-on-gate` on the same run also exits 1 when a gate check scores zero: a
-gate at zero caps the score at 40, and a capped site that reads exactly 40 passes `--fail-under 40`. Add it when the
-release you pin has it; an older release rejects the flag with exit 2.
+`--fail-on-gate` on the same run also exits 1 when a gate check scores zero: a gate at zero caps the score at
+40, and a capped site that reads exactly 40 passes `--fail-under 40`. The flag is new in 1.5.0; an older
+release rejects it with exit 2.
 
 ### GitLab CI
 

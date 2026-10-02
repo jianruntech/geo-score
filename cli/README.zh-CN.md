@@ -154,20 +154,21 @@ CLI 给**静态抓取能如实观测到的 17 个检查项**打分。它先用�
 
 ### 每个检查项能信几分
 
-用 1.3.0 在相同页面上重评五份公开的人工审计（[VALIDITY.zh-CN.md](../benchmark/VALIDITY.zh-CN.md)），86 对检查项里
-CLI 有 79% 与审计者的档位一致。只看两边都打了分的检查项，CLI 平均低 0.4 分（逐站从低 6 分到高 9 分，平均绝对差 5.2 分）。
-按完整的归一化分算，平均低 3.6 分，因为人工审计还给 `p3.listings`、`p3.mentions` 和 `p4.question-coverage` 打了分，
+用 1.5.0 在相同页面上重评五份公开的人工审计（[VALIDITY.zh-CN.md](../benchmark/VALIDITY.zh-CN.md)），84 对检查项里
+CLI 有 80% 与审计者的档位一致。只看两边都打了分的检查项，CLI 平均低 2.4 分（逐站从低 12 分到高 10 分，平均绝对差 8.8 分）。
+按完整的归一化分算，平均低 5.2 分，因为人工审计还给 `p3.listings`、`p3.mentions` 和 `p4.question-coverage` 打了分，
 CLI 不打这三项。
 
 | CLI 怎么读 | 检查项 | 与人工审计档位一致 |
 |---|---|--:|
-| **按规则**：解析文件、状态码或标记，按量表写明的计数给分 | `g.robots`、`p1.*`、`p3.knowledge-graph`、`p3.sameas`、`p4.cn-engines` | 41 对中的 95% |
-| **按启发式**：近似量表用文字描述的判断 | `g.reachable`、`g.ssr`、`p2.*`、`p3.video`、`p4.answer-shape` | 45 对中的 64% |
+| **按规则**：解析文件、状态码或标记，按量表写明的计数给分 | `g.robots`、`p1.*`、`p3.knowledge-graph`、`p3.sameas`、`p4.cn-engines` | 39 对中的 92% |
+| **按启发式**：近似量表用文字描述的判断 | `g.reachable`、`g.ssr`、`p2.*`、`p3.video`、`p4.answer-shape` | 45 对中的 69% |
 | **完全不读**：需要站外搜索或人的判断 | `p3.listings`、`p3.mentions`、`p4.question-coverage` | 移出分母 |
 
-一致度最低的是 `p2.sourced-stats`（5 个站里有 4 个 CLI 判得比审计者高），其次是 `p2.named-author`（5 个站里 2 个一致）。
-从 1.5.0 起，数字的出处必须就在它旁边；2026-09-30 在审计过的页面上重评，`p2.sourced-stats` 在 5 个站中的 4 个上与审计者一致，
-第五个站判得偏低。据此采取行动之前，这两项都先用 `--explain` 看一遍。
+一致度最低的是 `p2.named-author`（5 个站里只有 1 个一致：CLI 有 2 个判得比审计者高、2 个判得低），其次是 `p1.page-type`、
+`p2.answer-passages`、`p2.freshness` 和 `p3.video`（各是 5 个站里 3 个一致）。用 1.3.0 时最低的是 `p2.sourced-stats`
+（5 个站里有 4 个 CLI 判得比审计者高）；从 1.5.0 起，数字的出处必须就在它旁边，`p2.sourced-stats` 现在在 5 个站中的 4 个上与审计者一致，
+第五个站判得偏低。据此采取行动之前，这几项都先用 `--explain` 看一遍。
 
 ## 启发式判断，照直说明
 

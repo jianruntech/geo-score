@@ -88,7 +88,7 @@ change in any release).
 
 ## The `v1` tag
 
-`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`jianruntech/geo-score@v1.4.0`)
+`uses: jianruntech/geo-score@v1` follows the latest 1.x release. Pin an exact tag (`jianruntech/geo-score@v1.5.0`)
 when you need a score to stay put between runs.
 
 ## Supported Python
