@@ -49,13 +49,15 @@
 ### 变更
 - **从 PyPI 安装。** geo-score 从 1.5.0 起就在 PyPI 上，文件就是 GitHub 发布附带的那个 wheel 和 sdist；现在各处的安装命令
   都先给它：`uvx geo-score@X.Y.Z example.com`、`pipx install geo-score==X.Y.Z`，MCP 客户端用 `uvx geo-score@X.Y.Z mcp`
-  （安装按钮、Claude Code 那一行、标准配置，以及 guide/mcp.zh-CN.md 里的每个客户端）。发布的 wheel 链接留作访问不了
-  PyPI 时的那一行，git tag 留作从源码安装的那一行，`curl` 那一行仍是什么都不装就能跑第一级的用法。server.json 在 `.mcpb`
-  旁边加上 pypi 包，MCP Registry 因此也会提供它；README.md（也就是这个包在 PyPI 上的说明）带上 Registry 认领用的
-  `mcp-name` 一行。`release.py --bump` 会改写所有 `geo-score@X.Y.Z` 和 `geo-score==X.Y.Z`；`--publish-pypi`（或
-  `--execute --pypi`）用 twine 只上传 `SHA256SUMS` 里列出的 wheel 和 sdist，再核对 PyPI 上每个文件的 SHA-256
-  （RELEASING.md 第 8 步）。缺少 `geo_watch.py` 时（用管道跑的那一行命令），`watch`、`mcp` 和 `--ask` 打印的提示也先给这个包，
-  再给 wheel 包。
+  （安装按钮、Claude Code 那一行、标准配置、guide/mcp.zh-CN.md 里的每个客户端，以及 Claude Desktop 安装包里 watch init
+  的提示）。发布的 wheel 链接留作访问不了 PyPI 时的那一行，git tag 留作从源码安装的那一行，`curl` 那一行仍是什么都不装就能跑
+  第一级的用法。server.json 在 `.mcpb` 旁边加上 pypi 包，MCP Registry 从本版起因此也会提供它；README.md（也就是这个包在 PyPI
+  上的说明）带上 Registry 认领用的 `mcp-name` 一行（1.5.0 在 PyPI 上的说明没有这一行，所以 1.5.0 的登记只列 `.mcpb`）。
+  `release.py --bump` 会改写所有 `geo-score@X.Y.Z` 和 `geo-score==X.Y.Z`；`--execute` 最后一步就是上传 PyPI（`--no-pypi`
+  跳过这一步，`--publish-pypi` 只做这一步）：用 `TWINE_VERSION` 固定版本的 twine 只上传 `SHA256SUMS` 里列出的 wheel 和
+  sdist，再核对 PyPI 上每个文件的 SHA-256（RELEASING.md 第 8 步）。它对 GitHub 和 PyPI 的请求会试三次；中途停下、而重跑能
+  接着做完时，会给出重跑的命令。缺少 `geo_watch.py` 时（用管道跑的那一行命令），`watch`、`mcp` 和 `--ask` 打印的提示也先给
+  这个包，再给 wheel 包。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成

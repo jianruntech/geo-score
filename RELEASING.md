@@ -54,7 +54,7 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 
    then the same four with `py -3.14` (the newest stable Python, `PY_NEWEST` in `scripts/check.sh`). Say in
    the release notes that they passed, or what failed.
-7. **Publish:** `python3 scripts/release.py X.Y.Z --execute --pypi` stops at once unless `gh` is logged in
+7. **Publish:** `python3 scripts/release.py X.Y.Z --execute` stops at once unless `gh` is logged in
    (it creates the release, after the pushes), `uvx` is installed and PyPI does not have X.Y.Z yet (the
    PyPI upload comes last), then runs `check.sh --live --strict` (so the tests must run on
    Python 3.8 and 3.14: `uv python install 3.8 3.14` if either is missing; and every label must exist, as
@@ -65,18 +65,22 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    (the template with the bundle's real SHA-256 in `fileSha256`), writes `SHA256SUMS` over all of them
    and the two CLI files, pushes main, creates the tag `vX.Y.Z` and pushes it, moves `v1` to it and
    pushes that, and creates the GitHub release with the changelog section and the files attached. Main
-   goes first, so a rejected push leaves no local tag and the step can simply be rerun. With `--pypi` it
-   then does step 8; without it, it prints the command for step 8.
-8. **PyPI:** `python3 scripts/release.py X.Y.Z --publish-pypi` (what `--execute --pypi` ends with) uploads
+   goes first, so a rejected push leaves no local tag and the step can simply be rerun. It then does
+   step 8. `--execute --no-pypi` leaves step 8 out and prints its command; until that runs, every install
+   line that names `geo-score@X.Y.Z` or `geo-score==X.Y.Z` fails.
+8. **PyPI:** `python3 scripts/release.py X.Y.Z --publish-pypi` (what `--execute` ends with) uploads
    the wheel and the sdist named in `dist/SHA256SUMS`, and no other file, with
-   `uvx twine upload --non-interactive`. Before that it checks each file against `dist/SHA256SUMS` and
-   against the `SHA256SUMS` attached to the GitHub release, so PyPI gets the bytes the release
-   attached, never a rebuild. After it, it reads `https://pypi.org/pypi/geo-score/X.Y.Z/json` (waiting up
+   `uvx twine@<TWINE_VERSION> upload --non-interactive`: twine runs with the PyPI token, so `release.py`
+   pins it in `TWINE_VERSION`, as `check.sh` pins its tools. Before that it checks each file against
+   `dist/SHA256SUMS` and against the `SHA256SUMS` attached to the GitHub release, so PyPI gets the bytes
+   the release attached, never a rebuild. After it, it reads `https://pypi.org/pypi/geo-score/X.Y.Z/json` (waiting up
    to two minutes for PyPI to list the upload) and stops unless PyPI serves exactly those two files with
    the SHA-256 that `SHA256SUMS` gives them. twine finds its own credentials, in `~/.pypirc` or
    `TWINE_USERNAME=__token__` and `TWINE_PASSWORD`; the script never reads or prints them. The step can be
    rerun: a file PyPI already has with the right SHA-256 is not uploaded again, and one it has with
-   another SHA-256 stops it, since a file on PyPI can never be replaced.
+   another SHA-256 stops it, since a file on PyPI can never be replaced. Each request to GitHub or PyPI is
+   tried three times before the step stops on it, and every stop a rerun can get past ends with this
+   command (`--execute` cannot be rerun once the tag exists). When it finishes, it prints step 10's command.
 9. **Check it, once the release is published:** the install lines run the package from PyPI, and their
    fallback downloads the wheel attached to the release, so they can only be tried after steps 7 and 8
    (`check.sh --live` runs before the release exists). Each must print `geo-score X.Y.Z`:
@@ -97,6 +101,10 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
     registry accepts only when the package's description (README.md) carries the line
     `<!-- mcp-name: io.github.jianruntech/geo-score -->`; so this comes after steps 7 and 8. A published
     version is immutable: to correct only the listing, publish a prerelease version such as `X.Y.Z-1`.
+    The pypi package can be listed from 1.6.0, the first release whose description on PyPI carries that
+    line. 1.5.0's does not, so 1.5.0 is listed only from the `server.json` attached to its GitHub release,
+    which names the `.mcpb` alone; one that `--pack` writes now names the pypi package (and a bundle built
+    from main), and `mcp-publisher` would refuse it.
 
 ## The packaging files
 

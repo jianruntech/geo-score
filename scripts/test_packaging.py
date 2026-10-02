@@ -9,7 +9,8 @@ version, the tool names, the key variables, the entry point. Nothing else would 
 falls behind, so this compares each with the code, then builds the .mcpb the way release.py does, starts the
 bundled server and asks it for its tools.
 """
-import contextlib, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
+import contextlib, importlib.util, inspect, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
+import urllib.error
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -116,10 +117,12 @@ def check_pypi_publish(version):
     ok(release.read_sums("%s  a.whl\n%s *b.tar.gz\nnot a line\n" % ("0" * 64, "f" * 64)) == {"a.whl": "0" * 64, "b.tar.gz": "f" * 64},
        "SHA256SUMS lines are read in both of shasum's modes")
     saved_env, saved = dict(os.environ), (release.pypi_files, release.released_sums, release.PYPI_WAIT)
+    printed = []
 
     def attempt(pypi_answers, released=None, sums_drop=None, file_edit=None, twine_rc="0"):
         """Run publish_pypi on a fake dist/. pypi_answers is what each read of PyPI's JSON returns, in turn (the last
-        one repeats). Returns (finished without stopping, what stopped it, the twine command lines)."""
+        one repeats), and an exception there, or as released, is raised by that read. Returns (finished without
+        stopping, what stopped it, the twine command lines); what it printed goes into printed."""
         with tempfile.TemporaryDirectory() as tmp:
             dist = os.path.join(tmp, "dist")
             os.makedirs(dist)
@@ -134,9 +137,16 @@ def check_pypi_publish(version):
 
             def fake_pypi(v, timeout=30):
                 a = answers.pop(0) if len(answers) > 1 else answers[0]
+                if isinstance(a, Exception):
+                    raise a
                 return None if a is None else dict((n, sums[n] if h == "same" else h) for n, h in a.items())
+
+            def fake_released(v):
+                if isinstance(released, Exception):
+                    raise released
+                return dict(sums, **(released or {}))
             release.pypi_files = fake_pypi
-            release.released_sums = lambda v: dict(sums, **(released or {}))
+            release.released_sums = fake_released
             release.PYPI_WAIT = (2, 0)
             os.environ["PATH"] = fake_bin(tmp, {"uvx": 'echo "$*" >> "$HOME/calls"; exit "$FAKE_TWINE_RC"'})
             os.environ.update(HOME=tmp, FAKE_TWINE_RC=twine_rc)
@@ -146,16 +156,22 @@ def check_pypi_publish(version):
                     release.publish_pypi(version, dist)
             except SystemExit as e:
                 why = str(e.code)
+            printed[:] = [out.getvalue()]
             log = os.path.join(tmp, "calls")
             calls = io.open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
             return why is None, why or "", [" ".join(os.path.basename(w) for w in c.split()) for c in calls]
 
-    upload = "twine upload --non-interactive " + " ".join(names)
+    twine = "twine@" + release.TWINE_VERSION
+    ok(re.match(r"^\d+\.\d+\.\d+$", release.TWINE_VERSION) is not None,
+       "the upload runs a pinned twine (%s), as check.sh pins its tools" % twine)
+    upload = twine + " upload --non-interactive " + " ".join(names)
     both = dict((n, "same") for n in names)
+    cut = OSError("EOF occurred in violation of protocol (_ssl.c:1129)")
     try:
         done, why, calls = attempt([None, both])
-        ok(done and calls == [upload], "a new version: twine uploads the wheel and the sdist, nothing else, and PyPI "
-           "serves both with SHA256SUMS's SHA-256 (%s; %s)" % (calls, why))
+        ok(done and calls == [upload], "a new version: %s uploads the wheel and the sdist, nothing else, and PyPI "
+           "serves both with SHA256SUMS's SHA-256 (%s; %s)" % (twine, calls, why))
+        ok("mcp-publisher publish" in printed[0], "and it ends with the MCP Registry step, which needs the package on PyPI")
         done, why, calls = attempt([None, None, both])
         ok(done and calls == [upload], "PyPI's JSON lagging the upload: the check waits for it (%s)" % why)
         done, why, calls = attempt([None, dict(both, **{names[1]: "0" * 64})])
@@ -166,18 +182,25 @@ def check_pypi_publish(version):
         done, why, calls = attempt([both])
         ok(done and calls == [], "PyPI already has both files with the right SHA-256: nothing is uploaded (%s)" % calls)
         done, why, calls = attempt([{names[0]: "same"}, both])
-        ok(done and calls == ["twine upload --non-interactive " + names[1]],
+        ok(done and calls == [twine + " upload --non-interactive " + names[1]],
            "PyPI has the wheel only: just the sdist is uploaded (%s)" % calls)
         done, why, calls = attempt([{names[0]: "0" * 64}])
-        ok(not done and calls == [] and "never be replaced" in why,
-           "PyPI has the wheel with another SHA-256: nothing is uploaded")
+        ok(not done and calls == [] and "never be replaced" in why and "--publish-pypi" not in why,
+           "PyPI has the wheel with another SHA-256: nothing is uploaded, and no rerun is suggested")
         done, why, calls = attempt([dict(both, **{"geo_score-%s-py3-none-any.whl.extra" % version: "0" * 64})])
         ok(not done and calls == [] and "not in SHA256SUMS" in why, "PyPI has a file SHA256SUMS does not name: it stops")
         done, why, calls = attempt([None, both], released={names[0]: "0" * 64})
         ok(not done and calls == [] and "GitHub release" in why,
            "a dist/ that is not what the GitHub release attached: nothing is uploaded")
         done, why, calls = attempt([None, both], sums_drop=names[1])
-        ok(not done and calls == [] and names[1] in why, "dist/SHA256SUMS without the sdist: nothing is uploaded")
+        ok(not done and calls == [] and names[1] in why and "--publish-pypi" in why,
+           "dist/SHA256SUMS without the sdist: nothing is uploaded, and the stop names the command to rerun")
+        done, why, calls = attempt([None, both], released=cut)
+        ok(not done and calls == [] and "GitHub release" in why and "--publish-pypi" in why,
+           "GitHub out of reach: nothing is uploaded, and the stop names the command to rerun")
+        done, why, calls = attempt([cut])
+        ok(not done and calls == [] and "cannot ask PyPI" in why and "--publish-pypi" in why,
+           "PyPI out of reach before the upload: nothing is uploaded, and the stop names the command to rerun")
         done, why, calls = attempt([None, both], file_edit=names[0])
         ok(not done and calls == [] and names[0] in why, "a wheel that is not the one SHA256SUMS names: nothing is uploaded")
         done, why, calls = attempt([None], twine_rc="1")
@@ -185,15 +208,57 @@ def check_pypi_publish(version):
         release.pypi_files = lambda v, timeout=30: None
         with tempfile.TemporaryDirectory() as tmp:
             os.environ["PATH"] = fake_bin(tmp, {})
-            ok("uvx is not installed" in (release.pypi_problem(version) or ""), "--execute --pypi stops first without uvx")
+            ok("uvx is not installed" in (release.pypi_problem(version) or ""), "--execute stops first without uvx")
         os.environ["PATH"] = saved_env["PATH"]
         release.pypi_files = lambda v, timeout=30: {}
         ok(shutil.which("uvx") is None or "already has" in (release.pypi_problem(version) or ""),
-           "--execute --pypi stops first when PyPI already has the version")
+           "--execute stops first when PyPI already has the version")
+        ok(inspect.signature(release.execute).parameters["pypi"].default is True, "--execute ends with the PyPI upload unless --no-pypi")
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "release.py"), "9.9.9", "--no-pypi"],
+                           cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        ok(r.returncode == 2 and "--no-pypi goes with --execute" in r.stderr, "--no-pypi is refused without --execute")
     finally:
         os.environ.clear()
         os.environ.update(saved_env)
         release.pypi_files, release.released_sums, release.PYPI_WAIT = saved
+
+
+def check_fetch_retries():
+    """A request to PyPI or GitHub that fails is tried again before the step that made it stops; a 404 is an
+    answer, asked once."""
+    print("\n  release.py's requests: a dropped connection or a 5xx is tried again, a 404 is not")
+    saved, seen = (release.urllib.request.urlopen, release.FETCH_TRIES), []
+
+    def answers(outcomes):
+        def urlopen(req, timeout=30):
+            seen.append(req.full_url)
+            o = outcomes.pop(0) if len(outcomes) > 1 else outcomes[0]
+            if isinstance(o, Exception):
+                raise o
+            return io.BytesIO(o)
+        return urlopen
+
+    def status(code):
+        return urllib.error.HTTPError("https://pypi.org/pypi/x/json", code, "status %d" % code, {}, io.BytesIO(b""))
+
+    def fetch(outcomes):
+        del seen[:]
+        release.urllib.request.urlopen = answers(list(outcomes))
+        try:
+            return release.fetch("https://pypi.org/pypi/x/json")
+        except release.NET_ERRORS as e:
+            return e
+    drop = urllib.error.URLError("EOF occurred in violation of protocol (_ssl.c:1129)")
+    try:
+        release.FETCH_TRIES = (3, 0)
+        ok(fetch([drop, drop, b"body"]) == b"body" and len(seen) == 3,
+           "two dropped handshakes, then the answer: fetch returns it (%d tries)" % len(seen))
+        ok(fetch([status(503), b"body"]) == b"body" and len(seen) == 2, "a 503, then the answer: fetch returns it")
+        ok(isinstance(fetch([drop]), urllib.error.URLError) and len(seen) == 3,
+           "a connection that drops every time: fetch raises after 3 tries (%d)" % len(seen))
+        ok(fetch([status(404), b"body"]) is None and len(seen) == 1, "a 404 is an answer: None, after 1 try")
+    finally:
+        release.urllib.request.urlopen, release.FETCH_TRIES = saved
 
 
 def check_pythons():
@@ -471,6 +536,7 @@ def main():
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
     check_pins(version)
     check_pypi_publish(version)
+    check_fetch_retries()
 
     print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
     m = {}
