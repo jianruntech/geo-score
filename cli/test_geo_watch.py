@@ -3528,9 +3528,9 @@ class MentionOrder(Base):
     def test_the_report_shows_named_first_and_sentence_share(self):
         run = self.run_of()
         md = gw.render(run, "md")
-        self.assertIn("| engine | model | cited | 95% CI | mentioned | named first | avg rank |  |", md)
+        self.assertIn("| engine | model | cited | 95% CI | mentioned | named first (tracked) | avg rank |  |", md)
         self.assertIn("| 50% | 1/2 | 1.0 | 1 failed |", md)                    # perplexity: mentioned, named first
-        self.assertIn("|  | cited | 95% CI | mentioned | named first | sentence share |", md)
+        self.assertIn("|  | cited | 95% CI | mentioned | named first (tracked) | sentence share |", md)
         self.assertRegex(md, r"\| Lumo \(you\) \| [^\n]* \| 2/4 \| 47% \|")
         self.assertRegex(md, r"\| Reelcraft \| [^\n]* \| 1/4 \| 62% \|")
         for n in gw.MENTION_NOTES:
@@ -3538,7 +3538,9 @@ class MentionOrder(Base):
         notes = " ".join(gw.MENTION_NOTES).lower()
         for word in ("optimi", "should", "recommend", "better", "worse"):         # how it is read, never what to do
             self.assertNotIn(word, notes)
-        self.assertIn("named first", gw.render(run))
+        self.assertIn("named first (tracked)", gw.render(run))
+        self.assertIn("- Named first (tracked): answers that name that brand before any other brand in your config",
+                      gw.render(run))
         # with no competitor the brand is first whenever it is named: no column, no notes
         alone = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]})
         self.assertEqual(alone["summary"]["engines"][0]["named_first"], 0)       # synth's answers are empty

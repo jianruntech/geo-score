@@ -379,19 +379,19 @@ because those APIs search on every call or do not say. The JSON
 report and the MCP `report` tool carry the same table as `summary.by_question`; for a run saved
 before 1.6.0 it is computed from the saved answers.
 
-**Who is named first.** Each answer records, for your brand and each competitor, `mention_order`
-and `mention_share`. `mention_order` is 1 for the brand the answer names before every other brand in
-your config, 2 for the next, and so on, by the earliest match of its name, aliases or domains with
-the matcher of `mentioned`; it is null when the answer does not name the brand, and for two brands
-first named at the same place, one name inside the other. `mention_share` is the share of the
-answer's sentences that name the brand, every sentence counted the same: a sentence ends at a line
-break, at `。！？`, or at `.` `!` `?` before whitespace, and a piece with no letter or digit, such as a
-table rule, is not a sentence. With competitors in the config, "By engine" gains a column, *named
-first*: the answers that name you first, out of the answers that name at least one brand in your
-config. "Share of voice" gains *named first* for every brand and *sentence share*, the mean
-`mention_share` over the answers that name it. Brands your config does not list are invisible to
-both, so first among the brands you track may not be first in the answer, and the order is the
-order of first mention, not a position in a list. Both are read from the answer as saved, which
+**Who is named first.** Each answer records, for your brand and each competitor, `mention_order` and
+`mention_share`. `mention_order` is 1 for the brand the answer names before every other brand in your
+config, 2 for the next, and so on, by the earliest match of its name, aliases or domains with the
+matcher of `mentioned`; it is null when the answer does not name the brand, and for two brands first
+named at the same place, one name inside the other. `mention_share` is the share of the answer's
+sentences that name the brand, every sentence counted the same: a sentence ends at a line break, at
+`。！？`, or at `.` `!` `?` before whitespace, and a piece with no letter or digit, such as a table rule,
+is not a sentence. With competitors in the config, "By engine" gains a column, *named first
+(tracked)*: the answers that name you first among the brands you track, out of the answers that name
+at least one of them. "Share of voice" gains *named first (tracked)* for every brand and *sentence
+share*, the mean `mention_share` over the answers that name it. Brands your config does not list are
+invisible to both, so first among the brands you track may not be first in the answer, and the order
+is the order of first mention, not a position in a list. Both are read from the answer as saved, which
 keeps its first 20,000 characters (`answer_truncated` marks an answer that was cut). The JSON report
 carries them as `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
 `summary.share_of_voice`; for a run saved before 1.6.0 they are computed from the saved answers.

@@ -275,7 +275,7 @@ MCP 服务让 Agent 调用的功能：`score_site`（第一级，免费）、`as
 `mention_order`：取每个品牌的名字、别名或域名最早的一处匹配，匹配规则与[被提及](#mentioned被提及)相同。两个品牌第一次被提到的位置
 相同时都没有名次；配置里没列的品牌看不见，所以在你追踪的品牌里排第一，不一定是在回答里排第一。它读的是保存下来的回答，即前 20,000 个字符。
 
-**出现在：** `watch report` 里 `By engine` 和 `Share of voice` 两张表的 `named first` 列；运行文件里每条回答及其竞品的 `mention_order`；
+**出现在：** `watch report` 里 `By engine` 和 `Share of voice` 两张表的 `named first (tracked)` 列；运行文件里每条回答及其竞品的 `mention_order`；
 `summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first` 与 `any_named`。
 **详见：** [watch 方法说明 · 单位](watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)
 

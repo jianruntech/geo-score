@@ -325,7 +325,7 @@ brands first named at the same place get no order, and brands the config does no
 seen, so first among the brands you track may not be first in the answer. It reads the answer as
 saved, its first 20,000 characters.
 
-**Where:** the `named first` columns of `By engine` and `Share of voice` in `watch report`;
+**Where:** the `named first (tracked)` columns of `By engine` and `Share of voice` in `watch report`;
 `mention_order` on each answer and its competitors in run files; `named_first` and `any_named` on the
 rows of `summary.engines` and `summary.share_of_voice`.
 **More:** [watch methodology, The unit](watch-methodology.md#1-the-unit-an-answer-clustered-by-question)

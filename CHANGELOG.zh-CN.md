@@ -28,7 +28,8 @@
 - **`watch report` 列出谁最先被提到。** 每条回答为品牌和每个竞品记下 `mention_order`（在配置里所有品牌中最先被提到的记 1，位置取名字、
   别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同；没提到、或两个品牌第一次被提到的位置相同时为 null）和 `mention_share`
   （提到它的句子占全部句子的比例，每句同等计数；句子在换行处、`。！？` 处，或后面跟着空白的 `.` `!` `?` 处结束）。配置里有竞品时，
-  「By engine」表多一列「named first」：最先提到你的回答数，分母是至少提到配置里一个品牌的回答数。「Share of voice」表多出「named first」
+  「By engine」表多一列「named first (tracked)」：在配置里的品牌中最先提到你的回答数，分母是至少提到配置里一个品牌的回答数。
+  「Share of voice」表多出「named first (tracked)」
   和「sentence share」（在提到这个品牌的回答里 `mention_share` 的平均值），表下三行说明怎么读。配置里没列的品牌看不见，所以在你追踪的
   品牌里排第一，不一定是在回答里排第一。两者都从保存下来的回答里读，回答只保存前 20,000 个字符。Schema：`$defs/sample` 及其竞品里
   新增 `mention_order` 和 `mention_share`，`summary.engines` 与 `summary.share_of_voice` 每一行新增 `named_first`、`any_named` 和

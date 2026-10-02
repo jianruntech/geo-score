@@ -114,10 +114,10 @@ TRACKED_PAGE_NOTES = [
     "and so is the page's canonical URL when it differs.",
     "A citation whose redirect could not be followed counts as neither the tracked page nor another of yours.",
 ]
-# printed under the "Share of voice" table: how "named first" and "sentence share" are read from an answer
+# printed under the "Share of voice" table: how "named first (tracked)" and "sentence share" are read from an answer
 MENTION_NOTES = [
-    "Named first: answers that name that brand before any other brand in your config, out of the answers that name "
-    "at least one of them. Brands your config does not list are not seen, so first among the brands you track may "
+    "Named first (tracked): answers that name that brand before any other brand in your config, out of the answers "
+    "that name at least one of them. Brands your config does not list are not seen, so first among the brands you track may "
     "not be first in the answer. Two brands first named at the same place, one name inside the other, are neither "
     "first.",
     "Sentence share: in the answers that name a brand, the mean share of their sentences that name it, every "
@@ -2023,7 +2023,7 @@ def render(run, fmt="text"):
 
     L.append(_h("By engine", fmt))
     rows = []
-    rivalled = 1 if run.get("competitors") else 0   # the "named first" column; alone, the brand is always first
+    rivalled = 1 if run.get("competitors") else 0   # the "named first (tracked)" column; alone, the brand is first
     for e in sm["engines"]:
         if e["status"] != "measured":
             err = next((x.get("error") for x in run["engines"] if x["id"] == e["id"]), "")
@@ -2042,7 +2042,7 @@ def render(run, fmt="text"):
                      ci_s(head_ci(e)), pct(e["mentioned_rate"])]
                     + ["%d/%d" % (e["named_first"], e["any_named"])] * rivalled
                     + [e["avg_rank"] or "—", ", ".join(extra)])
-    L.append(table(["engine", "model", "cited", "95% CI", "mentioned"] + ["named first"] * rivalled
+    L.append(table(["engine", "model", "cited", "95% CI", "mentioned"] + ["named first (tracked)"] * rivalled
                    + ["avg rank", ""], rows, fmt))
     if br["question_ids"]:
         L.append("")   # a line right under a markdown table would be read as another row
@@ -2055,7 +2055,7 @@ def render(run, fmt="text"):
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
-        L.append(table(["", "cited", "95% CI", "mentioned", "named first", "sentence share"],
+        L.append(table(["", "cited", "95% CI", "mentioned", "named first (tracked)", "sentence share"],
                        [[s["name"] + (" (you)" if s["you"] else ""), pct(s["cited_rate"]), ci_s(head_ci(s)),
                          pct(s["mentioned_rate"]), "%d/%d" % (s["named_first"], s["any_named"]),
                          pct(s["mention_share"])] for s in sm["share_of_voice"]], fmt))
