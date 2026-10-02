@@ -54,7 +54,8 @@
   旁边加上 pypi 包，MCP Registry 因此也会提供它；README.md（也就是这个包在 PyPI 上的说明）带上 Registry 认领用的
   `mcp-name` 一行。`release.py --bump` 会改写所有 `geo-score@X.Y.Z` 和 `geo-score==X.Y.Z`；`--publish-pypi`（或
   `--execute --pypi`）用 twine 只上传 `SHA256SUMS` 里列出的 wheel 和 sdist，再核对 PyPI 上每个文件的 SHA-256
-  （RELEASING.md 第 8 步）。
+  （RELEASING.md 第 8 步）。缺少 `geo_watch.py` 时（用管道跑的那一行命令），`watch`、`mcp` 和 `--ask` 打印的提示也先给这个包，
+  再给 wheel 包。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成

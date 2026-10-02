@@ -3495,7 +3495,8 @@ def _write(path, text):
     except OSError as e:
         raise RuntimeError("cannot write %s: %s" % (path, e.strerror or e)) from None
 
-# the release's wheel carries geo_score.py and geo_watch.py together, with the geo-score and geo-score-mcp commands
+# the package on PyPI carries geo_score.py and geo_watch.py together, with the geo-score and geo-score-mcp commands;
+# the release attaches the same wheel, for a machine that cannot reach PyPI
 RELEASE_WHEEL = ("https://github.com/jianruntech/geo-score/releases/download/v%s/geo_score-%s-py3-none-any.whl"
                  % (__version__, __version__))
 
@@ -3503,11 +3504,13 @@ def _watch_module(*, what="--ask"):
     """Levels 2 and 3 live in geo_watch.py beside this file. Piped through `curl | python3 -` there is no beside.
     `what` is what the user typed that needs it: watch, mcp or --ask."""
     import importlib.util
-    then = {"mcp": "geo-score-mcp", "watch": "geo-score watch …"}.get(what, "geo-score SITE --ask QUESTION")
-    need = ("%s needs geo_watch.py %s next to geo_score.py. The release wheel carries both: `uvx --from %s %s`, or "
-            "`pipx install %s` and then `%s`. Or clone https://github.com/jianruntech/geo-score, or download "
+    args = {"mcp": "mcp", "watch": "watch …"}.get(what, "SITE --ask QUESTION")
+    then = "geo-score-mcp" if what == "mcp" else "geo-score " + args
+    need = ("%s needs geo_watch.py %s next to geo_score.py. The geo-score package on PyPI carries both: "
+            "`uvx geo-score@%s %s`, or `pipx install geo-score==%s` and then `%s`. Without PyPI, the release wheel: "
+            "`pipx install %s`. Or clone https://github.com/jianruntech/geo-score, or download "
             "cli/geo_score.py and cli/geo_watch.py from the same release"
-            % (what, __version__, RELEASE_WHEEL, then, RELEASE_WHEEL, then))
+            % (what, __version__, __version__, args, __version__, then, RELEASE_WHEEL))
     f = globals().get("__file__")
     # piped through `python3 -`, __file__ is "<stdin>": never go looking in the current directory
     here = os.path.dirname(os.path.abspath(f)) if f and os.path.isfile(f) else ""

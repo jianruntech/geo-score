@@ -82,6 +82,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   README.md, the package's description on PyPI, carries the registry's `mcp-name` line. `release.py --bump` moves
   every `geo-score@X.Y.Z` and `geo-score==X.Y.Z`, and `--publish-pypi` (or `--execute --pypi`) uploads exactly the
   wheel and sdist that `SHA256SUMS` names, with twine, then checks PyPI's SHA-256 of each (RELEASING.md, step 8).
+  The message `watch`, `mcp` and `--ask` print when `geo_watch.py` is missing (the piped one-line run) names the
+  package first too, then the wheel.
 
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question

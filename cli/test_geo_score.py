@@ -1644,20 +1644,24 @@ for _me in ("geo_score.py", "geo-score"):
     ok(other + " " not in _help, "never names %s when the user typed %s" % (other, _me))
 
 # piped through `python3 -` there is no geo_watch.py beside the file: the message names what was typed and how to
-# get the release that carries both files
+# get the package that carries both files, from PyPI first and the release wheel without it
 import subprocess as _sp, tempfile as _tf
 with io.open(os.path.join(HERE, "geo_score.py"), "rb") as _f:
     _src = _f.read()
 with _tf.TemporaryDirectory() as _d:
     for _argv, _then in ((["mcp"], "geo-score-mcp"), (["watch", "run"], "geo-score watch …"),
                          (["x.test", "--ask", "q", "--quiet"], "geo-score SITE --ask QUESTION")):
+        _run = "mcp" if _then == "geo-score-mcp" else _then[len("geo-score "):]
         _p = _sp.run([sys.executable, "-"] + _argv, input=_src, capture_output=True, cwd=_d, timeout=60)
         _err = _p.stderr.decode("utf-8", "replace")
         _what = "--ask" if "--ask" in _argv else _argv[0]
         ok(_p.returncode == 2 and _err.startswith("%s needs geo_watch.py %s next to geo_score.py" % (_what, gs.__version__)),
            "%s: %s" % (_argv, _err))
-        ok("`uvx --from %s %s`" % (gs.RELEASE_WHEEL, _then) in _err and "`pipx install %s`" % gs.RELEASE_WHEEL in _err
-           and _err.index("uvx") < _err.index("clone"), "%s: the wheel's install lines come before clone" % _argv)
+        _v = gs.__version__
+        ok("`uvx geo-score@%s %s`" % (_v, _run) in _err and "`pipx install geo-score==%s` and then `%s`" % (_v, _then) in _err
+           and "`pipx install %s`" % gs.RELEASE_WHEEL in _err
+           and _err.index("uvx") < _err.index(gs.RELEASE_WHEEL) < _err.index("clone"),
+           "%s: PyPI's install lines, then the release wheel's, then clone" % _argv)
 
 # ── what a sampled page can be ──
 for _u, _want in (("https://ex.test/agents.md", None), ("https://ex.test/blog/author/max/feed.xml", None),
