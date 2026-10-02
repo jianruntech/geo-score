@@ -1,5 +1,7 @@
 <p align="right"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
+<!-- mcp-name: io.github.jianruntech/geo-score -->
+
 <p align="center"><img src="assets/cover.svg" alt="geo-score — an open rubric for AI answer-engine visibility" width="100%"></p>
 
 # geo-score

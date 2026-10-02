@@ -501,6 +501,20 @@ def main():
     ok(bool(pk) and pk[0].get("fileSha256") == "${MCPB_SHA256}",
        "the template's fileSha256 is the ${MCPB_SHA256} placeholder (release.py fills it in dist/server.json)")
     ok(bool(pk) and pk[0].get("transport") == {"type": "stdio"}, "the mcpb package speaks stdio")
+    pp = [x for x in s.get("packages", []) if x.get("registryType") == "pypi"]
+    dist_name = re.search(r'^name = "([^"]+)"', rd("pyproject.toml"), re.M).group(1)
+    ok(len(pp) == 1, "one pypi package")
+    ok(bool(pp) and pp[0].get("identifier") == dist_name == release.PYPI_PROJECT,
+       "the pypi package is pyproject.toml's name, the one release.py uploads (%s)" % dist_name)
+    ok(bool(pp) and pp[0].get("runtimeHint") == "uvx" and pp[0].get("transport") == {"type": "stdio"}
+       and pp[0].get("packageArguments") == [{"type": "positional", "value": "mcp"}] and "fileSha256" not in pp[0],
+       "the pypi package runs as uvx geo-score@%s mcp over stdio" % version)
+    ok(bool(pp) and bool(pk) and pp[0].get("environmentVariables") == pk[0].get("environmentVariables"),
+       "the pypi package asks for the same variables as the mcpb one")
+    # the registry accepts a pypi package only when its description, README.md here, names the server
+    ok(re.search(r'^readme = "README\.md"$', rd("pyproject.toml"), re.M) is not None
+       and "<!-- mcp-name: %s -->" % s.get("name") in rd("README.md").split("\n## ")[0],
+       "README.md, the package's description on PyPI, carries mcp-name: %s near its top" % s.get("name"))
 
     print("\n  tools: the MCPB manifest lists exactly what tools/list serves")
     served = [t["name"] for t in watch.MCPServer("/nonexistent/geo-score-watch.json").handle(
@@ -582,6 +596,9 @@ def main():
         ok(bool(bp) and bp[0].get("fileSha256") == digest and bp[0].get("identifier") == release.mcpb_url(version),
            "dist/server.json names the bundle's URL and SHA-256")
         ok("${" not in io.open(sj, encoding="utf-8").read(), "dist/server.json has no placeholder left")
+        bpp = [x for x in built.get("packages", []) if x.get("registryType") == "pypi"]
+        ok([x.get("version") for x in bpp] == [version] and built.get("version") == version,
+           "dist/server.json names geo-score %s on PyPI" % version)
         env = {k: v for k, v in os.environ.items() if k not in every and not k.startswith("GEO_SCORE")}
         info, names = mcp_session([sys.executable, os.path.join(tmp, "x", "server", "geo_score.py"), "mcp"], tmp, env)
         ok(info.get("name") == "geo-score" and info.get("version") == version,

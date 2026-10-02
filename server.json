@@ -11,6 +11,65 @@
   "version": "1.5.0",
   "packages": [
     {
+      "registryType": "pypi",
+      "identifier": "geo-score",
+      "version": "1.5.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "Optional. OpenAI key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "PERPLEXITY_API_KEY",
+          "description": "Optional. Perplexity key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Optional. Gemini (Google AI Studio) key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "description": "Optional. Anthropic key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "OPENROUTER_API_KEY",
+          "description": "Optional. OpenRouter key; enables ask and run on that engine.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "GEO_SCORE_WATCH_CONFIG",
+          "description": "Optional. Path to geo-score-watch.json for run, list_runs, report and diff.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "filepath"
+        }
+      ]
+    },
+    {
       "registryType": "mcpb",
       "identifier": "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo-score-1.5.0.mcpb",
       "fileSha256": "${MCPB_SHA256}",
