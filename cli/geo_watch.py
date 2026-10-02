@@ -3603,6 +3603,8 @@ class MCPServer(object):
         lines += ["- %s: not measured (%s)" % (e["id"], status[e["id"]]) for e in engines
                   if status[e["id"]] != "measured"]
         lines += ["- warning: %s" % _cut(w, 200) for w in cfg.warnings]      # a mistyped cap, before anything is spent
+        # a target_url the run ignores, or a page off the brand's domains: watch check says so, and MCP has no check
+        lines += ["- warning: %s" % _cut(w, 200) for w in cfg.query_warnings]
         out = {"dry_run": bool(args.get("dry_run")), "run_id": None, "summary": None,
                "plan": {"questions": len(queries), "engines_active": [e["id"] for e, _ in active], "runs": cfg.runs,
                         "planned_calls": planned, "max_calls": max_calls, "budget_usd": budget,
@@ -3636,7 +3638,7 @@ class MCPServer(object):
         path = save_run(cfg, run)
         out.update(run_id=run["run_id"], summary=summary_of(run))
         return render(run, "md") + "\nsaved `%s`\n" % os.path.relpath(path, cfg.dir) + "".join(
-            "warning: %s\n" % _cut(w, 200) for w in cfg.warnings), out
+            "warning: %s\n" % _cut(w, 200) for w in cfg.warnings + cfg.query_warnings), out
 
     def tool_list_runs(self, args, token, ctx=None):
         cfg = self._cfg()
@@ -3690,6 +3692,7 @@ class MCPServer(object):
                 engines, prices = cfg.engines, cfg.prices
                 caps = {"max_calls": cfg.max_calls, "budget_usd": cfg.budget_usd}
                 questions = len(cfg.load_queries())
+                conf["warnings"] += cfg.query_warnings          # target_url values the run ignores, or not yours
             except ConfigError as e:
                 conf["errors"].append(str(e))
             if cfg is not None:

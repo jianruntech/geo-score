@@ -274,8 +274,9 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
 
 `target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
-`brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。其他写法 `watch check` 会给出警告，运行时忽略；
-页面不在品牌拥有的域名或 URL 前缀上时，也会警告，但照样匹配。之后这个问题的每条回答都记下 `target_cited`（有一条引用就是这个页面）
+`brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。
+其他写法 `watch check`、`watch run` 以及 MCP 的 `run` 和 `status` 工具都会给出警告，运行时忽略；页面不在品牌拥有的域名或 URL 前缀上时，
+也会警告，但照样匹配。之后这个问题的每条回答都记下 `target_cited`（有一条引用就是这个页面）
 和 `other_own_cited`（没有引用这个页面，但引用了你的另一个网址），报告多一张表「Pages you track」：每个页面对应哪些问题、拿到几条回答、
 其中几条引用了这个页面、几条转而引用了你的另一个网址，以及这些回答引用最多的是你的哪个网址（按引用时的原样列出）。CSV 的最后一列
 `target_cited`，在追踪页面的问题的回答上是 `Y` 或 `N`，其他情况留空。匹配的是规范化之后的同一个页面：`www`、大小写、末尾的斜杠、

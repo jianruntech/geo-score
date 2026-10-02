@@ -3292,6 +3292,27 @@ class TrackedPages(Base):
         self.assertEqual(gw.resolve_target(" /a b ", b), ("https://lumo.example/a b", None))
         self.assertEqual(gw.resolve_target("", b), ("", None))
 
+    def test_mcp_run_and_status_show_the_target_url_warnings(self):
+        # over MCP there is no watch check to read, so a mistyped target_url must not be dropped without a word
+        self.check("query_id,query,intent_tier,target_url\nq1,free ai video,list,lumo.example/free\n"
+                   "q2,pixa plans,pricing,https://pixa.example/plans\nq3,ai video pricing,pricing,/pricing\n")
+        srv = gw.MCPServer(os.path.join(self.tmp, gw.CONFIG_NAME), out=io.StringIO())
+        r = srv.call({"name": "run", "arguments": {"dry_run": True}})
+        self.assertFalse(r["isError"], r)
+        text = r["content"][0]["text"]
+        self.assertIn("\n- warning: q1: target_url 'lumo.example/free' is neither an http(s) URL nor a path that "
+                      "starts with /; it is ignored\n", text)
+        self.assertIn("\n- warning: q2: target_url https://pixa.example/plans is not on the brand's domains or "
+                      "url_prefixes; it is still matched\n", text)
+        self.assertNotIn("q3: target_url", text)
+        r = srv.call({"name": "status", "arguments": {}})
+        self.assertFalse(r["isError"], r)
+        self.assertEqual([w[:20] for w in r["structuredContent"]["config"]["warnings"]],
+                         ["q1: target_url 'lumo", "q2: target_url https"])
+        self.assertIn("\n  warning: q1: target_url 'lumo.example/free' is neither", r["content"][0]["text"])
+        out_schema = next(t["outputSchema"] for t in srv.tools() if t["name"] == "status")
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
     def test_www_slash_case_query_fragment_and_escapes_match_and_another_path_does_not(self):
         b = brand()
         target = "https://lumo.example/free"

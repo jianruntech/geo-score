@@ -313,9 +313,9 @@ a nickname the matcher cannot see.
 
 `target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
 or a path that starts with `/`, which is joined to the first of `brand.domains`
-(`/pricing` becomes `https://acme.com/pricing`). `watch check` warns about any other value, and the
-run ignores it; it also warns, and still matches, when the page is not on a domain or URL prefix
-the brand owns. Each answer to the question then records `target_cited` (one of its citations is
+(`/pricing` becomes `https://acme.com/pricing`). `watch check`, `watch run` and the MCP `run` and
+`status` tools warn about any other value, and the run ignores it; they also warn, and the run still
+matches, when the page is not on a domain or URL prefix the brand owns. Each answer to the question then records `target_cited` (one of its citations is
 that page) and `other_own_cited` (it cites another URL of yours, not that page), and the report
 adds a table, "Pages you track": per page, its questions, their answers, how many cite the page,
 how many cite another of your URLs instead, and which of your URLs those answers cite most, shown

@@ -29,8 +29,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - **`target_url` is read: `watch report` counts how often the page a question tracks is cited.** The column was
   documented and saved but nothing used it. It is now resolved when the questions load: an absolute `http(s)` URL
   as written (fragment and `utm_*` parameters dropped), or a path starting with `/` joined to the brand's first
-  domain. `watch check` warns about any other value, which the run ignores, and about a page that is not on the
-  brand's domains or URL prefixes, which is still matched. Each answer records `target_cited` (one of its
+  domain. `watch check`, `watch run` and the MCP `run` (its dry run too) and `status` tools warn about any other
+  value, which the run ignores, and about a page that is not on the brand's domains or URL prefixes, which is still
+  matched. Each answer records `target_cited` (one of its
   citations is that page) and `other_own_cited` (it cites another URL of the brand's, not that page), both null
   when the question tracks no page. The match is the exact page once `www`, letter case, a trailing slash, the
   query string, the fragment and percent-encoding are set aside; `/en/x` is not `/x`, and a citation left as an
