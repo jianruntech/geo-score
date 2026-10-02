@@ -793,6 +793,18 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(res["tier"]["g.reachable"], want, (faults, res["ev"]["g.reachable"]))
             self.assertIn(word, res["ev"]["g.reachable"])
 
+    def test_an_llms_txt_that_gets_no_answer_is_not_observed(self):
+        # every try at /llms.txt is dropped without an answer: that says nothing about whether the file exists
+        H.start()
+        srv = start_server("good", {"drop_nth": {"/llms.txt": tuple(range(1, 20))}})
+        try:
+            res = gs.run(srv.origin, 8, timeout=1)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertIsNone(res["tier"]["p1.llms-txt"], res["ev"]["p1.llms-txt"])
+        self.assertIn("got no answer", res["ev"]["p1.llms-txt"])
+
     def test_a_homepage_that_cannot_be_fetched_is_not_a_missing_entity(self):
         # partial carries its Organization only on the homepage. When the homepage is in the sample but answers
         # 503 on every try, the other pages lack the entity, and that is not evidence the site lacks it: the

@@ -1954,6 +1954,22 @@ def under_cn(url):
         return False
     return host.endswith(".cn")
 
+# A sampled page is a document a person reads. Files (feeds, Markdown, JSON, archives, media) that sitemaps and
+# links also list are not; listing pages (pagination, category, tag, author, series and archive pages) carry
+# navigation and excerpts, not prose, so they are drawn only when nothing else is left
+NOT_A_PAGE = re.compile(r"\.(png|jpe?g|gif|svg|webp|avif|ico|css|js|mjs|json|xml|rss|atom|txt|md|csv|pdf|zip|gz|"
+                        r"tgz|docx?|xlsx?|pptx?|woff2?|ttf|mp3|mp4|webm|mov)$", re.I)
+LISTING = re.compile(r"/(page|p)/\d+$|/(category|categories|tag|tags|author|authors|series|archives?)(/|$)|/feed$", re.I)
+
+
+def page_candidate(u):
+    """0 for a content page, 1 for a listing page, None for a file that is not a page at all."""
+    path = urllib.parse.urlsplit(u).path
+    if NOT_A_PAGE.search(path):
+        return None
+    return 1 if LISTING.search(path.rstrip("/")) else 0
+
+
 def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=None):
     """Pick pages the way a retrieval crawler would meet them: real leaf pages, not
     section indexes. Index pages carry navigation, not prose, and every content check
@@ -1988,7 +2004,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=N
         for m in in_tags(_A_HREF, _A, text):
             u = same_site(join_link(origin, m.group(1)).split("#")[0].split("?")[0].rstrip("/"))
             if not u: continue
-            if re.search(r"\.(png|jpe?g|gif|svg|css|js|pdf|zip|ico|xml|txt|woff2?|mp4)$", u, re.I): continue
+            if page_candidate(u) is None: continue
             if re.search(r"/(login|signin|signup|register|cart|checkout|account|admin|search)(/|$)", u, re.I): continue
             if u in seen: continue
             seen.add(u); out.append(u)
@@ -2013,7 +2029,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=N
         locs = [x.strip() for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
         for u in locs[:600]:
             u = same_site(u.split("#")[0].split("?")[0].rstrip("/"))
-            if u and u not in seen:
+            if u and u not in seen and page_candidate(u) is not None:
                 seen.add(u); pool.append(u)
 
     # section indexes are where recent posts actually live
@@ -2023,7 +2039,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=N
 
     depth = lambda u: urllib.parse.urlsplit(u).path.strip("/").count("/")
     def leafy(pats, n, min_depth=1):
-        got = sorted([u for u in pool if re.search(pats, u, re.I) and depth(u) >= min_depth],
+        got = sorted([u for u in pool if re.search(pats, u, re.I) and depth(u) >= min_depth and not page_candidate(u)],
                      key=lambda u: (-depth(u), len(u)))[:n]
         for u in got: pool.remove(u)
         return got
@@ -2033,7 +2049,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=N
     urls += leafy(r"/(docs?|guide|learn|tutorial|reference|api|help|kb|handbook)/", 2)
     urls += leafy(r"/(product|pricing|features?|solutions?|services?|platform|use-cases?)", 2, 0)
     if len(urls) < want:                              # anything left, deepest first
-        rest = sorted(pool, key=lambda u: (-depth(u), len(u)))
+        rest = sorted(pool, key=lambda u: (page_candidate(u) or 0, -depth(u), len(u)))   # listings last
         for u in rest:
             if len(urls) >= want: break
             if u not in urls: urls.append(u)
@@ -2378,6 +2394,10 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
             lt, lt_at = alt, scope + "/llms.txt"
     if late(lt):
         not_reached("p1.llms-txt", lt_at)
+    elif lt.status == 0:
+        # no answer after its retries says nothing about whether the file exists: not observed, never zero
+        tier["p1.llms-txt"] = None
+        ev["p1.llms-txt"] = "%s got no answer after its retries (%s); not observed." % (lt_at, fault_name(lt.err))
     elif not text_file(lt):
         tier["p1.llms-txt"] = 0
         ev["p1.llms-txt"] = ("/llms.txt %s%s." % (

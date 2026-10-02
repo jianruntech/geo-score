@@ -1606,6 +1606,43 @@ with _tf.TemporaryDirectory() as _d:
         ok("`uvx --from %s %s`" % (gs.RELEASE_WHEEL, _then) in _err and "`pipx install %s`" % gs.RELEASE_WHEEL in _err
            and _err.index("uvx") < _err.index("clone"), "%s: the wheel's install lines come before clone" % _argv)
 
+# ── what a sampled page can be ──
+for _u, _want in (("https://ex.test/agents.md", None), ("https://ex.test/blog/author/max/feed.xml", None),
+                  ("https://ex.test/newsroom.json", None), ("https://ex.test/guide.pdf", None),
+                  ("https://ex.test/blog/page/82", 1), ("https://ex.test/blog/tag/news", 1),
+                  ("https://ex.test/blog/category/product", 1), ("https://ex.test/blog/series/platform", 1),
+                  ("https://ex.test/blog/author/max", 1), ("https://ex.test/blog/how-we-ship", 0),
+                  ("https://ex.test/docs/getting-started", 0), ("https://ex.test/pricing", 0),
+                  ("https://ex.test/blog/paged-results", 0), ("https://ex.test/", 0)):
+    eq(gs.page_candidate(_u), _want, "page_candidate(%s)" % _u)
+
+def _discover_on(sitemap_paths, want):
+    """discover() on a fake site whose sitemap lists these paths, offline."""
+    site = "https://ex.test"
+    sm = "<?xml version='1.0'?><urlset>%s</urlset>" % "".join("<url><loc>%s%s</loc></url>" % (site, p) for p in sitemap_paths)
+    def fetch(url, ua=None, timeout=15, method="GET", **kw):
+        path = str(url)[len(site):]
+        if path in ("", "/"):
+            return gs.Resp(url, 200, b"<html><body><p>home</p></body></html>", {"content-type": "text/html"})
+        if path == "/robots.txt":
+            return gs.Resp(url, 200, ("Sitemap: %s/sitemap.xml" % site).encode(), {"content-type": "text/plain"})
+        if path == "/sitemap.xml":
+            return gs.Resp(url, 200, sm.encode(), {"content-type": "application/xml"})
+        return gs.Resp(url, 404, b"")
+    saved = gs.fetch, gs.fetch_steady
+    gs.fetch, gs.fetch_steady = fetch, (lambda u, tries=3, memo=None, **kw: fetch(u, **kw))
+    try:
+        return gs.discover(site, want)[0]
+    finally:
+        gs.fetch, gs.fetch_steady = saved
+
+_got = _discover_on(["/agents.md", "/feed.xml", "/blog/page/2", "/blog/page/82", "/blog/tag/news", "/blog/author/max",
+                     "/blog/post-one", "/blog/post-two", "/blog/post-three", "/docs/setup/install", "/pricing"], 8)
+ok(not any(gs.page_candidate(u) is None for u in _got), "a file a sitemap lists is never a sampled page: %s" % _got)
+_kinds = [gs.page_candidate(u) for u in _got]
+ok(_kinds == sorted(_kinds), "listing pages come only after every content page: %s" % _got)
+ok(sum(_kinds) <= 2, "with six content pages, at most two listing pages fill an eight-page sample: %s" % _got)
+
 if fails:
     print("FAIL — %d" % len(fails))
     for f in fails: print("  · " + f)
