@@ -101,17 +101,17 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 <!-- BEGIN MCP:install -->
 <!-- 由 scripts/mcp_docs.py 按版本 1.5.0 生成；要改请改脚本，不要改这一段。 -->
 
-[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJodHRwczovL2dpdGh1Yi5jb20vamlhbnJ1bnRlY2gvZ2VvLXNjb3JlL3JlbGVhc2VzL2Rvd25sb2FkL3YxLjUuMC9nZW9fc2NvcmUtMS41LjAtcHkzLW5vbmUtYW55LndobCIsImdlby1zY29yZS1tY3AiXX0%3D)
-[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522https%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%252Freleases%252Fdownload%252Fv1.5.0%252Fgeo_score-1.5.0-py3-none-any.whl%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522https%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%252Freleases%252Fdownload%252Fv1.5.0%252Fgeo_score-1.5.0-py3-none-any.whl%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJodHRwczovL2dpdGh1Yi5jb20vamlhbnJ1bnRlY2gvZ2VvLXNjb3JlL3JlbGVhc2VzL2Rvd25sb2FkL3YxLjUuMC9nZW9fc2NvcmUtMS41LjAtcHkzLW5vbmUtYW55LndobCIsImdlby1zY29yZS1tY3AiXX0%3D)
+[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS41LjAiLCJtY3AiXX0%3D)
+[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.5.0%2522%252C%2522mcp%2522%255D%257D)
+[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.5.0%2522%252C%2522mcp%2522%255D%257D)
+[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS41LjAiLCJtY3AiXX0%3D)
 
-按钮和下面几行用 `uvx` 安装 geo-score **1.5.0** 的发布 wheel 包，只需要先装 [uv](https://docs.astral.sh/uv/)，不需要 git，也没有构建步骤。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `geo-score-mcp` 后面加 `--read-only`。
+按钮和下面几行用 `uvx` 从 PyPI 运行 geo-score **1.5.0**，只需要先装 [uv](https://docs.astral.sh/uv/)，不需要 git，也没有构建步骤。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `mcp` 后面加 `--read-only`。
 
 **Claude Code**
 
 ```bash
-claude mcp add --scope user geo-score -- uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp
+claude mcp add --scope user geo-score -- uvx geo-score@1.5.0 mcp
 ```
 
 **标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
@@ -121,13 +121,15 @@ claude mcp add --scope user geo-score -- uvx --from https://github.com/jianrunte
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp"]
+      "args": ["geo-score@1.5.0", "mcp"]
     }
   }
 }
 ```
 
 Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输出的完整路径。
+
+访问不了 PyPI 时，用发布的 wheel 包：`uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp`
 
 从源码安装（需要 git）：`uvx --from git+https://github.com/jianruntech/geo-score@v1.5.0 geo-score-mcp`
 <!-- END MCP:install -->
@@ -180,7 +182,9 @@ Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp
 第一级就是这 100 分。第二、三级测的是量表有意不计分的那部分结果（[两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)）：
 单独报告，从不加进 100 分。就绪度 90 分的站，照样可能每条回答都输给第三方报道更多的竞品；反过来也会发生，所以两样都要看。
 
-第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起：克隆仓库，或者两个文件都下载。上面那行 `curl | python3` 只跑第一级。
+第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起。PyPI 上的包两个文件都有：`uvx geo-score@1.5.0 example.com`
+不安装直接运行，`pipx install geo-score==1.5.0` 装好一个 `geo-score` 命令。克隆仓库，或者两个文件都下载，也可以。
+上面那行 `curl | python3` 只跑第一级。
 
 ## 这和 SEO 问的不是同一个问题
 
@@ -272,6 +276,8 @@ amazon.com 只有 17 分正是这个原因。**另有 41 个站的正文只在 J
 ## 几种跑法
 
 **CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
+用 PyPI 上的包时，把下面的 `python3 cli/geo_score.py` 换成 `uvx geo-score@1.5.0`（或者 `pipx install geo-score==1.5.0`
+之后的 `geo-score`），三级都能用。
 
 ```bash
 python3 cli/geo_score.py example.com            # 人读
@@ -311,7 +317,8 @@ CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计
 因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
 样本只有 5 个站，而且都是当初用来校准的站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
 
-**MCP 服务**（三级都有）—— `geo-score-mcp`，或者在克隆的仓库里 `python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见 [MCP 服务](#mcp-服务)。
+**MCP 服务**（三级都有）—— 从 PyPI 运行 `uvx geo-score@1.5.0 mcp`（用 pipx 安装后是 `geo-score-mcp`），或者在克隆的仓库里
+`python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见 [MCP 服务](#mcp-服务)。
 
 ## 第二、三级 · AI 到底有没有引用你
 
@@ -548,14 +555,13 @@ Read this before quoting the numbers
 
 ## 稳定性、隐私与安装
 
-- **安装：** 第一级什么都不用装（上面那行 `curl`，锁定到某个发布版本）；想要一个包含三级的 `geo-score` 命令，安装发布的 wheel 包：
+- **安装：** 第一级什么都不用装（上面那行 `curl`，锁定到某个发布版本）；想要一个包含三级的 `geo-score` 命令，从 PyPI 安装：
+  `pipx install geo-score==1.5.0`。不安装直接运行：`uvx geo-score@1.5.0 example.com`（`uvx geo-score@1.5.0 mcp` 就是 MCP 服务）。
+  这两种方式都不需要 git，也没有构建步骤。
+  访问不了 PyPI 时，从发布页安装同一个 wheel 包：
   `pipx install https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl`。
-  不安装直接运行：
-  `pipx run --spec https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score example.com`
-  或 `uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score example.com`。
-  这几种方式都不需要 git，也没有构建步骤。
   从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.5.0`。每种方式都只用 Python 标准库。
-  发布的下载文件附带 `SHA256SUMS`（[如何校验](SECURITY.md#verifying-a-download)）。
+  发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站（包括它的跳转）、它的标记和 robots.txt 指向的地址

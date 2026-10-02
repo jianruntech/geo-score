@@ -120,6 +120,15 @@ grep -F "\"fileSha256\": \"$(shasum -a 256 "$mcpb" | cut -d' ' -f1)\"" server.js
 for f in geo_score.py geo_watch.py; do unzip -p "$mcpb" "server/$f" | cmp - "$f" && echo "server/$f: same"; done
 ```
 
+From 1.5.0 the wheel and the sdist are also on PyPI as `geo-score`, and they are the same files:
+`scripts/release.py` uploads the ones `SHA256SUMS` names and stops unless PyPI serves each with that
+SHA-256. To check the wheel pip downloads from PyPI against the release:
+
+```bash
+pip download --no-deps --only-binary :all: -d . "geo-score==${v#v}"
+grep -E " geo_score-${v#v}-py3-none-any\.whl\$" SHA256SUMS | shasum -a 256 -c
+```
+
 The one-line install in the README downloads from a release tag, never from `main`, so the code you
 run is the code that was released.
 

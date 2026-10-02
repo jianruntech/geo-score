@@ -72,6 +72,17 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   output schema the optional `runs` and `days`, so the MCP contract only grows. guide/watch-methodology.md gains
   section 8, "One ask, one day, one month".
 
+### Changed
+- **Install from PyPI.** geo-score has been on PyPI since 1.5.0, as the same wheel and sdist the GitHub release
+  attaches, and the install lines now lead with it: `uvx geo-score@X.Y.Z example.com`,
+  `pipx install geo-score==X.Y.Z`, and `uvx geo-score@X.Y.Z mcp` for MCP clients (the install buttons, the Claude
+  Code line, the standard config and every client in guide/mcp.md). The release wheel URL stays as the line for a
+  machine without PyPI, the git tag as the from-source line, and the `curl` line as the way to run level 1 with
+  nothing installed. server.json lists the pypi package beside the `.mcpb`, so the MCP Registry offers it, and
+  README.md, the package's description on PyPI, carries the registry's `mcp-name` line. `release.py --bump` moves
+  every `geo-score@X.Y.Z` and `geo-score==X.Y.Z`, and `--publish-pypi` (or `--execute --pypi`) uploads exactly the
+  wheel and sdist that `SHA256SUMS` names, with twine, then checks PyPI's SHA-256 of each (RELEASING.md, step 8).
+
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question
   reworded under the same id was compared with its old wording, and the edit could read as a change (and make

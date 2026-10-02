@@ -14,7 +14,7 @@ import contextlib, importlib.util, io, json, os, re, shutil, subprocess, sys, te
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import release  # noqa: E402  (MANIFESTS, version_fields, pack: the same code a release runs)
-import mcp_docs  # noqa: E402  (the install block's wheel URL)
+import mcp_docs  # noqa: E402  (the install block's command and its wheel fallback)
 
 # tracked files that may name a release although --bump does not rewrite them: the changelogs (history), raw
 # benchmark reports, build output, the pages build_page.py regenerates from the PINNED benchmark/_page_tpl.py,
@@ -83,9 +83,11 @@ def check_pins(version):
         ok(True, "%d tracked files: each one that names a release is in PINNED or exempt" % len(files))
     ok(wheels > 0, "%d wheel URLs, each releases/download/v%s/%s" % (wheels, version, release.wheel_name(version)))
 
-    print("\n  the wheel: what the install lines download, and what --bump and preflight do to it")
+    print("\n  the install lines: PyPI first, the wheel without PyPI, and what --bump and preflight do to them")
     url = "%s/releases/download/v%s/%s" % (release.REPO, version, release.wheel_name(version))
-    ok(mcp_docs.cfg_for(version)["args"][1] == url, "mcp_docs.py installs %s" % url)
+    pin = release.PYPI_PROJECT + "@" + version
+    ok(mcp_docs.cfg_for(version) == {"command": "uvx", "args": [pin, "mcp"]}, "mcp_docs.py runs uvx %s mcp" % pin)
+    ok(mcp_docs.WHEEL_URL.format(v=version) == url, "its no-PyPI line downloads %s" % url)
     # built from parts, so this file does not itself name a release
     old = "uvx --from %s/releases/download/v%s/%s geo-score" % (release.REPO, "1.2.3", release.wheel_name("1.2.3"))
     ok(release.repin(old, "9.9.9") == old.replace("1.2.3", "9.9.9"), "--bump rewrites the tag and the wheel's version")
@@ -511,6 +513,8 @@ def main():
        "the pypi package runs as uvx geo-score@%s mcp over stdio" % version)
     ok(bool(pp) and bool(pk) and pp[0].get("environmentVariables") == pk[0].get("environmentVariables"),
        "the pypi package asks for the same variables as the mcpb one")
+    ok(bool(pp) and ["%s@%s" % (pp[0].get("identifier"), version)] + [a.get("value") for a in pp[0].get("packageArguments", [])]
+       == mcp_docs.cfg_for(version)["args"], "the registry's pypi package runs what the install buttons run")
     # the registry accepts a pypi package only when its description, README.md here, names the server
     ok(re.search(r'^readme = "README\.md"$', rd("pyproject.toml"), re.M) is not None
        and "<!-- mcp-name: %s -->" % s.get("name") in rd("README.md").split("\n## ")[0],

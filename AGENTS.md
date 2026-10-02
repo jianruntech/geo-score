@@ -45,7 +45,7 @@ merges unless it passes.
 | `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics and the MCP guide, in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
 | `STABILITY.md` | What is a public contract and what semver means here |
-| `RELEASING.md`, `scripts/release.py` | How a release is cut, pinned and checksummed |
+| `RELEASING.md`, `scripts/release.py` | How a release is cut, pinned, checksummed and published to PyPI |
 
 ## Invariants
 
@@ -73,7 +73,7 @@ merges unless it passes.
 | **An MCP tool that spends says so.** `ask` and `run` are not read-only, their descriptions open with the cost, and `--read-only` removes them | `test_geo_watch.py` |
 | **Every manifest carries the release version** | `scripts/test_packaging.py`; `release.py` preflight |
 | **Every release pin moves with the release.** Every tracked file that names a release is one `release.py --bump` rewrites, and every release-wheel URL's tag and file name equal `__version__` | `scripts/test_packaging.py` (`check_pins`); `release.py` preflight |
-| **Install lines download the release wheel.** The generated install blocks use it, with the git install only on their "From source (needs git)" line, and every wheel URL names the current release | `mcp_docs.py --check`; `scripts/test_packaging.py` (`check_pins`) |
+| **Install lines run the PyPI package, pinned.** The generated install blocks run `uvx geo-score@X.Y.Z mcp`, with the release wheel only on their no-PyPI line and the git install only on their "From source (needs git)" line; every `geo-score@X.Y.Z`, `geo-score==X.Y.Z` and wheel URL names the current release, and `server.json`'s pypi package runs the same command | `mcp_docs.py --check`; `scripts/test_packaging.py` (`check_pins`, the server.json checks) |
 | **The gate's tools and actions are pinned.** ruff and jsonschema in `check.sh`, the same versions in validate.yml; actions by commit SHA with a `# vX.Y.Z` comment, top-level `permissions`, `persist-credentials: false`; the Docker base by digest | `scripts/test_packaging.py` (`check_gate_pins`, and the Dockerfile check) |
 | **pyproject.toml's classifiers cover `PY_OLDEST` to `PY_NEWEST`** from `check.sh`, and validate.yml and RELEASING.md name those two | `scripts/test_packaging.py` (`check_pythons`) |
 | **A new test suite joins the gate by its name**: `scripts/test_*.py` and `benchmark/test_*.py` | `scripts/check.sh` |

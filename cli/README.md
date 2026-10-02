@@ -12,6 +12,11 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.5.0/cli/geo_
   | python3 - yoursite.com
 ```
 
+All three levels come in one package on PyPI: `uvx geo-score@1.5.0 yoursite.com` runs it without
+installing, and `pipx install geo-score==1.5.0` installs the `geo-score` and `geo-score-mcp` commands.
+Without access to PyPI, the release wheel does the same:
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl`.
+
 ## Options
 
 | Flag | What it does |
@@ -398,8 +403,8 @@ keeps its first 20,000 characters (`answer_truncated` marks an answer that was c
 carries them as `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
 `summary.share_of_voice`; for a run saved before 1.6.0 they are computed from the saved answers.
 
-**Over MCP.** `geo-score-mcp` (`geo_score.py mcp` from a clone) serves all three levels to an agent
-over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
+**Over MCP.** `uvx geo-score@1.5.0 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
+clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
 app does not share with your shell, and a GUI client does not start it in your project, so pass
 `-c /absolute/path/geo-score-watch.json`. The config for each client, the tool table, keys,
 timeouts and troubleshooting: [guide/mcp.md](../guide/mcp.md).

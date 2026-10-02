@@ -2,7 +2,7 @@
 
 怎样把 geo-score 接进各个 Agent 客户端，以及这个服务做什么、不做什么。English: [mcp.md](mcp.md)
 
-`geo-score-mcp`（在克隆的仓库里是 `python3 cli/geo_score.py mcp`）是一个走 stdio 的本地 MCP 服务，
+`uvx geo-score@1.5.0 mcp`（PyPI 上的包；用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `python3 cli/geo_score.py mcp`）是一个走 stdio 的本地 MCP 服务，
 和命令行是同一份代码：只用标准库，Python 3.8 及以上。它提供：
 
 - **工具**，对应三级用法：`score_site`（第一级，免费）、`ask`（第二级），以及 `run`、`list_runs`、`report`、
@@ -19,17 +19,17 @@
 <!-- BEGIN MCP:install -->
 <!-- 由 scripts/mcp_docs.py 按版本 1.5.0 生成；要改请改脚本，不要改这一段。 -->
 
-[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJodHRwczovL2dpdGh1Yi5jb20vamlhbnJ1bnRlY2gvZ2VvLXNjb3JlL3JlbGVhc2VzL2Rvd25sb2FkL3YxLjUuMC9nZW9fc2NvcmUtMS41LjAtcHkzLW5vbmUtYW55LndobCIsImdlby1zY29yZS1tY3AiXX0%3D)
-[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522https%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%252Freleases%252Fdownload%252Fv1.5.0%252Fgeo_score-1.5.0-py3-none-any.whl%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522--from%2522%252C%2522https%253A%252F%252Fgithub.com%252Fjianruntech%252Fgeo-score%252Freleases%252Fdownload%252Fv1.5.0%252Fgeo_score-1.5.0-py3-none-any.whl%2522%252C%2522geo-score-mcp%2522%255D%257D)
-[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJodHRwczovL2dpdGh1Yi5jb20vamlhbnJ1bnRlY2gvZ2VvLXNjb3JlL3JlbGVhc2VzL2Rvd25sb2FkL3YxLjUuMC9nZW9fc2NvcmUtMS41LjAtcHkzLW5vbmUtYW55LndobCIsImdlby1zY29yZS1tY3AiXX0%3D)
+[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS41LjAiLCJtY3AiXX0%3D)
+[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.5.0%2522%252C%2522mcp%2522%255D%257D)
+[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.5.0%2522%252C%2522mcp%2522%255D%257D)
+[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS41LjAiLCJtY3AiXX0%3D)
 
-按钮和下面几行用 `uvx` 安装 geo-score **1.5.0** 的发布 wheel 包，只需要先装 [uv](https://docs.astral.sh/uv/)，不需要 git，也没有构建步骤。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `geo-score-mcp` 后面加 `--read-only`。
+按钮和下面几行用 `uvx` 从 PyPI 运行 geo-score **1.5.0**，只需要先装 [uv](https://docs.astral.sh/uv/)，不需要 git，也没有构建步骤。它们本身不带 Key，但如果启动服务的 shell 里 export 了服务商 Key（Claude Code 会把自己的环境变量传给服务），服务就能用它。要一个花不了钱的服务，在 `mcp` 后面加 `--read-only`。
 
 **Claude Code**
 
 ```bash
-claude mcp add --scope user geo-score -- uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp
+claude mcp add --scope user geo-score -- uvx geo-score@1.5.0 mcp
 ```
 
 **标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
@@ -39,13 +39,15 @@ claude mcp add --scope user geo-score -- uvx --from https://github.com/jianrunte
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp"]
+      "args": ["geo-score@1.5.0", "mcp"]
     }
   }
 }
 ```
 
 Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输出的完整路径。
+
+访问不了 PyPI 时，用发布的 wheel 包：`uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp`
 
 从源码安装（需要 git）：`uvx --from git+https://github.com/jianruntech/geo-score@v1.5.0 geo-score-mcp`
 <!-- END MCP:install -->
@@ -59,13 +61,13 @@ Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输�
 <summary><b>Claude Code</b></summary>
 
 ```bash
-claude mcp add --scope user geo-score -- uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp
+claude mcp add --scope user geo-score -- uvx geo-score@1.5.0 mcp
 ```
 
 带上 watch 配置，并把工具超时设为十分钟，免得较长的 `run` 被中途切断：
 
 ```bash
-claude mcp add-json --scope user geo-score '{"type":"stdio","command":"uvx","args":["--from","https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl","geo-score-mcp","-c","/absolute/path/geo-score-watch.json"],"timeout":600000}'
+claude mcp add-json --scope user geo-score '{"type":"stdio","command":"uvx","args":["geo-score@1.5.0","mcp","-c","/absolute/path/geo-score-watch.json"],"timeout":600000}'
 ```
 
 在启动 `claude` 的那个 shell 里 export 的 Key，通常能传到服务里。`--env NAME=value` 也可以，但会把 Key 明文写进
@@ -88,8 +90,7 @@ Claude Desktop 启动服务时既没有你 shell 里的 `PATH`，也没有你在
   "mcpServers": {
     "geo-score": {
       "command": "/Users/you/.local/bin/uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "/Users/you/acme/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "/Users/you/acme/geo-score-watch.json"],
       "env": {"OPENAI_API_KEY": "sk-...", "PERPLEXITY_API_KEY": "pplx-..."}
     }
   }
@@ -109,15 +110,14 @@ Claude Desktop 启动服务时既没有你 shell 里的 `PATH`，也没有你在
 ```toml
 [mcp_servers.geo-score]
 command = "uvx"
-args = ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-        "-c", "/absolute/path/geo-score-watch.json"]
+args = ["geo-score@1.5.0", "mcp", "-c", "/absolute/path/geo-score-watch.json"]
 # 从 Codex 所在的环境透传过去
 env_vars = ["OPENAI_API_KEY", "PERPLEXITY_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY"]
-startup_timeout_sec = 60   # 第一次启动要下载发布的 wheel 包
+startup_timeout_sec = 60   # 第一次启动要从 PyPI 下载这个包
 tool_timeout_sec = 600     # Codex 默认 60 秒；一次 run 可能更久
 ```
 
-`codex mcp add geo-score -- uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp`
+`codex mcp add geo-score -- uvx geo-score@1.5.0 mcp`
 会写好前三行，其余手动补上。
 
 </details>
@@ -133,8 +133,7 @@ tool_timeout_sec = 600     # Codex 默认 60 秒；一次 run 可能更久
     "geo-score": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "${workspaceFolder}/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "${workspaceFolder}/geo-score-watch.json"],
       "env": {"OPENAI_API_KEY": "${env:OPENAI_API_KEY}", "PERPLEXITY_API_KEY": "${env:PERPLEXITY_API_KEY}"}
     }
   }
@@ -160,8 +159,7 @@ tool_timeout_sec = 600     # Codex 默认 60 秒；一次 run 可能更久
     "geo-score": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "${workspaceFolder}/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "${workspaceFolder}/geo-score-watch.json"],
       "env": {"OPENAI_API_KEY": "${input:openai-key}"}
     }
   }
@@ -183,8 +181,7 @@ tool_timeout_sec = 600     # Codex 默认 60 秒；一次 run 可能更久
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "/absolute/path/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "/absolute/path/geo-score-watch.json"],
       "env": {"OPENAI_API_KEY": "$OPENAI_API_KEY", "GEMINI_API_KEY": "$GEMINI_API_KEY"}
     }
   }
@@ -206,8 +203,7 @@ macOS 和 Linux 是 `~/.config/devin/mcp_config.json`，Windows 是 `%APPDATA%\d
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "/absolute/path/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "/absolute/path/geo-score-watch.json"],
       "env": {"OPENAI_API_KEY": "sk-..."}
     }
   }
@@ -228,8 +224,7 @@ macOS 和 Linux 是 `~/.config/devin/mcp_config.json`，Windows 是 `%APPDATA%\d
   "context_servers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["--from", "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl", "geo-score-mcp",
-               "-c", "/absolute/path/geo-score-watch.json"],
+      "args": ["geo-score@1.5.0", "mcp", "-c", "/absolute/path/geo-score-watch.json"],
       "env": {}
     }
   }
@@ -387,7 +382,7 @@ docker run -i --rm --user "$(id -u)" -v "$PWD:/work" -e OPENAI_API_KEY geo-score
 `score_site` 和 `status`。无论环境里有什么 Key，这两种都调不了付费 API：
 
 ```bash
-claude mcp add --scope user geo-score -- uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score-mcp --read-only
+claude mcp add --scope user geo-score -- uvx geo-score@1.5.0 mcp --read-only
 ```
 
 在 JSON 配置里，把 `"--read-only"` 加到 `args` 末尾，或者在 `env` 里设 `"GEO_SCORE_MCP_READ_ONLY": "1"`。
@@ -421,7 +416,7 @@ claude mcp add --scope user geo-score -- uvx --from https://github.com/jianrunte
 工作目录就是客户端启动服务时所在的目录。终端客户端（Claude Code、Codex、Gemini CLI）通常在你启动它们的目录里
 启动服务；桌面应用和编辑器会在别处启动，常常是你的主目录或 `/`，而不是你的项目。拿不准就用绝对路径的 `-c`。
 配置里写的问题列表按配置文件所在目录解析，运行结果也存在它旁边的 `.geo-score/watch/runs/` 下。这两个文件用
-`uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo_score-1.5.0-py3-none-any.whl geo-score watch init` 创建（pip 安装后是 `geo-score watch init`，
+`uvx geo-score@1.5.0 watch init` 创建（pip 安装后是 `geo-score watch init`，
 在克隆的仓库里是 `python3 cli/geo_score.py watch init`）；全部配置项见
 [命令行说明](../cli/README.zh-CN.md#watch)。
 
@@ -500,8 +495,9 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
   '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | python3 cli/geo_score.py mcp
 ```
 
-**服务起不来。** 桌面应用常常找不到 `uvx`：在 `command` 里写它的绝对路径（`which uvx`）。第一次启动要下载发布的 wheel 包
+**服务起不来。** 桌面应用常常找不到 `uvx`：在 `command` 里写它的绝对路径（`which uvx`）。第一次启动要从 PyPI 下载这个包
 （uv 找不到 Python 时还要下载一个 Python），网络慢时可能超过客户端的启动超时；再启动一次，或者调大超时（Codex：`startup_timeout_sec`）。
+访问不了 PyPI 的地方，改用[安装](#安装)里那行发布的 wheel 包。
 
 **`cannot read … geo-score-watch.json`。** 服务不是在你的项目里运行的。传 `-c /绝对路径/geo-score-watch.json`，
 或者设 `GEO_SCORE_WATCH_CONFIG`。从 1.4.0 起，`status` 会显示服务尝试读取的路径。
