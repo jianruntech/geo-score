@@ -69,6 +69,8 @@
         "engines": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
         "share_of_voice": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
         "by_tier": {"type": "array", "items": {"$ref": "#/$defs/rate"}},
+        "by_question": {"type": "array", "items": {"$ref": "#/$defs/by_question"},
+                        "description": "One entry per question, in question order: who the answers cite and name, as counts. Added in 1.6.0; reports recompute the summary of a run saved without it."},
         "notes": {"type": "array", "items": {"type": "string"}}
       }}
   },
@@ -123,6 +125,28 @@
         "verdict": {"enum": ["change", "within noise", "too few questions to tell", "not measured"]},
         "note": {"type": ["string", "null"]}
       }},
+    "by_question": {"type": "object", "additionalProperties": false,
+      "description": "One question's answers, counted. Every number is a count of answers (status ok) over every engine and ask, never a rate.",
+      "required": ["query_id", "query", "intent_tier", "branded", "answered", "you", "competitors", "none_named", "searched", "leader"],
+      "properties": {
+        "query_id": {"type": "string"}, "query": {"type": "string"}, "intent_tier": {"type": "string"},
+        "branded": {"type": "boolean", "description": "The question counts as naming the brand, as in summary.branded."},
+        "answered": {"type": "integer", "minimum": 0},
+        "you": {"$ref": "#/$defs/named_counts"},
+        "competitors": {"type": "object", "additionalProperties": {"$ref": "#/$defs/named_counts"},
+                        "description": "Per tracked competitor, by name."},
+        "none_named": {"type": "integer", "minimum": 0,
+                       "description": "Answers whose text names neither the brand nor any tracked competitor. They may name brands the config does not list."},
+        "searched": {"type": "object", "additionalProperties": false, "required": ["yes", "no", "unknown"],
+          "description": "Whether the engine searched the web for each answer, from what the run saved: yes when it reported a search, exposed a search query or cited a URL; no when an OpenAI, Gemini or Anthropic answer shows none of these; unknown for Perplexity and OpenRouter, whose APIs search on every call or do not say.",
+          "properties": {"yes": {"type": "integer", "minimum": 0}, "no": {"type": "integer", "minimum": 0},
+                         "unknown": {"type": "integer", "minimum": 0}}},
+        "leader": {"type": ["string", "null"],
+                   "description": "The tracked brand (yours or a competitor) cited by the most answers, when the question has at least 4 answers and that count is above zero and above every other tracked brand's. Otherwise null."}
+      }},
+    "named_counts": {"type": "object", "additionalProperties": false, "required": ["cited", "mentioned"],
+      "properties": {"cited": {"type": "integer", "minimum": 0, "description": "Answers citing a URL this brand owns."},
+                     "mentioned": {"type": "integer", "minimum": 0, "description": "Answers whose text names it."}}},
     "entity": {"type": "object", "additionalProperties": false, "required": ["name", "domains", "url_prefixes", "aliases"],
       "properties": {
         "name": {"type": "string"},

@@ -318,6 +318,17 @@ questions, because answers to one question move together; otherwise it is Wilson
 change only when `diff` says `change`. Formulas and a worked example:
 [guide/watch-methodology.md](../guide/watch-methodology.md).
 
+**Who is named for each question.** `watch report` lists every question with the number of answers
+it got and, out of those, how many cite and name you, how many cite and name each competitor, how
+many name no tracked brand, how many searched the web (yes, no or unknown), and the tracked brand
+cited most often when the question has at least 4 answers and one brand is ahead of every other.
+These are counts, not rates. Whether an answer searched is read from the saved answer: yes when the
+provider reported a search, exposed a search query or the answer cites a URL; no when an OpenAI,
+Gemini or Anthropic answer shows none of these; unknown for every Perplexity and OpenRouter answer,
+because those APIs search on every call or do not say. The JSON
+report and the MCP `report` tool carry the same table as `summary.by_question`; for a run saved
+before 1.6.0 it is computed from the saved answers.
+
 **Over MCP.** `geo-score-mcp` (`geo_score.py mcp` from a clone) serves all three levels to an agent
 over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
 app does not share with your shell, and a GUI client does not start it in your project, so pass

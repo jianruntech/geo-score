@@ -44,6 +44,10 @@ BOOTSTRAP_REPS = 2000
 ALPHA = 0.05
 MIN_PAIRED = 6        # with 5 questions, all 5 flipping the same way gives exact p = 2/2^5 = 0.0625: no test can call it
 BRANDED_WARN = 0.3    # `watch check` warns above this share of questions that name the brand
+LEADER_MIN = 4        # summary.by_question names a leader only for a question with at least this many answers
+# Providers whose stored answers show whether the engine searched: a search count, the search queries or the
+# citations. The Perplexity and OpenRouter adapters record one search for every answer, so that count is never read.
+SEARCH_REPORTED = ("openai", "gemini", "anthropic")
 RETRY_STATUS = (429, 500, 502, 503, 504, 529)
 FATAL_STATUS = (400, 401, 403, 404)
 ENGINE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
@@ -86,6 +90,13 @@ NOTES = [
     "headline rate and reported on a line of their own.",
     "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
     "This measures citations. It does not predict traffic, rankings or revenue.",
+]
+
+# printed under the per-question table of a report: what its counts can and cannot say
+BY_QUESTION_NOTES = [
+    "An answer given without a web search cannot cite anything.",
+    "\"No tracked brand named\" counts answers that name none of the brands in your config; they may name others.",
+    "Perplexity and OpenRouter search on every call or do not say, so their answers count as unknown under searched.",
 ]
 
 # Swapped out by the tests; nothing else should touch these.
@@ -1222,6 +1233,20 @@ def questions_hash(queries):
     return hashlib.sha256(json.dumps(pairs, ensure_ascii=True, separators=(",", ":")).encode("ascii")).hexdigest()
 
 
+def searched_of(sample, provider):
+    """Whether the engine searched the web for this answer: True, False, or None when the stored answer cannot
+    say. Derived from what every run already saves. An answer that cites anything searched (Gemini's search count
+    is the number of query strings it exposed, which can be zero on a grounded answer). Perplexity and OpenRouter
+    are always None: their adapters write search_calls = 1 for every answer, which is not a measurement."""
+    if provider not in SEARCH_REPORTED:
+        return None
+    usage = sample.get("usage")
+    if (isinstance(usage, dict) and _int(usage.get("search_calls")) > 0) or sample.get("search_queries") \
+            or sample.get("citations"):
+        return True
+    return False if isinstance(usage, dict) else None
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1284,6 +1309,28 @@ def summarize(run):
             gaps.append({"query_id": qid, "query": qtext.get(qid, {}).get("query", ""),
                          "competitors": rivals_hit, "answered": len(rows)})
 
+    # Who is named for each question: counts only, one entry per question in question order
+    provider = dict((e["id"], e.get("provider")) for e in run["engines"])
+    by_question = []
+    for q in run["queries"]:
+        rows = per_q.get(q["query_id"], [])
+        you = {"cited": sum(1 for s in rows if s["cited"]), "mentioned": sum(1 for s in rows if s["mentioned"])}
+        comps = dict((r.name, {"cited": sum(1 for s in rows if s["competitors"].get(r.name, {}).get("cited")),
+                               "mentioned": sum(1 for s in rows if s["competitors"].get(r.name, {}).get("mentioned"))})
+                     for r in rivals)
+        how = Counter(searched_of(s, provider.get(s["engine"])) for s in rows)
+        cited = [(brand.name, you["cited"])] + [(n, c["cited"]) for n, c in comps.items()]
+        top = max(k for _, k in cited)
+        leader = None
+        if len(rows) >= LEADER_MIN and top > 0 and sum(1 for _, k in cited if k == top) == 1:
+            leader = next(n for n, k in cited if k == top)
+        by_question.append({
+            "query_id": q["query_id"], "query": q.get("query") or "", "intent_tier": q.get("intent_tier") or "",
+            "branded": is_branded(q, brand), "answered": len(rows), "you": you, "competitors": comps,
+            "none_named": sum(1 for s in rows if not s["mentioned"]
+                              and not any(s["competitors"].get(r.name, {}).get("mentioned") for r in rivals)),
+            "searched": {"yes": how[True], "no": how[False], "unknown": how[None]}, "leader": leader})
+
     tiers = {}
     for s in ok:
         t = qtext.get(s["query_id"], {}).get("intent_tier") or ""
@@ -1308,17 +1355,20 @@ def summarize(run):
                             skipped=sum(1 for s in samples if s["status"] == "skipped")),
             "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
             "engines": engines, "share_of_voice": share, "top_sources": sources,
-            "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps, "by_tier": by_tier,
+            "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps,
+            "by_question": by_question, "by_tier": by_tier,
             "searches": {"answers_exposing": len(exposed),
                          "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]},
             "notes": notes}
 
 
 def summary_of(run):
-    """The stored summary, or a fresh one for a run saved before the clustered intervals and the branded
-    split existed. Summaries are derived from the samples, so recomputing one changes no measurement."""
+    """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split or
+    the per-question counts existed. Summaries are derived from the samples, so recomputing one changes no
+    measurement."""
     sm = run.get("summary")
-    if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}):
+    if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
+            and "by_question" in sm:
         return sm
     return summarize(run)
 
@@ -1627,6 +1677,25 @@ def render(run, fmt="text"):
         L.append(_h("Questions where a competitor is cited and you are not (%d)" % len(sm["gaps"]), fmt))
         L.append(table(["id", "question", "cited instead"],
                        [[g["query_id"], _cut(g["query"], 60), ", ".join(g["competitors"])] for g in sm["gaps"]], fmt))
+
+    if o["answered"] and sm.get("by_question"):
+        rival_names = [c.get("name") or "" for c in run.get("competitors") or []]
+        rows = []
+        for q in sm["by_question"]:
+            n, you = q["answered"], q["you"]
+            rows.append([q["query_id"], _cut(q["query"], 40), n,
+                         "cited %d/%d · named %d/%d" % (you["cited"], n, you["mentioned"], n)]
+                        + ["cited %d · named %d" % (q["competitors"].get(r, {}).get("cited", 0),
+                                                    q["competitors"].get(r, {}).get("mentioned", 0)) for r in rival_names]
+                        + ["%d/%d" % (q["none_named"], n),
+                           "%d/%d/%d" % (q["searched"]["yes"], q["searched"]["no"], q["searched"]["unknown"]),
+                           q["leader"] + (" (you)" if q["leader"] == run["brand"]["name"] else "")
+                           if q["leader"] is not None else "—"])
+        L.append(_h("Who is named for each question", fmt))
+        L.append(table(["id", "question", "answers", "%s (you)" % name] + rival_names
+                       + ["no tracked brand named", "searched yes/no/unknown", "most cited"], rows, fmt))
+        L.append("")   # a line right under a markdown table would be read as another row
+        L.extend("- " + n for n in BY_QUESTION_NOTES)
 
     if sm["by_tier"]:
         L.append(_h("By question type", fmt))
@@ -2301,10 +2370,24 @@ OUT_REPORT = {"type": "object", "description": "A geo-score report (schema/repor
                              "checks": {"type": "array", "items": {"type": "object", "required": ["id", "state"]}}}}
 _BLOCK = {"type": "object", "properties": {"answered": {"type": "integer"}, "cited": {"type": "integer"},
                                            "cited_rate": _NUM_OR_NULL, "cited_ci": _CI, "cited_ci_clustered": _CI}}
+_COUNTS = {"type": "object", "properties": {"cited": {"type": "integer"}, "mentioned": {"type": "integer"}}}
+_BY_QUESTION = {"type": "array", "description": "Per question, in question order: answers, and how many of them cite "
+                                                "or name you and each competitor. Counts, not rates.",
+                "items": {"type": "object", "properties": {
+                    "query_id": {"type": "string"}, "query": {"type": "string"}, "intent_tier": {"type": "string"},
+                    "branded": {"type": "boolean"}, "answered": {"type": "integer"}, "you": _COUNTS,
+                    "competitors": {"type": "object", "additionalProperties": _COUNTS},
+                    "none_named": {"type": "integer", "description": "answers whose text names no brand the config lists"},
+                    "searched": {"type": "object", "properties": {
+                        "yes": {"type": "integer"}, "no": {"type": "integer"},
+                        "unknown": {"type": "integer", "description": "Perplexity and OpenRouter do not say"}}},
+                    "leader": _nullable("string", description="the one most-cited tracked brand; null below %d "
+                                                              "answers, on a tie or with no citation" % LEADER_MIN)}}}
 OUT_SUMMARY = {"type": "object", "description": "A watch run summary (schema/watch.v1.json, summary).",
                "required": ["overall", "headline", "engines"],
                "properties": {"overall": _BLOCK, "headline": _BLOCK, "branded": _BLOCK,
                               "engines": {"type": "array", "items": {"type": "object"}},
+                              "by_question": _BY_QUESTION,
                               "notes": {"type": "array", "items": {"type": "string"}}}}
 _ROW = {"type": "object", "properties": {
     "engine": {"type": "string"}, "verdict": {"type": "string"},
@@ -2640,7 +2723,7 @@ class MCPServer(object):
             {"name": "report", "title": "Report on a saved run",
              "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with "
                             "95% intervals, share of voice, most-cited third-party sources, questions a competitor "
-                            "wins, observed searches, cost.",
+                            "wins, who is cited and named for each question, observed searches, cost.",
              "inputSchema": {"type": "object", "properties": {
                  "run": {"type": "string", "description": "A run id, or 'latest' (default)."},
                  "format": {"type": "string", "enum": ["md", "json"]}}, "additionalProperties": False},

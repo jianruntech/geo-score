@@ -12,6 +12,8 @@ English version: [watch-methodology.md](watch-methodology.md)
 
 后文有两个推论：区间按问题重抽样，而不是按回答；比较两次运行时，每个问题只和它自己比。
 
+报告还会把每个问题单独列出来，见「Who is named for each question」表（`summary.by_question`）：这个问题拿到几条回答，其中几条引用或提到了品牌、几条引用或提到了每个追踪的竞品、几条一个都没提到，几条是联网搜索后给出的。这些都是计数，不附区间，也不做检验；四条回答里有三条，不是一个可以跨周比较的比率。「Most cited」（`leader`）只在问题至少有 4 条回答、且某个追踪的品牌被引用的回答数多于其他任何一个时，才给出这个品牌。回答有没有联网搜索，从运行保存的内容里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明有没有搜索，适配器无论如何都为每条回答记一次搜索。没有联网搜索就给出的回答，不可能引用任何东西。「No tracked brand named」统计的是没有提到配置里任何一个品牌的回答，配置里没列的品牌它说明不了。
+
 ## 2. 区间
 
 ### Wilson（每条回答视为独立）
@@ -178,6 +180,6 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

@@ -96,6 +96,17 @@ reports them on a line of their own.
 run files; the warning `watch check` prints when they are more than 30% of the set.
 **More:** [watch methodology, Questions that name the brand](watch-methodology.md#3-questions-that-name-the-brand)
 
+### By question
+
+A watch report's per-question view. For each tracked question it counts the answers, how many of
+them cite or name you and each tracked competitor, how many name no tracked brand, how many
+[searched](#searched), and which tracked brand is cited most often, given only when the question has
+at least 4 answers and one brand is ahead of every other. Every value is a count, never a rate.
+
+**Where:** the table `Who is named for each question` in `watch report`; `summary.by_question` in run
+files, the JSON report and the MCP `report` tool.
+**More:** [watch methodology, The unit](watch-methodology.md#1-the-unit-an-answer-clustered-by-question)
+
 ## C
 
 ### Check, check id
@@ -452,6 +463,16 @@ SARIF 2.1.0 with one rule per check and one result per check below full marks: `
 zero, `warning` for another check at zero, `note` for partial credit.
 
 **Where:** `--sarif FILE`; GitHub code scanning. **More:** [CLI reference, Options](../cli/README.md#options)
+
+### Searched
+
+Whether an engine ran a web search for an answer, read from what the run saved: yes when the provider
+reported a search, exposed a search query or the answer cites a URL; no when an OpenAI, Gemini or
+Anthropic answer shows none of these; unknown for Perplexity and OpenRouter, whose APIs search on
+every call or do not say. An answer given without a search cannot cite anything.
+
+**Where:** the `searched yes/no/unknown` column of the per-question table in `watch report`;
+`summary.by_question[].searched` in run files. **More:** [By question](#by-question)
 
 ### Sector median and the n<10 rule
 

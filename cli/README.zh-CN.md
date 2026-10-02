@@ -277,6 +277,12 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 95% 区间用对问题做的自助法（bootstrap）重抽样，因为同一个问题的几条回答会一起变动；否则用 Wilson 区间。只有 `diff` 说
 `change` 时才算有变化。公式和算例见 [guide/watch-methodology.zh-CN.md](../guide/watch-methodology.zh-CN.md)。
 
+**每个问题提到了谁。** `watch report` 逐个列出问题：拿到几条回答，其中几条引用、几条提到了你，几条引用、几条提到了每个竞品，
+几条一个追踪的品牌都没提到，几条联网搜索过（是、否或未知）；问题至少有 4 条回答、且某个追踪的品牌被引用的次数多于其他所有品牌时，
+还列出这个品牌。这些都是计数，不是比率。回答有没有联网搜索，从保存的回答里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，
+就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 的回答一律记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明。JSON 报告和 MCP 的
+`report` 工具以 `summary.by_question` 给出同一张表；1.6.0 之前保存的运行，由保存的回答当场算出。
+
 **通过 MCP 使用。** `geo-score-mcp`（在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见

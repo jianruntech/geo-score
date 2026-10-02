@@ -421,6 +421,85 @@
           },
           "type": "object"
          },
+         "by_question": {
+          "description": "Per question, in question order: answers, and how many of them cite or name you and each competitor. Counts, not rates.",
+          "items": {
+           "properties": {
+            "answered": {
+             "type": "integer"
+            },
+            "branded": {
+             "type": "boolean"
+            },
+            "competitors": {
+             "additionalProperties": {
+              "properties": {
+               "cited": {
+                "type": "integer"
+               },
+               "mentioned": {
+                "type": "integer"
+               }
+              },
+              "type": "object"
+             },
+             "type": "object"
+            },
+            "intent_tier": {
+             "type": "string"
+            },
+            "leader": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ],
+             "description": "the one most-cited tracked brand; null below 4 answers, on a tie or with no citation"
+            },
+            "none_named": {
+             "description": "answers whose text names no brand the config lists",
+             "type": "integer"
+            },
+            "query": {
+             "type": "string"
+            },
+            "query_id": {
+             "type": "string"
+            },
+            "searched": {
+             "properties": {
+              "no": {
+               "type": "integer"
+              },
+              "unknown": {
+               "description": "Perplexity and OpenRouter do not say",
+               "type": "integer"
+              },
+              "yes": {
+               "type": "integer"
+              }
+             },
+             "type": "object"
+            },
+            "you": {
+             "properties": {
+              "cited": {
+               "type": "integer"
+              },
+              "mentioned": {
+               "type": "integer"
+              }
+             },
+             "type": "object"
+            }
+           },
+           "type": "object"
+          },
+          "type": "array"
+         },
          "engines": {
           "items": {
            "type": "object"
@@ -648,7 +727,7 @@
     "readOnlyHint": true,
     "title": "Report on a saved run"
    },
-   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, observed searches, cost.",
+   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, who is cited and named for each question, observed searches, cost.",
    "inputSchema": {
     "additionalProperties": false,
     "properties": {
@@ -718,6 +797,85 @@
        }
       },
       "type": "object"
+     },
+     "by_question": {
+      "description": "Per question, in question order: answers, and how many of them cite or name you and each competitor. Counts, not rates.",
+      "items": {
+       "properties": {
+        "answered": {
+         "type": "integer"
+        },
+        "branded": {
+         "type": "boolean"
+        },
+        "competitors": {
+         "additionalProperties": {
+          "properties": {
+           "cited": {
+            "type": "integer"
+           },
+           "mentioned": {
+            "type": "integer"
+           }
+          },
+          "type": "object"
+         },
+         "type": "object"
+        },
+        "intent_tier": {
+         "type": "string"
+        },
+        "leader": {
+         "anyOf": [
+          {
+           "type": "string"
+          },
+          {
+           "type": "null"
+          }
+         ],
+         "description": "the one most-cited tracked brand; null below 4 answers, on a tie or with no citation"
+        },
+        "none_named": {
+         "description": "answers whose text names no brand the config lists",
+         "type": "integer"
+        },
+        "query": {
+         "type": "string"
+        },
+        "query_id": {
+         "type": "string"
+        },
+        "searched": {
+         "properties": {
+          "no": {
+           "type": "integer"
+          },
+          "unknown": {
+           "description": "Perplexity and OpenRouter do not say",
+           "type": "integer"
+          },
+          "yes": {
+           "type": "integer"
+          }
+         },
+         "type": "object"
+        },
+        "you": {
+         "properties": {
+          "cited": {
+           "type": "integer"
+          },
+          "mentioned": {
+           "type": "integer"
+          }
+         },
+         "type": "object"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
      },
      "engines": {
       "items": {

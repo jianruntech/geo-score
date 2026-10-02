@@ -2772,6 +2772,183 @@ class EditedQuestions(Base):
         self.assertIn(gw.questions_hash(old["queries"])[:8], out.getvalue())
 
 
+# ── who is named for each question ────────────────────────────────────────
+def answer(q, e, ask, you=(False, False), pixa=(False, False), reel=(False, False), searches=0, queries_=(),
+           cites=None, status="ok"):
+    """One saved sample: (cited, named) for Lumo, Pixa and Reelcraft, and what the provider reported of its search."""
+    if status != "ok":
+        return {"query_id": q, "engine": e, "run": ask, "status": status, "error": "HTTP 500"}
+    owned = [("lumo.example", you[0]), ("pixa.example", pixa[0]), ("reelcraft.example", reel[0])]
+    cites = [{"url": "https://%s/%s" % (d, q), "domain": d, "title": ""} for d, c in owned if c] if cites is None else cites
+    return {"query_id": q, "engine": e, "run": ask, "status": "ok", "cited": you[0], "rank": 1 if you[0] else None,
+            "quoted_url": "https://lumo.example/" + q if you[0] else None, "mentioned": you[1],
+            "competitors": {"Pixa": {"cited": pixa[0], "rank": None, "mentioned": pixa[1]},
+                            "Reelcraft": {"cited": reel[0], "rank": None, "mentioned": reel[1]}},
+            "citations": cites, "search_queries": list(queries_), "answer": "", "answer_truncated": False,
+            "usage": {"input_tokens": 0, "output_tokens": 0, "search_calls": searches, "api_calls": 1},
+            "cost_usd": None, "seconds": 0.0}
+
+
+def counted_run(samples, qs, engs=("chatgpt-api", "perplexity-api"), runs=2):
+    run = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]}, runs=runs, qs=qs)
+    run["competitors"] = [r.as_json() for r in rivals()]
+    run["engines"] = [dict(e, status="measured") for e in engines(*engs)]
+    run["queries"] = [gw.flag_query(q, brand(), rivals()) for q in qs]
+    run["samples"] = samples
+    run["summary"] = gw.summarize(run)
+    return run
+
+
+class ByQuestion(Base):
+    QS = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
+          {"query_id": "q02", "query": "lumo vs pixa", "intent_tier": "vs", "target_url": ""},
+          {"query_id": "q03", "query": "cheap video app", "intent_tier": "", "target_url": ""},
+          {"query_id": "q04", "query": "text to video for teams", "intent_tier": "persona", "target_url": ""},
+          {"query_id": "q05", "query": "video app with no watermark", "intent_tier": "", "target_url": ""}]
+
+    def run_of(self):
+        """Two competitors, runs=2, two engines: 4 asks per question, some of them failed."""
+        o, p = "chatgpt-api", "perplexity-api"
+        return counted_run([
+            # q01: Pixa is cited by 3 of 4 answers, Lumo by 1, Reelcraft by none; one answer names no tracked brand
+            answer("q01", o, 1, you=(True, True), pixa=(True, True), reel=(False, True), searches=1, queries_=["x"]),
+            answer("q01", o, 2, pixa=(True, True)),                        # a citation, no search reported
+            answer("q01", p, 1, pixa=(True, True), searches=1),
+            answer("q01", p, 2, searches=1),
+            # q02: 3 answers (one failed); Lumo is cited twice and Pixa once, but 3 answers name no leader
+            answer("q02", o, 1, you=(False, True)),                        # no search, no citation: did not search
+            answer("q02", o, 2, status="error"),
+            answer("q02", p, 1, you=(True, True), searches=1),
+            answer("q02", p, 2, you=(True, True), pixa=(True, False), searches=1),
+            # q03: never answered
+            answer("q03", o, 1, status="error"), answer("q03", o, 2, status="error"),
+            answer("q03", p, 1, status="error"), answer("q03", p, 2, status="error"),
+            # q04: Lumo and Pixa are cited by 2 answers each: a tie names no leader
+            answer("q04", o, 1, you=(True, True), searches=2), answer("q04", o, 2, pixa=(True, True), searches=1),
+            answer("q04", p, 1, you=(True, False), searches=1), answer("q04", p, 2, pixa=(True, False), searches=1),
+            # q05: four answers that cite no tracked brand
+            answer("q05", o, 1, searches=1), answer("q05", o, 2), answer("q05", p, 1, searches=1),
+            answer("q05", p, 2, reel=(False, True), searches=1),
+        ], self.QS)
+
+    def test_counts_per_question_with_two_competitors_and_two_asks(self):
+        run = self.run_of()
+        bq = run["summary"]["by_question"]
+        self.assertEqual([q["query_id"] for q in bq], ["q01", "q02", "q03", "q04", "q05"])    # question order
+        q1 = bq[0]
+        self.assertEqual(q1, {"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "branded": False,
+                              "answered": 4, "you": {"cited": 1, "mentioned": 1},
+                              "competitors": {"Pixa": {"cited": 3, "mentioned": 3},
+                                              "Reelcraft": {"cited": 0, "mentioned": 1}},
+                              "none_named": 1, "searched": {"yes": 2, "no": 0, "unknown": 2}, "leader": "Pixa"})
+        q2 = bq[1]
+        self.assertEqual((q2["answered"], q2["branded"], q2["you"], q2["competitors"]["Pixa"]),
+                         (3, True, {"cited": 2, "mentioned": 3}, {"cited": 1, "mentioned": 0}))
+        self.assertEqual((q2["none_named"], q2["searched"], q2["leader"]), (0, {"yes": 0, "no": 1, "unknown": 2}, None))
+        q3 = bq[2]
+        self.assertEqual((q3["answered"], q3["you"], q3["none_named"], q3["searched"], q3["leader"]),
+                         (0, {"cited": 0, "mentioned": 0}, 0, {"yes": 0, "no": 0, "unknown": 0}, None))
+        self.assertEqual((bq[3]["answered"], bq[3]["you"]["cited"], bq[3]["competitors"]["Pixa"]["cited"],
+                          bq[3]["leader"]), (4, 2, 2, None))
+        self.assertEqual((bq[4]["answered"], bq[4]["none_named"], bq[4]["searched"], bq[4]["leader"]),
+                         (4, 3, {"yes": 1, "no": 1, "unknown": 2}, None))
+        for q in bq:      # every value is a count of answers
+            self.assertEqual(sum(q["searched"].values()), q["answered"])
+            self.assertLessEqual(q["none_named"], q["answered"])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_the_leader_needs_four_answers_and_a_strict_lead(self):
+        o, p = "chatgpt-api", "perplexity-api"
+
+        def leader(samples):
+            return counted_run(samples, self.QS[:1])["summary"]["by_question"][0]["leader"]
+        three = [answer("q01", o, 1, you=(True, True)), answer("q01", o, 2, you=(True, True)),
+                 answer("q01", p, 1, you=(True, True))]
+        self.assertIsNone(leader(three))                                         # 3 of 3 cite Lumo: too few
+        self.assertEqual(leader(three + [answer("q01", p, 2)]), "Lumo")
+        self.assertIsNone(leader(three + [answer("q01", p, 2, pixa=(True, True)), answer("q01", p, 3, pixa=(True, False)),
+                                          answer("q01", o, 3, pixa=(True, False))]))         # 3 and 3: a tie
+        self.assertIsNone(leader([answer("q01", e, i) for e in (o, p) for i in (1, 2)]))     # nobody cited
+
+    def test_searched_per_provider(self):
+        s = lambda **kw: answer("q01", "x", 1, **kw)
+        for prov in ("openai", "gemini", "anthropic"):
+            self.assertIs(gw.searched_of(s(searches=1, cites=[]), prov), True, prov)
+            self.assertIs(gw.searched_of(s(queries_=["lumo pricing"], cites=[]), prov), True, prov)
+            self.assertIs(gw.searched_of(s(pixa=(True, False)), prov), True, prov)       # a citation means a search
+            self.assertIs(gw.searched_of(s(), prov), False, prov)
+        for prov in ("perplexity", "openrouter", None, "unknown"):
+            # their adapters write search_calls = 1 on every answer: never read as a measurement
+            self.assertIsNone(gw.searched_of(s(searches=1, pixa=(True, True)), prov), prov)
+            self.assertIsNone(gw.searched_of(s(), prov), prov)
+        bare = s()
+        del bare["usage"]
+        self.assertIsNone(gw.searched_of(bare, "openai"))                         # nothing saved to read
+        self.assertIs(gw.searched_of(dict(bare, search_queries=["x"]), "openai"), True)
+
+    def test_a_gemini_answer_with_citations_and_no_queries_searched(self):
+        self.fake({"generativelanguage.googleapis.com": lambda u, h, b: gemini_resp(
+            "Pixa has a free plan.", [("https://pixa.example/pricing", "pixa.example")])})
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        run = gw.execute(brand(), rivals(), [eng], queries(1))
+        smp = run["samples"][0]
+        self.assertEqual((smp["usage"]["search_calls"], smp["search_queries"]), (0, []))
+        self.assertIs(gw.searched_of(smp, "gemini"), True)
+        self.assertEqual(run["summary"]["by_question"][0]["searched"], {"yes": 1, "no": 0, "unknown": 0})
+        self.fake({"api.perplexity.ai": lambda u, h, b: pplx_resp("Pixa [1].", [("https://pixa.example/", "Pixa")]),
+                   "openrouter.ai": lambda u, h, b: openrouter_resp("Pixa.", [("https://pixa.example/", "Pixa")])})
+        run = gw.execute(brand(), rivals(), engines("perplexity-api", "or-api"), queries(1))
+        self.assertEqual([s["usage"]["search_calls"] for s in run["samples"]], [1, 1])      # hard-coded by the adapters
+        self.assertEqual(run["summary"]["by_question"][0]["searched"], {"yes": 0, "no": 0, "unknown": 2})
+
+    def test_the_report_has_the_section_and_its_notes(self):
+        run = self.run_of()
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn("Who is named for each question", text)
+            self.assertLess(text.index("Who is named for each question"), text.index("Ledger"))
+            for n in gw.BY_QUESTION_NOTES:
+                self.assertIn("- " + n, text)
+        md = gw.render(run, "md")
+        self.assertIn("| id | question | answers | Lumo (you) | Pixa | Reelcraft | no tracked brand named | "
+                      "searched yes/no/unknown | most cited |", md)
+        self.assertIn("| q01 | best ai video tool | 4 | cited 1/4 · named 1/4 | cited 3 · named 3 | cited 0 · named 1 | "
+                      "1/4 | 2/0/2 | Pixa |", md)
+        self.assertIn("| q03 | cheap video app | 0 | cited 0/0 · named 0/0 | cited 0 · named 0 | cited 0 · named 0 | "
+                      "0/0 | 0/0/0 | — |", md)
+        self.assertIn("|\n\n- An answer given without", md)            # a blank line ends the markdown table
+        for word in ("optimi", "worth", "should", "recommend"):         # counts, never advice
+            self.assertNotIn(word, "\n".join(gw.BY_QUESTION_NOTES).lower())
+        empty = counted_run([answer("q01", "chatgpt-api", 1, status="error")], self.QS[:1])
+        self.assertNotIn("Who is named for each question", gw.render(empty))
+        # the json report and the MCP report tool carry it
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        gw.save_run(gw.Config(cfgp), run)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["report", "-c", cfgp, "--format", "json"]), 0)
+        self.assertEqual(json.loads(out.getvalue())["summary"]["by_question"], run["summary"]["by_question"])
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["by_question"][0]["leader"], "Pixa")
+        out_schema = next(t for t in srv.tools() if t["name"] == "report")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
+    def test_summary_of_recomputes_a_summary_without_by_question(self):
+        run = self.run_of()
+        fresh = run["summary"]
+        old = json.loads(json.dumps(run))
+        del old["summary"]["by_question"]                     # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["by_question"], fresh["by_question"])
+        self.assertEqual(sm["headline"], fresh["headline"])     # recomputing changes no measurement
+        self.assertIs(gw.summary_of(run), run["summary"])        # a current summary is used as saved
+        self.assertIn("Who is named for each question", gw.render(old))
+        self.assertNotIn("by_question", old["summary"])          # the run itself is not rewritten
+
+
 # ── questions that name the brand ────────────────────────────────────────
 class Branded(Base):
     def test_questions_naming_the_brand_are_flagged(self):

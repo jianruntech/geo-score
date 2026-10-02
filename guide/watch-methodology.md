@@ -24,6 +24,19 @@ and call changes that are not there.
 Two consequences run through the rest of this page: intervals resample questions, not answers,
 and a diff compares each question with itself.
 
+The report also lists every question on its own, in the table "Who is named for each question"
+(`summary.by_question`): how many answers it got, how many of them cite or name the brand and
+each tracked competitor, how many name none of them, and how many came from a web search. These
+are counts, with no interval and no test; three of four answers is not a rate to compare across
+weeks. "Most cited" (`leader`) names a tracked brand only when the question has at least 4 answers
+and that brand is cited by more of them than any other. Whether an answer searched is read from
+what the run saved: yes when the provider reported a search, exposed a search query or the answer
+cites a URL; no when an OpenAI, Gemini or Anthropic answer shows none of these; unknown for
+Perplexity and OpenRouter, whose APIs search on every call or do not say, and whose adapters record
+one search per answer either way. An answer given without a search cannot cite anything.
+"No tracked brand named" counts answers that name none of the brands in the config, which says
+nothing about brands the config does not list.
+
 ## 2. Intervals
 
 ### Wilson (every answer independent)
@@ -278,8 +291,8 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
   `summary.branded`, `summary.brand_flags`, `cited_ci_clustered` and `n_questions` in every rate
-  block, `brand_in_query`, `competitor_in_query` and `branded` on each question, and
-  `questions_hash`, which two runs share when they asked the same questions.
+  block, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on each
+  question, and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

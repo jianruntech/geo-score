@@ -5,6 +5,21 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **`watch report` shows who is named for each question.** A new table, "Who is named for each question",
+  lists every question with its answers and, out of those, how many cite and name you, how many cite and name
+  each competitor, how many name no tracked brand, how many searched the web (yes, no or unknown), and the
+  tracked brand cited most often, given only when the question has at least 4 answers and one brand is ahead of
+  every other. Every value is a count. Whether an answer searched is derived from what every run already saves
+  (a reported search, an exposed search query or a citation); Perplexity and OpenRouter answers are always
+  unknown, because their adapters record one search per answer whatever happened. Three lines under the table
+  say what the counts cannot: an answer given without a search cannot cite anything, "no tracked brand named"
+  covers only the brands in your config, and why some answers are unknown. The summary gains
+  `summary.by_question` (`$defs/by_question` in schema/watch.v1.json), the JSON report and the MCP `report` tool
+  carry it, and it is an optional property of the tool's output schema, so the MCP contract only grows. A run
+  saved before this release gets it computed from its saved answers when it is reported; the run file is not
+  rewritten.
+
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question
   reworded under the same id was compared with its old wording, and the edit could read as a change (and make

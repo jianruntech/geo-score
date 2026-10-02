@@ -83,6 +83,15 @@ GitHub Action 的 `baseline` 输入，以及 `delta`、`dropped-checks` 两个�
 **出现在：** `queries.csv` 可选的 `branded` 列（`auto`、`yes` 或 `no`）；运行文件里的 `brand_in_query`；这类问题超过三成时
 `watch check` 给出的警告。**详见：** [watch 方法说明 · 提到品牌的问题](watch-methodology.zh-CN.md#3-提到品牌的问题)
 
+### By question（逐个问题）
+
+追踪报告里按问题看的视图。对每个追踪的问题，它统计拿到几条回答，其中几条引用或提到了你、几条引用或提到了每个追踪的竞品、
+几条一个追踪的品牌都没提到、几条[联网搜索过](#searched联网搜索过)，以及被引用次数最多的追踪品牌；后者只在问题至少有 4 条回答、
+且这个品牌多于其他所有品牌时才给出。每个值都是计数，不是比率。
+
+**出现在：** `watch report` 里的 `Who is named for each question` 表；运行文件、JSON 报告和 MCP `report` 工具里的 `summary.by_question`。
+**详见：** [watch 方法说明 · 单位](watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)
+
 ## C
 
 ### Check、check id（检查项与检查项 id）
@@ -384,6 +393,15 @@ Applebot、Amazonbot。
 门槛项得 0 分为 `error`，其他检查项得 0 分为 `warning`，拿到部分分为 `note`。
 
 **出现在：** `--sarif FILE`；GitHub 代码扫描。**详见：** [CLI 说明 · 参数](../cli/README.zh-CN.md#options)
+
+### Searched（联网搜索过）
+
+引擎给出某条回答前有没有联网搜索，从运行保存的内容里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，就算「是」；
+OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 记为「未知」，因为它们的 API
+每次调用都会搜索，或者不说明。没有联网搜索就给出的回答，不可能引用任何东西。
+
+**出现在：** `watch report` 逐题表里的 `searched yes/no/unknown` 列；运行文件里的 `summary.by_question[].searched`。
+**详见：** [By question（逐个问题）](#by-question逐个问题)
 
 ### Sector median and the n<10 rule（行业中位数与 n<10 规则）
 
