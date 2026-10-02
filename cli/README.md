@@ -247,7 +247,7 @@ measured" and the readiness report is unchanged.
 | `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, warn about a `target_url` it cannot use, and show which engines have keys and prices |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer), and exits 0, with or without keys |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
-| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | Several saved runs pooled: those started in the last DAYS days, or from run A to run B, both included. Each must match the newest (same questions, engines, models, country and brand domains); otherwise it exits 1 and names every run that differs. Gives the runs, the days they cover, the answers, the headline rate and a row per engine |
+| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | Several saved runs pooled: those started in the last DAYS days, or from run A to run B, both included. Each must match the newest (same questions, asks per question, engines, models, country and brand domains); otherwise it exits 1 and names every run that differs. Gives the runs, the days they cover, the answers, the headline rate and a row per engine |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
 | `watch runs` | Saved runs, their headline rate and the first 8 characters of their `questions_hash`, which two runs share when they asked the same questions |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | Level 2 without the score: one question to every engine, now, not saved |
@@ -356,9 +356,9 @@ change only when `diff` says `change`. Formulas and a worked example:
 
 **Pooling runs.** One run is one day's answers. `watch report --since 30` (or `--runs A..B`) counts the runs
 of a period as one set of answers, so each question's rate rests on more answers and one unusual day weighs
-less. It pools only runs that asked the same questions (the same `questions_hash`) on the same engines with the
-same models, from the same `country`, with the same brand domains and URL prefixes as the newest run in the
-window, and refuses otherwise, naming each run that differs and why. Its 95% interval treats every answer to one
+less. It pools only runs that asked the same questions (the same `questions_hash`) as many times each (the same
+`runs`), on the same engines with the same models, from the same `country`, with the same brand domains and URL
+prefixes as the newest run in the window, and refuses otherwise, naming each run that differs and why. Its 95% interval treats every answer to one
 question, from every run and engine, as one cluster: more runs narrow it only as far as the number of questions
 allows. A pooled rate describes a period; it is not a test for a change, and there is no pooled diff. The JSON
 follows `$defs/pooled` in [schema/watch.v1.json](../schema/watch.v1.json); the MCP `report` tool takes `since`.

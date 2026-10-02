@@ -785,7 +785,7 @@
       "type": "string"
      },
      "since": {
-      "description": "Pool the runs saved in the last N days instead of reporting one: they must have asked the same questions on the same engines and models, or the call fails and names the runs that differ.",
+      "description": "Pool the runs saved in the last N days instead of reporting one: they must have asked the same questions, as many times each, on the same engines and models, or the call fails and names the runs that differ.",
       "minimum": 1,
       "type": "integer"
      }

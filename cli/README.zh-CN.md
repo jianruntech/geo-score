@@ -216,7 +216,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），并以 0 退出，有没有 Key 都一样 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
-| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
+| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、每题问的次数、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
 | `watch runs` | 保存过的运行、各自的标题引用率，以及 `questions_hash` 的前 8 位：两次运行问的是同一组问题时，这一列相同 |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | 不打分的第二级：一个问题马上问遍所有引擎（或 `--engines` 指定的那些），不保存 |
@@ -307,7 +307,7 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 
 **合并多次运行。** 一次运行是一天的回答。`watch report --since 30`（或 `--runs A..B`）把一段时间里的运行当成一组回答来统计，
 这样每个问题的比率建立在更多回答上，某一天的异常影响也更小。只有与窗口里最新一次运行问的是同一组问题（`questions_hash` 相同）、
-用的是同样的引擎和模型、`country` 相同、品牌域名和 URL 前缀也相同的运行才会被合并；否则拒绝合并，并逐一列出不一致的运行和原因。
+每题问的次数相同（`runs` 相同）、用的是同样的引擎和模型、`country` 相同、品牌域名和 URL 前缀也相同的运行才会被合并；否则拒绝合并，并逐一列出不一致的运行和原因。
 它的 95% 区间把同一个问题的全部回答（不论来自哪次运行、哪个引擎）当作一簇：运行越多，区间最多也只能窄到问题数允许的程度。
 合并出来的比率描述的是一段时间，不是对变化的检验，也没有合并后的比较。JSON 遵循 [schema/watch.v1.json](../schema/watch.v1.json)
 里的 `$defs/pooled`；MCP 的 `report` 工具接受 `since` 参数。运行之前，`watch run --dry-run` 会打印这套计划的分辨力：E 个引擎时，

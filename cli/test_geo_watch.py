@@ -3746,6 +3746,30 @@ class Pooling(Base):
                                                         "status": "no_key"}])
         self.assertEqual(len(gw.pooled_report(self.cfg, since=30)[1]["runs"]), 2)
 
+    def test_pooling_refuses_runs_that_asked_each_question_more_often(self):
+        # every answer weighs the same in a pool, so a run that asked each question 5 times would count 5 times as
+        # much as one that asked once: 8 of 8 cited, then 0 of 40, would pool to 8 of 48, not to the runs' mean
+        qs = self.qs[:8]
+        once = synth(WEEKS[2], dict(((q["query_id"], "chatgpt-api"), [True]) for q in qs), qs=qs, runs=1)
+        five = synth(WEEKS[3], dict(((q["query_id"], "chatgpt-api"), [False] * 5) for q in qs), qs=qs, runs=5)
+        for run in (once, five):
+            gw.save_run(self.cfg, run)
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=30)
+        self.assertIn("cannot pool: 1 of the 2 runs do not match the newest, %s" % WEEKS[3], str(e.exception))
+        self.assertIn("\n  %s: asked each question 1 time (newest 5 times), so the runs would not weigh the same\n"
+                      % WEEKS[2], str(e.exception))
+        self.assertIn("asked the same questions as many times", str(e.exception))
+        self.assertEqual(gw.pool_mismatch(five, once), ["asked each question 5 times (newest 1 time), so the runs would "
+                                                        "not weigh the same"])
+        self.assertEqual(gw.pool_mismatch(five, dict(five, run_id="x")), [])
+        srv = gw.MCPServer(self.cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertTrue(r["isError"])
+        self.assertIn("asked each question 1 time (newest 5 times)", r["content"][0]["text"])
+        # each run on its own still reports
+        self.assertEqual(len(gw.pooled_report(self.cfg, span=WEEKS[3] + ".." + WEEKS[3])[1]["runs"]), 1)
+
     def test_report_flags(self):
         for rid in WEEKS:
             self.save(rid)

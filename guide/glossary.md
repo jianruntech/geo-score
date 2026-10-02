@@ -403,8 +403,8 @@ bonus checks' to 6. A run gives a check the points of the tier it reached.
 ### Pooled report
 
 Several saved watch runs counted as one set of answers: those of the last N days, or a range of run ids. Only
-runs that asked the same questions on the same engines and models, from the same `country`, with the same
-brand domains, pool; otherwise the command refuses and names the runs that differ. Its interval treats every
+runs that asked the same questions as many times each, on the same engines and models, from the same `country`,
+with the same brand domains, pool; otherwise the command refuses and names the runs that differ. Its interval treats every
 answer to one question, from every run, as one cluster, so pooling narrows it only as far as the number of
 questions allows. It describes a period and is not a test for a change.
 

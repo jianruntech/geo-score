@@ -125,7 +125,7 @@
         "min_questions": {"type": "integer", "description": "Fewer questions answered in both runs than this gives the verdict 'too few questions to tell'."}
       }},
     "pooled": {"type": "object", "additionalProperties": false,
-      "description": "Since 1.6.0. What `watch report --since DAYS` or `watch report --runs A..B` prints with --format json (and the MCP report tool with since): several saved runs counted as one set of answers. Every run pooled asked the same questions (the same questions_hash) on the same engines with the same providers and models, from the same country, with the same brand domains and URL prefixes as the newest; otherwise the command refuses and names the runs that differ. Not stored in run files.",
+      "description": "Since 1.6.0. What `watch report --since DAYS` or `watch report --runs A..B` prints with --format json (and the MCP report tool with since): several saved runs counted as one set of answers. Every run pooled asked the same questions (the same questions_hash) as many times each (the same runs, so every run weighs the same) on the same engines with the same providers and models, from the same country, with the same brand domains and URL prefixes as the newest; otherwise the command refuses and names the runs that differ. Not stored in run files.",
       "required": ["channel", "runs", "since_days", "from", "to", "days", "questions_hash", "n_questions", "overall", "headline", "branded", "brand_flags", "engines", "notes"],
       "properties": {
         "channel": {"enum": ["api"], "description": "Answers came from the providers' APIs, not the consumer apps."},

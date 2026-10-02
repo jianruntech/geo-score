@@ -1815,13 +1815,18 @@ def _measured(run):
 
 def pool_mismatch(run, ref):
     """Why run cannot be pooled with ref, the newest run of the pool: [] when it asked the same questions (the same
-    questions_hash), on the same engines with the same providers and models, from the same country, with the same
-    brand domains and URL prefixes."""
+    questions_hash) as many times each, on the same engines with the same providers and models, from the same country,
+    with the same brand domains and URL prefixes. Every answer weighs the same in a pool, so a run that asked each
+    question more often would weigh more than the others."""
     why = []
     qa, qb = run.get("questions_hash") or questions_hash(run["queries"]), ref.get("questions_hash") or \
         questions_hash(ref["queries"])
     if qa != qb:
         why.append("other questions (questions_hash %s, newest %s)" % (qa[:8], qb[:8]))
+    ka, kb = run.get("runs") or 1, ref.get("runs") or 1
+    if ka != kb:
+        why.append("asked each question %s (newest %s), so the runs would not weigh the same" % (
+            _n(ka, "time"), _n(kb, "time")))
     ea, eb = _measured(run), _measured(ref)
     for eid in sorted(set(ea) | set(eb)):
         if eid not in eb:
@@ -1897,8 +1902,8 @@ def pooled_report(cfg, since=None, span=None):
     bad = [(rid, why) for rid, why in bad if why]
     if bad:
         raise ConfigError("cannot pool: %d of the %d runs do not match the newest, %s, and pooling them would mix two "
-                          "measurements:\n%s\npool only runs that asked the same questions on the same engines and "
-                          "models: a shorter window (since), or --runs A..B on the command line" % (
+                          "measurements:\n%s\npool only runs that asked the same questions as many times on the same "
+                          "engines and models: a shorter window (since), or --runs A..B on the command line" % (
                               len(bad), len(runs), ref["run_id"],
                               "\n".join("  %s: %s" % (rid, "; ".join(why)) for rid, why in bad)))
     return runs, pool_runs(runs, since)
@@ -3235,8 +3240,8 @@ class MCPServer(object):
                  "run": {"type": "string", "description": "A run id, or 'latest' (default)."},
                  "since": {"type": "integer", "minimum": 1,
                            "description": "Pool the runs saved in the last N days instead of reporting one: they "
-                                          "must have asked the same questions on the same engines and models, or "
-                                          "the call fails and names the runs that differ."},
+                                          "must have asked the same questions, as many times each, on the same "
+                                          "engines and models, or the call fails and names the runs that differ."},
                  "format": {"type": "string", "enum": ["md", "json"]}}, "additionalProperties": False},
              "outputSchema": OUT_WATCH_REPORT,
              "annotations": self._hints(True, True, False)},
@@ -3926,7 +3931,7 @@ def main(argv=None, prog="geo_score.py watch"):
     p = with_config(sub.add_parser("report", help="report on a saved run, or pool several"))
     p.add_argument("run", nargs="?", help="run id (default: latest)")
     p.add_argument("--since", type=int, metavar="DAYS", help="pool the runs saved in the last DAYS days; they must "
-                   "match the newest run (same questions, engines, models, country and brand domains)")
+                   "match the newest run (same questions, asks per question, engines, models, country and brand domains)")
     p.add_argument("--runs", metavar="A..B", help="pool the runs from A to B, both included, under the same rule")
     p.add_argument("--format", choices=["text", "md", "csv", "json"], default="text")
     p.add_argument("-o", "--output")

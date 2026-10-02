@@ -344,15 +344,16 @@ of the whole set is a measurement of one day. Asks made minutes apart share that
 model version, so they are not independent of each other, and they say little about the next week.
 
 **Pooling.** `watch report --since DAYS` (or `--runs A..B`) counts several saved runs as one set of answers.
-It pools only runs that asked the same questions (the same `questions_hash`) on the same engines with the same
-providers and models, from the same `country`, with the same brand domains and URL prefixes as the newest run
-in the window. Otherwise it refuses and names each run that differs and why: a rate pooled over two question
-sets or two models describes neither. The output gives the runs, the calendar days from the first to the last,
+It pools only runs that asked the same questions (the same `questions_hash`) as many times each (the same
+`runs`), on the same engines with the same providers and models, from the same `country`, with the same brand
+domains and URL prefixes as the newest run in the window. Otherwise it refuses and names each run that differs
+and why: a rate pooled over two question sets or two models describes neither, and every answer weighs the same
+in a pool, so a run that asked each question five times would count five times as much as a run that asked once. The output gives the runs, the calendar days from the first to the last,
 the answers, the headline rate and a row per engine. The interval is the cluster bootstrap of section 2 with
 one cluster per question: every answer to a question, from every run and every engine, is resampled together.
 
-What pooling buys is more answers per question, so each question's rate is pinned down more closely and one
-unusual day weighs less. What it does not buy is more questions. The interval resamples questions, so it
+What pooling buys is more answers per question, so each question's rate is pinned down more closely, and,
+because every run pooled asked each question as often, one unusual day weighs less. What it does not buy is more questions. The interval resamples questions, so it
 narrows only as far as their number allows: ten questions asked every week for a month are still ten
 questions. A pooled rate describes a period. It is not a test for a change, and no pooled diff exists; to ask
 whether something changed, compare two runs with `watch diff`.
