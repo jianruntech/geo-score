@@ -1,7 +1,8 @@
 {
  "rubric_version": "v1.1",
- "tool": "geo-score-cli/1.3.0",
- "audited_at": "2026-09-27",
+ "tool": "geo-score-cli/1.5.0",
+ "audited_at": "2026-10-02",
+ "elapsed_s": 148.3,
  "target": "https://hioscar.com",
  "audience_language": "en",
  "sampled_urls": [
@@ -15,7 +16,7 @@
   "https://hioscar.com/for-brokers/faqs"
  ],
  "sample_source": "sitemap",
- "readiness": 46,
+ "readiness": 48,
  "observable_max": 86,
  "normalised": 40,
  "band": "Early",
@@ -27,18 +28,18 @@
    "state": "scored",
    "points": 5,
    "max": 5,
-   "evidence": "robots.txt (1068 bytes): the wildcard group carries an explicit allow-all. No Disallow applies to retrieval crawlers.",
+   "evidence": "robots.txt (1068 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
    "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
   },
   {
    "id": "g.reachable",
    "state": "scored",
-   "points": 3,
+   "points": 5,
    "max": 5,
-   "evidence": "9 of 10 retrieval user-agents returned 200 on 3 sampled pages; 9 of those served content matching what a browser receives.",
-   "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: all 10 retrieval user-agents return 200 with matching content",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+   "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+   "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
   },
   {
    "id": "g.ssr",
@@ -47,25 +48,25 @@
    "max": 5,
    "evidence": "0 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
    "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: present on some sampled pages",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
   },
   {
    "id": "p1.sitemap",
    "state": "scored",
    "points": 2,
    "max": 4,
-   "evidence": "Sitemap declared in robots.txt («site text: https://www.hioscar.com/sitemap-1.xml»): HTTP 200, 11609 <loc>, 0 <lastmod>.",
+   "evidence": "Sitemap declared in robots.txt («site text: https://www.hioscar.com/sitemap-1.xml»): HTTP 200, 11612 <loc>, 0 <lastmod>.",
    "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
   },
   {
    "id": "p1.llms-txt",
    "state": "scored",
    "points": 5,
    "max": 5,
-   "evidence": "/llms.txt: HTTP 200, 21731 bytes, 3 '##' sections, 3 of them containing links, site definition present.",
+   "evidence": "/llms.txt: HTTP 200, 21801 bytes, 3 '##' sections, 3 of them containing links, site definition present.",
    "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
   },
   {
    "id": "p1.organization",
@@ -74,7 +75,7 @@
    "max": 6,
    "evidence": "Organization + WebSite on 8 of 8 pages; no sameAs declared.",
    "tier_reason": "tier 3 of 4 — tier 4 (+1) needs: and the logo resolves, with sameAs declared",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
   },
   {
    "id": "p1.breadcrumb",
@@ -83,7 +84,7 @@
    "max": 3,
    "evidence": "BreadcrumbList on 3 of 7 nested pages.",
    "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: present across nested pages",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
   },
   {
    "id": "p1.page-type",
@@ -92,7 +93,7 @@
    "max": 4,
    "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 5 of 8 sampled pages; 5 of them with real field values.",
    "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
   },
   {
    "id": "p2.answer-passages",
@@ -101,7 +102,7 @@
    "max": 9,
    "evidence": "0 of 8 pages open with a self-contained passage of 25–120 words.",
    "tier_reason": "tier 1 of 4 — tier 2 (+4) needs: on a few pages",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
   },
   {
    "id": "p2.question-intent",
@@ -110,7 +111,7 @@
    "max": 7,
    "evidence": "6 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
    "tier_reason": "tier 4 of 4 — top tier: most do",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
   },
   {
    "id": "p2.freshness",
@@ -119,16 +120,16 @@
    "max": 6,
    "evidence": "3 of 8 pages carry a date a reader or a crawler can see; 3 declare dateModified.",
    "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
   },
   {
    "id": "p2.sourced-stats",
    "state": "scored",
    "points": 3,
    "max": 7,
-   "evidence": "Few numeric claims in the sample (0 figures), so there is little to attribute.",
+   "evidence": "Few numeric claims in the sample (0 figures on 0 pages), so there is little to attribute.",
    "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
   },
   {
    "id": "p2.named-author",
@@ -137,19 +138,19 @@
    "max": 6,
    "evidence": "3 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
    "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
   },
   {
    "id": "p3.listings",
    "state": "unobservable",
    "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
   },
   {
    "id": "p3.mentions",
    "state": "unobservable",
    "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
   },
   {
    "id": "p3.knowledge-graph",
@@ -158,7 +159,7 @@
    "max": 4,
    "evidence": "Brand read as «site text: oscar» (also tried «site text: Health insurance made for real life», «site text: Hioscar»). Entity found — Wikidata Q1951683 «site text: male given name»; en.wikipedia: «site text: Oscar»",
    "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
   },
   {
    "id": "p3.sameas",
@@ -167,7 +168,7 @@
    "max": 3,
    "evidence": "No sameAs declared on the Organization entity.",
    "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
   },
   {
    "id": "p3.video",
@@ -176,7 +177,7 @@
    "max": 3,
    "evidence": "0 pages declare VideoObject; 0 official channel links and 0 embedded players in the sample.",
    "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
   },
   {
    "id": "p4.answer-shape",
@@ -185,19 +186,19 @@
    "max": 4,
    "evidence": "0 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
    "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: subheadings present but paragraphs run long",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
   },
   {
    "id": "p4.question-coverage",
    "state": "unobservable",
    "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
   },
   {
    "id": "p4.cn-engines",
    "state": "unobservable",
    "reason": "Site does not address the Chinese market — the check leaves the denominator.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
   },
   {
    "id": "b.llms-full",
@@ -205,7 +206,7 @@
    "points": 0,
    "max": 2,
    "evidence": "Bonus check, outside the denominator.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
   },
   {
    "id": "b.ai-txt",
@@ -213,7 +214,7 @@
    "points": 0,
    "max": 2,
    "evidence": "Bonus check, outside the denominator.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#aitxt--2-pts--bai-txt"
   },
   {
    "id": "b.geo-link",
@@ -221,7 +222,7 @@
    "points": 0,
    "max": 1,
    "evidence": "Bonus check, outside the denominator.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
   },
   {
    "id": "b.speakable",
@@ -229,7 +230,7 @@
    "points": 0,
    "max": 1,
    "evidence": "Bonus check, outside the denominator.",
-   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.3.0/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+   "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.5.0/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
   }
  ],
  "notes": [

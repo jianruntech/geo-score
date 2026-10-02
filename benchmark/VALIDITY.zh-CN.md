@@ -1,17 +1,17 @@
 # CLI 与人工审计的一致程度
 
-由 `benchmark/validity.py` 于 2026-09-27 用 geo-score-cli/1.3.0（量表 v1.1）生成。请勿手改，重跑脚本即可。
+由 `benchmark/validity.py` 于 2026-10-02 用 geo-score-cli/1.5.0（量表 v1.1）生成。请勿手改，重跑脚本即可。
 English: [VALIDITY.md](VALIDITY.md)
 
 ## 测了什么
 
-[examples/audits/v1.1](../examples/audits/v1.1/) 里公开的 5 份人工审计，逐一用 CLI 在相同页面上重评（`--urls` 固定为审计的 `sampled_urls`），两边都打了分的检查项逐档比较，共 86 对。
+[examples/audits/v1.1](../examples/audits/v1.1/) 里公开的 5 份人工审计，逐一用 CLI 在相同页面上重评（`--urls` 固定为审计的 `sampled_urls`），两边都打了分的检查项逐档比较，共 84 对。
 
 ## 结果
 
-- **只看两边都打了分的检查项，CLI 平均低 0.4 分。** 逐站看，CLI 在这些检查项上的得分率减去审计者的，范围从低 6 分到高 9 分（平均绝对差 5.2 分）。Bland-Altman（n=5）：偏差 -0.4，95% 一致性界限 -12.8 到 +12.0。
-- **按完整的归一化分算，CLI 平均低 3.6 分**，范围从低 10 分到高 6 分。两个数不同，是因为审计者还给 p3.listings、p3.mentions、p4.question-coverage 打了分，而 CLI 把这 3 项退出了分母。
-- **79% 的检查项两边档位完全一致。** 按规则读取的检查项一致率 95%（41 对）；CLI 用启发式近似的检查项一致率 64%（45 对）。3 个需要判断的检查项 CLI 从不打分。
+- **只看两边都打了分的检查项，CLI 平均低 2.4 分。** 逐站看，CLI 在这些检查项上的得分率减去审计者的，范围从低 12 分到高 10 分（平均绝对差 8.8 分）。Bland-Altman（n=5）：偏差 -2.4，95% 一致性界限 -21.7 到 +16.9。
+- **按完整的归一化分算，CLI 平均低 5.2 分**，范围从低 16 分到高 7 分。两个数不同，是因为审计者还给 p3.listings、p3.mentions、p4.question-coverage 打了分，而 CLI 把这 3 项退出了分母。
+- **80% 的检查项两边档位完全一致。** 按规则读取的检查项一致率 92%（39 对）；CLI 用启发式近似的检查项一致率 69%（45 对）。3 个需要判断的检查项 CLI 从不打分。
 
 ## 引用之前先读这几条
 
@@ -27,10 +27,10 @@ English: [VALIDITY.md](VALIDITY.md)
 
 | 站点 | 人工审计日期 | 人工分 | CLI 分 | 差值 | 档位一致 | 页面数 |
 |---|---|--:|--:|--:|--:|--:|
-| anthropic.com | 2026-09-08 | 70 | 70 | +0 | 16/17 | 8 |
-| mingdao.com | 2026-09-08 | 69 | 64 | -5 | 13/18 | 8 |
-| nextjs.org | 2026-09-08 | 87 | 77 | -10 | 12/17 | 8 |
-| stripe.com | 2026-09-08 | 77 | 83 | +6 | 12/17 | 6 |
+| anthropic.com | 2026-09-08 | 70 | 77 | +7 | 14/17 | 8 |
+| mingdao.com | 2026-09-08 | 69 | 58 | -11 | 12/17 | 8 |
+| nextjs.org | 2026-09-08 | 87 | 71 | -16 | 12/16 | 8 |
+| stripe.com | 2026-09-08 | 77 | 80 | +3 | 14/17 | 6 |
 | svelte.dev | 2026-09-08 | 78 | 69 | -9 | 15/17 | 8 |
 
 ## 按检查项
@@ -39,20 +39,20 @@ English: [VALIDITY.md](VALIDITY.md)
 |---|---|--:|--:|--:|---|
 | `g.robots` | Crawlers allowed in robots.txt | 5 | 100% | +0.0 | 无 |
 | `g.reachable` | Reachable to retrieval agents | 5 | 80% | +0.4 | stripe.com 3→5 |
-| `g.ssr` | Main content server-rendered | 5 | 60% | -0.8 | nextjs.org 5→3, stripe.com 5→3 |
+| `g.ssr` | Main content server-rendered | 5 | 80% | -0.4 | nextjs.org 5→3 |
 | `p1.sitemap` | Sitemap discoverable and fresh | 5 | 100% | +0.0 | 无 |
 | `p1.llms-txt` | llms.txt present and structured | 5 | 100% | +0.0 | 无 |
 | `p1.organization` | Organization + WebSite schema | 5 | 100% | +0.0 | 无 |
 | `p1.breadcrumb` | BreadcrumbList on nested pages | 5 | 100% | +0.0 | 无 |
-| `p1.page-type` | Page-type schema (Product, FAQ…) | 5 | 80% | +0.4 | stripe.com 2→4 |
+| `p1.page-type` | Page-type schema (Product, FAQ…) | 5 | 60% | +0.8 | anthropic.com 2→4, stripe.com 2→4 |
 | `p2.answer-passages` | Self-contained answer passages | 5 | 60% | -1.0 | mingdao.com 7→4, nextjs.org 9→7 |
 | `p2.question-intent` | Headings match how people ask | 5 | 80% | -0.8 | mingdao.com 7→3 |
-| `p2.freshness` | Freshness signal present | 5 | 80% | -0.6 | mingdao.com 3→0 |
-| `p2.sourced-stats` | Statistics carry a source | 5 | 20% | +2.8 | anthropic.com 5→7, mingdao.com 3→7, nextjs.org 3→7, stripe.com 3→7 |
-| `p2.named-author` | Named, verifiable authorship | 5 | 40% | -0.6 | mingdao.com 0→3, nextjs.org 6→3, svelte.dev 6→3 |
+| `p2.freshness` | Freshness signal present | 5 | 60% | +0.0 | anthropic.com 3→6, mingdao.com 3→0 |
+| `p2.sourced-stats` | Statistics carry a source | 5 | 80% | -0.6 | mingdao.com 3→0 |
+| `p2.named-author` | Named, verifiable authorship | 5 | 20% | +0.0 | anthropic.com 3→6, mingdao.com 0→3, nextjs.org 6→3, svelte.dev 6→3 |
 | `p3.listings` | Third-party listings | — | — | — | CLI 不打分，未比较 |
 | `p3.mentions` | Independent mentions | — | — | — | CLI 不打分，未比较 |
-| `p3.knowledge-graph` | Knowledge-graph entity | 5 | 100% | +0.0 | 无 |
+| `p3.knowledge-graph` | Knowledge-graph entity | 3 | 100% | +0.0 | 无 |
 | `p3.sameas` | sameAs links resolve | 5 | 80% | +0.2 | stripe.com 2→3 |
 | `p3.video` | Video and multimodal presence | 5 | 60% | -0.8 | nextjs.org 2→0, svelte.dev 2→0 |
 | `p4.answer-shape` | Content shaped for extraction | 5 | 100% | +0.0 | 无 |

@@ -684,8 +684,11 @@ class Percentiles(unittest.TestCase):
         import percentiles
         d = percentiles.compute()
         o = d["overall"]
+        # the committed file is what the README quotes; a re-run of the leaderboard changes both together
+        with io.open(os.path.join(HERE, "percentiles.json"), encoding="utf-8") as f:
+            committed = json.load(f)["overall"]
         self.assertEqual([percentiles.share(o["at_or_above"][c]["n"], o["n"]) for c in sorted(d["cuts"], key=int)],
-                         ["85%", "58%", "34%", "10%"])
+                         [percentiles.share(committed["at_or_above"][c]["n"], committed["n"]) for c in sorted(d["cuts"], key=int)])
         self.assertEqual(d["candidates"]["v1.1"]["cuts"], [31, 51, 66, 83])
         self.assertEqual(d["gate_cap"]["capped"], sum(d["gate_cap"]["capped_by_band_before_cap"].values()))
 

@@ -1,32 +1,32 @@
 {
  "source": "benchmark/results.json",
- "measured_at": "2026-09-27",
- "tool": "geo-score-cli/1.3.0",
+ "measured_at": "2026-10-02",
+ "tool": "geo-score-cli/1.5.0",
  "method": "percentile bootstrap, 10000 resamples, seed 20260909; sectors below 10 scored sites get no median",
  "min_n": 10,
  "overall": {
-  "n": 317,
-  "median": 56,
+  "n": 324,
+  "median": 55,
   "ci": [
-   52,
+   51,
    58
   ]
  },
  "sectors": {
   "AI": {
    "n": 29,
-   "median": 70,
+   "median": 67,
    "ci": [
-    57,
-    78
+    58,
+    76
    ]
   },
   "China / AI": {
    "n": 13,
    "median": 40,
    "ci": [
-    25,
-    55
+    26,
+    49
    ]
   },
   "China / cloud": {
@@ -35,115 +35,115 @@
    "ci": null
   },
   "China / consumer": {
-   "n": 21,
-   "median": 33,
+   "n": 23,
+   "median": 40,
    "ci": [
-    27,
-    51
+    28,
+    45
    ]
   },
   "China / enterprise": {
    "n": 10,
-   "median": 40,
+   "median": 38,
    "ci": [
-    28,
-    58
+    21,
+    53
    ]
   },
   "China / no-code": {
    "n": 11,
-   "median": 37,
+   "median": 35,
    "ci": [
     20,
-    50
+    43
    ]
   },
   "Cloud & DevOps": {
-   "n": 24,
-   "median": 74,
+   "n": 25,
+   "median": 77,
    "ci": [
-    63,
-    85
+    60,
+    81
    ]
   },
   "Cross-border services": {
-   "n": 20,
+   "n": 21,
    "median": 40,
    "ci": [
-    32,
-    50
+    33,
+    47
    ]
   },
   "Developer tools": {
    "n": 38,
-   "median": 62,
+   "median": 60,
    "ci": [
     56,
-    71
+    74
    ]
   },
   "Ecommerce": {
-   "n": 14,
-   "median": 38,
+   "n": 15,
+   "median": 32,
    "ci": [
-    34,
-    66
+    24,
+    67
    ]
   },
   "Education": {
-   "n": 12,
-   "median": 57,
+   "n": 14,
+   "median": 51,
    "ci": [
-    36,
-    66
+    40,
+    60
    ]
   },
   "Healthcare": {
-   "n": 12,
-   "median": 50,
+   "n": 13,
+   "median": 46,
    "ci": [
     40,
-    64
+    60
    ]
   },
   "Logistics / Freight": {
-   "n": 12,
-   "median": 39,
+   "n": 11,
+   "median": 40,
    "ci": [
-    24,
-    48
+    25,
+    62
    ]
   },
   "Manufacturing / Industrial": {
    "n": 11,
-   "median": 40,
+   "median": 38,
    "ci": [
-    33,
-    53
+    31,
+    56
    ]
   },
   "Marketing / CRM": {
    "n": 17,
-   "median": 69,
+   "median": 66,
    "ci": [
-    63,
-    79
+    65,
+    77
    ]
   },
   "Media / Publishing": {
-   "n": 11,
+   "n": 13,
    "median": 40,
    "ci": [
     40,
-    56
+    53
    ]
   },
   "Payments / Fintech": {
    "n": 12,
-   "median": 71,
+   "median": 69,
    "ci": [
-    61,
-    75
+    62,
+    72
    ]
   },
   "Professional services": {
@@ -153,30 +153,27 @@
   },
   "SaaS / Productivity": {
    "n": 22,
-   "median": 60,
+   "median": 58,
    "ci": [
-    56,
-    72
+    51,
+    66
    ]
   },
   "Travel": {
-   "n": 11,
-   "median": 40,
-   "ci": [
-    22,
-    51
-   ]
+   "n": 9,
+   "median": null,
+   "ci": null
   }
  },
  "china_gap": {
-  "n_china": 64,
-  "n_rest": 253,
-  "median_china": 39,
-  "median_rest": 59,
-  "gap": 20,
+  "n_china": 66,
+  "n_rest": 258,
+  "median_china": 36,
+  "median_rest": 58,
+  "gap": 22,
   "ci": [
    16,
-   28
+   30
   ]
  },
  "china_gap_detail": {
@@ -190,41 +187,48 @@
   ],
   "crosstab": {
    "china": {
-    "zh": 37,
-    "other": 27
+    "zh": 43,
+    "other": 23
    },
    "rest": {
-    "zh": 13,
-    "other": 240
+    "zh": 11,
+    "other": 247
    },
    "other_languages": {
-    "en": 267
+    "ar": 1,
+    "de": 1,
+    "en": 255,
+    "es": 1,
+    "fr": 1,
+    "ja": 1,
+    "tr": 1,
+    "und": 9
    }
   },
   "by_language": {
    "group": "zh",
    "vs": "other",
-   "n_group": 50,
-   "n_vs": 267,
-   "median_group": 38,
+   "n_group": 54,
+   "n_vs": 270,
+   "median_group": 32,
    "median_vs": 58,
-   "gap": 20,
+   "gap": 26,
    "ci": [
-    13,
-    25
+    22,
+    32
    ]
   },
   "china_zh_vs_rest_other": {
    "group": "China sectors, zh",
    "vs": "other sectors, other languages",
-   "n_group": 37,
-   "n_vs": 240,
-   "median_group": 40,
+   "n_group": 43,
+   "n_vs": 247,
+   "median_group": 32,
    "median_vs": 59,
-   "gap": 19,
+   "gap": 27,
    "ci": [
-    10,
-    28
+    19,
+    37
    ]
   },
   "families": {
@@ -235,18 +239,18 @@
      "n_group": 13,
      "n_vs": 29,
      "median_group": 40,
-     "median_vs": 70,
-     "gap": 30,
+     "median_vs": 67,
+     "gap": 27,
      "ci": [
-      9,
-      48
+      15,
+      45
      ]
     },
     {
      "group": "China / cloud",
      "vs": "Cloud & DevOps",
      "n_group": 9,
-     "n_vs": 24,
+     "n_vs": 25,
      "median_group": null,
      "median_vs": null,
      "gap": null,
@@ -255,14 +259,14 @@
     {
      "group": "China / consumer",
      "vs": "Ecommerce",
-     "n_group": 21,
-     "n_vs": 14,
-     "median_group": 33,
-     "median_vs": 38,
-     "gap": 6,
+     "n_group": 23,
+     "n_vs": 15,
+     "median_group": 40,
+     "median_vs": 32,
+     "gap": -8,
      "ci": [
-      -14,
-      33
+      -17,
+      27
      ]
     },
     {
@@ -270,18 +274,18 @@
      "vs": "SaaS / Productivity",
      "n_group": 21,
      "n_vs": 22,
-     "median_group": 39,
-     "median_vs": 60,
-     "gap": 20,
+     "median_group": 35,
+     "median_vs": 58,
+     "gap": 24,
      "ci": [
-      9,
-      39
+      10,
+      38
      ]
     }
    ],
    "range": [
-    6,
-    30
+    -8,
+    27
    ],
    "suppressed": [
     "China / cloud"
@@ -289,72 +293,72 @@
   },
   "by_method": {
    "what": "mean points, other sectors minus China sectors, per check where scored, summed",
-   "total": 17.2,
-   "rule": 5.5,
-   "heuristic": 11.8,
-   "heuristic_share_pct": 68,
+   "total": 18.1,
+   "rule": 5.7,
+   "heuristic": 12.4,
+   "heuristic_share_pct": 69,
    "checks": {
-    "g.reachable": -0.34,
-    "g.robots": 0.0,
-    "g.ssr": 0.78,
-    "p1.breadcrumb": 0.14,
-    "p1.llms-txt": 1.55,
-    "p1.organization": 1.19,
-    "p1.page-type": 0.75,
-    "p1.sitemap": 0.68,
-    "p2.answer-passages": 3.01,
-    "p2.freshness": 0.81,
-    "p2.named-author": 1.41,
-    "p2.question-intent": 3.27,
-    "p2.sourced-stats": 0.9,
-    "p3.knowledge-graph": 0.09,
+    "g.reachable": 0.2,
+    "g.robots": -0.0,
+    "g.ssr": 0.79,
+    "p1.breadcrumb": 0.36,
+    "p1.llms-txt": 1.4,
+    "p1.organization": 1.3,
+    "p1.page-type": 0.93,
+    "p1.sitemap": 0.37,
+    "p2.answer-passages": 3.3,
+    "p2.freshness": 0.9,
+    "p2.named-author": 1.51,
+    "p2.question-intent": 3.1,
+    "p2.sourced-stats": 0.77,
+    "p3.knowledge-graph": 0.07,
     "p3.sameas": 0.89,
-    "p3.video": 0.65,
-    "p4.answer-shape": 1.29,
-    "p4.cn-engines": 0.17
+    "p3.video": 0.62,
+    "p4.answer-shape": 1.23,
+    "p4.cn-engines": 0.32
    }
   },
   "knowledge_graph": {
    "check": "p3.knowledge-graph",
    "by_language": {
     "zh": {
-     "n": 50,
+     "n": 54,
      "unobservable": 33
     },
     "other": {
-     "n": 267,
-     "unobservable": 76
+     "n": 270,
+     "unobservable": 43
     }
    },
    "note": "zh sites are looked up in both zh and en, twice the lookups, and absence needs every lookup to answer, so a partial failure leaves it unobservable"
   },
   "kg_imputed": {
    "0": {
+    "median_china": 36,
+    "median_rest": 58,
+    "gap": 22
+   },
+   "4": {
     "median_china": 38,
     "median_rest": 58,
     "gap": 20
-   },
-   "4": {
-    "median_china": 40,
-    "median_rest": 59,
-    "gap": 19
    }
   }
  },
  "thin_sample": {
   "threshold": 4,
-  "n_thin": 69,
-  "n_single_page": 55,
+  "n_thin": 66,
+  "n_single_page": 50,
   "with_thin": {
-   "n": 317,
-   "median": 56
+   "n": 324,
+   "median": 55
   },
   "without_thin": {
-   "n": 248,
-   "median": 62,
+   "n": 258,
+   "median": 59,
    "ci": [
-    58,
-    65
+    56,
+    62
    ]
   }
  }
