@@ -9,7 +9,7 @@
   `iesdouyin.com/share/user/…`）、西瓜视频频道（`ixigua.com/home/…`、`m.ixigua.com/user/…`）或快手个人主页
   （`kuaishou.com/profile/…`、`live.kuaishou.com/profile/…`）的链接，现在读作频道链接；抖音开放平台的播放器
   （`open.douyin.com/player/video`）读作嵌入播放器。1.5.0 及以前只认 YouTube、B 站和 Vimeo。短链接（`v.douyin.com`、
-  `v.kuaishou.com`）和单条视频的链接一律不算频道。方向：向上，只涉及链接了这些平台的网站。榜单在下一次重跑时体现这一变化。
+  `v.kuaishou.com`）和单条视频的链接一律不算频道。方向：上升，只涉及链接了这些平台的网站。榜单在下一次重跑时体现这一变化。
 
 ## [1.5.0] — 2026-09-30
 
