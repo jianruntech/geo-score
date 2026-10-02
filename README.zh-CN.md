@@ -325,9 +325,10 @@ export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # 有几个 Key 就测�
 python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # 第二级
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
 # 把买家会问 AI 的问题写进 queries.csv，然后：
-python3 geo_score.py watch run --dry-run            # 只看计划和上限，不调用、不花钱
+python3 geo_score.py watch run --dry-run            # 只看计划、上限和能测出多大的变化，不调用、不花钱
 python3 geo_score.py watch run                      # 第三级：每个问题问每个引擎，并保存
 python3 geo_score.py watch diff                     # 和上一次比，带显著性检验
+python3 geo_score.py watch report --since 30        # 合并最近 30 天的运行，按问题算一个区间
 ```
 
 <details>
@@ -343,17 +344,21 @@ Questions that name Lumo (2, kept out of the headline): cited in 100% (7 of 7, 9
 Your site was cited somewhere for 5 of 6 questions.
 
 By engine
-  engine          model             cited         95% CI   mentioned  avg rank
-  chatgpt-api     gpt-6-luna        9/12 75%      42–100%  75%        1.0
-  perplexity-api  sonar             4/11 36%      8–75%    36%        2.0       1 failed
-  gemini-api      gemini-3.8-flash  not measured                                no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
+  engine          model             cited         95% CI   mentioned  named first (tracked)  avg rank
+  chatgpt-api     gpt-6-luna        9/12 75%      42–100%  75%        9/12                   1.0
+  perplexity-api  sonar             4/11 36%      8–75%    36%        0/11                   2.0       1 failed
+  gemini-api      gemini-3.8-flash  not measured                                                       no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
 
 These rows, and the tables below, count every question, the 2 that name Lumo included.
 
 Share of voice
-              cited  95% CI  mentioned
-  Lumo (you)  57%    26–86%  57%
-  Pixa        52%    33–71%  100%
+              cited  95% CI  mentioned  named first (tracked)  sentence share
+  Lumo (you)  57%    26–86%  57%        9/23                   100%
+  Pixa        52%    33–71%  100%       14/23                  100%
+
+- Named first (tracked): answers that name that brand before any other brand in your config, out of the answers that name at least one of them. Brands your config does not list are not seen, so first among the brands you track may not be first in the answer. Two brands first named at the same place, one name inside the other, are neither first.
+- Sentence share: in the answers that name a brand, the mean share of their sentences that name it, every sentence counted the same. A sentence ends at a line break, at 。！？, or at . ! ? before a space.
+- Both read the answer as saved, which keeps its first 20,000 characters; a name that first appears after that is not seen.
 
 Sources the engines cite most (not yours)
   domain        answers  share  owner
@@ -363,6 +368,19 @@ Sources the engines cite most (not yours)
 Questions where a competitor is cited and you are not (1)
   id   question                    cited instead
   q03  cheapest text to video app  Pixa
+
+Who is named for each question
+  id   question                         answers  Lumo (you)             Pixa               no tracked brand named  searched yes/no/unknown  most cited
+  q01  best free ai video generator     4        cited 3/4 · named 3/4  cited 2 · named 4  0/4                     2/0/2                    Lumo (you)
+  q02  ai video tool with no watermark  4        cited 1/4 · named 1/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
+  q03  cheapest text to video app       4        cited 0/4 · named 0/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
+  q04  lumo vs pixa                     4        cited 4/4 · named 4/4  cited 2 · named 4  0/4                     2/0/2                    Lumo (you)
+  q05  pixa alternatives                4        cited 2/4 · named 2/4  cited 2 · named 4  0/4                     2/0/2                    —
+  q06  鹿末视频免费吗                   3        cited 3/3 · named 3/3  cited 2 · named 3  0/3                     2/0/1                    —
+
+- An answer given without a web search cannot cite anything.
+- "No tracked brand named" counts answers that name none of the brands in your config; they may name others.
+- Perplexity and OpenRouter search on every call or do not say, so their answers count as unknown under searched.
 
 By question type
   type         cited     95% CI   mentioned

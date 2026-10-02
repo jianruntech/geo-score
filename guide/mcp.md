@@ -376,11 +376,15 @@ Bold arguments are required. Hints are the tools' MCP annotations: clients may u
   config: without one it uses the four default engines (`chatgpt-api`, `perplexity-api`,
   `gemini-api`, `claude-api`). With a config it uses your brand, competitors and engines.
 - **`run`** asks every question in `queries.csv` on every engine and saves the run. With
-  `dry_run: true` it returns the plan (questions, engines, planned calls, caps) and spends nothing.
+  `dry_run: true` it returns the plan (questions, engines, planned calls, caps), how many questions
+  a diff of this plan needs to call a change, and any warning on the config or a `target_url`, and
+  spends nothing.
   `max_calls` and `budget_usd` can lower the caps in the config, never raise them; `limit` and
   `engines` ask fewer.
 - **`list_runs`**, **`report`** and **`diff`** read saved runs. `diff` calls a change a change only
   when an exact paired test says so; the method is in [watch-methodology.md](watch-methodology.md).
+  `report` with `since` pools the runs of the last N days and refuses runs that asked other
+  questions, asked them a different number of times, or used other models.
 - **`status`** (from 1.4.0) says what the server can do right now: its version, the toolsets that are
   on, the config path and whether it was found (with its errors), each engine with whether a key is
   present and whether it is priced, the number of questions and the caps. It never returns a key. It

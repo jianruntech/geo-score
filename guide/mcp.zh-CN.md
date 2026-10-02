@@ -356,10 +356,12 @@ docker run -i --rm --user "$(id -u)" -v "$PWD:/work" -e OPENAI_API_KEY geo-score
 - **`ask`** 把一个问题拿去问每个有 Key 的引擎，各问一次，不保存。它不需要配置文件：没有配置时用四个默认引擎
   （`chatgpt-api`、`perplexity-api`、`gemini-api`、`claude-api`）；有配置时用你的品牌、竞品和引擎。
 - **`run`** 把 `queries.csv` 里的每个问题拿去问每个引擎，并保存这次运行。带 `dry_run: true` 时只返回计划
-  （问题数、引擎、计划调用次数、上限），不花钱。`max_calls` 和 `budget_usd` 只能把配置里的上限调低，不能调高；
+  （问题数、引擎、计划调用次数、上限）、这套计划下 diff 至少要多少个问题才可能判定变化，以及配置或 `target_url`
+  的警告，不花钱。`max_calls` 和 `budget_usd` 只能把配置里的上限调低，不能调高；
   `limit` 和 `engines` 用来少问一些。
 - **`list_runs`**、**`report`** 和 **`diff`** 读取已保存的运行。只有精确配对检验说有变化，`diff` 才判定为变化；
-  方法见 [watch-methodology.zh-CN.md](watch-methodology.zh-CN.md)。
+  方法见 [watch-methodology.zh-CN.md](watch-methodology.zh-CN.md)。`report` 带 `since` 时合并最近 N 天的运行；
+  问的问题不同、每题问的次数不同或用的模型不同的运行，会被拒绝合并。
 - **`status`**（从 1.4.0 起）说明服务此刻能做什么：版本、开启了哪些工具集、配置文件路径和是否找到（以及错误）、
   每个引擎是否有 Key、是否配了价格、问题数和上限。它从不返回 Key 本身。适合作为第一个调用。
 
