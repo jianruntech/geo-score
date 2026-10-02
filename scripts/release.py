@@ -4,12 +4,15 @@
     python3 scripts/release.py 1.3.0            # preflight only: prints what is out of step and the plan
     python3 scripts/release.py 1.3.0 --bump     # rewrite versions, install pins and changelog headings
     python3 scripts/release.py 1.3.0 --execute  # after the bump is committed: build, checksum, tag, push, release
+    python3 scripts/release.py 1.3.0 --execute --pypi   # the same, then upload the wheel and sdist to PyPI
+    python3 scripts/release.py 1.3.0 --publish-pypi     # after the GitHub release: only the PyPI upload and its check
     python3 scripts/release.py 1.3.0 --pack     # only build dist/geo-score-1.3.0.mcpb and dist/server.json, to try them
 
 Hosted Actions have never run on this organisation, so nothing here happens automatically, and the
 moving `v1` tag in particular has fallen behind main before. The steps are in RELEASING.md.
 """
-import argparse, datetime, hashlib, io, json, os, re, shutil, subprocess, sys, zipfile
+import argparse, datetime, hashlib, http.client, io, json, os, re, shutil, subprocess, sys, time, zipfile
+import urllib.error, urllib.request
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 REPO = "https://github.com/jianruntech/geo-score"
@@ -30,7 +33,11 @@ PINS = [(re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d
         (re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"), "v"),
         (re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+"), "v"),
         (re.compile(r"(jianruntech/geo-score --ref )v\d+\.\d+\.\d+"), "v"),
-        (re.compile(r"(?<![\w.-])(geo_score-)\d+\.\d+\.\d+(?=-py3-none-any\.whl)"), "")]
+        (re.compile(r"(?<![\w.-])(geo_score-)\d+\.\d+\.\d+(?=-py3-none-any\.whl)"), ""),
+        # the package on PyPI: uvx's geo-score@X.Y.Z and pip's geo-score==X.Y.Z. No "v", and never the Action's
+        # jianruntech/geo-score@v1 or the plugin's geo-score@jianruntech, which have no digits after the @
+        (re.compile(r"(?<![\w./-])(geo-score@)\d+\.\d+\.\d+"), ""),
+        (re.compile(r"(?<![\w./-])(geo-score==)\d+\.\d+\.\d+"), "")]
 # a wheel the install lines download from a release, by its file name
 WHEEL_URL_RX = re.compile(r"jianruntech/geo-score/releases/download/v\d+\.\d+\.\d+/([\w.-]+\.whl)")
 # rewrites the generated MCP blocks (tool table, install buttons) in README*/guide/mcp*; --check exits 1 on drift.
@@ -39,6 +46,13 @@ MCP_DOCS = "scripts/mcp_docs.py"
 # what the Claude Desktop bundle holds besides its manifest: (path in the .mcpb, path in the repository)
 MCPB_FILES = [("server/geo_score.py", "cli/geo_score.py"), ("server/geo_watch.py", "cli/geo_watch.py"),
               ("LICENSE", "LICENSE")]
+# the package on PyPI (pyproject.toml's name) and its JSON API for one version
+PYPI_PROJECT = "geo-score"
+PYPI_JSON = "https://pypi.org/pypi/%s/%s/json"
+# PyPI's JSON API can lag an upload by a minute: (tries, seconds between them) before the hash check gives up
+PYPI_WAIT = (12, 10)
+# what a request to PyPI or GitHub can fail with: a network error, an HTTP error, a body that is not JSON
+NET_ERRORS = (OSError, ValueError, http.client.HTTPException)
 
 
 def rd(p):
@@ -67,8 +81,12 @@ def mcpb_url(v):
 
 
 def wheel_name(v):
-    """The file name the build gives the wheel, and the one the uvx and pipx install lines download."""
+    """The file name the build gives the wheel, and the one the no-PyPI install lines download."""
     return "geo_score-%s-py3-none-any.whl" % v
+
+
+def sdist_name(v):
+    return "geo_score-%s.tar.gz" % v
 
 
 def stale_pins(text, v):
@@ -135,6 +153,52 @@ def set_version_fields(obj, v):
     return obj
 
 
+def read_sums(text):
+    """{file name: SHA-256} from the lines of a SHA256SUMS file."""
+    return {m.group(2): m.group(1) for m in re.finditer(r"(?m)^([0-9a-f]{64}) [ *](\S+)$", text)}
+
+
+def fetch(url, timeout=30):
+    """The body at url, or None on a 404. Anything else that goes wrong raises one of NET_ERRORS.
+    urllib honours HTTPS_PROXY."""
+    req = urllib.request.Request(url, headers={"User-Agent": "geo-score-release"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        e.close()
+        if e.code == 404:
+            return None
+        raise
+
+
+def pypi_files(v, timeout=30):
+    """{file name: SHA-256} of every file PyPI serves for geo-score v, or None when PyPI has no such version."""
+    body = fetch(PYPI_JSON % (PYPI_PROJECT, v), timeout)
+    if body is None:
+        return None
+    return {f["filename"]: f["digests"]["sha256"] for f in json.loads(body.decode("utf-8")).get("urls") or []}
+
+
+def released_sums(v):
+    """{file name: SHA-256} from the SHA256SUMS attached to GitHub release v, or None when it has none."""
+    body = fetch("%s/releases/download/v%s/SHA256SUMS" % (REPO, v))
+    return None if body is None else read_sums(body.decode("utf-8"))
+
+
+def files_differ(want, got):
+    """How got ({name: SHA-256}) differs from want, one line per file; empty when they are the same files."""
+    out = []
+    for n in sorted(set(want) | set(got)):
+        if n not in got:
+            out.append("%s: missing" % n)
+        elif n not in want:
+            out.append("%s: not in SHA256SUMS" % n)
+        elif got[n] != want[n]:
+            out.append("%s: SHA-256 %s, SHA256SUMS says %s" % (n, got[n], want[n]))
+    return out
+
+
 def git(*args, capture=True):
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
     cmd = ["git"] + (["-c", "http.proxy=" + proxy] if proxy else []) + list(args)
@@ -194,6 +258,12 @@ def preflight(v):
         problems.append("not on main")
     if git("tag", "-l", "v" + v).stdout.strip():
         problems.append("tag v%s already exists" % v)
+    # a version on PyPI can never be uploaded again, so the install lines' geo-score@X.Y.Z must be new there
+    try:
+        if pypi_files(v, timeout=15) is not None:
+            problems.append("PyPI already has geo-score %s (https://pypi.org/project/%s/%s/)" % (v, PYPI_PROJECT, v))
+    except NET_ERRORS as e:
+        notes.append("could not ask PyPI whether geo-score %s exists (%s); --execute --pypi asks again" % (v, e))
     res = json.loads(rd("benchmark/results.json"))
     notes.append("benchmark/results.json was measured with %s on %s; the README says so, and re-running it is "
                  "the owner's call" % (res["tool"], res["measured_at"]))
@@ -271,8 +341,87 @@ def pack(v, out_dir):
     return mcpb, write_server_json(v, out_dir, sha256(mcpb))
 
 
-def execute(v):
-    why = gh_problem()
+def pypi_problem(v):
+    """Why --execute --pypi could not end with geo-score v on PyPI, or None. Asked before anything is pushed:
+    the upload runs last, and a version PyPI already has can never be uploaded again."""
+    if not shutil.which("uvx"):
+        return "uvx is not installed (https://docs.astral.sh/uv/); it runs twine for the PyPI upload"
+    try:
+        if pypi_files(v) is not None:
+            return "PyPI already has geo-score %s, and a version there can never be uploaded again" % v
+    except NET_ERRORS as e:
+        return "cannot ask PyPI whether geo-score %s exists (%s)" % (v, e)
+    return None
+
+
+def publish_pypi(v, dist=None):
+    """Upload the wheel and sdist named in dist/SHA256SUMS to PyPI, then check that PyPI serves exactly those files,
+    each with the SHA-256 that SHA256SUMS gives it. Runs after the GitHub release, and only uploads the files that
+    release attached: a dist/ rebuilt since then would put other bytes on PyPI for good. Safe to rerun: what PyPI
+    already has with the right SHA-256 is not uploaded again. twine finds its own credentials (~/.pypirc or
+    TWINE_* variables); this script never reads or prints them."""
+    dist = dist or os.path.join(ROOT, "dist")
+    again = "python3 scripts/release.py %s --publish-pypi" % v
+    sums_path = os.path.join(dist, "SHA256SUMS")
+    if not os.path.exists(sums_path):
+        sys.exit("stopped: no dist/SHA256SUMS: --execute writes it, with the files PyPI gets")
+    sums = read_sums(io.open(sums_path, encoding="utf-8").read())
+    want = {}
+    for n in (wheel_name(v), sdist_name(v)):
+        if n not in sums:
+            sys.exit("stopped: dist/SHA256SUMS does not name %s" % n)
+        if not os.path.exists(os.path.join(dist, n)):
+            sys.exit("stopped: dist/%s is missing" % n)
+        if sha256(os.path.join(dist, n)) != sums[n]:
+            sys.exit("stopped: dist/%s is not the file dist/SHA256SUMS names" % n)
+        want[n] = sums[n]
+    try:
+        rel = released_sums(v)
+    except NET_ERRORS as e:
+        sys.exit("stopped: cannot read the SHA256SUMS of GitHub release v%s (%s)" % (v, e))
+    if rel is None:
+        sys.exit("stopped: GitHub release v%s has no SHA256SUMS; PyPI gets the files a release attached" % v)
+    diff = files_differ(want, {n: rel[n] for n in want if n in rel})
+    if diff:
+        sys.exit("stopped: dist/ is not what GitHub release v%s attached:\n  %s" % (v, "\n  ".join(diff)))
+    try:
+        got = pypi_files(v) or {}
+    except NET_ERRORS as e:
+        sys.exit("stopped: cannot ask PyPI what geo-score %s has (%s)" % (v, e))
+    clash = [x for x in files_differ(want, got) if not x.endswith(": missing")]
+    if clash:
+        sys.exit("stopped: PyPI already has geo-score %s with other files, and a file there can never be replaced:\n  %s"
+                 % (v, "\n  ".join(clash)))
+    missing = [n for n in want if n not in got]
+    if not missing:
+        print("PyPI already has geo-score %s: %s; nothing to upload" % (v, ", ".join(want)))
+    else:
+        if not shutil.which("uvx"):
+            sys.exit("stopped: uvx is not installed (https://docs.astral.sh/uv/); it runs twine")
+        step = ["uvx", "twine", "upload", "--non-interactive"] + [os.path.join(dist, n) for n in missing]
+        print("$ " + " ".join(step[:4] + [os.path.relpath(x, ROOT) for x in step[4:]]))
+        if subprocess.run(step, cwd=ROOT).returncode:
+            sys.exit("stopped: twine upload failed; fix it, then: " + again)
+    tries, wait = PYPI_WAIT
+    for i in range(tries):
+        try:
+            diff = files_differ(want, pypi_files(v) or {})
+        except NET_ERRORS as e:
+            diff = ["cannot read %s (%s)" % (PYPI_JSON % (PYPI_PROJECT, v), e)]
+        if not diff:
+            break
+        if i < tries - 1:
+            time.sleep(wait)
+    if diff:
+        sys.exit("stopped: PyPI does not serve exactly the files in dist/SHA256SUMS:\n  %s\nwhen PyPI has caught up: %s"
+                 % ("\n  ".join(diff), again))
+    for n in sorted(want):
+        print("PyPI serves %s  %s, as SHA256SUMS says" % (want[n], n))
+    print("on PyPI: https://pypi.org/project/%s/%s/" % (PYPI_PROJECT, v))
+
+
+def execute(v, pypi=False):
+    why = gh_problem() or (pypi_problem(v) if pypi else None)
     if why:
         sys.exit("stopped: " + why)
     dist = os.path.join(ROOT, "dist")
@@ -316,7 +465,12 @@ def execute(v):
     if r.returncode:
         sys.exit("stopped: gh release create failed (tag and push are done; rerun that step by hand)")
     print("released v%s: %s/releases/tag/v%s" % (v, REPO, v))
-    print("MCP Registry (an Owner of the jianruntech org): cd dist && mcp-publisher validate && mcp-publisher publish")
+    if pypi:
+        publish_pypi(v)
+    else:
+        print("PyPI, which the install lines and the MCP Registry listing name: python3 scripts/release.py %s --publish-pypi" % v)
+    print("MCP Registry (an Owner of the jianruntech org), once PyPI has %s: "
+          "cd dist && mcp-publisher validate && mcp-publisher publish" % v)
 
 
 def main():
@@ -327,9 +481,16 @@ def main():
     g.add_argument("--execute", action="store_true", help="build, checksum, tag, push and publish")
     g.add_argument("--pack", action="store_true", help="only build dist/geo-score-X.Y.Z.mcpb and dist/server.json "
                    "(no checks, no git), e.g. to install the bundle in Claude Desktop before a release")
+    g.add_argument("--publish-pypi", action="store_true", help="after the GitHub release: upload the wheel and sdist "
+                   "named in dist/SHA256SUMS to PyPI with twine, and check PyPI's SHA-256 of each")
+    ap.add_argument("--pypi", action="store_true", help="with --execute: end with the --publish-pypi step")
     a = ap.parse_args()
     if not re.match(r"^\d+\.\d+\.\d+$", a.version):
         sys.exit("version must look like 1.3.0")
+    if a.pypi and not a.execute:
+        ap.error("--pypi goes with --execute; after a release, --publish-pypi does the PyPI step alone")
+    if a.publish_pypi:
+        return publish_pypi(a.version)
     if a.bump:
         return bump(a.version)
     if a.pack:
@@ -348,9 +509,10 @@ def main():
         print("\nready for %s. Plan: stop unless gh is logged in, check.sh --live --strict, build sdist + wheel "
               "(stopping unless the wheel is the file the install lines name), the .mcpb and dist/server.json, "
               "SHA256SUMS over them and the two CLI files, push main, tag v%s and push it, move v1 and push it, "
-              "gh release create with the changelog section.\nRun again with --execute." % (a.version, a.version))
+              "gh release create with the changelog section; with --pypi, then twine upload of the wheel and sdist and "
+              "a check of PyPI's SHA-256 of each.\nRun again with --execute (and --pypi)." % (a.version, a.version))
         return
-    execute(a.version)
+    execute(a.version, a.pypi)
 
 
 if __name__ == "__main__":

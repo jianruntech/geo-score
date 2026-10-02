@@ -9,7 +9,7 @@ version, the tool names, the key variables, the entry point. Nothing else would 
 falls behind, so this compares each with the code, then builds the .mcpb the way release.py does, starts the
 bundled server and asks it for its tools.
 """
-import importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
+import contextlib, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -91,11 +91,107 @@ def check_pins(version):
     ok(release.repin(old, "9.9.9") == old.replace("1.2.3", "9.9.9"), "--bump rewrites the tag and the wheel's version")
     ok(release.stale_pins(old.replace("v1.2.3", "v9.9.9"), "9.9.9") == ["geo_score-1.2.3"],
        "preflight names a wheel whose version is not the tag's")
+    # the PyPI pins, beside the tags that look like them and must not move: the Action's moving v1 and the plugin
+    pkg, at, eq = "geo-score", "@", "=="
+    old = ("uvx %s%s1.2.3 example.com; pipx install %s%s1.2.3; uses: jianruntech/%s%sv1; jianruntech/%s%sv1.2.3; "
+           "claude plugin install %s%sjianruntech" % (pkg, at, pkg, eq, pkg, at, pkg, at, pkg, at))
+    ok(release.repin(old, "9.9.9") == old.replace("1.2.3", "9.9.9"),
+       "--bump rewrites %s%sX.Y.Z and %s%sX.Y.Z, and leaves %s%sv1 and %s%sjianruntech" % (pkg, at, pkg, eq, pkg, at, pkg, at))
+    ok(release.stale_pins(old, "9.9.9") == sorted([pkg + eq + "1.2.3", pkg + at + "1.2.3", "jianruntech/%s%sv1.2.3" % (pkg, at)]),
+       "preflight names each PyPI pin that is not the release (%s)" % release.stale_pins(old, "9.9.9"))
     with tempfile.TemporaryDirectory() as tmp:
         io.open(os.path.join(tmp, release.wheel_name(version)), "wb").close()
         ok(release.wheel_problem(version, tmp) is None, "--execute goes on when the build made %s" % release.wheel_name(version))
         os.rename(os.path.join(tmp, release.wheel_name(version)), os.path.join(tmp, "geo_score-%s-cp312-cp312-any.whl" % version))
         ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
+
+
+def check_pypi_publish(version):
+    """--publish-pypi uploads exactly the wheel and sdist in dist/SHA256SUMS, and only when they are what the GitHub
+    release attached; afterwards PyPI must serve each with that SHA-256. PyPI, GitHub and twine are faked here."""
+    print("\n  the PyPI step: what --publish-pypi uploads, and what it checks before and after")
+    names = [release.wheel_name(version), release.sdist_name(version)]
+    ok(release.read_sums("%s  a.whl\n%s *b.tar.gz\nnot a line\n" % ("0" * 64, "f" * 64)) == {"a.whl": "0" * 64, "b.tar.gz": "f" * 64},
+       "SHA256SUMS lines are read in both of shasum's modes")
+    saved_env, saved = dict(os.environ), (release.pypi_files, release.released_sums, release.PYPI_WAIT)
+
+    def attempt(pypi_answers, released=None, sums_drop=None, file_edit=None, twine_rc="0"):
+        """Run publish_pypi on a fake dist/. pypi_answers is what each read of PyPI's JSON returns, in turn (the last
+        one repeats). Returns (finished without stopping, what stopped it, the twine command lines)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = os.path.join(tmp, "dist")
+            os.makedirs(dist)
+            for n in names + ["geo_score.py"]:
+                io.open(os.path.join(dist, n), "wb").write(("bytes of " + n).encode("utf-8"))
+            sums = {n: release.sha256(os.path.join(dist, n)) for n in names + ["geo_score.py"]}
+            io.open(os.path.join(dist, "SHA256SUMS"), "w", encoding="utf-8").write(
+                "".join("%s  %s\n" % (sums[n], n) for n in sorted(sums) if n != sums_drop))
+            if file_edit:
+                io.open(os.path.join(dist, file_edit), "ab").write(b"!")
+            answers = list(pypi_answers)
+
+            def fake_pypi(v, timeout=30):
+                a = answers.pop(0) if len(answers) > 1 else answers[0]
+                return None if a is None else dict((n, sums[n] if h == "same" else h) for n, h in a.items())
+            release.pypi_files = fake_pypi
+            release.released_sums = lambda v: dict(sums, **(released or {}))
+            release.PYPI_WAIT = (2, 0)
+            os.environ["PATH"] = fake_bin(tmp, {"uvx": 'echo "$*" >> "$HOME/calls"; exit "$FAKE_TWINE_RC"'})
+            os.environ.update(HOME=tmp, FAKE_TWINE_RC=twine_rc)
+            out, why = io.StringIO(), None
+            try:
+                with contextlib.redirect_stdout(out):
+                    release.publish_pypi(version, dist)
+            except SystemExit as e:
+                why = str(e.code)
+            log = os.path.join(tmp, "calls")
+            calls = io.open(log, encoding="utf-8").read().splitlines() if os.path.exists(log) else []
+            return why is None, why or "", [" ".join(os.path.basename(w) for w in c.split()) for c in calls]
+
+    upload = "twine upload --non-interactive " + " ".join(names)
+    both = dict((n, "same") for n in names)
+    try:
+        done, why, calls = attempt([None, both])
+        ok(done and calls == [upload], "a new version: twine uploads the wheel and the sdist, nothing else, and PyPI "
+           "serves both with SHA256SUMS's SHA-256 (%s; %s)" % (calls, why))
+        done, why, calls = attempt([None, None, both])
+        ok(done and calls == [upload], "PyPI's JSON lagging the upload: the check waits for it (%s)" % why)
+        done, why, calls = attempt([None, dict(both, **{names[1]: "0" * 64})])
+        ok(not done and "does not serve exactly" in why and names[1] in why,
+           "PyPI serving an sdist with another SHA-256 after the upload stops it, naming the file")
+        done, why, calls = attempt([None, None])
+        ok(not done and "missing" in why and "--publish-pypi" in why, "PyPI never listing the upload stops it, with the command to rerun")
+        done, why, calls = attempt([both])
+        ok(done and calls == [], "PyPI already has both files with the right SHA-256: nothing is uploaded (%s)" % calls)
+        done, why, calls = attempt([{names[0]: "same"}, both])
+        ok(done and calls == ["twine upload --non-interactive " + names[1]],
+           "PyPI has the wheel only: just the sdist is uploaded (%s)" % calls)
+        done, why, calls = attempt([{names[0]: "0" * 64}])
+        ok(not done and calls == [] and "never be replaced" in why,
+           "PyPI has the wheel with another SHA-256: nothing is uploaded")
+        done, why, calls = attempt([dict(both, **{"geo_score-%s-py3-none-any.whl.extra" % version: "0" * 64})])
+        ok(not done and calls == [] and "not in SHA256SUMS" in why, "PyPI has a file SHA256SUMS does not name: it stops")
+        done, why, calls = attempt([None, both], released={names[0]: "0" * 64})
+        ok(not done and calls == [] and "GitHub release" in why,
+           "a dist/ that is not what the GitHub release attached: nothing is uploaded")
+        done, why, calls = attempt([None, both], sums_drop=names[1])
+        ok(not done and calls == [] and names[1] in why, "dist/SHA256SUMS without the sdist: nothing is uploaded")
+        done, why, calls = attempt([None, both], file_edit=names[0])
+        ok(not done and calls == [] and names[0] in why, "a wheel that is not the one SHA256SUMS names: nothing is uploaded")
+        done, why, calls = attempt([None], twine_rc="1")
+        ok(not done and calls == [upload] and "--publish-pypi" in why, "twine failing stops it, with the command to rerun")
+        release.pypi_files = lambda v, timeout=30: None
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ["PATH"] = fake_bin(tmp, {})
+            ok("uvx is not installed" in (release.pypi_problem(version) or ""), "--execute --pypi stops first without uvx")
+        os.environ["PATH"] = saved_env["PATH"]
+        release.pypi_files = lambda v, timeout=30: {}
+        ok(shutil.which("uvx") is None or "already has" in (release.pypi_problem(version) or ""),
+           "--execute --pypi stops first when PyPI already has the version")
+    finally:
+        os.environ.clear()
+        os.environ.update(saved_env)
+        release.pypi_files, release.released_sums, release.PYPI_WAIT = saved
 
 
 def check_pythons():
@@ -372,6 +468,7 @@ def main():
     watch = load_watch()
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
     check_pins(version)
+    check_pypi_publish(version)
 
     print("\n  every manifest parses, in the layout release.py writes, at the CLI's version")
     m = {}
