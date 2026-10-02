@@ -1414,6 +1414,31 @@ _SOCIAL = ("facebook.com", "fb.com", "twitter.com", "x.com", "t.co", "linkedin.c
            "xiaohongshu.com", "bilibili.com")
 _SHARE = re.compile(r"/share|sharer|/intent/|sharearticle|addtoany|addthis|sharethis|/submit\?|/pin/create", re.I)
 
+# p3.video reads two things in the sampled pages' HTML: links to a video channel, and embedded players.
+# The Douyin, Xigua and Kuaishou forms were checked on live pages on 2026-10-02:
+# - douyin.com/user/<sec_uid> is an account page, and iesdouyin.com/share/user/<id>, where an expanded share link
+#   lands, redirects to it. douyin.com/user/self is the signed-in viewer's own page; the 8-character minimum leaves
+#   it out;
+# - ixigua.com/home/<id> redirects to m.ixigua.com/user/<id>, a channel page with the account's videos;
+# - kuaishou.com/profile/<id> and live.kuaishou.com/profile/<id> are profile pages;
+# - open.douyin.com/player/video?vid=<id> is Douyin's open-platform player: it plays the video and sends no header
+#   that stops it being framed. ixigua.com/iframe/<id> did not play that day, so it is not read as a player.
+# Short links (v.douyin.com, v.kuaishou.com) and single-video URLs (douyin.com/video/<id>, ixigua.com/<id>,
+# kuaishou.com/short-video/<id>) are never channels: which account they belong to cannot be read without following
+# them. The host must start the match, so v.douyin.com/... and notdouyin.com/... are not read as douyin.com.
+VIDEO_CHANNEL = re.compile(
+    r"(?:youtube\.com/(?:@|c/|channel/|user/)|bilibili\.com/\d{4,}|space\.bilibili\.com/|vimeo\.com/[a-z0-9-]{3,}"
+    r"|(?<![a-z0-9_.-])(?:www\.)?(?:douyin\.com/user|iesdouyin\.com/share/user)/[a-z0-9_-]{8,}"
+    r"|(?<![a-z0-9_.-])(?:(?:www\.)?ixigua\.com/home|m\.ixigua\.com/user)/\d{4,}"
+    r"|(?<![a-z0-9_.-])(?:www\.|live\.)?kuaishou\.com/profile/[a-z0-9_-]{3,})", re.I)
+VIDEO_EMBED = re.compile(r"(?:youtube\.com/embed|youtu\.be/|player\.vimeo\.com|player\.bilibili"
+                         r"|(?<![a-z0-9_.-])open\.douyin\.com/player/video)", re.I)
+
+
+def video_links(text):
+    """(channel links, embedded players) in a page's HTML, as p3.video counts them."""
+    return len(VIDEO_CHANNEL.findall(text)), len(VIDEO_EMBED.findall(text))
+
 
 def _host_in(host, domains):
     return any(host == d or host.endswith("." + d) for d in domains)
@@ -2655,9 +2680,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # ── p3.video ──
     blob = " ".join(r.text for r in live.values())
     vt = sum(1 for o in allld.values() if "VideoObject" in types_of(o))
-    chan = len(re.findall(r"(?:youtube\.com/(?:@|c/|channel/|user/)|bilibili\.com/\d{4,}|"
-                          r"space\.bilibili\.com/|vimeo\.com/[a-z0-9-]{3,})", blob, re.I))
-    embeds = len(re.findall(r"(youtube\.com/embed|youtu\.be/|player\.vimeo\.com|player\.bilibili)", blob, re.I))
+    chan, embeds = video_links(blob)
     tier["p3.video"] = 3 if (vt and (chan or embeds)) else (2 if (chan or embeds or vt) else 0)
     ev["p3.video"] = ("%d pages declare VideoObject; %d official channel links and %d embedded players "
                       "in the sample." % (vt, chan, embeds))

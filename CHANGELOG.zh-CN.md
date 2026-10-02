@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### 修复
+- **`p3.video`：抖音、西瓜视频和快手的频道链接算作频道。** 指向抖音账号主页（`douyin.com/user/…`，或分享链接展开后的
+  `iesdouyin.com/share/user/…`）、西瓜视频频道（`ixigua.com/home/…`、`m.ixigua.com/user/…`）或快手个人主页
+  （`kuaishou.com/profile/…`、`live.kuaishou.com/profile/…`）的链接，现在读作频道链接；抖音开放平台的播放器
+  （`open.douyin.com/player/video`）读作嵌入播放器。1.5.0 及以前只认 YouTube、B 站和 Vimeo。短链接（`v.douyin.com`、
+  `v.kuaishou.com`）和单条视频的链接一律不算频道。方向：向上，只涉及链接了这些平台的网站。榜单在下一次重跑时体现这一变化。
+
 ## [1.5.0] — 2026-09-30
 
 这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选

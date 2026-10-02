@@ -1,5 +1,5 @@
 {
-  "_normalised": 96,
+  "_normalised": 99,
   "_band": "Leading",
   "_gate_capped": false,
   "_lang": "zh-CN",
@@ -17,7 +17,8 @@
   "_notes": {
     "p2.freshness": "Dates flush against Chinese text ('更新于2026年8月28日') are read; before 1.3.0 a \\b in the date pattern missed them and this scored 3.",
     "p2.sourced-stats": "Figures flush against Chinese text ('占用了61%的', '样本为1,860家') count, and their source link sits in the next paragraph; before 1.3.0 CJK counted as a word boundary and this scored 3.",
-    "p3.sameas": "Weibo and Zhihu answer 403 to bots; the scorer leaves the check out (unobservable), as designed."
+    "p3.sameas": "Weibo and Zhihu answer 403 to bots; the scorer leaves the check out (unobservable), as designed.",
+    "p3.video": "The footer links the brand's Douyin account (douyin.com/user/…) and no page declares VideoObject: a channel, so 2. Before 1.6.0 only YouTube, Bilibili and Vimeo links were read as channels and this scored 0."
   },
   "g.robots": 5,
   "g.reachable": 5,
@@ -36,7 +37,7 @@
   "p3.mentions": null,
   "p3.knowledge-graph": 4,
   "p3.sameas": null,
-  "p3.video": 0,
+  "p3.video": 2,
   "p4.answer-shape": 4,
   "p4.question-coverage": null,
   "p4.cn-engines": 2,

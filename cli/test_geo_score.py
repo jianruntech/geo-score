@@ -1153,6 +1153,59 @@ for _site, _observed in (("https://www.cnbc.test", False), ("https://prop.cn", T
     eq(_r["tier"]["p4.cn-engines"] is not None, _observed,
        "p4.cn-engines on an English site at %s: observed only for a host under .cn" % _site)
 
+# ── p3.video: channel links on Douyin, Xigua and Kuaishou count, short links and single videos never do ──
+# Through 1.5.x the channel pattern knew YouTube, Bilibili and Vimeo only, so a Chinese site whose official channel is
+# on Douyin, Xigua or Kuaishou read as having none. The forms below were checked on live pages on 2026-10-02.
+_SEC_UID = "MS4wLjABAAAAexampleSecUid-0123456789_abcdefghij"
+for _html, _want in (
+        ('<a href="https://www.douyin.com/user/%s">抖音</a>' % _SEC_UID, (1, 0)),
+        ('<a href="https://douyin.com/user/%s?modal_id=7000000000000000001">抖音</a>' % _SEC_UID, (1, 0)),
+        ('<a href="HTTPS://WWW.DOUYIN.COM/user/%s">Douyin</a>' % _SEC_UID, (1, 0)),
+        ('<a href="https://www.iesdouyin.com/share/user/%s">抖音</a>' % _SEC_UID, (1, 0)),
+        ('<a href="https://www.iesdouyin.com/share/user/10000000001?sec_uid=x">抖音</a>', (1, 0)),
+        ('<a href="https://www.ixigua.com/home/1000000001/">西瓜视频</a>', (1, 0)),
+        ('<a href="https://ixigua.com/home/1000000001/video/">西瓜视频</a>', (1, 0)),
+        ('<a href="https://m.ixigua.com/user/1000000001">西瓜视频</a>', (1, 0)),
+        ('<a href="https://www.kuaishou.com/profile/3xexample7k2m">快手</a>', (1, 0)),
+        ('<a href="https://live.kuaishou.com/profile/examplebrandco">快手</a>', (1, 0)),
+        ('<iframe src="https://open.douyin.com/player/video?vid=7000000000000000001&autoplay=0"></iframe>', (0, 1)),
+        # short links and single videos: whose account they are cannot be read without following them
+        ('<a href="https://v.douyin.com/AbCdEfGh1/">抖音</a>', (0, 0)),
+        ('<a href="https://v.douyin.com/user/%s">抖音</a>' % _SEC_UID, (0, 0)),
+        ('<a href="https://www.douyin.com/video/7000000000000000001">视频</a>', (0, 0)),
+        ('<a href="https://www.douyin.com/">抖音</a>', (0, 0)),
+        ('<a href="https://www.douyin.com/user/self?from_nav=1">我的</a>', (0, 0)),
+        ('<a href="https://www.ixigua.com/7000000000000000002">视频</a>', (0, 0)),
+        ('<a href="https://m.ixigua.com/video/7000000000000000002">视频</a>', (0, 0)),
+        ('<a href="https://v.kuaishou.com/AbCdEf">快手</a>', (0, 0)),
+        ('<a href="https://www.kuaishou.com/short-video/3xexample7k2m">视频</a>', (0, 0)),
+        # a host that only ends in the platform's name is not the platform
+        ('<a href="https://notdouyin.com/user/%s">x</a>' % _SEC_UID, (0, 0)),
+        ('<a href="https://www.mykuaishou.com/profile/examplebrandco">x</a>', (0, 0)),
+        # Xigua's iframe address did not play on 2026-10-02, so it is not read as a player
+        ('<iframe src="https://www.ixigua.com/iframe/7000000000000000002"></iframe>', (0, 0)),
+        ("抖音号：95485807611", (0, 0)),
+        # the forms read before 1.6.0 still count
+        ('<a href="https://www.youtube.com/@example">YouTube</a>', (1, 0)),
+        ('<a href="https://space.bilibili.com/314748279">B站</a>', (1, 0)),
+        ('<a href="https://vimeo.com/example">Vimeo</a>', (1, 0)),
+        ('<iframe src="https://www.youtube.com/embed/abc"></iframe>', (0, 1)),
+        ('<iframe src="//player.bilibili.com/player.html?bvid=BV1xx"></iframe>', (0, 1))):
+    eq(gs.video_links(_html), _want, "video_links(%r)" % _html)
+
+_DY_FOOTER = '<footer><a href="https://www.douyin.com/user/%s">抖音</a></footer>' % _SEC_UID
+_VIDEO_LD = '{"@context":"https://schema.org","@type":"VideoObject","name":"x","uploadDate":"2026-09-01"}'
+for _page, _want, _why in (
+        (lambda path: _ld_page(body="<p>x</p>" + _DY_FOOTER), 2, "a Douyin account link alone is a channel: 2"),
+        (lambda path: _ld_page(_VIDEO_LD, body="<p>x</p>" + _DY_FOOTER), 3,
+         "a Douyin account link plus VideoObject on the site: 3"),
+        (lambda path: _ld_page(body='<p>x</p><a href="https://v.douyin.com/AbCdEfGh1/">抖音</a>'
+                                    '<a href="https://www.douyin.com/video/7000000000000000001">视频</a>'
+                                    '<a href="https://www.kuaishou.com/short-video/3xexample7k2m">快手</a>'), 0,
+         "a short link and single videos are no channel: 0")):
+    _r = _run_site(_page)
+    eq(_r["tier"]["p3.video"], _want, "p3.video: " + _why)
+
 # ── run(): each page is read in its own language ──
 # A lexicon reads only the pages in its language; a check with no page left to read is not observed, never zero.
 # Structured data and links are read in any language.
