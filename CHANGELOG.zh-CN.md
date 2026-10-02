@@ -54,9 +54,10 @@
   换了服务商时，说明里也会写明。运行文件新增可选的顶层字段 `questions_hash`（对按 id 排序的「id + 规范化文字」对做 SHA-256，定义见
   schema/watch.v1.json），`watch runs` 显示它的前 8 位；更早的运行由保存的问题当场算出。
 - **API 改了回答格式，不再悄无声息地被读成「引擎不再引用」。** 每个适配器只读各家服务商的一种格式，引用字段一改名，回答就一条引用都没有，
-  `watch diff --fail-on-drop` 也可能因为一次格式变化以退出码 4 退出。现在某个引擎给出 5 条或更多回答、却没有一条带任何域名的引用时，
-  `watch report` 在「By engine」下给出警告；同一模型下，某个引擎带任何引用的回答占比从至少 50% 降到 5% 以下、且后一次运行至少有 5 条
-  回答时，`watch diff` 在这个引擎的行上加 `warning`，并把同样的话写进说明和 stderr。结论和退出码 4 都不变：警告请你用 `watch ask`
+  `watch diff --fail-on-drop` 也可能因为一次格式变化以退出码 4 退出。现在某个引擎回答了 5 个或更多问题、
+  却没有一条回答带任何域名的引用时，`watch report` 在「By engine」下给出警告；同一模型下，某个引擎带任何引用的回答占比从至少 50%
+  降到 5% 以下、且后一次运行至少回答了 5 个问题时，`watch diff` 在这个引擎的行上加 `warning`，并把同样的话写进说明和 stderr。
+  两者数的都是问题而不是回答，因为同一个问题的几条回答会一起变动。结论和退出码 4 都不变：警告请你用 `watch ask`
   核对一条回答。summary 的 `summary.engines` 每一行新增 `with_citations` 和 `with_searches`，没有这两项的旧运行在出报告时由保存的回答
   当场算出。Schema 新增这两个计数，以及 `$defs/diff_row` 里可选的 `warning`；MCP `diff` 工具的输出 schema 新增可选的 `warning`，
   MCP 契约只增不减。

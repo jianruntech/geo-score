@@ -70,7 +70,7 @@
                         "description": "run: brand_in_query was set when the run was made. computed: the run predates the flag and it was found from the saved question text when the summary was made."},
         "engines": {"type": "array", "items": {"$ref": "#/$defs/rate", "properties": {
           "with_citations": {"type": "integer", "minimum": 0,
-                             "description": "Answers from this engine that carry at least one citation, of any domain. Added in 1.6.0; reports recompute the summary of a run saved without it. With 5 or more answers and none of them citing, the report warns that the API's answer format may have changed."},
+                             "description": "Answers from this engine that carry at least one citation, of any domain. Added in 1.6.0; reports recompute the summary of a run saved without it. When the engine answered 5 or more questions and none of its answers cites, the report warns that the API's answer format may have changed; it counts questions, not answers, because the answers to one question move together."},
           "with_searches": {"type": "integer", "minimum": 0,
                             "description": "Answers from this engine that expose at least one search query. Added in 1.6.0."},
           "named_first": {"type": "integer", "minimum": 0,
@@ -176,7 +176,7 @@
         "verdict": {"enum": ["change", "within noise", "too few questions to tell", "not measured"]},
         "note": {"type": ["string", "null"]},
         "warning": {"type": "string",
-                    "description": "Engine rows only, since 1.6.0. Present when the share of this engine's answers carrying any citation fell from at least 50% to below 5% with the same model, and the later run has at least 5 answers. An adapter reads one answer format, so a provider that changed its format reads as an engine that stopped citing. The verdict is left as computed; the same words are in the diff's notes."}
+                    "description": "Engine rows only, since 1.6.0. Present when the share of this engine's answers carrying any citation fell from at least 50% to below 5% with the same model, and the later run answered at least 5 questions on this engine. An adapter reads one answer format, so a provider that changed its format reads as an engine that stopped citing. The verdict is left as computed; the same words are in the diff's notes."}
       }},
     "by_question": {"type": "object", "additionalProperties": false,
       "description": "One question's answers, counted. Every number is a count of answers (status ok) over every engine and ask, never a rate.",

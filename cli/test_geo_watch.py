@@ -2970,9 +2970,9 @@ class CitationFormat(Base):
         build = openai_resp_renamed if renamed else openai_resp
         return {"api.openai.com": lambda u, h, b: build(self.TEXT, self.CITES, ["best free ai video generator"])}
 
-    def ask(self, n, renamed):
+    def ask(self, n, renamed, runs=1):
         self.fake(self.route(renamed))
-        return gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(n), max_calls=100)
+        return gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(n), runs=runs, max_calls=100)
 
     def config(self):
         cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
@@ -2988,8 +2988,8 @@ class CitationFormat(Base):
         e = run["summary"]["engines"][0]
         self.assertEqual((e["answered"], e["with_citations"], e["with_searches"]), (5, 0, 5))
         self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
-        warning = ("warning: chatgpt-api returned 5 answers and none carried a citation; if this engine usually "
-                   "cites, its API's answer format may have changed (check one answer with "
+        warning = ("warning: chatgpt-api answered 5 questions (5 answers) and none carried a citation; if this engine "
+                   "usually cites, its API's answer format may have changed (check one answer with "
                    "`watch ask --engines chatgpt-api`)")
         for fmt in ("text", "md"):
             text = gw.render(run, fmt)
@@ -3002,8 +3002,13 @@ class CitationFormat(Base):
         e = fine["summary"]["engines"][0]
         self.assertEqual((e["with_citations"], e["with_searches"]), (5, 5))
         self.assertNotIn("none carried a citation", gw.render(fine))
-        # four answers are too few to say anything
+        # four questions are too few to say anything, however often each was asked: answers to one question move
+        # together, so the threshold counts questions
         self.assertNotIn("none carried a citation", gw.render(self.ask(4, renamed=True)))
+        self.assertNotIn("none carried a citation", gw.render(self.ask(1, renamed=True, runs=5)))
+        self.assertNotIn("none carried a citation", gw.render(self.ask(4, renamed=True, runs=2)))
+        self.assertIn("warning: chatgpt-api answered 5 questions (10 answers) and none carried a citation",
+                      gw.render(self.ask(5, renamed=True, runs=2)))
         # a summary saved without the counts is recomputed, so the warning reaches runs saved before 1.6.0
         old = json.loads(json.dumps(run))
         for row in old["summary"]["engines"]:
@@ -3063,7 +3068,12 @@ class CitationFormat(Base):
         self.assertEqual(warned(gw.diff_runs(*pair(20, 0, n=20))), ["chatgpt-api"])
         self.assertEqual(warned(gw.diff_runs(*pair(20, 1, n=20))), [])             # 1 of 20 is 5%: not below it
         self.assertEqual(warned(gw.diff_runs(*pair(21, 1, n=21))), ["chatgpt-api"])     # 1 of 21 is below 5%
-        self.assertEqual(warned(gw.diff_runs(*pair(4, 0, n=4))), [])               # 4 answers after: too few
+        self.assertEqual(warned(gw.diff_runs(*pair(4, 0, n=4))), [])               # 4 questions after: too few
+        four = ["q%02d" % i for i in range(1, 5)]                                  # ... even when each was asked 3 times
+        self.assertEqual(warned(gw.diff_runs(synth("20260919T083000Z", dict(((q, "chatgpt-api"), [True] * 3) for q in four),
+                                                   runs=3),
+                                             synth("20260926T083000Z", dict(((q, "chatgpt-api"), [False] * 3) for q in four),
+                                                   runs=3))), [])
         a, b = pair(8, 0)
         b["engines"][0]["model"] = "gpt-7"
         d = gw.diff_runs(a, b)

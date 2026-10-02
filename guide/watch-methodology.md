@@ -224,10 +224,12 @@ engine's row and takes its result instead of being counted twice.
 Each adapter reads one answer format per provider (for OpenAI, `url_citation` annotations), so a
 provider that renames or moves its citations reads as an engine that stopped citing anything. Two
 warnings look for that shape, not for the brand: the report warns under "By engine" when an engine
-gave 5 or more answers and none carried a citation of any domain (`with_citations` is 0 in
-`summary.engines`), and `watch diff` gives an engine's row a `warning`, and puts the same words in
-the notes and on stderr, when the share of its answers carrying any citation fell from at least 50%
-to below 5% with the same model and at least 5 answers in the later run. Neither changes a verdict
+answered 5 or more questions and none of its answers carried a citation of any domain
+(`with_citations` is 0 in `summary.engines`), and `watch diff` gives an engine's row a `warning`, and
+puts the same words in the notes and on stderr, when the share of its answers carrying any citation
+fell from at least 50% to below 5% with the same model and at least 5 questions answered in the later
+run. Both count questions, not answers: the answers to one question move together, so one question
+asked five times is not five pieces of evidence. Neither changes a verdict
 or an exit code: in the saved answers a format change and an engine that stopped citing look the
 same, so the warning asks for one answer to be checked with `watch ask`.
 
