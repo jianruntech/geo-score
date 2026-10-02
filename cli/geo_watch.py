@@ -29,6 +29,9 @@ CONFIG_NAME = "geo-score-watch.json"
 STATE_DIR = os.path.join(".geo-score", "watch")
 QUERY_COLS = ["query_id", "query", "intent_tier", "target_url"]
 BRANDED_VALUES = ("auto", "yes", "no")   # the optional `branded` column of queries.csv
+# A suggested vocabulary for queries.csv's intent_tier, documented in cli/README.md and guide/watch-methodology.md.
+# The column stays free text: `watch check` counts whatever it holds.
+INTENT_TIERS = ("list", "vs", "alternative", "pricing", "problem", "persona", "verdict", "channel")
 CSV_COLS = ["week", "query_id", "query", "intent_tier", "engine", "cited", "quoted_url",
             "rank", "other_domains_cited", "note", "branded"]
 UA = "geo-score-watch/%s (+https://github.com/jianruntech/geo-score)" % __version__
@@ -2151,6 +2154,8 @@ def cmd_init(args):
         w.writerow(["q01", "<a question your buyers ask an AI assistant, in their words>", "list", ""])
         w.writerow(["q02", "<a pricing or comparison question in your category>", "pricing", ""])
         w.writerow(["q03", "<an 'alternative to <competitor>' question>", "alternative", ""])
+        w.writerow(["q04", "<a situation your buyer describes, without naming a product category>", "problem", ""])
+        w.writerow(["q05", "<is <category> worth it?>", "verdict", ""])
     print("wrote %s and %s" % (cfg_path, q_path))
     print("next: put real questions in queries.csv, export API keys, then `geo_score.py watch run --dry-run`")
     return 0
@@ -2163,6 +2168,22 @@ def _load(args):
     if cfg.errors:
         raise ConfigError("%s:\n  %s" % (args.config, "\n  ".join(cfg.errors)))
     return cfg
+
+
+def tier_lines(qs):
+    """What `watch check` says about the questions' types: a count per intent_tier, and a note, never a failure,
+    when every question has the same type or none has one."""
+    tiers = Counter(q.get("intent_tier") or "" for q in qs)
+    named = sorted((t for t in tiers if t), key=lambda t: (-tiers[t], t))
+    counts = ["%s %d" % (_cut(t, 40), tiers[t]) for t in named] + (["no type %d" % tiers[""]] if tiers[""] else [])
+    out = ["question types (intent_tier): " + ", ".join(counts)]
+    vocab = "suggested types: %s; any other label works too" % ", ".join(INTENT_TIERS)
+    if not named:
+        out.append("no question has an intent_tier, so the report has no table by question type (%s)" % vocab)
+    elif len(tiers) == 1 and len(qs) > 1:
+        out.append("every question has the type %s: the rates describe that one kind of question (%s)"
+                   % (_cut(named[0], 40), vocab))
+    return out
 
 
 def cmd_check(args):
@@ -2184,6 +2205,8 @@ def cmd_check(args):
                       "question file" % (msg, _n(len(qs) - len(named), "question")))
             else:
                 print("· " + msg)
+        for line in tier_lines(qs):
+            print("· " + line)
     except ConfigError as e:
         cfg.errors.append(str(e))
         print("✗ %s" % e)

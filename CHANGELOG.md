@@ -19,6 +19,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   carry it, and it is an optional property of the tool's output schema, so the MCP contract only grows. A run
   saved before this release gets it computed from its saved answers when it is reported; the run file is not
   rewritten.
+- **Suggested question types, and `watch check` counts them.** `intent_tier` stays free text; cli/README.md and
+  guide/watch-methodology.md now suggest eight labels, each with one line and an example: `list`, `vs`,
+  `alternative`, `pricing`, `problem` (a situation that names no category or brand), `persona` (who it is for),
+  `verdict` (is it worth it, can it be trusted) and `channel` (franchise, wholesale, distributor, procurement).
+  `watch check` prints how many questions have each type, with a note, never a failure, when every question has
+  the same type or none has one. `watch init` writes two more placeholder questions, a `problem` row and a
+  `verdict` row.
 
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question

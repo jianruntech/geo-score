@@ -12,6 +12,10 @@
   这些计数说明不了什么：没有联网搜索的回答不可能引用任何东西；「no tracked brand named」只覆盖配置里的品牌；以及为什么有些回答是「未知」。
   summary 新增 `summary.by_question`（schema/watch.v1.json 的 `$defs/by_question`），JSON 报告和 MCP `report` 工具都带上它；它是该工具
   输出 schema 里的可选字段，MCP 契约只增不减。本版之前保存的运行在出报告时由保存的回答当场算出，运行文件本身不会被改写。
+- **建议的问题类型，`watch check` 会统计。** `intent_tier` 仍然可以随便填；cli/README 和 guide/watch-methodology 现在建议 8 个标签，
+  各附一句说明和一个例子：`list`、`vs`、`alternative`、`pricing`、`problem`（描述一个处境，不提品类也不提品牌）、`persona`（给谁用）、
+  `verdict`（值不值、靠不靠谱）和 `channel`（加盟、批发、经销、采购）。`watch check` 打印每种类型有几个问题；所有问题同属一种类型、
+  或者都没有类型时给一条提示，但不算失败。`watch init` 多写两个占位问题：一行 `problem`，一行 `verdict`。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成

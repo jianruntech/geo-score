@@ -37,6 +37,26 @@ one search per answer either way. An answer given without a search cannot cite a
 "No tracked brand named" counts answers that name none of the brands in the config, which says
 nothing about brands the config does not list.
 
+Each question can carry a type, the `intent_tier` column of `queries.csv`, and the report gives each
+type its own rate and interval ("By question type"). A rate describes the questions behind it: a set
+of one type describes that one kind of question, and a type with few questions gets a wide clustered
+interval. The column is free text, and `watch check` counts the questions of each type, with a note
+when all share one type or none has one. These labels are suggested, so that sets read alike:
+
+| `intent_tier` | The question | Example |
+|---|---|---|
+| `list` | asks for the options in a category | best invoicing app for freelancers |
+| `vs` | compares named products | acme vs rival |
+| `alternative` | asks what to use instead of a named product | alternatives to rival |
+| `pricing` | asks about cost, plans or a free tier | how much does an invoicing app cost |
+| `problem` | describes a situation and names no category or brand | clients keep paying me late and I lose track of who owes what |
+| `persona` | says who it is for | invoicing app for a two-person design studio |
+| `verdict` | asks whether something is worth it or can be trusted | is acme worth it |
+| `channel` | is about buying or selling through another route: franchise, wholesale, distributor, procurement | invoicing software with a reseller programme |
+
+A `verdict` question about the brand names it, so it counts on the branded line (section 3), not in
+the headline.
+
 ## 2. Intervals
 
 ### Wilson (every answer independent)

@@ -212,8 +212,8 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 
 | 命令 | |
 |---|---|
-| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv` |
-| `watch check` | 校验配置和问题，显示哪些引擎配了 Key、有没有价格 |
+| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
+| `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，显示哪些引擎配了 Key、有没有价格 |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划并以 0 退出，有没有 Key 都一样 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
@@ -271,6 +271,23 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 `queries.csv` 有四列：`query_id,query,intent_tier,target_url`。问题要写成买家在 ChatGPT 里会打出来的样子，而且每周保持
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
 品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
+
+`intent_tier` 可以随便填。报告给每个值单独算一个引用率（「By question type」表），`watch check` 打印每种类型有几个问题；
+所有问题都是同一种类型、或者都没有类型时，会给一条提示，但不算失败。只有一种类型的问题集，测的就只是这一类问题。
+下面这些标签是建议用法，方便不同的问题集读起来一致：
+
+| `intent_tier` | 这类问题 | 例子 |
+|---|---|---|
+| `list` | 问某个品类里有哪些选择 | 适合自由职业者的开票软件推荐 |
+| `vs` | 比较几个点名的产品 | acme 和 rival 哪个好 |
+| `alternative` | 问某个点名产品用什么替代 | rival 的替代品 |
+| `pricing` | 问价格、套餐或免费额度 | 开票软件一般多少钱 |
+| `problem` | 描述一个处境，不提品类也不提品牌 | 客户老是拖款，我记不清谁还欠多少 |
+| `persona` | 说明给谁用 | 两个人的设计工作室用什么开票软件 |
+| `verdict` | 问值不值、靠不靠谱 | acme 值得买吗；rival 是不是智商税 |
+| `channel` | 经别的渠道买或卖：加盟、批发、经销、采购 | 开票软件怎么做代理 |
+
+关于你自己品牌的 `verdict` 问题会提到品牌，所以计入含品牌问题那一行，不进标题数字。
 
 **怎么读这些数字。** 标题引用率只统计没有提到品牌的问题。「acme vs rival」几乎一定会引用 Acme，所以这类问题单列一行；
 它们超过问题集的 30% 时，`watch check` 会发出警告。一个问题有不止一条回答时（`runs` > 1，或者总体那一行合并了几个引擎），

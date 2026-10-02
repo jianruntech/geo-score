@@ -3168,6 +3168,74 @@ class Branded(Base):
         self.assertIn("q2 names the brand", cit["note"])
 
 
+# ── question types (intent_tier) ──────────────────────────────────────────
+class IntentTiers(Base):
+    def check(self, body):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(body)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = gw.main(["check", "-c", cfgp])
+        return code, out.getvalue()
+
+    def test_the_init_template_has_a_problem_row_and_a_verdict_row(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(gw.main(["init", "--dir", self.tmp, "--brand", "Lumo", "--domain", "lumo.example"]), 0)
+        with io.open(os.path.join(self.tmp, "queries.csv"), encoding="utf-8") as f:
+            body = f.read()
+        rows = list(__import__("csv").DictReader(io.StringIO(body)))
+        self.assertEqual([(r["query_id"], r["intent_tier"]) for r in rows],
+                         [("q01", "list"), ("q02", "pricing"), ("q03", "alternative"), ("q04", "problem"),
+                          ("q05", "verdict")])
+        self.assertEqual(rows[3]["query"], "<a situation your buyer describes, without naming a product category>")
+        self.assertEqual(rows[4]["query"], "<is <category> worth it?>")
+        self.assertTrue(set(r["intent_tier"] for r in rows) <= set(gw.INTENT_TIERS))
+        code, text = self.check(body)
+        self.assertEqual(code, 1)                                  # every row is a placeholder until it is replaced
+        for line in range(2, 7):
+            self.assertIn("line %d: replace the <placeholder> with a real question" % line, text)
+
+    def test_check_counts_the_questions_of_each_type(self):
+        head = "query_id,query,intent_tier,target_url\n"
+        code, out = self.check(head + "q1,best ai video tool,list,\nq2,lumo vs pixa,vs,\nq3,cheap video app,list,\n"
+                                      "q4,my clips keep getting a watermark,,\nq5,is text to video worth it,verdict,\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): list 2, verdict 1, vs 1, no type 1\n", out)
+        self.assertNotIn("suggested types", out)                   # several types: counts, and nothing else
+
+    def test_one_type_or_none_is_a_note_never_a_failure(self):
+        vocab = "suggested types: list, vs, alternative, pricing, problem, persona, verdict, channel; any other " \
+                "label works too"
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n"
+                               "q2,cheap video app,list,\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): list 2\n", out)
+        self.assertIn("· every question has the type list: the rates describe that one kind of question (%s)\n"
+                      % vocab, out)
+        code, out = self.check("query_id,query\nq1,best ai video tool\nq2,cheap video app\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): no type 2\n", out)
+        self.assertIn("· no question has an intent_tier, so the report has no table by question type (%s)\n"
+                      % vocab, out)
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n")
+        self.assertEqual(code, 0)
+        self.assertNotIn("every question has the type", out)        # one question is not a set of one type
+        for line in out.splitlines():
+            self.assertFalse(line.startswith(("! ", "✗ ")), line)
+
+    def test_the_suggested_types_are_documented_in_both_languages(self):
+        for doc in ("cli/README.md", "cli/README.zh-CN.md", "guide/watch-methodology.md",
+                    "guide/watch-methodology.zh-CN.md"):
+            with io.open(os.path.join(HERE, "..", doc), encoding="utf-8") as f:
+                text = f.read()
+            for t in gw.INTENT_TIERS:
+                self.assertIn("| `%s` |" % t, text, (doc, t))
+
+
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
 class OldRuns(Base):
     def setUp(self):
