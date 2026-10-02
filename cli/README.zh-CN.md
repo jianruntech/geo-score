@@ -213,9 +213,9 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | 命令 | |
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
-| `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，显示哪些引擎配了 Key、有没有价格 |
+| `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划并以 0 退出，有没有 Key 都一样 |
-| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
 | `watch runs` | 保存过的运行、各自的标题引用率，以及 `questions_hash` 的前 8 位：两次运行问的是同一组问题时，这一列相同 |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | 不打分的第二级：一个问题马上问遍所有引擎（或 `--engines` 指定的那些），不保存 |
@@ -271,6 +271,16 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 `queries.csv` 有四列：`query_id,query,intent_tier,target_url`。问题要写成买家在 ChatGPT 里会打出来的样子，而且每周保持
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
 品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
+
+`target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
+`brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。其他写法 `watch check` 会给出警告，运行时忽略；
+页面不在品牌拥有的域名或 URL 前缀上时，也会警告，但照样匹配。之后这个问题的每条回答都记下 `target_cited`（有一条引用就是这个页面）
+和 `other_own_cited`（没有引用这个页面，但引用了你的另一个网址），报告多一张表「Pages you track」：每个页面对应哪些问题、拿到几条回答、
+其中几条引用了这个页面、几条转而引用了你的另一个网址，以及这些回答引用最多的是你的哪个网址（按引用时的原样列出）。CSV 的最后一列
+`target_cited`，在追踪页面的问题的回答上是 `Y` 或 `N`，其他情况留空。匹配的是规范化之后的同一个页面：`www`、大小写、末尾的斜杠、
+查询串、片段（`#` 之后）和百分号编码都不计，所以 `https://www.acme.com/Pricing/?utm_source=x#plans` 就是 `https://acme.com/pricing`。
+除此之外都不算：`/en/pricing` 不是 `/pricing`；页面以规范网址（canonical）被引用、而那个网址不同时，也算另一个页面。
+没能解析的跳转链接两边都不算。1.6.0 之前保存的运行，这张表由保存的引用当场算出。
 
 `intent_tier` 可以随便填。报告给每个值单独算一个引用率（「By question type」表），`watch check` 打印每种类型有几个问题；
 所有问题都是同一种类型、或者都没有类型时，会给一条提示，但不算失败。只有一种类型的问题集，测的就只是这一类问题。

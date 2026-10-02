@@ -3236,6 +3236,174 @@ class IntentTiers(Base):
                 self.assertIn("| `%s` |" % t, text, (doc, t))
 
 
+# ── pages you track: target_url ──────────────────────────────────────────
+def cite(*urls):
+    return [{"url": u, "domain": gw.host_of(u), "title": ""} for u in urls]
+
+
+class TrackedPages(Base):
+    def check(self, body, brand_=None):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": brand_ or {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(body)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = gw.main(["check", "-c", cfgp])
+        return code, out.getvalue(), gw.Config(cfgp)
+
+    def test_absolute_and_path_targets_resolve_and_anything_else_is_ignored_with_a_warning(self):
+        code, out, cfg = self.check(
+            "query_id,query,intent_tier,target_url\n"
+            "q1,free ai video,list,https://www.lumo.example/free?utm_source=x&plan=1#top\n"
+            "q2,ai video pricing,pricing,/pricing/\n"
+            "q3,lumo review,verdict,lumo.example/review\n"
+            "q4,cdn,list,//cdn.example/x\n"
+            "q5,pixa plans,pricing,https://pixa.example/plans\n"
+            "q6,no page,list,\n"
+            "q7,ftp page,list,ftp://lumo.example/x\n")
+        self.assertEqual(code, 0)                                   # a warning, never a failure
+        qs = cfg.load_queries()
+        self.assertEqual([q["target_url"] for q in qs],
+                         ["https://www.lumo.example/free?plan=1", "https://lumo.example/pricing/", "", "",
+                          "https://pixa.example/plans", "", ""])
+        self.assertIn("! q3: target_url 'lumo.example/review' is neither an http(s) URL nor a path that starts with "
+                      "/; it is ignored\n", out)
+        self.assertIn("! q4: target_url '//cdn.example/x' is neither", out)
+        self.assertIn("! q7: target_url 'ftp://lumo.example/x' is neither", out)
+        self.assertIn("! q5: target_url https://pixa.example/plans is not on the brand's domains or url_prefixes; it "
+                      "is still matched\n", out)
+        self.assertIn("· target_url: a page is tracked for 3 of 7 questions; the report counts how often answers cite "
+                      "it\n", out)
+        self.assertEqual(len(cfg.query_warnings), 4)
+        # a path needs a domain to join; a URL prefix the brand owns is its page too
+        code, out, cfg = self.check("query_id,query,target_url\nq1,a,/x\nq2,b,https://amazon.com/stores/Lumo/p\n",
+                                    {"name": "Lumo", "url_prefixes": ["amazon.com/stores/Lumo"]})
+        self.assertEqual(code, 0)
+        self.assertIn("! q1: target_url '/x' is a path, and the brand has no domain to join it to; it is ignored", out)
+        self.assertNotIn("q2: target_url", out)
+        self.assertEqual([q["target_url"] for q in cfg.load_queries()], ["", "https://amazon.com/stores/Lumo/p"])
+        # the first domain is the one a path joins
+        b = gw.Entity({"name": "Lumo", "domains": ["www.lumo.example", "lumo.cn"]}, you=True)
+        self.assertEqual(gw.resolve_target(" /a b ", b), ("https://lumo.example/a b", None))
+        self.assertEqual(gw.resolve_target("", b), ("", None))
+
+    def test_www_slash_case_query_fragment_and_escapes_match_and_another_path_does_not(self):
+        b = brand()
+        target = "https://lumo.example/free"
+        for u in ("https://www.lumo.example/free/", "https://LUMO.example/Free?utm_source=openai&ref=x",
+                  "https://lumo.example/free#pricing", "http://lumo.example/free", "https://lumo.example/free?a=1"):
+            self.assertEqual(gw.target_hits(cite(gw.clean_url(u)), b, target), (True, []), u)
+        zh = gw.resolve_target("/博客/免费", b)[0]
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/%E5%8D%9A%E5%AE%A2/%E5%85%8D%E8%B4%B9"), b, zh)[0],
+                         True)
+        # another locale, a longer path and the parent are other pages of yours
+        for u in ("https://lumo.example/en/free", "https://lumo.example/free-plan", "https://lumo.example/",
+                  "https://lumo.example/free/faq"):
+            self.assertEqual(gw.target_hits(cite(u), b, target), (False, [u]), u)
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/en/x"), b, "https://lumo.example/x")[0], False)
+        self.assertEqual(gw.target_hits(cite("https://pixa.example/free"), b, target), (False, []))
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/free"), b, ""), (None, []))
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/free"), b, None), (None, []))
+
+    def test_a_gemini_redirect_resolved_to_the_target_matches(self):
+        redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AAA"
+        self.fake({"generativelanguage.googleapis.com": lambda u, h, b: gemini_resp(
+            "Lumo has a free plan.", [(redirect, "lumo.example")])})
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        qs = [dict(queries(1)[0], target_url="/free")]
+        gw.RESOLVER = lambda u: "https://www.lumo.example/free/?utm_source=gemini" if u == redirect else None
+        smp = gw.execute(brand(), rivals(), [eng], qs)["samples"][0]
+        self.assertEqual((smp["cited"], smp["target_cited"], smp["other_own_cited"]), (True, True, False))
+        gw.RESOLVER = lambda u: None              # not followed: cited by its title's domain, but which page is unknown
+        run = gw.execute(brand(), rivals(), [eng], qs)
+        smp = run["samples"][0]
+        self.assertEqual((smp["cited"], smp["target_cited"], smp["other_own_cited"]), (True, False, False))
+        self.assertEqual(run["queries"][0]["target_url"], "https://lumo.example/free")     # saved resolved
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_no_target_gives_null(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(1))
+        smp = run["samples"][0]
+        self.assertTrue(smp["cited"])
+        self.assertIsNone(smp["target_cited"])
+        self.assertIsNone(smp["other_own_cited"])
+        self.assertEqual(run["summary"]["tracked_pages"], [])
+        self.assertNotIn("Pages you track", gw.render(run))
+        rows = list(__import__("csv").reader(io.StringIO(gw.render_csv(run))))
+        self.assertEqual((rows[0][-1], rows[1][-1]), ("target_cited", ""))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    QS = [{"query_id": "q01", "query": "free ai video", "intent_tier": "list", "target_url": "/free"},
+          {"query_id": "q02", "query": "ai video with no watermark", "intent_tier": "", "target_url": "https://lumo.example/free"},
+          {"query_id": "q03", "query": "ai video pricing", "intent_tier": "pricing", "target_url": "/pricing"},
+          {"query_id": "q04", "query": "best ai video", "intent_tier": "list", "target_url": ""}]
+
+    def run_of(self):
+        o, p = "chatgpt-api", "perplexity-api"
+        lumo = lambda *u: cite(*["https://lumo.example" + x for x in u])
+        return counted_run([
+            answer("q01", o, 1, you=(True, True), cites=lumo("/free")),
+            answer("q01", o, 2, you=(True, True), cites=lumo("/")),
+            answer("q01", p, 1, you=(True, True), cites=lumo("/blog/x", "/")),
+            answer("q01", p, 2, pixa=(True, True)),
+            answer("q02", o, 1, you=(True, True), cites=cite("https://www.lumo.example/free/")),
+            answer("q02", o, 2, status="error"),
+            answer("q02", p, 1, you=(True, True), cites=lumo("/")),
+            answer("q03", o, 1, status="error"),
+            answer("q04", o, 1, you=(True, True), cites=lumo("/x")),
+        ], self.QS)
+
+    def test_the_summary_counts_each_page_and_shows_your_page_cited_instead(self):
+        run = self.run_of()          # its samples carry no target_cited: the counts come from the saved citations
+        tp = run["summary"]["tracked_pages"]
+        self.assertEqual(tp, [
+            {"target_url": "https://lumo.example/free", "query_ids": ["q01", "q02"], "answered": 6, "target_cited": 2,
+             "other_own_cited": 3, "top_other_url": "https://lumo.example/", "top_other_answers": 3},
+            {"target_url": "https://lumo.example/pricing", "query_ids": ["q03"], "answered": 0, "target_cited": 0,
+             "other_own_cited": 0, "top_other_url": None, "top_other_answers": 0}])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        md = gw.render(run, "md")
+        self.assertIn("## Pages you track", md)
+        self.assertIn("| page (target_url) | questions | answers | this page cited | another of your pages cited | "
+                      "your page cited most instead |", md)
+        self.assertIn("| https://lumo.example/free | q01, q02 | 6 | 2/6 | 3/6 | https://lumo.example/ (3) |", md)
+        self.assertIn("| https://lumo.example/pricing | q03 | 0 | 0/0 | 0/0 | — |", md)
+        for n in gw.TRACKED_PAGE_NOTES:
+            self.assertIn("|\n\n- " + n if n == gw.TRACKED_PAGE_NOTES[0] else "- " + n, md)
+        for word in ("optimi", "should", "recommend", "instead of"):    # the match rule, never which page to track
+            self.assertNotIn(word, " ".join(gw.TRACKED_PAGE_NOTES).lower())
+        self.assertLess(md.index("Pages you track"), md.index("Ledger"))
+        self.assertIn("Pages you track", gw.render(run))
+        # the CSV's last column: Y or N on an answer to a question that tracks a page, else empty
+        rows = list(__import__("csv").reader(io.StringIO(gw.render_csv(run))))
+        self.assertEqual(rows[0], gw.CSV_COLS)
+        self.assertEqual([(r[1], r[-1]) for r in rows[1:]],
+                         [("q01", "Y"), ("q01", "N"), ("q01", "N"), ("q01", "N"), ("q02", "Y"), ("q02", ""),
+                          ("q02", "N"), ("q03", ""), ("q04", "")])
+        # the json report and the MCP report tool carry it
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        gw.save_run(gw.Config(cfgp), run)
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["tracked_pages"], tp)
+        out_schema = next(t for t in srv.tools() if t["name"] == "report")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
+    def test_summary_of_recomputes_a_summary_without_tracked_pages(self):
+        run = self.run_of()
+        old = json.loads(json.dumps(run))
+        del old["summary"]["tracked_pages"]                    # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["tracked_pages"], run["summary"]["tracked_pages"])
+        self.assertEqual(sm["headline"], run["summary"]["headline"])
+        self.assertIn("Pages you track", gw.render(old))
+        self.assertNotIn("tracked_pages", old["summary"])
+
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
 class OldRuns(Base):
     def setUp(self):

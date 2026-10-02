@@ -420,6 +420,16 @@ OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Pe
 
 ## T
 
+### Target page（目标页，target_url）
+
+一个追踪的问题所跟踪的你的那一个页面，写在 `queries.csv` 可选的 `target_url` 列里：完整网址，或者以 `/` 开头、接在品牌第一个域名后面的路径。
+回答的某条引用在不计 `www`、大小写、末尾斜杠、查询串、片段和百分号编码之后就是这个页面，才算引用了目标页；换一个路径或语言版本，
+或者页面以不同的规范网址（canonical）被引用，都算另一个页面。回答没有引用这个页面、却引用了你的另一个网址时，计入「another of your pages cited」。
+
+**出现在：** `watch report` 里的 `Pages you track` 表；运行文件里每条回答的 `target_cited` 和 `other_own_cited`；CSV 的 `target_cited` 列；
+运行文件、JSON 报告和 MCP `report` 工具里的 `summary.tracked_pages`；`watch check` 对用不了的值给出的警告。
+**详见：** [CLI 说明 · 第二、三级](../cli/README.zh-CN.md#watch)
+
 ### Thin sample（样本少）
 
 榜单上实际评分页面不足 4 个的行：这个站的抽样没能凑满，比如拿不到 sitemap、首页链接又少，或者抽到的页面加载失败。

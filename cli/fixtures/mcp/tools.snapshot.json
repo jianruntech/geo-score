@@ -609,6 +609,48 @@
            }
           },
           "type": "object"
+         },
+         "tracked_pages": {
+          "description": "Per page named in target_url: answers to its questions, how many cite that page, and how many cite another URL of yours instead. Counts.",
+          "items": {
+           "properties": {
+            "answered": {
+             "type": "integer"
+            },
+            "other_own_cited": {
+             "description": "answers citing another URL you own, not the page",
+             "type": "integer"
+            },
+            "query_ids": {
+             "items": {
+              "type": "string"
+             },
+             "type": "array"
+            },
+            "target_cited": {
+             "type": "integer"
+            },
+            "target_url": {
+             "type": "string"
+            },
+            "top_other_answers": {
+             "type": "integer"
+            },
+            "top_other_url": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ],
+             "description": "your URL those answers cite most, exactly as cited"
+            }
+           },
+           "type": "object"
+          },
+          "type": "array"
          }
         },
         "required": [
@@ -727,7 +769,7 @@
     "readOnlyHint": true,
     "title": "Report on a saved run"
    },
-   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, who is cited and named for each question, observed searches, cost.",
+   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, who is cited and named for each question, how often the pages you track are cited, observed searches, cost.",
    "inputSchema": {
     "additionalProperties": false,
     "properties": {
@@ -986,6 +1028,48 @@
        }
       },
       "type": "object"
+     },
+     "tracked_pages": {
+      "description": "Per page named in target_url: answers to its questions, how many cite that page, and how many cite another URL of yours instead. Counts.",
+      "items": {
+       "properties": {
+        "answered": {
+         "type": "integer"
+        },
+        "other_own_cited": {
+         "description": "answers citing another URL you own, not the page",
+         "type": "integer"
+        },
+        "query_ids": {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        "target_cited": {
+         "type": "integer"
+        },
+        "target_url": {
+         "type": "string"
+        },
+        "top_other_answers": {
+         "type": "integer"
+        },
+        "top_other_url": {
+         "anyOf": [
+          {
+           "type": "string"
+          },
+          {
+           "type": "null"
+          }
+         ],
+         "description": "your URL those answers cite most, exactly as cited"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
      }
     },
     "required": [

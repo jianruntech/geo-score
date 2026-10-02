@@ -244,9 +244,9 @@ measured" and the readiness report is unchanged.
 | Command | |
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv`, with one placeholder question for each of the types `list`, `pricing`, `alternative`, `problem` and `verdict` |
-| `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, and show which engines have keys and prices |
+| `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, warn about a `target_url` it cannot use, and show which engines have keys and prices |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and exits 0, with or without keys |
-| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
 | `watch runs` | Saved runs, their headline rate and the first 8 characters of their `questions_hash`, which two runs share when they asked the same questions |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | Level 2 without the score: one question to every engine, now, not saved |
@@ -309,6 +309,22 @@ way a buyer would type them into ChatGPT, and keep the set fixed from week to we
 fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides the automatic check
 for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
 a nickname the matcher cannot see.
+
+`target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
+or a path that starts with `/`, which is joined to the first of `brand.domains`
+(`/pricing` becomes `https://acme.com/pricing`). `watch check` warns about any other value, and the
+run ignores it; it also warns, and still matches, when the page is not on a domain or URL prefix
+the brand owns. Each answer to the question then records `target_cited` (one of its citations is
+that page) and `other_own_cited` (it cites another URL of yours, not that page), and the report
+adds a table, "Pages you track": per page, its questions, their answers, how many cite the page,
+how many cite another of your URLs instead, and which of your URLs those answers cite most, shown
+exactly as cited. The CSV's last column, `target_cited`, is `Y` or `N` on an answer to a question
+that tracks a page and empty otherwise. The match is the exact page after normalisation: `www`,
+letter case, a trailing slash, the query string, the fragment and percent-encoding are set aside,
+so `https://www.acme.com/Pricing/?utm_source=x#plans` is `https://acme.com/pricing`. Nothing else
+is: `/en/pricing` is not `/pricing`, and a page cited by its canonical URL, when that URL differs,
+is another page. A citation left as an unresolved redirect counts as neither. For a run saved
+before 1.6.0 the table is computed from the saved citations.
 
 `intent_tier` is free text. The report gives each value its own rate ("By question type"), and
 `watch check` prints how many questions have each one, with a note, never a failure, when every

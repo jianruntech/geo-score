@@ -33,7 +33,7 @@ BRANDED_VALUES = ("auto", "yes", "no")   # the optional `branded` column of quer
 # The column stays free text: `watch check` counts whatever it holds.
 INTENT_TIERS = ("list", "vs", "alternative", "pricing", "problem", "persona", "verdict", "channel")
 CSV_COLS = ["week", "query_id", "query", "intent_tier", "engine", "cited", "quoted_url",
-            "rank", "other_domains_cited", "note", "branded"]
+            "rank", "other_domains_cited", "note", "branded", "target_cited"]
 UA = "geo-score-watch/%s (+https://github.com/jianruntech/geo-score)" % __version__
 HTTP_TIMEOUT = 120
 MAX_BODY = 8 << 20
@@ -106,6 +106,13 @@ BY_QUESTION_NOTES = [
     "An answer given without a web search cannot cite anything.",
     "\"No tracked brand named\" counts answers that name none of the brands in your config; they may name others.",
     "Perplexity and OpenRouter search on every call or do not say, so their answers count as unknown under searched.",
+]
+# printed under the "Pages you track" table: the match rule
+TRACKED_PAGE_NOTES = [
+    "A cited URL is the tracked page when it is the same page once www, letter case, a trailing slash, the query "
+    "string, the fragment and percent-encoding are set aside. Another path, such as /en/x for /x, is another page, "
+    "and so is the page's canonical URL when it differs.",
+    "A citation whose redirect could not be followed counts as neither the tracked page nor another of yours.",
 ]
 
 # Swapped out by the tests; nothing else should touch these.
@@ -220,6 +227,13 @@ def prefix_key(u):
     except ValueError:
         path = ""
     return (h + path.lower()).rstrip("/")
+
+
+def page_key(u):
+    """The unit a tracked page (target_url) is matched on: prefix_key with its percent-escapes decoded, so www, letter
+    case, a trailing slash, the query string, the fragment and percent-encoding make no difference."""
+    k = prefix_key(u)
+    return urllib.parse.unquote(k).lower() if k else ""
 
 
 def clean_url(u):
@@ -755,7 +769,20 @@ def normalize_citations(raw, entities, resolve=True):
     return out
 
 
-def evaluate(res, brand, rivals, resolve=True):
+def target_hits(cites, brand, target):
+    """One answer's citations against a question's tracked page: (whether one of them is that page, the brand's
+    other pages it cites when none is). A citation left as an unresolved redirect is neither: which page it was is
+    unknown. (None, []) when the question tracks no page."""
+    want = page_key(target) if target else ""
+    if not want:
+        return None, []
+    if any(page_key(c["url"]) == want for c in cites):
+        return True, []
+    return False, _uniq(c["url"] for c in cites
+                        if brand.owns(c["url"], c["domain"]) and host_of(c["url"]) not in REDIRECT_HOSTS)
+
+
+def evaluate(res, brand, rivals, resolve=True, target=None):
     cites = normalize_citations(res["citations"], [brand] + rivals, resolve)
     answer = res["answer"]
 
@@ -773,10 +800,12 @@ def evaluate(res, brand, rivals, resolve=True):
     for r in rivals:
         rr, _ = place(r)
         comps[r.name] = {"cited": rr is not None, "rank": rr, "mentioned": r.named_in(answer)}
+    hit, others = target_hits(cites, brand, target)
     return {"cited": rank is not None, "rank": rank, "quoted_url": url, "mentioned": brand.named_in(answer),
             "competitors": comps, "citations": cites,
             "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
-            "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER}
+            "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER,
+            "target_cited": hit, "other_own_cited": None if hit is None else bool(others)}
 
 
 def flag_query(q, brand, rivals):
@@ -785,6 +814,24 @@ def flag_query(q, brand, rivals):
     text = q.get("query") or ""
     return dict(q, branded=q.get("branded") or "auto", brand_in_query=brand.named_in(text),
                 competitor_in_query=any(r.named_in(text) for r in rivals))
+
+
+def resolve_target(value, brand):
+    """A question's target_url as the page it names: an absolute http(s) URL through clean_url, or a path that starts
+    with a single / joined to the brand's first domain. Returns (url, problem): url is "" when the question tracks no
+    page, and problem says why a value that is there cannot be used (`watch check` prints it)."""
+    v = str(value or "").strip()
+    if not v:
+        return "", None
+    if v.startswith("/") and not v.startswith("//"):
+        if not brand.domains:
+            return "", "is a path, and the brand has no domain to join it to"
+        u = clean_url("https://%s%s" % (brand.domains[0], v))
+    else:
+        u = clean_url(v) if re.match(r"(?i)https?://", v) else ""
+    if not u or not page_key(u):
+        return "", "is neither an http(s) URL nor a path that starts with /"
+    return u, None
 
 
 def is_branded(q, brand=None):
@@ -972,6 +1019,7 @@ class Config(object):
         self.queries_path = os.path.join(self.dir, q) if isinstance(q, str) and q else ""
         if not self.queries_path:
             err("queries must name a CSV file")
+        self.query_warnings = []     # set by load_queries: target_url values it could not use, or that are not yours
 
     def runs_dir(self):
         return os.path.join(self.dir, STATE_DIR, "runs")
@@ -982,7 +1030,7 @@ class Config(object):
         names, rows = _read_csv(self.queries_path)
         if "query_id" not in names or "query" not in names:
             raise ConfigError("%s needs the columns %s" % (self.queries_path, ",".join(QUERY_COLS)))
-        out, ids, problems = [], set(), []
+        out, ids, problems, warns = [], set(), [], []
         for n, r in enumerate(rows, 2):
             vals = {k: (r.get(k) or "").strip() if isinstance(r.get(k), str) else "" for k in QUERY_COLS}
             if not any(vals.values()):
@@ -1003,6 +1051,14 @@ class Config(object):
             if b and b not in BRANDED_VALUES:
                 problems.append("line %d: branded must be auto, yes or no, not %r" % (n, b))
             vals["branded"] = b or "auto"
+            if vals["target_url"]:
+                url, why = resolve_target(vals["target_url"], self.brand)
+                if why:
+                    warns.append("%s: target_url %r %s; it is ignored" % (qid, _cut(vals["target_url"], 80), why))
+                elif not self.brand.owns(url, host_of(url)):
+                    warns.append("%s: target_url %s is not on the brand's domains or url_prefixes; it is still "
+                                 "matched" % (qid, _cut(url, 80)))
+                vals["target_url"] = url
             ids.add(qid)
             out.append(vals)
         if problems:
@@ -1011,6 +1067,7 @@ class Config(object):
             raise ConfigError("%s has no questions" % self.queries_path)
         if len(out) > MAX_QUERIES:
             raise ConfigError("%s has %d questions; the limit is %d" % (self.queries_path, len(out), MAX_QUERIES))
+        self.query_warnings = warns
         return out
 
 
@@ -1117,7 +1174,9 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
             budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True):
     prices = prices or {}
     started = NOW()
-    queries = [flag_query(q, brand, rivals) for q in queries]
+    # target_url is saved as the page it resolves to ("" when unusable), whether or not load_queries saw it first
+    queries = [dict(flag_query(q, brand, rivals), target_url=resolve_target(q.get("target_url"), brand)[0])
+               for q in queries]
     active, status = plan(engines, prices, budget, allow_unpriced)
     slots = [(r, q, e) for r in range(1, runs + 1) for q in queries for e, _ in active]
     samples = [None] * len(slots)
@@ -1177,7 +1236,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
                 stopped[e["id"]] = ("unpriced", "the provider did not report this call's cost, so the budget "
                                                 "cannot cover this engine")
             try:
-                s = dict(base, status="ok", **evaluate(res, brand, rivals, resolve))
+                s = dict(base, status="ok", **evaluate(res, brand, rivals, resolve, q["target_url"]))
             except Exception as err:   # the call was paid for; keep the fact that it failed to parse
                 finish(i, dict(base, status="error", error=redact("unexpected: %r" % err, key)))
                 continue
@@ -1342,6 +1401,23 @@ def summarize(run):
                               and not any(s["competitors"].get(r.name, {}).get("mentioned") for r in rivals)),
             "searched": {"yes": how[True], "no": how[False], "unknown": how[None]}, "leader": leader})
 
+    # Pages you track: one entry per target page, questions sharing a page together, in question order. Read from the
+    # saved citations, so runs saved before target_cited existed get the same counts.
+    pages = {}
+    for q in run["queries"]:
+        url, _ = resolve_target(q.get("target_url"), brand)
+        if url:
+            pages.setdefault(page_key(url), {"target_url": url, "query_ids": []})["query_ids"].append(q["query_id"])
+    tracked = []
+    for p in pages.values():
+        rows = [s for qid in p["query_ids"] for s in per_q.get(qid, [])]
+        hits = [target_hits(s["citations"], brand, p["target_url"]) for s in rows]
+        instead = Counter(u for hit, others in hits for u in others)
+        top = min(instead.items(), key=lambda kv: (-kv[1], kv[0])) if instead else (None, 0)
+        tracked.append(dict(p, answered=len(rows), target_cited=sum(1 for hit, _ in hits if hit),
+                            other_own_cited=sum(1 for hit, others in hits if not hit and others),
+                            top_other_url=top[0], top_other_answers=top[1]))
+
     tiers = {}
     for s in ok:
         t = qtext.get(s["query_id"], {}).get("intent_tier") or ""
@@ -1367,7 +1443,7 @@ def summarize(run):
             "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
             "engines": engines, "share_of_voice": share, "top_sources": sources,
             "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps,
-            "by_question": by_question, "by_tier": by_tier,
+            "by_question": by_question, "tracked_pages": tracked, "by_tier": by_tier,
             "searches": {"answers_exposing": len(exposed),
                          "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]},
             "notes": notes}
@@ -1375,11 +1451,12 @@ def summarize(run):
 
 def summary_of(run):
     """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
-    per-question counts or the per-engine citation counts existed. Summaries are derived from the samples, so
-    recomputing one changes no measurement."""
+    per-question counts, the per-engine citation counts or the tracked pages existed. Summaries are derived from the
+    samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
-            and "by_question" in sm and all("with_citations" in e for e in sm.get("engines") or []):
+            and "by_question" in sm and "tracked_pages" in sm \
+            and all("with_citations" in e for e in sm.get("engines") or []):
         return sm
     return summarize(run)
 
@@ -1736,6 +1813,18 @@ def render(run, fmt="text"):
         L.append("")   # a line right under a markdown table would be read as another row
         L.extend("- " + n for n in BY_QUESTION_NOTES)
 
+    if o["answered"] and sm.get("tracked_pages"):
+        w = 200 if fmt == "md" else 70        # URLs are evidence: md shows them whole
+        rows = [[_cut(p["target_url"], w), _cut(", ".join(p["query_ids"]), 30), p["answered"],
+                 "%d/%d" % (p["target_cited"], p["answered"]), "%d/%d" % (p["other_own_cited"], p["answered"]),
+                 "%s (%d)" % (_cut(p["top_other_url"], w), p["top_other_answers"]) if p["top_other_url"] else "—"]
+                for p in sm["tracked_pages"]]
+        L.append(_h("Pages you track", fmt))
+        L.append(table(["page (target_url)", "questions", "answers", "this page cited", "another of your pages cited",
+                        "your page cited most instead"], rows, fmt))
+        L.append("")
+        L.extend("- " + n for n in TRACKED_PAGE_NOTES)
+
     if sm["by_tier"]:
         L.append(_h("By question type", fmt))
         L.append(table(["type", "cited", "95% CI", "mentioned"],
@@ -1847,14 +1936,17 @@ def render_csv(run):
     w.writerow(CSV_COLS)
     for s in run["samples"]:
         q = qs.get(s["query_id"], {})
+        hit = None
         if s["status"] == "ok":
             others = _uniq(c["domain"] for c in s["citations"] if not brand.owns(c["url"], c["domain"]))[:3]
             row = ["Y" if s["cited"] else "N", s["quoted_url"] or "", s["rank"] or "", ",".join(others),
                    "api · %s" % models.get(s["engine"], "")]
+            hit, _ = target_hits(s["citations"], brand, resolve_target(q.get("target_url"), brand)[0])
         else:
             row = ["", "", "", "", "%s: %s" % (s["status"], s.get("error") or s.get("skip_reason") or "")]
         w.writerow([_csv_safe(v) for v in [week, s["query_id"], q.get("query", ""), q.get("intent_tier", ""),
-                                            s["engine"]] + row + ["Y" if s["query_id"] in named else "N"]])
+                                            s["engine"]] + row + ["Y" if s["query_id"] in named else "N",
+                                                                  "" if hit is None else "Y" if hit else "N"]])
     return buf.getvalue()
 
 
@@ -2207,6 +2299,12 @@ def cmd_check(args):
                 print("· " + msg)
         for line in tier_lines(qs):
             print("· " + line)
+        for w in cfg.query_warnings:
+            print("! " + w)
+        tracked = sum(1 for q in qs if q["target_url"])
+        if tracked:
+            print("· target_url: a page is tracked for %d of %d questions; the report counts how often answers "
+                  "cite it" % (tracked, len(qs)))
     except ConfigError as e:
         cfg.errors.append(str(e))
         print("✗ %s" % e)
@@ -2237,6 +2335,8 @@ def cmd_run(args):
             raise ConfigError("%s must be at least %s" % (flag, lo))
     cfg = _load(args)
     queries = cfg.load_queries()
+    for w in cfg.query_warnings:
+        print("warning: " + w, file=sys.stderr)
     if args.limit:
         queries = queries[:args.limit]
     engines = select_engines(cfg.engines, args.engines.split(",") if args.engines else None)
@@ -2434,6 +2534,7 @@ OUT_REPORT = {"type": "object", "description": "A geo-score report (schema/repor
 _BLOCK = {"type": "object", "properties": {"answered": {"type": "integer"}, "cited": {"type": "integer"},
                                            "cited_rate": _NUM_OR_NULL, "cited_ci": _CI, "cited_ci_clustered": _CI}}
 _COUNTS = {"type": "object", "properties": {"cited": {"type": "integer"}, "mentioned": {"type": "integer"}}}
+_STRS = {"type": "array", "items": {"type": "string"}}
 _BY_QUESTION = {"type": "array", "description": "Per question, in question order: answers, and how many of them cite "
                                                 "or name you and each competitor. Counts, not rates.",
                 "items": {"type": "object", "properties": {
@@ -2446,11 +2547,19 @@ _BY_QUESTION = {"type": "array", "description": "Per question, in question order
                         "unknown": {"type": "integer", "description": "Perplexity and OpenRouter do not say"}}},
                     "leader": _nullable("string", description="the one most-cited tracked brand; null below %d "
                                                               "answers, on a tie or with no citation" % LEADER_MIN)}}}
+_TRACKED = {"type": "array", "description": "Per page named in target_url: answers to its questions, how many cite "
+                                             "that page, and how many cite another URL of yours instead. Counts.",
+            "items": {"type": "object", "properties": {
+                "target_url": {"type": "string"}, "query_ids": _STRS, "answered": {"type": "integer"},
+                "target_cited": {"type": "integer"},
+                "other_own_cited": {"type": "integer", "description": "answers citing another URL you own, not the page"},
+                "top_other_url": _nullable("string", description="your URL those answers cite most, exactly as cited"),
+                "top_other_answers": {"type": "integer"}}}}
 OUT_SUMMARY = {"type": "object", "description": "A watch run summary (schema/watch.v1.json, summary).",
                "required": ["overall", "headline", "engines"],
                "properties": {"overall": _BLOCK, "headline": _BLOCK, "branded": _BLOCK,
                               "engines": {"type": "array", "items": {"type": "object"}},
-                              "by_question": _BY_QUESTION,
+                              "by_question": _BY_QUESTION, "tracked_pages": _TRACKED,
                               "notes": {"type": "array", "items": {"type": "string"}}}}
 _ROW = {"type": "object", "properties": {
     "engine": {"type": "string"}, "verdict": {"type": "string"},
@@ -2470,7 +2579,6 @@ OUT_RUNS = {"type": "object", "required": ["runs"],
                 "properties": {"run_id": {"type": "string"}, "answered": _nullable("integer"),
                                "planned": _nullable("integer"), "cited_rate": _NUM_OR_NULL,
                                "cited_ci": _CI, "readable": {"type": "boolean"}}}}}}
-_STRS = {"type": "array", "items": {"type": "string"}}
 OUT_ASK = {"type": "object", "description": "One question, one answer per engine (names follow schema/watch.v1.json).",
            "required": ["question", "engines"],
            "properties": {"question": {"type": "string"}, "brand": {"type": "string"},
@@ -2788,7 +2896,8 @@ class MCPServer(object):
             {"name": "report", "title": "Report on a saved run",
              "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with "
                             "95% intervals, share of voice, most-cited third-party sources, questions a competitor "
-                            "wins, who is cited and named for each question, observed searches, cost.",
+                            "wins, who is cited and named for each question, how often the pages you track are "
+                            "cited, observed searches, cost.",
              "inputSchema": {"type": "object", "properties": {
                  "run": {"type": "string", "description": "A run id, or 'latest' (default)."},
                  "format": {"type": "string", "enum": ["md", "json"]}}, "additionalProperties": False},

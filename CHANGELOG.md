@@ -26,6 +26,21 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `watch check` prints how many questions have each type, with a note, never a failure, when every question has
   the same type or none has one. `watch init` writes two more placeholder questions, a `problem` row and a
   `verdict` row.
+- **`target_url` is read: `watch report` counts how often the page a question tracks is cited.** The column was
+  documented and saved but nothing used it. It is now resolved when the questions load: an absolute `http(s)` URL
+  as written (fragment and `utm_*` parameters dropped), or a path starting with `/` joined to the brand's first
+  domain. `watch check` warns about any other value, which the run ignores, and about a page that is not on the
+  brand's domains or URL prefixes, which is still matched. Each answer records `target_cited` (one of its
+  citations is that page) and `other_own_cited` (it cites another URL of the brand's, not that page), both null
+  when the question tracks no page. The match is the exact page once `www`, letter case, a trailing slash, the
+  query string, the fragment and percent-encoding are set aside; `/en/x` is not `/x`, and a citation left as an
+  unresolved redirect counts as neither. A new table, "Pages you track", gives per page its questions, their
+  answers, how many cite the page, how many cite another of your URLs instead, and the URL of yours those
+  answers cite most, exactly as cited. The CSV export gains a last column, `target_cited` (`Y`, `N` or empty).
+  Schema: `target_cited` and `other_own_cited` in `$defs/sample`, `summary.tracked_pages` with
+  `$defs/tracked_page`, and a description of the saved `target_url`. The MCP `report` tool's output schema gains
+  the optional `tracked_pages`, so the MCP contract only grows. A run saved before this release gets the table
+  computed from its saved citations when it is reported.
 
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question

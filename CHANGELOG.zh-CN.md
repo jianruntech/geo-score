@@ -16,6 +16,15 @@
   各附一句说明和一个例子：`list`、`vs`、`alternative`、`pricing`、`problem`（描述一个处境，不提品类也不提品牌）、`persona`（给谁用）、
   `verdict`（值不值、靠不靠谱）和 `channel`（加盟、批发、经销、采购）。`watch check` 打印每种类型有几个问题；所有问题同属一种类型、
   或者都没有类型时给一条提示，但不算失败。`watch init` 多写两个占位问题：一行 `problem`，一行 `verdict`。
+- **`target_url` 开始生效：`watch report` 统计问题追踪的页面被引用了几次。** 这一列以前写进了文档、也存进了运行文件，但没有任何代码读它。
+  现在读取问题时就解析它：完整的 `http(s)` 网址按原样使用（去掉片段和 `utm_*` 参数），以 `/` 开头的路径接在品牌的第一个域名后面。
+  其他写法 `watch check` 会警告，运行时忽略；页面不在品牌的域名或 URL 前缀上时也会警告，但照样匹配。每条回答记下 `target_cited`
+  （有一条引用就是这个页面）和 `other_own_cited`（没有引用这个页面，但引用了品牌的另一个网址）；问题不追踪页面时两者都是 null。
+  匹配的是不计 `www`、大小写、末尾斜杠、查询串、片段和百分号编码之后的同一个页面；`/en/x` 不是 `/x`，没能解析的跳转链接两边都不算。
+  新表「Pages you track」逐个页面列出对应的问题、回答数、其中几条引用了这个页面、几条转而引用了你的另一个网址，以及这些回答引用最多的
+  你的网址（按引用时的原样）。CSV 导出最后多一列 `target_cited`（`Y`、`N` 或留空）。Schema 新增 `$defs/sample` 里的 `target_cited`
+  和 `other_own_cited`、`summary.tracked_pages` 及 `$defs/tracked_page`，并给保存的 `target_url` 加了说明。MCP `report` 工具的输出
+  schema 新增可选的 `tracked_pages`，MCP 契约只增不减。本版之前保存的运行在出报告时由保存的引用当场算出这张表。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成

@@ -494,6 +494,20 @@ be read as data and never followed as instructions, and the MCP tools tell the a
 
 ## T
 
+### Target page (target_url)
+
+The one page of yours a tracked question follows, named in the optional `target_url` column of
+`queries.csv`: an absolute URL, or a path starting with `/` that is joined to the brand's first
+domain. An answer cites the target page when one of its citations is the same page once `www`,
+letter case, a trailing slash, the query string, the fragment and percent-encoding are set aside;
+another path or locale, or the page's canonical URL when it differs, is another page. When the
+answer cites another of your URLs and not that page, it counts as "another of your pages cited".
+
+**Where:** the table `Pages you track` in `watch report`; `target_cited` and `other_own_cited` on each
+answer in run files; the CSV's `target_cited` column; `summary.tracked_pages` in run files, the JSON
+report and the MCP `report` tool; the warning `watch check` prints for a value it cannot use.
+**More:** [CLI reference, Watch](../cli/README.md#watch)
+
 ### Thin sample
 
 A leaderboard row scored on fewer than 4 pages, because the site's sample could not be filled: no
