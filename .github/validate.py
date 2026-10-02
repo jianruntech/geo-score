@@ -598,6 +598,10 @@ for r in MODERN:
             check(f"| `{basis}` |" in row, f"{tp}: {c['id']} basis differs from {jp} ({basis})")
             check(f"| {c['points']} |" in row, f"{tp}: {c['id']} points differ from {jp} ({c['points']})")
             check(f"| {e.get('last_verified')} |" in row, f"{tp}: {c['id']} verified date differs from {jp}")
+            # 英文表的最后一格就是 evidence.note 原文；只改了表、没改 JSON 的说明会在这里被拦下
+            if tp == f"rubric/evidence-{stem}.md" and isinstance(e.get("note"), str):
+                check(row.rstrip().endswith(f"| {e['note']} |"),
+                      f"{tp}: {c['id']} note differs from evidence.note in {jp} — the English row's last cell is that note, verbatim")
             for u in src:
                 if u.startswith(REPO_URL):
                     # 仓库内文件在表里用相对链接；中文表可以指向对应的 .zh-CN.md

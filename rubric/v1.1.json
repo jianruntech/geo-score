@@ -777,7 +777,7 @@
           "https://arxiv.org/abs/2606.20065"
         ],
         "last_verified": "2026-09-27",
-        "note": "Google says its generative AI features can bring in relevant videos alongside page links and documents VideoObject markup, and a vendor-run preprint found YouTube the most-cited non-corporate source at 4.2% of citations; the sustained-output tier is the auditor's judgement."
+        "note": "Google says its generative AI features can bring in relevant videos alongside page links and documents VideoObject markup, and a vendor-run preprint found YouTube the most-cited non-corporate source at 4.2% of citations; the sustained-output tier is the auditor's judgement. Implementation note: through 1.5.x the CLI read channel links on YouTube, Bilibili and Vimeo only, so a site whose official channel is on Douyin, Xigua or Kuaishou read as having none; 1.6.0 also reads Douyin account pages, Xigua channel pages and Kuaishou profile pages as channels, and Douyin's open-platform player as an embedded player. A short link or a single video's URL is never read as a channel, because whose account it belongs to cannot be read without following it; as with YouTube, a link to an account the site does not own also counts."
       }
     },
     {
