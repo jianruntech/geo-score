@@ -41,7 +41,8 @@
   （`questions_hash` 相同）、每题问的次数相同（`runs` 相同，每次运行分量一样）、用的是同样的引擎和模型、
   `country` 相同、品牌域名和 URL 前缀也相同；否则以 1 退出，并逐一列出不一致的运行和原因。
   输出给出合并了哪些运行、覆盖的日历天数、回答数、标题引用率和每个引擎一行，95% 区间对问题重抽样（每个问题带着它在每次运行里的全部回答），
-  并保留 API 渠道的说明。没有合并后的比较。Schema：schema/watch.v1.json 新增 `$defs/pooled`。MCP：`report` 工具新增可选参数 `since`，
+  并保留单次报告的说明（API 渠道、提到品牌的问题、什么算未测量，以及它预测不了流量、排名或收入）。
+  没有合并后的比较。Schema：schema/watch.v1.json 新增 `$defs/pooled`。MCP：`report` 工具新增可选参数 `since`，
   输出 schema 新增可选的 `runs` 和 `days`，MCP 契约只增不减。guide/watch-methodology 新增第 8 节「一次提问、一天、一个月」。
 
 ### 修复

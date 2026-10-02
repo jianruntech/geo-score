@@ -3683,8 +3683,10 @@ class Pooling(Base):
                       % gw.ci_s(c), text)
         self.assertIn("Questions that name Lumo (1, kept out of the headline): cited in 100% (8 of 8", text)
         self.assertIn("Runs pooled", text)
-        for n in [gw.NOTES[0]] + gw.POOL_NOTES:
-            self.assertIn("- " + n, text)                      # the API-channel note stays
+        for n in [gw.NOTES[0]] + gw.POOL_NOTES + gw.NOTES[2:]:
+            self.assertIn("- " + n, text)                      # the run report's standing notes stay
+        self.assertIn("- This measures citations. It does not predict traffic, rankings or revenue.", text)
+        self.assertNotIn(gw.NOTES[1], text)                    # diff's paired test is not this report's business
 
     def test_the_window(self):
         for rid in WEEKS:

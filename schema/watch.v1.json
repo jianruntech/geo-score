@@ -152,7 +152,7 @@
           "id": {"type": "string"}, "model": {"type": "string"},
           "errors": {"type": "integer", "minimum": 0}, "skipped": {"type": "integer", "minimum": 0}}},
           "description": "One row per engine measured, every run's answers from it pooled, its interval resampling questions."},
-        "notes": {"type": "array", "items": {"type": "string"}, "description": "The API-channel note, what pooling does and does not show, and any note on how questions were flagged."}
+        "notes": {"type": "array", "items": {"type": "string"}, "description": "The API-channel note, what pooling does and does not show, the run report's notes on questions that name the brand, on what counts as not measured and on what a citation rate does not predict, and any note on how questions were flagged."}
       }},
     "diff_row": {"type": "object", "additionalProperties": false,
       "required": ["engine", "before", "after", "before_n", "after_n", "delta", "p_value", "verdict", "note"],

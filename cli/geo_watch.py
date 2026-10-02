@@ -1874,7 +1874,8 @@ def pool_runs(runs, since=None):
     headline = block([s for s in ok if s["query_id"] not in named_ids], "headline") if named_ids else dict(everything)
     branded = dict(block([s for s in ok if s["query_id"] in named_ids], "branded"), question_ids=named_ids)
     first, last = run_time(ids[0]), run_time(ids[-1])
-    notes = [NOTES[0]] + POOL_NOTES
+    # the run report's standing notes, but for the one on diff's paired test, which says nothing about a pool
+    notes = [NOTES[0]] + POOL_NOTES + NOTES[2:]
     if not stored:
         notes.append("The newest run was saved before questions were flagged at run time. Questions that name the "
                      "brand were found when this report was made, from its saved question text and its brand name, "
