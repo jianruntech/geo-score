@@ -2682,7 +2682,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     vt = sum(1 for o in allld.values() if "VideoObject" in types_of(o))
     chan, embeds = video_links(blob)
     tier["p3.video"] = 3 if (vt and (chan or embeds)) else (2 if (chan or embeds or vt) else 0)
-    ev["p3.video"] = ("%d pages declare VideoObject; %d official channel links and %d embedded players "
+    ev["p3.video"] = ("%d pages declare VideoObject; %d channel links and %d embedded players "
                       "in the sample." % (vt, chan, embeds))
 
     # ── p4.answer-shape ──

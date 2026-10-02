@@ -174,7 +174,7 @@
       "state": "scored",
       "points": 3,
       "max": 3,
-      "evidence": "1 pages declare VideoObject; 16 official channel links and 2 embedded players in the sample.",
+      "evidence": "1 pages declare VideoObject; 16 channel links and 2 embedded players in the sample.",
       "tier_reason": "tier 3 of 3 — top tier: sustained output, with VideoObject on site",
       "doc_url": "https://github.com/jianruntech/geo-score/blob/v{VERSION}/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
     },
