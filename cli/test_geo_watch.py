@@ -2672,6 +2672,106 @@ class Statistics(Base):
         self.assertIn("p (Holm)", srv.call({"name": "diff", "arguments": {}})["content"][0]["text"])
 
 
+# ── a question is paired only with itself ─────────────────────────────────
+class EditedQuestions(Base):
+    def pair(self, n, edit=(), before=True, after=False):
+        """Two saved runs of n questions on one engine, every answer cited before and not after (by default); the
+        questions in edit are reworded in the second run under the same id."""
+        qa = [{"query_id": "q%02d" % i, "query": "question %d" % i, "intent_tier": "", "target_url": ""}
+              for i in range(1, n + 1)]
+        qb = [dict(q, query="reworded " + q["query"]) if q["query_id"] in edit else dict(q) for q in qa]
+        cited = dict(((q["query_id"], "chatgpt-api"), [before]) for q in qa)
+        return (synth("20260919T083000Z", cited, qs=qa),
+                synth("20260926T083000Z", dict((u, [after]) for u in cited), qs=qb))
+
+    def test_an_edited_question_is_left_out_and_named(self):
+        a, b = self.pair(10, edit=("q07", "q03"))
+        d = gw.diff_runs(a, b)
+        self.assertIn("q03, q07: question text changed between runs; not compared", d["notes"])
+        self.assertEqual((d["overall"]["n_questions"], d["overall"]["before_n"], d["overall"]["after_n"]), (8, 8, 8))
+        self.assertEqual(len(d["lost"]), 8)
+        self.assertFalse(set(x["query_id"] for x in d["lost"]) & {"q03", "q07"})
+        self.assertIn("note: q03, q07: question text changed between runs; not compared", gw.render_diff(d))
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+        # case, spacing and line breaks are not edits
+        b["queries"][2]["query"] = "  QUESTION\n 3 "
+        b["queries"][6]["query"] = "Question   7"
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["n_questions"], 10)
+        self.assertFalse(any("question text changed" in n for n in d["notes"]))
+
+    def test_at_most_ten_edited_ids_are_named(self):
+        a, b = self.pair(14, edit=["q%02d" % i for i in range(1, 14)])
+        notes = [n for n in gw.diff_runs(a, b)["notes"] if "question text changed" in n]
+        self.assertEqual(notes, ["q01, q02, q03, q04, q05, q06, q07, q08, q09, q10 and 3 more: question text changed "
+                                 "between runs; not compared"])
+
+    def test_an_edit_that_leaves_too_few_questions_says_so(self):
+        a, b = self.pair(7)                                   # all seven lost: 2/2^7 = 0.016, a change
+        self.assertEqual(gw.diff_runs(a, b)["overall"]["verdict"], "change")
+        a, b = self.pair(7, edit=("q01", "q02"))              # five compared: no exact test can call it
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["n_questions"], 5)
+        self.assertEqual([r["verdict"] for r in [d["overall"]] + d["engines"]], ["too few questions to tell"] * 2)
+        self.assertEqual(gw.drops(d), [])
+        text = gw.render_diff(d)
+        self.assertIn("too few questions to tell", text)
+        self.assertIn("q01, q02: question text changed", text)
+
+    def test_a_change_of_location_or_provider_is_noted(self):
+        a, b = self.pair(8)
+        self.assertFalse([n for n in gw.diff_runs(a, b)["notes"] if "locations" in n or "provider" in n])
+        a["country"] = "US"
+        self.assertIn("the runs asked from different locations (US vs none); answers can differ for that reason "
+                      "alone", gw.diff_runs(a, b)["notes"])
+        b["country"] = "DE"
+        self.assertIn("the runs asked from different locations (US vs DE); answers can differ for that reason "
+                      "alone", gw.diff_runs(a, b)["notes"])
+        b["country"] = "US"
+        b["engines"][0]["provider"] = "openrouter"
+        notes = gw.diff_runs(a, b)["notes"]
+        self.assertEqual([n for n in notes if "locations" in n], [])
+        self.assertIn("chatgpt-api: provider changed (openai -> openrouter); the same engine id measured another API",
+                      notes)
+
+    def test_questions_hash_ignores_order_case_and_spacing_and_sees_every_edit(self):
+        qs = queries(4)
+        h = gw.questions_hash(qs)
+        self.assertRegex(h, r"^[0-9a-f]{64}$")
+        self.assertEqual(gw.questions_hash(list(reversed(qs))), h)
+        self.assertEqual(gw.questions_hash([dict(q, query=" " + q["query"].upper() + "\t") for q in qs]), h)
+        self.assertEqual(gw.questions_hash([dict(q, intent_tier="pricing") for q in qs]), h)    # text and id only
+        for i in range(len(qs)):
+            edited = [dict(q, query=q["query"] + "?") if j == i else q for j, q in enumerate(qs)]
+            self.assertNotEqual(gw.questions_hash(edited), h, i)
+        self.assertNotEqual(gw.questions_hash([dict(qs[0], query_id="q99")] + qs[1:]), h)
+        self.assertNotEqual(gw.questions_hash(qs[:3]), h)
+        # the text a run saves, a lone surrogate included, never stops the hash
+        self.assertRegex(gw.questions_hash([{"query_id": "ask", "query": "\ud83d half an emoji"}]), r"^[0-9a-f]{64}$")
+
+    def test_a_run_saves_its_questions_hash_and_runs_lists_it(self):
+        self.fake({"api.openai.com": lambda u, h, b: openai_resp("Lumo", [("https://lumo.example/", "")])})
+        qs = queries(3)
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), qs)
+        self.assertEqual(run["questions_hash"], gw.questions_hash(qs))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        old = synth("20260919T083000Z", {("q01", "chatgpt-api"): [True]})       # saved before 1.6.0: no hash
+        self.assertNotIn("questions_hash", old)
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        cfg = gw.Config(cfgp)
+        for r in (old, run):
+            gw.save_run(cfg, r)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["runs", "-c", cfgp]), 0)
+        self.assertIn("questions", out.getvalue())
+        self.assertIn(run["questions_hash"][:8], out.getvalue())
+        self.assertIn(gw.questions_hash(old["queries"])[:8], out.getvalue())
+
+
 # ── questions that name the brand ────────────────────────────────────────
 class Branded(Base):
     def test_questions_naming_the_brand_are_flagged(self):

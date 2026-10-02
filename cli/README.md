@@ -247,8 +247,8 @@ measured" and the readiness report is unchanged.
 | `watch check` | Validate the config and the questions, and show which engines have keys and prices |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and exits 0, with or without keys |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
-| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
-| `watch runs` | Saved runs and their headline rate |
+| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
+| `watch runs` | Saved runs, their headline rate and the first 8 characters of their `questions_hash`, which two runs share when they asked the same questions |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | Level 2 without the score: one question to every engine, now, not saved |
 | `mcp` | Score and watch over MCP (stdio); see [guide/mcp.md](../guide/mcp.md) |
 

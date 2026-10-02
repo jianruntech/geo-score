@@ -1202,7 +1202,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
            "finished_at": NOW().strftime("%Y-%m-%dT%H:%M:%SZ"),
            "interrupted": interrupted, "brand": brand.as_json(),
            "competitors": [r.as_json() for r in rivals], "country": country, "runs": runs,
-           "engines": eng_rows, "queries": queries,
+           "engines": eng_rows, "queries": queries, "questions_hash": questions_hash(queries),
            "caps": {"max_calls": max_calls, "budget_usd": budget},
            "ledger": ledger.as_json(), "samples": samples, "notes": NOTES}
     run["summary"] = summarize(run)
@@ -1210,6 +1210,18 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
 
 
 # ── reading a run ─────────────────────────────────────────────────────────
+def norm_question(text):
+    """A question's text as diff and questions_hash compare it: case-folded, whitespace collapsed and stripped."""
+    return re.sub(r"\s+", " ", str(text or "")).strip().casefold()
+
+
+def questions_hash(queries):
+    """SHA-256 over the sorted (query_id, normalised text) pairs, written as compact ASCII JSON. Two runs that asked
+    the same questions share it, in whatever order queries.csv listed them; any edit to a question's text changes it."""
+    pairs = sorted([str(q.get("query_id") or ""), norm_question(q.get("query"))] for q in queries)
+    return hashlib.sha256(json.dumps(pairs, ensure_ascii=True, separators=(",", ":")).encode("ascii")).hexdigest()
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1353,7 +1365,13 @@ def diff_runs(a, b):
     """What changed from run a to run b, on the questions and engines both runs measured. Answers are paired
     by question, engine and ask (the asks both runs made); the verdict comes from an exact paired test with
     Holm's correction across the rows."""
-    common_q = set(q["query_id"] for q in a["queries"]) & set(q["query_id"] for q in b["queries"])
+    text_a = dict((q["query_id"], norm_question(q.get("query"))) for q in a["queries"])
+    text_b = dict((q["query_id"], norm_question(q.get("query"))) for q in b["queries"])
+    common_q = set(text_a) & set(text_b)
+    # The same id with other words is another question: pairing it would read the edit as a change in the engine.
+    edited = [q["query_id"] for q in b["queries"]
+              if q["query_id"] in common_q and text_a[q["query_id"]] != text_b[q["query_id"]]]
+    common_q -= set(edited)
     ea = dict((e["id"], e) for e in a["engines"])
     eb = dict((e["id"], e) for e in b["engines"])
     notes, rows = [], []
@@ -1362,13 +1380,23 @@ def diff_runs(a, b):
     if a["brand"].get("domains") != b["brand"].get("domains") or \
             a["brand"].get("url_prefixes") != b["brand"].get("url_prefixes"):
         notes.append("the brand's domains changed between runs, so 'cited' was judged differently")
-    dropped = len(set(q["query_id"] for q in a["queries"]) ^ set(q["query_id"] for q in b["queries"]))
+    if a.get("country") != b.get("country"):
+        notes.append("the runs asked from different locations (%s vs %s); answers can differ for that reason alone"
+                     % (a.get("country") or "none", b.get("country") or "none"))
+    dropped = len(set(text_a) ^ set(text_b))
     if dropped:
         notes.append("%d questions appear in only one run and are left out" % dropped)
+    if edited:
+        notes.append("%s%s: question text changed between runs; not compared" % (
+            ", ".join(edited[:10]), " and %d more" % (len(edited) - 10) if len(edited) > 10 else ""))
     if a.get("runs") != b.get("runs"):
         notes.append("the runs asked each question %s and %s times; the paired test uses the asks both made "
                      "(the first %s)" % (a.get("runs"), b.get("runs"), min(a.get("runs") or 1, b.get("runs") or 1)))
     common_e = [e for e in ea if e in eb]
+    for eid in common_e:
+        if ea[eid].get("provider") != eb[eid].get("provider"):
+            notes.append("%s: provider changed (%s -> %s); the same engine id measured another API" % (
+                eid, ea[eid].get("provider"), eb[eid].get("provider")))
     asks_a, asks_b = _asks(a, common_q, set(common_e)), _asks(b, common_q, set(common_e))
     pairs = {}
     for u, xs in asks_a.items():
@@ -2187,13 +2215,16 @@ def cmd_runs(args):
         try:
             r = load_run(cfg, rid)
         except ConfigError as e:
-            rows.append([rid, "unreadable", "", "", str(e)[:40]])
+            rows.append([rid, "unreadable", "", "", "", str(e)[:40]])
             continue
         sm = summary_of(r)
         o, h = sm["overall"], sm["headline"]
-        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h)),
+        # runs saved before 1.6.0 have no questions_hash; it is derived from the saved questions, so compute it
+        qh = r.get("questions_hash") or questions_hash(r["queries"])
+        rows.append([rid, "%d/%d" % (o["answered"], o["planned"]), pct(h["cited_rate"]), ci_s(head_ci(h)), qh[:8],
                      ",".join(e["id"] for e in r["engines"] if e["status"] == "measured")])
-    print(table(["run", "answered", "cited (headline)", "95% CI", "engines"], rows, "text") if rows else "no runs yet")
+    print(table(["run", "answered", "cited (headline)", "95% CI", "questions", "engines"], rows, "text")
+          if rows else "no runs yet")
     return 0
 
 

@@ -40,6 +40,8 @@
                            "description": "The question names the brand, an alias or a brand domain, by the matcher used on answers (whole words for Latin script, anywhere for Chinese, Japanese and Korean). Set at run time; for runs saved without it, reports compute it from the question text and the run's brand."},
         "competitor_in_query": {"type": "boolean", "description": "The question names a tracked competitor."}
       }}},
+    "questions_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$",
+                       "description": "SHA-256 (hex) of the JSON array of [query_id, text] pairs, sorted, written with no spaces and with non-ASCII characters as \\u escapes; the text is case-folded, its whitespace collapsed to single spaces and stripped. Two runs that asked the same questions share it, whatever their order. Saved since 1.6.0; for older runs it can be computed from queries."},
     "caps": {"type": "object", "additionalProperties": false, "required": ["max_calls", "budget_usd"],
       "properties": {"max_calls": {"type": "integer", "minimum": 1}, "budget_usd": {"type": ["number", "null"]}}},
     "ledger": {"type": "object", "additionalProperties": false,

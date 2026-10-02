@@ -5,6 +5,18 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Fixed
+- **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question
+  reworded under the same id was compared with its old wording, and the edit could read as a change (and make
+  `--fail-on-drop` exit 4). The question text is now compared case-folded, with whitespace collapsed: a question
+  whose text changed is left out of every row and named in the notes (at most 10 ids, then "and N more"). The
+  6-question minimum and the screen for rows no test could call apply to the questions left, so on runs with
+  edited questions a verdict can change, and can become `too few questions to tell`. The notes also say when the
+  runs asked from different locations (`country`) and when an engine id moved to another provider. Run files gain
+  an optional top-level `questions_hash` (SHA-256 over the sorted pairs of id and normalised text, defined in
+  schema/watch.v1.json), and `watch runs` shows its first 8 characters; for older runs it is computed from the
+  saved questions.
+
 ## [1.5.0] — 2026-09-30
 
 A release about reading sites the way the rubric says, and about failing CI for the right reason. The two

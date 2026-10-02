@@ -102,7 +102,9 @@ one per engine plus "all engines".
 Answers are paired by question, engine and ask number, over the asks both runs made: if run A
 asked each question once and run B three times, only B's first ask is used. For question q, the
 net change d_q is the number of cited answers in B minus the number in A, summed over its paired
-asks (and, in the all-engines row, over the engines). The row reports:
+asks (and, in the all-engines row, over the engines). A question is paired only with itself: when
+its text changed between the runs under the same `query_id` (compared case-folded, with whitespace
+collapsed), it is left out of every row and named in the diff's notes. The row reports:
 
 - `before_paired`, `after_paired`: cited share of the paired answers in each run, n = `n_asks`;
 - `delta_pp`: 100 × Σ d_q / `n_asks`, in percentage points;
@@ -276,7 +278,8 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
   `summary.branded`, `summary.brand_flags`, `cited_ci_clustered` and `n_questions` in every rate
-  block, and `brand_in_query`, `competitor_in_query` and `branded` on each question.
+  block, `brand_in_query`, `competitor_in_query` and `branded` on each question, and
+  `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

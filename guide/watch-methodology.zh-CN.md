@@ -60,7 +60,7 @@ k 条引用、共 n 条回答，z = 1.96：
 
 ### 配对
 
-回答按问题、引擎和第几次提问配对，只用两次运行都做过的那几次提问：若 A 每题问一次、B 每题问三次，只用 B 的第一次。问题 q 的净变化 d_q = B 中被引用的回答数 − A 中被引用的回答数，对它所有配对提问求和（all engines 行再对各引擎求和）。每行报告：
+回答按问题、引擎和第几次提问配对，只用两次运行都做过的那几次提问：若 A 每题问一次、B 每题问三次，只用 B 的第一次。问题 q 的净变化 d_q = B 中被引用的回答数 − A 中被引用的回答数，对它所有配对提问求和（all engines 行再对各引擎求和）。问题只和它自己配对：同一个 `query_id` 下的问题文字在两次运行之间改过（忽略大小写、合并空白后比较），它就不进入任何一行，并在比较结果的说明（notes）里点名。每行报告：
 
 - `before_paired`、`after_paired`：各次运行中配对回答的引用占比，n = `n_asks`；
 - `delta_pp`：100 × Σ d_q / `n_asks`，单位是百分点；
@@ -178,6 +178,6 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，以及每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

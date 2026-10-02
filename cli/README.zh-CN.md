@@ -216,8 +216,8 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `watch check` | 校验配置和问题，显示哪些引擎配了 Key、有没有价格 |
 | `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划并以 0 退出，有没有 Key 都一样 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
-| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
-| `watch runs` | 保存过的运行，以及各自的标题引用率 |
+| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
+| `watch runs` | 保存过的运行、各自的标题引用率，以及 `questions_hash` 的前 8 位：两次运行问的是同一组问题时，这一列相同 |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | 不打分的第二级：一个问题马上问遍所有引擎（或 `--engines` 指定的那些），不保存 |
 | `mcp` | 通过 MCP（stdio）提供打分和追踪；见 [guide/mcp.zh-CN.md](../guide/mcp.zh-CN.md) |
 
