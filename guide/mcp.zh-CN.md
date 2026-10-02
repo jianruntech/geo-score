@@ -340,7 +340,7 @@ docker run -i --rm --user "$(id -u)" -v "$PWD:/work" -e OPENAI_API_KEY geo-score
 | `ask` | 2 | 付费（你的 Key） | 否 | 非破坏性、访问外部 | **`question`**、`engines`、`brand`、`domains` |
 | `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd` |
 | `list_runs` | 3 | 免费 | 否 | 只读、幂等 | — |
-| `report` | 3 | 免费 | 否 | 只读、幂等 | `run`、`format` |
+| `report` | 3 | 免费 | 否 | 只读、幂等 | `run`、`since`、`format` |
 | `diff` | 3 | 免费 | 否 | 只读、幂等 | `from`、`to`、`format` |
 | `status` | — | 免费 | 否 | 只读、幂等 | — |
 

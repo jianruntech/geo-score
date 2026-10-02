@@ -33,6 +33,15 @@
   品牌里排第一，不一定是在回答里排第一。两者都从保存下来的回答里读，回答只保存前 20,000 个字符。Schema：`$defs/sample` 及其竞品里
   新增 `mention_order` 和 `mention_share`，`summary.engines` 与 `summary.share_of_voice` 每一行新增 `named_first`、`any_named` 和
   `mention_share`。MCP 工具的 schema 不变。本版之前保存的运行在出报告时由保存的回答当场算出。
+- **`watch run --dry-run` 说明这套计划能测出什么，`watch report` 可以合并多次运行。** 试运行会打印计划的分辨力：E 个引擎时，
+  `watch diff` 检验 E + 1 行（只有一个引擎时是一行）；两次运行之间至少要有 k 个问题朝同一方向变动，才可能判定变化。k 是满足
+  行数 × 2 / 2^n < 0.05 的最小 n，也就是 diff 本来就用的筛选：一个引擎 6 个问题，两个引擎 7 个，三到五个引擎 8 个。问题更少时打印
+  「this plan cannot detect a change」：多加问题有用，多加引擎会抬高 k，每题多问几次不会降低 k。MCP `run` 工具试运行时打印同样的几行。
+  `watch report --since DAYS`（或 `--runs A..B`）把一段时间里保存的运行当成一组回答来统计，前提是每一次都与最新一次问的是同一组问题
+  （`questions_hash` 相同）、用的是同样的引擎和模型、`country` 相同、品牌域名和 URL 前缀也相同；否则以 1 退出，并逐一列出不一致的运行和原因。
+  输出给出合并了哪些运行、覆盖的日历天数、回答数、标题引用率和每个引擎一行，95% 区间对问题重抽样（每个问题带着它在每次运行里的全部回答），
+  并保留 API 渠道的说明。没有合并后的比较。Schema：schema/watch.v1.json 新增 `$defs/pooled`。MCP：`report` 工具新增可选参数 `since`，
+  输出 schema 新增可选的 `runs` 和 `days`，MCP 契约只增不减。guide/watch-methodology 新增第 8 节「一次提问、一天、一个月」。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成

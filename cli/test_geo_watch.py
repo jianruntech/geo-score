@@ -3549,6 +3549,257 @@ class MentionOrder(Base):
 
 
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
+# ── what a plan can tell, and runs pooled ────────────────────────────────
+class Resolution(Base):
+    def test_k_for_one_two_three_and_five_engines(self):
+        for n_eng, rows, k in ((1, 1, 6), (2, 3, 7), (3, 4, 8), (5, 6, 8)):
+            r = gw.resolution(n_eng, 10)
+            self.assertEqual((r["engines"], r["rows"], r["min_questions"], r["questions"]), (n_eng, rows, k, 10))
+            self.assertTrue(gw.reachable(rows, k))
+            self.assertFalse(gw.reachable(rows, k - 1))           # k is the smallest such n
+        self.assertTrue(gw.resolution(2, 7)["detectable"])
+        self.assertFalse(gw.resolution(2, 6)["detectable"])
+
+    def test_k_is_the_screen_diff_applies(self):
+        # every question lost on every engine, the clearest move a diff can see: with k - 1 questions no row can be
+        # called a change, with k the first row passes Holm. Asking each question three times does not lower k.
+        for n_eng in (1, 2, 3):
+            engs = ("chatgpt-api", "perplexity-api", "gemini-api")[:n_eng]
+            k = gw.resolution(n_eng, 0)["min_questions"]
+            for runs in (1, 3):
+                for n_q, called in ((k - 1, False), (k, True)):
+                    units = [("q%02d" % i, e) for i in range(n_q) for e in engs]
+                    d = gw.diff_runs(synth("20260919T083000Z", dict((u, [True] * runs) for u in units), runs=runs),
+                                     synth("20260926T083000Z", dict((u, [False] * runs) for u in units), runs=runs))
+                    verdicts = [r["verdict"] for r in [d["overall"]] + d["engines"]]
+                    if called:
+                        self.assertIn("change", verdicts, (n_eng, runs, n_q))
+                    else:
+                        self.assertEqual(set(verdicts), {"too few questions to tell"}, (n_eng, runs, n_q))
+
+    def test_dry_run_prints_the_resolution(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
+                       "engines": engines("chatgpt-api", "perplexity-api"), "max_calls": 100}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query\n" + "".join("q%02d,question number %d\n" % (i, i) for i in range(1, 11)))
+        api = self.fake({})
+
+        def dry(*extra):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(gw.main(["run", "-c", cfgp, "--dry-run"] + list(extra)), 0)
+            return out.getvalue()
+
+        out = dry()
+        self.assertIn("resolution: diff can call a change only when at least 7 of your 10 questions move the same way "
+                      "between two runs (3 × 2/2^7 < 0.05; 3 rows: 2 engines and all engines, Holm-corrected)\n", out)
+        self.assertNotIn("cannot detect", out)
+        out = dry("--limit", "6")
+        self.assertIn("at least 7 questions move the same way between two runs", out)
+        self.assertIn("; this plan has 6\nthis plan cannot detect a change: adding questions helps, adding engines "
+                      "raises the 7, and asking each question more times (--runs) does not lower it\n", out)
+        self.assertIn("this plan cannot detect a change", dry("--limit", "6", "--runs", "3"))
+        out = dry("--limit", "6", "--engines", "chatgpt-api")
+        self.assertIn("at least 6 of your 6 questions move the same way between two runs (1 × 2/2^6 < 0.05; 1 row: "
+                      "one engine, which is also all engines)", out)
+        self.assertNotIn("cannot detect", out)
+        self.assertEqual(api.calls, [])                        # a dry run asks nothing
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "run", "arguments": {"dry_run": True, "limit": 5}})
+        self.assertFalse(r["isError"], r)
+        self.assertIn("this plan cannot detect a change", r["content"][0]["text"])
+        self.assertIn("at least 7 of your 10", srv.call({"name": "run", "arguments": {"dry_run": True}})["content"][0]["text"])
+        for k in ALL_KEY_ENVS:                                 # nothing would be measured: nothing to resolve
+            os.environ.pop(k, None)
+        out = dry()
+        self.assertIn("nothing would be measured", out)
+        self.assertNotIn("resolution", out)
+
+
+WEEKS = ("20260905T083000Z", "20260912T083000Z", "20260919T083000Z", "20260926T083000Z")
+
+
+class Pooling(Base):
+    def setUp(self):
+        Base.setUp(self)
+        self.cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(self.cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        self.cfg = gw.Config(self.cfgp)
+        gw.NOW = lambda: datetime.datetime(2026, 9, 27, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        # eight questions that never name the brand, four always cited and four never, plus one that names it
+        self.qs = [{"query_id": "q%02d" % i, "query": "question %d" % i, "intent_tier": "", "target_url": ""}
+                   for i in range(8)] + [{"query_id": "q99", "query": "is lumo worth it", "intent_tier": "verdict",
+                                          "target_url": ""}]
+
+    def save(self, rid, qs=None, engs=("chatgpt-api", "perplexity-api"), **change):
+        qs = qs or self.qs
+        cited = dict(((q["query_id"], e), [q["query_id"] in ("q00", "q01", "q02", "q03", "q99")]) for q in qs
+                     for e in engs)
+        run = synth(rid, cited, qs=qs)
+        run["questions_hash"] = gw.questions_hash(run["queries"])
+        run.update(change)
+        gw.save_run(self.cfg, run)
+        return run
+
+    def main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def test_pooled_runs_cluster_by_question_across_runs(self):
+        for rid in WEEKS:
+            self.save(rid)
+        runs, p = gw.pooled_report(self.cfg, since=30)
+        ids = list(WEEKS)
+        self.assertEqual([r["run_id"] for r in p["runs"]], ids)
+        self.assertEqual((p["since_days"], p["from"], p["to"], p["days"], p["n_questions"]),
+                         (30, "2026-09-05T08:30:00Z", "2026-09-26T08:30:00Z", 22, 9))
+        self.assertEqual(p["questions_hash"], gw.questions_hash(self.qs))
+        o, h, br = p["overall"], p["headline"], p["branded"]
+        self.assertEqual((o["planned"], o["answered"], o["errors"], o["skipped"]), (72, 72, 0, 0))
+        self.assertEqual((h["answered"], h["cited"], h["n_questions"]), (64, 32, 8))
+        self.assertEqual((br["question_ids"], br["answered"], br["cited"]), (["q99"], 8, 8))
+        self.assertEqual([(e["id"], e["answered"], e["n_questions"]) for e in p["engines"]],
+                         [("chatgpt-api", 36, 9), ("perplexity-api", 36, 9)])
+        # one cluster per question: its 8 answers, 2 engines in each of 4 runs
+        groups = [(8, 8)] * 4 + [(0, 8)] * 4
+        self.assertEqual(h["cited_ci_clustered"], gw.cluster_ci(groups, gw._seed(*(ids + ["pooled", "headline"]))))
+        per_run = gw.cluster_ci([(2, 2)] * 16 + [(0, 2)] * 16, 1)      # what clustering by run and question would say
+        c, w = h["cited_ci_clustered"], h["cited_ci"]
+        self.assertGreater(c[1] - c[0], per_run[1] - per_run[0])
+        self.assertGreater(c[1] - c[0], 2 * (w[1] - w[0]))
+        self.assertEqual(gw.head_ci(h), c)
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(p)), sc["$defs"]["pooled"], sc), [])
+        self.assertEqual(gw.pooled_report(self.cfg, since=30)[1], p)                  # seeded: the same every time
+        text = gw.render_pool(p, "Lumo")
+        self.assertIn("geo-score watch · Lumo · 4 runs pooled, 2026-09-05 to 2026-09-26 (22 days) · api channel", text)
+        self.assertIn("4 runs · 9 questions · 2 engines · 72 planned · 72 answered · 0 failed · 0 skipped", text)
+        self.assertIn("Cited in 50%% of answers to questions that do not name Lumo (32 of 64, 8 questions, 95%% CI %s)"
+                      % gw.ci_s(c), text)
+        self.assertIn("Questions that name Lumo (1, kept out of the headline): cited in 100% (8 of 8", text)
+        self.assertIn("Runs pooled", text)
+        for n in [gw.NOTES[0]] + gw.POOL_NOTES:
+            self.assertIn("- " + n, text)                      # the API-channel note stays
+
+    def test_the_window(self):
+        for rid in WEEKS:
+            self.save(rid)
+        self.assertEqual([r["run_id"] for r in gw.pooled_report(self.cfg, since=10)[1]["runs"]], list(WEEKS[2:]))
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=1)                # the newest run started 28 hours ago
+        self.assertIn("no run saved in the last 1 day", str(e.exception))
+        p = gw.pooled_report(self.cfg, span="20260912T083000Z..20260919T083000Z")[1]
+        self.assertEqual(([r["run_id"] for r in p["runs"]], p["since_days"], p["days"]),
+                         (list(WEEKS[1:3]), None, 8))
+        p = gw.pooled_report(self.cfg, span="20260926T083000Z..20260926T083000Z")[1]
+        self.assertEqual((len(p["runs"]), p["days"]), (1, 1))
+        for bad, why in (("20260912T083000Z", "two run ids, A..B"), ("x..20260919T083000Z", "two run ids, A..B"),
+                         ("20260919T083000Z..20260912T083000Z", "the first run is the later one"),
+                         ("20260912T083000Z..20261231T083000Z", "no run 20261231T083000Z")):
+            with self.assertRaises(gw.ConfigError) as e:
+                gw.pooled_report(self.cfg, span=bad)
+            self.assertIn(why, str(e.exception))
+
+    def test_pooling_refuses_edited_questions_and_other_models(self):
+        self.save(WEEKS[0], engines=[dict(e, status="measured", model="gpt-5" if e["id"] == "chatgpt-api" else e["model"])
+                                     for e in engines("chatgpt-api", "perplexity-api")])
+        self.save(WEEKS[1], qs=[dict(q, query="question 3, reworded") if q["query_id"] == "q03" else q for q in self.qs])
+        self.save(WEEKS[2], qs=[dict(q, query="  " + q["query"].upper()) for q in reversed(self.qs)])   # not an edit
+        newest = self.save(WEEKS[3])
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=30)
+        msg = str(e.exception)
+        self.assertIn("cannot pool: 2 of the 4 runs do not match the newest, 20260926T083000Z", msg)
+        self.assertIn("\n  20260905T083000Z: chatgpt-api model gpt-5 (newest gpt-6-luna)\n", msg)
+        edited = gw.questions_hash([dict(q, query="question 3, reworded") if q["query_id"] == "q03" else q
+                                    for q in self.qs])
+        self.assertIn("\n  20260912T083000Z: other questions (questions_hash %s, newest %s)\n" % (
+            edited[:8], newest["questions_hash"][:8]), msg)
+        self.assertNotIn("20260919T083000Z:", msg)
+        code, out, err = self.main("report", "-c", self.cfgp, "--since", "30")
+        self.assertEqual((code, out), (1, ""))
+        self.assertIn("error: cannot pool", err)
+        # the runs that match pool
+        self.assertEqual(len(gw.pooled_report(self.cfg, span="20260919T083000Z..20260926T083000Z")[1]["runs"]), 2)
+
+    def test_pooling_refuses_other_engines_country_or_brand(self):
+        base = self.save(WEEKS[3])
+        cases = [({"engines": [dict(e, status="measured") for e in engines("chatgpt-api")]},
+                  "perplexity-api not measured"),
+                 ({"engines": [dict(e, status="measured", provider="openrouter") if e["id"] == "chatgpt-api" else e
+                               for e in base["engines"]]}, "chatgpt-api provider openrouter (newest openai)"),
+                 ({"country": "US"}, "country US (newest none)"),
+                 ({"brand": dict(base["brand"], domains=["lumo.example", "lumo.app"])}, "the brand's domains")]
+        for change, why in cases:
+            self.save(WEEKS[0], **change)
+            with self.assertRaises(gw.ConfigError) as e:
+                gw.pooled_report(self.cfg, since=30)
+            self.assertIn("20260905T083000Z: " + why, str(e.exception))
+            os.unlink(os.path.join(self.cfg.runs_dir(), WEEKS[0] + ".json"))
+        # an engine listed without a key was not measured, so listing it does not stop the runs pooling
+        self.save(WEEKS[0], engines=base["engines"] + [{"id": "gemini-api", "provider": "gemini", "model": "m",
+                                                        "status": "no_key"}])
+        self.assertEqual(len(gw.pooled_report(self.cfg, since=30)[1]["runs"]), 2)
+
+    def test_report_flags(self):
+        for rid in WEEKS:
+            self.save(rid)
+        code, out, _ = self.main("report", "-c", self.cfgp, "--since", "30", "--format", "json")
+        self.assertEqual(code, 0)
+        sc = watch_schema()
+        p = json.loads(out)
+        self.assertEqual(validate(p, sc["$defs"]["pooled"], sc), [])
+        self.assertEqual(len(p["runs"]), 4)
+        code, out, _ = self.main("report", "-c", self.cfgp, "--runs", "20260912T083000Z..20260926T083000Z",
+                                 "--format", "md")
+        self.assertEqual(code, 0)
+        self.assertIn("# geo-score watch · Lumo · 3 runs pooled", out)
+        self.assertIn("## Runs pooled", out)
+        path = os.path.join(self.tmp, "pooled.txt")
+        self.assertEqual(self.main("report", "-c", self.cfgp, "--since", "30", "-o", path)[0], 0)
+        with io.open(path, encoding="utf-8") as f:
+            self.assertIn("4 runs pooled", f.read())
+        for argv, why in (([WEEKS[0], "--since", "30"], "not both"),
+                          (["--since", "30", "--runs", WEEKS[0] + ".." + WEEKS[1]], "pass one of them"),
+                          (["--since", "30", "--format", "csv"], "--format csv lists one run's answers"),
+                          (["--since", "0"], "--since takes a whole number of days")):
+            code, out, err = self.main("report", "-c", self.cfgp, *argv)
+            self.assertEqual((code, out), (1, ""), argv)
+            self.assertIn(why, err)
+        code, out, _ = self.main("report", "-c", self.cfgp)          # without the flags: the latest run, as before
+        self.assertEqual(code, 0)
+        self.assertIn("run 20260926T083000Z", out)
+
+    def test_mcp_report_since(self):
+        srv = gw.MCPServer(self.cfgp, out=io.StringIO())
+        for rid in WEEKS:
+            self.save(rid)
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertFalse(r["isError"], r)
+        self.assertIn("4 runs pooled", r["content"][0]["text"])
+        sc = watch_schema()
+        out_schema = next(t["outputSchema"] for t in srv.tools() if t["name"] == "report")
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+        self.assertEqual(validate(r["structuredContent"], sc["$defs"]["pooled"], sc), [])
+        r = srv.call({"name": "report", "arguments": {"since": 10, "format": "json"}})
+        self.assertEqual(len(json.loads(r["content"][0]["text"])["runs"]), 2)
+        for bad in ({"since": 0}, {"since": "30"}, {"since": True}, {"since": 30, "run": WEEKS[0]}):
+            self.assertTrue(srv.call({"name": "report", "arguments": bad})["isError"], bad)
+        r = srv.call({"name": "report", "arguments": {}})              # without since: one run's summary
+        self.assertFalse(r["isError"], r)
+        self.assertNotIn("runs", r["structuredContent"])
+        self.assertIn("by_question", r["structuredContent"])
+        self.save("20260920T083000Z", qs=self.qs[:8])
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertTrue(r["isError"])
+        self.assertIn("cannot pool: 1 of the 5 runs", r["content"][0]["text"])
+
+
 class OldRuns(Base):
     def setUp(self):
         Base.setUp(self)
@@ -3607,6 +3858,20 @@ class OldRuns(Base):
         self.assertIn("cited (headline)", out)
         with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:
             self.assertNotIn("brand_in_query", f.read())                 # reports never rewrite a run file
+
+
+    def test_1_2_0_runs_pool(self):
+        gw.NOW = lambda: datetime.datetime(2026, 9, 30, tzinfo=datetime.timezone.utc)
+        runs, p = gw.pooled_report(self.cfg, since=30)
+        self.assertEqual([r["run_id"] for r in p["runs"]], self.ids)
+        self.assertEqual(p["questions_hash"], gw.questions_hash(runs[0]["queries"]))    # computed: 1.2.0 saved none
+        self.assertEqual((p["brand_flags"], p["branded"]["question_ids"]), ("computed", ["q04", "q06"]))
+        self.assertEqual(p["overall"]["answered"], sum(r["answered"] for r in p["runs"]))
+        self.assertEqual([e["id"] for e in p["engines"]], ["chatgpt-api", "perplexity-api"])   # gemini had no key
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(p)), sc["$defs"]["pooled"], sc), [])
+        self.assertTrue(any("saved before questions were flagged" in n for n in p["notes"]))
+        self.assertEqual(self.main("report", "-c", self.cfgp, "--since", "30")[0], 0)
 
 
 class PipedDecoy(unittest.TestCase):

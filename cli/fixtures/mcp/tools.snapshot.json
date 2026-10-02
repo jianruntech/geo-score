@@ -769,7 +769,7 @@
     "readOnlyHint": true,
     "title": "Report on a saved run"
    },
-   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, who is cited and named for each question, how often the pages you track are cited, observed searches, cost.",
+   "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with 95% intervals, share of voice, most-cited third-party sources, questions a competitor wins, who is cited and named for each question, how often the pages you track are cited, observed searches, cost. With since, the runs of the last N days pooled: their citation rate per engine, with intervals that resample questions across the runs.",
    "inputSchema": {
     "additionalProperties": false,
     "properties": {
@@ -783,13 +783,18 @@
      "run": {
       "description": "A run id, or 'latest' (default).",
       "type": "string"
+     },
+     "since": {
+      "description": "Pool the runs saved in the last N days instead of reporting one: they must have asked the same questions on the same engines and models, or the call fails and names the runs that differ.",
+      "minimum": 1,
+      "type": "integer"
      }
     },
     "type": "object"
    },
    "name": "report",
    "outputSchema": {
-    "description": "A watch run summary (schema/watch.v1.json, summary).",
+    "description": "A watch run summary (schema/watch.v1.json, summary); with since, several runs pooled ($defs/pooled).",
     "properties": {
      "branded": {
       "properties": {
@@ -919,6 +924,10 @@
       },
       "type": "array"
      },
+     "days": {
+      "description": "With since only: calendar days from the first run pooled to the last, both counted.",
+      "type": "integer"
+     },
      "engines": {
       "items": {
        "type": "object"
@@ -1028,6 +1037,27 @@
        }
       },
       "type": "object"
+     },
+     "runs": {
+      "description": "With since only: the runs pooled, oldest first.",
+      "items": {
+       "properties": {
+        "answered": {
+         "type": "integer"
+        },
+        "planned": {
+         "type": "integer"
+        },
+        "run_id": {
+         "type": "string"
+        },
+        "started_at": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
      },
      "tracked_pages": {
       "description": "Per page named in target_url: answers to its questions, how many cite that page, and how many cite another URL of yours instead. Counts.",

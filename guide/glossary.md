@@ -400,6 +400,17 @@ bonus checks' to 6. A run gives a check the points of the tier it reached.
 **Where:** `3/5` beside each check; the JSON fields `checks[].points` and `max`; the value in
 `--assert`, a number or `max`. **More:** [rubric v1.1](../rubric/v1.1.md)
 
+### Pooled report
+
+Several saved watch runs counted as one set of answers: those of the last N days, or a range of run ids. Only
+runs that asked the same questions on the same engines and models, from the same `country`, with the same
+brand domains, pool; otherwise the command refuses and names the runs that differ. Its interval treats every
+answer to one question, from every run, as one cluster, so pooling narrows it only as far as the number of
+questions allows. It describes a period and is not a test for a change.
+
+**Where:** `watch report --since DAYS` or `--runs A..B`; the MCP tool `report` with `since`; `$defs/pooled` in
+`schema/watch.v1.json`. **More:** [watch methodology, One ask, one day, one month](watch-methodology.md#8-one-ask-one-day-one-month)
+
 ### Probe
 
 A live request that `g.reachable` sends with a retrieval crawler's user-agent string: each of the ten,
@@ -419,6 +430,17 @@ answered, its reason starts `Only N of 10 retrieval user-agents got an answer`.
 **More:** [AI crawler user-agents](../reference/ai-crawlers.md), [rubric v1.1, `g.reachable`](../rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable)
 
 ## R
+
+### Resolution
+
+What a watch plan can tell before it is run: the fewest questions, k, that must move the same way between two
+runs before `watch diff` can call a change. With E engines diff tests E + 1 rows (one row with one engine), and
+k is the smallest n with rows × 2 / 2^n < 0.05: 6 with one engine, 7 with two, 8 with three to five. More
+questions help; more engines raise k; asking each question more times does not lower it.
+
+**Where:** the `resolution:` line of `watch run --dry-run` and of the MCP tool `run` with `dry_run`, which adds
+`this plan cannot detect a change` when the set has fewer than k questions.
+**More:** [watch methodology, One ask, one day, one month](watch-methodology.md#8-one-ask-one-day-one-month)
 
 ### Retrieval crawler
 

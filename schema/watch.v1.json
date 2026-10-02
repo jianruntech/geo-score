@@ -124,6 +124,36 @@
         "alpha": {"type": "number", "description": "Threshold on p_adjusted for a change."},
         "min_questions": {"type": "integer", "description": "Fewer questions answered in both runs than this gives the verdict 'too few questions to tell'."}
       }},
+    "pooled": {"type": "object", "additionalProperties": false,
+      "description": "Since 1.6.0. What `watch report --since DAYS` or `watch report --runs A..B` prints with --format json (and the MCP report tool with since): several saved runs counted as one set of answers. Every run pooled asked the same questions (the same questions_hash) on the same engines with the same providers and models, from the same country, with the same brand domains and URL prefixes as the newest; otherwise the command refuses and names the runs that differ. Not stored in run files.",
+      "required": ["channel", "runs", "since_days", "from", "to", "days", "questions_hash", "n_questions", "overall", "headline", "branded", "brand_flags", "engines", "notes"],
+      "properties": {
+        "channel": {"enum": ["api"], "description": "Answers came from the providers' APIs, not the consumer apps."},
+        "runs": {"type": "array", "minItems": 1, "description": "The runs pooled, oldest first.",
+          "items": {"type": "object", "additionalProperties": false, "required": ["run_id", "started_at", "planned", "answered"],
+            "properties": {
+              "run_id": {"type": "string", "pattern": "^\\d{8}T\\d{6}Z(-\\d{1,3})?$"},
+              "started_at": {"type": "string"},
+              "planned": {"type": "integer", "minimum": 0, "description": "Samples in the run: questions x engines x asks."},
+              "answered": {"type": "integer", "minimum": 0, "description": "Samples with status ok."}}}},
+        "since_days": {"type": ["integer", "null"], "minimum": 1,
+                       "description": "The --since window in days: runs started that many days before the report or later. Null with --runs."},
+        "from": {"type": "string", "description": "started_at of the first run pooled."},
+        "to": {"type": "string", "description": "started_at of the newest run pooled."},
+        "days": {"type": "integer", "minimum": 1, "description": "Calendar days (UTC) from the first run's start to the newest run's, both counted."},
+        "questions_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The questions_hash every run pooled shares."},
+        "n_questions": {"type": "integer", "minimum": 0, "description": "Questions in the set."},
+        "overall": {"$ref": "#/$defs/rate", "description": "Every answer of every run pooled, with planned, errors and skipped as in summary.overall."},
+        "headline": {"$ref": "#/$defs/rate",
+                     "description": "Answers to questions that do not name the brand, as in summary.headline. cited_ci_clustered resamples questions, each with all its answers from every run and engine: the interval to quote."},
+        "branded": {"$ref": "#/$defs/rate", "description": "Answers to questions that name the brand, flagged as in the newest run, with their question_ids."},
+        "brand_flags": {"enum": ["run", "computed"], "description": "As in summary.brand_flags, for the newest run."},
+        "engines": {"type": "array", "items": {"$ref": "#/$defs/rate", "properties": {
+          "id": {"type": "string"}, "model": {"type": "string"},
+          "errors": {"type": "integer", "minimum": 0}, "skipped": {"type": "integer", "minimum": 0}}},
+          "description": "One row per engine measured, every run's answers from it pooled, its interval resampling questions."},
+        "notes": {"type": "array", "items": {"type": "string"}, "description": "The API-channel note, what pooling does and does not show, and any note on how questions were flagged."}
+      }},
     "diff_row": {"type": "object", "additionalProperties": false,
       "required": ["engine", "before", "after", "before_n", "after_n", "delta", "p_value", "verdict", "note"],
       "properties": {

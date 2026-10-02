@@ -336,6 +336,53 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
   that what it said is true or that the page deserved it. Engines also cite misleading and self-promotional
   pages, so a high rate is not evidence that a source is good, and a low one is not evidence that it is bad.
 
+## 8. One ask, one day, one month
+
+One ask of one question on one engine is an anecdote. The same question gets a different answer from one ask
+to the next: the model samples its wording, and its search can return other sources on the next call. One run
+of the whole set is a measurement of one day. Asks made minutes apart share that day's index, rankings and
+model version, so they are not independent of each other, and they say little about the next week.
+
+**Pooling.** `watch report --since DAYS` (or `--runs A..B`) counts several saved runs as one set of answers.
+It pools only runs that asked the same questions (the same `questions_hash`) on the same engines with the same
+providers and models, from the same `country`, with the same brand domains and URL prefixes as the newest run
+in the window. Otherwise it refuses and names each run that differs and why: a rate pooled over two question
+sets or two models describes neither. The output gives the runs, the calendar days from the first to the last,
+the answers, the headline rate and a row per engine. The interval is the cluster bootstrap of section 2 with
+one cluster per question: every answer to a question, from every run and every engine, is resampled together.
+
+What pooling buys is more answers per question, so each question's rate is pinned down more closely and one
+unusual day weighs less. What it does not buy is more questions. The interval resamples questions, so it
+narrows only as far as their number allows: ten questions asked every week for a month are still ten
+questions. A pooled rate describes a period. It is not a test for a change, and no pooled diff exists; to ask
+whether something changed, compare two runs with `watch diff`.
+
+However many runs are pooled, the API channel cannot reproduce what a person sees in an app: the account
+(signed in or not, memory, history, settings), the network address a request comes from and the location a
+provider infers from it, and the app's own model, prompts and personalisation. Pooling API runs gives a steadier
+API rate, not an estimate of the apps (section 7).
+
+**What a plan can tell.** `watch run --dry-run` prints the plan's resolution before anything is spent: the
+fewest questions that must move the same way between two runs before `watch diff` can call a change. With E
+engines, diff tests m = E + 1 rows, each engine and all engines; with one engine, m = 1, because the
+all-engines row is that engine's test. An exact paired test on n questions reaches at best p = 2 / 2^n, every
+question moving the same way, and Holm's first step holds the smallest p to 0.05 / m. So k is the smallest n
+with m × 2 / 2^n < 0.05, the screen of section 4:
+
+| engines E | rows m | k |
+|---|---|---|
+| 1 | 1 | 6 |
+| 2 | 3 | 7 |
+| 3 | 4 | 8 |
+| 5 | 6 | 8 |
+
+A set with fewer than k questions gets "this plan cannot detect a change": every diff of two such runs reads
+`too few questions to tell`. Adding questions helps; adding engines raises k; asking each question more times
+(`runs`) does not lower it, because the test counts questions, not answers. k is a floor, not a promise: at
+least k questions must move in the direction of the change, a question that moves the other way never helps,
+and a real change of a few points moves only a few questions. The figure assumes every engine answers every
+question; a run with failures pairs fewer.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
@@ -347,4 +394,6 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
   each question, and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
+- Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool
+  with `since`): the `pooled` definition in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

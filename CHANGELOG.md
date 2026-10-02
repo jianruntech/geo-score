@@ -54,6 +54,20 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `mention_order` and `mention_share` in `$defs/sample` and its competitors, and `named_first`, `any_named` and
   `mention_share` on the rows of `summary.engines` and `summary.share_of_voice`. The MCP tools' schemas are
   unchanged. A run saved before this release gets them computed from its saved answers when it is reported.
+- **`watch run --dry-run` says what the plan can detect, and `watch report` can pool runs.** The dry run prints
+  the plan's resolution: with E engines `watch diff` tests E + 1 rows (one row with one engine), and it can call a
+  change only when at least k questions move the same way between two runs, k being the smallest n with
+  rows × 2 / 2^n < 0.05, the screen diff already applies: 6 questions with one engine, 7 with two, 8 with three to
+  five. A set with fewer questions gets "this plan cannot detect a change": more questions help, more engines raise
+  k, and more asks per question do not lower it. The MCP `run` tool's dry run prints the same lines. `watch report
+  --since DAYS` (or `--runs A..B`) counts the saved runs of a period as one set of answers, when each asked the same
+  questions (the same `questions_hash`) on the same engines with the same models, from the same `country`, with the
+  same brand domains and URL prefixes as the newest; otherwise it exits 1 and names every run that differs and
+  why. It gives the runs, the calendar days they cover, the answers, the headline rate and a row per engine, with a
+  95% interval that resamples questions, each with every answer it got in every run, and the API-channel note.
+  There is no pooled diff. Schema: `$defs/pooled` in schema/watch.v1.json. MCP: the `report` tool gains an
+  optional `since` argument and its output schema the optional `runs` and `days`, so the MCP contract only grows.
+  guide/watch-methodology.md gains section 8, "One ask, one day, one month".
 
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question

@@ -214,8 +214,45 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 - **好坏。** 被引用说明在场，不是对质量的评判：它说的是引擎提到并链接了某一页，不说明它说的是真的，也不说明那一页配得上。
   引擎也会引用误导性的、自我宣传的页面，所以引用率高不能证明来源好，低也不能证明来源差。
 
+## 8. 一次提问、一天、一个月
+
+在一个引擎上把一个问题问一次，得到的是一则轶事。同一个问题，这次问和下次问会得到不同的回答：模型会随机挑选措辞，
+它的搜索下一次调用也可能返回别的来源。把整个问题集跑一次，测的是一天：几分钟之内的提问共用当天的索引、排序和模型版本，
+彼此并不独立，也说明不了下一周会怎样。
+
+**合并多次运行。** `watch report --since DAYS`（或 `--runs A..B`）把多次保存下来的运行当成一组回答来统计。只有与窗口里最新一次运行
+问的是同一组问题（`questions_hash` 相同）、用的是同样的引擎、服务商和模型、`country` 相同、品牌域名和 URL 前缀也相同的运行，才会被合并；
+否则拒绝合并，并逐一列出不一致的运行和原因：把两套问题或两个模型的回答合在一起算出的比率，哪一边都描述不了。输出给出合并了哪些运行、
+从第一次到最后一次覆盖的日历天数、回答数、标题引用率，以及每个引擎一行。区间用第 2 节的聚类自助法，每个问题一簇：
+同一个问题的全部回答，不论来自哪次运行、哪个引擎，都一起重抽样。
+
+合并换来的是每个问题有更多回答，所以每个问题的比率估得更准，某一天的异常影响也更小。合并换不来更多的问题。区间是对问题重抽样的，
+所以最多只能窄到问题数允许的程度：十个问题每周问一次、问上一个月，仍然是十个问题。合并出来的比率描述的是一段时间，不是对变化的检验，
+也没有合并后的比较；要问有没有变化，用 `watch diff` 比较两次运行。
+
+不管合并多少次运行，API 渠道都复现不了一个人在 App 里看到的东西：账号（是否登录、记忆、历史、设置）、请求来自哪个网络地址以及服务商据此推断的位置，
+还有 App 自己的模型、提示词和个性化。合并 API 运行得到的是更稳定的 API 引用率，不是对 App 的估计（见第 7 节）。
+
+**一套计划能测出什么。** `watch run --dry-run` 在花钱之前打印这套计划的分辨力：两次运行之间至少要有几个问题朝同一方向变动，
+`watch diff` 才可能判定变化。E 个引擎时，diff 检验 m = E + 1 行，每个引擎一行，再加上全部引擎一行；只有一个引擎时 m = 1，
+因为全部引擎那一行就是这个引擎的检验。n 个问题上的精确配对检验，最小只能得到 p = 2 / 2^n（每个问题都朝同一方向变动），
+而 Holm 校正的第一步要求最小的 p 低于 0.05 / m。所以 k 是满足 m × 2 / 2^n < 0.05 的最小 n，也就是第 4 节的筛选：
+
+| 引擎数 E | 行数 m | k |
+|---|---|---|
+| 1 | 1 | 6 |
+| 2 | 3 | 7 |
+| 3 | 4 | 8 |
+| 5 | 6 | 8 |
+
+问题少于 k 个时，计划会打印「this plan cannot detect a change」：这样两次运行之间的任何比较都只会是 `too few questions to tell`。
+多加问题有用；多加引擎会抬高 k；每题多问几次（`runs`）不会降低 k，因为检验数的是问题，不是回答。k 是下限，不是保证：
+至少要有 k 个问题朝变化的方向变动，反方向变动的问题永远帮不上忙，而几个百分点的真实变化只会让少数几个问题变动。
+这个数假定每个引擎都回答了每个问题；有失败的运行，能配对的问题更少。
+
 ## 字段在哪里
 
 - 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
+- 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

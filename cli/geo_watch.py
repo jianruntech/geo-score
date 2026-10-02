@@ -126,6 +126,14 @@ MENTION_NOTES = [
     "not seen.".format(MAX_ANSWER),
 ]
 
+# printed with a pooled report (watch report --since / --runs): what pooling buys and what it does not
+POOL_NOTES = [
+    "Pooled: the runs are counted as one set of answers. Every answer to one question, from every run and engine, is "
+    "one cluster, and the 95% interval resamples questions: more runs pin down each question's rate, but the interval "
+    "narrows only as far as the number of questions allows.",
+    "A pooled rate describes the period it covers. It is not a test for a change: compare two runs with watch diff.",
+]
+
 # Swapped out by the tests; nothing else should touch these.
 NOW = lambda: datetime.datetime.now(datetime.timezone.utc)
 SLEEP = time.sleep
@@ -1370,6 +1378,21 @@ def searched_of(sample, provider):
     return False if isinstance(usage, dict) else None
 
 
+def rate_block(rows, seed, hit=lambda s: s["cited"], named=lambda s: s["mentioned"]):
+    """A rate block ($defs/rate) over answers: cited and mentioned counts, Wilson, and the bootstrap over questions.
+    Every answer to one question is one cluster, whichever ask, engine or run gave it."""
+    k = sum(1 for s in rows if hit(s))
+    m = sum(1 for s in rows if named(s))
+    per_q = {}
+    for s in rows:
+        c = per_q.setdefault(s["query_id"], [0, 0])
+        c[0] += 1 if hit(s) else 0
+        c[1] += 1
+    return {"answered": len(rows), "cited": k, "cited_rate": rate(k, len(rows)), "cited_ci": wilson(k, len(rows)),
+            "cited_ci_clustered": cluster_ci([tuple(per_q[q]) for q in sorted(per_q)], seed),
+            "n_questions": len(per_q), "mentioned": m, "mentioned_rate": rate(m, len(rows))}
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1379,16 +1402,7 @@ def summarize(run):
     rid = run.get("run_id") or ""
 
     def block(rows, label, hit=lambda s: s["cited"], named=lambda s: s["mentioned"]):
-        k = sum(1 for s in rows if hit(s))
-        m = sum(1 for s in rows if named(s))
-        per_q = {}
-        for s in rows:
-            c = per_q.setdefault(s["query_id"], [0, 0])
-            c[0] += 1 if hit(s) else 0
-            c[1] += 1
-        return {"answered": len(rows), "cited": k, "cited_rate": rate(k, len(rows)), "cited_ci": wilson(k, len(rows)),
-                "cited_ci_clustered": cluster_ci([tuple(per_q[q]) for q in sorted(per_q)], _seed(rid, label)),
-                "n_questions": len(per_q), "mentioned": m, "mentioned_rate": rate(m, len(rows))}
+        return rate_block(rows, _seed(rid, label), hit, named)
 
     # Where each answer names the brand (index 0) and each competitor: as saved since 1.6.0, or read from the saved
     # answer for an older run, the same way.
@@ -1594,6 +1608,42 @@ def _paired(pairs, seed):
     return out
 
 
+def reachable(m, n):
+    """Whether a diff row on n questions could be called a change in a family of m rows. The smallest p an exact
+    paired test reaches on n questions is 2 / 2^n (every one of them moving the same way), and Holm's first step
+    holds it to ALPHA / m: Tarone's screen for discrete tests."""
+    return m * 2.0 / 2 ** n < ALPHA
+
+
+def resolution(n_engines, n_questions):
+    """What diff can tell from a plan, if every engine answers every question. diff tests one row per engine plus
+    all engines (m = E + 1), or one row for one engine, whose all-engines row is the same test. k is the smallest n
+    with m * 2 / 2^n < ALPHA, the screen diff_runs applies (never below MIN_PAIRED): diff can call a change only
+    when at least k questions move the same way between the two runs. More asks per question do not lower k; the
+    test counts questions."""
+    m = n_engines + 1 if n_engines > 1 else 1
+    k = MIN_PAIRED
+    while not reachable(m, k):
+        k += 1
+    return {"engines": n_engines, "rows": m, "min_questions": k, "questions": n_questions,
+            "detectable": n_questions >= k}
+
+
+def resolution_lines(res):
+    """What `watch run --dry-run` (and the MCP run tool's dry run) prints about the plan's resolution."""
+    m, k, q = res["rows"], res["min_questions"], res["questions"]
+    rows = "1 row: one engine, which is also all engines" if m == 1 else \
+        "%d rows: %d engines and all engines, Holm-corrected" % (m, res["engines"])
+    why = "%d × 2/2^%d < %.2f; %s" % (m, k, ALPHA, rows)
+    if res["detectable"]:
+        return ["resolution: diff can call a change only when at least %d of your %d questions move the same way "
+                "between two runs (%s)" % (k, q, why)]
+    return ["resolution: diff can call a change only when at least %d questions move the same way between two runs "
+            "(%s); this plan has %d" % (k, why, q),
+            "this plan cannot detect a change: adding questions helps, adding engines raises the %d, and asking each "
+            "question more times (--runs) does not lower it" % k]
+
+
 def diff_runs(a, b):
     """What changed from run a to run b, on the questions and engines both runs measured. Answers are paired
     by question, engine and ask (the asks both runs made); the verdict comes from an exact paired test with
@@ -1682,7 +1732,7 @@ def diff_runs(a, b):
     # way). If Holm's multiplier puts even that at or above alpha, the row can never be called a change, and
     # "within noise" would be a claim the data cannot support: say so, then correct over the rows left.
     while family:
-        untestable = [r for r in family if len(family) * 2.0 / 2 ** r["n_questions"] >= ALPHA]
+        untestable = [r for r in family if not reachable(len(family), r["n_questions"])]
         if not untestable:
             break
         for r in untestable:
@@ -1721,6 +1771,137 @@ def drops(d):
     """Rows whose verdict is a change for the worse."""
     return [r["engine"] for r in [d["overall"]] + d["engines"]
             if r["verdict"] == "change" and (r.get("delta_pp") or 0) < 0]
+
+
+# ── pooling runs ──────────────────────────────────────────────────────────
+def run_time(rid):
+    """The UTC time a run id names (its start), or None."""
+    m = RUN_ID_RE.match(str(rid))
+    if not m:
+        return None
+    try:
+        return datetime.datetime.strptime(m.group(1), "%Y%m%dT%H%M%SZ").replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
+def pool_ids(cfg, since=None, span=None):
+    """The saved runs to pool, oldest first: those started in the last `since` days, or those from A to B, both
+    included, for span "A..B"."""
+    ids = list_run_ids(cfg)
+    if span is not None:
+        a, sep, b = str(span).partition("..")
+        if not sep or not RUN_ID_RE.match(a) or not RUN_ID_RE.match(b):
+            raise ConfigError("--runs takes two run ids, A..B, such as 20260905T083000Z..20260926T083000Z")
+        for rid in (a, b):
+            if rid not in ids:
+                raise ConfigError("no run %s in %s" % (rid, cfg.runs_dir()))
+        lo, hi = _run_sort_key(a), _run_sort_key(b)
+        if lo > hi:
+            raise ConfigError("--runs %s..%s: the first run is the later one; write the earlier run first" % (a, b))
+        return [rid for rid in ids if lo <= _run_sort_key(rid) <= hi]
+    if not isinstance(since, int) or isinstance(since, bool) or since < 1:
+        raise ConfigError("--since takes a whole number of days, 1 or more")
+    cut = NOW() - datetime.timedelta(days=since)
+    out = [rid for rid in ids if run_time(rid) is not None and run_time(rid) >= cut]
+    if not out:
+        raise ConfigError("no run saved in the last %s in %s" % (_n(since, "day"), cfg.runs_dir()))
+    return out
+
+
+def _measured(run):
+    return dict((e["id"], (e.get("provider"), e.get("model"))) for e in run["engines"] if e.get("status") == "measured")
+
+
+def pool_mismatch(run, ref):
+    """Why run cannot be pooled with ref, the newest run of the pool: [] when it asked the same questions (the same
+    questions_hash), on the same engines with the same providers and models, from the same country, with the same
+    brand domains and URL prefixes."""
+    why = []
+    qa, qb = run.get("questions_hash") or questions_hash(run["queries"]), ref.get("questions_hash") or \
+        questions_hash(ref["queries"])
+    if qa != qb:
+        why.append("other questions (questions_hash %s, newest %s)" % (qa[:8], qb[:8]))
+    ea, eb = _measured(run), _measured(ref)
+    for eid in sorted(set(ea) | set(eb)):
+        if eid not in eb:
+            why.append("%s measured, not in the newest run" % eid)
+        elif eid not in ea:
+            why.append("%s not measured" % eid)
+        elif ea[eid][0] != eb[eid][0]:
+            why.append("%s provider %s (newest %s)" % (eid, ea[eid][0], eb[eid][0]))
+        elif ea[eid][1] != eb[eid][1]:
+            why.append("%s model %s (newest %s)" % (eid, ea[eid][1], eb[eid][1]))
+    if run.get("country") != ref.get("country"):
+        why.append("country %s (newest %s)" % (run.get("country") or "none", ref.get("country") or "none"))
+    if run.get("channel") != ref.get("channel"):
+        why.append("channel %s (newest %s)" % (run.get("channel"), ref.get("channel")))
+    if run["brand"].get("domains") != ref["brand"].get("domains") or \
+            run["brand"].get("url_prefixes") != ref["brand"].get("url_prefixes"):
+        why.append("the brand's domains or URL prefixes differ, so 'cited' was judged differently")
+    return why
+
+
+def pool_runs(runs, since=None):
+    """Several saved runs as one set of answers ($defs/pooled). runs: oldest first, each one matching the last
+    (pool_mismatch is empty). Every answer to one question, from every run and engine, is one cluster of the
+    bootstrap. Questions that name the brand are those of the newest run, as its report would flag them."""
+    ref = runs[-1]
+    brand = Entity(ref["brand"], you=True)
+    ids = [r["run_id"] for r in runs]
+    samples = [s for r in runs for s in r["samples"]]
+    ok = [s for s in samples if s["status"] == "ok"]
+
+    def block(rows, label):
+        return rate_block(rows, _seed(*(ids + ["pooled", label])))
+
+    engines = []
+    for e in ref["engines"]:
+        if e["status"] != "measured":
+            continue
+        es = [s for s in samples if s["engine"] == e["id"]]
+        engines.append(dict(block([s for s in es if s["status"] == "ok"], "engine:" + e["id"]), id=e["id"],
+                            model=e["model"], errors=sum(1 for s in es if s["status"] == "error"),
+                            skipped=sum(1 for s in es if s["status"] == "skipped")))
+    everything = block(ok, "overall")
+    stored = all("brand_in_query" in q for q in ref["queries"])
+    named_ids = sorted(q["query_id"] for q in ref["queries"] if is_branded(q, brand))
+    headline = block([s for s in ok if s["query_id"] not in named_ids], "headline") if named_ids else dict(everything)
+    branded = dict(block([s for s in ok if s["query_id"] in named_ids], "branded"), question_ids=named_ids)
+    first, last = run_time(ids[0]), run_time(ids[-1])
+    notes = [NOTES[0]] + POOL_NOTES
+    if not stored:
+        notes.append("The newest run was saved before questions were flagged at run time. Questions that name the "
+                     "brand were found when this report was made, from its saved question text and its brand name, "
+                     "aliases and domains.")
+    return {"channel": ref.get("channel") or "api",
+            "runs": [{"run_id": r["run_id"], "started_at": r.get("started_at") or "",
+                      "planned": len(r["samples"]), "answered": sum(1 for s in r["samples"] if s["status"] == "ok")}
+                     for r in runs],
+            "since_days": since, "from": runs[0].get("started_at") or "", "to": ref.get("started_at") or "",
+            "days": (last.date() - first.date()).days + 1 if first and last else 1,
+            "questions_hash": ref.get("questions_hash") or questions_hash(ref["queries"]),
+            "n_questions": len(ref["queries"]),
+            "overall": dict(everything, planned=len(samples), errors=sum(1 for s in samples if s["status"] == "error"),
+                            skipped=sum(1 for s in samples if s["status"] == "skipped")),
+            "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
+            "engines": engines, "notes": notes}
+
+
+def pooled_report(cfg, since=None, span=None):
+    """Load the runs to pool and pool them: (the runs, oldest first, and the pooled report). ConfigError lists every
+    run that does not match the newest, and why."""
+    runs = [load_run(cfg, rid) for rid in pool_ids(cfg, since, span)]
+    ref = runs[-1]
+    bad = [(r["run_id"], pool_mismatch(r, ref)) for r in runs[:-1]]
+    bad = [(rid, why) for rid, why in bad if why]
+    if bad:
+        raise ConfigError("cannot pool: %d of the %d runs do not match the newest, %s, and pooling them would mix two "
+                          "measurements:\n%s\npool only runs that asked the same questions on the same engines and "
+                          "models: a shorter window (since), or --runs A..B on the command line" % (
+                              len(bad), len(runs), ref["run_id"],
+                              "\n".join("  %s: %s" % (rid, "; ".join(why)) for rid, why in bad)))
+    return runs, pool_runs(runs, since)
 
 
 # ── rendering ─────────────────────────────────────────────────────────────
@@ -1795,6 +1976,27 @@ def money(x):
     return "$%.4f" % x if x < 0.01 else "$%.2f" % x
 
 
+def headline_lines(sm, name, fmt):
+    """The headline rate and the line for questions that name the brand, from a summary or a pooled report."""
+    o, h, br = sm["overall"], sm["headline"], sm["branded"]
+    if not br["question_ids"]:
+        line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
+            pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(head_ci(o)), pct(o["mentioned_rate"]))
+    elif h["answered"]:
+        line = "Cited in %s of answers to questions that do not name %s (%d of %d, %s, 95%% CI %s) · " \
+               "mentioned in %s" % (pct(h["cited_rate"]), name, h["cited"], h["answered"],
+                                    _n(h["n_questions"], "question"), ci_s(head_ci(h)), pct(h["mentioned_rate"]))
+    else:
+        line = "No headline rate: no question that leaves out %s was answered" % name
+    L = ["**%s**" % line if fmt == "md" else line]
+    if br["question_ids"]:
+        L.append("Questions that name %s (%d, kept out of the headline): %s" % (
+            name, len(br["question_ids"]), "no answers" if not br["answered"] else
+            "cited in %s (%d of %d, 95%% CI %s) · mentioned in %s" % (
+                pct(br["cited_rate"]), br["cited"], br["answered"], ci_s(head_ci(br)), pct(br["mentioned_rate"]))))
+    return L
+
+
 def render(run, fmt="text"):
     sm = summary_of(run)
     o, L = sm["overall"], []
@@ -1806,24 +2008,10 @@ def render(run, fmt="text"):
         len(run["queries"]), engines_n, run["runs"], o["planned"], o["answered"], o["errors"], o["skipped"],
         " · interrupted" if run.get("interrupted") else ""))
     name = run["brand"]["name"] or "the brand"
-    h, br = sm["headline"], sm["branded"]
+    br = sm["branded"]
     if o["answered"]:
         L.append("")
-        if not br["question_ids"]:
-            line = "Cited in %s of answers (%d of %d, 95%% CI %s) · mentioned in %s" % (
-                pct(o["cited_rate"]), o["cited"], o["answered"], ci_s(head_ci(o)), pct(o["mentioned_rate"]))
-        elif h["answered"]:
-            line = "Cited in %s of answers to questions that do not name %s (%d of %d, %s, 95%% CI %s) · " \
-                   "mentioned in %s" % (pct(h["cited_rate"]), name, h["cited"], h["answered"],
-                                        _n(h["n_questions"], "question"), ci_s(head_ci(h)), pct(h["mentioned_rate"]))
-        else:
-            line = "No headline rate: no question that leaves out %s was answered" % name
-        L.append("**%s**" % line if fmt == "md" else line)
-        if br["question_ids"]:
-            L.append("Questions that name %s (%d, kept out of the headline): %s" % (
-                name, len(br["question_ids"]), "no answers" if not br["answered"] else
-                "cited in %s (%d of %d, 95%% CI %s) · mentioned in %s" % (
-                    pct(br["cited_rate"]), br["cited"], br["answered"], ci_s(head_ci(br)), pct(br["mentioned_rate"]))))
+        L.extend(headline_lines(sm, name, fmt))
         L.append("Your site was cited somewhere for %d of %d questions." % (
             sm["questions"]["cited_somewhere"], sm["questions"]["asked"]))
 
@@ -1932,6 +2120,43 @@ def render(run, fmt="text"):
                                                 "" if caps["budget_usd"] is None else ", budget " + money(caps["budget_usd"])))
     L.append(_h("Read this before quoting the numbers", fmt))
     L.extend("- " + n for n in NOTES + sm.get("notes", []))   # the numbers above are this release's arithmetic
+    return "\n".join(L) + "\n"
+
+
+def render_pool(p, brand_name, fmt="text"):
+    """A pooled report (pool_runs) as text or markdown."""
+    o, L = p["overall"], []
+    head = "geo-score watch · %s · %s pooled, %s to %s (%s) · %s channel" % (
+        brand_name or "(no brand)", _n(len(p["runs"]), "run"), p["from"][:10], p["to"][:10], _n(p["days"], "day"),
+        p["channel"])
+    L.append("# " + head if fmt == "md" else head)
+    L.append("")
+    L.append("%s · %s · %s · %d planned · %d answered · %d failed · %d skipped" % (
+        _n(len(p["runs"]), "run"), _n(p["n_questions"], "question"), _n(len(p["engines"]), "engine"), o["planned"],
+        o["answered"], o["errors"], o["skipped"]))
+    if o["answered"]:
+        L.append("")
+        L.extend(headline_lines(p, brand_name or "the brand", fmt))
+    L.append(_h("By engine", fmt))
+    rows = []
+    for e in p["engines"]:
+        extra = []
+        if e["errors"]:
+            extra.append("%d failed" % e["errors"])
+        if e["skipped"]:
+            extra.append("%d skipped" % e["skipped"])
+        rows.append([e["id"], e["model"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])),
+                     ci_s(head_ci(e)), pct(e["mentioned_rate"]), ", ".join(extra)])
+    L.append(table(["engine", "model", "cited", "95% CI", "mentioned", ""], rows, fmt))
+    if p["branded"]["question_ids"]:
+        L.append("")   # a line right under a markdown table would be read as another row
+        L.append("These rows count every question, the %d that name %s included." % (
+            len(p["branded"]["question_ids"]), brand_name or "the brand"))
+    L.append(_h("Runs pooled", fmt))
+    L.append(table(["run", "started", "answered"],
+                   [[r["run_id"], r["started_at"], "%d/%d" % (r["answered"], r["planned"])] for r in p["runs"]], fmt))
+    L.append(_h("Read this before quoting the numbers", fmt))
+    L.extend("- " + n for n in p["notes"])
     return "\n".join(L) + "\n"
 
 
@@ -2447,6 +2672,8 @@ def cmd_run(args):
     if args.dry_run:
         if not active:
             print("nothing would be measured: export at least one API key")
+        else:
+            print("\n".join(resolution_lines(resolution(len(active), len(queries)))))
         return 0
     if not active:
         print("error: nothing can be measured — export at least one API key", file=sys.stderr)
@@ -2497,6 +2724,17 @@ def _out(text, path):
 
 def cmd_report(args):
     cfg = _load(args)
+    if args.since is not None or args.runs is not None:
+        if args.run:
+            raise ConfigError("pass a run id, or --since or --runs to pool several runs, not both")
+        if args.since is not None and args.runs is not None:
+            raise ConfigError("--since and --runs both choose the runs to pool; pass one of them")
+        if args.format == "csv":
+            raise ConfigError("--format csv lists one run's answers: pass a run id, or pool with --format json")
+        runs, p = pooled_report(cfg, args.since, args.runs)
+        _out(json.dumps(p, ensure_ascii=False, indent=1) + "\n" if args.format == "json"
+             else render_pool(p, runs[-1]["brand"].get("name") or "", args.format), args.output)
+        return 0
     run = load_run(cfg, args.run or "latest")
     if args.format == "json":
         text = _json_bytes(dict(run, summary=summary_of(run))).decode("utf-8")     # answers included, as saved
@@ -2645,6 +2883,16 @@ OUT_SUMMARY = {"type": "object", "description": "A watch run summary (schema/wat
                               "engines": {"type": "array", "items": {"type": "object"}},
                               "by_question": _BY_QUESTION, "tracked_pages": _TRACKED,
                               "notes": {"type": "array", "items": {"type": "string"}}}}
+# the report tool's output: a run summary, or with since several runs pooled, which carry the same blocks
+OUT_WATCH_REPORT = dict(OUT_SUMMARY, description="A watch run summary (schema/watch.v1.json, summary); with since, "
+                                                 "several runs pooled ($defs/pooled).",
+                        properties=dict(OUT_SUMMARY["properties"], runs={
+                            "type": "array", "description": "With since only: the runs pooled, oldest first.",
+                            "items": {"type": "object", "properties": {
+                                "run_id": {"type": "string"}, "started_at": {"type": "string"},
+                                "planned": {"type": "integer"}, "answered": {"type": "integer"}}}},
+                            days={"type": "integer", "description": "With since only: calendar days from the first "
+                                                                    "run pooled to the last, both counted."}))
 _ROW = {"type": "object", "properties": {
     "engine": {"type": "string"}, "verdict": {"type": "string"},
     "delta_pp": _nullable("number", description="change in cited share, percentage points"),
@@ -2981,11 +3229,16 @@ class MCPServer(object):
              "description": "Free, local: reads a saved run. The report for a saved run: citation rate per engine with "
                             "95% intervals, share of voice, most-cited third-party sources, questions a competitor "
                             "wins, who is cited and named for each question, how often the pages you track are "
-                            "cited, observed searches, cost.",
+                            "cited, observed searches, cost. With since, the runs of the last N days pooled: their "
+                            "citation rate per engine, with intervals that resample questions across the runs.",
              "inputSchema": {"type": "object", "properties": {
                  "run": {"type": "string", "description": "A run id, or 'latest' (default)."},
+                 "since": {"type": "integer", "minimum": 1,
+                           "description": "Pool the runs saved in the last N days instead of reporting one: they "
+                                          "must have asked the same questions on the same engines and models, or "
+                                          "the call fails and names the runs that differ."},
                  "format": {"type": "string", "enum": ["md", "json"]}}, "additionalProperties": False},
-             "outputSchema": OUT_SUMMARY,
+             "outputSchema": OUT_WATCH_REPORT,
              "annotations": self._hints(True, True, False)},
             {"name": "diff", "title": "Compare two runs",
              "description": "Free, local: reads two saved runs. Citation rate before and after, per engine, on the "
@@ -3350,6 +3603,8 @@ class MCPServer(object):
                         "not_measured": [{"engine": e["id"], "reason": status[e["id"]]} for e in engines
                                          if status[e["id"]] != "measured"]}}
         if args.get("dry_run"):
+            if active:
+                lines += ["- " + x for x in resolution_lines(resolution(len(active), len(queries)))]
             return "\n".join(lines) + "\n", out
         if not active:
             raise ConfigError("\n".join(lines + ["no engine can run"]))
@@ -3395,6 +3650,16 @@ class MCPServer(object):
         return text, {"runs": runs}
 
     def tool_report(self, args, token, ctx=None):
+        since = args.get("since")
+        if since is not None:
+            if not isinstance(since, int) or isinstance(since, bool) or since < 1:
+                raise ConfigError("since must be a whole number of days, 1 or more")
+            if args.get("run"):
+                raise ConfigError("pass run, or since to pool the runs of the last days, not both")
+            runs, p = pooled_report(self._cfg(), since)
+            if args.get("format") == "json":
+                return json.dumps(p, ensure_ascii=False, indent=1), p
+            return render_pool(p, runs[-1]["brand"].get("name") or "", "md"), p
         run = load_run(self._cfg(), args.get("run") or "latest")
         sm = summary_of(run)
         if args.get("format") == "json":
@@ -3658,8 +3923,11 @@ def main(argv=None, prog="geo_score.py watch"):
     p.add_argument("--brand")
     p.add_argument("--domain", action="append")
     p.add_argument("--format", choices=["text", "md", "json"], default="text")
-    p = with_config(sub.add_parser("report", help="report on a saved run"))
+    p = with_config(sub.add_parser("report", help="report on a saved run, or pool several"))
     p.add_argument("run", nargs="?", help="run id (default: latest)")
+    p.add_argument("--since", type=int, metavar="DAYS", help="pool the runs saved in the last DAYS days; they must "
+                   "match the newest run (same questions, engines, models, country and brand domains)")
+    p.add_argument("--runs", metavar="A..B", help="pool the runs from A to B, both included, under the same rule")
     p.add_argument("--format", choices=["text", "md", "csv", "json"], default="text")
     p.add_argument("-o", "--output")
     p = with_config(sub.add_parser("diff", help="compare two runs (default: the latest two)"))

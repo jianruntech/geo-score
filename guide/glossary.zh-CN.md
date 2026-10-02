@@ -338,6 +338,15 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 **出现在：** 每个检查项旁边的 `3/5`；JSON 的 `checks[].points` 和 `max`；`--assert` 里的取值，一个数或 `max`。
 **详见：** [量表 v1.1](../rubric/v1.1.zh-CN.md)
 
+### Pooled report（合并报告）
+
+把多次保存下来的 watch 运行当成一组回答来统计：最近 N 天的运行，或一段运行 ID 范围内的运行。只有问的是同一组问题、用的是同样的引擎和模型、
+`country` 相同、品牌域名也相同的运行才会被合并；否则命令拒绝合并，并列出不一致的运行。它的区间把同一个问题的全部回答（不论来自哪次运行）
+当作一簇，所以合并最多只能把区间收窄到问题数允许的程度。它描述的是一段时间，不是对变化的检验。
+
+**出现在：** `watch report --since DAYS` 或 `--runs A..B`；MCP 的 `report` 工具带 `since`；`schema/watch.v1.json` 里的 `$defs/pooled`。
+**详见：** [watch 方法说明 · 一次提问、一天、一个月](watch-methodology.zh-CN.md#8-一次提问一天一个月)
+
 ### Probe（探测）
 
 `g.reachable` 用检索爬虫的 user-agent 字符串发出的实时请求：十个 UA 各发一遍，最多测三个抽样页面；
@@ -354,6 +363,16 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 **详见：** [AI 爬虫 user-agent 一览](../reference/ai-crawlers.md)（英文）、[量表 v1.1 · 检索 UA 实测可达](../rubric/v1.1.zh-CN.md#检索-ua-实测可达--5--greachable)
 
 ## R
+
+### Resolution（分辨力）
+
+一套 watch 计划在运行之前就能知道的事：两次运行之间至少要有 k 个问题朝同一方向变动，`watch diff` 才可能判定变化。
+E 个引擎时 diff 检验 E + 1 行（只有一个引擎时是一行），k 是满足 行数 × 2 / 2^n < 0.05 的最小 n：一个引擎 6，两个引擎 7，三到五个引擎 8。
+多加问题有用；多加引擎会抬高 k；每题多问几次不会降低 k。
+
+**出现在：** `watch run --dry-run` 和 MCP `run` 工具带 `dry_run` 时打印的 `resolution:` 一行；问题集少于 k 个问题时，还会加上
+`this plan cannot detect a change`。
+**详见：** [watch 方法说明 · 一次提问、一天、一个月](watch-methodology.zh-CN.md#8-一次提问一天一个月)
 
 ### Retrieval crawler（检索爬虫）
 
