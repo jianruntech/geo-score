@@ -96,6 +96,17 @@ reports them on a line of their own.
 run files; the warning `watch check` prints when they are more than 30% of the set.
 **More:** [watch methodology, Questions that name the brand](watch-methodology.md#3-questions-that-name-the-brand)
 
+### By question
+
+A watch report's per-question view. For each tracked question it counts the answers, how many of
+them cite or name you and each tracked competitor, how many name no tracked brand, how many
+[searched](#searched), and which tracked brand is cited most often, given only when the question has
+at least 4 answers and one brand is ahead of every other. Every value is a count, never a rate.
+
+**Where:** the table `Who is named for each question` in `watch report`; `summary.by_question` in run
+files, the JSON report and the MCP `report` tool.
+**More:** [watch methodology, The unit](watch-methodology.md#1-the-unit-an-answer-clustered-by-question)
+
 ## C
 
 ### Check, check id
@@ -305,6 +316,20 @@ only.
 
 ## N
 
+### Named first
+
+In a watch report, the answers that name a brand before any other brand in the config, out of the
+answers that name at least one of them. Each answer's `mention_order` gives the order: the earliest
+match of each brand's name, aliases or domains, with the matcher of [mentioned](#mentioned). Two
+brands first named at the same place get no order, and brands the config does not list are not
+seen, so first among the brands you track may not be first in the answer. It reads the answer as
+saved, its first 20,000 characters.
+
+**Where:** the `named first (tracked)` columns of `By engine` and `Share of voice` in `watch report`;
+`mention_order` on each answer and its competitors in run files; `named_first` and `any_named` on the
+rows of `summary.engines` and `summary.share_of_voice`.
+**More:** [watch methodology, The unit](watch-methodology.md#1-the-unit-an-answer-clustered-by-question)
+
 ### Normalised score
 
 The 0–100 score itself: readiness (the points scored, bonus included) divided by the observable max,
@@ -375,6 +400,17 @@ bonus checks' to 6. A run gives a check the points of the tier it reached.
 **Where:** `3/5` beside each check; the JSON fields `checks[].points` and `max`; the value in
 `--assert`, a number or `max`. **More:** [rubric v1.1](../rubric/v1.1.md)
 
+### Pooled report
+
+Several saved watch runs counted as one set of answers: those of the last N days, or a range of run ids. Only
+runs that asked the same questions as many times each, on the same engines and models, from the same `country`,
+with the same brand domains, pool; otherwise the command refuses and names the runs that differ. Its interval treats every
+answer to one question, from every run, as one cluster, so pooling narrows it only as far as the number of
+questions allows. It describes a period and is not a test for a change.
+
+**Where:** `watch report --since DAYS` or `--runs A..B`; the MCP tool `report` with `since`; `$defs/pooled` in
+`schema/watch.v1.json`. **More:** [watch methodology, One ask, one day, one month](watch-methodology.md#8-one-ask-one-day-one-month)
+
 ### Probe
 
 A live request that `g.reachable` sends with a retrieval crawler's user-agent string: each of the ten,
@@ -394,6 +430,17 @@ answered, its reason starts `Only N of 10 retrieval user-agents got an answer`.
 **More:** [AI crawler user-agents](../reference/ai-crawlers.md), [rubric v1.1, `g.reachable`](../rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable)
 
 ## R
+
+### Resolution
+
+What a watch plan can tell before it is run: the fewest questions, k, that must move the same way between two
+runs before `watch diff` can call a change. With E engines diff tests E + 1 rows (one row with one engine), and
+k is the smallest n with rows × 2 / 2^n < 0.05: 6 with one engine, 7 with two, 8 with three to five. More
+questions help; more engines raise k; asking each question more times does not lower it.
+
+**Where:** the `resolution:` line of `watch run --dry-run` and of the MCP tool `run` with `dry_run`, which adds
+`this plan cannot detect a change` when the set has fewer than k questions.
+**More:** [watch methodology, One ask, one day, one month](watch-methodology.md#8-one-ask-one-day-one-month)
 
 ### Retrieval crawler
 
@@ -453,6 +500,16 @@ zero, `warning` for another check at zero, `note` for partial credit.
 
 **Where:** `--sarif FILE`; GitHub code scanning. **More:** [CLI reference, Options](../cli/README.md#options)
 
+### Searched
+
+Whether an engine ran a web search for an answer, read from what the run saved: yes when the provider
+reported a search, exposed a search query or the answer cites a URL; no when an OpenAI, Gemini or
+Anthropic answer shows none of these; unknown for Perplexity and OpenRouter, whose APIs search on
+every call or do not say. An answer given without a search cannot cite anything.
+
+**Where:** the `searched yes/no/unknown` column of the per-question table in `watch report`;
+`summary.by_question[].searched` in run files. **More:** [By question](#by-question)
+
 ### Sector median and the n<10 rule
 
 The median score of the scored sites in one leaderboard sector; the benchmark's README gives it with a
@@ -461,6 +518,18 @@ the median of a handful of sites would print like a real one and mean much less.
 
 **Where:** the By sector table in `benchmark/README.md` and on the leaderboard page; `sectors` in
 `benchmark/stats.json`. **More:** [benchmark/README.md, By sector](../benchmark/README.md#by-sector)
+
+### Sentence share
+
+The share of an answer's sentences that name a brand (`mention_share`), every sentence counted the
+same. A sentence ends at a line break, at `。！？`, or at `.` `!` `?` before whitespace; a piece with
+no letter or digit, such as a table rule, is not a sentence. The report gives its mean over the
+answers that name the brand. A longer answer spreads one name over more sentences, so shares from
+engines that write at different lengths are not on one scale.
+
+**Where:** the `sentence share` column of `Share of voice` in `watch report`; `mention_share` on each
+answer, its competitors, and the rows of `summary.engines` and `summary.share_of_voice` in run files.
+**More:** [Named first](#named-first)
 
 ### Site text fence
 
@@ -472,6 +541,20 @@ be read as data and never followed as instructions, and the MCP tools tell the a
 **More:** [SECURITY.md, Threat model](../SECURITY.md#threat-model)
 
 ## T
+
+### Target page (target_url)
+
+The one page of yours a tracked question follows, named in the optional `target_url` column of
+`queries.csv`: an absolute URL, or a path starting with `/` that is joined to the brand's first
+domain. An answer cites the target page when one of its citations is the same page once `www`,
+letter case, a trailing slash, the query string, the fragment and percent-encoding are set aside;
+another path or locale, or the page's canonical URL when it differs, is another page. When the
+answer cites another of your URLs and not that page, it counts as "another of your pages cited".
+
+**Where:** the table `Pages you track` in `watch report`; `target_cited` and `other_own_cited` on each
+answer in run files; the CSV's `target_cited` column; `summary.tracked_pages` in run files, the JSON
+report and the MCP `report` tool; the warning `watch check` prints for a value it cannot use.
+**More:** [CLI reference, Watch](../cli/README.md#watch)
 
 ### Thin sample
 

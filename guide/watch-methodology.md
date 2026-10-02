@@ -24,6 +24,55 @@ and call changes that are not there.
 Two consequences run through the rest of this page: intervals resample questions, not answers,
 and a diff compares each question with itself.
 
+The report also lists every question on its own, in the table "Who is named for each question"
+(`summary.by_question`): how many answers it got, how many of them cite or name the brand and
+each tracked competitor, how many name none of them, and how many came from a web search. These
+are counts, with no interval and no test; three of four answers is not a rate to compare across
+weeks. "Most cited" (`leader`) names a tracked brand only when the question has at least 4 answers
+and that brand is cited by more of them than any other. Whether an answer searched is read from
+what the run saved: yes when the provider reported a search, exposed a search query or the answer
+cites a URL; no when an OpenAI, Gemini or Anthropic answer shows none of these; unknown for
+Perplexity and OpenRouter, whose APIs search on every call or do not say, and whose adapters record
+one search per answer either way. An answer given without a search cannot cite anything.
+"No tracked brand named" counts answers that name none of the brands in the config, which says
+nothing about brands the config does not list.
+
+Each answer also records where it names each brand in the config. `mention_order` ranks the brands the
+answer names by where each is first named, the earliest match of its name, aliases or domains with the
+matcher of `mentioned`: 1 is named first. A brand the answer does not name has no order, and neither
+have two brands first named at the same place, as when one name contains the other. `mention_share` is
+the share of the answer's sentences that name the brand, every sentence counted the same. A sentence
+ends at a line break, at `。！？`, or at `.` `!` `?` followed by whitespace, so a domain or a decimal does
+not end one; a piece with no letter or digit, such as a table rule, is not a sentence. Both are read
+from the answer as saved, which keeps its first 20,000 characters. The report gives, per engine ("By
+engine") and for each brand ("Share of voice"), "named first (tracked)": the answers that name that
+brand first among the brands in the config, out of the answers that name at least one of them; and
+"sentence share": the mean `mention_share` over the answers that name it. Both describe the answers and
+carry no interval or test. They see only the brands in the config, so first among the brands you track
+may not be first in the answer. The order is the order of first mention, not a position in a list, and a
+longer answer spreads one name over more sentences, so sentence shares from engines that write at
+different lengths are not on one scale.
+
+Each question can carry a type, the `intent_tier` column of `queries.csv`, and the report gives each
+type its own rate and interval ("By question type"). A rate describes the questions behind it: a set
+of one type describes that one kind of question, and a type with few questions gets a wide clustered
+interval. The column is free text, and `watch check` counts the questions of each type, with a note
+when all share one type or none has one. These labels are suggested, so that sets read alike:
+
+| `intent_tier` | The question | Example |
+|---|---|---|
+| `list` | asks for the options in a category | best invoicing app for freelancers |
+| `vs` | compares named products | acme vs rival |
+| `alternative` | asks what to use instead of a named product | alternatives to rival |
+| `pricing` | asks about cost, plans or a free tier | how much does an invoicing app cost |
+| `problem` | describes a situation and names no category or brand | clients keep paying me late and I lose track of who owes what |
+| `persona` | says who it is for | invoicing app for a two-person design studio |
+| `verdict` | asks whether something is worth it or can be trusted | is acme worth it |
+| `channel` | is about buying or selling through another route: franchise, wholesale, distributor, procurement | invoicing software with a reseller programme |
+
+A `verdict` question about the brand names it, so it counts on the branded line (section 3), not in
+the headline.
+
 ## 2. Intervals
 
 ### Wilson (every answer independent)
@@ -102,7 +151,9 @@ one per engine plus "all engines".
 Answers are paired by question, engine and ask number, over the asks both runs made: if run A
 asked each question once and run B three times, only B's first ask is used. For question q, the
 net change d_q is the number of cited answers in B minus the number in A, summed over its paired
-asks (and, in the all-engines row, over the engines). The row reports:
+asks (and, in the all-engines row, over the engines). A question is paired only with itself: when
+its text changed between the runs under the same `query_id` (compared case-folded, with whitespace
+collapsed), it is left out of every row and named in the diff's notes. The row reports:
 
 - `before_paired`, `after_paired`: cited share of the paired answers in each run, n = `n_asks`;
 - `delta_pp`: 100 × Σ d_q / `n_asks`, in percentage points;
@@ -167,6 +218,20 @@ engine's row and takes its result instead of being counted twice.
 
 `watch diff --fail-on-drop` exits with code 4 when any row's verdict is `change` with a negative
 `delta_pp`, so a CI job can stop on a drop and on nothing else.
+
+### Answers with no citation at all
+
+Each adapter reads one answer format per provider (for OpenAI, `url_citation` annotations), so a
+provider that renames or moves its citations reads as an engine that stopped citing anything. Two
+warnings look for that shape, not for the brand: the report warns under "By engine" when an engine
+answered 5 or more questions and none of its answers carried a citation of any domain
+(`with_citations` is 0 in `summary.engines`), and `watch diff` gives an engine's row a `warning`, and
+puts the same words in the notes and on stderr, when the share of its answers carrying any citation
+fell from at least 50% to below 5% with the same model and at least 5 questions answered in the later
+run. Both count questions, not answers: the answers to one question move together, so one question
+asked five times is not five pieces of evidence. Neither changes a verdict
+or an exit code: in the saved answers a format change and an engine that stopped citing look the
+same, so the warning asks for one answer to be checked with `watch ask`.
 
 ### The interval for the change
 
@@ -267,16 +332,71 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
   search answer.
 - **The retrieval behind a citation.** The citations an API returns are the end of its retrieval: what it
   searched and read but did not cite is mostly not returned, and the shape of what is returned changes between
-  API versions, so a sudden move can be the format rather than the engine.
+  API versions, so a sudden move can be the format rather than the engine. The report and the diff warn when an
+  engine's answers stop carrying citations altogether ([Answers with no citation at all](#answers-with-no-citation-at-all)).
 - **Merit.** A citation is presence, not a verdict on quality: it says an engine named and linked a page, not
   that what it said is true or that the page deserved it. Engines also cite misleading and self-promotional
   pages, so a high rate is not evidence that a source is good, and a low one is not evidence that it is bad.
+
+## 8. One ask, one day, one month
+
+One ask of one question on one engine is an anecdote. The same question gets a different answer from one ask
+to the next: the model samples its wording, and its search can return other sources on the next call. One run
+of the whole set is a measurement of one day. Asks made minutes apart share that day's index, rankings and
+model version, so they are not independent of each other, and they say little about the next week.
+
+**Pooling.** `watch report --since DAYS` (or `--runs A..B`) counts several saved runs as one set of answers.
+It pools only runs that asked the same questions (the same `questions_hash`) as many times each (the same
+`runs`), on the same engines with the same providers and models, from the same `country`, with the same brand
+domains and URL prefixes as the newest run in the window. Otherwise it refuses and names each run that differs
+and why: a rate pooled over two question sets or two models describes neither, and every answer weighs the same
+in a pool, so a run that asked each question five times would count five times as much as a run that asked once. The output gives the runs, the calendar days from the first to the last,
+the answers, the headline rate and a row per engine. The interval is the cluster bootstrap of section 2 with
+one cluster per question: every answer to a question, from every run and every engine, is resampled together.
+
+What pooling buys is more answers per question, so each question's rate is pinned down more closely, and,
+because every run pooled asked each question as often, one unusual day weighs less. What it does not buy is more questions. The interval resamples questions, so it
+narrows only as far as their number allows: ten questions asked every week for a month are still ten
+questions. A pooled rate describes a period. It is not a test for a change, and no pooled diff exists; to ask
+whether something changed, compare two runs with `watch diff`.
+
+However many runs are pooled, the API channel cannot reproduce what a person sees in an app: the account
+(signed in or not, memory, history, settings), the network address a request comes from and the location a
+provider infers from it, and the app's own model, prompts and personalisation. Pooling API runs gives a steadier
+API rate, not an estimate of the apps (section 7).
+
+**What a plan can tell.** `watch run --dry-run` prints the plan's resolution before anything is spent: the
+fewest questions that must move the same way between two runs before `watch diff` can call a change. With E
+engines, diff tests m = E + 1 rows, each engine and all engines; with one engine, m = 1, because the
+all-engines row is that engine's test. An exact paired test on n questions reaches at best p = 2 / 2^n, every
+question moving the same way, and Holm's first step holds the smallest p to 0.05 / m. So k is the smallest n
+with m × 2 / 2^n < 0.05, the screen of section 4:
+
+| engines E | rows m | k |
+|---|---|---|
+| 1 | 1 | 6 |
+| 2 | 3 | 7 |
+| 3 | 4 | 8 |
+| 5 | 6 | 8 |
+
+A set with fewer than k questions gets "this plan cannot detect a change": every diff of two such runs reads
+`too few questions to tell`. Adding questions helps; adding engines raises k; asking each question more times
+(`runs`) does not lower it, because the test counts questions, not answers. k is a floor, not a promise: at
+least k questions must move in the direction of the change, a question that moves the other way never helps,
+and a real change of a few points moves only a few questions. The figure assumes every engine answers every
+question; a run with failures pairs fewer.
 
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
   `summary.branded`, `summary.brand_flags`, `cited_ci_clustered` and `n_questions` in every rate
-  block, and `brand_in_query`, `competitor_in_query` and `branded` on each question.
+  block, `with_citations` and `with_searches` on each row of `summary.engines`,
+  `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
+  `summary.share_of_voice`, `mention_order` and `mention_share` on each answer and on each of its
+  `competitors`, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on
+  each question, and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
+- Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool
+  with `since`): the `pooled` definition in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

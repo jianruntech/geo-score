@@ -142,7 +142,7 @@ From source (needs git): `uvx --from git+https://github.com/jianruntech/geo-scor
 | `ask` | 2 | Paid (your keys) | No | non-destructive, open-world | **`question`**, `engines`, `brand`, `domains` |
 | `run` | 3 | Paid (your keys); `dry_run` is free | A run file under `.geo-score/watch/runs/`, next to the config | non-destructive, open-world | `dry_run`, `engines`, `limit`, `max_calls`, `budget_usd` |
 | `list_runs` | 3 | Free | No | read-only, idempotent | — |
-| `report` | 3 | Free | No | read-only, idempotent | `run`, `format` |
+| `report` | 3 | Free | No | read-only, idempotent | `run`, `since`, `format` |
 | `diff` | 3 | Free | No | read-only, idempotent | `from`, `to`, `format` |
 | `status` | — | Free | No | read-only, idempotent | — |
 

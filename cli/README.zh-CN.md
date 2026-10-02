@@ -213,12 +213,13 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 
 | 命令 | |
 |---|---|
-| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv` |
-| `watch check` | 校验配置和问题，显示哪些引擎配了 Key、有没有价格 |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划并以 0 退出，有没有 Key 都一样 |
-| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
-| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
-| `watch runs` | 保存过的运行，以及各自的标题引用率 |
+| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
+| `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），并以 0 退出，有没有 Key 都一样 |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
+| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、每题问的次数、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
+| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
+| `watch runs` | 保存过的运行、各自的标题引用率，以及 `questions_hash` 的前 8 位：两次运行问的是同一组问题时，这一列相同 |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | 不打分的第二级：一个问题马上问遍所有引擎（或 `--engines` 指定的那些），不保存 |
 | `mcp` | 通过 MCP（stdio）提供打分和追踪；见 [guide/mcp.zh-CN.md](../guide/mcp.zh-CN.md) |
 
@@ -273,10 +274,65 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
 品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
 
+`target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
+`brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。
+其他写法 `watch check`、`watch run` 以及 MCP 的 `run` 和 `status` 工具都会给出警告，运行时忽略；页面不在品牌拥有的域名或 URL 前缀上时，
+也会警告，但照样匹配。之后这个问题的每条回答都记下 `target_cited`（有一条引用就是这个页面）
+和 `other_own_cited`（没有引用这个页面，但引用了你的另一个网址），报告多一张表「Pages you track」：每个页面对应哪些问题、拿到几条回答、
+其中几条引用了这个页面、几条转而引用了你的另一个网址，以及这些回答引用最多的是你的哪个网址（按引用时的原样列出）。CSV 的最后一列
+`target_cited`，在追踪页面的问题的回答上是 `Y` 或 `N`，其他情况留空。匹配的是规范化之后的同一个页面：`www`、大小写、末尾的斜杠、
+查询串、片段（`#` 之后）和百分号编码都不计，所以 `https://www.acme.com/Pricing/?utm_source=x#plans` 就是 `https://acme.com/pricing`。
+除此之外都不算：`/en/pricing` 不是 `/pricing`；页面以规范网址（canonical）被引用、而那个网址不同时，也算另一个页面。
+没能解析的跳转链接两边都不算。1.6.0 之前保存的运行，这张表由保存的引用当场算出。
+
+`intent_tier` 可以随便填。报告给每个值单独算一个引用率（「By question type」表），`watch check` 打印每种类型有几个问题；
+所有问题都是同一种类型、或者都没有类型时，会给一条提示，但不算失败。只有一种类型的问题集，测的就只是这一类问题。
+下面这些标签是建议用法，方便不同的问题集读起来一致：
+
+| `intent_tier` | 这类问题 | 例子 |
+|---|---|---|
+| `list` | 问某个品类里有哪些选择 | 适合自由职业者的开票软件推荐 |
+| `vs` | 比较几个点名的产品 | acme 和 rival 哪个好 |
+| `alternative` | 问某个点名产品用什么替代 | rival 的替代品 |
+| `pricing` | 问价格、套餐或免费额度 | 开票软件一般多少钱 |
+| `problem` | 描述一个处境，不提品类也不提品牌 | 客户老是拖款，我记不清谁还欠多少 |
+| `persona` | 说明给谁用 | 两个人的设计工作室用什么开票软件 |
+| `verdict` | 问值不值、靠不靠谱 | acme 值得买吗 |
+| `channel` | 经别的渠道买或卖：加盟、批发、经销、采购 | 有代理或经销计划的开票软件 |
+
+关于你自己品牌的 `verdict` 问题会提到品牌，所以计入含品牌问题那一行，不进标题数字。
+
 **怎么读这些数字。** 标题引用率只统计没有提到品牌的问题。「acme vs rival」几乎一定会引用 Acme，所以这类问题单列一行；
 它们超过问题集的 30% 时，`watch check` 会发出警告。一个问题有不止一条回答时（`runs` > 1，或者总体那一行合并了几个引擎），
 95% 区间用对问题做的自助法（bootstrap）重抽样，因为同一个问题的几条回答会一起变动；否则用 Wilson 区间。只有 `diff` 说
 `change` 时才算有变化。公式和算例见 [guide/watch-methodology.zh-CN.md](../guide/watch-methodology.zh-CN.md)。
+
+**合并多次运行。** 一次运行是一天的回答。`watch report --since 30`（或 `--runs A..B`）把一段时间里的运行当成一组回答来统计，
+这样每个问题的比率建立在更多回答上，某一天的异常影响也更小。只有与窗口里最新一次运行问的是同一组问题（`questions_hash` 相同）、
+每题问的次数相同（`runs` 相同）、用的是同样的引擎和模型、`country` 相同、品牌域名和 URL 前缀也相同的运行才会被合并；否则拒绝合并，并逐一列出不一致的运行和原因。
+它的 95% 区间把同一个问题的全部回答（不论来自哪次运行、哪个引擎）当作一簇：运行越多，区间最多也只能窄到问题数允许的程度。
+合并出来的比率描述的是一段时间，不是对变化的检验，也没有合并后的比较。JSON 遵循 [schema/watch.v1.json](../schema/watch.v1.json)
+里的 `$defs/pooled`；MCP 的 `report` 工具接受 `since` 参数。运行之前，`watch run --dry-run` 会打印这套计划的分辨力：E 个引擎时，
+`watch diff` 检验 E + 1 行（只有一个引擎时是一行）；至少要有 k 个问题朝同一方向变动，才可能判定变化，k 是满足 行数 × 2 / 2^n < 0.05
+的最小 n：一个引擎 6 个问题，两个引擎 7 个，三到五个引擎 8 个。多加问题有用；多加引擎会抬高 k；每题多问几次（`runs`）不会降低 k。
+见 [guide/watch-methodology.zh-CN.md · 一次提问、一天、一个月](../guide/watch-methodology.zh-CN.md#8-一次提问一天一个月)。
+
+**每个问题提到了谁。** `watch report` 逐个列出问题：拿到几条回答，其中几条引用、几条提到了你，几条引用、几条提到了每个竞品，
+几条一个追踪的品牌都没提到，几条联网搜索过（是、否或未知）；问题至少有 4 条回答、且某个追踪的品牌被引用的次数多于其他所有品牌时，
+还列出这个品牌。这些都是计数，不是比率。回答有没有联网搜索，从保存的回答里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，
+就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 的回答一律记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明。JSON 报告和 MCP 的
+`report` 工具以 `summary.by_question` 给出同一张表；1.6.0 之前保存的运行，由保存的回答当场算出。
+
+**谁最先被提到。** 每条回答都为你的品牌和每个竞品记下 `mention_order` 和 `mention_share`。`mention_order`：回答在配置里所有品牌中
+最先提到的那个记 1，其次记 2，依此类推；位置取品牌名、别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同。回答没提到这个品牌时
+记为 null；两个品牌第一次被提到的位置相同（一个名字包含另一个）时，两者也都是 null。`mention_share` 是回答里提到这个品牌的句子
+占全部句子的比例，每句同等计数：句子在换行处、在 `。！？` 处，或在后面跟着空白的 `.` `!` `?` 处结束；没有任何字母、汉字或数字的片段
+（比如表格的分隔行）不算一句。配置里有竞品时，「By engine」表多一列 *named first (tracked)*：在你追踪的品牌里最先提到你的回答数，分母是至少提到配置里
+一个品牌的回答数。「Share of voice」表给每个品牌加上 *named first (tracked)* 和 *sentence share*：在提到这个品牌的回答里，`mention_share`
+的平均值。配置里没列的品牌这两项都看不见，所以在你追踪的品牌里排第一，不一定是在回答里排第一；这里的顺序是第一次提到的先后，
+不是在列表里的位置。两者都从保存下来的回答里读，回答只保存前 20,000 个字符（被截断的回答 `answer_truncated` 为 true）。JSON 报告
+在 `summary.engines` 和 `summary.share_of_voice` 的每一行里以 `named_first`、`any_named` 和 `mention_share` 给出；1.6.0 之前保存的运行，
+由保存的回答当场算出。
 
 **通过 MCP 使用。** `geo-score-mcp`（在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，

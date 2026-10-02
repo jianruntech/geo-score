@@ -5,6 +5,105 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **`watch report` shows who is named for each question.** A new table, "Who is named for each question",
+  lists every question with its answers and, out of those, how many cite and name you, how many cite and name
+  each competitor, how many name no tracked brand, how many searched the web (yes, no or unknown), and the
+  tracked brand cited most often, given only when the question has at least 4 answers and one brand is ahead of
+  every other. Every value is a count. Whether an answer searched is derived from what every run already saves
+  (a reported search, an exposed search query or a citation); Perplexity and OpenRouter answers are always
+  unknown, because their adapters record one search per answer whatever happened. Three lines under the table
+  say what the counts cannot: an answer given without a search cannot cite anything, "no tracked brand named"
+  covers only the brands in your config, and why some answers are unknown. The summary gains
+  `summary.by_question` (`$defs/by_question` in schema/watch.v1.json), the JSON report and the MCP `report` tool
+  carry it, and it is an optional property of the tool's output schema, so the MCP contract only grows. A run
+  saved before this release gets it computed from its saved answers when it is reported; the run file is not
+  rewritten.
+- **Suggested question types, and `watch check` counts them.** `intent_tier` stays free text; cli/README.md and
+  guide/watch-methodology.md now suggest eight labels, each with one line and an example: `list`, `vs`,
+  `alternative`, `pricing`, `problem` (a situation that names no category or brand), `persona` (who it is for),
+  `verdict` (is it worth it, can it be trusted) and `channel` (franchise, wholesale, distributor, procurement).
+  `watch check` prints how many questions have each type, with a note, never a failure, when every question has
+  the same type or none has one. `watch init` writes two more placeholder questions, a `problem` row and a
+  `verdict` row.
+- **`target_url` is read: `watch report` counts how often the page a question tracks is cited.** The column was
+  documented and saved but nothing used it. It is now resolved when the questions load: an absolute `http(s)` URL
+  as written (fragment and `utm_*` parameters dropped), or a path starting with `/` joined to the brand's first
+  domain. `watch check`, `watch run` and the MCP `run` (its dry run too) and `status` tools warn about any other
+  value, which the run ignores, and about a page that is not on the brand's domains or URL prefixes, which is still
+  matched. Each answer records `target_cited` (one of its
+  citations is that page) and `other_own_cited` (it cites another URL of the brand's, not that page), both null
+  when the question tracks no page. The match is the exact page once `www`, letter case, a trailing slash, the
+  query string, the fragment and percent-encoding are set aside; `/en/x` is not `/x`, and a citation left as an
+  unresolved redirect counts as neither. A new table, "Pages you track", gives per page its questions, their
+  answers, how many cite the page, how many cite another of your URLs instead, and the URL of yours those
+  answers cite most, exactly as cited. The CSV export gains a last column, `target_cited` (`Y`, `N` or empty).
+  Schema: `target_cited` and `other_own_cited` in `$defs/sample`, `summary.tracked_pages` with
+  `$defs/tracked_page`, and a description of the saved `target_url`. The MCP `report` tool's output schema gains
+  the optional `tracked_pages`, so the MCP contract only grows. A run saved before this release gets the table
+  computed from its saved citations when it is reported.
+- **`watch report` shows who is named first.** Each answer records, for the brand and each competitor,
+  `mention_order` (1 for the brand named before every other brand in the config, by the earliest match of its name,
+  aliases or domains with the matcher of `mentioned`; null when it is not named, or when two brands are first named
+  at the same place) and `mention_share` (the share of the answer's sentences that name it, every sentence counted
+  the same; a sentence ends at a line break, at `。！？`, or at `.` `!` `?` before whitespace). With competitors in the
+  config, "By engine" gains a column, "named first (tracked)": the answers that name you first among the brands in
+  the config, out of the answers that name at least one of them. "Share of voice" gains "named first (tracked)" and
+  "sentence share", the mean `mention_share` over the answers that name each brand, with three lines on how they are
+  read. Brands the config does not list are not seen, so first among the brands you track may not be first in the
+  answer. Both are read from the answer as saved, which keeps its first 20,000 characters. Schema: `mention_order`
+  and `mention_share` in `$defs/sample` and its competitors, and `named_first`, `any_named` and `mention_share` on
+  the rows of `summary.engines` and `summary.share_of_voice`. The MCP tools' schemas are unchanged. A run saved
+  before this release gets them computed from its saved answers when it is reported.
+- **`watch run --dry-run` says what the plan can detect, and `watch report` can pool runs.** The dry run prints the
+  plan's resolution: with E engines `watch diff` tests E + 1 rows (one row with one engine), and it can call a
+  change only when at least k questions move the same way between two runs, k being the smallest n with rows × 2 /
+  2^n < 0.05, the screen diff already applies: 6 questions with one engine, 7 with two, 8 with three to five. A set
+  with fewer questions gets "this plan cannot detect a change": more questions help, more engines raise k, and more
+  asks per question do not lower it. The MCP `run` tool's dry run prints the same lines. `watch report --since DAYS`
+  (or `--runs A..B`) counts the saved runs of a period as one set of answers, when each asked the same questions
+  (the same `questions_hash`) as many times each (the same `runs`, so every run weighs the same) on the same engines
+  with the same models, from the same `country`, with the same brand domains and URL prefixes as the newest;
+  otherwise it exits 1 and names every run that differs and why. It gives the runs, the calendar days they cover,
+  the answers, the headline rate and a row per engine, with a 95% interval that resamples questions, each with every
+  answer it got in every run, and the run report's notes (the API channel, questions that name the brand, what
+  counts as not measured, and that it does not predict traffic, rankings or revenue). There is no pooled diff.
+  Schema: `$defs/pooled` in schema/watch.v1.json. MCP: the `report` tool gains an optional `since` argument and its
+  output schema the optional `runs` and `days`, so the MCP contract only grows. guide/watch-methodology.md gains
+  section 8, "One ask, one day, one month".
+
+### Fixed
+- **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question
+  reworded under the same id was compared with its old wording, and the edit could read as a change (and make
+  `--fail-on-drop` exit 4). The question text is now compared case-folded, with whitespace collapsed: a question
+  whose text changed is left out of every row and named in the notes (at most 10 ids, then "and N more"). The
+  6-question minimum and the screen for rows no test could call apply to the questions left, so on runs with
+  edited questions a verdict can change, and can become `too few questions to tell`. The notes also say when the
+  runs asked from different locations (`country`) and when an engine id moved to another provider. Run files gain
+  an optional top-level `questions_hash` (SHA-256 over the sorted pairs of id and normalised text, defined in
+  schema/watch.v1.json), and `watch runs` shows its first 8 characters; for older runs it is computed from the
+  saved questions.
+- **An API that changes its answer format no longer reads, without a word, as an engine that stopped citing.**
+  Each adapter reads one format per provider, so a renamed citation field gave answers with no citations at all,
+  and `watch diff --fail-on-drop` could exit 4 on what was a format change. `watch report` now warns under "By
+  engine" when an engine answered 5 or more questions and none of its answers carried a citation of any domain.
+  `watch diff` adds a `warning` to an engine's row, the same words to the notes and to stderr, when the share of
+  its answers carrying any citation fell from at least 50% to below 5% with the same model and at least 5
+  questions answered in the later run. Both count questions, not answers, because the answers to one question
+  move together. The verdict and exit code 4 are unchanged: the warning asks for one answer to be checked with
+  `watch ask`. The summary gains `with_citations` and `with_searches` on each row of `summary.engines`, and a
+  run saved without them gets them computed from its saved answers when it is reported. Schema: both counts, and
+  an optional `warning` in `$defs/diff_row`; the MCP `diff` tool's output schema gains the optional `warning`,
+  so the MCP contract only grows.
+- **`p3.video`: Douyin, Xigua and Kuaishou channel links count as channels.** A link to a Douyin account page
+  (`douyin.com/user/…`, or the `iesdouyin.com/share/user/…` form an expanded share link takes), a Xigua channel
+  (`ixigua.com/home/…`, `m.ixigua.com/user/…`) or a Kuaishou profile (`kuaishou.com/profile/…`,
+  `live.kuaishou.com/profile/…`) is now read as a channel link, and Douyin's open-platform player
+  (`open.douyin.com/player/video`) as an embedded player; through 1.5.0 only YouTube, Bilibili and Vimeo were.
+  Short links (`v.douyin.com`, `v.kuaishou.com`) and single-video URLs are never channels. The evidence line now
+  says "channel links", not "official channel links", because a link to an account the site does not own counts too.
+  Direction: up, on sites that link them. The leaderboard picks this up at its next run.
+
 ## [1.5.0] — 2026-09-30
 
 A release about reading sites the way the rubric says, and about failing CI for the right reason. The two

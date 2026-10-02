@@ -83,6 +83,15 @@ GitHub Action 的 `baseline` 输入，以及 `delta`、`dropped-checks` 两个�
 **出现在：** `queries.csv` 可选的 `branded` 列（`auto`、`yes` 或 `no`）；运行文件里的 `brand_in_query`；这类问题超过三成时
 `watch check` 给出的警告。**详见：** [watch 方法说明 · 提到品牌的问题](watch-methodology.zh-CN.md#3-提到品牌的问题)
 
+### By question（逐个问题）
+
+追踪报告里按问题看的视图。对每个追踪的问题，它统计拿到几条回答，其中几条引用或提到了你、几条引用或提到了每个追踪的竞品、
+几条一个追踪的品牌都没提到、几条[联网搜索过](#searched联网搜索过)，以及被引用次数最多的追踪品牌；后者只在问题至少有 4 条回答、
+且这个品牌多于其他所有品牌时才给出。每个值都是计数，不是比率。
+
+**出现在：** `watch report` 里的 `Who is named for each question` 表；运行文件、JSON 报告和 MCP `report` 工具里的 `summary.by_question`。
+**详见：** [watch 方法说明 · 单位](watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)
+
 ## C
 
 ### Check、check id（检查项与检查项 id）
@@ -260,6 +269,16 @@ MCP 服务让 Agent 调用的功能：`score_site`（第一级，免费）、`as
 
 ## N
 
+### Named first（最先被提到）
+
+追踪报告里，最先提到某个品牌（在配置里所有品牌中）的回答数，分母是至少提到配置里一个品牌的回答数。先后看每条回答的
+`mention_order`：取每个品牌的名字、别名或域名最早的一处匹配，匹配规则与[被提及](#mentioned被提及)相同。两个品牌第一次被提到的位置
+相同时都没有名次；配置里没列的品牌看不见，所以在你追踪的品牌里排第一，不一定是在回答里排第一。它读的是保存下来的回答，即前 20,000 个字符。
+
+**出现在：** `watch report` 里 `By engine` 和 `Share of voice` 两张表的 `named first (tracked)` 列；运行文件里每条回答及其竞品的 `mention_order`；
+`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first` 与 `any_named`。
+**详见：** [watch 方法说明 · 单位](watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)
+
 ### Normalised score（归一化分）
 
 也就是 0–100 分本身：就绪度（得分加上加分项）除以可观测满分，乘以 100 后四舍五入，最高 100。有门槛项得 0 分时，再封顶 40。
@@ -319,6 +338,15 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 **出现在：** 每个检查项旁边的 `3/5`；JSON 的 `checks[].points` 和 `max`；`--assert` 里的取值，一个数或 `max`。
 **详见：** [量表 v1.1](../rubric/v1.1.zh-CN.md)
 
+### Pooled report（合并报告）
+
+把多次保存下来的 watch 运行当成一组回答来统计：最近 N 天的运行，或一段运行 ID 范围内的运行。只有问的是同一组问题、每题问的次数相同、用的是同样的引擎和模型、
+`country` 相同、品牌域名也相同的运行才会被合并；否则命令拒绝合并，并列出不一致的运行。它的区间把同一个问题的全部回答（不论来自哪次运行）
+当作一簇，所以合并最多只能把区间收窄到问题数允许的程度。它描述的是一段时间，不是对变化的检验。
+
+**出现在：** `watch report --since DAYS` 或 `--runs A..B`；MCP 的 `report` 工具带 `since`；`schema/watch.v1.json` 里的 `$defs/pooled`。
+**详见：** [watch 方法说明 · 一次提问、一天、一个月](watch-methodology.zh-CN.md#8-一次提问一天一个月)
+
 ### Probe（探测）
 
 `g.reachable` 用检索爬虫的 user-agent 字符串发出的实时请求：十个 UA 各发一遍，最多测三个抽样页面；
@@ -335,6 +363,16 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 **详见：** [AI 爬虫 user-agent 一览](../reference/ai-crawlers.md)（英文）、[量表 v1.1 · 检索 UA 实测可达](../rubric/v1.1.zh-CN.md#检索-ua-实测可达--5--greachable)
 
 ## R
+
+### Resolution（分辨力）
+
+一套 watch 计划在运行之前就能知道的事：两次运行之间至少要有 k 个问题朝同一方向变动，`watch diff` 才可能判定变化。
+E 个引擎时 diff 检验 E + 1 行（只有一个引擎时是一行），k 是满足 行数 × 2 / 2^n < 0.05 的最小 n：一个引擎 6，两个引擎 7，三到五个引擎 8。
+多加问题有用；多加引擎会抬高 k；每题多问几次不会降低 k。
+
+**出现在：** `watch run --dry-run` 和 MCP `run` 工具带 `dry_run` 时打印的 `resolution:` 一行；问题集少于 k 个问题时，还会加上
+`this plan cannot detect a change`。
+**详见：** [watch 方法说明 · 一次提问、一天、一个月](watch-methodology.zh-CN.md#8-一次提问一天一个月)
 
 ### Retrieval crawler（检索爬虫）
 
@@ -385,6 +423,15 @@ Applebot、Amazonbot。
 
 **出现在：** `--sarif FILE`；GitHub 代码扫描。**详见：** [CLI 说明 · 参数](../cli/README.zh-CN.md#options)
 
+### Searched（联网搜索过）
+
+引擎给出某条回答前有没有联网搜索，从运行保存的内容里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，就算「是」；
+OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 记为「未知」，因为它们的 API
+每次调用都会搜索，或者不说明。没有联网搜索就给出的回答，不可能引用任何东西。
+
+**出现在：** `watch report` 逐题表里的 `searched yes/no/unknown` 列；运行文件里的 `summary.by_question[].searched`。
+**详见：** [By question（逐个问题）](#by-question逐个问题)
+
 ### Sector median and the n<10 rule（行业中位数与 n<10 规则）
 
 榜单上某个行业里已打分站点的分数中位数，基准的 README 同时给出 95% 自助法区间。有分的站不足 10 个的行业不给中位数，
@@ -392,6 +439,16 @@ Applebot、Amazonbot。
 
 **出现在：** `benchmark/README.md` 和榜单页的分行业表；`benchmark/stats.json` 的 `sectors`。
 **详见：** [benchmark/README.md · By sector](../benchmark/README.md#by-sector)（英文）
+
+### Sentence share（句子占比）
+
+回答里提到某个品牌的句子占全部句子的比例（`mention_share`），每句同等计数。句子在换行处、在 `。！？` 处，或在后面跟着空白的
+`.` `!` `?` 处结束；没有任何字母、汉字或数字的片段（比如表格的分隔行）不算一句。报告给出的是它在提到这个品牌的回答里的平均值。
+回答越长，同一个名字摊到的句子越多，所以回答长短不同的引擎之间，这个比例不在同一把尺子上。
+
+**出现在：** `watch report` 里 `Share of voice` 表的 `sentence share` 列；运行文件里每条回答、其竞品，以及 `summary.engines` 和
+`summary.share_of_voice` 每一行的 `mention_share`。
+**详见：** [Named first（最先被提到）](#named-first最先被提到)
 
 ### Site text fence（«site text» 围栏）
 
@@ -401,6 +458,16 @@ Applebot、Amazonbot。
 **出现在：** 每份报告里的证据和 `--explain` 的输出；MCP 工具的输出。**详见：** [SECURITY.md · Threat model](../SECURITY.md#threat-model)（英文）
 
 ## T
+
+### Target page（目标页，target_url）
+
+一个追踪的问题所跟踪的你的那一个页面，写在 `queries.csv` 可选的 `target_url` 列里：完整网址，或者以 `/` 开头、接在品牌第一个域名后面的路径。
+回答的某条引用在不计 `www`、大小写、末尾斜杠、查询串、片段和百分号编码之后就是这个页面，才算引用了目标页；换一个路径或语言版本，
+或者页面以不同的规范网址（canonical）被引用，都算另一个页面。回答没有引用这个页面、却引用了你的另一个网址时，计入「another of your pages cited」。
+
+**出现在：** `watch report` 里的 `Pages you track` 表；运行文件里每条回答的 `target_cited` 和 `other_own_cited`；CSV 的 `target_cited` 列；
+运行文件、JSON 报告和 MCP `report` 工具里的 `summary.tracked_pages`；`watch check` 对用不了的值给出的警告。
+**详见：** [CLI 说明 · 第二、三级](../cli/README.zh-CN.md#watch)
 
 ### Thin sample（样本少）
 

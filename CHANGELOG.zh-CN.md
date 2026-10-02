@@ -4,6 +4,70 @@
 
 ## [Unreleased]
 
+### 新增
+- **`watch report` 列出每个问题提到了谁。** 新表「Who is named for each question」逐个列出问题：拿到几条回答，其中几条引用、几条提到了你，
+  几条引用、几条提到了每个竞品，几条一个追踪的品牌都没提到，几条联网搜索过（是、否或未知），以及被引用次数最多的追踪品牌；后者只在问题
+  至少有 4 条回答、且这个品牌多于其他所有品牌时才给出。每个值都是计数。回答有没有联网搜索，由每次运行本来就保存的内容推出（报告的搜索次数、
+  给出的搜索词或引用）；Perplexity 和 OpenRouter 的回答一律记为「未知」，因为它们的适配器不管实际情况都为每条回答记一次搜索。表下三行说明
+  这些计数说明不了什么：没有联网搜索的回答不可能引用任何东西；「no tracked brand named」只覆盖配置里的品牌；以及为什么有些回答是「未知」。
+  summary 新增 `summary.by_question`（schema/watch.v1.json 的 `$defs/by_question`），JSON 报告和 MCP `report` 工具都带上它；它是该工具
+  输出 schema 里的可选字段，MCP 契约只增不减。本版之前保存的运行在出报告时由保存的回答当场算出，运行文件本身不会被改写。
+- **建议的问题类型，`watch check` 会统计。** `intent_tier` 仍然可以随便填；cli/README 和 guide/watch-methodology 现在建议 8 个标签，
+  各附一句说明和一个例子：`list`、`vs`、`alternative`、`pricing`、`problem`（描述一个处境，不提品类也不提品牌）、`persona`（给谁用）、
+  `verdict`（值不值、靠不靠谱）和 `channel`（加盟、批发、经销、采购）。`watch check` 打印每种类型有几个问题；所有问题同属一种类型、
+  或者都没有类型时给一条提示，但不算失败。`watch init` 多写两个占位问题：一行 `problem`，一行 `verdict`。
+- **`target_url` 开始生效：`watch report` 统计问题追踪的页面被引用了几次。** 这一列以前写进了文档、也存进了运行文件，但没有任何代码读它。
+  现在读取问题时就解析它：完整的 `http(s)` 网址按原样使用（去掉片段和 `utm_*` 参数），以 `/` 开头的路径接在品牌的第一个域名后面。
+  其他写法 `watch check`、`watch run` 以及 MCP 的 `run`（包括试运行）和 `status` 工具都会警告，运行时忽略；页面不在品牌的域名或
+  URL 前缀上时也会警告，但照样匹配。每条回答记下 `target_cited`（有一条引用就是这个页面）和 `other_own_cited`（没有引用这个页面，但引用了品牌的另一个网址）；问题不追踪页面时两者都是 null。
+  匹配的是不计 `www`、大小写、末尾斜杠、查询串、片段和百分号编码之后的同一个页面；`/en/x` 不是 `/x`，没能解析的跳转链接两边都不算。
+  新表「Pages you track」逐个页面列出对应的问题、回答数、其中几条引用了这个页面、几条转而引用了你的另一个网址，以及这些回答引用最多的
+  你的网址（按引用时的原样）。CSV 导出最后多一列 `target_cited`（`Y`、`N` 或留空）。Schema 新增 `$defs/sample` 里的 `target_cited`
+  和 `other_own_cited`、`summary.tracked_pages` 及 `$defs/tracked_page`，并给保存的 `target_url` 加了说明。MCP `report` 工具的输出
+  schema 新增可选的 `tracked_pages`，MCP 契约只增不减。本版之前保存的运行在出报告时由保存的引用当场算出这张表。
+- **`watch report` 列出谁最先被提到。** 每条回答为品牌和每个竞品记下 `mention_order`（在配置里所有品牌中最先被提到的记 1，位置取名字、
+  别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同；没提到、或两个品牌第一次被提到的位置相同时为 null）和 `mention_share`
+  （提到它的句子占全部句子的比例，每句同等计数；句子在换行处、`。！？` 处，或后面跟着空白的 `.` `!` `?` 处结束）。配置里有竞品时，
+  「By engine」表多一列「named first (tracked)」：在配置里的品牌中最先提到你的回答数，分母是至少提到配置里一个品牌的回答数。
+  「Share of voice」表多出「named first (tracked)」
+  和「sentence share」（在提到这个品牌的回答里 `mention_share` 的平均值），表下三行说明怎么读。配置里没列的品牌看不见，所以在你追踪的
+  品牌里排第一，不一定是在回答里排第一。两者都从保存下来的回答里读，回答只保存前 20,000 个字符。Schema：`$defs/sample` 及其竞品里
+  新增 `mention_order` 和 `mention_share`，`summary.engines` 与 `summary.share_of_voice` 每一行新增 `named_first`、`any_named` 和
+  `mention_share`。MCP 工具的 schema 不变。本版之前保存的运行在出报告时由保存的回答当场算出。
+- **`watch run --dry-run` 说明这套计划能测出什么，`watch report` 可以合并多次运行。** 试运行会打印计划的分辨力：E 个引擎时，
+  `watch diff` 检验 E + 1 行（只有一个引擎时是一行）；两次运行之间至少要有 k 个问题朝同一方向变动，才可能判定变化。k 是满足
+  行数 × 2 / 2^n < 0.05 的最小 n，也就是 diff 本来就用的筛选：一个引擎 6 个问题，两个引擎 7 个，三到五个引擎 8 个。问题更少时打印
+  「this plan cannot detect a change」：多加问题有用，多加引擎会抬高 k，每题多问几次不会降低 k。MCP `run` 工具试运行时打印同样的几行。
+  `watch report --since DAYS`（或 `--runs A..B`）把一段时间里保存的运行当成一组回答来统计，前提是每一次都与最新一次问的是同一组问题
+  （`questions_hash` 相同）、每题问的次数相同（`runs` 相同，每次运行分量一样）、用的是同样的引擎和模型、
+  `country` 相同、品牌域名和 URL 前缀也相同；否则以 1 退出，并逐一列出不一致的运行和原因。
+  输出给出合并了哪些运行、覆盖的日历天数、回答数、标题引用率和每个引擎一行，95% 区间对问题重抽样（每个问题带着它在每次运行里的全部回答），
+  并保留单次报告的说明（API 渠道、提到品牌的问题、什么算未测量，以及它预测不了流量、排名或收入）。
+  没有合并后的比较。Schema：schema/watch.v1.json 新增 `$defs/pooled`。MCP：`report` 工具新增可选参数 `since`，
+  输出 schema 新增可选的 `runs` 和 `days`，MCP 契约只增不减。guide/watch-methodology 新增第 8 节「一次提问、一天、一个月」。
+
+### 修复
+- **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成
+  「变化」（`--fail-on-drop` 也会因此以退出码 4 退出）。现在会比较问题文字（忽略大小写、合并空白）：文字改过的问题不进入任何一行，
+  并在说明里点名（最多列 10 个 id，其余写成 `and N more`）。至少 6 个问题的门槛，以及对任何检验都判不出来的行的筛查，都只按剩下的问题计算，
+  所以在含改写问题的运行上，结论可能变化，也可能变成 `too few questions to tell`。两次运行的提问地区（`country`）不同、或某个引擎 id
+  换了服务商时，说明里也会写明。运行文件新增可选的顶层字段 `questions_hash`（对按 id 排序的「id + 规范化文字」对做 SHA-256，定义见
+  schema/watch.v1.json），`watch runs` 显示它的前 8 位；更早的运行由保存的问题当场算出。
+- **API 改了回答格式，不再悄无声息地被读成「引擎不再引用」。** 每个适配器只读各家服务商的一种格式，引用字段一改名，回答就一条引用都没有，
+  `watch diff --fail-on-drop` 也可能因为一次格式变化以退出码 4 退出。现在某个引擎回答了 5 个或更多问题、
+  却没有一条回答带任何域名的引用时，`watch report` 在「By engine」下给出警告；同一模型下，某个引擎带任何引用的回答占比从至少 50%
+  降到 5% 以下、且后一次运行至少回答了 5 个问题时，`watch diff` 在这个引擎的行上加 `warning`，并把同样的话写进说明和 stderr。
+  两者数的都是问题而不是回答，因为同一个问题的几条回答会一起变动。结论和退出码 4 都不变：警告请你用 `watch ask`
+  核对一条回答。summary 的 `summary.engines` 每一行新增 `with_citations` 和 `with_searches`，没有这两项的旧运行在出报告时由保存的回答
+  当场算出。Schema 新增这两个计数，以及 `$defs/diff_row` 里可选的 `warning`；MCP `diff` 工具的输出 schema 新增可选的 `warning`，
+  MCP 契约只增不减。
+- **`p3.video`：抖音、西瓜视频和快手的频道链接算作频道。** 指向抖音账号主页（`douyin.com/user/…`，或分享链接展开后的
+  `iesdouyin.com/share/user/…`）、西瓜视频频道（`ixigua.com/home/…`、`m.ixigua.com/user/…`）或快手个人主页
+  （`kuaishou.com/profile/…`、`live.kuaishou.com/profile/…`）的链接，现在读作频道链接；抖音开放平台的播放器
+  （`open.douyin.com/player/video`）读作嵌入播放器。1.5.0 及以前只认 YouTube、B 站和 Vimeo。短链接（`v.douyin.com`、
+  `v.kuaishou.com`）和单条视频的链接一律不算频道。证据行里的「official channel links」改为「channel links」，
+  因为指向并非本站所有的账号的链接也会计入。方向：上升，只涉及链接了这些平台的网站。榜单在下一次重跑时体现这一变化。
+
 ## [1.5.0] — 2026-09-30
 
 这一版关乎按量表的本意读网站，也关乎让 CI 为对的原因失败。两个爬虫门槛项现在只看 10 个检索爬虫，按 RFC 9309 为每个爬虫选

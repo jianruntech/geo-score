@@ -245,12 +245,13 @@ measured" and the readiness report is unchanged.
 
 | Command | |
 |---|---|
-| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv` |
-| `watch check` | Validate the config and the questions, and show which engines have keys and prices |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and exits 0, with or without keys |
-| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded` |
-| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
-| `watch runs` | Saved runs and their headline rate |
+| `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv`, with one placeholder question for each of the types `list`, `pricing`, `alternative`, `problem` and `verdict` |
+| `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, warn about a `target_url` it cannot use, and show which engines have keys and prices |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer), and exits 0, with or without keys |
+| `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
+| `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | Several saved runs pooled: those started in the last DAYS days, or from run A to run B, both included. Each must match the newest (same questions, asks per question, engines, models, country and brand domains); otherwise it exits 1 and names every run that differs. Gives the runs, the days they cover, the answers, the headline rate and a row per engine |
+| `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
+| `watch runs` | Saved runs, their headline rate and the first 8 characters of their `questions_hash`, which two runs share when they asked the same questions |
 | `watch ask "question" [--engines a,b] [--brand NAME] [--domain D] [--format text\|md\|json]` | Level 2 without the score: one question to every engine, now, not saved |
 | `mcp` | Score and watch over MCP (stdio); see [guide/mcp.md](../guide/mcp.md) |
 
@@ -312,6 +313,41 @@ fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides t
 for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
 a nickname the matcher cannot see.
 
+`target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
+or a path that starts with `/`, which is joined to the first of `brand.domains`
+(`/pricing` becomes `https://acme.com/pricing`). `watch check`, `watch run` and the MCP `run` and
+`status` tools warn about any other value, and the run ignores it; they also warn, and the run still
+matches, when the page is not on a domain or URL prefix the brand owns. Each answer to the question then records `target_cited` (one of its citations is
+that page) and `other_own_cited` (it cites another URL of yours, not that page), and the report
+adds a table, "Pages you track": per page, its questions, their answers, how many cite the page,
+how many cite another of your URLs instead, and which of your URLs those answers cite most, shown
+exactly as cited. The CSV's last column, `target_cited`, is `Y` or `N` on an answer to a question
+that tracks a page and empty otherwise. The match is the exact page after normalisation: `www`,
+letter case, a trailing slash, the query string, the fragment and percent-encoding are set aside,
+so `https://www.acme.com/Pricing/?utm_source=x#plans` is `https://acme.com/pricing`. Nothing else
+is: `/en/pricing` is not `/pricing`, and a page cited by its canonical URL, when that URL differs,
+is another page. A citation left as an unresolved redirect counts as neither. For a run saved
+before 1.6.0 the table is computed from the saved citations.
+
+`intent_tier` is free text. The report gives each value its own rate ("By question type"), and
+`watch check` prints how many questions have each one, with a note, never a failure, when every
+question has the same type or none has one. A set of one type measures that one kind of question.
+These labels are suggested, so that sets read alike:
+
+| `intent_tier` | The question | Example |
+|---|---|---|
+| `list` | asks for the options in a category | best invoicing app for freelancers |
+| `vs` | compares named products | acme vs rival |
+| `alternative` | asks what to use instead of a named product | alternatives to rival |
+| `pricing` | asks about cost, plans or a free tier | how much does an invoicing app cost |
+| `problem` | describes a situation and names no category or brand | clients keep paying me late and I lose track of who owes what |
+| `persona` | says who it is for | invoicing app for a two-person design studio |
+| `verdict` | asks whether something is worth it or can be trusted | is acme worth it |
+| `channel` | is about buying or selling through another route: franchise, wholesale, distributor, procurement | invoicing software with a reseller programme |
+
+A `verdict` question about your own brand names it, so it counts on the branded line, not in the
+headline.
+
 **Reading the numbers.** The headline rate counts only questions that do not name the brand.
 "acme vs rival" all but guarantees an Acme citation, so those questions get their own line, and
 `watch check` warns when they are more than 30% of the set. When a question has more than one
@@ -319,6 +355,48 @@ answer (`runs` > 1, or several engines in the overall line), the 95% interval is
 questions, because answers to one question move together; otherwise it is Wilson. Call something a
 change only when `diff` says `change`. Formulas and a worked example:
 [guide/watch-methodology.md](../guide/watch-methodology.md).
+
+**Pooling runs.** One run is one day's answers. `watch report --since 30` (or `--runs A..B`) counts the runs
+of a period as one set of answers, so each question's rate rests on more answers and one unusual day weighs
+less. It pools only runs that asked the same questions (the same `questions_hash`) as many times each (the same
+`runs`), on the same engines with the same models, from the same `country`, with the same brand domains and URL
+prefixes as the newest run in the window, and refuses otherwise, naming each run that differs and why. Its 95% interval treats every answer to one
+question, from every run and engine, as one cluster: more runs narrow it only as far as the number of questions
+allows. A pooled rate describes a period; it is not a test for a change, and there is no pooled diff. The JSON
+follows `$defs/pooled` in [schema/watch.v1.json](../schema/watch.v1.json); the MCP `report` tool takes `since`.
+Before a run, `watch run --dry-run` prints the plan's resolution: with E engines, `watch diff` tests E + 1 rows
+(one row with one engine), and a change can be called only when at least k questions move the same way, k being
+the smallest n with rows × 2 / 2^n < 0.05: 6 questions with one engine, 7 with two, 8 with three to five. More
+questions help; more engines raise k; more asks per question (`runs`) do not lower it.
+[guide/watch-methodology.md, One ask, one day, one month](../guide/watch-methodology.md#8-one-ask-one-day-one-month).
+
+**Who is named for each question.** `watch report` lists every question with the number of answers
+it got and, out of those, how many cite and name you, how many cite and name each competitor, how
+many name no tracked brand, how many searched the web (yes, no or unknown), and the tracked brand
+cited most often when the question has at least 4 answers and one brand is ahead of every other.
+These are counts, not rates. Whether an answer searched is read from the saved answer: yes when the
+provider reported a search, exposed a search query or the answer cites a URL; no when an OpenAI,
+Gemini or Anthropic answer shows none of these; unknown for every Perplexity and OpenRouter answer,
+because those APIs search on every call or do not say. The JSON
+report and the MCP `report` tool carry the same table as `summary.by_question`; for a run saved
+before 1.6.0 it is computed from the saved answers.
+
+**Who is named first.** Each answer records, for your brand and each competitor, `mention_order` and
+`mention_share`. `mention_order` is 1 for the brand the answer names before every other brand in your
+config, 2 for the next, and so on, by the earliest match of its name, aliases or domains with the
+matcher of `mentioned`; it is null when the answer does not name the brand, and for two brands first
+named at the same place, one name inside the other. `mention_share` is the share of the answer's
+sentences that name the brand, every sentence counted the same: a sentence ends at a line break, at
+`。！？`, or at `.` `!` `?` before whitespace, and a piece with no letter or digit, such as a table rule,
+is not a sentence. With competitors in the config, "By engine" gains a column, *named first
+(tracked)*: the answers that name you first among the brands you track, out of the answers that name
+at least one of them. "Share of voice" gains *named first (tracked)* for every brand and *sentence
+share*, the mean `mention_share` over the answers that name it. Brands your config does not list are
+invisible to both, so first among the brands you track may not be first in the answer, and the order
+is the order of first mention, not a position in a list. Both are read from the answer as saved, which
+keeps its first 20,000 characters (`answer_truncated` marks an answer that was cut). The JSON report
+carries them as `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
+`summary.share_of_voice`; for a run saved before 1.6.0 they are computed from the saved answers.
 
 **Over MCP.** `geo-score-mcp` (`geo_score.py mcp` from a clone) serves all three levels to an agent
 over stdio, with the same config and caps. It reads keys from its own environment, which a desktop

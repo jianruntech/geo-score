@@ -145,8 +145,11 @@ class ProviderParsing(Base):
         self.assertEqual(s["rank"], 1)
         self.assertEqual(s["quoted_url"], "https://www.lumo.example/free")   # utm_source=openai dropped
         self.assertTrue(s["mentioned"])
-        self.assertEqual(s["competitors"]["Pixa"], {"cited": True, "rank": 2, "mentioned": True})
-        self.assertEqual(s["competitors"]["Reelcraft"], {"cited": False, "rank": None, "mentioned": False})
+        self.assertEqual((s["mention_order"], s["mention_share"]), (1, 1.0))     # one sentence, Lumo named first
+        self.assertEqual(s["competitors"]["Pixa"], {"cited": True, "rank": 2, "mentioned": True,
+                                                    "mention_order": 2, "mention_share": 1.0})
+        self.assertEqual(s["competitors"]["Reelcraft"], {"cited": False, "rank": None, "mentioned": False,
+                                                         "mention_order": None, "mention_share": None})
         self.assertEqual(s["search_queries"], ["best free ai video generator"])
         self.assertEqual(res["usage"], {"input_tokens": 1000, "output_tokens": 200, "search_calls": 1, "api_calls": 1})
 
@@ -2672,6 +2675,413 @@ class Statistics(Base):
         self.assertIn("p (Holm)", srv.call({"name": "diff", "arguments": {}})["content"][0]["text"])
 
 
+# ── a question is paired only with itself ─────────────────────────────────
+class EditedQuestions(Base):
+    def pair(self, n, edit=(), before=True, after=False):
+        """Two saved runs of n questions on one engine, every answer cited before and not after (by default); the
+        questions in edit are reworded in the second run under the same id."""
+        qa = [{"query_id": "q%02d" % i, "query": "question %d" % i, "intent_tier": "", "target_url": ""}
+              for i in range(1, n + 1)]
+        qb = [dict(q, query="reworded " + q["query"]) if q["query_id"] in edit else dict(q) for q in qa]
+        cited = dict(((q["query_id"], "chatgpt-api"), [before]) for q in qa)
+        return (synth("20260919T083000Z", cited, qs=qa),
+                synth("20260926T083000Z", dict((u, [after]) for u in cited), qs=qb))
+
+    def test_an_edited_question_is_left_out_and_named(self):
+        a, b = self.pair(10, edit=("q07", "q03"))
+        d = gw.diff_runs(a, b)
+        self.assertIn("q03, q07: question text changed between runs; not compared", d["notes"])
+        self.assertEqual((d["overall"]["n_questions"], d["overall"]["before_n"], d["overall"]["after_n"]), (8, 8, 8))
+        self.assertEqual(len(d["lost"]), 8)
+        self.assertFalse(set(x["query_id"] for x in d["lost"]) & {"q03", "q07"})
+        self.assertIn("note: q03, q07: question text changed between runs; not compared", gw.render_diff(d))
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+        # case, spacing and line breaks are not edits
+        b["queries"][2]["query"] = "  QUESTION\n 3 "
+        b["queries"][6]["query"] = "Question   7"
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["n_questions"], 10)
+        self.assertFalse(any("question text changed" in n for n in d["notes"]))
+
+    def test_at_most_ten_edited_ids_are_named(self):
+        a, b = self.pair(14, edit=["q%02d" % i for i in range(1, 14)])
+        notes = [n for n in gw.diff_runs(a, b)["notes"] if "question text changed" in n]
+        self.assertEqual(notes, ["q01, q02, q03, q04, q05, q06, q07, q08, q09, q10 and 3 more: question text changed "
+                                 "between runs; not compared"])
+
+    def test_an_edit_that_leaves_too_few_questions_says_so(self):
+        a, b = self.pair(7)                                   # all seven lost: 2/2^7 = 0.016, a change
+        self.assertEqual(gw.diff_runs(a, b)["overall"]["verdict"], "change")
+        a, b = self.pair(7, edit=("q01", "q02"))              # five compared: no exact test can call it
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["n_questions"], 5)
+        self.assertEqual([r["verdict"] for r in [d["overall"]] + d["engines"]], ["too few questions to tell"] * 2)
+        self.assertEqual(gw.drops(d), [])
+        text = gw.render_diff(d)
+        self.assertIn("too few questions to tell", text)
+        self.assertIn("q01, q02: question text changed", text)
+
+    def test_a_change_of_location_or_provider_is_noted(self):
+        a, b = self.pair(8)
+        self.assertFalse([n for n in gw.diff_runs(a, b)["notes"] if "locations" in n or "provider" in n])
+        a["country"] = "US"
+        self.assertIn("the runs asked from different locations (US vs none); answers can differ for that reason "
+                      "alone", gw.diff_runs(a, b)["notes"])
+        b["country"] = "DE"
+        self.assertIn("the runs asked from different locations (US vs DE); answers can differ for that reason "
+                      "alone", gw.diff_runs(a, b)["notes"])
+        b["country"] = "US"
+        b["engines"][0]["provider"] = "openrouter"
+        notes = gw.diff_runs(a, b)["notes"]
+        self.assertEqual([n for n in notes if "locations" in n], [])
+        self.assertIn("chatgpt-api: provider changed (openai -> openrouter); the same engine id measured another API",
+                      notes)
+
+    def test_questions_hash_ignores_order_case_and_spacing_and_sees_every_edit(self):
+        qs = queries(4)
+        h = gw.questions_hash(qs)
+        self.assertRegex(h, r"^[0-9a-f]{64}$")
+        self.assertEqual(gw.questions_hash(list(reversed(qs))), h)
+        self.assertEqual(gw.questions_hash([dict(q, query=" " + q["query"].upper() + "\t") for q in qs]), h)
+        self.assertEqual(gw.questions_hash([dict(q, intent_tier="pricing") for q in qs]), h)    # text and id only
+        for i in range(len(qs)):
+            edited = [dict(q, query=q["query"] + "?") if j == i else q for j, q in enumerate(qs)]
+            self.assertNotEqual(gw.questions_hash(edited), h, i)
+        self.assertNotEqual(gw.questions_hash([dict(qs[0], query_id="q99")] + qs[1:]), h)
+        self.assertNotEqual(gw.questions_hash(qs[:3]), h)
+        # the text a run saves, a lone surrogate included, never stops the hash
+        self.assertRegex(gw.questions_hash([{"query_id": "ask", "query": "\ud83d half an emoji"}]), r"^[0-9a-f]{64}$")
+
+    def test_a_run_saves_its_questions_hash_and_runs_lists_it(self):
+        self.fake({"api.openai.com": lambda u, h, b: openai_resp("Lumo", [("https://lumo.example/", "")])})
+        qs = queries(3)
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), qs)
+        self.assertEqual(run["questions_hash"], gw.questions_hash(qs))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        old = synth("20260919T083000Z", {("q01", "chatgpt-api"): [True]})       # saved before 1.6.0: no hash
+        self.assertNotIn("questions_hash", old)
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        cfg = gw.Config(cfgp)
+        for r in (old, run):
+            gw.save_run(cfg, r)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["runs", "-c", cfgp]), 0)
+        self.assertIn("questions", out.getvalue())
+        self.assertIn(run["questions_hash"][:8], out.getvalue())
+        self.assertIn(gw.questions_hash(old["queries"])[:8], out.getvalue())
+
+
+# ── who is named for each question ────────────────────────────────────────
+def answer(q, e, ask, you=(False, False), pixa=(False, False), reel=(False, False), searches=0, queries_=(),
+           cites=None, status="ok"):
+    """One saved sample: (cited, named) for Lumo, Pixa and Reelcraft, and what the provider reported of its search."""
+    if status != "ok":
+        return {"query_id": q, "engine": e, "run": ask, "status": status, "error": "HTTP 500"}
+    owned = [("lumo.example", you[0]), ("pixa.example", pixa[0]), ("reelcraft.example", reel[0])]
+    cites = [{"url": "https://%s/%s" % (d, q), "domain": d, "title": ""} for d, c in owned if c] if cites is None else cites
+    return {"query_id": q, "engine": e, "run": ask, "status": "ok", "cited": you[0], "rank": 1 if you[0] else None,
+            "quoted_url": "https://lumo.example/" + q if you[0] else None, "mentioned": you[1],
+            "competitors": {"Pixa": {"cited": pixa[0], "rank": None, "mentioned": pixa[1]},
+                            "Reelcraft": {"cited": reel[0], "rank": None, "mentioned": reel[1]}},
+            "citations": cites, "search_queries": list(queries_), "answer": "", "answer_truncated": False,
+            "usage": {"input_tokens": 0, "output_tokens": 0, "search_calls": searches, "api_calls": 1},
+            "cost_usd": None, "seconds": 0.0}
+
+
+def counted_run(samples, qs, engs=("chatgpt-api", "perplexity-api"), runs=2):
+    run = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]}, runs=runs, qs=qs)
+    run["competitors"] = [r.as_json() for r in rivals()]
+    run["engines"] = [dict(e, status="measured") for e in engines(*engs)]
+    run["queries"] = [gw.flag_query(q, brand(), rivals()) for q in qs]
+    run["samples"] = samples
+    run["summary"] = gw.summarize(run)
+    return run
+
+
+class ByQuestion(Base):
+    QS = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
+          {"query_id": "q02", "query": "lumo vs pixa", "intent_tier": "vs", "target_url": ""},
+          {"query_id": "q03", "query": "cheap video app", "intent_tier": "", "target_url": ""},
+          {"query_id": "q04", "query": "text to video for teams", "intent_tier": "persona", "target_url": ""},
+          {"query_id": "q05", "query": "video app with no watermark", "intent_tier": "", "target_url": ""}]
+
+    def run_of(self):
+        """Two competitors, runs=2, two engines: 4 asks per question, some of them failed."""
+        o, p = "chatgpt-api", "perplexity-api"
+        return counted_run([
+            # q01: Pixa is cited by 3 of 4 answers, Lumo by 1, Reelcraft by none; one answer names no tracked brand
+            answer("q01", o, 1, you=(True, True), pixa=(True, True), reel=(False, True), searches=1, queries_=["x"]),
+            answer("q01", o, 2, pixa=(True, True)),                        # a citation, no search reported
+            answer("q01", p, 1, pixa=(True, True), searches=1),
+            answer("q01", p, 2, searches=1),
+            # q02: 3 answers (one failed); Lumo is cited twice and Pixa once, but 3 answers name no leader
+            answer("q02", o, 1, you=(False, True)),                        # no search, no citation: did not search
+            answer("q02", o, 2, status="error"),
+            answer("q02", p, 1, you=(True, True), searches=1),
+            answer("q02", p, 2, you=(True, True), pixa=(True, False), searches=1),
+            # q03: never answered
+            answer("q03", o, 1, status="error"), answer("q03", o, 2, status="error"),
+            answer("q03", p, 1, status="error"), answer("q03", p, 2, status="error"),
+            # q04: Lumo and Pixa are cited by 2 answers each: a tie names no leader
+            answer("q04", o, 1, you=(True, True), searches=2), answer("q04", o, 2, pixa=(True, True), searches=1),
+            answer("q04", p, 1, you=(True, False), searches=1), answer("q04", p, 2, pixa=(True, False), searches=1),
+            # q05: four answers that cite no tracked brand
+            answer("q05", o, 1, searches=1), answer("q05", o, 2), answer("q05", p, 1, searches=1),
+            answer("q05", p, 2, reel=(False, True), searches=1),
+        ], self.QS)
+
+    def test_counts_per_question_with_two_competitors_and_two_asks(self):
+        run = self.run_of()
+        bq = run["summary"]["by_question"]
+        self.assertEqual([q["query_id"] for q in bq], ["q01", "q02", "q03", "q04", "q05"])    # question order
+        q1 = bq[0]
+        self.assertEqual(q1, {"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "branded": False,
+                              "answered": 4, "you": {"cited": 1, "mentioned": 1},
+                              "competitors": {"Pixa": {"cited": 3, "mentioned": 3},
+                                              "Reelcraft": {"cited": 0, "mentioned": 1}},
+                              "none_named": 1, "searched": {"yes": 2, "no": 0, "unknown": 2}, "leader": "Pixa"})
+        q2 = bq[1]
+        self.assertEqual((q2["answered"], q2["branded"], q2["you"], q2["competitors"]["Pixa"]),
+                         (3, True, {"cited": 2, "mentioned": 3}, {"cited": 1, "mentioned": 0}))
+        self.assertEqual((q2["none_named"], q2["searched"], q2["leader"]), (0, {"yes": 0, "no": 1, "unknown": 2}, None))
+        q3 = bq[2]
+        self.assertEqual((q3["answered"], q3["you"], q3["none_named"], q3["searched"], q3["leader"]),
+                         (0, {"cited": 0, "mentioned": 0}, 0, {"yes": 0, "no": 0, "unknown": 0}, None))
+        self.assertEqual((bq[3]["answered"], bq[3]["you"]["cited"], bq[3]["competitors"]["Pixa"]["cited"],
+                          bq[3]["leader"]), (4, 2, 2, None))
+        self.assertEqual((bq[4]["answered"], bq[4]["none_named"], bq[4]["searched"], bq[4]["leader"]),
+                         (4, 3, {"yes": 1, "no": 1, "unknown": 2}, None))
+        for q in bq:      # every value is a count of answers
+            self.assertEqual(sum(q["searched"].values()), q["answered"])
+            self.assertLessEqual(q["none_named"], q["answered"])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_the_leader_needs_four_answers_and_a_strict_lead(self):
+        o, p = "chatgpt-api", "perplexity-api"
+
+        def leader(samples):
+            return counted_run(samples, self.QS[:1])["summary"]["by_question"][0]["leader"]
+        three = [answer("q01", o, 1, you=(True, True)), answer("q01", o, 2, you=(True, True)),
+                 answer("q01", p, 1, you=(True, True))]
+        self.assertIsNone(leader(three))                                         # 3 of 3 cite Lumo: too few
+        self.assertEqual(leader(three + [answer("q01", p, 2)]), "Lumo")
+        self.assertIsNone(leader(three + [answer("q01", p, 2, pixa=(True, True)), answer("q01", p, 3, pixa=(True, False)),
+                                          answer("q01", o, 3, pixa=(True, False))]))         # 3 and 3: a tie
+        self.assertIsNone(leader([answer("q01", e, i) for e in (o, p) for i in (1, 2)]))     # nobody cited
+
+    def test_searched_per_provider(self):
+        s = lambda **kw: answer("q01", "x", 1, **kw)
+        for prov in ("openai", "gemini", "anthropic"):
+            self.assertIs(gw.searched_of(s(searches=1, cites=[]), prov), True, prov)
+            self.assertIs(gw.searched_of(s(queries_=["lumo pricing"], cites=[]), prov), True, prov)
+            self.assertIs(gw.searched_of(s(pixa=(True, False)), prov), True, prov)       # a citation means a search
+            self.assertIs(gw.searched_of(s(), prov), False, prov)
+        for prov in ("perplexity", "openrouter", None, "unknown"):
+            # their adapters write search_calls = 1 on every answer: never read as a measurement
+            self.assertIsNone(gw.searched_of(s(searches=1, pixa=(True, True)), prov), prov)
+            self.assertIsNone(gw.searched_of(s(), prov), prov)
+        bare = s()
+        del bare["usage"]
+        self.assertIsNone(gw.searched_of(bare, "openai"))                         # nothing saved to read
+        self.assertIs(gw.searched_of(dict(bare, search_queries=["x"]), "openai"), True)
+
+    def test_a_gemini_answer_with_citations_and_no_queries_searched(self):
+        self.fake({"generativelanguage.googleapis.com": lambda u, h, b: gemini_resp(
+            "Pixa has a free plan.", [("https://pixa.example/pricing", "pixa.example")])})
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        run = gw.execute(brand(), rivals(), [eng], queries(1))
+        smp = run["samples"][0]
+        self.assertEqual((smp["usage"]["search_calls"], smp["search_queries"]), (0, []))
+        self.assertIs(gw.searched_of(smp, "gemini"), True)
+        self.assertEqual(run["summary"]["by_question"][0]["searched"], {"yes": 1, "no": 0, "unknown": 0})
+        self.fake({"api.perplexity.ai": lambda u, h, b: pplx_resp("Pixa [1].", [("https://pixa.example/", "Pixa")]),
+                   "openrouter.ai": lambda u, h, b: openrouter_resp("Pixa.", [("https://pixa.example/", "Pixa")])})
+        run = gw.execute(brand(), rivals(), engines("perplexity-api", "or-api"), queries(1))
+        self.assertEqual([s["usage"]["search_calls"] for s in run["samples"]], [1, 1])      # hard-coded by the adapters
+        self.assertEqual(run["summary"]["by_question"][0]["searched"], {"yes": 0, "no": 0, "unknown": 2})
+
+    def test_the_report_has_the_section_and_its_notes(self):
+        run = self.run_of()
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn("Who is named for each question", text)
+            self.assertLess(text.index("Who is named for each question"), text.index("Ledger"))
+            for n in gw.BY_QUESTION_NOTES:
+                self.assertIn("- " + n, text)
+        md = gw.render(run, "md")
+        self.assertIn("| id | question | answers | Lumo (you) | Pixa | Reelcraft | no tracked brand named | "
+                      "searched yes/no/unknown | most cited |", md)
+        self.assertIn("| q01 | best ai video tool | 4 | cited 1/4 · named 1/4 | cited 3 · named 3 | cited 0 · named 1 | "
+                      "1/4 | 2/0/2 | Pixa |", md)
+        self.assertIn("| q03 | cheap video app | 0 | cited 0/0 · named 0/0 | cited 0 · named 0 | cited 0 · named 0 | "
+                      "0/0 | 0/0/0 | — |", md)
+        self.assertIn("|\n\n- An answer given without", md)            # a blank line ends the markdown table
+        for word in ("optimi", "worth", "should", "recommend"):         # counts, never advice
+            self.assertNotIn(word, "\n".join(gw.BY_QUESTION_NOTES).lower())
+        empty = counted_run([answer("q01", "chatgpt-api", 1, status="error")], self.QS[:1])
+        self.assertNotIn("Who is named for each question", gw.render(empty))
+        # the json report and the MCP report tool carry it
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        gw.save_run(gw.Config(cfgp), run)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["report", "-c", cfgp, "--format", "json"]), 0)
+        self.assertEqual(json.loads(out.getvalue())["summary"]["by_question"], run["summary"]["by_question"])
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["by_question"][0]["leader"], "Pixa")
+        out_schema = next(t for t in srv.tools() if t["name"] == "report")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
+    def test_summary_of_recomputes_a_summary_without_by_question(self):
+        run = self.run_of()
+        fresh = run["summary"]
+        old = json.loads(json.dumps(run))
+        del old["summary"]["by_question"]                     # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["by_question"], fresh["by_question"])
+        self.assertEqual(sm["headline"], fresh["headline"])     # recomputing changes no measurement
+        self.assertIs(gw.summary_of(run), run["summary"])        # a current summary is used as saved
+        self.assertIn("Who is named for each question", gw.render(old))
+        self.assertNotIn("by_question", old["summary"])          # the run itself is not rewritten
+
+
+# ── an engine whose answers stop carrying citations ──────────────────────
+def openai_resp_renamed(text, cites=(), queries=()):
+    """openai_resp with the annotation type renamed, as a provider changing its answer format would: the adapter
+    reads url_citation only, so the answer arrives with no citation at all."""
+    js = openai_resp(text, cites, queries)
+    for an in js["output"][-1]["content"][0]["annotations"]:
+        an["type"] = "url_reference"
+    return js
+
+
+class CitationFormat(Base):
+    TEXT = "Lumo gives 15 free credits; Pixa is another option."
+    CITES = [("https://www.lumo.example/free", "Lumo free plan"), ("https://pixa.example/pricing", "Pixa pricing")]
+
+    def route(self, renamed):
+        build = openai_resp_renamed if renamed else openai_resp
+        return {"api.openai.com": lambda u, h, b: build(self.TEXT, self.CITES, ["best free ai video generator"])}
+
+    def ask(self, n, renamed, runs=1):
+        self.fake(self.route(renamed))
+        return gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(n), runs=runs, max_calls=100)
+
+    def config(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
+                       "competitors": [{"name": "Pixa", "domains": ["pixa.example"]}]}, f)
+        return cfgp
+
+    def test_a_renamed_annotation_type_gives_no_citations_and_the_run_warns(self):
+        run = self.ask(5, renamed=True)
+        self.assertEqual([(s["status"], s["citations"], s["cited"], s["mentioned"]) for s in run["samples"]],
+                         [("ok", [], False, True)] * 5)             # the text still names Lumo; nothing is cited
+        e = run["summary"]["engines"][0]
+        self.assertEqual((e["answered"], e["with_citations"], e["with_searches"]), (5, 0, 5))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        warning = ("warning: chatgpt-api answered 5 questions (5 answers) and none carried a citation; if this engine "
+                   "usually cites, its API's answer format may have changed (check one answer with "
+                   "`watch ask --engines chatgpt-api`)")
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn(warning, text)
+            self.assertLess(text.index("By engine"), text.index(warning))
+            self.assertLess(text.index(warning), text.index("Ledger"))
+            self.assertIn("\n\n" + warning, text)                   # never read as a row of the table above
+        # the same answers in the format the adapter reads: counted, and no warning
+        fine = self.ask(5, renamed=False)
+        e = fine["summary"]["engines"][0]
+        self.assertEqual((e["with_citations"], e["with_searches"]), (5, 5))
+        self.assertNotIn("none carried a citation", gw.render(fine))
+        # four questions are too few to say anything, however often each was asked: answers to one question move
+        # together, so the threshold counts questions
+        self.assertNotIn("none carried a citation", gw.render(self.ask(4, renamed=True)))
+        self.assertNotIn("none carried a citation", gw.render(self.ask(1, renamed=True, runs=5)))
+        self.assertNotIn("none carried a citation", gw.render(self.ask(4, renamed=True, runs=2)))
+        self.assertIn("warning: chatgpt-api answered 5 questions (10 answers) and none carried a citation",
+                      gw.render(self.ask(5, renamed=True, runs=2)))
+        # a summary saved without the counts is recomputed, so the warning reaches runs saved before 1.6.0
+        old = json.loads(json.dumps(run))
+        for row in old["summary"]["engines"]:
+            del row["with_citations"], row["with_searches"]
+        self.assertEqual(gw.summary_of(old)["engines"][0]["with_citations"], 0)
+        self.assertIn(warning, gw.render(old))
+        self.assertIs(gw.summary_of(run), run["summary"])
+
+    def test_the_diff_warns_when_citations_vanish_and_still_exits_4(self):
+        cfgp = self.config()
+        cfg = gw.Config(cfgp)
+        gw.save_run(cfg, self.ask(8, renamed=False))
+        gw.save_run(cfg, self.ask(8, renamed=True))
+        a, b = gw.load_run(cfg, "previous"), gw.load_run(cfg, "latest")
+        d = gw.diff_runs(a, b)
+        words = ("chatgpt-api: answers carrying any citation fell from 8 of 8 to 0 of 8 with the same model; if "
+                 "this engine usually cites, its API's answer format may have changed, and this row may measure "
+                 "that, not the engine (check one answer with `watch ask --engines chatgpt-api`)")
+        row = d["engines"][0]
+        self.assertEqual((row["verdict"], row["warning"]), ("change", words))      # the verdict is kept
+        self.assertIn(words, d["notes"])
+        self.assertNotIn("warning", d["overall"])
+        self.assertEqual(gw.drops(d), ["all engines", "chatgpt-api"])
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+        self.assertIn("no citations at all: see the notes", gw.render_diff(d))
+        self.assertIn("note: " + words, gw.render_diff(d))
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(["diff", "-c", cfgp, "--fail-on-drop"])
+        self.assertEqual(code, 4)
+        self.assertIn("warning: " + words, err.getvalue())
+        self.assertLess(err.getvalue().index("warning: "), err.getvalue().index("citation rate dropped"))
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(gw.main(["diff", "-c", cfgp, "--format", "json"]), 0)     # warns, never fails alone
+        self.assertEqual(json.loads(out.getvalue())["engines"][0]["warning"], words)
+        self.assertIn("warning: " + words, err.getvalue())
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "diff", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["engines"][0]["warning"], words)
+        out_schema = next(t for t in srv.tools() if t["name"] == "diff")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+        self.assertIn("warning", out_schema["properties"]["engines"]["items"]["properties"])
+
+    def test_the_diff_warning_needs_a_steady_model_a_citing_engine_and_five_answers(self):
+        def pair(before, after, n=8):
+            """Two runs of n questions on one engine: the first `before` questions cited (with a citation) in the
+            first run, the first `after` in the second. synth gives an uncited answer no citation at all."""
+            ids = ["q%02d" % i for i in range(1, n + 1)]
+            return (synth("20260919T083000Z", dict(((q, "chatgpt-api"), [i < before]) for i, q in enumerate(ids))),
+                    synth("20260926T083000Z", dict(((q, "chatgpt-api"), [i < after]) for i, q in enumerate(ids))))
+        warned = lambda d: [r["engine"] for r in d["engines"] if "warning" in r]
+        self.assertEqual(warned(gw.diff_runs(*pair(4, 0))), ["chatgpt-api"])       # 50% to 0%
+        self.assertEqual(warned(gw.diff_runs(*pair(3, 0))), [])                    # 38%: it did not usually cite
+        self.assertEqual(warned(gw.diff_runs(*pair(8, 1))), [])                    # 13% left: still citing
+        self.assertEqual(warned(gw.diff_runs(*pair(20, 0, n=20))), ["chatgpt-api"])
+        self.assertEqual(warned(gw.diff_runs(*pair(20, 1, n=20))), [])             # 1 of 20 is 5%: not below it
+        self.assertEqual(warned(gw.diff_runs(*pair(21, 1, n=21))), ["chatgpt-api"])     # 1 of 21 is below 5%
+        self.assertEqual(warned(gw.diff_runs(*pair(4, 0, n=4))), [])               # 4 questions after: too few
+        four = ["q%02d" % i for i in range(1, 5)]                                  # ... even when each was asked 3 times
+        self.assertEqual(warned(gw.diff_runs(synth("20260919T083000Z", dict(((q, "chatgpt-api"), [True] * 3) for q in four),
+                                                   runs=3),
+                                             synth("20260926T083000Z", dict(((q, "chatgpt-api"), [False] * 3) for q in four),
+                                                   runs=3))), [])
+        a, b = pair(8, 0)
+        b["engines"][0]["model"] = "gpt-7"
+        d = gw.diff_runs(a, b)
+        self.assertEqual(warned(d), [])                                            # a new model can cite less
+        self.assertEqual(d["engines"][0]["note"], "model changed: gpt-6-luna -> gpt-7")
+        self.assertFalse([n for n in d["notes"] if "citation fell" in n])
+
+
 # ── questions that name the brand ────────────────────────────────────────
 class Branded(Base):
     def test_questions_naming_the_brand_are_flagged(self):
@@ -2771,7 +3181,684 @@ class Branded(Base):
         self.assertIn("q2 names the brand", cit["note"])
 
 
+# ── question types (intent_tier) ──────────────────────────────────────────
+class IntentTiers(Base):
+    def check(self, body):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(body)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = gw.main(["check", "-c", cfgp])
+        return code, out.getvalue()
+
+    def test_the_init_template_has_a_problem_row_and_a_verdict_row(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(gw.main(["init", "--dir", self.tmp, "--brand", "Lumo", "--domain", "lumo.example"]), 0)
+        with io.open(os.path.join(self.tmp, "queries.csv"), encoding="utf-8") as f:
+            body = f.read()
+        rows = list(__import__("csv").DictReader(io.StringIO(body)))
+        self.assertEqual([(r["query_id"], r["intent_tier"]) for r in rows],
+                         [("q01", "list"), ("q02", "pricing"), ("q03", "alternative"), ("q04", "problem"),
+                          ("q05", "verdict")])
+        self.assertEqual(rows[3]["query"], "<a situation your buyer describes, without naming a product category>")
+        self.assertEqual(rows[4]["query"], "<is <category> worth it?>")
+        self.assertTrue(set(r["intent_tier"] for r in rows) <= set(gw.INTENT_TIERS))
+        code, text = self.check(body)
+        self.assertEqual(code, 1)                                  # every row is a placeholder until it is replaced
+        for line in range(2, 7):
+            self.assertIn("line %d: replace the <placeholder> with a real question" % line, text)
+
+    def test_check_counts_the_questions_of_each_type(self):
+        head = "query_id,query,intent_tier,target_url\n"
+        code, out = self.check(head + "q1,best ai video tool,list,\nq2,lumo vs pixa,vs,\nq3,cheap video app,list,\n"
+                                      "q4,my clips keep getting a watermark,,\nq5,is text to video worth it,verdict,\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): list 2, verdict 1, vs 1, no type 1\n", out)
+        self.assertNotIn("suggested types", out)                   # several types: counts, and nothing else
+
+    def test_one_type_or_none_is_a_note_never_a_failure(self):
+        vocab = "suggested types: list, vs, alternative, pricing, problem, persona, verdict, channel; any other " \
+                "label works too"
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n"
+                               "q2,cheap video app,list,\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): list 2\n", out)
+        self.assertIn("· every question has the type list: the rates describe that one kind of question (%s)\n"
+                      % vocab, out)
+        code, out = self.check("query_id,query\nq1,best ai video tool\nq2,cheap video app\n")
+        self.assertEqual(code, 0)
+        self.assertIn("· question types (intent_tier): no type 2\n", out)
+        self.assertIn("· no question has an intent_tier, so the report has no table by question type (%s)\n"
+                      % vocab, out)
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n")
+        self.assertEqual(code, 0)
+        self.assertNotIn("every question has the type", out)        # one question is not a set of one type
+        for line in out.splitlines():
+            self.assertFalse(line.startswith(("! ", "✗ ")), line)
+
+    def test_the_suggested_types_are_documented_in_both_languages(self):
+        for doc in ("cli/README.md", "cli/README.zh-CN.md", "guide/watch-methodology.md",
+                    "guide/watch-methodology.zh-CN.md"):
+            with io.open(os.path.join(HERE, "..", doc), encoding="utf-8") as f:
+                text = f.read()
+            for t in gw.INTENT_TIERS:
+                self.assertIn("| `%s` |" % t, text, (doc, t))
+
+
+# ── pages you track: target_url ──────────────────────────────────────────
+def cite(*urls):
+    return [{"url": u, "domain": gw.host_of(u), "title": ""} for u in urls]
+
+
+class TrackedPages(Base):
+    def check(self, body, brand_=None):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": brand_ or {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write(body)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = gw.main(["check", "-c", cfgp])
+        return code, out.getvalue(), gw.Config(cfgp)
+
+    def test_absolute_and_path_targets_resolve_and_anything_else_is_ignored_with_a_warning(self):
+        code, out, cfg = self.check(
+            "query_id,query,intent_tier,target_url\n"
+            "q1,free ai video,list,https://www.lumo.example/free?utm_source=x&plan=1#top\n"
+            "q2,ai video pricing,pricing,/pricing/\n"
+            "q3,lumo review,verdict,lumo.example/review\n"
+            "q4,cdn,list,//cdn.example/x\n"
+            "q5,pixa plans,pricing,https://pixa.example/plans\n"
+            "q6,no page,list,\n"
+            "q7,ftp page,list,ftp://lumo.example/x\n")
+        self.assertEqual(code, 0)                                   # a warning, never a failure
+        qs = cfg.load_queries()
+        self.assertEqual([q["target_url"] for q in qs],
+                         ["https://www.lumo.example/free?plan=1", "https://lumo.example/pricing/", "", "",
+                          "https://pixa.example/plans", "", ""])
+        self.assertIn("! q3: target_url 'lumo.example/review' is neither an http(s) URL nor a path that starts with "
+                      "/; it is ignored\n", out)
+        self.assertIn("! q4: target_url '//cdn.example/x' is neither", out)
+        self.assertIn("! q7: target_url 'ftp://lumo.example/x' is neither", out)
+        self.assertIn("! q5: target_url https://pixa.example/plans is not on the brand's domains or url_prefixes; it "
+                      "is still matched\n", out)
+        self.assertIn("· target_url: a page is tracked for 3 of 7 questions; the report counts how often answers cite "
+                      "it\n", out)
+        self.assertEqual(len(cfg.query_warnings), 4)
+        # a path needs a domain to join; a URL prefix the brand owns is its page too
+        code, out, cfg = self.check("query_id,query,target_url\nq1,a,/x\nq2,b,https://amazon.com/stores/Lumo/p\n",
+                                    {"name": "Lumo", "url_prefixes": ["amazon.com/stores/Lumo"]})
+        self.assertEqual(code, 0)
+        self.assertIn("! q1: target_url '/x' is a path, and the brand has no domain to join it to; it is ignored", out)
+        self.assertNotIn("q2: target_url", out)
+        self.assertEqual([q["target_url"] for q in cfg.load_queries()], ["", "https://amazon.com/stores/Lumo/p"])
+        # the first domain is the one a path joins
+        b = gw.Entity({"name": "Lumo", "domains": ["www.lumo.example", "lumo.cn"]}, you=True)
+        self.assertEqual(gw.resolve_target(" /a b ", b), ("https://lumo.example/a b", None))
+        self.assertEqual(gw.resolve_target("", b), ("", None))
+
+    def test_mcp_run_and_status_show_the_target_url_warnings(self):
+        # over MCP there is no watch check to read, so a mistyped target_url must not be dropped without a word
+        self.check("query_id,query,intent_tier,target_url\nq1,free ai video,list,lumo.example/free\n"
+                   "q2,pixa plans,pricing,https://pixa.example/plans\nq3,ai video pricing,pricing,/pricing\n")
+        srv = gw.MCPServer(os.path.join(self.tmp, gw.CONFIG_NAME), out=io.StringIO())
+        r = srv.call({"name": "run", "arguments": {"dry_run": True}})
+        self.assertFalse(r["isError"], r)
+        text = r["content"][0]["text"]
+        self.assertIn("\n- warning: q1: target_url 'lumo.example/free' is neither an http(s) URL nor a path that "
+                      "starts with /; it is ignored\n", text)
+        self.assertIn("\n- warning: q2: target_url https://pixa.example/plans is not on the brand's domains or "
+                      "url_prefixes; it is still matched\n", text)
+        self.assertNotIn("q3: target_url", text)
+        r = srv.call({"name": "status", "arguments": {}})
+        self.assertFalse(r["isError"], r)
+        self.assertEqual([w[:20] for w in r["structuredContent"]["config"]["warnings"]],
+                         ["q1: target_url 'lumo", "q2: target_url https"])
+        self.assertIn("\n  warning: q1: target_url 'lumo.example/free' is neither", r["content"][0]["text"])
+        out_schema = next(t["outputSchema"] for t in srv.tools() if t["name"] == "status")
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
+    def test_www_slash_case_query_fragment_and_escapes_match_and_another_path_does_not(self):
+        b = brand()
+        target = "https://lumo.example/free"
+        for u in ("https://www.lumo.example/free/", "https://LUMO.example/Free?utm_source=openai&ref=x",
+                  "https://lumo.example/free#pricing", "http://lumo.example/free", "https://lumo.example/free?a=1"):
+            self.assertEqual(gw.target_hits(cite(gw.clean_url(u)), b, target), (True, []), u)
+        zh = gw.resolve_target("/博客/免费", b)[0]
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/%E5%8D%9A%E5%AE%A2/%E5%85%8D%E8%B4%B9"), b, zh)[0],
+                         True)
+        # another locale, a longer path and the parent are other pages of yours
+        for u in ("https://lumo.example/en/free", "https://lumo.example/free-plan", "https://lumo.example/",
+                  "https://lumo.example/free/faq"):
+            self.assertEqual(gw.target_hits(cite(u), b, target), (False, [u]), u)
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/en/x"), b, "https://lumo.example/x")[0], False)
+        self.assertEqual(gw.target_hits(cite("https://pixa.example/free"), b, target), (False, []))
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/free"), b, ""), (None, []))
+        self.assertEqual(gw.target_hits(cite("https://lumo.example/free"), b, None), (None, []))
+
+    def test_a_gemini_redirect_resolved_to_the_target_matches(self):
+        redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AAA"
+        self.fake({"generativelanguage.googleapis.com": lambda u, h, b: gemini_resp(
+            "Lumo has a free plan.", [(redirect, "lumo.example")])})
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        qs = [dict(queries(1)[0], target_url="/free")]
+        gw.RESOLVER = lambda u: "https://www.lumo.example/free/?utm_source=gemini" if u == redirect else None
+        smp = gw.execute(brand(), rivals(), [eng], qs)["samples"][0]
+        self.assertEqual((smp["cited"], smp["target_cited"], smp["other_own_cited"]), (True, True, False))
+        gw.RESOLVER = lambda u: None              # not followed: cited by its title's domain, but which page is unknown
+        run = gw.execute(brand(), rivals(), [eng], qs)
+        smp = run["samples"][0]
+        self.assertEqual((smp["cited"], smp["target_cited"], smp["other_own_cited"]), (True, False, False))
+        self.assertEqual(run["queries"][0]["target_url"], "https://lumo.example/free")     # saved resolved
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_no_target_gives_null(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(1))
+        smp = run["samples"][0]
+        self.assertTrue(smp["cited"])
+        self.assertIsNone(smp["target_cited"])
+        self.assertIsNone(smp["other_own_cited"])
+        self.assertEqual(run["summary"]["tracked_pages"], [])
+        self.assertNotIn("Pages you track", gw.render(run))
+        rows = list(__import__("csv").reader(io.StringIO(gw.render_csv(run))))
+        self.assertEqual((rows[0][-1], rows[1][-1]), ("target_cited", ""))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    QS = [{"query_id": "q01", "query": "free ai video", "intent_tier": "list", "target_url": "/free"},
+          {"query_id": "q02", "query": "ai video with no watermark", "intent_tier": "", "target_url": "https://lumo.example/free"},
+          {"query_id": "q03", "query": "ai video pricing", "intent_tier": "pricing", "target_url": "/pricing"},
+          {"query_id": "q04", "query": "best ai video", "intent_tier": "list", "target_url": ""}]
+
+    def run_of(self):
+        o, p = "chatgpt-api", "perplexity-api"
+        lumo = lambda *u: cite(*["https://lumo.example" + x for x in u])
+        return counted_run([
+            answer("q01", o, 1, you=(True, True), cites=lumo("/free")),
+            answer("q01", o, 2, you=(True, True), cites=lumo("/")),
+            answer("q01", p, 1, you=(True, True), cites=lumo("/blog/x", "/")),
+            answer("q01", p, 2, pixa=(True, True)),
+            answer("q02", o, 1, you=(True, True), cites=cite("https://www.lumo.example/free/")),
+            answer("q02", o, 2, status="error"),
+            answer("q02", p, 1, you=(True, True), cites=lumo("/")),
+            answer("q03", o, 1, status="error"),
+            answer("q04", o, 1, you=(True, True), cites=lumo("/x")),
+        ], self.QS)
+
+    def test_the_summary_counts_each_page_and_shows_your_page_cited_instead(self):
+        run = self.run_of()          # its samples carry no target_cited: the counts come from the saved citations
+        tp = run["summary"]["tracked_pages"]
+        self.assertEqual(tp, [
+            {"target_url": "https://lumo.example/free", "query_ids": ["q01", "q02"], "answered": 6, "target_cited": 2,
+             "other_own_cited": 3, "top_other_url": "https://lumo.example/", "top_other_answers": 3},
+            {"target_url": "https://lumo.example/pricing", "query_ids": ["q03"], "answered": 0, "target_cited": 0,
+             "other_own_cited": 0, "top_other_url": None, "top_other_answers": 0}])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        md = gw.render(run, "md")
+        self.assertIn("## Pages you track", md)
+        self.assertIn("| page (target_url) | questions | answers | this page cited | another of your pages cited | "
+                      "your page cited most instead |", md)
+        self.assertIn("| https://lumo.example/free | q01, q02 | 6 | 2/6 | 3/6 | https://lumo.example/ (3) |", md)
+        self.assertIn("| https://lumo.example/pricing | q03 | 0 | 0/0 | 0/0 | — |", md)
+        for n in gw.TRACKED_PAGE_NOTES:
+            self.assertIn("|\n\n- " + n if n == gw.TRACKED_PAGE_NOTES[0] else "- " + n, md)
+        for word in ("optimi", "should", "recommend", "instead of"):    # the match rule, never which page to track
+            self.assertNotIn(word, " ".join(gw.TRACKED_PAGE_NOTES).lower())
+        self.assertLess(md.index("Pages you track"), md.index("Ledger"))
+        self.assertIn("Pages you track", gw.render(run))
+        # the CSV's last column: Y or N on an answer to a question that tracks a page, else empty
+        rows = list(__import__("csv").reader(io.StringIO(gw.render_csv(run))))
+        self.assertEqual(rows[0], gw.CSV_COLS)
+        self.assertEqual([(r[1], r[-1]) for r in rows[1:]],
+                         [("q01", "Y"), ("q01", "N"), ("q01", "N"), ("q01", "N"), ("q02", "Y"), ("q02", ""),
+                          ("q02", "N"), ("q03", ""), ("q04", "")])
+        # the json report and the MCP report tool carry it
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        gw.save_run(gw.Config(cfgp), run)
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["tracked_pages"], tp)
+        out_schema = next(t for t in srv.tools() if t["name"] == "report")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+
+    def test_summary_of_recomputes_a_summary_without_tracked_pages(self):
+        run = self.run_of()
+        old = json.loads(json.dumps(run))
+        del old["summary"]["tracked_pages"]                    # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["tracked_pages"], run["summary"]["tracked_pages"])
+        self.assertEqual(sm["headline"], run["summary"]["headline"])
+        self.assertIn("Pages you track", gw.render(old))
+        self.assertNotIn("tracked_pages", old["summary"])
+
+
+# ── who is named first, and in how many sentences ─────────────────────────
+def said(sample, text):
+    sample["answer"] = text
+    return sample
+
+
+class MentionOrder(Base):
+    def positions(self, text, ents=None):
+        return gw.mention_positions(text, ents or [brand()] + rivals())
+
+    def test_an_english_answer_whole_words_only(self):
+        text = ("Pixa is the most popular pick. Lumos users and Pixabay fans may also like Lumo, which costs less.\n"
+                "See lumo.example for the 3.5 release! Reelcraft suits teams.")
+        # three sentences end at ". " and "!" and one at the line break; the domain and 3.5 end none
+        self.assertEqual(len(gw.sentence_spans(text)), 4)
+        lumo, pixa, reel = self.positions(text)
+        self.assertEqual(pixa, (1, 0.25))          # "Pixabay" is not Pixa
+        self.assertEqual(lumo, (2, 0.5))           # "Lumos" is not Lumo; the domain names it
+        self.assertEqual(reel, (3, 0.25))
+        self.assertEqual(self.positions("Nothing tracked here. Try other tools."), [(None, None)] * 3)
+        self.assertEqual(self.positions(""), [(None, None)] * 3)
+
+    def test_a_chinese_answer_names_match_anywhere(self):
+        text = "推荐用鹿末做视频。鹿末免费额度多！也可以用Pixa？"
+        self.assertEqual(len(gw.sentence_spans(text)), 3)
+        lumo, pixa, reel = self.positions(text)
+        self.assertEqual(lumo, (1, 0.6667))        # the alias inside a run of Chinese
+        self.assertEqual(pixa, (2, 0.3333))        # a Latin name beside Chinese characters
+        self.assertEqual(reel, (None, None))
+
+    def test_a_tie_or_an_absent_name_gives_null(self):
+        studio = gw.Entity({"name": "Lumo Studio"})
+        ents = [brand(), studio] + rivals()
+        # "Lumo Studio" holds "Lumo": both first named at offset 0, so neither is first; Pixa still has two before it
+        self.assertEqual(self.positions("Lumo Studio is new. Pixa is older.", ents),
+                         [(None, 0.5), (None, 0.5), (3, 0.5), (None, None)])
+        # the same name in two configs entries is a tie wherever it is
+        twin = gw.Entity({"name": "Pixa"})
+        self.assertEqual(self.positions("Lumo first, then Pixa.", [brand(), rivals()[0], twin]),
+                         [(1, 1.0), (None, 1.0), (None, 1.0)])
+
+    def test_a_table_rule_is_not_a_sentence(self):
+        text = "| tool | price |\n|---|---|\n| Lumo | $9 |\n| Pixa | $12 |"
+        self.assertEqual(len(gw.sentence_spans(text)), 3)
+        self.assertEqual(self.positions(text)[:2], [(1, 0.3333), (2, 0.3333)])
+
+    def test_evaluate_reads_the_answer_as_saved(self):
+        res = gw._result("Lumo is good. " + "x " * gw.MAX_ANSWER + "Pixa too.", [], [], 0, 0, 0)
+        s = gw.evaluate(res, brand(), rivals())
+        self.assertTrue(s["answer_truncated"])
+        self.assertEqual((s["mention_order"], s["mentioned"]), (1, True))
+        pixa = s["competitors"]["Pixa"]
+        self.assertTrue(pixa["mentioned"])                     # the matcher reads the whole answer
+        self.assertEqual((pixa["mention_order"], pixa["mention_share"]), (None, None))   # past what is saved
+        self.assertEqual([(s["mention_order"], s["mention_share"])]
+                         + [(c["mention_order"], c["mention_share"]) for c in s["competitors"].values()],
+                         self.positions(s["answer"]))         # a report gets the same from the run file
+        self.assertIn("first 20,000 characters", " ".join(gw.MENTION_NOTES))
+
+    def run_of(self):
+        o, p = "chatgpt-api", "perplexity-api"
+        qs = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
+              {"query_id": "q02", "query": "ai video for teams", "intent_tier": "persona", "target_url": ""}]
+        return counted_run([
+            said(answer("q01", o, 1, you=(True, True), pixa=(False, True)),
+                 "Lumo is the cheapest. Pixa has more styles."),
+            said(answer("q01", o, 2, you=(False, True), pixa=(True, True), reel=(False, True)),
+                 "Pixa leads. Lumo follows. Reelcraft is for teams. That is all."),
+            said(answer("q01", p, 1, you=(True, True), pixa=(False, True)), "推荐鹿末。鹿末免费！Pixa 也可以？"),
+            said(answer("q02", o, 1), "Nothing tracked here, try other tools."),
+            said(answer("q02", p, 1, pixa=(False, True), reel=(True, True)),
+                 "Reelcraft and Pixa both work.\nReelcraft is older."),
+            answer("q02", p, 2, status="error"),
+        ], qs)
+
+    def test_the_summary_counts_first_mentions_per_engine_and_in_share_of_voice(self):
+        run = self.run_of()          # its samples carry no mention_order: the counts come from the saved answers
+        sm = run["summary"]
+        eng = dict((e["id"], (e["named_first"], e["any_named"], e["mention_share"])) for e in sm["engines"])
+        self.assertEqual(eng, {"chatgpt-api": (1, 2, 0.375), "perplexity-api": (1, 2, 0.6667)})
+        sov = dict((s["name"], (s["named_first"], s["any_named"], s["mention_share"])) for s in sm["share_of_voice"])
+        self.assertEqual(sov, {"Lumo": (2, 4, 0.4722), "Pixa": (1, 4, 0.3958), "Reelcraft": (1, 4, 0.625)})
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        # samples that carry the fields are read as saved, and give the same counts
+        fresh = json.loads(json.dumps(run))
+        ents = [brand()] + rivals()
+        for s in fresh["samples"]:
+            if s["status"] == "ok":
+                pos = gw.mention_positions(s["answer"], ents)
+                s["mention_order"], s["mention_share"] = pos[0]
+                for r, (order, share) in zip(rivals(), pos[1:]):
+                    s["competitors"][r.name].update(mention_order=order, mention_share=share)
+        self.assertEqual(validate(fresh, watch_schema()), [])
+        self.assertEqual(gw.summarize(fresh)["share_of_voice"], sm["share_of_voice"])
+        self.assertEqual(gw.summarize(fresh)["engines"], sm["engines"])
+
+    def test_the_report_shows_named_first_and_sentence_share(self):
+        run = self.run_of()
+        md = gw.render(run, "md")
+        self.assertIn("| engine | model | cited | 95% CI | mentioned | named first (tracked) | avg rank |  |", md)
+        self.assertIn("| 50% | 1/2 | 1.0 | 1 failed |", md)                    # perplexity: mentioned, named first
+        self.assertIn("|  | cited | 95% CI | mentioned | named first (tracked) | sentence share |", md)
+        self.assertRegex(md, r"\| Lumo \(you\) \| [^\n]* \| 2/4 \| 47% \|")
+        self.assertRegex(md, r"\| Reelcraft \| [^\n]* \| 1/4 \| 62% \|")
+        for n in gw.MENTION_NOTES:
+            self.assertIn("|\n\n- " + n if n == gw.MENTION_NOTES[0] else "- " + n, md)
+        notes = " ".join(gw.MENTION_NOTES).lower()
+        for word in ("optimi", "should", "recommend", "better", "worse"):         # how it is read, never what to do
+            self.assertNotIn(word, notes)
+        self.assertIn("named first (tracked)", gw.render(run))
+        self.assertIn("- Named first (tracked): answers that name that brand before any other brand in your config",
+                      gw.render(run))
+        # with no competitor the brand is first whenever it is named: no column, no notes
+        alone = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]})
+        self.assertEqual(alone["summary"]["engines"][0]["named_first"], 0)       # synth's answers are empty
+        self.assertNotIn("named first", gw.render(alone))
+        self.assertNotIn(gw.MENTION_NOTES[0], gw.render(alone, "md"))
+
+    def test_summary_of_recomputes_a_summary_without_named_first(self):
+        run = self.run_of()
+        old = json.loads(json.dumps(run))
+        for e in old["summary"]["engines"] + old["summary"]["share_of_voice"]:
+            for k in ("named_first", "any_named", "mention_share"):
+                del e[k]                                         # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["share_of_voice"], run["summary"]["share_of_voice"])
+        self.assertEqual(sm["engines"], run["summary"]["engines"])
+        self.assertIn("sentence share", gw.render(old))
+        self.assertNotIn("named_first", old["summary"]["engines"][0])
+
+    def test_a_run_saves_the_order_on_each_answer(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api"), queries(1))
+        by = dict((s["engine"], s) for s in run["samples"])
+        o, p = by["chatgpt-api"], by["perplexity-api"]
+        self.assertEqual((o["mention_order"], o["competitors"]["Pixa"]["mention_order"]), (1, 2))
+        # "Pixa [1] and Reelcraft [2] lead; reddit threads disagree [3]." names no Lumo
+        self.assertEqual((p["mention_order"], p["mention_share"]), (None, None))
+        self.assertEqual([p["competitors"][n]["mention_order"] for n in ("Pixa", "Reelcraft")], [1, 2])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
+# ── what a plan can tell, and runs pooled ────────────────────────────────
+class Resolution(Base):
+    def test_k_for_one_two_three_and_five_engines(self):
+        for n_eng, rows, k in ((1, 1, 6), (2, 3, 7), (3, 4, 8), (5, 6, 8)):
+            r = gw.resolution(n_eng, 10)
+            self.assertEqual((r["engines"], r["rows"], r["min_questions"], r["questions"]), (n_eng, rows, k, 10))
+            self.assertTrue(gw.reachable(rows, k))
+            self.assertFalse(gw.reachable(rows, k - 1))           # k is the smallest such n
+        self.assertTrue(gw.resolution(2, 7)["detectable"])
+        self.assertFalse(gw.resolution(2, 6)["detectable"])
+
+    def test_k_is_the_screen_diff_applies(self):
+        # every question lost on every engine, the clearest move a diff can see: with k - 1 questions no row can be
+        # called a change, with k the first row passes Holm. Asking each question three times does not lower k.
+        for n_eng in (1, 2, 3):
+            engs = ("chatgpt-api", "perplexity-api", "gemini-api")[:n_eng]
+            k = gw.resolution(n_eng, 0)["min_questions"]
+            for runs in (1, 3):
+                for n_q, called in ((k - 1, False), (k, True)):
+                    units = [("q%02d" % i, e) for i in range(n_q) for e in engs]
+                    d = gw.diff_runs(synth("20260919T083000Z", dict((u, [True] * runs) for u in units), runs=runs),
+                                     synth("20260926T083000Z", dict((u, [False] * runs) for u in units), runs=runs))
+                    verdicts = [r["verdict"] for r in [d["overall"]] + d["engines"]]
+                    if called:
+                        self.assertIn("change", verdicts, (n_eng, runs, n_q))
+                    else:
+                        self.assertEqual(set(verdicts), {"too few questions to tell"}, (n_eng, runs, n_q))
+
+    def test_dry_run_prints_the_resolution(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
+                       "engines": engines("chatgpt-api", "perplexity-api"), "max_calls": 100}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query\n" + "".join("q%02d,question number %d\n" % (i, i) for i in range(1, 11)))
+        api = self.fake({})
+
+        def dry(*extra):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(gw.main(["run", "-c", cfgp, "--dry-run"] + list(extra)), 0)
+            return out.getvalue()
+
+        out = dry()
+        self.assertIn("resolution: diff can call a change only when at least 7 of your 10 questions move the same way "
+                      "between two runs (3 × 2/2^7 < 0.05; 3 rows: 2 engines and all engines, Holm-corrected)\n", out)
+        self.assertNotIn("cannot detect", out)
+        out = dry("--limit", "6")
+        self.assertIn("at least 7 questions move the same way between two runs", out)
+        self.assertIn("; this plan has 6\nthis plan cannot detect a change: adding questions helps, adding engines "
+                      "raises the 7, and asking each question more times (--runs) does not lower it\n", out)
+        self.assertIn("this plan cannot detect a change", dry("--limit", "6", "--runs", "3"))
+        out = dry("--limit", "6", "--engines", "chatgpt-api")
+        self.assertIn("at least 6 of your 6 questions move the same way between two runs (1 × 2/2^6 < 0.05; 1 row: "
+                      "one engine, which is also all engines)", out)
+        self.assertNotIn("cannot detect", out)
+        self.assertEqual(api.calls, [])                        # a dry run asks nothing
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "run", "arguments": {"dry_run": True, "limit": 5}})
+        self.assertFalse(r["isError"], r)
+        self.assertIn("this plan cannot detect a change", r["content"][0]["text"])
+        self.assertIn("at least 7 of your 10", srv.call({"name": "run", "arguments": {"dry_run": True}})["content"][0]["text"])
+        for k in ALL_KEY_ENVS:                                 # nothing would be measured: nothing to resolve
+            os.environ.pop(k, None)
+        out = dry()
+        self.assertIn("nothing would be measured", out)
+        self.assertNotIn("resolution", out)
+
+
+WEEKS = ("20260905T083000Z", "20260912T083000Z", "20260919T083000Z", "20260926T083000Z")
+
+
+class Pooling(Base):
+    def setUp(self):
+        Base.setUp(self)
+        self.cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(self.cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        self.cfg = gw.Config(self.cfgp)
+        gw.NOW = lambda: datetime.datetime(2026, 9, 27, 12, 0, 0, tzinfo=datetime.timezone.utc)
+        # eight questions that never name the brand, four always cited and four never, plus one that names it
+        self.qs = [{"query_id": "q%02d" % i, "query": "question %d" % i, "intent_tier": "", "target_url": ""}
+                   for i in range(8)] + [{"query_id": "q99", "query": "is lumo worth it", "intent_tier": "verdict",
+                                          "target_url": ""}]
+
+    def save(self, rid, qs=None, engs=("chatgpt-api", "perplexity-api"), **change):
+        qs = qs or self.qs
+        cited = dict(((q["query_id"], e), [q["query_id"] in ("q00", "q01", "q02", "q03", "q99")]) for q in qs
+                     for e in engs)
+        run = synth(rid, cited, qs=qs)
+        run["questions_hash"] = gw.questions_hash(run["queries"])
+        run.update(change)
+        gw.save_run(self.cfg, run)
+        return run
+
+    def main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def test_pooled_runs_cluster_by_question_across_runs(self):
+        for rid in WEEKS:
+            self.save(rid)
+        runs, p = gw.pooled_report(self.cfg, since=30)
+        ids = list(WEEKS)
+        self.assertEqual([r["run_id"] for r in p["runs"]], ids)
+        self.assertEqual((p["since_days"], p["from"], p["to"], p["days"], p["n_questions"]),
+                         (30, "2026-09-05T08:30:00Z", "2026-09-26T08:30:00Z", 22, 9))
+        self.assertEqual(p["questions_hash"], gw.questions_hash(self.qs))
+        o, h, br = p["overall"], p["headline"], p["branded"]
+        self.assertEqual((o["planned"], o["answered"], o["errors"], o["skipped"]), (72, 72, 0, 0))
+        self.assertEqual((h["answered"], h["cited"], h["n_questions"]), (64, 32, 8))
+        self.assertEqual((br["question_ids"], br["answered"], br["cited"]), (["q99"], 8, 8))
+        self.assertEqual([(e["id"], e["answered"], e["n_questions"]) for e in p["engines"]],
+                         [("chatgpt-api", 36, 9), ("perplexity-api", 36, 9)])
+        # one cluster per question: its 8 answers, 2 engines in each of 4 runs
+        groups = [(8, 8)] * 4 + [(0, 8)] * 4
+        self.assertEqual(h["cited_ci_clustered"], gw.cluster_ci(groups, gw._seed(*(ids + ["pooled", "headline"]))))
+        per_run = gw.cluster_ci([(2, 2)] * 16 + [(0, 2)] * 16, 1)      # what clustering by run and question would say
+        c, w = h["cited_ci_clustered"], h["cited_ci"]
+        self.assertGreater(c[1] - c[0], per_run[1] - per_run[0])
+        self.assertGreater(c[1] - c[0], 2 * (w[1] - w[0]))
+        self.assertEqual(gw.head_ci(h), c)
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(p)), sc["$defs"]["pooled"], sc), [])
+        self.assertEqual(gw.pooled_report(self.cfg, since=30)[1], p)                  # seeded: the same every time
+        text = gw.render_pool(p, "Lumo")
+        self.assertIn("geo-score watch · Lumo · 4 runs pooled, 2026-09-05 to 2026-09-26 (22 days) · api channel", text)
+        self.assertIn("4 runs · 9 questions · 2 engines · 72 planned · 72 answered · 0 failed · 0 skipped", text)
+        self.assertIn("Cited in 50%% of answers to questions that do not name Lumo (32 of 64, 8 questions, 95%% CI %s)"
+                      % gw.ci_s(c), text)
+        self.assertIn("Questions that name Lumo (1, kept out of the headline): cited in 100% (8 of 8", text)
+        self.assertIn("Runs pooled", text)
+        for n in [gw.NOTES[0]] + gw.POOL_NOTES + gw.NOTES[2:]:
+            self.assertIn("- " + n, text)                      # the run report's standing notes stay
+        self.assertIn("- This measures citations. It does not predict traffic, rankings or revenue.", text)
+        self.assertNotIn(gw.NOTES[1], text)                    # diff's paired test is not this report's business
+
+    def test_the_window(self):
+        for rid in WEEKS:
+            self.save(rid)
+        self.assertEqual([r["run_id"] for r in gw.pooled_report(self.cfg, since=10)[1]["runs"]], list(WEEKS[2:]))
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=1)                # the newest run started 28 hours ago
+        self.assertIn("no run saved in the last 1 day", str(e.exception))
+        p = gw.pooled_report(self.cfg, span="20260912T083000Z..20260919T083000Z")[1]
+        self.assertEqual(([r["run_id"] for r in p["runs"]], p["since_days"], p["days"]),
+                         (list(WEEKS[1:3]), None, 8))
+        p = gw.pooled_report(self.cfg, span="20260926T083000Z..20260926T083000Z")[1]
+        self.assertEqual((len(p["runs"]), p["days"]), (1, 1))
+        for bad, why in (("20260912T083000Z", "two run ids, A..B"), ("x..20260919T083000Z", "two run ids, A..B"),
+                         ("20260919T083000Z..20260912T083000Z", "the first run is the later one"),
+                         ("20260912T083000Z..20261231T083000Z", "no run 20261231T083000Z")):
+            with self.assertRaises(gw.ConfigError) as e:
+                gw.pooled_report(self.cfg, span=bad)
+            self.assertIn(why, str(e.exception))
+
+    def test_pooling_refuses_edited_questions_and_other_models(self):
+        self.save(WEEKS[0], engines=[dict(e, status="measured", model="gpt-5" if e["id"] == "chatgpt-api" else e["model"])
+                                     for e in engines("chatgpt-api", "perplexity-api")])
+        self.save(WEEKS[1], qs=[dict(q, query="question 3, reworded") if q["query_id"] == "q03" else q for q in self.qs])
+        self.save(WEEKS[2], qs=[dict(q, query="  " + q["query"].upper()) for q in reversed(self.qs)])   # not an edit
+        newest = self.save(WEEKS[3])
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=30)
+        msg = str(e.exception)
+        self.assertIn("cannot pool: 2 of the 4 runs do not match the newest, 20260926T083000Z", msg)
+        self.assertIn("\n  20260905T083000Z: chatgpt-api model gpt-5 (newest gpt-6-luna)\n", msg)
+        edited = gw.questions_hash([dict(q, query="question 3, reworded") if q["query_id"] == "q03" else q
+                                    for q in self.qs])
+        self.assertIn("\n  20260912T083000Z: other questions (questions_hash %s, newest %s)\n" % (
+            edited[:8], newest["questions_hash"][:8]), msg)
+        self.assertNotIn("20260919T083000Z:", msg)
+        code, out, err = self.main("report", "-c", self.cfgp, "--since", "30")
+        self.assertEqual((code, out), (1, ""))
+        self.assertIn("error: cannot pool", err)
+        # the runs that match pool
+        self.assertEqual(len(gw.pooled_report(self.cfg, span="20260919T083000Z..20260926T083000Z")[1]["runs"]), 2)
+
+    def test_pooling_refuses_other_engines_country_or_brand(self):
+        base = self.save(WEEKS[3])
+        cases = [({"engines": [dict(e, status="measured") for e in engines("chatgpt-api")]},
+                  "perplexity-api not measured"),
+                 ({"engines": [dict(e, status="measured", provider="openrouter") if e["id"] == "chatgpt-api" else e
+                               for e in base["engines"]]}, "chatgpt-api provider openrouter (newest openai)"),
+                 ({"country": "US"}, "country US (newest none)"),
+                 ({"brand": dict(base["brand"], domains=["lumo.example", "lumo.app"])}, "the brand's domains")]
+        for change, why in cases:
+            self.save(WEEKS[0], **change)
+            with self.assertRaises(gw.ConfigError) as e:
+                gw.pooled_report(self.cfg, since=30)
+            self.assertIn("20260905T083000Z: " + why, str(e.exception))
+            os.unlink(os.path.join(self.cfg.runs_dir(), WEEKS[0] + ".json"))
+        # an engine listed without a key was not measured, so listing it does not stop the runs pooling
+        self.save(WEEKS[0], engines=base["engines"] + [{"id": "gemini-api", "provider": "gemini", "model": "m",
+                                                        "status": "no_key"}])
+        self.assertEqual(len(gw.pooled_report(self.cfg, since=30)[1]["runs"]), 2)
+
+    def test_pooling_refuses_runs_that_asked_each_question_more_often(self):
+        # every answer weighs the same in a pool, so a run that asked each question 5 times would count 5 times as
+        # much as one that asked once: 8 of 8 cited, then 0 of 40, would pool to 8 of 48, not to the runs' mean
+        qs = self.qs[:8]
+        once = synth(WEEKS[2], dict(((q["query_id"], "chatgpt-api"), [True]) for q in qs), qs=qs, runs=1)
+        five = synth(WEEKS[3], dict(((q["query_id"], "chatgpt-api"), [False] * 5) for q in qs), qs=qs, runs=5)
+        for run in (once, five):
+            gw.save_run(self.cfg, run)
+        with self.assertRaises(gw.ConfigError) as e:
+            gw.pooled_report(self.cfg, since=30)
+        self.assertIn("cannot pool: 1 of the 2 runs do not match the newest, %s" % WEEKS[3], str(e.exception))
+        self.assertIn("\n  %s: asked each question 1 time (newest 5 times), so the runs would not weigh the same\n"
+                      % WEEKS[2], str(e.exception))
+        self.assertIn("asked the same questions as many times", str(e.exception))
+        self.assertEqual(gw.pool_mismatch(five, once), ["asked each question 5 times (newest 1 time), so the runs would "
+                                                        "not weigh the same"])
+        self.assertEqual(gw.pool_mismatch(five, dict(five, run_id="x")), [])
+        srv = gw.MCPServer(self.cfgp, out=io.StringIO())
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertTrue(r["isError"])
+        self.assertIn("asked each question 1 time (newest 5 times)", r["content"][0]["text"])
+        # each run on its own still reports
+        self.assertEqual(len(gw.pooled_report(self.cfg, span=WEEKS[3] + ".." + WEEKS[3])[1]["runs"]), 1)
+
+    def test_report_flags(self):
+        for rid in WEEKS:
+            self.save(rid)
+        code, out, _ = self.main("report", "-c", self.cfgp, "--since", "30", "--format", "json")
+        self.assertEqual(code, 0)
+        sc = watch_schema()
+        p = json.loads(out)
+        self.assertEqual(validate(p, sc["$defs"]["pooled"], sc), [])
+        self.assertEqual(len(p["runs"]), 4)
+        code, out, _ = self.main("report", "-c", self.cfgp, "--runs", "20260912T083000Z..20260926T083000Z",
+                                 "--format", "md")
+        self.assertEqual(code, 0)
+        self.assertIn("# geo-score watch · Lumo · 3 runs pooled", out)
+        self.assertIn("## Runs pooled", out)
+        path = os.path.join(self.tmp, "pooled.txt")
+        self.assertEqual(self.main("report", "-c", self.cfgp, "--since", "30", "-o", path)[0], 0)
+        with io.open(path, encoding="utf-8") as f:
+            self.assertIn("4 runs pooled", f.read())
+        for argv, why in (([WEEKS[0], "--since", "30"], "not both"),
+                          (["--since", "30", "--runs", WEEKS[0] + ".." + WEEKS[1]], "pass one of them"),
+                          (["--since", "30", "--format", "csv"], "--format csv lists one run's answers"),
+                          (["--since", "0"], "--since takes a whole number of days")):
+            code, out, err = self.main("report", "-c", self.cfgp, *argv)
+            self.assertEqual((code, out), (1, ""), argv)
+            self.assertIn(why, err)
+        code, out, _ = self.main("report", "-c", self.cfgp)          # without the flags: the latest run, as before
+        self.assertEqual(code, 0)
+        self.assertIn("run 20260926T083000Z", out)
+
+    def test_mcp_report_since(self):
+        srv = gw.MCPServer(self.cfgp, out=io.StringIO())
+        for rid in WEEKS:
+            self.save(rid)
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertFalse(r["isError"], r)
+        self.assertIn("4 runs pooled", r["content"][0]["text"])
+        sc = watch_schema()
+        out_schema = next(t["outputSchema"] for t in srv.tools() if t["name"] == "report")
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+        self.assertEqual(validate(r["structuredContent"], sc["$defs"]["pooled"], sc), [])
+        r = srv.call({"name": "report", "arguments": {"since": 10, "format": "json"}})
+        self.assertEqual(len(json.loads(r["content"][0]["text"])["runs"]), 2)
+        for bad in ({"since": 0}, {"since": "30"}, {"since": True}, {"since": 30, "run": WEEKS[0]}):
+            self.assertTrue(srv.call({"name": "report", "arguments": bad})["isError"], bad)
+        r = srv.call({"name": "report", "arguments": {}})              # without since: one run's summary
+        self.assertFalse(r["isError"], r)
+        self.assertNotIn("runs", r["structuredContent"])
+        self.assertIn("by_question", r["structuredContent"])
+        self.save("20260920T083000Z", qs=self.qs[:8])
+        r = srv.call({"name": "report", "arguments": {"since": 30}})
+        self.assertTrue(r["isError"])
+        self.assertIn("cannot pool: 1 of the 5 runs", r["content"][0]["text"])
+
+
 class OldRuns(Base):
     def setUp(self):
         Base.setUp(self)
@@ -2830,6 +3917,20 @@ class OldRuns(Base):
         self.assertIn("cited (headline)", out)
         with io.open(os.path.join(FIXTURES, self.ids[0] + ".json"), encoding="utf-8") as f:
             self.assertNotIn("brand_in_query", f.read())                 # reports never rewrite a run file
+
+
+    def test_1_2_0_runs_pool(self):
+        gw.NOW = lambda: datetime.datetime(2026, 9, 30, tzinfo=datetime.timezone.utc)
+        runs, p = gw.pooled_report(self.cfg, since=30)
+        self.assertEqual([r["run_id"] for r in p["runs"]], self.ids)
+        self.assertEqual(p["questions_hash"], gw.questions_hash(runs[0]["queries"]))    # computed: 1.2.0 saved none
+        self.assertEqual((p["brand_flags"], p["branded"]["question_ids"]), ("computed", ["q04", "q06"]))
+        self.assertEqual(p["overall"]["answered"], sum(r["answered"] for r in p["runs"]))
+        self.assertEqual([e["id"] for e in p["engines"]], ["chatgpt-api", "perplexity-api"])   # gemini had no key
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(p)), sc["$defs"]["pooled"], sc), [])
+        self.assertTrue(any("saved before questions were flagged" in n for n in p["notes"]))
+        self.assertEqual(self.main("report", "-c", self.cfgp, "--since", "30")[0], 0)
 
 
 class PipedDecoy(unittest.TestCase):
