@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-10-03
+
 ### Added
 - **`watch report` shows who is named for each question.** A new table, "Who is named for each question",
   lists every question with its answers and, out of those, how many cite and name you, how many cite and name
@@ -1110,7 +1112,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/jianruntech/geo-score/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jianruntech/geo-score/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jianruntech/geo-score/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0

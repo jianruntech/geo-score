@@ -8,7 +8,7 @@ geo-score:
   variables:
     SITE_URL: https://example.com
     GEO_SCORE_FAIL_UNDER: "40"        # the job fails below this score; drop --fail-under to only report
-    GEO_SCORE_RELEASE: https://github.com/jianruntech/geo-score/releases/download/v1.5.0
+    GEO_SCORE_RELEASE: https://github.com/jianruntech/geo-score/releases/download/v1.6.0
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"          # CI/CD > Schedules, e.g. weekly
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

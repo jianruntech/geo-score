@@ -8,12 +8,12 @@
     "url": "https://github.com/jianruntech/geo-score",
     "source": "github"
   },
-  "version": "1.5.0",
+  "version": "1.6.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "geo-score",
-      "version": "1.5.0",
+      "version": "1.6.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -71,7 +71,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/jianruntech/geo-score/releases/download/v1.5.0/geo-score-1.5.0.mcpb",
+      "identifier": "https://github.com/jianruntech/geo-score/releases/download/v1.6.0/geo-score-1.6.0.mcpb",
       "fileSha256": "${MCPB_SHA256}",
       "transport": {
         "type": "stdio"

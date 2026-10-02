@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-10-03
+
 ### 新增
 - **`watch report` 列出每个问题提到了谁。** 新表「Who is named for each question」逐个列出问题：拿到几条回答，其中几条引用、几条提到了你，
   几条引用、几条提到了每个竞品，几条一个追踪的品牌都没提到，几条联网搜索过（是、否或未知），以及被引用次数最多的追踪品牌；后者只在问题
@@ -705,7 +707,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/jianruntech/geo-score/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jianruntech/geo-score/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jianruntech/geo-score/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jianruntech/geo-score/compare/v1.2.0...v1.3.0

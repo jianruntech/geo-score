@@ -23,7 +23,7 @@ import math, os, random, re, socket, sys, threading, time, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 RUN_FORMAT = "geo-score/watch.v1"
 CONFIG_NAME = "geo-score-watch.json"
 STATE_DIR = os.path.join(".geo-score", "watch")
