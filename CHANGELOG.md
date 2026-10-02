@@ -91,6 +91,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   run saved without them gets them computed from its saved answers when it is reported. Schema: both counts, and
   an optional `warning` in `$defs/diff_row`; the MCP `diff` tool's output schema gains the optional `warning`,
   so the MCP contract only grows.
+- **`p3.video`: Douyin, Xigua and Kuaishou channel links count as channels.** A link to a Douyin account page
+  (`douyin.com/user/…`, or the `iesdouyin.com/share/user/…` form an expanded share link takes), a Xigua channel
+  (`ixigua.com/home/…`, `m.ixigua.com/user/…`) or a Kuaishou profile (`kuaishou.com/profile/…`,
+  `live.kuaishou.com/profile/…`) is now read as a channel link, and Douyin's open-platform player
+  (`open.douyin.com/player/video`) as an embedded player; through 1.5.0 only YouTube, Bilibili and Vimeo were.
+  Short links (`v.douyin.com`, `v.kuaishou.com`) and single-video URLs are never channels. The evidence line now
+  says "channel links", not "official channel links", because a link to an account the site does not own counts too.
+  Direction: up, on sites that link them. The leaderboard picks this up at its next run.
 
 ## [1.5.0] — 2026-09-30
 

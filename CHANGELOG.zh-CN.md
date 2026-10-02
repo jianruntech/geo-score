@@ -57,6 +57,12 @@
   核对一条回答。summary 的 `summary.engines` 每一行新增 `with_citations` 和 `with_searches`，没有这两项的旧运行在出报告时由保存的回答
   当场算出。Schema 新增这两个计数，以及 `$defs/diff_row` 里可选的 `warning`；MCP `diff` 工具的输出 schema 新增可选的 `warning`，
   MCP 契约只增不减。
+- **`p3.video`：抖音、西瓜视频和快手的频道链接算作频道。** 指向抖音账号主页（`douyin.com/user/…`，或分享链接展开后的
+  `iesdouyin.com/share/user/…`）、西瓜视频频道（`ixigua.com/home/…`、`m.ixigua.com/user/…`）或快手个人主页
+  （`kuaishou.com/profile/…`、`live.kuaishou.com/profile/…`）的链接，现在读作频道链接；抖音开放平台的播放器
+  （`open.douyin.com/player/video`）读作嵌入播放器。1.5.0 及以前只认 YouTube、B 站和 Vimeo。短链接（`v.douyin.com`、
+  `v.kuaishou.com`）和单条视频的链接一律不算频道。证据行里的「official channel links」改为「channel links」，
+  因为指向并非本站所有的账号的链接也会计入。方向：上升，只涉及链接了这些平台的网站。榜单在下一次重跑时体现这一变化。
 
 ## [1.5.0] — 2026-09-30
 
