@@ -45,6 +45,12 @@ ALPHA = 0.05
 MIN_PAIRED = 6        # with 5 questions, all 5 flipping the same way gives exact p = 2/2^5 = 0.0625: no test can call it
 BRANDED_WARN = 0.3    # `watch check` warns above this share of questions that name the brand
 LEADER_MIN = 4        # summary.by_question names a leader only for a question with at least this many answers
+# An engine with at least this many answers and no citation in any of them gets a warning: an adapter reads one
+# answer format, so a provider that renamed a field reads as an engine that stopped citing.
+CITATIONLESS_MIN = 5
+# watch diff warns when an engine's share of answers carrying any citation falls from at least the first value
+# to below the second, with the same model.
+CITATIONS_WERE, CITATIONS_GONE = 0.5, 0.05
 # Providers whose stored answers show whether the engine searched: a search count, the search queries or the
 # citations. The Perplexity and OpenRouter adapters record one search for every answer, so that count is never read.
 SEARCH_REPORTED = ("openai", "gemini", "anthropic")
@@ -1275,7 +1281,9 @@ def summarize(run):
         row = dict(block(eo, "engine:" + e["id"]), id=e["id"], model=e["model"], status=e["status"],
                    errors=sum(1 for s in es if s["status"] == "error"),
                    skipped=sum(1 for s in es if s["status"] == "skipped"),
-                   avg_rank=round(sum(ranks) / float(len(ranks)), 1) if ranks else None)
+                   avg_rank=round(sum(ranks) / float(len(ranks)), 1) if ranks else None,
+                   with_citations=sum(1 for s in eo if s["citations"]),
+                   with_searches=sum(1 for s in eo if s["search_queries"]))
         engines.append(row)
 
     everything = block(ok, "overall")
@@ -1363,14 +1371,33 @@ def summarize(run):
 
 
 def summary_of(run):
-    """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split or
-    the per-question counts existed. Summaries are derived from the samples, so recomputing one changes no
-    measurement."""
+    """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
+    per-question counts or the per-engine citation counts existed. Summaries are derived from the samples, so
+    recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
-            and "by_question" in sm:
+            and "by_question" in sm and all("with_citations" in e for e in sm.get("engines") or []):
         return sm
     return summarize(run)
+
+
+def citationless(eid, answered):
+    """The report's warning for an engine none of whose answers carried a citation."""
+    return ("%s returned %d answers and none carried a citation; if this engine usually cites, its API's answer "
+            "format may have changed (check one answer with `watch ask --engines %s`)" % (eid, answered, eid))
+
+
+def citations_vanished(eid, sa, sb):
+    """The diff's warning when an engine's answers stopped carrying citations, or None. sa and sb are its answers
+    in the two runs; only called when the model is the same in both."""
+    if not sa or len(sb) < CITATIONLESS_MIN:
+        return None
+    was, now = sum(1 for s in sa if s["citations"]), sum(1 for s in sb if s["citations"])
+    if was < CITATIONS_WERE * len(sa) or now >= CITATIONS_GONE * len(sb):
+        return None
+    return ("%s: answers carrying any citation fell from %d of %d to %d of %d with the same model; if this engine "
+            "usually cites, its API's answer format may have changed, and this row may measure that, not the engine "
+            "(check one answer with `watch ask --engines %s`)" % (eid, was, len(sa), now, len(sb), eid))
 
 
 def _asks(run, common_q, engines):
@@ -1483,6 +1510,11 @@ def diff_runs(a, b):
         all_a += sa
         all_b += sb
         rows.append(compare(eid, sa, sb, dict((u, v) for u, v in pairs.items() if u[1] == eid), note))
+        # the verdict stands: a format change and an engine that stopped citing look the same in the samples
+        warning = None if note else citations_vanished(eid, sa, sb)
+        if warning:
+            rows[-1]["warning"] = warning
+            notes.append(warning)
     overall = compare("all engines", all_a, all_b, pairs)
 
     # Holm over the engines plus the overall row. With one engine the overall row is that engine's test again.
@@ -1661,6 +1693,10 @@ def render(run, fmt="text"):
         L.append("")   # a line right under a markdown table would be read as another row
         L.append("These rows, and the tables below, count every question, the %d that name %s included." % (
             len(br["question_ids"]), name))
+    for e in sm["engines"]:
+        if e["status"] == "measured" and e["answered"] >= CITATIONLESS_MIN and e.get("with_citations") == 0:
+            L.append("")
+            L.append("warning: " + citationless(e["id"], e["answered"]))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
@@ -1763,7 +1799,8 @@ def render_diff(d, fmt="text"):
                      "%s (n=%d)" % (pct(r["after_paired"]), r["n_asks"]),
                      "—" if r["delta_pp"] is None else "%+d pts" % round(r["delta_pp"]),
                      "%+d to %+d" % (round(ci[0]), round(ci[1])) if ci else "—",
-                     "—" if p is None else "%.3f" % p, r["verdict"], r["note"] or ""])
+                     "—" if p is None else "%.3f" % p, r["verdict"],
+                     r["note"] or ("no citations at all: see the notes" if r.get("warning") else "")])
     L.append("")
     L.append(table(["", "before", "after", "change", "95% CI", "p (Holm)", "verdict", ""], rows, fmt))
     L.append("")
@@ -2271,6 +2308,9 @@ def cmd_diff(args):
     d = diff_runs(a, b)
     _out(json.dumps(d, ensure_ascii=False, indent=1) + "\n" if args.format == "json" else render_diff(d, args.format),
          None)
+    for r in d["engines"]:
+        if r.get("warning"):
+            print("warning: " + _printable(r["warning"]), file=sys.stderr)
     if args.fail_on_drop and drops(d):
         print("citation rate dropped beyond noise: %s" % ", ".join(drops(d)), file=sys.stderr)
         return 4
@@ -2394,7 +2434,9 @@ _ROW = {"type": "object", "properties": {
     "delta_pp": _nullable("number", description="change in cited share, percentage points"),
     "delta_ci": _nullable({"type": "array", "items": {"type": "number"}},
                           description="95% interval for delta_pp, in percentage points"),
-    "p_adjusted": _NUM_OR_NULL}}
+    "p_adjusted": _NUM_OR_NULL,
+    "warning": {"type": "string", "description": "present when this engine's answers stopped carrying citations "
+                                                 "with the same model: its API's answer format may have changed"}}}
 OUT_DIFF = {"type": "object", "description": "Two runs compared (schema/watch.v1.json, $defs/diff).",
             "required": ["from", "to", "overall", "engines"],
             "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "overall": _ROW,

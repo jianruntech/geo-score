@@ -107,6 +107,14 @@ k 条引用、共 n 条回答，z = 1.96：
 
 `watch diff --fail-on-drop` 在任何一行结论为 `change` 且 `delta_pp` 为负时以退出码 4 结束，CI 任务可以只在下降时停下，其他情况一律不停。
 
+### 完全不带引用的回答
+
+每个适配器只读各家服务商的一种回答格式（OpenAI 读的是 `url_citation` 标注），所以服务商一旦给引用改名或换位置，读出来就像引擎什么都不引用了。
+有两条警告专门找这种情形，与品牌无关：某个引擎给出 5 条或更多回答、却没有一条带任何域名的引用时（`summary.engines` 里 `with_citations` 为 0），
+报告在「By engine」下给出警告；同一模型下，某个引擎带任何引用的回答占比从至少 50% 降到 5% 以下、且后一次运行至少有 5 条回答时，
+`watch diff` 在这个引擎的行上加 `warning`，并把同样的话写进说明（notes）和 stderr。两者都不改变结论，也不改变退出码：在保存的回答里，
+格式变了和引擎不再引用看起来一模一样，所以警告请你用 `watch ask` 核对一条回答。
+
 ### 变化量的区间
 
 `delta_ci` 是 95% 配对自助区间：有放回地抽问题（每个问题带着它的 d_q 和配对提问数），算 Σ d_q / Σ 提问数，重复 2,000 次，取第 2.5 与第 97.5 百分位。种子来自两次运行的 ID 与行名，做法同上。然后把它放宽到覆盖 Newcombe（1998）的配对比例混合得分区间，该区间在配对提问的四格表上计算（a 两次都引用，b 丢失，c 新获得，d 两次都没有，n = a + b + c + d）：
@@ -174,12 +182,12 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
   也只有部分引擎会用它。
 - **智能体选工具。** 编程智能体选用哪个库或 API，是在智能体内部决定的，不在一条搜索回答里。
 - **引用背后的检索。** API 返回的引用是检索的终点：它搜过、读过却没引用的内容大多不会返回；返回内容的格式也会随 API 版本变化，
-  所以一次突然的变化可能是格式变了，而不是引擎变了。
+  所以一次突然的变化可能是格式变了，而不是引擎变了。某个引擎的回答完全不再带引用时，报告和比较结果都会警告（见[完全不带引用的回答](#完全不带引用的回答)）。
 - **好坏。** 被引用说明在场，不是对质量的评判：它说的是引擎提到并链接了某一页，不说明它说的是真的，也不说明那一页配得上。
   引擎也会引用误导性的、自我宣传的页面，所以引用率高不能证明来源好，低也不能证明来源差。
 
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

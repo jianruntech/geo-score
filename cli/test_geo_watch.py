@@ -2949,6 +2949,126 @@ class ByQuestion(Base):
         self.assertNotIn("by_question", old["summary"])          # the run itself is not rewritten
 
 
+# ── an engine whose answers stop carrying citations ──────────────────────
+def openai_resp_renamed(text, cites=(), queries=()):
+    """openai_resp with the annotation type renamed, as a provider changing its answer format would: the adapter
+    reads url_citation only, so the answer arrives with no citation at all."""
+    js = openai_resp(text, cites, queries)
+    for an in js["output"][-1]["content"][0]["annotations"]:
+        an["type"] = "url_reference"
+    return js
+
+
+class CitationFormat(Base):
+    TEXT = "Lumo gives 15 free credits; Pixa is another option."
+    CITES = [("https://www.lumo.example/free", "Lumo free plan"), ("https://pixa.example/pricing", "Pixa pricing")]
+
+    def route(self, renamed):
+        build = openai_resp_renamed if renamed else openai_resp
+        return {"api.openai.com": lambda u, h, b: build(self.TEXT, self.CITES, ["best free ai video generator"])}
+
+    def ask(self, n, renamed):
+        self.fake(self.route(renamed))
+        return gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(n), max_calls=100)
+
+    def config(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
+                       "competitors": [{"name": "Pixa", "domains": ["pixa.example"]}]}, f)
+        return cfgp
+
+    def test_a_renamed_annotation_type_gives_no_citations_and_the_run_warns(self):
+        run = self.ask(5, renamed=True)
+        self.assertEqual([(s["status"], s["citations"], s["cited"], s["mentioned"]) for s in run["samples"]],
+                         [("ok", [], False, True)] * 5)             # the text still names Lumo; nothing is cited
+        e = run["summary"]["engines"][0]
+        self.assertEqual((e["answered"], e["with_citations"], e["with_searches"]), (5, 0, 5))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        warning = ("warning: chatgpt-api returned 5 answers and none carried a citation; if this engine usually "
+                   "cites, its API's answer format may have changed (check one answer with "
+                   "`watch ask --engines chatgpt-api`)")
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn(warning, text)
+            self.assertLess(text.index("By engine"), text.index(warning))
+            self.assertLess(text.index(warning), text.index("Ledger"))
+            self.assertIn("\n\n" + warning, text)                   # never read as a row of the table above
+        # the same answers in the format the adapter reads: counted, and no warning
+        fine = self.ask(5, renamed=False)
+        e = fine["summary"]["engines"][0]
+        self.assertEqual((e["with_citations"], e["with_searches"]), (5, 5))
+        self.assertNotIn("none carried a citation", gw.render(fine))
+        # four answers are too few to say anything
+        self.assertNotIn("none carried a citation", gw.render(self.ask(4, renamed=True)))
+        # a summary saved without the counts is recomputed, so the warning reaches runs saved before 1.6.0
+        old = json.loads(json.dumps(run))
+        for row in old["summary"]["engines"]:
+            del row["with_citations"], row["with_searches"]
+        self.assertEqual(gw.summary_of(old)["engines"][0]["with_citations"], 0)
+        self.assertIn(warning, gw.render(old))
+        self.assertIs(gw.summary_of(run), run["summary"])
+
+    def test_the_diff_warns_when_citations_vanish_and_still_exits_4(self):
+        cfgp = self.config()
+        cfg = gw.Config(cfgp)
+        gw.save_run(cfg, self.ask(8, renamed=False))
+        gw.save_run(cfg, self.ask(8, renamed=True))
+        a, b = gw.load_run(cfg, "previous"), gw.load_run(cfg, "latest")
+        d = gw.diff_runs(a, b)
+        words = ("chatgpt-api: answers carrying any citation fell from 8 of 8 to 0 of 8 with the same model; if "
+                 "this engine usually cites, its API's answer format may have changed, and this row may measure "
+                 "that, not the engine (check one answer with `watch ask --engines chatgpt-api`)")
+        row = d["engines"][0]
+        self.assertEqual((row["verdict"], row["warning"]), ("change", words))      # the verdict is kept
+        self.assertIn(words, d["notes"])
+        self.assertNotIn("warning", d["overall"])
+        self.assertEqual(gw.drops(d), ["all engines", "chatgpt-api"])
+        sc = watch_schema()
+        self.assertEqual(validate(json.loads(json.dumps(d)), sc["$defs"]["diff"], sc), [])
+        self.assertIn("no citations at all: see the notes", gw.render_diff(d))
+        self.assertIn("note: " + words, gw.render_diff(d))
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(["diff", "-c", cfgp, "--fail-on-drop"])
+        self.assertEqual(code, 4)
+        self.assertIn("warning: " + words, err.getvalue())
+        self.assertLess(err.getvalue().index("warning: "), err.getvalue().index("citation rate dropped"))
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(gw.main(["diff", "-c", cfgp, "--format", "json"]), 0)     # warns, never fails alone
+        self.assertEqual(json.loads(out.getvalue())["engines"][0]["warning"], words)
+        self.assertIn("warning: " + words, err.getvalue())
+        srv = gw.MCPServer(cfgp, out=io.StringIO())
+        r = srv.call({"name": "diff", "arguments": {"format": "json"}})
+        self.assertEqual(r["structuredContent"]["engines"][0]["warning"], words)
+        out_schema = next(t for t in srv.tools() if t["name"] == "diff")["outputSchema"]
+        self.assertEqual(schema_errors(r["structuredContent"], out_schema), [])
+        self.assertIn("warning", out_schema["properties"]["engines"]["items"]["properties"])
+
+    def test_the_diff_warning_needs_a_steady_model_a_citing_engine_and_five_answers(self):
+        def pair(before, after, n=8):
+            """Two runs of n questions on one engine: the first `before` questions cited (with a citation) in the
+            first run, the first `after` in the second. synth gives an uncited answer no citation at all."""
+            ids = ["q%02d" % i for i in range(1, n + 1)]
+            return (synth("20260919T083000Z", dict(((q, "chatgpt-api"), [i < before]) for i, q in enumerate(ids))),
+                    synth("20260926T083000Z", dict(((q, "chatgpt-api"), [i < after]) for i, q in enumerate(ids))))
+        warned = lambda d: [r["engine"] for r in d["engines"] if "warning" in r]
+        self.assertEqual(warned(gw.diff_runs(*pair(4, 0))), ["chatgpt-api"])       # 50% to 0%
+        self.assertEqual(warned(gw.diff_runs(*pair(3, 0))), [])                    # 38%: it did not usually cite
+        self.assertEqual(warned(gw.diff_runs(*pair(8, 1))), [])                    # 13% left: still citing
+        self.assertEqual(warned(gw.diff_runs(*pair(20, 0, n=20))), ["chatgpt-api"])
+        self.assertEqual(warned(gw.diff_runs(*pair(20, 1, n=20))), [])             # 1 of 20 is 5%: not below it
+        self.assertEqual(warned(gw.diff_runs(*pair(21, 1, n=21))), ["chatgpt-api"])     # 1 of 21 is below 5%
+        self.assertEqual(warned(gw.diff_runs(*pair(4, 0, n=4))), [])               # 4 answers after: too few
+        a, b = pair(8, 0)
+        b["engines"][0]["model"] = "gpt-7"
+        d = gw.diff_runs(a, b)
+        self.assertEqual(warned(d), [])                                            # a new model can cite less
+        self.assertEqual(d["engines"][0]["note"], "model changed: gpt-6-luna -> gpt-7")
+        self.assertFalse([n for n in d["notes"] if "citation fell" in n])
+
+
 # ── questions that name the brand ────────────────────────────────────────
 class Branded(Base):
     def test_questions_naming_the_brand_are_flagged(self):

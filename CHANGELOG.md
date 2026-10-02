@@ -31,6 +31,17 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   an optional top-level `questions_hash` (SHA-256 over the sorted pairs of id and normalised text, defined in
   schema/watch.v1.json), and `watch runs` shows its first 8 characters; for older runs it is computed from the
   saved questions.
+- **An API that changes its answer format no longer reads, without a word, as an engine that stopped citing.**
+  Each adapter reads one format per provider, so a renamed citation field gave answers with no citations at all,
+  and `watch diff --fail-on-drop` could exit 4 on what was a format change. `watch report` now warns under "By
+  engine" when an engine gave 5 or more answers and none carried a citation of any domain. `watch diff` adds a
+  `warning` to an engine's row, the same words to the notes and to stderr, when the share of its answers
+  carrying any citation fell from at least 50% to below 5% with the same model and at least 5 answers in the
+  later run. The verdict and exit code 4 are unchanged: the warning asks for one answer to be checked with
+  `watch ask`. The summary gains `with_citations` and `with_searches` on each row of `summary.engines`, and a
+  run saved without them gets them computed from its saved answers when it is reported. Schema: both counts, and
+  an optional `warning` in `$defs/diff_row`; the MCP `diff` tool's output schema gains the optional `warning`,
+  so the MCP contract only grows.
 
 ## [1.5.0] — 2026-09-30
 

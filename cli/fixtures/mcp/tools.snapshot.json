@@ -1072,6 +1072,10 @@
         },
         "verdict": {
          "type": "string"
+        },
+        "warning": {
+         "description": "present when this engine's answers stopped carrying citations with the same model: its API's answer format may have changed",
+         "type": "string"
         }
        },
        "type": "object"
@@ -1122,6 +1126,10 @@
         ]
        },
        "verdict": {
+        "type": "string"
+       },
+       "warning": {
+        "description": "present when this engine's answers stopped carrying citations with the same model: its API's answer format may have changed",
         "type": "string"
        }
       },

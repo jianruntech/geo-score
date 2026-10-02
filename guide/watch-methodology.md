@@ -183,6 +183,18 @@ engine's row and takes its result instead of being counted twice.
 `watch diff --fail-on-drop` exits with code 4 when any row's verdict is `change` with a negative
 `delta_pp`, so a CI job can stop on a drop and on nothing else.
 
+### Answers with no citation at all
+
+Each adapter reads one answer format per provider (for OpenAI, `url_citation` annotations), so a
+provider that renames or moves its citations reads as an engine that stopped citing anything. Two
+warnings look for that shape, not for the brand: the report warns under "By engine" when an engine
+gave 5 or more answers and none carried a citation of any domain (`with_citations` is 0 in
+`summary.engines`), and `watch diff` gives an engine's row a `warning`, and puts the same words in
+the notes and on stderr, when the share of its answers carrying any citation fell from at least 50%
+to below 5% with the same model and at least 5 answers in the later run. Neither changes a verdict
+or an exit code: in the saved answers a format change and an engine that stopped citing look the
+same, so the warning asks for one answer to be checked with `watch ask`.
+
 ### The interval for the change
 
 `delta_ci` is a 95% paired bootstrap: draw questions with replacement (each with its d_q and its
@@ -282,7 +294,8 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
   search answer.
 - **The retrieval behind a citation.** The citations an API returns are the end of its retrieval: what it
   searched and read but did not cite is mostly not returned, and the shape of what is returned changes between
-  API versions, so a sudden move can be the format rather than the engine.
+  API versions, so a sudden move can be the format rather than the engine. The report and the diff warn when an
+  engine's answers stop carrying citations altogether ([Answers with no citation at all](#answers-with-no-citation-at-all)).
 - **Merit.** A citation is presence, not a verdict on quality: it says an engine named and linked a page, not
   that what it said is true or that the page deserved it. Engines also cite misleading and self-promotional
   pages, so a high rate is not evidence that a source is good, and a low one is not evidence that it is bad.
@@ -291,7 +304,8 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
   `summary.branded`, `summary.brand_flags`, `cited_ci_clustered` and `n_questions` in every rate
-  block, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on each
+  block, `with_citations` and `with_searches` on each row of `summary.engines`,
+  `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on each
   question, and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
