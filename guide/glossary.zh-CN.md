@@ -269,6 +269,16 @@ MCP 服务让 Agent 调用的功能：`score_site`（第一级，免费）、`as
 
 ## N
 
+### Named first（最先被提到）
+
+追踪报告里，最先提到某个品牌（在配置里所有品牌中）的回答数，分母是至少提到配置里一个品牌的回答数。先后看每条回答的
+`mention_order`：取每个品牌的名字、别名或域名最早的一处匹配，匹配规则与[被提及](#mentioned被提及)相同。两个品牌第一次被提到的位置
+相同时都没有名次；配置里没列的品牌看不见，所以在你追踪的品牌里排第一，不一定是在回答里排第一。它读的是保存下来的回答，即前 20,000 个字符。
+
+**出现在：** `watch report` 里 `By engine` 和 `Share of voice` 两张表的 `named first` 列；运行文件里每条回答及其竞品的 `mention_order`；
+`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first` 与 `any_named`。
+**详见：** [watch 方法说明 · 单位](watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)
+
 ### Normalised score（归一化分）
 
 也就是 0–100 分本身：就绪度（得分加上加分项）除以可观测满分，乘以 100 后四舍五入，最高 100。有门槛项得 0 分时，再封顶 40。
@@ -410,6 +420,16 @@ OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Pe
 
 **出现在：** `benchmark/README.md` 和榜单页的分行业表；`benchmark/stats.json` 的 `sectors`。
 **详见：** [benchmark/README.md · By sector](../benchmark/README.md#by-sector)（英文）
+
+### Sentence share（句子占比）
+
+回答里提到某个品牌的句子占全部句子的比例（`mention_share`），每句同等计数。句子在换行处、在 `。！？` 处，或在后面跟着空白的
+`.` `!` `?` 处结束；没有任何字母、汉字或数字的片段（比如表格的分隔行）不算一句。报告给出的是它在提到这个品牌的回答里的平均值。
+回答越长，同一个名字摊到的句子越多，所以回答长短不同的引擎之间，这个比例不在同一把尺子上。
+
+**出现在：** `watch report` 里 `Share of voice` 表的 `sentence share` 列；运行文件里每条回答、其竞品，以及 `summary.engines` 和
+`summary.share_of_voice` 每一行的 `mention_share`。
+**详见：** [Named first（最先被提到）](#named-first最先被提到)
 
 ### Site text fence（«site text» 围栏）
 

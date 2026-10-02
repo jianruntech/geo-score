@@ -41,6 +41,19 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `$defs/tracked_page`, and a description of the saved `target_url`. The MCP `report` tool's output schema gains
   the optional `tracked_pages`, so the MCP contract only grows. A run saved before this release gets the table
   computed from its saved citations when it is reported.
+- **`watch report` shows who is named first.** Each answer records, for the brand and each competitor,
+  `mention_order` (1 for the brand named before every other brand in the config, by the earliest match of its
+  name, aliases or domains with the matcher of `mentioned`; null when it is not named, or when two brands are
+  first named at the same place) and `mention_share` (the share of the answer's sentences that name it, every
+  sentence counted the same; a sentence ends at a line break, at `。！？`, or at `.` `!` `?` before whitespace).
+  With competitors in the config, "By engine" gains a column, "named first": the answers that name you first, out
+  of the answers that name at least one brand in the config. "Share of voice" gains "named first" and "sentence
+  share", the mean `mention_share` over the answers that name each brand, with three lines on how they are read.
+  Brands the config does not list are not seen, so first among the brands you track may not be first in the
+  answer. Both are read from the answer as saved, which keeps its first 20,000 characters. Schema:
+  `mention_order` and `mention_share` in `$defs/sample` and its competitors, and `named_first`, `any_named` and
+  `mention_share` on the rows of `summary.engines` and `summary.share_of_voice`. The MCP tools' schemas are
+  unchanged. A run saved before this release gets them computed from its saved answers when it is reported.
 
 ### Fixed
 - **`watch diff` compares a question only with itself.** It paired questions by `query_id` alone, so a question

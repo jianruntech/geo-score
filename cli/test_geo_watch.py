@@ -145,8 +145,11 @@ class ProviderParsing(Base):
         self.assertEqual(s["rank"], 1)
         self.assertEqual(s["quoted_url"], "https://www.lumo.example/free")   # utm_source=openai dropped
         self.assertTrue(s["mentioned"])
-        self.assertEqual(s["competitors"]["Pixa"], {"cited": True, "rank": 2, "mentioned": True})
-        self.assertEqual(s["competitors"]["Reelcraft"], {"cited": False, "rank": None, "mentioned": False})
+        self.assertEqual((s["mention_order"], s["mention_share"]), (1, 1.0))     # one sentence, Lumo named first
+        self.assertEqual(s["competitors"]["Pixa"], {"cited": True, "rank": 2, "mentioned": True,
+                                                    "mention_order": 2, "mention_share": 1.0})
+        self.assertEqual(s["competitors"]["Reelcraft"], {"cited": False, "rank": None, "mentioned": False,
+                                                         "mention_order": None, "mention_share": None})
         self.assertEqual(s["search_queries"], ["best free ai video generator"])
         self.assertEqual(res["usage"], {"input_tokens": 1000, "output_tokens": 200, "search_calls": 1, "api_calls": 1})
 
@@ -3403,6 +3406,147 @@ class TrackedPages(Base):
         self.assertEqual(sm["headline"], run["summary"]["headline"])
         self.assertIn("Pages you track", gw.render(old))
         self.assertNotIn("tracked_pages", old["summary"])
+
+
+# ── who is named first, and in how many sentences ─────────────────────────
+def said(sample, text):
+    sample["answer"] = text
+    return sample
+
+
+class MentionOrder(Base):
+    def positions(self, text, ents=None):
+        return gw.mention_positions(text, ents or [brand()] + rivals())
+
+    def test_an_english_answer_whole_words_only(self):
+        text = ("Pixa is the most popular pick. Lumos users and Pixabay fans may also like Lumo, which costs less.\n"
+                "See lumo.example for the 3.5 release! Reelcraft suits teams.")
+        # three sentences end at ". " and "!" and one at the line break; the domain and 3.5 end none
+        self.assertEqual(len(gw.sentence_spans(text)), 4)
+        lumo, pixa, reel = self.positions(text)
+        self.assertEqual(pixa, (1, 0.25))          # "Pixabay" is not Pixa
+        self.assertEqual(lumo, (2, 0.5))           # "Lumos" is not Lumo; the domain names it
+        self.assertEqual(reel, (3, 0.25))
+        self.assertEqual(self.positions("Nothing tracked here. Try other tools."), [(None, None)] * 3)
+        self.assertEqual(self.positions(""), [(None, None)] * 3)
+
+    def test_a_chinese_answer_names_match_anywhere(self):
+        text = "推荐用鹿末做视频。鹿末免费额度多！也可以用Pixa？"
+        self.assertEqual(len(gw.sentence_spans(text)), 3)
+        lumo, pixa, reel = self.positions(text)
+        self.assertEqual(lumo, (1, 0.6667))        # the alias inside a run of Chinese
+        self.assertEqual(pixa, (2, 0.3333))        # a Latin name beside Chinese characters
+        self.assertEqual(reel, (None, None))
+
+    def test_a_tie_or_an_absent_name_gives_null(self):
+        studio = gw.Entity({"name": "Lumo Studio"})
+        ents = [brand(), studio] + rivals()
+        # "Lumo Studio" holds "Lumo": both first named at offset 0, so neither is first; Pixa still has two before it
+        self.assertEqual(self.positions("Lumo Studio is new. Pixa is older.", ents),
+                         [(None, 0.5), (None, 0.5), (3, 0.5), (None, None)])
+        # the same name in two configs entries is a tie wherever it is
+        twin = gw.Entity({"name": "Pixa"})
+        self.assertEqual(self.positions("Lumo first, then Pixa.", [brand(), rivals()[0], twin]),
+                         [(1, 1.0), (None, 1.0), (None, 1.0)])
+
+    def test_a_table_rule_is_not_a_sentence(self):
+        text = "| tool | price |\n|---|---|\n| Lumo | $9 |\n| Pixa | $12 |"
+        self.assertEqual(len(gw.sentence_spans(text)), 3)
+        self.assertEqual(self.positions(text)[:2], [(1, 0.3333), (2, 0.3333)])
+
+    def test_evaluate_reads_the_answer_as_saved(self):
+        res = gw._result("Lumo is good. " + "x " * gw.MAX_ANSWER + "Pixa too.", [], [], 0, 0, 0)
+        s = gw.evaluate(res, brand(), rivals())
+        self.assertTrue(s["answer_truncated"])
+        self.assertEqual((s["mention_order"], s["mentioned"]), (1, True))
+        pixa = s["competitors"]["Pixa"]
+        self.assertTrue(pixa["mentioned"])                     # the matcher reads the whole answer
+        self.assertEqual((pixa["mention_order"], pixa["mention_share"]), (None, None))   # past what is saved
+        self.assertEqual([(s["mention_order"], s["mention_share"])]
+                         + [(c["mention_order"], c["mention_share"]) for c in s["competitors"].values()],
+                         self.positions(s["answer"]))         # a report gets the same from the run file
+        self.assertIn("first 20,000 characters", " ".join(gw.MENTION_NOTES))
+
+    def run_of(self):
+        o, p = "chatgpt-api", "perplexity-api"
+        qs = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
+              {"query_id": "q02", "query": "ai video for teams", "intent_tier": "persona", "target_url": ""}]
+        return counted_run([
+            said(answer("q01", o, 1, you=(True, True), pixa=(False, True)),
+                 "Lumo is the cheapest. Pixa has more styles."),
+            said(answer("q01", o, 2, you=(False, True), pixa=(True, True), reel=(False, True)),
+                 "Pixa leads. Lumo follows. Reelcraft is for teams. That is all."),
+            said(answer("q01", p, 1, you=(True, True), pixa=(False, True)), "推荐鹿末。鹿末免费！Pixa 也可以？"),
+            said(answer("q02", o, 1), "Nothing tracked here, try other tools."),
+            said(answer("q02", p, 1, pixa=(False, True), reel=(True, True)),
+                 "Reelcraft and Pixa both work.\nReelcraft is older."),
+            answer("q02", p, 2, status="error"),
+        ], qs)
+
+    def test_the_summary_counts_first_mentions_per_engine_and_in_share_of_voice(self):
+        run = self.run_of()          # its samples carry no mention_order: the counts come from the saved answers
+        sm = run["summary"]
+        eng = dict((e["id"], (e["named_first"], e["any_named"], e["mention_share"])) for e in sm["engines"])
+        self.assertEqual(eng, {"chatgpt-api": (1, 2, 0.375), "perplexity-api": (1, 2, 0.6667)})
+        sov = dict((s["name"], (s["named_first"], s["any_named"], s["mention_share"])) for s in sm["share_of_voice"])
+        self.assertEqual(sov, {"Lumo": (2, 4, 0.4722), "Pixa": (1, 4, 0.3958), "Reelcraft": (1, 4, 0.625)})
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        # samples that carry the fields are read as saved, and give the same counts
+        fresh = json.loads(json.dumps(run))
+        ents = [brand()] + rivals()
+        for s in fresh["samples"]:
+            if s["status"] == "ok":
+                pos = gw.mention_positions(s["answer"], ents)
+                s["mention_order"], s["mention_share"] = pos[0]
+                for r, (order, share) in zip(rivals(), pos[1:]):
+                    s["competitors"][r.name].update(mention_order=order, mention_share=share)
+        self.assertEqual(validate(fresh, watch_schema()), [])
+        self.assertEqual(gw.summarize(fresh)["share_of_voice"], sm["share_of_voice"])
+        self.assertEqual(gw.summarize(fresh)["engines"], sm["engines"])
+
+    def test_the_report_shows_named_first_and_sentence_share(self):
+        run = self.run_of()
+        md = gw.render(run, "md")
+        self.assertIn("| engine | model | cited | 95% CI | mentioned | named first | avg rank |  |", md)
+        self.assertIn("| 50% | 1/2 | 1.0 | 1 failed |", md)                    # perplexity: mentioned, named first
+        self.assertIn("|  | cited | 95% CI | mentioned | named first | sentence share |", md)
+        self.assertRegex(md, r"\| Lumo \(you\) \| [^\n]* \| 2/4 \| 47% \|")
+        self.assertRegex(md, r"\| Reelcraft \| [^\n]* \| 1/4 \| 62% \|")
+        for n in gw.MENTION_NOTES:
+            self.assertIn("|\n\n- " + n if n == gw.MENTION_NOTES[0] else "- " + n, md)
+        notes = " ".join(gw.MENTION_NOTES).lower()
+        for word in ("optimi", "should", "recommend", "better", "worse"):         # how it is read, never what to do
+            self.assertNotIn(word, notes)
+        self.assertIn("named first", gw.render(run))
+        # with no competitor the brand is first whenever it is named: no column, no notes
+        alone = synth("20260926T083000Z", {("q01", "chatgpt-api"): [True]})
+        self.assertEqual(alone["summary"]["engines"][0]["named_first"], 0)       # synth's answers are empty
+        self.assertNotIn("named first", gw.render(alone))
+        self.assertNotIn(gw.MENTION_NOTES[0], gw.render(alone, "md"))
+
+    def test_summary_of_recomputes_a_summary_without_named_first(self):
+        run = self.run_of()
+        old = json.loads(json.dumps(run))
+        for e in old["summary"]["engines"] + old["summary"]["share_of_voice"]:
+            for k in ("named_first", "any_named", "mention_share"):
+                del e[k]                                         # saved by 1.5.0 or earlier
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["share_of_voice"], run["summary"]["share_of_voice"])
+        self.assertEqual(sm["engines"], run["summary"]["engines"])
+        self.assertIn("sentence share", gw.render(old))
+        self.assertNotIn("named_first", old["summary"]["engines"][0])
+
+    def test_a_run_saves_the_order_on_each_answer(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api"), queries(1))
+        by = dict((s["engine"], s) for s in run["samples"])
+        o, p = by["chatgpt-api"], by["perplexity-api"]
+        self.assertEqual((o["mention_order"], o["competitors"]["Pixa"]["mention_order"]), (1, 2))
+        # "Pixa [1] and Reelcraft [2] lead; reddit threads disagree [3]." names no Lumo
+        self.assertEqual((p["mention_order"], p["mention_share"]), (None, None))
+        self.assertEqual([p["competitors"][n]["mention_order"] for n in ("Pixa", "Reelcraft")], [1, 2])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
 
 # ── run files saved by 1.2.0 ─────────────────────────────────────────────
 class OldRuns(Base):

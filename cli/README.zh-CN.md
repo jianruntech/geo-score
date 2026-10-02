@@ -310,6 +310,17 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 的回答一律记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明。JSON 报告和 MCP 的
 `report` 工具以 `summary.by_question` 给出同一张表；1.6.0 之前保存的运行，由保存的回答当场算出。
 
+**谁最先被提到。** 每条回答都为你的品牌和每个竞品记下 `mention_order` 和 `mention_share`。`mention_order`：回答在配置里所有品牌中
+最先提到的那个记 1，其次记 2，依此类推；位置取品牌名、别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同。回答没提到这个品牌时
+记为 null；两个品牌第一次被提到的位置相同（一个名字包含另一个）时，两者也都是 null。`mention_share` 是回答里提到这个品牌的句子
+占全部句子的比例，每句同等计数：句子在换行处、在 `。！？` 处，或在后面跟着空白的 `.` `!` `?` 处结束；没有任何字母、汉字或数字的片段
+（比如表格的分隔行）不算一句。配置里有竞品时，「By engine」表多一列 *named first*：最先提到你的回答数，分母是至少提到配置里
+一个品牌的回答数。「Share of voice」表给每个品牌加上 *named first* 和 *sentence share*：在提到这个品牌的回答里，`mention_share`
+的平均值。配置里没列的品牌这两项都看不见，所以在你追踪的品牌里排第一，不一定是在回答里排第一；这里的顺序是第一次提到的先后，
+不是在列表里的位置。两者都从保存下来的回答里读，回答只保存前 20,000 个字符（被截断的回答 `answer_truncated` 为 true）。JSON 报告
+在 `summary.engines` 和 `summary.share_of_voice` 的每一行里以 `named_first`、`any_named` 和 `mention_share` 给出；1.6.0 之前保存的运行，
+由保存的回答当场算出。
+
 **通过 MCP 使用。** `geo-score-mcp`（在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见

@@ -37,6 +37,22 @@ one search per answer either way. An answer given without a search cannot cite a
 "No tracked brand named" counts answers that name none of the brands in the config, which says
 nothing about brands the config does not list.
 
+Each answer also records where it names each brand in the config. `mention_order` ranks the brands
+the answer names by where each is first named, the earliest match of its name, aliases or domains
+with the matcher of `mentioned`: 1 is named first. A brand the answer does not name has no order,
+and neither have two brands first named at the same place, as when one name contains the other.
+`mention_share` is the share of the answer's sentences that name the brand, every sentence counted
+the same. A sentence ends at a line break, at `。！？`, or at `.` `!` `?` followed by whitespace, so a
+domain or a decimal does not end one; a piece with no letter or digit, such as a table rule, is not
+a sentence. Both are read from the answer as saved, which keeps its first 20,000 characters. The
+report gives, per engine ("By engine") and for each brand ("Share of voice"), "named first": the
+answers that name that brand first, out of the answers that name at least one brand in the config;
+and "sentence share": the mean `mention_share` over the answers that name it. Both describe the
+answers and carry no interval or test. They see only the brands in the config, so first among the
+brands you track may not be first in the answer. The order is the order of first mention, not a
+position in a list, and a longer answer spreads one name over more sentences, so sentence shares
+from engines that write at different lengths are not on one scale.
+
 Each question can carry a type, the `intent_tier` column of `queries.csv`, and the report gives each
 type its own rate and interval ("By question type"). A rate describes the questions behind it: a set
 of one type describes that one kind of question, and a type with few questions gets a wide clustered
@@ -325,8 +341,10 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
   `summary.branded`, `summary.brand_flags`, `cited_ci_clustered` and `n_questions` in every rate
   block, `with_citations` and `with_searches` on each row of `summary.engines`,
-  `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on each
-  question, and `questions_hash`, which two runs share when they asked the same questions.
+  `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
+  `summary.share_of_voice`, `mention_order` and `mention_share` on each answer and on each of its
+  `competitors`, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on
+  each question, and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

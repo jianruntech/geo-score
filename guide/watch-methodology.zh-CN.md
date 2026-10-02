@@ -14,6 +14,17 @@ English version: [watch-methodology.md](watch-methodology.md)
 
 报告还会把每个问题单独列出来，见「Who is named for each question」表（`summary.by_question`）：这个问题拿到几条回答，其中几条引用或提到了品牌、几条引用或提到了每个追踪的竞品、几条一个都没提到，几条是联网搜索后给出的。这些都是计数，不附区间，也不做检验；四条回答里有三条，不是一个可以跨周比较的比率。「Most cited」（`leader`）只在问题至少有 4 条回答、且某个追踪的品牌被引用的回答数多于其他任何一个时，才给出这个品牌。回答有没有联网搜索，从运行保存的内容里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明有没有搜索，适配器无论如何都为每条回答记一次搜索。没有联网搜索就给出的回答，不可能引用任何东西。「No tracked brand named」统计的是没有提到配置里任何一个品牌的回答，配置里没列的品牌它说明不了。
 
+每条回答还会记下它在哪里提到配置里的每个品牌。`mention_order` 按每个品牌第一次被提到的位置，给回答里提到的品牌排序；
+位置取品牌名、别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同：1 就是最先被提到。回答没提到的品牌没有名次；
+两个品牌第一次被提到的位置相同（比如一个名字包含另一个）时，两者都没有名次。`mention_share` 是回答里提到这个品牌的句子
+占全部句子的比例，每句同等计数。句子在换行处、在 `。！？` 处，或在后面跟着空白的 `.` `!` `?` 处结束，所以域名和小数
+不会把一句话断开；没有任何字母、汉字或数字的片段（比如表格的分隔行）不算一句。两者都从保存下来的回答里读，回答只保存前
+20,000 个字符。报告按引擎（「By engine」表）和按品牌（「Share of voice」表）给出「named first」：最先提到这个品牌的
+回答数，分母是至少提到配置里一个品牌的回答数；以及「sentence share」：在提到这个品牌的回答里，`mention_share` 的平均值。
+两者都是对回答的描述，不附区间，也不做检验。它们只看得见配置里的品牌，所以在你追踪的品牌里排第一，不一定是在回答里排第一。
+这里的顺序是第一次提到的先后，不是在列表里的位置；回答越长，同一个名字摊到的句子越多，所以回答长短不同的引擎之间，
+sentence share 不在同一把尺子上。
+
 每个问题可以带一个类型，即 `queries.csv` 的 `intent_tier` 列，报告给每种类型单独算引用率和区间（「By question type」表）。
 引用率描述的是它背后的那些问题：只有一种类型的问题集，描述的就只是这一类问题；问题很少的类型，聚类区间会很宽。这一列可以随便填，
 `watch check` 会统计每种类型有几个问题，所有问题同属一种类型、或者都没有类型时给一条提示。下面这些标签是建议用法，方便不同的问题集读起来一致：
@@ -205,6 +216,6 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

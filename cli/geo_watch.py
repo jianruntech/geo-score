@@ -18,8 +18,8 @@ competitors, or the third-party pages the engines lean on. Run it through geo_sc
 No dependencies. Python 3.8+. API keys are read from the environment and never written
 anywhere. https://github.com/jianruntech/geo-score
 """
-import argparse, contextlib, csv, datetime, difflib, hashlib, http.client, importlib.util, io, ipaddress, json, math
-import os, random, re, socket, sys, threading, time, unicodedata
+import argparse, bisect, contextlib, csv, datetime, difflib, hashlib, http.client, importlib.util, io, ipaddress, json
+import math, os, random, re, socket, sys, threading, time, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from collections import Counter
 
@@ -113,6 +113,17 @@ TRACKED_PAGE_NOTES = [
     "string, the fragment and percent-encoding are set aside. Another path, such as /en/x for /x, is another page, "
     "and so is the page's canonical URL when it differs.",
     "A citation whose redirect could not be followed counts as neither the tracked page nor another of yours.",
+]
+# printed under the "Share of voice" table: how "named first" and "sentence share" are read from an answer
+MENTION_NOTES = [
+    "Named first: answers that name that brand before any other brand in your config, out of the answers that name "
+    "at least one of them. Brands your config does not list are not seen, so first among the brands you track may "
+    "not be first in the answer. Two brands first named at the same place, one name inside the other, are neither "
+    "first.",
+    "Sentence share: in the answers that name a brand, the mean share of their sentences that name it, every "
+    "sentence counted the same. A sentence ends at a line break, at 。！？, or at . ! ? before a space.",
+    "Both read the answer as saved, which keeps its first {:,} characters; a name that first appears after that is "
+    "not seen.".format(MAX_ANSWER),
 ]
 
 # Swapped out by the tests; nothing else should touch these.
@@ -741,6 +752,48 @@ class Entity(object):
                 "aliases": self.aliases}
 
 
+# mention_share's sentences: one ends at a line break, at 。！？, or at . ! ? before whitespace or the end of the text,
+# so a domain (lumo.example) or a number (3.5) does not end one. A piece with no letter or digit, such as a markdown
+# table rule, is not a sentence.
+_SENTENCE_END = re.compile(r"\n|[。！？]|[.!?](?=\s|$)")
+_LETTER_OR_DIGIT = re.compile(r"[^\W_]")
+
+
+def sentence_spans(text):
+    """The (start, end) offsets of the sentences in text, as mention_share counts them."""
+    spans, at = [], 0
+    for m in _SENTENCE_END.finditer(text):
+        spans.append((at, m.end()))
+        at = m.end()
+    spans.append((at, len(text)))
+    return [(a, b) for a, b in spans if _LETTER_OR_DIGIT.search(text, a, b)]
+
+
+def mention_positions(text, entities):
+    """Where an answer names each tracked entity, with the matcher `mentioned` uses (Entity._pats), as one
+    (mention_order, mention_share) per entity, in the order given. mention_order is 1 for the entity named before
+    every other one named, 2 for the next, and so on; it is None for an entity the text does not name, and for
+    entities first named at the same offset, as when one name is inside another. mention_share is the share of the
+    text's sentences that name the entity, unweighted, or None when the text does not name it. Pass the answer as
+    saved, so that a report can recompute both from a run file."""
+    text = text or ""
+    spans = sentence_spans(text)
+    ends = [b for _, b in spans]
+    first, share = [], []
+    for e in entities:
+        at = sorted(m.start() for p in e._pats for m in p.finditer(text))
+        hit = set()
+        for x in at:
+            i = bisect.bisect_right(ends, x)
+            if i < len(spans) and spans[i][0] <= x:
+                hit.add(i)
+        first.append(at[0] if at else None)
+        share.append((round(len(hit) / float(len(spans)), 4) if spans else 0.0) if at else None)
+    named = [f for f in first if f is not None]
+    order = [None if f is None or named.count(f) > 1 else 1 + sum(1 for g in named if g < f) for f in first]
+    return list(zip(order, share))
+
+
 def normalize_citations(raw, entities, resolve=True):
     out, seen, resolved = [], set(), 0
     for item in raw:
@@ -796,13 +849,15 @@ def evaluate(res, brand, rivals, resolve=True, target=None):
         return None, None
 
     rank, url = place(brand)
+    pos = mention_positions(answer[:MAX_ANSWER], [brand] + rivals)
     comps = {}
-    for r in rivals:
+    for r, (order, share) in zip(rivals, pos[1:]):
         rr, _ = place(r)
-        comps[r.name] = {"cited": rr is not None, "rank": rr, "mentioned": r.named_in(answer)}
+        comps[r.name] = {"cited": rr is not None, "rank": rr, "mentioned": r.named_in(answer),
+                         "mention_order": order, "mention_share": share}
     hit, others = target_hits(cites, brand, target)
     return {"cited": rank is not None, "rank": rank, "quoted_url": url, "mentioned": brand.named_in(answer),
-            "competitors": comps, "citations": cites,
+            "mention_order": pos[0][0], "mention_share": pos[0][1], "competitors": comps, "citations": cites,
             "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
             "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER,
             "target_cited": hit, "other_own_cited": None if hit is None else bool(others)}
@@ -1335,6 +1390,26 @@ def summarize(run):
                 "cited_ci_clustered": cluster_ci([tuple(per_q[q]) for q in sorted(per_q)], _seed(rid, label)),
                 "n_questions": len(per_q), "mentioned": m, "mentioned_rate": rate(m, len(rows))}
 
+    # Where each answer names the brand (index 0) and each competitor: as saved since 1.6.0, or read from the saved
+    # answer for an older run, the same way.
+    ents = [brand] + rivals
+    placed = {}
+    for s in ok:
+        if "mention_order" in s:
+            cs = [s["competitors"].get(r.name, {}) for r in rivals]
+            placed[id(s)] = [(s.get("mention_order"), s.get("mention_share"))] + [
+                (c.get("mention_order"), c.get("mention_share")) for c in cs]
+        else:
+            placed[id(s)] = mention_positions(s.get("answer") or "", ents)
+
+    def firsts(rows, i):
+        """Entity i named first among the brands you track (k of the answers naming any of them), and its mean
+        mention_share over the answers that name it."""
+        shares = [placed[id(s)][i][1] for s in rows if placed[id(s)][i][1] is not None]
+        return {"named_first": sum(1 for s in rows if placed[id(s)][i][0] == 1),
+                "any_named": sum(1 for s in rows if any(sh is not None for _, sh in placed[id(s)])),
+                "mention_share": round(sum(shares) / len(shares), 4) if shares else None}
+
     engines = []
     for e in run["engines"]:
         es = [s for s in samples if s["engine"] == e["id"]]
@@ -1345,16 +1420,16 @@ def summarize(run):
                    skipped=sum(1 for s in es if s["status"] == "skipped"),
                    avg_rank=round(sum(ranks) / float(len(ranks)), 1) if ranks else None,
                    with_citations=sum(1 for s in eo if s["citations"]),
-                   with_searches=sum(1 for s in eo if s["search_queries"]))
+                   with_searches=sum(1 for s in eo if s["search_queries"]), **firsts(eo, 0))
         engines.append(row)
 
     everything = block(ok, "overall")
-    share = [dict(everything, name=brand.name, you=True)]
-    for r in rivals:
+    share = [dict(everything, name=brand.name, you=True, **firsts(ok, 0))]
+    for i, r in enumerate(rivals, 1):
         share.append(dict(block(ok, "rival:" + r.name,
                                 hit=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("cited")),
                                 named=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("mentioned"))),
-                          name=r.name, you=False))
+                          name=r.name, you=False, **firsts(ok, i)))
 
     counts, owners = Counter(), {}
     for s in ok:
@@ -1451,12 +1526,13 @@ def summarize(run):
 
 def summary_of(run):
     """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
-    per-question counts, the per-engine citation counts or the tracked pages existed. Summaries are derived from the
-    samples, so recomputing one changes no measurement."""
+    per-question counts, the per-engine citation counts, the tracked pages or the named-first counts existed.
+    Summaries are derived from the samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
             and "by_question" in sm and "tracked_pages" in sm \
-            and all("with_citations" in e for e in sm.get("engines") or []):
+            and all("with_citations" in e and "named_first" in e for e in sm.get("engines") or []) \
+            and all("named_first" in v for v in sm.get("share_of_voice") or []):
         return sm
     return summarize(run)
 
@@ -1753,10 +1829,12 @@ def render(run, fmt="text"):
 
     L.append(_h("By engine", fmt))
     rows = []
+    rivalled = 1 if run.get("competitors") else 0   # the "named first" column; alone, the brand is always first
     for e in sm["engines"]:
         if e["status"] != "measured":
             err = next((x.get("error") for x in run["engines"] if x["id"] == e["id"]), "")
-            rows.append([e["id"], e["model"], "not measured", "", "", "", e["status"] + (": " + err if err else "")])
+            rows.append([e["id"], e["model"], "not measured", "", ""] + [""] * rivalled
+                        + ["", e["status"] + (": " + err if err else "")])
             continue
         extra = []
         if e["errors"]:
@@ -1767,8 +1845,11 @@ def render(run, fmt="text"):
         if stop:
             extra.append("stopped: " + _cut(stop.get("error", ""), 60))
         rows.append([e["id"], e["model"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])),
-                     ci_s(head_ci(e)), pct(e["mentioned_rate"]), e["avg_rank"] or "—", ", ".join(extra)])
-    L.append(table(["engine", "model", "cited", "95% CI", "mentioned", "avg rank", ""], rows, fmt))
+                     ci_s(head_ci(e)), pct(e["mentioned_rate"])]
+                    + ["%d/%d" % (e["named_first"], e["any_named"])] * rivalled
+                    + [e["avg_rank"] or "—", ", ".join(extra)])
+    L.append(table(["engine", "model", "cited", "95% CI", "mentioned"] + ["named first"] * rivalled
+                   + ["avg rank", ""], rows, fmt))
     if br["question_ids"]:
         L.append("")   # a line right under a markdown table would be read as another row
         L.append("These rows, and the tables below, count every question, the %d that name %s included." % (
@@ -1780,9 +1861,12 @@ def render(run, fmt="text"):
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
-        L.append(table(["", "cited", "95% CI", "mentioned"],
+        L.append(table(["", "cited", "95% CI", "mentioned", "named first", "sentence share"],
                        [[s["name"] + (" (you)" if s["you"] else ""), pct(s["cited_rate"]), ci_s(head_ci(s)),
-                         pct(s["mentioned_rate"])] for s in sm["share_of_voice"]], fmt))
+                         pct(s["mentioned_rate"]), "%d/%d" % (s["named_first"], s["any_named"]),
+                         pct(s["mention_share"])] for s in sm["share_of_voice"]], fmt))
+        L.append("")   # a line right under a markdown table would be read as another row
+        L.extend("- " + n for n in MENTION_NOTES)
 
     if sm["top_sources"]:
         L.append(_h("Sources the engines cite most (not yours)", fmt))

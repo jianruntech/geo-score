@@ -316,6 +316,20 @@ only.
 
 ## N
 
+### Named first
+
+In a watch report, the answers that name a brand before any other brand in the config, out of the
+answers that name at least one of them. Each answer's `mention_order` gives the order: the earliest
+match of each brand's name, aliases or domains, with the matcher of [mentioned](#mentioned). Two
+brands first named at the same place get no order, and brands the config does not list are not
+seen, so first among the brands you track may not be first in the answer. It reads the answer as
+saved, its first 20,000 characters.
+
+**Where:** the `named first` columns of `By engine` and `Share of voice` in `watch report`;
+`mention_order` on each answer and its competitors in run files; `named_first` and `any_named` on the
+rows of `summary.engines` and `summary.share_of_voice`.
+**More:** [watch methodology, The unit](watch-methodology.md#1-the-unit-an-answer-clustered-by-question)
+
 ### Normalised score
 
 The 0–100 score itself: readiness (the points scored, bonus included) divided by the observable max,
@@ -482,6 +496,18 @@ the median of a handful of sites would print like a real one and mean much less.
 
 **Where:** the By sector table in `benchmark/README.md` and on the leaderboard page; `sectors` in
 `benchmark/stats.json`. **More:** [benchmark/README.md, By sector](../benchmark/README.md#by-sector)
+
+### Sentence share
+
+The share of an answer's sentences that name a brand (`mention_share`), every sentence counted the
+same. A sentence ends at a line break, at `。！？`, or at `.` `!` `?` before whitespace; a piece with
+no letter or digit, such as a table rule, is not a sentence. The report gives its mean over the
+answers that name the brand. A longer answer spreads one name over more sentences, so shares from
+engines that write at different lengths are not on one scale.
+
+**Where:** the `sentence share` column of `Share of voice` in `watch report`; `mention_share` on each
+answer, its competitors, and the rows of `summary.engines` and `summary.share_of_voice` in run files.
+**More:** [Named first](#named-first)
 
 ### Site text fence
 

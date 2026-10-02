@@ -25,6 +25,14 @@
   你的网址（按引用时的原样）。CSV 导出最后多一列 `target_cited`（`Y`、`N` 或留空）。Schema 新增 `$defs/sample` 里的 `target_cited`
   和 `other_own_cited`、`summary.tracked_pages` 及 `$defs/tracked_page`，并给保存的 `target_url` 加了说明。MCP `report` 工具的输出
   schema 新增可选的 `tracked_pages`，MCP 契约只增不减。本版之前保存的运行在出报告时由保存的引用当场算出这张表。
+- **`watch report` 列出谁最先被提到。** 每条回答为品牌和每个竞品记下 `mention_order`（在配置里所有品牌中最先被提到的记 1，位置取名字、
+  别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同；没提到、或两个品牌第一次被提到的位置相同时为 null）和 `mention_share`
+  （提到它的句子占全部句子的比例，每句同等计数；句子在换行处、`。！？` 处，或后面跟着空白的 `.` `!` `?` 处结束）。配置里有竞品时，
+  「By engine」表多一列「named first」：最先提到你的回答数，分母是至少提到配置里一个品牌的回答数。「Share of voice」表多出「named first」
+  和「sentence share」（在提到这个品牌的回答里 `mention_share` 的平均值），表下三行说明怎么读。配置里没列的品牌看不见，所以在你追踪的
+  品牌里排第一，不一定是在回答里排第一。两者都从保存下来的回答里读，回答只保存前 20,000 个字符。Schema：`$defs/sample` 及其竞品里
+  新增 `mention_order` 和 `mention_share`，`summary.engines` 与 `summary.share_of_voice` 每一行新增 `named_first`、`any_named` 和
+  `mention_share`。MCP 工具的 schema 不变。本版之前保存的运行在出报告时由保存的回答当场算出。
 
 ### 修复
 - **`watch diff` 只拿一个问题和它自己比较。** 以前只按 `query_id` 配对，同一 id 下改写过的问题会和旧措辞配对，改写本身可能被读成
