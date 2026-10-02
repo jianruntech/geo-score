@@ -265,7 +265,7 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
   "queries": "queries.csv",
   "engines": [{"id": "chatgpt-api", "provider": "openai", "model": "gpt-6-luna"},
               {"id": "perplexity-api", "provider": "perplexity"},
-              {"id": "deepseek-api", "provider": "openrouter", "model": "deepseek/deepseek-chat"}],
+              {"id": "deepseek-via-openrouter", "provider": "openrouter", "model": "deepseek/deepseek-chat"}],
   "country": "US",
   "runs": 1,
   "max_calls": 120,
@@ -278,7 +278,7 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 |---|---|
 | `brand.domains` / `url_prefixes` | What counts as yours. Subdomains count; a prefix covers a store or profile on someone else's site |
 | `brand.aliases` | Other names the answer may use. Chinese, Japanese and Korean names match anywhere; all others match whole words |
-| `country` | Two-letter code passed to the engines that accept a location (OpenAI, Claude, Perplexity) |
+| `country` | Two-letter code passed to the engines that accept a location: OpenAI, Claude and Perplexity apply it; Gemini and OpenRouter ignore it |
 | `runs` | Asks per question per engine. `3` gives steadier rates at three times the cost |
 | `max_calls` | Exact cap on questions asked in one run |
 | `budget_usd` | Spend cap, checked before every call; it can be exceeded by at most one call per engine. With a budget, unpriced engines are left out unless `--allow-unpriced` |
@@ -286,6 +286,10 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 | `engines[].api` | Gemini only: `interactions` (default) or `generate_content` |
 | `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
+
+An OpenRouter engine measures that model answering through OpenRouter's `web` plugin, not the vendor's own app
+or search: for a model without native search, such as `deepseek/deepseek-chat`, the plugin searches with Exa
+(OpenRouter's documentation, checked 2026-10-02). The engine id names a model route, not a product.
 
 The file's keys are specified in [schema/watch-config.v1.json](../schema/watch-config.v1.json)
 (JSON Schema draft 2020-12). `watch init` writes `"$schema"` as the first key, pointing at it, so an

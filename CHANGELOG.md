@@ -196,6 +196,11 @@ only the optional `elapsed_s`.
   request the good fixture makes, and holds `diff` to golden files.
 
 ### Changed
+- **Docs: what an API run cannot see, and the OpenRouter example.** The README and the watch methodology (a
+  new §7) list the surfaces these APIs cannot reach and say that a citation is presence, not merit. The
+  OpenRouter example engine is now `deepseek-via-openrouter`, and the docs say an OpenRouter engine measures
+  the model answering over OpenRouter's search, not the vendor's own; `country` is applied by OpenAI, Claude and
+  Perplexity and ignored by Gemini and OpenRouter.
 - **The headline names the gate.** Each gate at zero is named with the first sentence of its evidence, in
   the default view and in `--brief`:
   `GATE AT ZERO — g.ssr: 0 of 8 sampled pages carry substantive body text …; the score cannot exceed 40 while a gate is at zero`.
@@ -314,6 +319,14 @@ only the optional `elapsed_s`.
   the bands analysis.
 
 ### Fixed
+- **The sample is documents.** A file that a sitemap or a link lists (Markdown such as `agents.md`, feeds,
+  JSON, PDFs, media) is never a sampled page, and listing pages (pagination, category, tag, author, series
+  and archive pages) are drawn only after every content page. Direction: either way, toward what the site's
+  content reads. On the 1.3.0 leaderboard, 5 sites had a file in their sample and 39 had two or more
+  listing pages; baseus.com had been scored on `agents.md` alone.
+- **`p1.llms-txt`: no answer is not observed.** An `/llms.txt` that gets no answer after its retries now
+  leaves the denominator instead of scoring 0. Direction: 0 to not observed (38 sites on the first 1.5.0
+  pass read 0 from a request that never got an answer).
 - **A handshake cut off in the middle is a dropped connection.** An SSL EOF during the handshake is now kind
   `dropped` and is retried, not `tls`, which is not. A `tls` error on a Python whose TLS library cannot speak
   TLS 1.3 says so: macOS's `/usr/bin/python3` is built on LibreSSL 2.8, and many sites require TLS 1.3.

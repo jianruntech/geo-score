@@ -443,6 +443,11 @@ see what the engines say today, not to measure a rate.
 - **It is not the ChatGPT app.** Answers come from each provider's API with web search switched
   on. The consumer apps use other models, prompts and personalisation. Compare API runs with API
   runs; never pool them with answers sampled by hand in the apps.
+- **Some surfaces are out of reach.** Google AI Overviews and AI Mode, the AI summaries inside apps such
+  as TikTok, Reddit or Xiaohongshu, an assistant's memory and account settings, location finer than the
+  country hint, and which library a coding agent picks cannot be reached through these APIs.
+- **A citation is presence, not merit.** A citation rate says an engine named and linked you, not that what
+  it said is true or that the page deserved it; engines also cite misleading and self-promotional pages.
 - **One answer is an anecdote.** Every rate carries a 95% interval (a bootstrap over questions
   when a question has several answers, since those answers move together), and `diff` calls
   something a change only when an exact paired test on the questions both runs answered,
@@ -465,7 +470,7 @@ run where the model changed. OpenRouter covers hundreds of models with one key.
 | `perplexity-api` | Perplexity Sonar | `PERPLEXITY_API_KEY` | `sonar` | numbered sources the answer uses | no | yes |
 | `gemini-api` | Gemini Interactions API + `google_search` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini-3.8-flash` | `url_citation` annotations | yes | no, set prices |
 | `claude-api` | Anthropic Messages + `web_search` tool | `ANTHROPIC_API_KEY` | `claude-sonnet-5` | citations on the answer text | yes | no, set prices |
-| any id you choose | OpenRouter + `web` plugin | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` annotations | no | yes |
+| any id you choose | OpenRouter + `web` plugin (the model answering over OpenRouter's search, not the vendor's own) | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` annotations | no | yes |
 
 **Caps and cost.** `max_calls` is an exact cap on questions asked in a run, and a plan that
 exceeds it refuses to start. `budget_usd` is checked before every call against the spend so far

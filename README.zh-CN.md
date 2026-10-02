@@ -413,6 +413,10 @@ Read this before quoting the numbers
 
 - **这不是 ChatGPT App 里的回答。** 数据来自各家 API（开了联网搜索）。App 用的模型、系统提示
   和个性化都不一样。API 渠道只和 API 渠道比，别和人工在 App 里采的样本混着算。
+- **有些地方够不着。** Google AI Overviews 与 AI Mode、TikTok、Reddit、小红书等应用内的 AI 总结、助手的记忆与账号设置、
+  比国家提示更细的地理位置，以及编程智能体选用哪个库，都没法通过这些 API 测到。
+- **被引用说明在场，不说明好坏。** 引用率说的是引擎提到并链接了你，不说明它说的是真的，也不说明那一页配得上；
+  引擎也会引用误导性的、自我宣传的页面。
 - **一条回答只是个例。** 同一个问题问两次，引用的来源可能不同。所有比率都带 95% 区间（同一问题有多条回答时，
   这些回答会一起变动，区间按问题做自助法重抽样）；`diff` 只比较两次都回答了的问题，用精确配对检验并对各引擎做
   Holm 校正，p < 0.05 才说「有变化」，共同问题太少（少于 6 个，或相对比较的引擎数太少）时直接说「问题太少，无法判断」。20 个问题 × 1 个引擎，
@@ -432,7 +436,7 @@ Read this before quoting the numbers
 | `perplexity-api` | Perplexity Sonar | `PERPLEXITY_API_KEY` | `sonar` | 正文用到的编号来源 | 否 | 是 |
 | `gemini-api` | Gemini Interactions API + `google_search` | `GEMINI_API_KEY` 或 `GOOGLE_API_KEY` | `gemini-3.8-flash` | `url_citation` 标注 | 能 | 否，需配价格 |
 | `claude-api` | Anthropic Messages + `web_search` 工具 | `ANTHROPIC_API_KEY` | `claude-sonnet-5` | 正文上的 citations | 能 | 否，需配价格 |
-| 自定 id | OpenRouter + `web` 插件 | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` 标注 | 否 | 是 |
+| 自定 id | OpenRouter + `web` 插件（模型经 OpenRouter 的搜索作答，不是厂商自家的搜索） | `OPENROUTER_API_KEY` | `openai/gpt-6-luna` | `url_citation` 标注 | 否 | 是 |
 
 **上限与费用。** `max_calls` 是单次运行问题数的硬上限，计划超了就不开始；`budget_usd` 每次调用前核一次：
 已花的钱加上这个引擎目前最贵的一次调用，所以最多超出每个引擎一次调用的费用。设了 `budget_usd` 时，算不出费用的引擎不跑，除非加 `--allow-unpriced`。每次运行都有账本：

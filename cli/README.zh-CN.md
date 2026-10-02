@@ -234,7 +234,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
   "queries": "queries.csv",
   "engines": [{"id": "chatgpt-api", "provider": "openai", "model": "gpt-6-luna"},
               {"id": "perplexity-api", "provider": "perplexity"},
-              {"id": "deepseek-api", "provider": "openrouter", "model": "deepseek/deepseek-chat"}],
+              {"id": "deepseek-via-openrouter", "provider": "openrouter", "model": "deepseek/deepseek-chat"}],
   "country": "US",
   "runs": 1,
   "max_calls": 120,
@@ -247,7 +247,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `brand.domains` / `url_prefixes` | 哪些算你的。子域名也算；前缀用来覆盖你在别人网站上的店铺页或主页 |
 | `brand.aliases` | 回答里可能用到的其他名字。中文、日文、韩文名按包含匹配，其他名字按整词匹配 |
-| `country` | 两个字母的国家代码，传给支持指定地区的引擎（OpenAI、Claude、Perplexity） |
+| `country` | 两个字母的国家代码，传给支持指定地区的引擎：OpenAI、Claude、Perplexity 会用它；Gemini 和 OpenRouter 忽略它 |
 | `runs` | 每个问题在每个引擎上问几次。设成 `3` 比率更稳，费用也是三倍 |
 | `max_calls` | 单次运行提问次数的硬上限 |
 | `budget_usd` | 花费上限，每次调用前核对一次；最多超出每个引擎一次调用的费用。设了预算时，没有价格的引擎不跑，除非加 `--allow-unpriced` |
@@ -255,6 +255,9 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `engines[].api` | 仅限 Gemini：`interactions`（默认）或 `generate_content` |
 | `engines[].key_env` / `base_url` | 从另一个环境变量读 Key；指向一个兼容的端点（`https://` 或 `http://localhost`） |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | 服务商调优：联网搜索工具的版本（OpenAI、Anthropic），每条回答的搜索次数和输出 token 数（Anthropic），每次搜索返回的结果数（OpenRouter） |
+
+OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，不是厂商自家的 App 或搜索：对没有原生搜索的模型（如
+`deepseek/deepseek-chat`），插件用 Exa 搜索（依据 OpenRouter 文档，2026-10-02 核对）。引擎 id 命名的是一条模型路由，不是一个产品。
 
 这个文件有哪些键，由 [schema/watch-config.v1.json](../schema/watch-config.v1.json)（JSON Schema draft 2020-12）规定。
 `watch init` 把 `"$schema"` 写成第一个键并指向它，支持 JSON Schema 的编辑器就会在你输入时校验并补全。

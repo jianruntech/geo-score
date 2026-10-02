@@ -129,6 +129,9 @@ git，关卡锁定所用工具的版本，CI 示例覆盖 GitHub 之外的平台
   的回应），统计 good 夹具发出的每一个请求，并用 golden 文件核对 `diff` 的输出。
 
 ### 变更
+- **文档：一次 API 运行看不到什么，以及 OpenRouter 示例。** README 与 watch 方法说明（新增第 7 节）列出这些 API 够不着的界面，
+  并说明被引用是在场、不是好坏。OpenRouter 示例引擎改名为 `deepseek-via-openrouter`，文档写明 OpenRouter 引擎测的是模型经
+  OpenRouter 的搜索作答，不是厂商自家的搜索；`country` 由 OpenAI、Claude、Perplexity 采用，Gemini 和 OpenRouter 忽略。
 - **报告开头点名门槛项。** 默认视图和 `--brief` 都会点名每个得 0 分的门槛项，并附上其证据的第一句：
   `GATE AT ZERO — g.ssr: 0 of 8 sampled pages carry substantive body text …; the score cannot exceed 40 while a gate is at zero`。
   以前只写 `GATE CAPPED — a gate check scored zero`。
@@ -207,6 +210,11 @@ git，关卡锁定所用工具的版本，CI 示例覆盖 GitHub 之外的平台
   链接了档位分析。
 
 ### 修复
+- **样本只取文档。** sitemap 或链接里列出的文件（如 `agents.md` 这类 Markdown、订阅源、JSON、PDF、媒体文件）不再被抽为样本页；
+  列表页（分页、分类、标签、作者、系列、归档页）只在内容页都用完后才会抽到。方向：两边都有，都是向网站内容本身的读数靠拢。
+  1.3.0 榜单上有 5 个站的样本里混进了文件，39 个站的样本里有两个及以上列表页；baseus.com 当时只按 `agents.md` 一个文件评分。
+- **`p1.llms-txt`：没有应答记为不可观测。** 重试后仍没有应答的 `/llms.txt` 现在移出分母，不再记 0 分。方向：由 0 分变为不可观测
+  （1.5.0 第一轮重跑中，有 38 个站因为请求始终没有应答而在这一项得了 0 分）。
 - **握手进行到一半被断开，算作连接断开。** 握手过程中的 SSL EOF 现在记为 `dropped` 并会重试，不再记为不重试的 `tls`。
   如果运行 CLI 的 Python 其 TLS 库不支持 TLS 1.3，`tls` 报错会写明这一点：macOS 自带的 `/usr/bin/python3` 基于 LibreSSL 2.8，
   而很多网站要求 TLS 1.3。

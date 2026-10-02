@@ -255,6 +255,23 @@ answer 80% of the time, 1.2.0's unpaired, uncorrected tests reported a change in
 diffs and the paired, Holm-corrected diff in 2.6%. With independent asks the figures were 8.9%
 and 2.3%.
 
+## 7. What a run cannot see
+
+A run measures what the providers' search-enabled APIs return, and nothing beyond it:
+
+- **Other surfaces.** Google AI Overviews and AI Mode, the AI summaries inside apps such as TikTok, Reddit or
+  Xiaohongshu, and the consumer chat apps run their own models, prompts and retrieval; no API returns them.
+- **The person asking.** An assistant's memory, account settings and history shape its answers, and an API
+  call has none of them. The `country` hint is the only location an API takes, and only some engines apply it.
+- **Agents choosing tools.** Which library or API a coding agent picks is decided inside the agent, not in a
+  search answer.
+- **The retrieval behind a citation.** The citations an API returns are the end of its retrieval: what it
+  searched and read but did not cite is mostly not returned, and the shape of what is returned changes between
+  API versions, so a sudden move can be the format rather than the engine.
+- **Merit.** A citation is presence, not a verdict on quality: it says an engine named and linked a page, not
+  that what it said is true or that the page deserved it. Engines also cite misleading and self-promotional
+  pages, so a high rate is not evidence that a source is good, and a low one is not evidence that it is bad.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
