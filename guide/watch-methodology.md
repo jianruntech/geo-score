@@ -37,6 +37,24 @@ one search per answer either way. An answer given without a search cannot cite a
 "No tracked brand named" counts answers that name none of the brands in the config, which says
 nothing about brands the config does not list.
 
+"What the engines searched for" lists the searches the answers expose, the 15 most frequent first
+(`summary.searches.top`); OpenAI, Gemini and Anthropic return them, Perplexity and OpenRouter do not.
+A line under the table counts, over every exposed search, how many contain a year and how many contain
+a ranking or comparison word (`summary.searches.modifiers`: `total`, `with_year`,
+`with_ranking_word`). A year is a four-digit number from 1900 to 2099 with no letter, digit or
+underscore beside it; a Chinese, Japanese or Korean character beside it is a break, so `2026年` counts.
+The words are best, top, vs, versus, review, reviews, compare, comparison, alternative and
+alternatives as whole words in any letter case (so "topic" is not "top"), and `最好` `最佳` `推荐`
+`排行` `排名` `哪家` `哪个好` `对比` `评测` anywhere. A search counts once for each, however many it
+holds, and a search that repeats the question's own words counts as well: the line describes what
+was searched, not what the engine added to the question. When an answer's usage reports a search but
+no query came back, the section says how many answers, per engine
+(`summary.searches.answers_searched_without_queries`, and `searched_without_queries` on each row of
+`summary.engines`). Some OpenAI-compatible endpoints a `base_url` points at return the search calls
+without their queries; those answers are in neither the table nor the counts, which is not the same
+as searching with no year in the query. Only OpenAI, Gemini and Anthropic answers are read this way,
+since the Perplexity and OpenRouter adapters record one search per answer whatever happened.
+
 Each answer also records where it names each brand in the config. `mention_order` ranks the brands the
 answer names by where each is first named, the earliest match of its name, aliases or domains with the
 matcher of `mentioned`: 1 is named first. A brand the answer does not name has no order, and neither
@@ -394,7 +412,8 @@ question; a run with failures pairs fewer.
   `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
   `summary.share_of_voice`, `mention_order` and `mention_share` on each answer and on each of its
   `competitors`, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on
-  each question, and `questions_hash`, which two runs share when they asked the same questions.
+  each question, `summary.searches` with its `modifiers` and `answers_searched_without_queries`,
+  and `questions_hash`, which two runs share when they asked the same questions.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool

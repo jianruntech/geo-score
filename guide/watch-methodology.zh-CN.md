@@ -14,6 +14,17 @@ English version: [watch-methodology.md](watch-methodology.md)
 
 报告还会把每个问题单独列出来，见「Who is named for each question」表（`summary.by_question`）：这个问题拿到几条回答，其中几条引用或提到了品牌、几条引用或提到了每个追踪的竞品、几条一个都没提到，几条是联网搜索后给出的。这些都是计数，不附区间，也不做检验；四条回答里有三条，不是一个可以跨周比较的比率。「Most cited」（`leader`）只在问题至少有 4 条回答、且某个追踪的品牌被引用的回答数多于其他任何一个时，才给出这个品牌。回答有没有联网搜索，从运行保存的内容里读：服务商报告了搜索、给出了搜索词，或回答引用了网址，就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明有没有搜索，适配器无论如何都为每条回答记一次搜索。没有联网搜索就给出的回答，不可能引用任何东西。「No tracked brand named」统计的是没有提到配置里任何一个品牌的回答，配置里没列的品牌它说明不了。
 
+「What the engines searched for」列出回答里给出的搜索词，出现最多的 15 个排在前面（`summary.searches.top`）；OpenAI、Gemini
+和 Anthropic 会给出搜索词，Perplexity 和 OpenRouter 不给。表下一行在全部给出的搜索词里统计：几条含年份，几条含排名或比较类的词
+（`summary.searches.modifiers`：`total`、`with_year`、`with_ranking_word`）。年份指 1900 到 2099 之间的四位数，两边不能紧挨字母、
+数字或下划线；紧挨中文、日文或韩文字符算断开，所以「2026年」算。这些词是 best、top、vs、versus、review、reviews、compare、
+comparison、alternative、alternatives，按整词匹配、不分大小写（所以 topic 不算 top），以及「最好」「最佳」「推荐」「排行」「排名」
+「哪家」「哪个好」「对比」「评测」，出现在任何位置都算。一条搜索词里不管出现几次，每一项只算一次；搜索词照搬了问题原话的也照样计入：
+这一行描述的是实际搜了什么，不是引擎往问题里加了什么。回答的用量里报告了搜索、却没有返回任何搜索词时，这一节会写明有几条这样的回答，
+并按引擎列出（`summary.searches.answers_searched_without_queries`，以及 `summary.engines` 每一行的 `searched_without_queries`）。
+有些用 `base_url` 指向的 OpenAI 兼容接口只返回搜索调用、不带搜索词；这些回答既不进表，也不进上面的计数，这和「搜了但搜索词里没有年份」
+不是一回事。只有 OpenAI、Gemini 和 Anthropic 的回答这样读，因为 Perplexity 和 OpenRouter 的适配器不管实际情况都为每条回答记一次搜索。
+
 每条回答还会记下它在哪里提到配置里的每个品牌。`mention_order` 按每个品牌第一次被提到的位置，给回答里提到的品牌排序；
 位置取品牌名、别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同：1 就是最先被提到。回答没提到的品牌没有名次；
 两个品牌第一次被提到的位置相同（比如一个名字包含另一个）时，两者都没有名次。`mention_share` 是回答里提到这个品牌的句子
@@ -255,7 +266,7 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

@@ -387,6 +387,16 @@ because those APIs search on every call or do not say. The JSON
 report and the MCP `report` tool carry the same table as `summary.by_question`; for a run saved
 before 1.6.0 it is computed from the saved answers.
 
+**What the engines searched for.** The searches OpenAI, Gemini and Anthropic answers expose, most
+frequent first, then one line: of all those searches, how many contain a year (1900 to 2099) and how
+many contain a ranking or comparison word (best, top, vs, versus, review(s), compare, comparison,
+alternative(s) as whole words; `最好` `最佳` `推荐` `排行` `排名` `哪家` `哪个好` `对比` `评测`
+anywhere). A search that repeats the question's words counts too. When answers report a search but
+no query came back, as some OpenAI-compatible endpoints a `base_url` points at do, the section says
+how many, per engine, instead of disappearing. JSON: `summary.searches` (`modifiers`,
+`answers_searched_without_queries`). Details:
+[guide/watch-methodology.md](../guide/watch-methodology.md#1-the-unit-an-answer-clustered-by-question).
+
 **Who is named first.** Each answer records, for your brand and each competitor, `mention_order` and
 `mention_share`. `mention_order` is 1 for the brand the answer names before every other brand in your
 config, 2 for the next, and so on, by the earliest match of its name, aliases or domains with the

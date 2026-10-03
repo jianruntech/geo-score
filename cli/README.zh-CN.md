@@ -328,6 +328,13 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 就算「是」；OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Perplexity 和 OpenRouter 的回答一律记为「未知」，因为它们的 API 每次调用都会搜索，或者不说明。JSON 报告和 MCP 的
 `report` 工具以 `summary.by_question` 给出同一张表；1.6.0 之前保存的运行，由保存的回答当场算出。
 
+**引擎实际搜了什么。** 列出 OpenAI、Gemini 和 Anthropic 的回答给出的搜索词，出现最多的排在前面，再加一行：全部搜索词里几条含年份
+（1900 到 2099），几条含排名或比较类的词（best、top、vs、versus、review(s)、compare、comparison、alternative(s) 按整词匹配；
+「最好」「最佳」「推荐」「排行」「排名」「哪家」「哪个好」「对比」「评测」出现在任何位置都算）。照搬问题原话的搜索词也照样计入。
+回答报告了搜索、却没有返回搜索词时（有些用 `base_url` 指向的 OpenAI 兼容接口就是这样），这一节不再消失，而是写明有几条这样的回答、
+按引擎列出。JSON：`summary.searches`（`modifiers`、`answers_searched_without_queries`）。细节见
+[guide/watch-methodology.zh-CN.md](../guide/watch-methodology.zh-CN.md#1-单位一条回答按问题成簇)。
+
 **谁最先被提到。** 每条回答都为你的品牌和每个竞品记下 `mention_order` 和 `mention_share`。`mention_order`：回答在配置里所有品牌中
 最先提到的那个记 1，其次记 2，依此类推；位置取品牌名、别名或域名最早的一处匹配，匹配规则与 `mentioned` 相同。回答没提到这个品牌时
 记为 null；两个品牌第一次被提到的位置相同（一个名字包含另一个）时，两者也都是 null。`mention_share` 是回答里提到这个品牌的句子

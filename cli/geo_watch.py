@@ -1394,6 +1394,34 @@ def searched_of(sample, provider):
     return False if isinstance(usage, dict) else None
 
 
+def searched_without_queries(sample, provider):
+    """The provider reported a web search for this answer and returned no search query text with it. An
+    OpenAI-compatible relay a base_url points at can strip the queries (OpenAI web_search_call items with no
+    action) while the engine still searched. Read only for providers whose search count is measured (see
+    searched_of)."""
+    usage = sample.get("usage")
+    return provider in SEARCH_REPORTED and not sample.get("search_queries") and isinstance(usage, dict) \
+        and _int(usage.get("search_calls")) > 0
+
+
+# What summary.searches.modifiers counts in the search queries an engine exposed: a year (a four-digit number from
+# 1900 to 2099 standing alone) and a ranking or comparison word. Latin words match whole words, case-insensitive,
+# with a CJK character counting as a word break (as in _mention_re); Chinese words match anywhere.
+RANKING_WORDS = ("best", "top", "vs", "versus", "review", "reviews", "compare", "comparison", "alternative",
+                 "alternatives", "最好", "最佳", "推荐", "排行", "排名", "哪家", "哪个好", "对比", "评测")
+_YEAR_RE = re.compile("(?<!%s)(?:19|20)[0-9]{2}(?!%s)" % (_WORD_NOT_CJK, _WORD_NOT_CJK))
+_RANKING_RE = re.compile("|".join(re.escape(w) if _CJK.search(w) else "(?<!%s)%s(?!%s)" % (
+    _WORD_NOT_CJK, re.escape(w), _WORD_NOT_CJK) for w in RANKING_WORDS), re.I)
+
+
+def query_modifiers(queries):
+    """Of these search queries, how many contain a year and how many a ranking or comparison word. A query counts
+    once for each, however many years or words it holds. What the engines searched, described; not a judgement."""
+    qs = [q for q in queries if isinstance(q, str)]
+    return {"total": len(qs), "with_year": sum(1 for q in qs if _YEAR_RE.search(q)),
+            "with_ranking_word": sum(1 for q in qs if _RANKING_RE.search(q))}
+
+
 def rate_block(rows, seed, hit=lambda s: s["cited"], named=lambda s: s["mentioned"]):
     """A rate block ($defs/rate) over answers: cited and mentioned counts, Wilson, and the bootstrap over questions.
     Every answer to one question is one cluster, whichever ask, engine or run gave it."""
@@ -1450,7 +1478,9 @@ def summarize(run):
                    skipped=sum(1 for s in es if s["status"] == "skipped"),
                    avg_rank=round(sum(ranks) / float(len(ranks)), 1) if ranks else None,
                    with_citations=sum(1 for s in eo if s["citations"]),
-                   with_searches=sum(1 for s in eo if s["search_queries"]), **firsts(eo, 0))
+                   with_searches=sum(1 for s in eo if s["search_queries"]),
+                   searched_without_queries=sum(1 for s in eo if searched_without_queries(s, e.get("provider"))),
+                   **firsts(eo, 0))
         engines.append(row)
 
     everything = block(ok, "overall")
@@ -1542,6 +1572,7 @@ def summarize(run):
 
     exposed = [s for s in ok if s["search_queries"]]
     searched = Counter(re.sub(r"\s+", " ", q.lower()).strip() for s in exposed for q in s["search_queries"])
+    blind = sum(1 for s in ok if searched_without_queries(s, provider.get(s["engine"])))
     return {"overall": dict(everything, planned=len(samples),
                             errors=sum(1 for s in samples if s["status"] == "error"),
                             skipped=sum(1 for s in samples if s["status"] == "skipped")),
@@ -1550,17 +1581,21 @@ def summarize(run):
             "questions": {"asked": len(per_q), "cited_somewhere": yours}, "gaps": gaps,
             "by_question": by_question, "tracked_pages": tracked, "by_tier": by_tier,
             "searches": {"answers_exposing": len(exposed),
-                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)]},
+                         "top": [{"query": q, "count": n} for q, n in searched.most_common(15)],
+                         "answers_searched_without_queries": blind,
+                         "modifiers": query_modifiers(q for s in exposed for q in s["search_queries"])},
             "notes": notes}
 
 
 def summary_of(run):
     """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
-    per-question counts, the per-engine citation counts, the tracked pages or the named-first counts existed.
+    per-question counts, the per-engine citation counts, the tracked pages, the named-first counts or the search
+    counts (answers that searched with no query text, the year and ranking words) existed.
     Summaries are derived from the samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
             and "by_question" in sm and "tracked_pages" in sm \
+            and "answers_searched_without_queries" in (sm.get("searches") or {}) \
             and all("with_citations" in e and "named_first" in e for e in sm.get("engines") or []) \
             and all("named_first" in v for v in sm.get("share_of_voice") or []):
         return sm
@@ -1977,6 +2012,10 @@ def _n(k, word):
     return "%d %s%s" % (k, word, "" if k == 1 else "s")
 
 
+def _searches(k):
+    return "%d search%s" % (k, "" if k == 1 else "es")
+
+
 def table(headers, rows, fmt):
     rows = [[str(c) for c in r] for r in rows]
     if fmt == "md":
@@ -1997,6 +2036,49 @@ def money(x):
     if not x:
         return "$0"
     return "$%.4f" % x if x < 0.01 else "$%.2f" % x
+
+
+def ledger_cost(lg, hint=" (add prices to geo-score-watch.json)"):
+    """The ledger's cost: the sum when every answer was priced; the sum of the priced answers plus how many had no
+    price when some were; "cost unknown" when none was, because $0 would read as free."""
+    n = _int(lg.get("unpriced_answers"))
+    if lg.get("cost_complete") or not n:
+        return money(lg.get("cost_usd"))
+    unpriced = "%s with no price%s" % (_n(n, "answer"), hint)
+    # answers settled with usage = questions asked - failed calls; none of them priced and nothing spent
+    priced = _int(lg.get("questions_asked")) - _int(lg.get("errors")) - n
+    if priced <= 0 and not lg.get("cost_usd"):
+        return "cost unknown: " + unpriced
+    return money(lg.get("cost_usd")) + " + " + unpriced
+
+
+def search_lines(sm, fmt):
+    """The report's "What the engines searched for": the searches the answers exposed, how many of them contain a
+    year or a ranking or comparison word, and how many answers searched the web with no query text returned."""
+    sr = sm.get("searches") or {}
+    top, blind, mods = sr.get("top") or [], _int(sr.get("answers_searched_without_queries")), sr.get("modifiers")
+    if not top and not blind:
+        return []
+    L = []
+    if top:
+        k = _int(sr.get("answers_exposing"))
+        L.append(_h("What the engines searched for (from %s that show%s it)" % (_n(k, "answer"), "s" if k == 1 else ""),
+                    fmt))
+        L.append(table(["times", "search"], [[s["count"], _cut(s["query"], 70)] for s in top], fmt))
+        L.append("")   # a line right under a markdown table would be read as another row
+    else:
+        L.append(_h("What the engines searched for (no answer shows it)", fmt))
+    verb = lambda k: "contains" if k == 1 else "contain"
+    if top and isinstance(mods, dict) and mods.get("total"):
+        L.append("- Of %s: %d %s a year, %d %s a ranking or comparison word." % (
+            _searches(mods["total"]), mods["with_year"], verb(mods["with_year"]), mods["with_ranking_word"],
+            verb(mods["with_ranking_word"])))
+    if blind:
+        per = ", ".join("%s: %d" % (e["id"], e["searched_without_queries"]) for e in sm.get("engines") or []
+                        if e.get("searched_without_queries"))
+        L.append("- %s searched the web but the endpoint returned no search queries%s; an OpenAI-compatible "
+                 "base_url may strip them." % (_n(blind, "answer"), " (%s)" % per if per else ""))
+    return L
 
 
 def headline_lines(sm, name, fmt):
@@ -2126,15 +2208,11 @@ def render(run, fmt="text"):
                        [[t["tier"], "%d/%d %s" % (t["cited"], t["answered"], pct(t["cited_rate"])), ci_s(head_ci(t)),
                          pct(t["mentioned_rate"])] for t in sm["by_tier"]], fmt))
 
-    if sm["searches"]["top"]:
-        L.append(_h("What the engines searched for (from %d answers that show it)" % sm["searches"]["answers_exposing"], fmt))
-        L.append(table(["times", "search"], [[s["count"], _cut(s["query"], 70)] for s in sm["searches"]["top"]], fmt))
+    L.extend(search_lines(sm, fmt))
 
     lg = run["ledger"]
     L.append(_h("Ledger", fmt))
-    cost = money(lg["cost_usd"])
-    if not lg["cost_complete"]:
-        cost += " + %d answers with no price (add prices to geo-score-watch.json)" % lg["unpriced_answers"]
+    cost = ledger_cost(lg)
     L.append("%d questions asked · %d API requests · %s in / %s out tokens · %d searches · %s" % (
         lg["questions_asked"], lg["api_requests"], "{:,}".format(lg["input_tokens"]),
         "{:,}".format(lg["output_tokens"]), lg["search_calls"], cost))
@@ -2211,6 +2289,9 @@ def render_ask(run, fmt="text"):
         L.append("  sources: " + (", ".join(doms[:8]) + (" …" if len(doms) > 8 else "") if doms else "none"))
         if s["search_queries"]:
             L.append("  searched: " + " | ".join(_cut(q, 60) for q in s["search_queries"][:4]))
+        elif searched_without_queries(s, e.get("provider")):
+            L.append("  searched: %s, but the endpoint returned no search queries (an OpenAI-compatible base_url "
+                     "may strip them)" % _searches(s["usage"]["search_calls"]))
         L.append("  answer: " + _cut(s["answer"], 280))
         L.append("")
     L.append("(api channel — not the consumer apps; one ask per engine, so treat it as an anecdote, not a rate)")
@@ -3651,9 +3732,9 @@ class MCPServer(object):
             # cancelled, or stdin closed: a partial run would read as a full one in report and diff, so it is
             # not saved; what it cost goes to stderr, where the client's log keeps it
             lg = run["ledger"]
-            why = "run stopped before it finished: %d questions asked (%d API requests), cost %s%s; not saved" % (
-                lg["questions_asked"], lg["api_requests"], money(lg["cost_usd"]),
-                "" if lg["cost_complete"] else " plus unpriced answers")
+            cost = ledger_cost(lg, hint="")
+            why = "run stopped before it finished: %d questions asked (%d API requests), %s; not saved" % (
+                lg["questions_asked"], lg["api_requests"], cost if cost.startswith("cost unknown") else "cost " + cost)
             print("geo-score mcp: " + why, file=sys.stderr)
             raise ConfigError(why)
         path = save_run(cfg, run)

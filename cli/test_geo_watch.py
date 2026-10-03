@@ -2966,6 +2966,180 @@ class ByQuestion(Base):
         self.assertNotIn("by_question", old["summary"])          # the run itself is not rewritten
 
 
+# ── what the engines searched for: stripped queries, years and ranking words ──
+def relay_resp(text, cites=(), n_search=2):
+    """An OpenAI Responses answer as some OpenAI-compatible relays return it: web_search_call items with
+    "action": null, so the engine searched but no query text came back."""
+    r = openai_resp(text, cites)
+    r["output"] = [{"type": "web_search_call", "id": "ws_%d" % i, "status": "completed", "action": None}
+                   for i in range(n_search)] + r["output"]
+    return r
+
+
+class Searches(Base):
+    RELAY = "https://relay.example/v1/responses"
+
+    def relay_engine(self):
+        return dict(engines("chatgpt-api")[0], base_url=self.RELAY)
+
+    def test_a_relay_that_strips_the_queries_is_named_not_silent(self):
+        self.fake({"relay.example": lambda u, h, b: relay_resp(
+            "Pixa has a free plan.", [("https://pixa.example/pricing", "Pixa pricing")])})
+        run = gw.execute(brand(), rivals(), [self.relay_engine()], queries(2))
+        for s in run["samples"]:
+            self.assertEqual((s["status"], s["usage"]["search_calls"], s["search_queries"]), ("ok", 2, []))
+        sm = run["summary"]
+        self.assertEqual(sm["searches"], {"answers_exposing": 0, "top": [], "answers_searched_without_queries": 2,
+                                          "modifiers": {"total": 0, "with_year": 0, "with_ranking_word": 0}})
+        self.assertEqual((sm["engines"][0]["with_searches"], sm["engines"][0]["searched_without_queries"]), (0, 2))
+        self.assertEqual(run["ledger"]["search_calls"], 4)                      # the ledger counted the searches
+        self.assertEqual(sm["by_question"][0]["searched"], {"yes": 1, "no": 0, "unknown": 0})
+        note = ("- 2 answers searched the web but the endpoint returned no search queries (chatgpt-api: 2); "
+                "an OpenAI-compatible base_url may strip them.")
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn("What the engines searched for (no answer shows it)", text)
+            self.assertIn(note, text)
+            self.assertNotIn("- Of ", text)                                     # no query, nothing to count
+            self.assertLess(text.index(note), text.index("Ledger"))
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        one = gw.execute(brand(), rivals(), [self.relay_engine()], queries(1))
+        self.assertIn("  searched: 2 searches, but the endpoint returned no search queries", gw.render_ask(one))
+
+    def test_queries_that_come_back_are_not_flagged_and_other_providers_never_are(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api"), queries(2))
+        sr = run["summary"]["searches"]
+        # Perplexity's adapter records one search per answer and exposes none: that is not a stripped query
+        self.assertEqual((sr["answers_exposing"], sr["answers_searched_without_queries"]), (2, 0))
+        self.assertEqual([e["searched_without_queries"] for e in run["summary"]["engines"]], [0, 0])
+        text = gw.render(run)
+        self.assertNotIn("returned no search queries", text)
+        self.assertIn("- Of 2 searches: 0 contain a year, 2 contain a ranking or comparison word.", text)
+        # a relay beside the official endpoint: the table, the count and the note together
+        self.fake(dict(self.standard_routes(), **{"relay.example": lambda u, h, b: relay_resp("Pixa.", n_search=1)}))
+        relay = dict(self.relay_engine(), id="relay-api")
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api") + [relay], queries(3))
+        md = gw.render(run, "md")
+        self.assertIn("## What the engines searched for (from 3 answers that show it)", md)
+        self.assertIn("|\n\n- Of 3 searches: 0 contain a year, 3 contain a ranking or comparison word.\n"
+                      "- 3 answers searched the web but the endpoint returned no search queries (relay-api: 3); "
+                      "an OpenAI-compatible base_url may strip them.\n", md)
+        self.assertEqual(gw.summary_of(run), run["summary"])
+
+    def test_year_and_ranking_words(self):
+        m = lambda *qs: gw.query_modifiers(qs)
+        for q, year, word in [
+                ("best SEO consultant Lille 2026", 1, 1),
+                ("seo consultant lille", 0, 0),
+                ("topic modelling tools", 0, 0),           # "topic" is not "top"
+                ("laptop desktop stopwatch", 0, 0),        # nor is a word that holds it
+                ("top ai video tools", 0, 1),
+                ("Lumo VS Pixa", 0, 1), ("lumo vs. pixa", 0, 1), ("lumo versus pixa", 0, 1),
+                ("pixa review", 0, 1), ("Pixa Reviews 2025", 1, 1), ("reviewer jobs", 0, 0),
+                ("compare video apps", 0, 1), ("video app comparison", 0, 1), ("comparable apps", 0, 0),
+                ("alternatives to pixa", 0, 1), ("pixa alternative", 0, 1),
+                ("best of 2026, best in 2026 and 2026 again", 1, 1),   # counted once per search
+                ("h2020 grant", 0, 0), ("2000mAh battery", 0, 0), ("12026 items", 0, 0), ("iphone_2026", 0, 0),
+                ("1899 or 2100", 0, 0), ("since 1900", 1, 0), ("by 2099", 1, 0), ("2026-10 report", 1, 0),
+                ("2026年AI视频工具推荐", 1, 1),               # a CJK character beside a year is a break
+                ("AI视频工具哪个好", 0, 1), ("视频工具排行榜", 0, 1), ("剪辑软件排名", 0, 1), ("哪家好", 0, 1),
+                ("最好的剪辑软件", 0, 1), ("最佳剪辑软件", 0, 1), ("剪映和Pixa对比", 0, 1), ("剪辑软件评测", 0, 1),
+                ("AI视频工具Top", 0, 1),                     # a CJK character beside a Latin word is a break
+                ("鹿末视频免费吗", 0, 0), ("", 0, 0)]:
+            self.assertEqual(m(q), {"total": 1, "with_year": year, "with_ranking_word": word}, q)
+        self.assertEqual(m("best 2026", "pixa", "2025 tools", None), {"total": 3, "with_year": 2, "with_ranking_word": 1})
+        self.assertEqual(m(), {"total": 0, "with_year": 0, "with_ranking_word": 0})
+
+    def test_the_summary_counts_every_exposed_search_and_the_report_says_so_once(self):
+        qs = [{"query_id": "q01", "query": "video tool", "intent_tier": "", "target_url": ""},
+              {"query_id": "q02", "query": "lumo or pixa", "intent_tier": "", "target_url": ""}]
+        o = "chatgpt-api"
+        run = counted_run([
+            answer("q01", o, 1, searches=2, queries_=["best video tool 2026", "video tool pricing"]),
+            answer("q01", o, 2, searches=1, queries_=["best video tool 2026"]),     # the same search, another answer
+            answer("q02", o, 1, searches=1, queries_=["lumo pricing 2025"]),
+            answer("q02", o, 2, searches=2),                                         # searched, no query text
+        ], qs, engs=(o,))
+        sr = run["summary"]["searches"]
+        self.assertEqual(sr["modifiers"], {"total": 4, "with_year": 3, "with_ranking_word": 2})
+        self.assertEqual((sr["answers_exposing"], sr["answers_searched_without_queries"]), (3, 1))
+        self.assertEqual(sr["top"][0], {"query": "best video tool 2026", "count": 2})
+        text = gw.render(run)
+        self.assertIn("- Of 4 searches: 3 contain a year, 2 contain a ranking or comparison word.", text)
+        self.assertIn("- 1 answer searched the web but the endpoint returned no search queries (chatgpt-api: 1);", text)
+        self.assertEqual(text.count("- Of 4 searches"), 1)
+        single = counted_run([answer("q01", o, 1, searches=1, queries_=["pixa review"])], qs[:1], engs=(o,))
+        self.assertIn("- Of 1 search: 0 contain a year, 1 contains a ranking or comparison word.", gw.render(single))
+        nothing = counted_run([answer("q01", o, 1)], qs[:1], engs=(o,))
+        self.assertNotIn("What the engines searched for", gw.render(nothing))
+        for r in (run, single, nothing):
+            self.assertEqual(validate(json.loads(json.dumps(r)), watch_schema()), [])
+        for word in ("optimi", "should", "recommend", "worth", "improve"):  # what was searched, never advice
+            self.assertNotIn(word, "\n".join(gw.search_lines(run["summary"], "text")).lower())
+
+    def test_a_summary_saved_without_the_counts_is_recomputed(self):
+        o = "chatgpt-api"
+        qs = [{"query_id": "q01", "query": "video tool", "intent_tier": "", "target_url": ""}]
+        run = counted_run([answer("q01", o, 1, searches=1, queries_=["best video tool 2026"]),
+                           answer("q01", o, 2, searches=3)], qs, engs=(o,))
+        old = json.loads(json.dumps(run))
+        for k in ("answers_searched_without_queries", "modifiers"):           # saved by 1.6.0
+            del old["summary"]["searches"][k]
+        del old["summary"]["engines"][0]["searched_without_queries"]
+        sm = gw.summary_of(old)
+        self.assertEqual(sm["searches"], run["summary"]["searches"])
+        self.assertEqual(sm["engines"][0]["searched_without_queries"], 1)
+        self.assertIs(gw.summary_of(run), run["summary"])
+        self.assertIn("- Of 1 search: 1 contains a year", gw.render(old))
+        # a summary that carries only the 1.2.0 fields still renders
+        self.assertEqual(gw.search_lines({"searches": {"answers_exposing": 1, "top": [{"query": "x", "count": 1}]}},
+                                         "text")[0].strip(), "What the engines searched for (from 1 answer that shows it)")
+
+
+class LedgerCost(Base):
+    def ledger(self, asked, errors, unpriced, cost):
+        return {"questions_asked": asked, "api_requests": asked, "http_attempts": asked, "errors": errors,
+                "input_tokens": 0, "output_tokens": 0, "search_calls": 0, "cost_usd": cost,
+                "unpriced_answers": unpriced, "cost_complete": unpriced == 0}
+
+    def test_the_cost_line_both_ways(self):
+        hint = " (add prices to geo-score-watch.json)"
+        for args, want in [
+                ((4, 0, 4, 0.0), "cost unknown: 4 answers with no price" + hint),        # nothing priced: not $0
+                ((5, 1, 4, 0.0), "cost unknown: 4 answers with no price" + hint),        # a failed call is not priced
+                ((2, 1, 1, 0.0), "cost unknown: 1 answer with no price" + hint),
+                ((24, 1, 12, 0.066), "$0.07 + 12 answers with no price" + hint),        # some priced
+                ((4, 0, 2, 0.0), "$0 + 2 answers with no price" + hint),                # priced at zero, others not
+                ((4, 0, 0, 0.066), "$0.07"), ((0, 0, 0, 0.0), "$0")]:
+            self.assertEqual(gw.ledger_cost(self.ledger(*args)), want, args)
+        self.assertEqual(gw.ledger_cost(self.ledger(4, 0, 4, 0.0), hint=""), "cost unknown: 4 answers with no price")
+
+    def test_reports_print_it(self):
+        self.fake(self.standard_routes())
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(3))        # no prices in the config
+        self.assertEqual((run["ledger"]["unpriced_answers"], run["ledger"]["cost_usd"]), (3, 0.0))
+        line = "3 searches · cost unknown: 3 answers with no price (add prices to geo-score-watch.json)"
+        for fmt in ("text", "md"):
+            self.assertIn(line, gw.render(run, fmt))
+            self.assertNotIn("$0 +", gw.render(run, fmt))
+        prices = {"perplexity-api": {"input_per_mtok": 1, "output_per_mtok": 1}}
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api"), queries(3), prices=prices)
+        self.assertIn("$0.02 + 3 answers with no price (add prices to geo-score-watch.json)", gw.render(run))
+        # the MCP report tool prints the same ledger, and the JSON ledger is unchanged
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        gw.save_run(gw.Config(cfgp), gw.execute(brand(), rivals(), engines("chatgpt-api"), queries(2)))
+        r = gw.MCPServer(cfgp, out=io.StringIO()).call({"name": "report", "arguments": {}})
+        self.assertIn("cost unknown: 2 answers with no price", r["content"][0]["text"])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["report", "-c", cfgp, "--format", "json"]), 0)
+        lg = json.loads(out.getvalue())["ledger"]
+        self.assertEqual((lg["cost_usd"], lg["unpriced_answers"], lg["cost_complete"]), (0.0, 2, False))
+
+
 # ── an engine whose answers stop carrying citations ──────────────────────
 def openai_resp_renamed(text, cites=(), queries=()):
     """openai_resp with the annotation type renamed, as a provider changing its answer format would: the adapter

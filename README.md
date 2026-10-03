@@ -433,6 +433,8 @@ What the engines searched for (from 12 answers that show it)
   2      pixa alternatives
   2      鹿末视频免费吗
 
+- Of 12 searches: 0 contain a year, 6 contain a ranking or comparison word.
+
 Ledger
 24 questions asked · 23 API requests · 14,620 in / 4,860 out tokens · 23 searches · $0.07 + 12 answers with no price (add prices to geo-score-watch.json)
 1 failed after 24 HTTP requests in all; a request that timed out may still be billed.
@@ -462,7 +464,7 @@ see what the engines say today, not to measure a rate.
 | **share of voice** | The same two rates for each competitor, over the same answers |
 | **sources** | The third-party domains cited most often: the pages the engines trust in your category |
 | **gaps** | Questions where a competitor is cited and you are not, in any answer |
-| **searches** | The searches the engine actually ran before answering, where the API exposes them (OpenAI, Gemini, Claude). This is the query fan-out, observed rather than guessed |
+| **searches** | The searches the engine actually ran before answering, where the API exposes them (OpenAI, Gemini, Claude). This is the query fan-out, observed rather than guessed. The report counts how many contain a year or a ranking or comparison word, and says so when answers searched but the endpoint returned no query text |
 | **ledger** | Questions asked, API requests, tokens, searches and cost. Every run keeps its own ledger |
 
 **What it will not tell you.**

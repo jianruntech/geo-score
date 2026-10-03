@@ -6,8 +6,21 @@
 
 ### 新增
 - **`engines[].timeout`。** 等一个引擎回答的秒数，10 到 600（默认 120），用于响应慢的接口、或要长时间搜索和推理的模型。超时的请求仍不重试。
+- **「What the engines searched for」统计年份和排名类的词，并写明搜了却没返回搜索词的回答。** 表下多一行：在回答给出的全部搜索词里，
+  几条含年份（1900 到 2099 之间单独出现的四位数），几条含排名或比较类的词：`best`、`top`、`vs`、`versus`、`review`、`reviews`、
+  `compare`、`comparison`、`alternative`、`alternatives` 按整词匹配、不分大小写，`最好`、`最佳`、`推荐`、`排行`、`排名`、`哪家`、
+  `哪个好`、`对比`、`评测` 出现在任何位置都算。一条搜索词每一项只算一次，照搬问题原话的也照样计入：这一行描述的是实际搜了什么，
+  不是引擎加了什么。OpenAI、Gemini 或 Anthropic 的回答报告了搜索、却没有给出搜索词时（`base_url` 指向的 OpenAI 兼容接口返回
+  不带 `action` 的 `web_search_call` 就是这样），这一节不再消失，而是写明有几条回答搜了却没有返回搜索词，并按引擎列出；
+  `watch ask` 也在回答下面写明。Perplexity 和 OpenRouter 的回答从不计入，因为它们的适配器不管实际情况都为每条回答记一次搜索。
+  summary 新增 `summary.searches.answers_searched_without_queries`、`summary.searches.modifiers`（`total`、`with_year`、
+  `with_ranking_word`）和 `summary.engines` 每一行的 `searched_without_queries`，schema/watch.v1.json 现在描述了 `summary.searches`。
+  本版之前保存的运行在出报告时由保存的回答当场算出，运行文件本身不会被改写。
 
 ### 变更
+- **没有一条回答有价格时，账本写明费用未知。** 以前写成 `$0 + 4 answers with no price (add prices to geo-score-watch.json)`，
+  看起来像没花钱；现在写成 `cost unknown: 4 answers with no price (add prices to geo-score-watch.json)`。部分回答有价格时仍写
+  `$0.07 + 12 answers with no price`。MCP `run` 工具在运行被取消时的提示用同样的说法。JSON 账本不变。
 - **账本写明失败了多少。** 有调用失败时，`watch report` 多出一行，写明失败几次、一共发出多少次 HTTP 请求，因为服务商可能对超时的请求照样计费。
   不在当前目录下的路径改为显示绝对路径，不再是一串 `../`。
 

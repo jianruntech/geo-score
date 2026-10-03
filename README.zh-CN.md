@@ -405,6 +405,8 @@ What the engines searched for (from 12 answers that show it)
   2      pixa alternatives
   2      鹿末视频免费吗
 
+- Of 12 searches: 0 contain a year, 6 contain a ranking or comparison word.
+
 Ledger
 24 questions asked · 23 API requests · 14,620 in / 4,860 out tokens · 23 searches · $0.07 + 12 answers with no price (add prices to geo-score-watch.json)
 1 failed after 24 HTTP requests in all; a request that timed out may still be billed.
@@ -432,7 +434,7 @@ Read this before quoting the numbers
 | **声量份额** | 同一批回答里，每个竞品的被引用率和被提及率 |
 | **来源** | 被引用最多的第三方域名，也就是 AI 在你这个品类里信得过的那些页面 |
 | **缺口** | 竞品被引用、你一次都没被引用的问题 |
-| **实际搜索词** | 引擎回答前真正搜了什么（OpenAI、Gemini、Claude 的 API 会给出）。这就是 query fan-out，是实际记下来的，不是猜的 |
+| **实际搜索词** | 引擎回答前真正搜了什么（OpenAI、Gemini、Claude 的 API 会给出）。这就是 query fan-out，是实际记下来的，不是猜的。报告统计其中几条含年份、几条含排名或比较类的词；回答搜索过、接口却没返回搜索词时，报告会写明 |
 | **账本** | 问了几个问题、发了几次请求、用了多少 token 和搜索、花了多少钱。每次运行一本 |
 
 **它不告诉你什么。**

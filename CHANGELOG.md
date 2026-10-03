@@ -8,8 +8,26 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ### Added
 - **`engines[].timeout`.** Seconds to wait for one engine's answer, 10 to 600 (default 120), for a slow endpoint
   or a model that searches and reasons at length. A timed-out request is still not retried.
+- **"What the engines searched for" counts years and ranking words, and names searches that came back without
+  their queries.** A line under the table gives, over every search the answers exposed, how many contain a year
+  (a four-digit number from 1900 to 2099 standing alone) and how many contain a ranking or comparison word: `best`,
+  `top`, `vs`, `versus`, `review`, `reviews`, `compare`, `comparison`, `alternative`, `alternatives` as whole words
+  in any letter case, or `最好`, `最佳`, `推荐`, `排行`, `排名`, `哪家`, `哪个好`, `对比`, `评测` anywhere. A search
+  counts once for each, and one that repeats the question's own words counts too: the line describes what was
+  searched, not what the engine added. When OpenAI, Gemini or Anthropic answers report a search but expose no query,
+  as an OpenAI-compatible `base_url` that returns `web_search_call` items with no `action` does, the section no
+  longer disappears: it says how many answers searched with no query text, per engine, and `watch ask` says the same
+  under the answer. Perplexity and OpenRouter answers are never counted there, since their adapters record one
+  search per answer whatever happened. The summary gains `summary.searches.answers_searched_without_queries`,
+  `summary.searches.modifiers` (`total`, `with_year`, `with_ranking_word`) and `searched_without_queries` on each
+  row of `summary.engines`, and schema/watch.v1.json now describes `summary.searches`. A run saved before this
+  release gets them computed from its saved answers when it is reported; the run file is not rewritten.
 
 ### Changed
+- **A ledger with no priced answer says the cost is unknown.** It read `$0 + 4 answers with no price (add prices
+  to geo-score-watch.json)`, which looks like a free run; it now reads `cost unknown: 4 answers with no price (add
+  prices to geo-score-watch.json)`. When some answers are priced it still reads `$0.07 + 12 answers with no price`.
+  The MCP `run` tool's message for a cancelled run uses the same words. The JSON ledger is unchanged.
 - **The ledger says what failed.** When calls failed, `watch report` adds a line with how many, and how many HTTP
   requests were sent in all, since a provider may bill a request it timed out on. A path outside the current
   directory is printed absolute instead of as a chain of `../`.

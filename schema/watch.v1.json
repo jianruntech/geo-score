@@ -73,6 +73,8 @@
                              "description": "Answers from this engine that carry at least one citation, of any domain. Added in 1.6.0; reports recompute the summary of a run saved without it. When the engine answered 5 or more questions and none of its answers cites, the report warns that the API's answer format may have changed; it counts questions, not answers, because the answers to one question move together."},
           "with_searches": {"type": "integer", "minimum": 0,
                             "description": "Answers from this engine that expose at least one search query. Added in 1.6.0."},
+          "searched_without_queries": {"type": "integer", "minimum": 0,
+                                       "description": "Answers from this engine (OpenAI, Gemini or Anthropic) whose usage reports at least one search call but which expose no search query, as when an OpenAI-compatible base_url returns web_search_call items with no action. Reports recompute the summary of a run saved without it."},
           "named_first": {"type": "integer", "minimum": 0,
                           "description": "Answers from this engine whose mention_order for the brand is 1: it is named before every other brand in the config. Added in 1.6.0; reports recompute the summary of a run saved without it."},
           "any_named": {"type": "integer", "minimum": 0,
@@ -92,6 +94,23 @@
                         "description": "One entry per question, in question order: who the answers cite and name, as counts. Added in 1.6.0; reports recompute the summary of a run saved without it."},
         "tracked_pages": {"type": "array", "items": {"$ref": "#/$defs/tracked_page"},
                           "description": "One entry per page named in target_url, questions that share a page together, in question order; empty when no question tracks a page. Added in 1.6.0 and read from the saved citations; reports recompute the summary of a run saved without it."},
+        "searches": {"type": "object",
+          "description": "What the engines searched for, read from the search queries the answers (status ok) expose. Counts that describe the searches, not a judgement of them.",
+          "properties": {
+            "answers_exposing": {"type": "integer", "minimum": 0, "description": "Answers that expose at least one search query."},
+            "top": {"type": "array", "description": "The 15 most frequent search queries, lower-cased with whitespace collapsed, with how often each was run.",
+              "items": {"type": "object", "additionalProperties": false, "required": ["query", "count"],
+                        "properties": {"query": {"type": "string"}, "count": {"type": "integer", "minimum": 1}}}},
+            "answers_searched_without_queries": {"type": "integer", "minimum": 0,
+              "description": "Answers from OpenAI, Gemini or Anthropic engines whose usage reports at least one search call but which expose no search query: the engine searched and the endpoint did not return what it searched for, as an OpenAI-compatible base_url may do. Perplexity and OpenRouter answers are never counted, because their adapters record one search per answer whatever happened. Reports recompute the summary of a run saved without it."},
+            "modifiers": {"type": "object", "additionalProperties": false, "required": ["total", "with_year", "with_ranking_word"],
+              "description": "Over every exposed search query (each answer's queries, de-duplicated within the answer): how many contain a year and how many a ranking or comparison word. A query counts once for each, however many it holds. A query that repeats the question's own words counts too. Reports recompute the summary of a run saved without it.",
+              "properties": {
+                "total": {"type": "integer", "minimum": 0, "description": "Search queries counted."},
+                "with_year": {"type": "integer", "minimum": 0,
+                              "description": "Queries holding a four-digit number from 1900 to 2099 with no letter, digit or underscore on either side (a Chinese, Japanese or Korean character beside it is a break, so 2026年 counts)."},
+                "with_ranking_word": {"type": "integer", "minimum": 0,
+                                      "description": "Queries holding best, top, vs, versus, review, reviews, compare, comparison, alternative or alternatives as a whole word, any letter case, or 最好, 最佳, 推荐, 排行, 排名, 哪家, 哪个好, 对比 or 评测 anywhere."}}}}},
         "notes": {"type": "array", "items": {"type": "string"}}
       }}
   },
