@@ -487,14 +487,20 @@ def _err_text(js, raw):
     return (raw or b"").decode("utf-8", "replace").strip()[:300] or "empty response"
 
 
-def api_post(url, headers, body, secret):
+def _shown(path):
+    """A path as the user can read it: relative when it is under the current directory, else absolute."""
+    rel = os.path.relpath(path)
+    return os.path.abspath(path) if rel.startswith(os.pardir) else rel
+
+
+def api_post(url, headers, body, secret, timeout=None):
     """POST with up to two retries on 429/5xx. Timeouts are not retried: the provider may have billed them.
-    Returns (json, attempts)."""
+    `timeout` is the engine's own wait in seconds (engines[].timeout), else HTTP_TIMEOUT. Returns (json, attempts)."""
     attempt = 0
     while True:
         attempt += 1
         try:
-            st, hdrs, raw = TRANSPORT(url, headers, body)
+            st, hdrs, raw = TRANSPORT(url, headers, body) if timeout is None else TRANSPORT(url, headers, body, timeout=timeout)
         except TransportError as e:
             raise EngineError("network: " + redact(e, secret)) from None
         if st in RETRY_STATUS and attempt < 3:
@@ -527,8 +533,10 @@ def call_openai(eng, key, question, country):
     tool = {"type": eng.get("tool") or "web_search"}
     if country:
         tool["user_location"] = {"type": "approximate", "country": country}
-    body = {"model": eng["model"], "input": question, "tools": [tool]}
-    js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key)
+    # the question as a one-message list: the Responses API takes a string or a list, and some
+    # OpenAI-compatible endpoints a base_url points at accept only the list
+    body = {"model": eng["model"], "input": [{"role": "user", "content": question}], "tools": [tool]}
+    js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key, timeout=eng.get("timeout"))
     text, cites, searches, nsearch = [], [], [], 0
     for item in js.get("output") or []:
         if not isinstance(item, dict):
@@ -557,7 +565,7 @@ def call_perplexity(eng, key, question, country):
     body = {"model": eng["model"], "messages": [{"role": "user", "content": question}]}
     if country:
         body["web_search_options"] = {"user_location": {"country": country}}
-    js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key)
+    js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key, timeout=eng.get("timeout"))
     msg = ((js.get("choices") or [{}])[0] or {}).get("message") or {}
     text = _text(msg.get("content"))
     cites = [(r.get("url"), r.get("title")) for r in js.get("search_results") or [] if isinstance(r, dict)]
@@ -582,7 +590,7 @@ def call_gemini(eng, key, question, country):
     if eng.get("api") == "generate_content":
         return _gemini_generate_content(eng, key, question)
     body = {"model": eng["model"], "input": question, "tools": [{"type": "google_search"}], "store": False}
-    js, n = api_post(_endpoint(eng), {"x-goog-api-key": key}, body, key)
+    js, n = api_post(_endpoint(eng), {"x-goog-api-key": key}, body, key, timeout=eng.get("timeout"))
     text, cites, searches = [], [], []
     for step in js.get("steps") or []:
         if not isinstance(step, dict):
@@ -612,7 +620,7 @@ def call_gemini(eng, key, question, country):
 def _gemini_generate_content(eng, key, question):
     url = (eng.get("base_url") or GEMINI_GENERATE_URL).replace("{model}", urllib.parse.quote(eng["model"], safe=""))
     body = {"contents": [{"role": "user", "parts": [{"text": question}]}], "tools": [{"google_search": {}}]}
-    js, n = api_post(url, {"x-goog-api-key": key}, body, key)
+    js, n = api_post(url, {"x-goog-api-key": key}, body, key, timeout=eng.get("timeout"))
     cand = (js.get("candidates") or [{}])[0] or {}
     parts = (cand.get("content") or {}).get("parts") or []
     text = "".join(p.get("text") or "" for p in parts if isinstance(p, dict) and not p.get("thought"))
@@ -640,7 +648,7 @@ def call_anthropic(eng, key, question, country):
     for _ in range(3):   # a long search can pause the turn; send it back to continue, at most twice
         body = {"model": eng["model"], "max_tokens": int(eng.get("max_tokens") or 2048),
                 "messages": msgs, "tools": [tool]}
-        js, n = api_post(_endpoint(eng), hdr, body, key)
+        js, n = api_post(_endpoint(eng), hdr, body, key, timeout=eng.get("timeout"))
         calls += 1
         attempts += n
         content = js.get("content") if isinstance(js.get("content"), list) else []
@@ -669,7 +677,7 @@ def call_openrouter(eng, key, question, country):
             "plugins": [{"id": "web", "max_results": int(eng.get("max_results") or 5)}]}
     hdr = {"Authorization": "Bearer " + key, "HTTP-Referer": "https://github.com/jianruntech/geo-score",
            "X-Title": "geo-score"}
-    js, n = api_post(_endpoint(eng), hdr, body, key)
+    js, n = api_post(_endpoint(eng), hdr, body, key, timeout=eng.get("timeout"))
     msg = ((js.get("choices") or [{}])[0] or {}).get("message") or {}
     cites = []
     for an in msg.get("annotations") or []:
@@ -920,7 +928,7 @@ ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
 # the last four tune the provider adapters: tool (OpenAI, Anthropic), max_tokens and max_searches (Anthropic),
 # max_results (OpenRouter)
 ENGINE_KEYS = ("provider", "id", "model", "base_url", "api", "key_env", "tool", "max_tokens", "max_searches",
-               "max_results")
+               "max_results", "timeout")
 PRICE_KEYS = ("input_per_mtok", "output_per_mtok", "per_search", "per_call")
 # what a pasted API key is called, lower case with the separators taken out: api_key, OPENAI_KEY, api_token,
 # client_secret, credentials. Such a name never gets a "did you mean": the nearest known key can be 'api', the
@@ -1040,6 +1048,13 @@ class Config(object):
                 err("engines[%d].key_env must name an environment variable" % i)
             if e.get("tool") is not None and not isinstance(e["tool"], str):
                 err("engines[%d].tool must be a string" % i)
+            if e.get("timeout") is not None:
+                t = _num(e["timeout"])
+                if t is None or not 10 <= t <= 600:
+                    err("engines[%d].timeout must be seconds between 10 and 600" % i)
+                    del eng["timeout"]
+                else:
+                    eng["timeout"] = t
             for k in ("max_tokens", "max_searches", "max_results"):
                 if e.get(k) is None:
                     continue
@@ -2123,6 +2138,10 @@ def render(run, fmt="text"):
     L.append("%d questions asked · %d API requests · %s in / %s out tokens · %d searches · %s" % (
         lg["questions_asked"], lg["api_requests"], "{:,}".format(lg["input_tokens"]),
         "{:,}".format(lg["output_tokens"]), lg["search_calls"], cost))
+    if lg.get("errors"):
+        # a failed call is not an answer, but it was sent: a provider may bill a request it timed out on
+        L.append("%d failed after %d HTTP requests in all; a request that timed out may still be billed." % (
+            lg["errors"], lg.get("http_attempts") or 0))
     caps = run["caps"]
     L.append("Caps: at most %d questions%s." % (caps["max_calls"],
                                                 "" if caps["budget_usd"] is None else ", budget " + money(caps["budget_usd"])))
@@ -2603,7 +2622,7 @@ def cmd_check(args):
         print("! " + w)
     try:
         qs = cfg.load_queries()
-        print("✓ %d questions in %s" % (len(qs), os.path.relpath(cfg.queries_path)))
+        print("✓ %d questions in %s" % (len(qs), _shown(cfg.queries_path)))
         named = [q["query_id"] for q in qs if is_branded(flag_query(q, cfg.brand, cfg.competitors))]
         if named:
             msg = "%d of %d questions (%d%%) name %s (%s): they are reported on their own line, not in the " \
@@ -2690,7 +2709,7 @@ def cmd_run(args):
                   args.allow_unpriced, progress=_progress_printer(args.quiet))
     path = save_run(cfg, run)
     print(_printable(render(run, args.format if args.format in ("text", "md") else "text")))
-    print("saved %s" % os.path.relpath(path))
+    print("saved %s" % _shown(path))
     return 0 if run["summary"]["overall"]["answered"] else 3
 
 

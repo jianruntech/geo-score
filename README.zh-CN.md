@@ -407,6 +407,7 @@ What the engines searched for (from 12 answers that show it)
 
 Ledger
 24 questions asked · 23 API requests · 14,620 in / 4,860 out tokens · 23 searches · $0.07 + 12 answers with no price (add prices to geo-score-watch.json)
+1 failed after 24 HTTP requests in all; a request that timed out may still be billed.
 Caps: at most 100 questions.
 
 Read this before quoting the numbers

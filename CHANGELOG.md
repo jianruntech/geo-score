@@ -5,6 +5,20 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **`engines[].timeout`.** Seconds to wait for one engine's answer, 10 to 600 (default 120), for a slow endpoint
+  or a model that searches and reasons at length. A timed-out request is still not retried.
+
+### Changed
+- **The ledger says what failed.** When calls failed, `watch report` adds a line with how many, and how many HTTP
+  requests were sent in all, since a provider may bill a request it timed out on. A path outside the current
+  directory is printed absolute instead of as a chain of `../`.
+
+### Fixed
+- **OpenAI engines send the question as a one-message list.** The Responses API accepts a string or a list;
+  some OpenAI-compatible endpoints that a `base_url` points at accept only the list and refused every call.
+  Official OpenAI answers the same either way.
+
 ## [1.6.0] — 2026-10-03
 
 ### Added

@@ -294,6 +294,7 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 | `engines[].api` | Gemini only: `interactions` (default) or `generate_content` |
 | `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
+| `engines[].timeout` | Seconds to wait for this engine's answer, 10 to 600 (default 120). A slow endpoint, or a model that searches and reasons at length, may need more; a request that timed out is not retried and may still be billed |
 
 An OpenRouter engine measures that model answering through OpenRouter's `web` plugin, not the vendor's own app
 or search: for a model without native search, such as `deepseek/deepseek-chat`, the plugin searches with Exa

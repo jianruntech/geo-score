@@ -55,7 +55,8 @@
         "tool": {"type": ["string", "null"], "description": "The web-search tool version (OpenAI, Anthropic)."},
         "max_tokens": {"type": ["integer", "null"], "minimum": 1, "description": "Output tokens per answer (Anthropic)."},
         "max_searches": {"type": ["integer", "null"], "minimum": 1, "description": "Searches per answer (Anthropic)."},
-        "max_results": {"type": ["integer", "null"], "minimum": 1, "description": "Results per search (OpenRouter)."}
+        "max_results": {"type": ["integer", "null"], "minimum": 1, "description": "Results per search (OpenRouter)."},
+        "timeout": {"type": ["number", "null"], "minimum": 10, "maximum": 600, "description": "Seconds to wait for this engine's answer (default 120). A slow endpoint or a model that searches and reasons at length may need more. A request that timed out may still be billed."}
       },
       "if": {"properties": {"provider": {"const": "gemini"}}},
       "else": {"properties": {"api": {"type": "null"}}}},

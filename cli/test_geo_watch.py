@@ -59,9 +59,10 @@ class FakeAPI(object):
     def __init__(self, routes):
         self.routes, self.calls, self.lock = routes, [], threading.Lock()
 
-    def __call__(self, url, headers, body):
+    def __call__(self, url, headers, body, timeout=None):
         with self.lock:
             self.calls.append((url, headers, body))
+            self.timeouts = getattr(self, "timeouts", []) + [timeout]
         for host, fn in self.routes.items():
             if host in url:
                 r = fn(url, headers, body)
@@ -161,7 +162,20 @@ class ProviderParsing(Base):
         self.assertEqual(headers["Authorization"], "Bearer " + KEYS["OPENAI_API_KEY"])
         self.assertEqual(body["tools"], [{"type": "web_search",
                                           "user_location": {"type": "approximate", "country": "DE"}}])
-        self.assertEqual(body["input"], "which one?")
+        self.assertEqual(body["input"], [{"role": "user", "content": "which one?"}])
+
+    def test_an_engine_timeout_reaches_the_request_and_a_bad_one_is_refused(self):
+        api = self.fake(self.standard_routes())
+        eng = dict(engines("chatgpt-api")[0], timeout=300)
+        gw.call_openai(eng, KEYS["OPENAI_API_KEY"], "which one?", None)
+        gw.call_openai(engines("chatgpt-api")[0], KEYS["OPENAI_API_KEY"], "which one?", None)
+        self.assertEqual(api.timeouts, [300, None])          # None: http_post's default, HTTP_TIMEOUT
+        for bad in (5, 900, "slow", True):
+            p = os.path.join(self.tmp, "geo-score-watch.json")
+            with io.open(p, "w", encoding="utf-8") as f:
+                json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
+                           "engines": [dict(engines("chatgpt-api")[0], timeout=bad)]}, f)
+            self.assertTrue(any("timeout must be seconds between 10 and 600" in e for e in gw.Config(p).errors), bad)
 
     def test_perplexity_keeps_only_numbered_sources(self):
         self.fake({"api.perplexity.ai": lambda u, h, b: pplx_resp(
@@ -469,7 +483,7 @@ class Running(Base):
 def canned(per_query):
     """per_query: {query_id: (text, [urls])} for a single openai engine."""
     def handler(u, h, b):
-        text, urls = per_query[b["input"]]
+        text, urls = per_query[b["input"][0]["content"]]
         return openai_resp(text, [(x, "") for x in urls])
     return handler
 
@@ -3120,7 +3134,7 @@ class Branded(Base):
 
     def test_the_headline_leaves_out_questions_that_name_the_brand(self):
         def handler(u, h, b):
-            q = b["input"]
+            q = b["input"][0]["content"]
             cite = "lumo" in q.lower() or "鹿末" in q
             return openai_resp("Lumo is fine." if cite else "Pixa.",
                                [("https://lumo.example/", "")] if cite else [("https://pixa.example/", "")])
