@@ -432,7 +432,7 @@
     "access": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Observations about how crawlers reach the site's pages, reported outside the score: nothing here enters readiness, observable_max or normalised, and the rubric does not define them. URLs and rules are in the form RFC 9309 section 2.2.2 compares them in (percent-encoding normalised). Optional.",
+      "description": "Observations about how crawlers reach the site's pages, reported outside the score: nothing here enters readiness, observable_max or normalised, and the rubric does not define them. URLs and robots.txt rules are in the form RFC 9309 section 2.2.2 compares them in (percent-encoding normalised). Optional.",
       "properties": {
         "robots_paths": {
           "type": "object",
@@ -603,6 +603,71 @@
                   }
                 }
               }
+            }
+          }
+        },
+        "server_links": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pages_searched",
+            "home_links",
+            "few_home_links",
+            "other_sampled",
+            "home_links_to_sampled",
+            "sitemap_urls",
+            "sitemap_urls_linked",
+            "unlinked_sitemap_urls"
+          ],
+          "description": "Links in the server HTML: the <a href> links a crawler that runs no JavaScript can follow, read from the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), outside comments, scripts, styles and templates. A link is to a page on this site when it resolves to the audited host and path; fragments, queries and a trailing slash are dropped, and javascript:, mailto: and tel: links are not links to a page. Only the fetched pages are searched, so a URL none of them links to is not shown to be orphaned. No request is made for it.",
+          "properties": {
+            "pages_searched": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fetched pages whose server HTML was searched for links, each once."
+            },
+            "home_links": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "Pages on this site the homepage's server HTML links to, the homepage itself left out; null when the homepage was not fetched (a pinned sample without it, or an error)."
+            },
+            "few_home_links": {
+              "type": "boolean",
+              "description": "home_links is below 3: navigation that appears only after JavaScript runs cannot be followed by crawlers that do not run it."
+            },
+            "other_sampled": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Sampled pages other than the homepage."
+            },
+            "home_links_to_sampled": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "How many of them the homepage's server HTML links to; null when the homepage was not fetched."
+            },
+            "sitemap_urls": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Sitemap URLs checked: those of access.robots_paths that the sitemap lists."
+            },
+            "sitemap_urls_linked": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of them, those the server HTML of at least one searched page links to, a page's link to itself left out."
+            },
+            "unlinked_sitemap_urls": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "string"
+              },
+              "description": "The first 50 of the others, in sitemap order."
             }
           }
         }

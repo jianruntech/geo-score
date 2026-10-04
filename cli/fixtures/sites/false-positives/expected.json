@@ -50,5 +50,13 @@
     "checked": 6,
     "blocked": 0,
     "read_differently": 0
+  },
+  "_server_links": {
+    "pages_searched": 6,
+    "home_links": 3,
+    "other_sampled": 5,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 6,
+    "sitemap_urls_linked": 4
   }
 }

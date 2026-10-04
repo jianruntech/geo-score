@@ -851,6 +851,45 @@ eq((_many["blocked"], len(_many["pages"])), (60, gs.ACCESS_LIST_MAX), "the JSON 
 _txtv = gs.access_lines({"robots_paths": dict(robots_txt="read", **_many)})
 eq(_txtv[-1], "  50 more pages; the JSON report lists the first 50.", "the views show 10 rows and say how many more")
 
+# ── links in the server HTML, reported outside the score ──
+# a homepage whose menu a script writes links to nothing a crawler that runs no JavaScript can follow; the pages it
+# reaches only through that menu are found, if at all, through the sitemap
+_H = "x.test"
+eq(gs.link_html('<p>a</p><script>nav.innerHTML = \'<a href="/pricing">P</a>\'</script><!-- <a href="/old">o</a> -->'
+                '<template><a href="/t">t</a></template><noscript><a href="/ns">n</a></noscript>'),
+   '<p>a</p>   <noscript><a href="/ns">n</a></noscript>', "scripts, comments and templates go; noscript stays")
+eq(gs.link_html("<p>a</p><script>never closed <a href='/x'>"), "<p>a</p>", "an unclosed script hides the rest")
+_page = ('<a href="/">home</a> <a href="#top">top</a> <a href="">self</a> <a href="/docs/">docs</a> <a href="/docs">docs</a>'
+         ' <a href="guide.html?ref=nav#s">guide</a> <a href="HTTP://X.TEST/Pricing.html">p</a> <a href="//x.test/a%7Eb">t</a>'
+         ' <a rel="nofollow" href="https://x.test/legal">l</a> <a href="/q?a=1&amp;b=2">q</a>'
+         ' <a href="javascript:void(0)">js</a> <a href="mailto:a@x.test">m</a> <a href="tel:+1">t</a>'
+         ' <a href="https://elsewhere.test/x">off</a> <a href="https://sub.x.test/x">sub</a>'
+         ' <script>document.write(\'<a href="/hidden">h</a>\')</script>')
+eq(gs.page_links(_page, "https://x.test/blog/", _H),
+   {"/", "/docs", "/blog/guide.html", "/Pricing.html", "/a~b", "/legal", "/q"},
+   "same-site links: resolved, without fragment, query or trailing slash, any scheme or host case; a nofollow link "
+   "counts; the page itself, other schemes, other hosts and links a script writes do not")
+eq(gs.page_links('<a href="/docs/a">a</a><a href="/blog/b">b</a><a href="/docs">d</a>', "https://x.test/docs/", _H, "/docs"),
+   {"/docs/a"}, "a site under a path: links outside it are not on the site, and the page itself is left out")
+_resp = lambda url, body: gs.Resp(url, 200, body.encode(), {"content-type": "text/html"})
+_home = ("https://x.test/", _resp("https://x.test/", '<a href="/a">a</a><script>m(\'<a href="/b">b</a>\')</script>'))
+_a = ("https://x.test/a", _resp("https://x.test/a", '<a href="/">h</a><a href="/c">c</a><a href="/a">self</a>'))
+_sl = gs.server_links(_home, [_home, _a], ["https://x.test/", "https://x.test/a", "https://x.test/b"],
+                      ["https://x.test/", "https://x.test/a", "https://x.test/b", "https://x.test/c", "https://x.test/d"], _H)
+eq(_sl, {"pages_searched": 2, "home_links": 1, "few_home_links": True, "other_sampled": 2, "home_links_to_sampled": 1,
+         "sitemap_urls": 5, "sitemap_urls_linked": 3, "unlinked_sitemap_urls": ["https://x.test/b", "https://x.test/d"]},
+   "server_links: the homepage's links, the sampled pages it reaches, and the sitemap URLs no searched page links to")
+_lines = gs.access_lines({"server_links": _sl}, origin="https://x.test")
+eq(_lines[0], "The homepage's server HTML links to 1 page on this site (fewer than 3): navigation that appears only "
+              "after JavaScript runs cannot be followed by crawlers that do not run it. It links to 1 of the 2 other "
+              "sampled pages.", "the flag, in the report's words")
+ok("Only those pages were searched, so a URL they do not link to is not necessarily orphaned" in _lines[1],
+   "the caveat: only the fetched pages were searched: %r" % _lines[1])
+eq(_lines[2:], ["  /b", "  /d"], "and the sitemap URLs they do not link to")
+eq(gs.server_links(None, [_a], ["https://x.test/a"], [], _H)["home_links"], None, "a homepage not fetched: not observed")
+eq(gs.access_lines({"server_links": gs.server_links(None, [_a], ["https://x.test/a"], [], _H)})[0],
+   "Links in the server HTML: the homepage was not fetched this run, so its links were not read.", "and says so")
+
 # ── a catch-all 200 with an HTML shell is not a text file ──
 ok(not gs.text_file(gs.Resp("u", 200, b"  <!DOCTYPE html><html><body>app</body></html>")), "an SPA shell is not an llms.txt")
 ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <html>")

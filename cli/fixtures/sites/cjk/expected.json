@@ -20,6 +20,14 @@
     "blocked": 0,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 9,
+    "home_links": 4,
+    "other_sampled": 7,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 10,
+    "sitemap_urls_linked": 8
+  },
   "_notes": {
     "p2.freshness": "Dates flush against Chinese text ('更新于2026年8月28日') are read; before 1.3.0 a \\b in the date pattern missed them and this scored 3.",
     "p2.sourced-stats": "Figures flush against Chinese text ('占用了61%的', '样本为1,860家') count, and their source link sits in the next paragraph; before 1.3.0 CJK counted as a word boundary and this scored 3.",

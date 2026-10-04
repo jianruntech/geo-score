@@ -20,12 +20,21 @@
     "blocked": 0,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 16,
+    "home_links": 0,
+    "other_sampled": 7,
+    "home_links_to_sampled": 0,
+    "sitemap_urls": 8,
+    "sitemap_urls_linked": 0
+  },
   "_notes": {
     "p1.llms-txt": "The SPA catch-all answers /llms.txt with its HTML shell: not a text file, so 0. Before 1.3.0 this scored 4.",
     "b.llms-full": "Same catch-all: 0. Before 1.3.0, 2.",
     "b.ai-txt": "Same catch-all: 0. Before 1.3.0, 2.",
     "p2.sourced-stats": "QUESTIONABLE: an empty shell with no figures at all earns 3 of 7 ('little to attribute'); no evidence either way would read better as unobservable.",
-    "g.ssr": "The shell carries the bot-management sensor script a CDN injects into ordinary pages (/cdn-cgi/challenge-platform/scripts/jsd/). That is no bot challenge: the shell still scores 0 here, and is never dropped as a challenge page."
+    "g.ssr": "The shell carries the bot-management sensor script a CDN injects into ordinary pages (/cdn-cgi/challenge-platform/scripts/jsd/). That is no bot challenge: the shell still scores 0 here, and is never dropped as a challenge page.",
+    "_server_links": "An empty #root: the shell carries no <a href>, so the homepage links to no page and the flag fires. The SPA answers every section index with the same shell, so 16 pages were searched (the eight sampled and eight section indexes) and none links to a sitemap URL."
   },
   "g.robots": 3,
   "g.reachable": 5,

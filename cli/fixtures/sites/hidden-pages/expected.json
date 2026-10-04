@@ -20,9 +20,18 @@
     "blocked": 3,
     "read_differently": 3
   },
+  "_server_links": {
+    "pages_searched": 9,
+    "home_links": 1,
+    "other_sampled": 7,
+    "home_links_to_sampled": 0,
+    "sitemap_urls": 11,
+    "sitemap_urls_linked": 8
+  },
   "_notes": {
     "g.robots": "No Disallow closes the whole site: the * group carries Allow: / and Googlebot's group an Allow, so the gate reads 5 although path rules close three checked pages. That is the case the access field exists for.",
-    "_robots_paths": "Checked: the eight sampled pages (the homepage among them) and the three sitemap URLs that are not among them, /blog/, the PDF and /about.html: 11. Under RFC 9309 Disallow: /pricing (8 characters) outweighs Allow: / and closes /pricing.html to the nine crawlers that read the * group, Disallow: /*.pdf$ closes the PDF to them, and Googlebot's Disallow: /docs/ closes /docs/setup.html. A first-match reading (urllib.robotparser) disagrees on three pages: it lets Allow: / open /pricing.html and the PDF, and lets Disallow: /docs/ close /docs/start.html, which Googlebot's longer Allow opens."
+    "_robots_paths": "Checked: the eight sampled pages (the homepage among them) and the three sitemap URLs that are not among them, /blog/, the PDF and /about.html: 11. Under RFC 9309 Disallow: /pricing (8 characters) outweighs Allow: / and closes /pricing.html to the nine crawlers that read the * group, Disallow: /*.pdf$ closes the PDF to them, and Googlebot's Disallow: /docs/ closes /docs/setup.html. A first-match reading (urllib.robotparser) disagrees on three pages: it lets Allow: / open /pricing.html and the PDF, and lets Disallow: /docs/ close /docs/start.html, which Googlebot's longer Allow opens.",
+    "_server_links": "The homepage's menu is written by a script, so its server HTML links to one page of the site (/blog/): the self link, the commented-out menu, the mailto:, tel:, javascript: and fragment links and the off-site link are not links to a page, and the links inside the script are not in the server HTML. The flag fires (fewer than 3). Nine pages were searched (the eight sampled and the /blog index); they link to 8 of the 11 checked sitemap URLs, and /pricing.html, /features/alerts.html and /about.html are reached only through the script's menu and the sitemap."
   },
   "g.robots": 5,
   "g.reachable": 5,

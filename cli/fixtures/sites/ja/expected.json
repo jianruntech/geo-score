@@ -20,6 +20,14 @@
     "blocked": 0,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 8,
+    "home_links": 3,
+    "other_sampled": 7,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 8,
+    "sitemap_urls_linked": 4
+  },
   "_notes": {
     "_lang": "Japanese pages (<html lang=\"ja\">, kana in the text). Through 1.4.x any page with enough Han characters made the site zh-CN.",
     "g.ssr": "Kana counts as characters. Through 1.4.x only Han was counted, every page read as 47–79 characters, and this gate scored 0 (the site was capped at 40).",

@@ -1962,6 +1962,7 @@ MAX_URL_CHARS = 2048        # the sitemaps protocol's limit: a longer URL is not
 # RFC 9309 2.5: a crawler may stop parsing robots.txt after 500 KiB, the least it must read. The page-by-page reading
 # stops there too, which also bounds its time on a hostile file
 ROBOTS_PARSE_LIMIT = 500 * 1024
+FEW_HOME_LINKS = 3          # a homepage whose server HTML links to fewer pages of the site than this is flagged
 _UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 _PCT = re.compile(r"%([0-9A-Fa-f]{2})")
 
@@ -2203,6 +2204,83 @@ def crawler_names(names):
     return ", ".join(names)
 
 
+# ── links in the server HTML ──
+# A crawler that runs no JavaScript follows only the links the server's HTML carries. Navigation a script writes into
+# the page is not among them, and a page reached only through it is found, if at all, through the sitemap.
+_UNFOLLOWED = re.compile(r"<(script|style|template)\b", re.I)
+
+
+def link_html(h):
+    """h without its comments and its script, style and template elements: the markup a crawler that runs no
+    JavaScript reads links from. A link a script writes is not in it; noscript content is, as markup. An element that
+    is never closed hides the rest of the page, as it does in a browser."""
+    h = strip_comments(h)
+    out, i, low = [], 0, None
+    while True:
+        m = _UNFOLLOWED.search(h, i)
+        if not m:
+            out.append(h[i:])
+            return "".join(out)
+        if low is None:
+            low = _lower(h)
+        close = "</%s>" % m.group(1).lower()
+        end = low.find(close, m.end())
+        out.append(h[i:m.start()])
+        if end < 0:
+            return "".join(out)
+        out.append(" ")
+        i = end + len(close)
+
+
+def link_key(url, host, scope=""):
+    """A page on this site as links name it: its path in robots_path form, without a trailing slash, query or fragment
+    ("/" for the root), or None for a URL off the host or outside `scope` (site_path). One rule for the links and the
+    pages they are held against, as discover() drops the query and the trailing slash."""
+    p = site_path(url, host, scope)
+    return None if p is None else (p.rstrip("/") or "/")
+
+
+def page_links(h, base, host, scope=""):
+    """The pages on this site that one page's server HTML links to, as link_key()s: each <a href> outside comments,
+    scripts, styles and templates (link_html), resolved against `base`. A rel=nofollow link counts: a crawler still sees
+    it. javascript:, mailto:, tel: and every other scheme but http and https name no page, and the page itself (an empty
+    href, a fragment, a self link) is left out."""
+    out = set()
+    for href, _text in anchors(link_html(h)):
+        k = link_key(join_link(base, html.unescape(href).strip()).split("#")[0], host, scope)
+        if k is not None:
+            out.add(k)
+    out.discard(link_key(base, host, scope))
+    return out
+
+
+def server_links(home, pages, sampled, sitemap_urls, host, scope=""):
+    """The `access.server_links` object of schema/report.v2.json. `home` is the homepage's (url, Resp) or None when it
+    was not fetched; `pages` every fetched page searched, as (url, Resp), the homepage among them; `sampled` the sampled
+    URLs; `sitemap_urls` the sitemap URLs the access observations check. Only these pages are searched, so a URL none
+    of them links to is not shown to be orphaned."""
+    links, seen = [], set()
+    for u, r in pages:
+        k = link_key(r.url or u, host, scope) or link_key(u, host, scope)
+        if k is None or k in seen:
+            continue
+        seen.add(k)
+        found = page_links(r.text, r.url or u, host, scope)
+        found.discard(link_key(u, host, scope))
+        links.append(found)
+    reached = set().union(*links) if links else set()
+    home_key = link_key(home[0], host, scope) if home else None
+    home_links = page_links(home[1].text, home[1].url or home[0], host, scope) - {home_key} if home else None
+    others = list(dict.fromkeys(k for k in (link_key(u, host, scope) for u in sampled) if k and k != home_key))
+    unlinked = [u for u in sitemap_urls if link_key(u, host, scope) not in reached]
+    return {"pages_searched": len(links), "home_links": None if home_links is None else len(home_links),
+            "few_home_links": home_links is not None and len(home_links) < FEW_HOME_LINKS,
+            "other_sampled": len(others),
+            "home_links_to_sampled": None if home_links is None else sum(1 for k in others if k in home_links),
+            "sitemap_urls": len(sitemap_urls), "sitemap_urls_linked": len(sitemap_urls) - len(unlinked),
+            "unlinked_sitemap_urls": [shown_url(u) for u in unlinked[:ACCESS_LIST_MAX]]}
+
+
 def shown_origin(root):
     """The scheme and host of a report's target, as shown_url() writes them, so a view can list a page by its path."""
     try:
@@ -2260,6 +2338,41 @@ def access_lines(access, fmt="text", origin=None):
                               [[(page(p["url"]), crawler_names(r["crawlers"]), reading(r["rfc9309"]),
                                  reading(r["first_match"])) for r in p["readings"]] for p in rp["differences"]],
                               rp["read_differently"], md)
+    sl = access.get("server_links")
+    if sl:
+        n = sl["home_links"]
+        if n is None:
+            out.append("Links in the server HTML: the homepage was not fetched this run, so its links were not read.")
+        elif sl["few_home_links"]:
+            out.append("The homepage's server HTML links to %d page%s on this site (fewer than %d): navigation that "
+                       "appears only after JavaScript runs cannot be followed by crawlers that do not run it. It links "
+                       "to %d of the %d other sampled pages." % (n, "" if n == 1 else "s", FEW_HOME_LINKS,
+                                                                 sl["home_links_to_sampled"], sl["other_sampled"]))
+        else:
+            out.append("The homepage's server HTML links to %d pages on this site, %d of the %d other sampled pages "
+                       "among them." % (n, sl["home_links_to_sampled"], sl["other_sampled"]))
+        m, searched = sl["sitemap_urls"], sl["pages_searched"]
+        where = "%d fetched page%s" % (searched, "" if searched == 1 else "s")
+        if not m:
+            out.append("No sitemap URL was checked for links: the run read no sitemap, or it lists no page on this site.")
+        elif sl["sitemap_urls_linked"] == m:
+            out.append("All %d checked sitemap URLs are linked from the server HTML of at least one of the %s."
+                       % (m, where))
+        else:
+            out.append("%d of the %d checked sitemap URLs are linked from the server HTML of at least one of the %s "
+                       "(the homepage, the sampled pages and the section indexes). Only those pages were searched, so "
+                       "a URL they do not link to is not necessarily orphaned. Not linked from them:"
+                       % (sl["sitemap_urls_linked"], m, where))
+            out += _table(("Page",), [[(page(u),)] for u in sl["unlinked_sitemap_urls"]],
+                          m - sl["sitemap_urls_linked"], md)
+    if md:
+        # each sentence its own paragraph: Markdown joins lines that no blank line parts, except a table's rows
+        spaced = []
+        for ln in out:
+            if spaced and ln and spaced[-1] and not (ln.startswith("|") and spaced[-1].startswith("|")):
+                spaced.append("")
+            spaced.append(ln)
+        out = spaced
     return out
 
 
@@ -2273,10 +2386,12 @@ def _table(head, pages, total, md):
         w = [min(48, max(len(r[i]) for r in rows)) for i in range(len(head))]
         out = ["  " + "  ".join(c.ljust(w[i]) for i, c in enumerate(r)).rstrip() for r in rows]
     rest = total - min(len(pages), ACCESS_ROWS)
+    if md:
+        out.append("")      # a line right under a Markdown table would be read as another row
     if rest:
         out.append("%s%d more page%s; the JSON report lists the first %d." % (
             "" if md else "  ", rest, "" if rest == 1 else "s", ACCESS_LIST_MAX))
-    return out + ([""] if md else [])
+    return out
 
 
 def clip(s, n):
@@ -2315,6 +2430,10 @@ def under_cn(url):
 NOT_A_PAGE = re.compile(r"\.(png|jpe?g|gif|svg|webp|avif|ico|css|js|mjs|json|xml|rss|atom|txt|md|csv|pdf|zip|gz|"
                         r"tgz|docx?|xlsx?|pptx?|woff2?|ttf|mp3|mp4|webm|mov)$", re.I)
 LISTING = re.compile(r"/(page|p)/\d+$|/(category|categories|tag|tags|author|authors|series|archives?)(/|$)|/feed$", re.I)
+
+
+# the section indexes discover() reads for links to recent pages; the access observations search them for links too
+SECTION_INDEXES = ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")
 
 
 def page_candidate(u):
@@ -2388,7 +2507,7 @@ def discover(base, want=8, verbose=False, *, memo=None, timeout=None, deadline=N
                 seen.add(u); pool.append(u)
 
     # section indexes are where recent posts actually live
-    idx = [root + p for p in ("/blog", "/news", "/posts", "/articles", "/insights", "/resources", "/docs", "/learn")]
+    idx = [root + p for p in SECTION_INDEXES]
     for r in pmap(steady, idx):
         if r.ok and r.body: pool += harvest(r.text, r.url)
 
@@ -3123,7 +3242,7 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     locs = []
     if sm and not late(sm) and not re.search(r"<sitemapindex", sm.text, re.I):
         locs = [html.unescape(x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
-    checked, _from_sitemap = checked_urls(root, origin, scope, urls, pages, locs)
+    checked, from_sitemap = checked_urls(root, origin, scope, urls, pages, locs)
     if rb.ok:
         rp = dict(robots_txt="read", **robots_paths(txt, checked))
     elif rb.status and not transient(rb.status):
@@ -3133,7 +3252,19 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     else:
         rp = dict(robots_txt="unreadable", checked=len(checked), crawlers=len(RETRIEVAL_UAS), blocked=None, pages=[],
                   read_differently=None, differences=[])
-    access = {"robots_paths": rp}
+    # ── outside the score: links in the server HTML ──
+    # Read from the pages this run already fetched: the homepage, the sampled pages and the section indexes discover()
+    # read (in this run's memo; a pinned sample has none). Nothing is fetched for it.
+    with memo.lock:
+        got = dict(memo.got)
+    fetched = lambda u: pages.get(u) or got.get((u, UA_BROWSER, "GET"))
+    is_page = lambda r: r is not None and r.ok and bool(r.body) and not challenge_kind(r)
+    home_r = fetched(root + "/")
+    home = (root + "/", home_r) if is_page(home_r) else None
+    searched = ([home] if home else []) + [(u, r) for u, r in live.items()] + \
+        [(u, r) for u, r in ((root + p, got.get((root + p, UA_BROWSER, "GET"))) for p in SECTION_INDEXES) if is_page(r)]
+    access = {"robots_paths": rp, "server_links": server_links(home, searched, list(live), from_sitemap,
+                                                               urllib.parse.urlsplit(origin).netloc.lower(), scope)}
 
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
     # one last pass: whatever a page managed to put into a string, no control or bidi character leaves here

@@ -16,6 +16,14 @@
     "blocked": 0,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 4,
+    "home_links": 2,
+    "other_sampled": 3,
+    "home_links_to_sampled": 1,
+    "sitemap_urls": 4,
+    "sitemap_urls_linked": 2
+  },
   "_notes": {
     "p2.sourced-stats": "Each figure has its source beside it: a link in its own paragraph, in the next table cell or the next paragraph, or a footnote reference whose note links out. A figure beside a link to the site's own GitHub profile (its sameAs) is not attributed, and one named only by <cite> is attributed without a link: most, not all, of those pages' figures are linked."
   },

@@ -16,6 +16,14 @@
     "blocked": 0,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 4,
+    "home_links": 3,
+    "other_sampled": 3,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 4,
+    "sitemap_urls_linked": 4
+  },
   "g.robots": 5,
   "g.reachable": 5,
   "g.ssr": 5,

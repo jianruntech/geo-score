@@ -20,6 +20,14 @@
     "blocked": 9,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 9,
+    "home_links": 4,
+    "other_sampled": 7,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 9,
+    "sitemap_urls_linked": 8
+  },
   "_notes": {
     "g.robots": "GPTBot, ClaudeBot and PerplexityBot each get Disallow: / in a group of their own. PerplexityBot is a retrieval crawler, so this stays at 0 and the gate cap; GPTBot and ClaudeBot are training crawlers, named in the evidence and not scored (1.5.0).",
     "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5.",

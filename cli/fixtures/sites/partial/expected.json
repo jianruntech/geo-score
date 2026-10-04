@@ -20,6 +20,14 @@
     "blocked": 1,
     "read_differently": 0
   },
+  "_server_links": {
+    "pages_searched": 9,
+    "home_links": 5,
+    "other_sampled": 7,
+    "home_links_to_sampled": 3,
+    "sitemap_urls": 10,
+    "sitemap_urls_linked": 9
+  },
   "g.robots": 3,
   "g.reachable": 3,
   "g.ssr": 3,

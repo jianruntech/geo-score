@@ -244,6 +244,16 @@
       "pages": [],
       "read_differently": 0,
       "differences": []
+    },
+    "server_links": {
+      "pages_searched": 10,
+      "home_links": 7,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 2,
+      "sitemap_urls": 11,
+      "sitemap_urls_linked": 11,
+      "unlinked_sitemap_urls": []
     }
   }
 }
