@@ -378,9 +378,12 @@ search or judgement.
 
 ### Opt-out token
 
-A name in robots.txt that looks like a user-agent but belongs to no crawler and sends no requests, such
-as `Google-Extended` or `Applebot-Extended`: a signal about whether content may be used for AI training
-or grounding. The rubric does not score opt-out tokens.
+A name in robots.txt that looks like a user-agent but belongs to no crawler and sends no requests: it says
+how content another crawler fetched may be used. `Google-Extended` covers training Gemini models and
+grounding in Gemini Apps and Vertex AI, and does not affect inclusion in Google Search or AI Overviews;
+`Applebot-Extended` covers training Apple's foundation models. The rubric does not score opt-out tokens,
+which does not make blocking one free: a site that blocks `Google-Extended` leaves the grounding in Gemini
+Apps and Vertex AI.
 
 **Where:** the rubric's `g.robots` check, which reads only the retrieval crawlers; the AI crawler
 reference. **More:** [AI crawler user-agents](../reference/ai-crawlers.md#the-distinction-that-matters-most)

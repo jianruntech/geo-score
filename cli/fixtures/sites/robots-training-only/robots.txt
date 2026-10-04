@@ -1,4 +1,5 @@
-# Out of model training, still quotable: training crawlers and opt-out tokens only
+# Out of model training, retrieval crawlers still allowed: training crawlers and opt-out tokens only
+# (Google-Extended also leaves Gemini's grounding, which no check scores)
 User-agent: GPTBot
 User-agent: ClaudeBot
 User-agent: CCBot

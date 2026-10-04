@@ -89,6 +89,26 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - **OpenAI engines send the question as a one-message list.** The Responses API accepts a string or a list;
   some OpenAI-compatible endpoints that a `base_url` points at accept only the list and refused every call.
   Official OpenAI answers the same either way.
+- **The crawler reference no longer says that blocking an opt-out token costs nothing.** `reference/ai-crawlers.md`
+  put the cost of blocking an opt-out token at "nothing, in citation terms" and closed by saying that blocking every
+  training crawler and both opt-out tokens "costs nothing". Google's common crawlers page (last updated 2026-07-14,
+  checked 2026-10-04) says `Google-Extended` governs grounding in Gemini Apps and in Grounding with Google Search on
+  Vertex AI as well as the training of Gemini models, and does not affect inclusion or ranking in Google Search. The
+  reference now says what each opt-out token and training crawler controls, citing the vendor's page with its date:
+  `Applebot-Extended` governs training only, and Apple's AI answers are opted out of with `nosnippet` (About Applebot,
+  published 2026-09-04); `anthropic-ai` is not in Anthropic's current crawler article. A new table gives the control
+  Google documents for each part of its AI features, among them Search Console's Search generative AI control for AI
+  Overviews and AI Mode. Nothing is scored differently: training crawlers and opt-out tokens are still not scored,
+  rubric v1.1 is unchanged, and the glossary's opt-out token entry says the same in both languages.
+- **`reference/platform-source-selection.md` gave AI Overviews' grounding control to `Google-Extended`, and offered
+  observations this repository has no data for.** Per Google, AI Overviews and AI Mode answer to Googlebot's
+  robots.txt rules, the snippet controls (`nosnippet`, `data-nosnippet`, `max-snippet`, `noindex`) and Search
+  Console's Search generative AI control; `Google-Extended` governs Gemini's grounding. The lines offered as our
+  observation (pages with `Organization` or `Article` schema, recently updated pages, Q&A pages and PDFs cited
+  disproportionately; `llms.txt` mattering more to Claude; an unindexed Bing site as the most common blind spot) had
+  no measurement behind them here, since the benchmark scores sites, not answers, and are gone with the other unsourced
+  lines; the passage as the unit of selection is now labelled a hypothesis. Each engine's section now cites its
+  vendor's documentation, re-read on 2026-10-04, and says no data where the vendor documents nothing.
 
 ## [1.6.0] — 2026-10-03
 

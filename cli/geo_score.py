@@ -46,8 +46,9 @@ RETRIEVAL_UAS = [
     ("Amazonbot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1) "
                   "Chrome/119.0.6045.214 Safari/537.36"),
 ]
-# Training crawlers and opt-out tokens. Blocking them costs no citations, so they are never scored: a
-# robots.txt group that disallows one by name is reported in g.robots' evidence, and nothing else.
+# Training crawlers and opt-out tokens. They are never scored: a robots.txt group that disallows one by name is
+# reported in g.robots' evidence, and nothing else. Not scored is not free: Google-Extended also governs grounding in
+# Gemini Apps and Vertex AI, which no check measures (reference/ai-crawlers.md).
 NOT_SCORED_TOKENS = ["GPTBot", "ClaudeBot", "CCBot", "Google-Extended", "Applebot-Extended", "anthropic-ai",
                      "cohere-ai", "Bytespider", "Meta-ExternalAgent"]
 CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"),

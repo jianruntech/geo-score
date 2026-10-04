@@ -319,8 +319,9 @@ CLI 只输出 `scored` 和 `unobservable`。**详见：** [排查指南 · 检�
 
 ### Opt-out token（选择退出令牌）
 
-写在 robots.txt 里、看上去像 user-agent 的名字，但不对应任何爬虫，也不发请求，比如 `Google-Extended`、`Applebot-Extended`；
-它表达的是内容能不能用于 AI 训练或作为生成答案的依据。量表不给它计分。
+写在 robots.txt 里、看上去像 user-agent 的名字，但不对应任何爬虫，也不发请求；它说的是别的爬虫抓来的内容可以怎么用。
+`Google-Extended` 管 Gemini 模型的训练，以及 Gemini 应用和 Vertex AI 拿内容作为生成答案的依据（grounding），不影响能否出现在 Google 搜索和 AI Overviews 里；
+`Applebot-Extended` 管 Apple 基础模型的训练。量表不给它计分，但不计分不等于挡了没代价：挡了 `Google-Extended`，Gemini 应用和 Vertex AI 就不再拿这个站的内容作为生成答案的依据。
 
 **出现在：** 量表的 `g.robots` 检查项（它只看检索爬虫）；AI 爬虫一览。
 **详见：** [AI 爬虫 user-agent 一览](../reference/ai-crawlers.md#the-distinction-that-matters-most)（英文）
