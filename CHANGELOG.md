@@ -96,14 +96,21 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   Vertex AI as well as the training of Gemini models, and does not affect inclusion or ranking in Google Search. The
   reference now says what each opt-out token and training crawler controls, citing the vendor's page with its date:
   `Applebot-Extended` governs training only, and Apple's AI answers are opted out of with `nosnippet` (About Applebot,
-  published 2026-09-04); `anthropic-ai` is not in Anthropic's current crawler article. A new table gives the control
-  Google documents for each part of its AI features, among them Search Console's Search generative AI control for AI
-  Overviews and AI Mode. Nothing is scored differently: training crawlers and opt-out tokens are still not scored,
+  published 2026-09-04); Meta's crawler page (undated, checked 2026-10-04) describes `Meta-ExternalAgent` as crawling
+  for training and also for indexing content to improve Meta's products, so it is no longer implied to be
+  training-only; `anthropic-ai` is not in Anthropic's current crawler article, so whether it sends requests is marked
+  no data instead of falling under a heading that said opt-out tokens send none. A new table gives the control Google
+  documents for each part of its AI features, among them Search Console's Search generative AI control for AI
+  Overviews and AI Mode, and eligibility for those features now follows Google's newer guide (last updated
+  2026-07-10), which adds inclusion under that control to being indexed and eligible for a snippet. Nothing is scored
+  differently: training crawlers and opt-out tokens are still not scored,
   rubric v1.1 is unchanged, and the glossary's opt-out token entry says the same in both languages.
 - **`reference/platform-source-selection.md` gave AI Overviews' grounding control to `Google-Extended`, and offered
   observations this repository has no data for.** Per Google, AI Overviews and AI Mode answer to Googlebot's
   robots.txt rules, the snippet controls (`nosnippet`, `data-nosnippet`, `max-snippet`, `noindex`) and Search
-  Console's Search generative AI control; `Google-Extended` governs Gemini's grounding. The lines offered as our
+  Console's Search generative AI control; `Google-Extended` governs Gemini's grounding. The page no longer says that a
+  retrieval crawler disallowed in robots.txt gets nothing: OpenAI and Perplexity say their user-triggered fetchers
+  (`ChatGPT-User`, `Perplexity-User`) may not follow robots.txt. The lines offered as our
   observation (pages with `Organization` or `Article` schema, recently updated pages, Q&A pages and PDFs cited
   disproportionately; `llms.txt` mattering more to Claude; an unindexed Bing site as the most common blind spot) had
   no measurement behind them here, since the benchmark scores sites, not answers, and are gone with the other unsourced

@@ -66,12 +66,16 @@
   挡掉全部训练爬虫和两个退出令牌「没有代价」。Google 的通用爬虫页（页面自标 2026-07-14，核对日期 2026-10-04）写明：
   `Google-Extended` 除了管 Gemini 模型的训练，还管 Gemini 应用和 Vertex AI「Grounding with Google Search」拿内容作为生成答案的依据
   （grounding），不影响能否出现在 Google 搜索里、也不是排名信号。一览现在按厂商原页写明每个退出令牌和训练爬虫管什么，并注明来源和日期：
-  `Applebot-Extended` 只管训练，Apple 的 AI 回答要用 `nosnippet` 退出（About Applebot，页面自标 2026-09-04）；`anthropic-ai`
-  不在 Anthropic 现行的爬虫说明里。新增一张表，列出 Google 为它的各项 AI 功能各自写明的控制方式，其中 AI Overviews 和 AI Mode
-  由 Search Console 的 Search generative AI 控件管。计分不变：训练爬虫和退出令牌仍不计分，量表 v1.1 不变；术语表里退出令牌一条的中英文也照此改写。
+  `Applebot-Extended` 只管训练，Apple 的 AI 回答要用 `nosnippet` 退出（About Applebot，页面自标 2026-09-04）；Meta 的爬虫页
+  （未标日期，核对日期 2026-10-04）写明 `Meta-ExternalAgent` 既用于训练，也用于直接索引内容来改进 Meta 的产品，一览不再暗示它只管训练；
+  `anthropic-ai` 不在 Anthropic 现行的爬虫说明里，它会不会发请求改标无数据，不再归在「退出令牌不发请求」的标题下。新增一张表，列出
+  Google 为它的各项 AI 功能各自写明的控制方式，其中 AI Overviews 和 AI Mode 由 Search Console 的 Search generative AI 控件管；
+  进入这些功能的条件改按 Google 较新的指南（页面自标 2026-07-10）：除了已收录、能带摘要展示，还要在这个控件里处于纳入状态。计分不变：训练爬虫和退出令牌仍不计分，量表 v1.1 不变；术语表里退出令牌一条的中英文也照此改写。
 - **`reference/platform-source-selection.md` 把 AI Overviews 的 grounding 控制归给了 `Google-Extended`，还写了本仓库没有数据支撑的观察。**
   按 Google 的文档，AI Overviews 和 AI Mode 受 Googlebot 的 robots.txt 规则、摘要控制（`nosnippet`、`data-nosnippet`、`max-snippet`、
-  `noindex`）和 Search Console 的 Search generative AI 控件管；`Google-Extended` 管的是 Gemini 的 grounding。原来以「我们的观察」
+  `noindex`）和 Search Console 的 Search generative AI 控件管；`Google-Extended` 管的是 Gemini 的 grounding。这一页也不再说
+  被 robots.txt 禁止的检索爬虫什么都拿不到：OpenAI 和 Perplexity 写明，它们由用户触发的抓取器（`ChatGPT-User`、`Perplexity-User`）
+  可能不遵守 robots.txt。原来以「我们的观察」
   出现的几条（带 `Organization` 或 `Article` schema 的页面、近期更新的页面、问答页和 PDF 被引用得更多；`llms.txt` 对 Claude 更重要；
   Bing 没收录是最常见的盲区）在本仓库没有任何测量支撑（榜单测的是站点，不是回答），和其他没有来源的说法一起删去；「选取单位是段落」
   改标为假设。每个引擎一节现在都引厂商自己的文档（核对日期 2026-10-04），厂商没写的就写无数据。

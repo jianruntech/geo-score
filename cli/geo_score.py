@@ -48,7 +48,8 @@ RETRIEVAL_UAS = [
 ]
 # Training crawlers and opt-out tokens. They are never scored: a robots.txt group that disallows one by name is
 # reported in g.robots' evidence, and nothing else. Not scored is not free: Google-Extended also governs grounding in
-# Gemini Apps and Vertex AI, which no check measures (reference/ai-crawlers.md).
+# Gemini Apps and Vertex AI, Meta documents Meta-ExternalAgent for indexing as well as training, and for the others
+# the cost is unknown; no check measures any of it (reference/ai-crawlers.md).
 NOT_SCORED_TOKENS = ["GPTBot", "ClaudeBot", "CCBot", "Google-Extended", "Applebot-Extended", "anthropic-ai",
                      "cohere-ai", "Bytespider", "Meta-ExternalAgent"]
 CN_UAS = [("Baiduspider", "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"),

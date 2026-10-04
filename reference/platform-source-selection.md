@@ -24,19 +24,23 @@ on. The first is a hypothesis; the second and third rest on the sources named:
 2. **A page need not rank for the user's own words to be retrieved.** Google says AI Overviews
    and AI Mode may issue several related searches for one question (query fan-out) ([GA]). How
    closely classic rank and citation go together: no data here.
-3. **Content a crawler does not receive cannot be retrieved.** A retrieval crawler blocked by
-   robots.txt or a firewall gets nothing; the vendors' crawler pages each document robots.txt as
-   the control ([O1], [A1], [X1]). Google documents that Googlebot renders JavaScript before it
-   indexes a page ([GJ]); for the other crawlers the rubric relies on a traffic study by Vercel and
-   MERJ (a third-party report, not verified here; see `g.ssr` in the
-   [evidence](../rubric/evidence-v1.1.md)).
+3. **Content a crawler does not receive cannot be retrieved.** A retrieval crawler that honours
+   robots.txt and is disallowed there, or one a firewall refuses, gets nothing. Not every fetcher
+   honours it: OpenAI and Perplexity say their user-triggered fetchers (`ChatGPT-User`,
+   `Perplexity-User`) may not follow robots.txt ([O1], [X1]), while Anthropic says its bots honour
+   it ([A1]). Google documents that Googlebot renders JavaScript before it indexes a page ([GJ]);
+   for the other crawlers the rubric relies on a traffic study by Vercel and MERJ (a third-party
+   report, not verified here; see `g.ssr` in the [evidence](../rubric/evidence-v1.1.md)).
 
 ## Google AI Overviews and AI Mode
 
 - Built on Google Search's core ranking and quality systems: pages are retrieved from the Search
   index to ground the answer, and one question may fan out into several searches ([GA]).
-- To be shown as a supporting link, a page must be indexed and eligible to be shown in Search with
-  a snippet; Google states there are no additional technical requirements ([G5]).
+- To be eligible for these features, a page must be indexed and eligible to be shown in Search with
+  a snippet, and the site must be included under Search generative AI features in Search Console
+  ([GA]); include is the default ([GC]). Google's AI features page, which says there are no
+  additional technical requirements ([G5]), was last updated on 2025-12-10, before the control
+  reached all sites on 2026-08-31 ([GC]).
 - **What controls appearing here**, as Google documents it:
   - **Googlebot's robots.txt rules** decide what is crawled for Search, AI features included ([G5]).
   - **`nosnippet`, `data-nosnippet`, `max-snippet`, `noindex`** limit what Search shows from a
@@ -44,8 +48,7 @@ on. The first is a hypothesis; the second and third rest on the sources named:
   - **Search Console, Settings > Search generative AI.** Set to exclude, a site's links and content
     leave AI Overviews, AI Mode and Discover's generative AI features and are no longer used as input
     to generate their answers. The default is include, and Google says the setting is not a ranking
-    or inclusion signal for the rest of Search ([GC]). Google's guide names being included there as
-    a condition of appearing in these features ([GA]).
+    or inclusion signal for the rest of Search ([GC]).
 - **`Google-Extended` does not control grounding here.** Google says it does not affect inclusion or
   ranking in Google Search ([GX]); Search Console's help names it only as the control for training
   the models behind these features ([GC]). The grounding it does govern is Gemini's (below).

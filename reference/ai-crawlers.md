@@ -15,7 +15,7 @@ common mistake in AI-visibility advice:
 | Kind | What it is | What blocking it costs |
 |---|---|---|
 | **Retrieval crawler** | A real crawler that fetches pages to answer user questions | **Citations.** This is what you must allow |
-| **Training crawler** | Fetches pages for model training corpora | For `GPTBot` and `ClaudeBot`, the vendors document a training effect only, and run separate search crawlers ([O1], [A1]). For the others, no data |
+| **Training crawler** | Fetches pages for model training corpora | For `GPTBot` and `ClaudeBot`, the vendors document a training effect only, and run separate search crawlers ([O1], [A1]). Meta documents `Meta-ExternalAgent` for training and also for indexing content to improve its products ([MT]). For the others, no data |
 | **Opt-out token** | *Not a crawler.* Sends no requests. A control that says how content another crawler fetched may be used | **Depends on the token.** `Google-Extended` also governs grounding in Gemini Apps and in Grounding with Google Search on Vertex AI, so blocking it can cost you there ([GX]). `Applebot-Extended` governs training only ([AP]) |
 
 An opt-out token looks like a user-agent and sits in `robots.txt`, which is why it gets
@@ -28,9 +28,11 @@ Gemini models ([GX]). `Disallow: Applebot-Extended` does not remove you from sea
 Spotlight, Siri or Safari ([AP]).
 
 **This rubric scores retrieval-crawler access only.** Blocking training crawlers and opt-out
-tokens is a legitimate posture — content stays out of those vendors' model training while the
-retrieval crawlers can still fetch it — and is not penalised. Not penalised is not the same as
-free: `Google-Extended` reaches past training into Gemini's grounding, which no check here measures.
+tokens is not penalised, and refusing training while letting the retrieval crawlers fetch is a
+legitimate posture. Not penalised is not the same as free, and not every name below is
+training-only: `Google-Extended` reaches past training into Gemini's grounding ([GX]), Meta
+describes `Meta-ExternalAgent` as also indexing content to improve its products ([MT]), and for
+the rows marked no data, what blocking costs is unknown. No check here measures any of it.
 
 ## Retrieval crawlers — allow these to be cited
 
@@ -60,6 +62,11 @@ Amazon's crawler page now also documents `Amzn-SearchBot` (search, including Ale
 Amazon's models. The table keeps `Amazonbot` as a retrieval crawler until that classification
 is reviewed.
 
+Meta's crawler page documents two agents this table does not list ([MT]): `Meta-WebIndexer`,
+which crawls to improve Meta AI's search results and which, Meta says, helps Meta AI cite and link
+a site's content, and `Meta-ExternalFetcher`, which fetches links at a user's request and may
+bypass robots.txt. Neither is checked or probed.
+
 **The probes are unverified.** `g.reachable` sends each vendor's documented user-agent
 string from the auditor's own address, not from the vendor's published IP ranges. For
 two of the ten, `Claude-SearchBot` and `Claude-User`, Anthropic documents only the product
@@ -77,9 +84,14 @@ user-agents", not as proof that the vendor's crawler is blocked.
 | `CCBot` | Common Crawl | Builds Common Crawl's open repository of web crawl data, which anyone may use ([CC]). Common Crawl is not an answer engine; what blocking it costs downstream: no data |
 | `cohere-ai` | Cohere | Not checked against vendor documentation: no data |
 | `Bytespider` | ByteDance | Not checked against vendor documentation: no data |
-| `Meta-ExternalAgent` | Meta | Not checked: Meta's crawler page could not be read on 2026-10-04. No data |
+| `Meta-ExternalAgent` | Meta | Crawls the web "for use cases such as training foundation AI models or improving products by indexing content directly" ([MT]). Not documented as training-only; which products that indexing feeds, and what blocking it costs: no data |
 
-## Opt-out tokens — not crawlers, send no requests
+## Opt-out tokens — not scored
+
+`Google-Extended` and `Applebot-Extended` are not crawlers and send no requests of their own:
+Google crawls with its existing user agents, and Apple says `Applebot-Extended` does not crawl
+([GX], [AP]). `anthropic-ai` is listed here because the CLI's `NOT_SCORED_TOKENS` lists it;
+whether it is an opt-out token or sends requests of its own: no data.
 
 | Token | Operator | What it actually controls |
 |---|---|---|
@@ -99,9 +111,11 @@ Overviews or AI Mode.
 | Leave AI Overviews, AI Mode and Discover's generative AI features, and stop your content grounding their answers | Search Console, Settings > Search generative AI, set to exclude. The default is include, and Google says the setting is not a ranking or inclusion signal for the rest of Search ([GC]). Its guide for generative AI features names being included there as a condition of appearing in them ([GA]) |
 | Keep content out of Gemini training, and out of grounding in Gemini Apps and Vertex AI | `Google-Extended` ([GX]) |
 
-To be shown as a supporting link in AI Overviews or AI Mode, a page must be indexed and eligible
-to be shown in Search with a snippet; Google states there are no additional technical requirements
-([G5]).
+To be eligible for Google's generative AI features, a page must be indexed and eligible to be
+shown in Search with a snippet, and the site must be included under Search generative AI features
+in Search Console ([GA]); include is the default ([GC]). Google's AI features page, which says there
+are no additional technical requirements ([G5]), was last updated on 2025-12-10, before the control
+reached all sites on 2026-08-31 ([GC]).
 
 ## How this list is scored
 
@@ -117,9 +131,12 @@ defined in [`rubric/v1.1.md`](../rubric/v1.1.md) — read the tiers there, not h
 One thing worth stating because it is counter-intuitive: **blocking every training crawler and
 every opt-out token costs nothing in the score.** Only the retrieval crawlers affect either check,
 and the rubric scores a site that allows retrieval while refusing training at full marks. That is
-the score, not the whole cost: a `Disallow` for `Google-Extended` also takes the site out of
-grounding in Gemini Apps and Vertex AI ([GX]), which no check measures. Refusing training is a
-coherent posture; refusing Gemini's grounding as well is a separate choice, best made knowing that.
+the score, not the whole cost, and no check measures the rest. A `Disallow` for `Google-Extended`
+also takes the site out of grounding in Gemini Apps and Vertex AI ([GX]). Meta describes
+`Meta-ExternalAgent` as also indexing content to improve its products ([MT]). For `cohere-ai`,
+`Bytespider` and `anthropic-ai`, and for what `CCBot`'s data feeds downstream, what blocking costs
+is unknown. Refusing training is a coherent posture; refusing Gemini's grounding as well is a
+separate choice, best made knowing that.
 
 ## Sources
 
@@ -133,6 +150,7 @@ Each page was re-read on 2026-10-04. The date in parentheses is the page's own, 
 - **[O1]** OpenAI, [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (undated).
 - **[A1]** Anthropic, [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (2026-04-07).
 - **[CC]** Common Crawl, [CCBot](https://commoncrawl.org/ccbot) (undated).
+- **[MT]** Meta, [Meta Web Crawlers](https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers) (undated; the old address, `https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/`, redirects there).
 
 [GX]: https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers
 [GC]: https://support.google.com/webmasters/answer/16908024
@@ -142,3 +160,4 @@ Each page was re-read on 2026-10-04. The date in parentheses is the page's own, 
 [O1]: https://developers.openai.com/api/docs/bots
 [A1]: https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler
 [CC]: https://commoncrawl.org/ccbot
+[MT]: https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers
