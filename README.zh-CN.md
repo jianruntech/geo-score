@@ -307,9 +307,13 @@ python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # C
 有四项需要站外检索或人的判断，技能把这些也做了。
 
 ```bash
-git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
+npx skills add jianruntech/geo-score     # 加 -g 是全局安装
 # 然后：/geo-score audit https://example.com
 ```
+
+`npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
+把整个仓库（约 9 MB）复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js 的话，克隆一份效果一样：
+`git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
 
 CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
 （按规则读取的项 92%，靠启发式近似判断的项 69%）。只看两边都打了分的检查项，CLI 平均低 2.4 分
@@ -563,7 +567,9 @@ Read this before quoting the numbers
   这两种方式都不需要 git，也没有构建步骤。
   访问不了 PyPI 时，从发布页安装同一个 wheel 包：
   `pipx install https://github.com/jianruntech/geo-score/releases/download/v1.6.0/geo_score-1.6.0-py3-none-any.whl`。
-  从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.6.0`。每种方式都只用 Python 标准库。
+  从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.6.0`。
+  Claude Code 技能：`npx skills add jianruntech/geo-score`（加 `-g` 是全局安装），或者克隆到 `~/.claude/skills/geo-score`
+  （见[几种跑法](#几种跑法)）。每种方式都只用 Python 标准库。
   发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。

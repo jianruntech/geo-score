@@ -330,9 +330,14 @@ A gate at zero caps the score at 40: a site that would otherwise score 40 or mor
 off-site search or human judgement, and the skill does those too.
 
 ```bash
-git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score
+npx skills add jianruntech/geo-score     # add -g for a global install
 # then: /geo-score audit https://example.com
 ```
+
+`npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
+repository, `geo-score`, and copies the whole repository (about 9 MB) into `.claude/skills/geo-score` for
+Claude Code. Without Node.js, a clone does the same:
+`git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
 the five published hand audits on the same pages, it matched the auditor's tier on 80% of
@@ -617,6 +622,8 @@ this repo deliberately excludes.
   Without access to PyPI, install the same wheel from the release:
   `pipx install https://github.com/jianruntech/geo-score/releases/download/v1.6.0/geo_score-1.6.0-py3-none-any.whl`.
   From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.6.0`.
+  The Claude Code skill: `npx skills add jianruntech/geo-score` (`-g` for a global install), or a clone into
+  `~/.claude/skills/geo-score` ([Ways to run it](#ways-to-run-it)).
   Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
   sdist on PyPI match it byte for byte ([how to check](SECURITY.md#verifying-a-download)).
 - **Stability:** the rubric and the tool are versioned separately, and the report schema, check
