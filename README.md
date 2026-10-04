@@ -336,7 +336,7 @@ npx skills add jianruntech/geo-score     # add -g for a global install
 
 `npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
 repository, `geo-score`, and copies the whole repository (about 9 MB) into `.claude/skills/geo-score` for
-Claude Code. Without Node.js, a clone does the same:
+Claude Code. Without Node.js, clone the repository into your own skills folder instead:
 `git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
 
 The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring

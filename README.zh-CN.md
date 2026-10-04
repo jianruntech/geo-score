@@ -312,7 +312,7 @@ npx skills add jianruntech/geo-score     # 加 -g 是全局安装
 ```
 
 `npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
-把整个仓库（约 9 MB）复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js 的话，克隆一份效果一样：
+把整个仓库（约 9 MB）复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js 的话，改为把仓库克隆到你自己的技能目录：
 `git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
 
 CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
