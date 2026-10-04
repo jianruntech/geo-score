@@ -690,7 +690,10 @@
             "pages_with_hreflang",
             "annotations",
             "pages_with_link_header",
+            "annotations_in_link_header",
             "pages",
+            "outside_head",
+            "outside_head_pages",
             "no_self_reference",
             "no_self_reference_pages",
             "invalid_codes",
@@ -707,7 +710,7 @@
             "targets_not_fetched",
             "not_read"
           ],
-          "description": "hreflang annotations on the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), reported as found: each <link> whose rel names alternate and that has an hreflang and an href, outside comments, scripts, styles and templates, anywhere in the server HTML (a link whose type names something other than HTML, as a feed's does, is left out), and each link in the page's HTTP Link header (RFC 8288) with rel alternate and an hreflang parameter, every Link line read. Annotations from a sitemap are not read. Each href resolves against the URL its page was answered from; two URLs name one page when their host, path (without a trailing slash, percent-encoding normalised) and query match, whatever the scheme and fragment. Codes are held to the subset of BCP 47 that Google's hreflang documentation supports: an ISO 639-1 language, optionally an ISO 15924 script, optionally an officially assigned ISO 3166-1 alpha-2 region, or x-default, in any letter case. Return links are checked only between the fetched pages. Codes and hrefs as written are shown with each character outside printable ASCII, and each of ' <>\"{}|\\^`', percent-encoded. Only the first 1,000 annotations of a page are read (see not_read). No request is made for it.",
+          "description": "hreflang annotations on the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), reported as found: each <link> whose rel names alternate and that has an hreflang and an href, outside comments, scripts, styles and templates, anywhere in the server HTML, those after the head's end counted in outside_head as well (a link whose type names something other than HTML, as a feed's does, is left out), and each link in the page's HTTP Link header (RFC 8288) with rel alternate and an hreflang parameter, every Link line read. Annotations from a sitemap are not read. Each href resolves against the URL its page was answered from; two URLs name one page when their host (a trailing dot and the scheme's default port aside), path (without a trailing slash, percent-encoding normalised) and query match, whatever the scheme and fragment. Codes are held to the subset of BCP 47 that Google's hreflang documentation supports: an ISO 639-1 language (a two-letter subtag the IANA Language Subtag Registry does not mark deprecated), optionally an ISO 15924 script, optionally an officially assigned ISO 3166-1 alpha-2 region, or x-default, in any letter case. Return links are checked only between the fetched pages. Codes and hrefs as written are shown with each character outside printable ASCII, and each of ' <>\"{}|\\^`', percent-encoded. Only the first 1,000 annotations of a page are read (see not_read). No request is made for it.",
           "properties": {
             "pages_searched": {
               "type": "integer",
@@ -729,10 +732,43 @@
               "minimum": 0,
               "description": "Pages that carry annotations in their HTTP Link header."
             },
+            "annotations_in_link_header": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of the annotations, those read in HTTP Link headers; the rest are in the HTML."
+            },
             "pages": {
               "type": "array",
               "maxItems": 50,
               "description": "The first 50 pages that carry annotations, with how many.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "annotations"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "annotations": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            },
+            "outside_head": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pages that carry annotations in their server HTML after the end of the head (after </head> or the <body> tag), where Google's hreflang documentation says the <link> tags must be inside a well-formed <head>. Those annotations are counted with the others in every other field."
+            },
+            "outside_head_pages": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them, with how many annotations each carries after the head.",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -796,9 +832,10 @@
                     "enum": [
                       "form",
                       "language",
+                      "deprecated",
                       "region"
                     ],
-                    "description": "form: not language[-Script][-REGION] (an underscore, a word, a fourth part). language: two or three letters that are no ISO 639-1 code (a two-letter subtag of the IANA Language Subtag Registry). region: no officially assigned ISO 3166-1 alpha-2 code (UK, EU, UN, or a three-digit area such as 419)."
+                    "description": "form: not language[-Script][-REGION] (an underscore, a word, a fourth part). language: two or three letters that are no ISO 639-1 code (a two-letter language subtag of the IANA Language Subtag Registry it does not mark deprecated). deprecated: a two-letter language subtag the registry marks deprecated (bh, in, iw, ji, jw, mo). region: no officially assigned ISO 3166-1 alpha-2 code (UK, EU, UN, or a three-digit area such as 419)."
                   }
                 }
               }
@@ -850,7 +887,7 @@
             "not_absolute": {
               "type": "integer",
               "minimum": 0,
-              "description": "Annotations whose href, as written, is not an absolute http or https URL (a relative path, no scheme, or another scheme), counted once per page and href."
+              "description": "URLs the annotations name whose href, as written, is not an absolute http or https URL (a relative path, no scheme, or another scheme), counted once per page and href."
             },
             "not_absolute_hrefs": {
               "type": "array",
@@ -877,7 +914,7 @@
             "other_host": {
               "type": "integer",
               "minimum": 0,
-              "description": "Annotations naming a URL on a host that is not this site's (the audited host, or the one its homepage redirected to), counted once per page and URL. hreflang allows it; it is noted only."
+              "description": "URLs the annotations name on a host that is not this site's (the audited host, or the one its homepage redirected to), counted once per page and URL. hreflang allows it; it is noted only."
             },
             "other_host_hrefs": {
               "type": "array",

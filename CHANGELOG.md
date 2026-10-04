@@ -47,16 +47,21 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `<link rel="alternate" hreflang="…" href="…">` in the server HTML (outside comments, scripts, styles and templates; a
   feed's alternate left out) and each `rel="alternate"` link with an `hreflang` parameter in the page's HTTP `Link`
   header, every `Link` line read (a response's repeated `Link` lines used to keep only the last). It says how many
-  pages carry annotations and how many there are, and lists, as found: pages whose annotations leave the page itself
-  out; codes outside the subset of BCP 47 that Google's hreflang documentation supports (an ISO 639-1 language,
-  optionally an ISO 15924 script and an officially assigned ISO 3166-1 alpha-2 region, or `x-default`), so `en_US`,
-  `jp`, `en-UK` and `es-419` are listed, each with why; a code that names more than one URL on one page; hrefs that are
-  not absolute, as written; and URLs on another host, which hreflang allows and the report only notes. Return links are
-  checked only between the pages the run fetched: a pair where one page names the other and is not named back is
-  listed, and the other URLs the annotations name are counted as not checked. A site with none gets one line. The
-  codes are the two-letter language subtags of the IANA Language Subtag Registry (File-Date 2026-09-17) and the 249
-  officially assigned ISO 3166-1 alpha-2 codes among its region subtags; the registry and Google's page (last updated 2026-09-21) were read on
-  2026-10-04. Only the first 1,000 annotations of a page are read, and the rest are counted. No request is added, and
+  pages carry annotations, how many there are and how many came in a `Link` header, and lists, as found: pages that
+  carry annotations after the end of the head (after `</head>` or the `<body>` tag), since Google's hreflang
+  documentation says the `<link>` tags must be inside a well-formed `<head>` (they are still counted with the others);
+  pages whose annotations leave the page itself out; codes outside the subset of BCP 47 that Google's hreflang
+  documentation supports (an ISO 639-1 language, optionally an ISO 15924 script and an officially assigned ISO 3166-1
+  alpha-2 region, or `x-default`), so `en_US`, `jp`, `en-UK`, `es-419` and the registry's six deprecated two-letter
+  language subtags (`iw` and the like) are listed, each with why; a code that names more than one URL on one page; URLs
+  named in annotations that are not absolute, as written; and URLs on another host, which hreflang allows and the
+  report only notes. A `>` inside a quoted attribute value does not end a `<link>`, a backslash-escaped quote in a
+  `Link` header parameter does not end it, and a default port or a trailing dot on a host names the same host. Return
+  links are checked only between the pages the run fetched: a pair where one page names the other and is not named
+  back is listed, and the other URLs the annotations name are counted as not checked. A site with none gets one line.
+  The codes are the 184 two-letter language subtags the IANA Language Subtag Registry (File-Date 2026-09-17) does not
+  mark deprecated and the 249 officially assigned ISO 3166-1 alpha-2 codes among its region subtags; the registry and
+  Google's page (last updated 2026-09-21) were read on 2026-10-04. Only the first 1,000 annotations of a page are read, and the rest are counted. No request is added, and
   it is never scored: rubric v1.1, every tier and the leaderboard are unchanged.
 - **The text report, the MCP `score_site` summary and the Action's job summary show all three under "Outside the
   score".** The JSON report carries them in a new optional `access` field (`access.robots_paths`,

@@ -1140,8 +1140,9 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual([k for k in r["offsite"] if "lumen-kettle" in k[1]] + r["leaks"], [])
         _res, v = views("hreflang")
         text = " ".join(v["report"].split())
-        self.assertIn("hreflang annotations: 5 of the 6 fetched pages carry them, 17 in all; 1 page carries them in an "
-                      "HTTP Link header.", text)
+        self.assertIn("hreflang annotations: 5 of the 6 fetched pages carry them, 17 in all; 1 page carries 2 of them in "
+                      "an HTTP Link header.", text)
+        self.assertEqual((hl["annotations_in_link_header"], hl["outside_head"]), (2, 0), "both Link lines, all in heads")
         self.assertIn("Return links, checked only between the pages this run fetched: 1 of the 3 pairs in which one page "
                       "names the other is one-way", text)
         self.assertIn("      «site text: /»  «site text: /fr/»", v["report"].splitlines(), "the pair, fenced")

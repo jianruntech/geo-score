@@ -2345,19 +2345,22 @@ def server_links(home, pages, sampled, sitemap_urls, hosts, scope=""):
 #
 # A code is held to the subset of BCP 47 (RFC 5646) that the same page supports: an ISO 639-1 language, optionally an
 # ISO 15924 script, optionally an ISO 3166-1 alpha-2 region, or x-default, in any letter case. It names es-419 as not
-# supported, and EU, UN and UK as without effect. HREFLANG_LANGS are the two-letter language subtags of the IANA Language Subtag
-# Registry (https://www.iana.org/assignments/language-subtag-registry, File-Date 2026-09-17, read 2026-10-04): the codes
-# of ISO 639-1, with the six the registry marks deprecated (bh, in, iw, ji, jw, mo). HREFLANG_REGIONS are the 249
+# supported, and EU, UN and UK as without effect. HREFLANG_LANGS are the 184 two-letter language subtags of the IANA Language
+# Subtag Registry (https://www.iana.org/assignments/language-subtag-registry, File-Date 2026-09-17, read 2026-10-04) that
+# it does not mark deprecated: the codes of ISO 639-1. HREFLANG_DEPRECATED_LANGS are the six it does (in, iw and ji
+# since 1989-01-01, jw since 2001-08-13, mo since 2008-11-22, bh since 2026-06-14): a code with one of them is listed as
+# "deprecated", as a deprecated region is listed under "region". HREFLANG_REGIONS are the 249
 # officially assigned ISO 3166-1 alpha-2 codes: the registry's two-letter regions without the exceptionally reserved AC,
 # CP, CQ, DG, EA, EU, EZ, IC, TA and UN, the private-use AA and ZZ, and the eleven it marks deprecated (AN, BU, CS, DD,
 # FX, NT, SU, TP, YD, YU, ZR); the same 249 as tzdata's iso3166.tab. A script is checked for its form only.
 HREFLANG_LANGS = frozenset(
-    "aa ab ae af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el "
-    "en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik in io is it "
-    "iu iw ja ji jv jw ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mo "
+    "aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el "
+    "en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it "
+    "iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn "
     "mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg sh "
     "si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh "
     "yi yo za zh zu".split())
+HREFLANG_DEPRECATED_LANGS = frozenset("bh in iw ji jw mo".split())
 HREFLANG_REGIONS = frozenset(
     "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ "
     "CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO "
@@ -2369,31 +2372,44 @@ HREFLANG_REGIONS = frozenset(
 # language, then an optional script, then an optional region (two letters, or a UN M.49 area's three digits)
 _HREFLANG_FORM = re.compile(r"([A-Za-z]{2,3})(?:-([A-Za-z]{4}))?(?:-([A-Za-z]{2}|[0-9]{3}))?\Z")
 HREFLANG_PROBLEMS = {"form": "not language[-Script][-REGION]", "language": "not an ISO 639-1 language",
+                     "deprecated": "a language subtag the IANA registry marks deprecated",
                      "region": "not an assigned ISO 3166-1 alpha-2 region"}
 HREFLANG_URLS_SHOWN = 10    # URLs the JSON lists for one code that names several on a page
 # annotations read on one page, at most; the rest are counted (not_read). Each is resolved as a URL, so a page of 100,000
 # would take seconds, and no real page carries a thousand
 HREFLANG_PAGE_MAX = 1000
 _LINK_TAG = re.compile(r"<link(?=[\s/>])", re.I)
+# the rest of a tag after its name, up to the ">" that closes it. A ">" inside a quoted attribute value does not close
+# it, as in a browser (href="/?a>b", title="EN > US"); a value starts after "=", so a quote anywhere else is an ordinary
+# character. Read in one pass: a quoted value is scanned once, to its closing quote
+_TAG_REST = re.compile(r"""(?:[^>=]+|=\s*(?:"[^"]*"|'[^']*'|[^\s>]*))*""")
+# where a page's head has ended at the latest: its </head>, or its <body> tag
+_HEAD_END = re.compile(r"</head(?![^\s/>])|<body(?![^\s/>])", re.I)
 # one attribute of a tag: name, then a value in double quotes, single quotes or none. A quote never closed runs to the
 # end of the tag's text, so no value is read twice and a tag is read in one pass
 _TAG_ATTR = re.compile(r"""([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)(?:"|\Z)|'([^']*)(?:'|\Z)|([^\s>]+)))?""")
-# one parameter of a Link header's link-value (RFC 8288 section 3): ;name, ;name=token or ;name="quoted"
-_LINK_PARAM = re.compile(r"""\s*;\s*([^\s=;,<]+)\s*(?:=\s*(?:"([^"]*)(?:"|\Z)|([^\s;,<]*)))?""")
+# one parameter of a Link header's link-value (RFC 8288 section 3): ;name, ;name=token or ;name="quoted", a quoted
+# string holding backslash-escaped characters (RFC 9110 section 5.6.4: title="a \" b")
+_LINK_PARAM = re.compile(r"""\s*;\s*([^\s=;,<]+)\s*(?:=\s*(?:"((?:[^"\\]|\\.)*)(?:"|\\?\Z)|([^\s;,<]*)))?""", re.S)
+_QUOTED_PAIR = re.compile(r"\\(.)", re.S)
 _ABSOLUTE = re.compile(r"https?://", re.I)
 
 
 def hreflang_problem(code):
     """None for a code the subset of BCP 47 above holds (x-default included), else why not: "form" (not
-    language[-Script][-REGION]), "language" (no ISO 639-1 code) or "region" (no officially assigned ISO 3166-1
-    alpha-2 code). Letter case and surrounding white space do not matter."""
+    language[-Script][-REGION]), "language" (no ISO 639-1 code), "deprecated" (a language subtag the IANA registry
+    marks deprecated, such as iw) or "region" (no officially assigned ISO 3166-1 alpha-2 code). Letter case and
+    surrounding white space do not matter."""
     c = code.strip()
     if c.lower() == "x-default":
         return None
     m = _HREFLANG_FORM.match(c)
     if not m:
         return "form"
-    if m.group(1).lower() not in HREFLANG_LANGS:
+    lang = m.group(1).lower()
+    if lang in HREFLANG_DEPRECATED_LANGS:
+        return "deprecated"
+    if lang not in HREFLANG_LANGS:
         return "language"
     if m.group(3) and m.group(3).upper() not in HREFLANG_REGIONS:
         return "region"
@@ -2426,7 +2442,8 @@ def link_header_alternates(value):
             p = _LINK_PARAM.match(value, i)
             if not p or p.end() == i:
                 break
-            params.setdefault(p.group(1).lower(), p.group(2) if p.group(2) is not None else p.group(3) or "")
+            q = p.group(2)
+            params.setdefault(p.group(1).lower(), _QUOTED_PAIR.sub(r"\1", q) if q is not None else p.group(3) or "")
             i = p.end()
         if "alternate" in params.get("rel", "").lower().split() and "hreflang" in params:
             out.append((value[a + 1:b].strip(), params["hreflang"]))
@@ -2435,27 +2452,44 @@ def link_header_alternates(value):
 def page_hreflang(r):
     """The hreflang annotations of one fetched page, as (code, href, source): each <link> whose rel names "alternate"
     and that has an hreflang and an href, outside comments, scripts, styles and templates (link_html), in document
-    order (source "html"), then each one in the response's Link header (source "header"). A link whose type names
-    something other than HTML, as a feed's does, announces no language version of the page."""
+    order (source "html", or "body" for one after the page's </head> or <body> tag: Google's hreflang documentation
+    reads the <link> tags inside the head), then each one in the response's Link header (source "header"). A link whose
+    type names something other than HTML, as a feed's does, announces no language version of the page."""
     out, h = [], link_html(r.text)
+    end = _HEAD_END.search(h)
+    head_end = end.start() if end else len(h)
     i = 0
     while True:
         m = _LINK_TAG.search(h, i)
         if not m:
             break
-        gt = h.find(">", m.end())
-        attrs = tag_attrs(h[m.end():gt if gt >= 0 else len(h)])
+        gt = _TAG_REST.match(h, m.end()).end()
+        attrs = tag_attrs(h[m.end():gt])
         if "alternate" in attrs.get("rel", "").lower().split() and "hreflang" in attrs and "href" in attrs \
                 and "html" in (attrs.get("type") or "html").lower():
-            out.append((attrs["hreflang"], attrs["href"].strip(), "html"))
-        if gt < 0:
+            out.append((attrs["hreflang"], attrs["href"].strip(), "html" if m.start() < head_end else "body"))
+        if gt >= len(h):
             break
         i = gt + 1
     return out + [(code, href, "header") for href, code in link_header_alternates(r.headers.get("link", ""))]
 
 
+def alt_host(netloc, scheme=""):
+    """host_key() of a URL's host as hreflang annotations are compared: without a trailing dot on the name, nor the
+    scheme's default port (80 for http, 443 for https; either one for a host given without its scheme), so
+    "https://x.test.:443/" names the host "https://x.test/" does. Any other port stays."""
+    user, at, h = host_key(netloc).rpartition("@")
+    i = h.rfind(":")
+    name, port = (h[:i], h[i + 1:]) if i > h.rfind("]") else (h, None)
+    if name.endswith("."):
+        name = name[:-1]
+    if port is not None and port in {"http": ("", "80"), "https": ("", "443")}.get(scheme.lower(), ("", "80", "443")):
+        port = None
+    return user + at + name + ("" if port is None else ":" + port)
+
+
 def alt_key(url):
-    """A page as hreflang annotations name it, to tell whether two URLs are one page: its host (host_key), its path in
+    """A page as hreflang annotations name it, to tell whether two URLs are one page: its host (alt_host), its path in
     robots_path form without a trailing slash, and its query; the scheme and the fragment do not matter. None for a URL
     that is not an http or https URL with a host."""
     try:
@@ -2464,7 +2498,7 @@ def alt_key(url):
         return None
     if u.scheme.lower() not in ("http", "https") or not u.netloc:
         return None
-    return host_key(u.netloc), robots_path(u.path or "/").rstrip("/") or "/", robots_path(u.query)
+    return alt_host(u.netloc, u.scheme), robots_path(u.path or "/").rstrip("/") or "/", robots_path(u.query)
 
 
 def shown_code(code):
@@ -2480,7 +2514,7 @@ def hreflang(pages, hosts):
     Return links are checked only between these pages: an annotation naming a page the run did not fetch counts in
     targets_not_fetched, and its return link is not checked. Only the first HREFLANG_PAGE_MAX annotations of a page are
     read; the rest are counted in not_read. Counts cover every page; lists hold the first ACCESS_LIST_MAX."""
-    hosts = (hosts,) if isinstance(hosts, str) else hosts
+    hosts = {alt_host(x) for x in ((hosts,) if isinstance(hosts, str) else hosts)}
     recs, seen, not_read = [], set(), 0
     for u, r in pages:
         own = {k for k in (alt_key(u), alt_key(r.url or u)) if k}
@@ -2498,22 +2532,27 @@ def hreflang(pages, hosts):
     for i, (_url, own, _anns) in enumerate(recs):
         for k in own:
             by_key.setdefault(k, i)
-    lists = {k: [] for k in ("pages", "no_self", "invalid", "duplicates", "not_absolute", "other_host")}
+    lists = {k: [] for k in ("pages", "outside_head", "no_self", "invalid", "duplicates", "not_absolute", "other_host")}
     counts = dict.fromkeys(lists, 0)
 
     def add(name, item):
         counts[name] += 1
         if len(lists[name]) < ACCESS_LIST_MAX:
             lists[name].append(item)
-    names, not_fetched, total, in_header = [], set(), 0, 0
+    names, not_fetched, total, in_header, header_anns = [], set(), 0, 0, 0
     for i, (url, own, anns) in enumerate(recs):
         named = set()
         names.append(named)
         if not anns:
             continue
         total += len(anns)
-        in_header += any(a[2] == "header" for a in anns)
+        hdr = sum(1 for a in anns if a[2] == "header")
+        header_anns += hdr
+        in_header += hdr > 0
         add("pages", {"url": url, "annotations": len(anns)})
+        after = sum(1 for a in anns if a[2] == "body")
+        if after:
+            add("outside_head", {"url": url, "annotations": after})
         if not any(a[4] in own for a in anns):
             add("no_self", url)
         bad, codes, written, other = set(), {}, set(), set()
@@ -2551,7 +2590,8 @@ def hreflang(pages, hosts):
             if i not in names[j]:
                 one_way.append({"from": recs[i][0], "to": recs[j][0]})
     return {"pages_searched": len(recs), "pages_with_hreflang": counts["pages"], "annotations": total,
-            "pages_with_link_header": in_header, "pages": lists["pages"],
+            "pages_with_link_header": in_header, "annotations_in_link_header": header_anns, "pages": lists["pages"],
+            "outside_head": counts["outside_head"], "outside_head_pages": lists["outside_head"],
             "no_self_reference": counts["no_self"], "no_self_reference_pages": lists["no_self"],
             "invalid_codes": counts["invalid"], "invalid": lists["invalid"],
             "duplicate_codes": counts["duplicates"], "duplicates": lists["duplicates"],
@@ -2680,22 +2720,37 @@ def _hreflang_lines(hl, md, quote, page):
     where = "%d fetched page%s" % (n, "" if n == 1 else "s")
     if not k:
         return ["No hreflang annotations on the %s (link elements in the server HTML, or an HTTP Link header)." % where]
-    hdr = hl["pages_with_link_header"]
-    a = hl["annotations"]
+    hdr, a, ha = hl["pages_with_link_header"], hl["annotations"], hl["annotations_in_link_header"]
+    # how many of the annotations came in a Link header: a page can carry some in its HTML and some there
+    in_hdr = "all of them" if ha == a else "%d of them" % ha
     if n == 1:
-        first = "hreflang annotations: the 1 fetched page carries %d%s." % (a, ", in an HTTP Link header" if hdr else "")
+        first = "hreflang annotations: the 1 fetched page carries %d%s." % (
+            a, "" if not ha else ", in an HTTP Link header" if ha == a else ", %s in an HTTP Link header" % in_hdr)
     else:
         first = "hreflang annotations: %d of the %s carr%s them, %d in all%s." % (
-            k, where, "ies" if k == 1 else "y", a, "" if not hdr else "; %d page%s carr%s them in an HTTP Link header"
-            % (hdr, "" if hdr == 1 else "s", "ies" if hdr == 1 else "y"))
+            k, where, "ies" if k == 1 else "y", a, "" if not hdr else "; %d page%s carr%s %s in an HTTP Link header"
+            % (hdr, "" if hdr == 1 else "s", "ies" if hdr == 1 else "y", in_hdr))
     out = [first]
+    tag = (lambda t: "`%s`" % t) if md else (lambda t: t)
+    m = hl["outside_head"]
+    if m:
+        out.append("%s after the end of %s head (after %s or the %s tag in the server HTML). Google's hreflang "
+                   "documentation says the %s tags must be inside a well-formed %s section; they are counted here "
+                   "with the others:" % (
+                       "It carries annotations" if k == 1 else "%d of the %d pages with annotations carr%s some" % (
+                           m, k, "ies" if m == 1 else "y"), "its" if k == 1 else "the", tag("</head>"), tag("<body>"),
+                       tag("<link>"), tag("<head>")))
+        out += _table(("Page", "After the head"), [[(page(x["url"]), str(x["annotations"]))]
+                                                   for x in hl["outside_head_pages"]], m, md)
     m = hl["no_self_reference"]
     if m:
-        out.append("%d of them %s not list %s among %s own annotations:" % (
-            m, "does" if m == 1 else "do", "itself" if m == 1 else "themselves", "its" if m == 1 else "their"))
+        out.append("It does not list itself among its own annotations:" if k == 1 else
+                   "%d of the %d pages with annotations %s not list %s among %s own annotations:" % (
+                       m, k, "does" if m == 1 else "do", "itself" if m == 1 else "themselves",
+                       "its" if m == 1 else "their"))
         out += _table(("Page",), [[(page(u),)] for u in hl["no_self_reference_pages"]], m, md)
     else:
-        out.append("Each of them lists itself among its own annotations." if k > 1 else
+        out.append("Each page with annotations lists itself among its own annotations." if k > 1 else
                    "It lists itself among its own annotations.")
     m = hl["invalid_codes"]
     if m:
@@ -2716,15 +2771,17 @@ def _hreflang_lines(hl, md, quote, page):
                                                  for x in hl["duplicates"]], m, md, "code")
     m = hl["not_absolute"]
     if m:
-        out.append("%d annotation%s a URL that is not absolute (a relative path, no scheme, or a scheme other than "
-                   "http and https), as written:" % (m, " names" if m == 1 else "s name"))
+        out.append("%d URL%s the annotations name %s not absolute (a relative path, no scheme, or a scheme other than "
+                   "http and https), each counted once a page, as written:" % (m, "" if m == 1 else "s",
+                                                                                "is" if m == 1 else "are"))
         out += _table(("Page", "As written"), [[(page(x["url"]), quote(x["href"]))] for x in hl["not_absolute_hrefs"]],
-                      m, md, "annotation")
+                      m, md, "URL")
     m = hl["other_host"]
     if m:
-        out.append("%d annotation%s a URL on another host, which hreflang allows:" % (m, " names" if m == 1 else "s name"))
+        out.append("%d URL%s the annotations name %s on another host, which hreflang allows, each counted once a page:"
+                   % (m, "" if m == 1 else "s", "is" if m == 1 else "are"))
         out += _table(("Page", "URL"), [[(page(x["url"]), page(x["href"]))] for x in hl["other_host_hrefs"]],
-                      m, md, "annotation")
+                      m, md, "URL")
     pc, ow, nf = hl["pairs_checked"], hl["one_way"], hl["targets_not_fetched"]
     if not pc and not nf:
         out.append("The annotations name no page but their own, so there is no return link to check.")

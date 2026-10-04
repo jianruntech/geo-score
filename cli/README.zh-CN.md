@@ -227,14 +227,17 @@ CLI 和一个细心的人判断不一致时，以人为准，量表是裁判。�
 - **hreflang 标注**（`access.hreflang`）。在同样这些抓到的页面上，报告读取服务端 HTML 里的每个
   `<link rel="alternate" hreflang="…" href="…">`（不含注释、script、style、template 里的；`type` 写的不是 HTML 的链接，比如 feed 的，不算），
   以及页面 HTTP `Link` 响应头（RFC 8288）里每个带 `hreflang` 参数的 `rel="alternate"` 链接，多行 `Link` 头每一行都读。sitemap 里的标注不读。
-  每个 href 按所在页面实际返回的地址解析；两个 URL 的主机、路径（去掉末尾斜杠）和查询参数都相同，就算同一个页面，不管 http 还是 https。
-  报告写明有几个页面带标注、一共几条，并按原样列出：标注里没有指向页面自己的页面；不在
-  [Google 的 hreflang 文档](https://developers.google.com/search/docs/specialty/international/localized-versions)所支持的 BCP 47 子集里的代码
-  （这个子集是：ISO 639-1 语言代码，可选 ISO 15924 文字代码，可选正式分配的 ISO 3166-1 alpha-2 地区代码，或者 `x-default`，不分大小写；
-  所以 `en_US`、`jp`、`en-UK`、`es-419` 都会列出，并写明原因；文字代码只看格式）；同一页面上一个代码指向不止一个 URL 的情况；
-  不是完整 `http`/`https` 地址的 href，照原样列出；以及指向其他主机的 URL，hreflang 允许这样做，报告只是注明。
+  每个 href 按所在页面实际返回的地址解析；两个 URL 的主机（主机名末尾的点和该协议的默认端口不算）、路径（去掉末尾斜杠）和查询参数都相同，
+  就算同一个页面，不管 http 还是 https。报告写明有几个页面带标注、一共几条、其中几条来自 `Link` 响应头，并按原样列出：
+  在 head 结束之后（服务端 HTML 里的 `</head>` 或 `<body>` 标签之后）还带标注的页面，因为
+  [Google 的 hreflang 文档](https://developers.google.com/search/docs/specialty/international/localized-versions)（最后更新 2026-09-21，核对日期 2026-10-04）
+  写明 `<link>` 标签必须放在格式正确的 `<head>` 里；这些标注在其他各项里照常计入。然后是：标注里没有指向页面自己的页面；
+  不在这一页所支持的 BCP 47 子集里的代码（这个子集是：ISO 639-1 语言代码，可选 ISO 15924 文字代码，可选正式分配的 ISO 3166-1 alpha-2 地区代码，
+  或者 `x-default`，不分大小写；所以 `en_US`、`jp`、`en-UK`、`es-419` 都会列出，并写明原因，下面注册表标为已弃用的六个两字母语言子标签
+  `in`、`iw`、`ji`、`jw`、`mo`、`bh` 也会列出；文字代码只看格式）；同一页面上一个代码指向不止一个 URL 的情况；
+  标注里不是完整 `http`/`https` 地址的 URL，照原样列出；以及指向其他主机的 URL，hreflang 允许这样做，报告只是注明。后两项按页面和 URL 各计一次。
   回链只在这次运行抓到的页面之间检查：一个页面指向另一个、对方没有指回来的，列为单向；标注指向的其他 URL 只计数，记为未检查。
-  语言代码取自 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry)（File-Date 2026-09-17）里的两字母子标签，
+  语言代码取自 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry)（File-Date 2026-09-17）里未标为已弃用的 184 个两字母子标签，
   地区代码取自其中 249 个正式分配的 ISO 3166-1 代码，均于 2026-10-04 读取。每个页面只读前 1,000 条标注，其余的计数。
   抓到的页面上一条标注都没有时，只写一行。
 

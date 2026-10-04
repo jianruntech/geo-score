@@ -950,12 +950,15 @@ for _code, _why in (("en", None), ("EN-gb", None), ("zh-Hant", None), ("zh-Hans-
                     ("X-Default", None), (" de ", None), ("pt-BR", None), ("en_US", "form"), ("english", "form"),
                     ("", "form"), ("en-US-x-test", "form"), ("de-CH-1996", "form"), ("eng", "language"),
                     ("jp", "language"), ("cn", "language"), ("en-UK", "region"), ("en-EU", "region"),
-                    ("es-419", "region"), ("fr-FX", "region"), ("sr-Latn-RS", None), ("iw", None)):
+                    ("es-419", "region"), ("fr-FX", "region"), ("sr-Latn-RS", None), ("he", None), ("iw", "deprecated"),
+                    ("IN-id", "deprecated"), ("mo-MD", "deprecated"), ("jw", "deprecated")):
     eq(gs.hreflang_problem(_code), _why, "hreflang code %r" % _code)
 eq(len(gs.HREFLANG_REGIONS), 249, "the 249 officially assigned ISO 3166-1 alpha-2 codes")
 ok({"GB", "US", "CN", "TW", "HK"} <= gs.HREFLANG_REGIONS and not {"UK", "EU", "UN", "ZZ", "AA"} & gs.HREFLANG_REGIONS,
    "assigned regions in, reserved and private-use ones out")
-eq(len(gs.HREFLANG_LANGS), 190, "the registry's two-letter language subtags")
+eq((len(gs.HREFLANG_LANGS), len(gs.HREFLANG_DEPRECATED_LANGS)), (184, 6),
+   "the registry's two-letter language subtags: 184 current, 6 it marks deprecated")
+ok(not gs.HREFLANG_LANGS & gs.HREFLANG_DEPRECATED_LANGS, "a deprecated subtag is not a current one")
 # a <link>'s attributes in any quoting; the first of a repeated name wins; character references are decoded
 eq(gs.tag_attrs(''' REL=alternate hreflang='de' href="/a?x=1&amp;y=2" href="/b" data-x /'''),
    {"rel": "alternate", "hreflang": "de", "href": "/a?x=1&y=2", "data-x": ""}, "tag_attrs")
@@ -967,6 +970,9 @@ eq(gs.link_header_alternates('<https://x.test/de/>; rel="alternate"; hreflang="d
                              'nofollow"; hreflang=en; title="a, b <c>", <https://x.test/feed>; rel=alternate'),
    [("https://x.test/de/", "de"), ("/fr/", "fr"), ("https://x.test/en/", "en")], "link_header_alternates")
 eq(gs.link_header_alternates("<https://x.test/a"), [], "a link-value never closed is no link")
+# a quoted string may hold an escaped quote (RFC 9110 quoted-pair): the parameters after it are still read
+eq(gs.link_header_alternates('<https://x.test/de/>; title="a \\" b"; rel=alternate; hreflang="d\\e"'),
+   [("https://x.test/de/", "de")], "a quoted-pair neither ends the string nor stays in the value")
 # two Link lines on one answer are both kept; any other field keeps its last line, as before
 import http.client as _hc
 _msg = _hc.parse_headers(io.BytesIO(
@@ -985,6 +991,22 @@ _hp = gs.Resp("https://x.test/", 200, (
     {"content-type": "text/html", "link": '<https://x.test/pt/>; rel="alternate"; hreflang="pt"'})
 eq(gs.page_hreflang(_hp), [("en", "https://x.test/", "html"), ("de", "/de/", "html"), ("pt", "https://x.test/pt/", "header")],
    "page_hreflang: what a crawler reading the server HTML and the headers is told")
+# a ">" inside a quoted value does not end the tag, as in a browser; an unquoted value keeps its quote characters
+eq(gs.page_hreflang(gs.Resp("https://x.test/", 200, (
+    '<head><link title="EN > US" rel="alternate" hreflang="en-US" href="https://x.test/us/">'
+    "<link rel='alternate' hreflang='de' href='https://x.test/?a>b'><link rel=alternate hreflang=fr href=/f\"r>"
+    '</head>').encode())),
+   [("en-US", "https://x.test/us/", "html"), ("de", "https://x.test/?a>b", "html"), ("fr", '/f"r', "html")],
+   "a quoted > stays inside its value")
+# annotations after </head> or the <body> tag are read, and marked: Google reads the <link> tags inside the head
+_body = lambda h: gs.page_hreflang(gs.Resp("https://x.test/", 200, h.encode()))
+eq(_body('<head><link rel=alternate hreflang=en href=/></head><body><link rel=alternate hreflang=de href=/de/>'),
+   [("en", "/", "html"), ("de", "/de/", "body")], "after </head>")
+eq(_body('<title>t</title><BODY class=x><link rel=alternate hreflang=de href=/de/>'), [("de", "/de/", "body")],
+   "after <body>, any case")
+eq(_body('<head><!-- </head> --><script>"<body>"</script><link rel=alternate hreflang=en href=/><bodyx></head>'),
+   [("en", "/", "html")], "a </head> in a comment or a script, or <bodyx>, ends no head")
+eq(_body('<link rel=alternate hreflang=en href=/>'), [("en", "/", "html")], "a page with no head end: all in it")
 # the run's pages: a cluster where / names /fr/ and /fr/ does not name / back, a page without its own annotation,
 # codes outside the subset, one code naming two URLs, a relative href and one on another host
 _rh = lambda url, body, h=None: (url, gs.Resp(url, 200, body.encode(), dict({"content-type": "text/html"}, **(h or {}))))
@@ -1004,11 +1026,13 @@ _hset = [
 ]
 _hl = gs.hreflang(_hset, {"x.test"})
 eq({k: _hl[k] for k in ("pages_searched", "pages_with_hreflang", "annotations", "pages_with_link_header",
-                        "no_self_reference", "invalid_codes", "duplicate_codes", "not_absolute", "other_host",
-                        "pairs_checked", "one_way", "targets_not_fetched", "not_read")},
+                        "annotations_in_link_header", "outside_head", "no_self_reference", "invalid_codes",
+                        "duplicate_codes", "not_absolute", "other_host", "pairs_checked", "one_way",
+                        "targets_not_fetched", "not_read")},
    {"pages_searched": 6, "pages_with_hreflang": 5, "annotations": 16, "pages_with_link_header": 1,
-    "no_self_reference": 1, "invalid_codes": 3, "duplicate_codes": 1, "not_absolute": 1, "other_host": 1,
-    "pairs_checked": 3, "one_way": 1, "targets_not_fetched": 6, "not_read": 0}, "hreflang: the counts")
+    "annotations_in_link_header": 2, "outside_head": 0, "no_self_reference": 1, "invalid_codes": 3,
+    "duplicate_codes": 1, "not_absolute": 1, "other_host": 1, "pairs_checked": 3, "one_way": 1,
+    "targets_not_fetched": 6, "not_read": 0}, "hreflang: the counts")
 eq(_hl["one_way_pairs"], [{"from": "https://x.test/", "to": "https://x.test/fr/"}],
    "reciprocity between fetched pages: / names /fr/, which names /de/ but not / back (/de and /de/ are one page)")
 eq(_hl["no_self_reference_pages"], ["https://x.test/blog/b"], "a page that does not name itself (the relative self link "
@@ -1028,6 +1052,17 @@ eq((_both["pairs_checked"], _both["one_way"], _both["no_self_reference"]), (1, 0
 _www = gs.hreflang([("https://x.test/", gs.Resp("https://www.x.test/", 200, _alt("en", "/").encode(),
                                                  {"content-type": "text/html"}))], {"x.test", "www.x.test"})
 eq((_www["no_self_reference"], _www["other_host"]), (0, 0), "an annotation resolves against the URL its page was answered from")
+# a default port or a trailing dot names the same host; another port does not
+eq([gs.alt_host(*x) for x in (("X.test.:443", "https"), ("x.test:80", "http"), ("x.test:443", "http"),
+                              ("x.test:8443", "https"), ("x.test:", "https"), ("[::1]:443", "https"), ("[::1]", ""),
+                              ("u:p@x.test.:80", "http"), ("x.test:443", ""))],
+   ["x.test", "x.test", "x.test:443", "x.test:8443", "x.test", "[::1]", "[::1]", "u:p@x.test", "x.test"], "alt_host")
+_port = gs.hreflang([_rh("https://x.test/", _alt("en", "https://x.test:443/") + _alt("de", "https://x.test./de/"))],
+                    "x.test")
+eq((_port["no_self_reference"], _port["other_host"], _port["targets_not_fetched"]), (0, 0, 1),
+   "https://x.test:443/ is the page https://x.test/, and x.test. is this site's host")
+eq(gs.hreflang([_rh("http://127.0.0.1:8080/", _alt("en", "http://127.0.0.1:8080/") + _alt("de", "http://127.0.0.1/de/"))],
+               "127.0.0.1:8080")["other_host"], 1, "a port other than the default is another host")
 # the views: one line when nothing is found; the site's words fenced in text and in code spans in Markdown
 eq(gs.access_lines({"hreflang": gs.hreflang([_hset[5]], "x.test")}),
    ["No hreflang annotations on the 1 fetched page (link elements in the server HTML, or an HTTP Link header)."],
@@ -1035,8 +1070,37 @@ eq(gs.access_lines({"hreflang": gs.hreflang([_hset[5]], "x.test")}),
 eq(gs.access_lines({"hreflang": gs.hreflang([], "x.test")}),
    ["hreflang: no page was fetched this run, so no annotation was read."], "no page: says so")
 _hv = gs.access_lines({"hreflang": _hl}, origin="https://x.test")
-eq(_hv[0], "hreflang annotations: 5 of the 6 fetched pages carry them, 16 in all; 1 page carries them in an HTTP Link "
-           "header.", "the opening line")
+eq(_hv[0], "hreflang annotations: 5 of the 6 fetched pages carry them, 16 in all; 1 page carries 2 of them in an HTTP "
+           "Link header.", "the opening line")
+ok("1 of the 5 pages with annotations does not list itself among its own annotations:" in _hv and
+   "1 URL the annotations name is not absolute (a relative path, no scheme, or a scheme other than http and https), "
+   "each counted once a page, as written:" in _hv and
+   "1 URL the annotations name is on another host, which hreflang allows, each counted once a page:" in _hv,
+   "the counts in the views say what they count: %r" % _hv)
+# one page: how many came in its Link header, and "it", not "them"
+_one = lambda body, h=None: gs.access_lines({"hreflang": gs.hreflang([_rh("https://x.test/", body, h)], "x.test")},
+                                            origin="https://x.test")
+_l1 = _one(_alt("en", "https://x.test/") + _alt("de", "/de/"), {"link": "<https://x.test/fr/>; rel=alternate; hreflang=fr"})
+eq(_l1[:2], ["hreflang annotations: the 1 fetched page carries 3, 1 of them in an HTTP Link header.",
+             "It lists itself among its own annotations."], "one page, HTML and header")
+_l2 = _one("<p>x</p>", {"link": "<https://x.test/fr/>; rel=alternate; hreflang=fr"})
+eq(_l2[:3], ["hreflang annotations: the 1 fetched page carries 1, in an HTTP Link header.",
+             "It does not list itself among its own annotations:", "  «site text: /»"], "one page, header only")
+# annotations after the head: the pages listed, the site's paths fenced, the tags as code in Markdown
+_ah = gs.hreflang([_rh("https://x.test/", "<head>" + _alt("en", "https://x.test/") + "</head><body>" + _alt("de", "/de/")),
+                   _rh("https://x.test/de/", "<body>" + _alt("de", "/de/") + _alt("en", "/"))], "x.test")
+eq((_ah["outside_head"], _ah["outside_head_pages"]),
+   (2, [{"url": "https://x.test/", "annotations": 1}, {"url": "https://x.test/de/", "annotations": 2}]),
+   "annotations after the head, page by page")
+eq((_ah["pairs_checked"], _ah["one_way"], _ah["no_self_reference"]), (1, 0, 0), "and still counted with the others")
+_aht = gs.access_lines({"hreflang": _ah}, origin="https://x.test")
+eq(_aht[1:4], ["2 of the 2 pages with annotations carry some after the end of the head (after </head> or the <body> tag "
+               "in the server HTML). Google's hreflang documentation says the <link> tags must be inside a well-formed "
+               "<head> section; they are counted here with the others:",
+               "  «site text: /»     1", "  «site text: /de/»  2"], "the after-head line: %r" % _aht)
+_ahm = gs.access_lines({"hreflang": _ah}, "md", "https://x.test")
+ok(any("after `</head>` or the `<body>` tag" in x and "inside a well-formed `<head>` section" in x for x in _ahm) and
+   "| `/de/` | 2 |" in _ahm, "Markdown: the tags as code, not markup: %r" % _ahm)
 ok("  «site text: /»  «site text: /fr/»" in _hv, "the one-way pair, fenced: %r" % _hv)
 ok(any(x.startswith("Return links, checked only between the pages this run fetched: 1 of the 3 pairs") for x in _hv) and
    "6 other URLs the annotations name were not fetched this run, so their return links were not checked." in _hv,

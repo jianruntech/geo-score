@@ -244,8 +244,9 @@ An annotation by which a page names its versions in other languages or for other
 `<link rel="alternate" hreflang="de" href="…">` element, the same link in an HTTP `Link` header, or an
 entry in a sitemap. The code is a language, optionally with a script and a region (`de`, `en-GB`,
 `zh-Hant`), or `x-default`. geo-score reads the first two forms on the pages a run fetched and reports
-what it finds outside the score: pages whose annotations leave the page itself out, codes outside the
-subset Google's documentation supports, one code naming two URLs, hrefs that are not absolute, URLs on
+what it finds outside the score: annotations placed after the end of the head (Google's documentation
+says the `<link>` tags must be inside it), pages whose annotations leave the page itself out, codes outside
+the subset Google's documentation supports, one code naming two URLs, hrefs that are not absolute, URLs on
 another host, and pairs of fetched pages where one names the other and is not named back.
 
 **Where:** `Outside the score (observed, never scored)` in the terminal report; the JSON field

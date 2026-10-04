@@ -270,18 +270,24 @@ carries them in its optional `access` field ([`schema/report.v2.json`](../schema
   a link whose `type` names something other than HTML, as a feed's does, is left out) and each `rel="alternate"` link
   with an `hreflang` parameter in the page's HTTP `Link` header (RFC 8288), every `Link` line read. Annotations in a
   sitemap are not read. Each href resolves against the URL its page was answered from, and two URLs name one page when
-  their host, path (without a trailing slash) and query match, whatever the scheme. The report says how many pages carry
-  annotations and how many there are, and lists, as found: the pages whose annotations do not name the page itself;
-  codes outside the subset of BCP 47 that
+  their host (a trailing dot and the scheme's default port aside), path (without a trailing slash) and query match,
+  whatever the scheme. The report says how many pages carry annotations, how many there are and how many of them came
+  in a `Link` header, and lists, as found: pages that carry annotations after the end of the head (after `</head>` or
+  the `<body>` tag in the server HTML), since
   [Google's hreflang documentation](https://developers.google.com/search/docs/specialty/international/localized-versions)
-  supports, which is an ISO 639-1 language, optionally an ISO 15924 script, optionally an officially assigned ISO
-  3166-1 alpha-2 region, or `x-default`, in any letter case (so `en_US`, `jp`, `en-UK` and `es-419` are listed, each
-  with why; a script is checked for its form only); a code that names more than one URL on one page; hrefs that are not
-  absolute `http` or `https` URLs, as written; and URLs on another host, which hreflang allows and the report only
-  notes. Return links are checked only between the pages the run fetched: a pair where one page names the other and is
+  (last updated 2026-09-21, checked 2026-10-04) says the `<link>` tags must be inside a well-formed `<head>`; they are
+  still counted with the others everywhere else. Then the pages whose annotations do not name the page itself; codes
+  outside the subset of BCP 47 that the same page supports, which is an ISO 639-1 language, optionally an ISO 15924
+  script, optionally an officially assigned ISO 3166-1 alpha-2 region, or `x-default`, in any letter case (so `en_US`,
+  `jp`, `en-UK` and `es-419` are listed, each with why, and so are the six two-letter language subtags the registry
+  below marks deprecated, `in`, `iw`, `ji`, `jw`, `mo` and `bh`; a script is checked for its form only); a code that
+  names more than one URL on one page; URLs named in annotations that are not absolute `http` or `https` URLs, as
+  written; and URLs on another host, which hreflang allows and the report only notes. These last two are counted once
+  per page and URL. Return links are checked only between the pages the run fetched: a pair where one page names the other and is
   not named back is listed, and the other URLs the annotations name are counted as not checked. The language codes are
-  the two-letter subtags of the
-  [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry) (File-Date 2026-09-17) and
+  the 184 two-letter subtags of the
+  [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry) (File-Date 2026-09-17)
+  that it does not mark deprecated, and
   the regions the 249 officially assigned ISO 3166-1 alpha-2 codes among its region subtags, both read on 2026-10-04. Only the first 1,000 annotations
   of a page are read, and the report counts the rest. A site with no annotation on the fetched pages gets one line.
 
