@@ -36,7 +36,9 @@ tool, or a new rubric version, and a changelog entry that says what to change.
 
 `--fail-on-gate` and `--assert` are CI policy, not measurement: their results are printed to stderr and never
 written into the report JSON. `elapsed_s` in the report (since 1.5.0) describes the run, not the site: it
-depends on the machine and network that ran the score, it may be absent, and `diff` never compares it. The
+depends on the machine and network that ran the score, it may be absent, and `diff` never compares it. `access`
+(the observations under "Outside the score": pages robots.txt blocks, and links in the server HTML) is never part
+of the score: no tier, point or band reads it, it may be absent, and `diff` never compares it. The
 flags, subcommands and exit codes `--help` lists are contracts; its wording, examples and layout are not.
 
 Not contracts: the Python functions inside `geo_score.py` and `geo_watch.py` (`run`, `score`,

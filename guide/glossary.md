@@ -371,6 +371,21 @@ or grounding. The rubric does not score opt-out tokens.
 **Where:** the rubric's `g.robots` check, which reads only the retrieval crawlers; the AI crawler
 reference. **More:** [AI crawler user-agents](../reference/ai-crawlers.md#the-distinction-that-matters-most)
 
+### Outside the score
+
+What a report observes without scoring it: no tier, point or band moves with it. Two observations
+sit there. **Pages robots.txt blocks** holds the homepage, the sampled pages and the sitemap's first 200
+URLs against each retrieval crawler's rules, read as RFC 9309 says (the longest matching rule decides),
+and **Rules read differently** names the pages where the first-match reading of Python's
+`urllib.robotparser` and many older checkers (rules in file order, the first plain prefix decides)
+reaches the other verdict. **Links in the server HTML** counts the links a crawler that runs no
+JavaScript can follow, flags a homepage that links to fewer than 3 pages of the site, and names the
+sitemap URLs that no fetched page links to; only the fetched pages are searched.
+
+**Where:** `Outside the score (observed, never scored)` after the footer of the terminal report, the
+MCP `score_site` summary and the Action's job summary; the JSON field `access`.
+**More:** [CLI reference, Outside the score](../cli/README.md#outside-the-score)
+
 ## P
 
 ### Pillar

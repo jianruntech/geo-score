@@ -16,6 +16,25 @@
   summary 新增 `summary.searches.answers_searched_without_queries`、`summary.searches.modifiers`（`total`、`with_year`、
   `with_ranking_word`）和 `summary.engines` 每一行的 `searched_without_queries`，schema/watch.v1.json 现在描述了 `summary.searches`。
   本版之前保存的运行在出报告时由保存的回答当场算出，运行文件本身不会被改写。
+- **robots.txt 按路径封掉了哪些页面、哪些规则两种读法结论不同，在分数之外报告。** `g.robots` 只看封掉整站的 Disallow，
+  所以一条只针对某个路径的规则不会让它变红。现在每次运行都拿首页、每个抽样页面，以及 sitemap 里属于被测主机和路径的前 200 个 URL，
+  逐一对照十个检索爬虫各自遵守的规则，按 RFC 9309 第 2.2.2 节的读法判断：匹配上的规则里模式最长的那条说了算，长度相同时 allow 优先，
+  `*` 和末尾的 `$` 是通配符，百分号编码统一成一种形式再比较。报告列出被规则封掉的每个页面、对哪些爬虫、是哪条规则；
+  再列出 Python `urllib.robotparser` 和许多老检查工具的「第一条匹配」读法（按文件顺序，第一条前缀匹配的规则说了算）结论不同的页面，
+  写明两种读法各自选中的规则。robots.txt 只读前 500 KiB，这是 RFC 9309 第 2.5 节要求爬虫至少解析的量。不为此多发任何请求，
+  也从不计分：量表 v1.1、每一档和公开榜单都不变。
+- **页面有没有被服务端 HTML 链接到，在分数之外报告。** 从这次运行已经抓到的 HTML（首页、计分的抽样页面、抽样时读过的栏目索引页）里，
+  统计不运行 JavaScript 的爬虫能跟的 `<a href>` 链接中指向被测主机和路径内页面的那些：注释、script、style、template 里的链接不算，
+  `javascript:`、`mailto:`、`tel:` 链接也不算。报告写明首页链接到本站几个页面、其中有几个是其他抽样页面；首页链接少于 3 个时
+  给出提示（「只在 JavaScript 运行后才出现的导航，不运行 JavaScript 的爬虫跟不过去」）；并列出没有任何一个抓到的页面链接到的、
+  被检查的 sitemap URL。只搜索了抓到的这些页面，所以它们没链接到的页面不能说明是孤立页面，报告里也这么写。不多发请求，从不计分。
+- **文本报告、MCP `score_site` 摘要和 Action 的 job summary 都在「Outside the score」下显示这两项。** JSON 报告放在新的可选字段
+  `access` 里（`access.robots_paths`、`access.server_links`），已在 schema/report.v2.json 里登记；每项最多列出前 50 个页面，
+  计数覆盖全部。新增端到端 fixture `hidden-pages`：一条路径规则封掉了它的价格页、有两种读法结论不同的规则、菜单只由脚本写入；
+  每个 fixture 的 `expected.json` 都固定了新的计数。
+- **Claude Code 技能可以用 `npx skills add jianruntech/geo-score` 安装**（开源的 skills CLI；加 `-g` 是全局安装）。
+  2026-10-04 实测：它找到一个技能 `geo-score`，把整个仓库（约 9 MB）复制到 `.claude/skills/geo-score`。
+  README 里的 `git clone` 保留，作为没有 Node.js 时的装法。
 
 ### 变更
 - **没有一条回答有价格时，账本写明费用未知。** 以前写成 `$0 + 4 answers with no price (add prices to geo-score-watch.json)`，

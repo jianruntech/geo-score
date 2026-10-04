@@ -313,6 +313,17 @@ CLI 只输出 `scored` 和 `unobservable`。**详见：** [排查指南 · 检�
 **出现在：** 量表的 `g.robots` 检查项（它只看检索爬虫）；AI 爬虫一览。
 **详见：** [AI 爬虫 user-agent 一览](../reference/ai-crawlers.md#the-distinction-that-matters-most)（英文）
 
+### Outside the score（分数之外）
+
+报告观测到、但不计分的内容：不影响任何一档、任何分数和档位。目前有两项。**Pages robots.txt blocks** 拿首页、抽样页面和
+sitemap 的前 200 个 URL，对照每个检索爬虫遵守的规则，按 RFC 9309 的读法判断（匹配上的规则里最长的那条说了算）；
+**Rules read differently** 列出 Python `urllib.robotparser` 和许多老检查工具的「第一条匹配」读法（按文件顺序，第一条前缀匹配的规则说了算）
+得出相反结论的页面。**Links in the server HTML** 统计不运行 JavaScript 的爬虫能跟的链接，首页链接到本站页面少于 3 个时给出提示，
+并列出没有任何一个抓到的页面链接到的 sitemap URL；只搜索了抓到的页面。
+
+**出现在：** 终端报告页脚之后的 `Outside the score (observed, never scored)`、MCP `score_site` 摘要和 Action 的 job summary；
+JSON 的 `access` 字段。**详见：** [CLI 参考 · 分数之外](../cli/README.zh-CN.md#分数之外)
+
 ## P
 
 ### Pillar（支柱）
