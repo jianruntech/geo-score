@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-04
+
 ### 新增
 - **`engines[].timeout`。** 等一个引擎回答的秒数，10 到 600（默认 120），用于响应慢的接口、或要长时间搜索和推理的模型。超时的请求仍不重试。
 - **「What the engines searched for」统计年份和排名类的词，并写明搜了却没返回搜索词的回答。** 表下多一行：在回答给出的全部搜索词里，
@@ -783,7 +785,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/jianruntech/geo-score/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jianruntech/geo-score/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jianruntech/geo-score/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jianruntech/geo-score/compare/v1.3.0...v1.4.0
