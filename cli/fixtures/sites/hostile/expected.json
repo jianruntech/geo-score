@@ -24,6 +24,23 @@
     "sitemap_urls": 3,
     "sitemap_urls_linked": 3
   },
+  "_hreflang": {
+    "pages_searched": 4,
+    "pages_with_hreflang": 1,
+    "annotations": 2,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 1,
+    "duplicate_codes": 0,
+    "not_absolute": 1,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 1
+  },
+  "_notes": {
+    "_hreflang": "The homepage carries two hreflang annotations with the injection text: one as the code itself (not language[-Script][-REGION]: an invalid code), one in a relative href behind a bidi override (not absolute, and a URL the run did not fetch). Both reach the JSON percent-encoded, with no space, bidi or control character, and the views fence them as site text; no tier moves."
+  },
   "g.robots": 5,
   "g.reachable": 5,
   "g.ssr": 5,

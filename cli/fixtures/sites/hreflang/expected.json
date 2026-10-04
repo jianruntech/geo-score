@@ -1,0 +1,72 @@
+{
+  "_normalised": 53,
+  "_band": "Growing",
+  "_gate_capped": false,
+  "_lang": "en",
+  "_sample_source": "sitemap",
+  "_sampled": [
+    "/",
+    "/about.html",
+    "/blog/how-hard-water-shortens-a-kettle.html",
+    "/blog/what-a-descaling-cycle-does.html",
+    "/de",
+    "/fr"
+  ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 6,
+    "blocked": 0,
+    "read_differently": 0
+  },
+  "_server_links": {
+    "pages_searched": 6,
+    "home_links": 5,
+    "other_sampled": 5,
+    "home_links_to_sampled": 5,
+    "sitemap_urls": 5,
+    "sitemap_urls_linked": 5
+  },
+  "_hreflang": {
+    "pages_searched": 6,
+    "pages_with_hreflang": 5,
+    "annotations": 17,
+    "pages_with_link_header": 1,
+    "no_self_reference": 1,
+    "invalid_codes": 3,
+    "duplicate_codes": 1,
+    "not_absolute": 1,
+    "other_host": 1,
+    "pairs_checked": 3,
+    "one_way": 1,
+    "targets_not_fetched": 6
+  },
+  "_notes": {
+    "_hreflang": "Six pages are searched: the six sampled (the sitemap's six URLs; /de and /fr are answered from /de/ and /fr/). Five carry annotations, 17 in all: the homepage 4 (en, de, fr, x-default), /de/ 4, /fr/ 2 in its HTTP Link header (sent on two lines, so both are read only when the lines are joined), the hard-water article 6 and the descaling article 1; about.html has none. The hard-water article's commented-out it link and its feed's alternate (type application/rss+xml) are not annotations. The descaling article names only /de/blog/... and not itself. Three codes are outside the subset Google documents: en_GB (form), jp (no ISO 639-1 code) and en-UK (UK is no assigned ISO 3166-1 region). de and DE name two URLs on the hard-water article, one of them on lumen-kettle.example (another host, noted), and its en self link is relative. Return links: of the three pairs of fetched pages that name each other or one the other, / and /de/ and /de/ and /fr/ name each other; / names /fr/ and /fr/ does not name / back, the one-way pair. Six other URLs the annotations name (/de/blog/..., /uk/..., /jp/..., /en-uk/..., the other host's and /de/blog/... of the descaling article) were not fetched.",
+    "g.ssr": "Every page carries at least 120 words of server-rendered text, so the gate reads 5; the fixture exists for the annotations, which are outside the score."
+  },
+  "g.robots": 5,
+  "g.reachable": 5,
+  "g.ssr": 5,
+  "p1.sitemap": 4,
+  "p1.llms-txt": 0,
+  "p1.organization": 0,
+  "p1.breadcrumb": 0,
+  "p1.page-type": 0,
+  "p2.answer-passages": 9,
+  "p2.question-intent": 7,
+  "p2.freshness": 3,
+  "p2.sourced-stats": 3,
+  "p2.named-author": 3,
+  "p3.listings": null,
+  "p3.mentions": null,
+  "p3.knowledge-graph": 0,
+  "p3.sameas": 0,
+  "p3.video": 0,
+  "p4.answer-shape": 2,
+  "p4.question-coverage": null,
+  "p4.cn-engines": null,
+  "b.llms-full": 0,
+  "b.ai-txt": 0,
+  "b.geo-link": 0,
+  "b.speakable": 0
+}

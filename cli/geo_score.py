@@ -377,6 +377,17 @@ def read_body(r, limit, until):
     return b"".join(parts)
 
 
+def header_map(msg):
+    """A response's headers by lower-case name. A field sent on several lines keeps its last line, except Link, whose
+    lines are joined with ", ", as RFC 9110 section 5.3 allows for a list field: a page's hreflang annotations may come
+    on more than one."""
+    h = {}
+    for k, v in (msg or {}).items():
+        k = k.lower()
+        h[k] = h[k] + ", " + v if k == "link" and k in h else v
+    return h
+
+
 def fetch(url, ua=UA_BROWSER, timeout=None, method="GET", *, deadline=None):
     """One request, never retried. It waits `timeout` seconds per read (default TIMEOUT) and
     max(FETCH_BUDGET, 2 × timeout) in all. `deadline`, a time.monotonic() value, is the run's: it stops the
@@ -402,12 +413,11 @@ def fetch(url, ua=UA_BROWSER, timeout=None, method="GET", *, deadline=None):
             raw = read_body(r, MAX_BODY, until)
             if r.headers.get("Content-Encoding") == "gzip":
                 raw = gunzip(raw)
-            h = {k.lower(): v for k, v in r.headers.items()}
-            return Resp(r.geturl(), r.status, raw, h, elapsed=time.time() - t0)
+            return Resp(r.geturl(), r.status, raw, header_map(r.headers), elapsed=time.time() - t0)
     except urllib.error.HTTPError as e:
         try: raw = read_body(e, 400_000, until)
         except Exception: raw = b""
-        h = {k.lower(): v for k, v in (e.headers or {}).items()}
+        h = header_map(e.headers)
         if h.get("content-encoding") == "gzip":
             # an error page is read too, for a bot challenge (Cloudflare's comes back 403, gzipped)
             raw = gunzip(raw)
@@ -2325,6 +2335,232 @@ def server_links(home, pages, sampled, sitemap_urls, hosts, scope=""):
             "unlinked_sitemap_urls": [shown_url(u) for u in unlinked[:ACCESS_LIST_MAX]]}
 
 
+# ── hreflang annotations ──
+# What the fetched pages say about their language and region versions: <link rel="alternate" hreflang="…" href="…"> in
+# the server HTML, and the same in an HTTP Link header (RFC 8288). Google's hreflang documentation reads these two from
+# a page, and a sitemap as a third way, which is not read here
+# (https://developers.google.com/search/docs/specialty/international/localized-versions, last updated 2026-09-21, read
+# 2026-10-04). It asks each version to list itself and every other version, and ignores a pair of pages that do not
+# both name each other; alternate URLs may be on another domain.
+#
+# A code is held to the subset of BCP 47 (RFC 5646) that the same page supports: an ISO 639-1 language, optionally an
+# ISO 15924 script, optionally an ISO 3166-1 alpha-2 region, or x-default, in any letter case. It names es-419 as not
+# supported, and EU, UN and UK as without effect. HREFLANG_LANGS are the two-letter language subtags of the IANA Language Subtag
+# Registry (https://www.iana.org/assignments/language-subtag-registry, File-Date 2026-09-17, read 2026-10-04): the codes
+# of ISO 639-1, with the six the registry marks deprecated (bh, in, iw, ji, jw, mo). HREFLANG_REGIONS are the 249
+# officially assigned ISO 3166-1 alpha-2 codes: the registry's two-letter regions without the exceptionally reserved AC,
+# CP, CQ, DG, EA, EU, EZ, IC, TA and UN, the private-use AA and ZZ, and the eleven it marks deprecated (AN, BU, CS, DD,
+# FX, NT, SU, TP, YD, YU, ZR); the same 249 as tzdata's iso3166.tab. A script is checked for its form only.
+HREFLANG_LANGS = frozenset(
+    "aa ab ae af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el "
+    "en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik in io is it "
+    "iu iw ja ji jv jw ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mo "
+    "mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg sh "
+    "si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh "
+    "yi yo za zh zu".split())
+HREFLANG_REGIONS = frozenset(
+    "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ "
+    "CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO "
+    "FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE "
+    "JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO "
+    "MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW "
+    "PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM "
+    "TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split())
+# language, then an optional script, then an optional region (two letters, or a UN M.49 area's three digits)
+_HREFLANG_FORM = re.compile(r"([A-Za-z]{2,3})(?:-([A-Za-z]{4}))?(?:-([A-Za-z]{2}|[0-9]{3}))?\Z")
+HREFLANG_PROBLEMS = {"form": "not language[-Script][-REGION]", "language": "not an ISO 639-1 language",
+                     "region": "not an assigned ISO 3166-1 alpha-2 region"}
+HREFLANG_URLS_SHOWN = 10    # URLs the JSON lists for one code that names several on a page
+# annotations read on one page, at most; the rest are counted (not_read). Each is resolved as a URL, so a page of 100,000
+# would take seconds, and no real page carries a thousand
+HREFLANG_PAGE_MAX = 1000
+_LINK_TAG = re.compile(r"<link(?=[\s/>])", re.I)
+# one attribute of a tag: name, then a value in double quotes, single quotes or none. A quote never closed runs to the
+# end of the tag's text, so no value is read twice and a tag is read in one pass
+_TAG_ATTR = re.compile(r"""([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)(?:"|\Z)|'([^']*)(?:'|\Z)|([^\s>]+)))?""")
+# one parameter of a Link header's link-value (RFC 8288 section 3): ;name, ;name=token or ;name="quoted"
+_LINK_PARAM = re.compile(r"""\s*;\s*([^\s=;,<]+)\s*(?:=\s*(?:"([^"]*)(?:"|\Z)|([^\s;,<]*)))?""")
+_ABSOLUTE = re.compile(r"https?://", re.I)
+
+
+def hreflang_problem(code):
+    """None for a code the subset of BCP 47 above holds (x-default included), else why not: "form" (not
+    language[-Script][-REGION]), "language" (no ISO 639-1 code) or "region" (no officially assigned ISO 3166-1
+    alpha-2 code). Letter case and surrounding white space do not matter."""
+    c = code.strip()
+    if c.lower() == "x-default":
+        return None
+    m = _HREFLANG_FORM.match(c)
+    if not m:
+        return "form"
+    if m.group(1).lower() not in HREFLANG_LANGS:
+        return "language"
+    if m.group(3) and m.group(3).upper() not in HREFLANG_REGIONS:
+        return "region"
+    return None
+
+
+def tag_attrs(tag):
+    """The attributes in one tag's text (after its name, up to its ">"): names in lower case, values with their
+    character references decoded. A name given twice keeps its first value, as a browser does."""
+    out = {}
+    for m in _TAG_ATTR.finditer(tag):
+        k = m.group(1).lower()
+        if k not in out:
+            v = next((g for g in m.groups()[1:] if g is not None), "")
+            out[k] = html.unescape(v)
+    return out
+
+
+def link_header_alternates(value):
+    """(href as written, hreflang) of each link-value in an HTTP Link header (RFC 8288) whose rel names "alternate" and
+    that carries an hreflang parameter, in order, in one pass."""
+    out, i = [], 0
+    while True:
+        a = value.find("<", i)
+        b = value.find(">", a + 1) if a >= 0 else -1
+        if b < 0:
+            return out
+        params, i = {}, b + 1
+        while True:
+            p = _LINK_PARAM.match(value, i)
+            if not p or p.end() == i:
+                break
+            params.setdefault(p.group(1).lower(), p.group(2) if p.group(2) is not None else p.group(3) or "")
+            i = p.end()
+        if "alternate" in params.get("rel", "").lower().split() and "hreflang" in params:
+            out.append((value[a + 1:b].strip(), params["hreflang"]))
+
+
+def page_hreflang(r):
+    """The hreflang annotations of one fetched page, as (code, href, source): each <link> whose rel names "alternate"
+    and that has an hreflang and an href, outside comments, scripts, styles and templates (link_html), in document
+    order (source "html"), then each one in the response's Link header (source "header"). A link whose type names
+    something other than HTML, as a feed's does, announces no language version of the page."""
+    out, h = [], link_html(r.text)
+    i = 0
+    while True:
+        m = _LINK_TAG.search(h, i)
+        if not m:
+            break
+        gt = h.find(">", m.end())
+        attrs = tag_attrs(h[m.end():gt if gt >= 0 else len(h)])
+        if "alternate" in attrs.get("rel", "").lower().split() and "hreflang" in attrs and "href" in attrs \
+                and "html" in (attrs.get("type") or "html").lower():
+            out.append((attrs["hreflang"], attrs["href"].strip(), "html"))
+        if gt < 0:
+            break
+        i = gt + 1
+    return out + [(code, href, "header") for href, code in link_header_alternates(r.headers.get("link", ""))]
+
+
+def alt_key(url):
+    """A page as hreflang annotations name it, to tell whether two URLs are one page: its host (host_key), its path in
+    robots_path form without a trailing slash, and its query; the scheme and the fragment do not matter. None for a URL
+    that is not an http or https URL with a host."""
+    try:
+        u = urllib.parse.urlsplit(url)
+    except ValueError:
+        return None
+    if u.scheme.lower() not in ("http", "https") or not u.netloc:
+        return None
+    return host_key(u.netloc), robots_path(u.path or "/").rstrip("/") or "/", robots_path(u.query)
+
+
+def shown_code(code):
+    """An hreflang value as a report lists it: in robots_path form, so no space, control or bidi character and no `
+    or | reaches a view, cut at 64 characters."""
+    return clip(robots_path(code.strip()), 64)
+
+
+def hreflang(pages, hosts):
+    """The `access.hreflang` object of schema/report.v2.json. `pages` every fetched page searched, as (url, Resp): the
+    homepage, the sampled pages and the section indexes, each once; `hosts` this site's hosts (site_path): the audited
+    host, and the one its homepage redirected to. Each page's annotations resolve against the URL it was answered from.
+    Return links are checked only between these pages: an annotation naming a page the run did not fetch counts in
+    targets_not_fetched, and its return link is not checked. Only the first HREFLANG_PAGE_MAX annotations of a page are
+    read; the rest are counted in not_read. Counts cover every page; lists hold the first ACCESS_LIST_MAX."""
+    hosts = (hosts,) if isinstance(hosts, str) else hosts
+    recs, seen, not_read = [], set(), 0
+    for u, r in pages:
+        own = {k for k in (alt_key(u), alt_key(r.url or u)) if k}
+        if not own or own & seen:
+            continue
+        seen |= own
+        base = r.url or u
+        anns, found = [], page_hreflang(r)
+        not_read += max(0, len(found) - HREFLANG_PAGE_MAX)
+        for code, href, src in found[:HREFLANG_PAGE_MAX]:
+            target = join_link(base, href).split("#")[0]
+            anns.append((code, href, src, target, alt_key(target)))
+        recs.append((shown_url(base), own, anns))
+    by_key = {}
+    for i, (_url, own, _anns) in enumerate(recs):
+        for k in own:
+            by_key.setdefault(k, i)
+    lists = {k: [] for k in ("pages", "no_self", "invalid", "duplicates", "not_absolute", "other_host")}
+    counts = dict.fromkeys(lists, 0)
+
+    def add(name, item):
+        counts[name] += 1
+        if len(lists[name]) < ACCESS_LIST_MAX:
+            lists[name].append(item)
+    names, not_fetched, total, in_header = [], set(), 0, 0
+    for i, (url, own, anns) in enumerate(recs):
+        named = set()
+        names.append(named)
+        if not anns:
+            continue
+        total += len(anns)
+        in_header += any(a[2] == "header" for a in anns)
+        add("pages", {"url": url, "annotations": len(anns)})
+        if not any(a[4] in own for a in anns):
+            add("no_self", url)
+        bad, codes, written, other = set(), {}, set(), set()
+        for code, href, _src, target, key in anns:
+            c = code.strip().lower()
+            why = hreflang_problem(code)
+            if why and c not in bad:
+                bad.add(c)
+                add("invalid", {"url": url, "hreflang": shown_code(code), "problem": why})
+            codes.setdefault(c, (code, {}))[1].setdefault(key or target, target)
+            if not _ABSOLUTE.match(href) and href not in written:
+                written.add(href)
+                add("not_absolute", {"url": url, "href": clip(robots_path(href), MAX_URL_CHARS)})
+            if key and key[0] not in hosts and key not in other:
+                other.add(key)
+                add("other_host", {"url": url, "href": clip(shown_url(target), MAX_URL_CHARS)})
+            if key and key not in own:
+                j = by_key.get(key)
+                if j is None:
+                    not_fetched.add(key)
+                elif j != i:
+                    named.add(j)
+        for code, targets in codes.values():
+            if len(targets) > 1:
+                add("duplicates", {"url": url, "hreflang": shown_code(code), "urls": len(targets),
+                                   "hrefs": [clip(shown_url(t), MAX_URL_CHARS)
+                                             for t in list(targets.values())[:HREFLANG_URLS_SHOWN]]})
+    # a pair of fetched pages, one naming the other: one-way unless the other names it back
+    pairs, one_way = set(), []
+    for i, named in enumerate(names):
+        for j in sorted(named):
+            if (min(i, j), max(i, j)) in pairs:
+                continue
+            pairs.add((min(i, j), max(i, j)))
+            if i not in names[j]:
+                one_way.append({"from": recs[i][0], "to": recs[j][0]})
+    return {"pages_searched": len(recs), "pages_with_hreflang": counts["pages"], "annotations": total,
+            "pages_with_link_header": in_header, "pages": lists["pages"],
+            "no_self_reference": counts["no_self"], "no_self_reference_pages": lists["no_self"],
+            "invalid_codes": counts["invalid"], "invalid": lists["invalid"],
+            "duplicate_codes": counts["duplicates"], "duplicates": lists["duplicates"],
+            "not_absolute": counts["not_absolute"], "not_absolute_hrefs": lists["not_absolute"],
+            "other_host": counts["other_host"], "other_host_hrefs": lists["other_host"],
+            "pairs_checked": len(pairs), "one_way": len(one_way), "one_way_pairs": one_way[:ACCESS_LIST_MAX],
+            "targets_not_fetched": len(not_fetched), "not_read": not_read}
+
+
 def shown_origin(root):
     """The scheme and host of a report's target, as shown_url() writes them, so a view can list a page by its path."""
     try:
@@ -2421,6 +2657,9 @@ def access_lines(access, fmt="text", origin=None):
                        % (sl["sitemap_urls_linked"], m, where))
             out += _table(("Page",), [[(page(u),)] for u in sl["unlinked_sitemap_urls"]],
                           m - sl["sitemap_urls_linked"], md)
+    hl = access.get("hreflang")
+    if hl:
+        out += _hreflang_lines(hl, md, quote, page)
     if md:
         # each sentence its own paragraph: Markdown joins lines that no blank line parts, except a table's rows
         spaced = []
@@ -2432,9 +2671,92 @@ def access_lines(access, fmt="text", origin=None):
     return out
 
 
-def _table(head, pages, total, md):
+def _hreflang_lines(hl, md, quote, page):
+    """access_lines() for `access.hreflang`: what the fetched pages' annotations say, as found. `quote` and `page` fence
+    the site's text as the rest of the section does."""
+    n, k = hl["pages_searched"], hl["pages_with_hreflang"]
+    if not n:
+        return ["hreflang: no page was fetched this run, so no annotation was read."]
+    where = "%d fetched page%s" % (n, "" if n == 1 else "s")
+    if not k:
+        return ["No hreflang annotations on the %s (link elements in the server HTML, or an HTTP Link header)." % where]
+    hdr = hl["pages_with_link_header"]
+    a = hl["annotations"]
+    if n == 1:
+        first = "hreflang annotations: the 1 fetched page carries %d%s." % (a, ", in an HTTP Link header" if hdr else "")
+    else:
+        first = "hreflang annotations: %d of the %s carr%s them, %d in all%s." % (
+            k, where, "ies" if k == 1 else "y", a, "" if not hdr else "; %d page%s carr%s them in an HTTP Link header"
+            % (hdr, "" if hdr == 1 else "s", "ies" if hdr == 1 else "y"))
+    out = [first]
+    m = hl["no_self_reference"]
+    if m:
+        out.append("%d of them %s not list %s among %s own annotations:" % (
+            m, "does" if m == 1 else "do", "itself" if m == 1 else "themselves", "its" if m == 1 else "their"))
+        out += _table(("Page",), [[(page(u),)] for u in hl["no_self_reference_pages"]], m, md)
+    else:
+        out.append("Each of them lists itself among its own annotations." if k > 1 else
+                   "It lists itself among its own annotations.")
+    m = hl["invalid_codes"]
+    if m:
+        out.append("%d code%s outside the subset of BCP 47 that Google's hreflang documentation supports (an ISO "
+                   "639-1 language, optionally an ISO 15924 script and an assigned ISO 3166-1 alpha-2 region, or "
+                   "x-default):"
+                   % (m, " is" if m == 1 else "s are"))
+        out += _table(("Page", "Code", "Why"), [[(page(x["url"]), quote(x["hreflang"]), HREFLANG_PROBLEMS[x["problem"]])]
+                                                for x in hl["invalid"]], m, md, "code")
+    m = hl["duplicate_codes"]
+    if m:
+        out.append("%d code%s more than one URL on the same page:" % (m, " names" if m == 1 else "s name"))
+
+        def urls(x):
+            shown = [page(u) for u in x["hrefs"][:3]]
+            return ", ".join(shown) + (" and %d more" % (x["urls"] - 3) if x["urls"] > 3 else "")
+        out += _table(("Page", "Code", "URLs"), [[(page(x["url"]), quote(x["hreflang"]), urls(x))]
+                                                 for x in hl["duplicates"]], m, md, "code")
+    m = hl["not_absolute"]
+    if m:
+        out.append("%d annotation%s a URL that is not absolute (a relative path, no scheme, or a scheme other than "
+                   "http and https), as written:" % (m, " names" if m == 1 else "s name"))
+        out += _table(("Page", "As written"), [[(page(x["url"]), quote(x["href"]))] for x in hl["not_absolute_hrefs"]],
+                      m, md, "annotation")
+    m = hl["other_host"]
+    if m:
+        out.append("%d annotation%s a URL on another host, which hreflang allows:" % (m, " names" if m == 1 else "s name"))
+        out += _table(("Page", "URL"), [[(page(x["url"]), page(x["href"]))] for x in hl["other_host_hrefs"]],
+                      m, md, "annotation")
+    pc, ow, nf = hl["pairs_checked"], hl["one_way"], hl["targets_not_fetched"]
+    if not pc and not nf:
+        out.append("The annotations name no page but their own, so there is no return link to check.")
+    elif not pc:
+        out.append("Return links are checked only between the pages this run fetched, and %s, so none was checked." % (
+            "the one other URL the annotations name was not fetched" if nf == 1 else
+            "none of the %d other URLs the annotations name was fetched" % nf))
+    else:
+        if ow:
+            out.append("Return links, checked only between the pages this run fetched: %d of the %d pair%s in which "
+                       "one page names the other %s one-way (the first page names the second, which does not name it "
+                       "back):" % (ow, pc, "" if pc == 1 else "s", "is" if ow == 1 else "are"))
+            out += _table(("Page", "Names, not named back by"), [[(page(x["from"]), page(x["to"]))]
+                                                                  for x in hl["one_way_pairs"]], ow, md, "pair")
+        else:
+            out.append("Return links, checked only between the pages this run fetched: in %s %d pair%s in which one "
+                       "page names the other, each names the other." % ("the" if pc == 1 else "all", pc,
+                                                                         "" if pc == 1 else "s"))
+        if nf:
+            out.append("%d other URL%s the annotations name %s not fetched this run, so %s return link%s %s not "
+                       "checked." % (nf, "" if nf == 1 else "s", "was" if nf == 1 else "were", "its" if nf == 1 else
+                                     "their", "" if nf == 1 else "s", "was" if nf == 1 else "were"))
+    if hl.get("not_read"):
+        k = hl["not_read"]
+        out.append("%d more annotation%s not read: a page's first %d are read, and the counts cover those." % (
+            k, " was" if k == 1 else "s were", HREFLANG_PAGE_MAX))
+    return out
+
+
+def _table(head, pages, total, md, unit="page"):
     """The rows of the first ACCESS_ROWS pages (each page a list of rows), as a Markdown table or indented text, and a
-    line saying how many of the `total` pages are not shown."""
+    line saying how many of the `total` pages (or other `unit`s: codes, annotations, pairs) are not shown."""
     rows = [r for p in pages[:ACCESS_ROWS] for r in p]
     if md:
         out = ["", "| %s |" % " | ".join(head), "|" + "---|" * len(head)] + ["| %s |" % " | ".join(r) for r in rows]
@@ -2445,8 +2767,8 @@ def _table(head, pages, total, md):
     if md:
         out.append("")      # a line right under a Markdown table would be read as another row
     if rest:
-        out.append("%s%d more page%s; the JSON report lists the first %d." % (
-            "" if md else "  ", rest, "" if rest == 1 else "s", ACCESS_LIST_MAX))
+        out.append("%s%d more %s%s; the JSON report lists the first %d." % (
+            "" if md else "  ", rest, unit, "" if rest == 1 else "s", ACCESS_LIST_MAX))
     return out
 
 
@@ -3295,8 +3617,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # ── outside the score: robots.txt page by page ──
     # The homepage, the sampled pages and the first URLs of the sitemap p1.sitemap read (the first child of a sitemap
     # index), held against robots.txt as RFC 9309 and a first-match reading choose a rule (robots_paths). Nothing is
-    # fetched for it, nor for the links below: they read the pages this run already has, the homepage, the sampled
-    # pages and the section indexes discover() read (in this run's memo; a pinned sample has none).
+    # fetched for it, nor for the links and the hreflang annotations below: they read the pages this run already has,
+    # the homepage, the sampled pages and the section indexes discover() read (in this run's memo; a pinned sample has
+    # none).
     with memo.lock:
         got = dict(memo.got)
     fetched = lambda u: pages.get(u) or got.get((u, UA_BROWSER, "GET"))
@@ -3327,7 +3650,9 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     home = (root + "/", home_r) if is_page(home_r) else None
     searched = ([home] if home else []) + [(u, r) for u, r in live.items()] + \
         [(u, r) for u, r in ((root + p, got.get((root + p, UA_BROWSER, "GET"))) for p in SECTION_INDEXES) if is_page(r)]
-    access = {"robots_paths": rp, "server_links": server_links(home, searched, list(live), linked_sitemap, site, scope)}
+    # ── outside the score: hreflang annotations on the same pages, in their HTML and their Link headers ──
+    access = {"robots_paths": rp, "server_links": server_links(home, searched, list(live), linked_sitemap, site, scope),
+              "hreflang": hreflang(searched, site)}
 
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
     # one last pass: whatever a page managed to put into a string, no control or bidi character leaves here

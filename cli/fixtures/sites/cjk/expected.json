@@ -28,6 +28,20 @@
     "sitemap_urls": 9,
     "sitemap_urls_linked": 7
   },
+  "_hreflang": {
+    "pages_searched": 9,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "p2.freshness": "Dates flush against Chinese text ('更新于2026年8月28日') are read; before 1.3.0 a \\b in the date pattern missed them and this scored 3.",
     "p2.sourced-stats": "Figures flush against Chinese text ('占用了61%的', '样本为1,860家') count, and their source link sits in the next paragraph; before 1.3.0 CJK counted as a word boundary and this scored 3.",

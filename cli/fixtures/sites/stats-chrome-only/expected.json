@@ -24,6 +24,20 @@
     "sitemap_urls": 3,
     "sitemap_urls_linked": 1
   },
+  "_hreflang": {
+    "pages_searched": 4,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "p2.sourced-stats": "Every figure sits in body text with no source beside it. The only links off the site and the only source word are in the chrome: a 'Research' menu item, partner logos, social icons and a share button in the header, nav, footer, an aside inside <main>, a contents list inside <article> and role=banner/navigation/contentinfo elements. Before 1.5.0 the whole page was read when it had no <main>, and this scored 7."
   },

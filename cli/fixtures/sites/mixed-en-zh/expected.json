@@ -28,6 +28,20 @@
     "sitemap_urls": 7,
     "sitemap_urls_linked": 3
   },
+  "_hreflang": {
+    "pages_searched": 8,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "_lang": "A Chinese homepage and seven English pages: the most common page language. Through 1.4.x the one Chinese page made the site zh-CN.",
     "p2.answer-passages": "Each page in its own unit: the seven English pages in words, the Chinese homepage in characters. Through 1.4.x one Chinese page held every page to 50–200 characters, the English passages were counted in words against it, and this scored 4 (the airwallex.com misreading).",

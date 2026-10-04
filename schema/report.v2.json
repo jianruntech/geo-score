@@ -432,7 +432,7 @@
     "access": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Observations about how crawlers reach the site's pages, reported outside the score: nothing here enters readiness, observable_max or normalised, and the rubric does not define them. URLs and robots.txt rules are in the form RFC 9309 section 2.2.2 compares them in (percent-encoding normalised). Optional.",
+      "description": "Observations about how crawlers reach the site's pages and what the pages tell them about their language versions, reported outside the score: nothing here enters readiness, observable_max or normalised, and the rubric does not define them. URLs and robots.txt rules are in the form RFC 9309 section 2.2.2 compares them in (percent-encoding normalised). Optional.",
       "properties": {
         "robots_paths": {
           "type": "object",
@@ -679,6 +679,268 @@
                 "type": "string"
               },
               "description": "The first 50 of the others, in sitemap order."
+            }
+          }
+        },
+        "hreflang": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pages_searched",
+            "pages_with_hreflang",
+            "annotations",
+            "pages_with_link_header",
+            "pages",
+            "no_self_reference",
+            "no_self_reference_pages",
+            "invalid_codes",
+            "invalid",
+            "duplicate_codes",
+            "duplicates",
+            "not_absolute",
+            "not_absolute_hrefs",
+            "other_host",
+            "other_host_hrefs",
+            "pairs_checked",
+            "one_way",
+            "one_way_pairs",
+            "targets_not_fetched",
+            "not_read"
+          ],
+          "description": "hreflang annotations on the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), reported as found: each <link> whose rel names alternate and that has an hreflang and an href, outside comments, scripts, styles and templates, anywhere in the server HTML (a link whose type names something other than HTML, as a feed's does, is left out), and each link in the page's HTTP Link header (RFC 8288) with rel alternate and an hreflang parameter, every Link line read. Annotations from a sitemap are not read. Each href resolves against the URL its page was answered from; two URLs name one page when their host, path (without a trailing slash, percent-encoding normalised) and query match, whatever the scheme and fragment. Codes are held to the subset of BCP 47 that Google's hreflang documentation supports: an ISO 639-1 language, optionally an ISO 15924 script, optionally an officially assigned ISO 3166-1 alpha-2 region, or x-default, in any letter case. Return links are checked only between the fetched pages. Codes and hrefs as written are shown with each character outside printable ASCII, and each of ' <>\"{}|\\^`', percent-encoded. Only the first 1,000 annotations of a page are read (see not_read). No request is made for it.",
+          "properties": {
+            "pages_searched": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fetched pages read for annotations, each once."
+            },
+            "pages_with_hreflang": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of them, those that carry at least one annotation."
+            },
+            "annotations": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Annotations read on them, in the HTML and in Link headers."
+            },
+            "pages_with_link_header": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pages that carry annotations in their HTTP Link header."
+            },
+            "pages": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 pages that carry annotations, with how many.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "annotations"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "annotations": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            },
+            "no_self_reference": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pages with annotations none of which names the page itself (its requested or its answered URL)."
+            },
+            "no_self_reference_pages": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "invalid_codes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Codes outside the subset, counted once per page and code (letter case aside)."
+            },
+            "invalid": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "hreflang",
+                  "problem"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "hreflang": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "The code as written, cut at 64 characters."
+                  },
+                  "problem": {
+                    "enum": [
+                      "form",
+                      "language",
+                      "region"
+                    ],
+                    "description": "form: not language[-Script][-REGION] (an underscore, a word, a fourth part). language: two or three letters that are no ISO 639-1 code (a two-letter subtag of the IANA Language Subtag Registry). region: no officially assigned ISO 3166-1 alpha-2 code (UK, EU, UN, or a three-digit area such as 419)."
+                  }
+                }
+              }
+            },
+            "duplicate_codes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Codes that name more than one page on the same page (letter case aside), counted once per page and code."
+            },
+            "duplicates": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "hreflang",
+                  "urls",
+                  "hrefs"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "hreflang": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "urls": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "description": "How many pages the code names there."
+                  },
+                  "hrefs": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The first 10 of them, resolved."
+                  }
+                }
+              }
+            },
+            "not_absolute": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Annotations whose href, as written, is not an absolute http or https URL (a relative path, no scheme, or another scheme), counted once per page and href."
+            },
+            "not_absolute_hrefs": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them, as written.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "href"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "href": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "other_host": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Annotations naming a URL on a host that is not this site's (the audited host, or the one its homepage redirected to), counted once per page and URL. hreflang allows it; it is noted only."
+            },
+            "other_host_hrefs": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them, resolved.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url",
+                  "href"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The annotated page, as it was answered (scheme and host as given, path and query in the form RFC 9309 section 2.2.2 compares them in)."
+                  },
+                  "href": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "pairs_checked": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pairs of fetched pages in which at least one names the other."
+            },
+            "one_way": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of them, pairs in which only one names the other."
+            },
+            "one_way_pairs": {
+              "type": "array",
+              "maxItems": 50,
+              "description": "The first 50 of them: from names to, and to does not name from back.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "targets_not_fetched": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Other pages the annotations name that the run did not fetch: their return links are not checked."
+            },
+            "not_read": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Annotations past the first 1,000 of a page, counted and not read; the other counts and lists cover the ones read. 0 on any real page."
             }
           }
         }

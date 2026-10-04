@@ -24,6 +24,20 @@
     "sitemap_urls": 3,
     "sitemap_urls_linked": 1
   },
+  "_hreflang": {
+    "pages_searched": 4,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "p2.sourced-stats": "Each figure has its source beside it: a link in its own paragraph, in the next table cell or the next paragraph, or a footnote reference whose note links out. A figure beside a link to the site's own GitHub profile (its sameAs) is not attributed, and one named only by <cite> is attributed without a link: most, not all, of those pages' figures are linked."
   },

@@ -28,6 +28,20 @@
     "sitemap_urls": 7,
     "sitemap_urls_linked": 3
   },
+  "_hreflang": {
+    "pages_searched": 8,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "_lang": "Japanese pages (<html lang=\"ja\">, kana in the text). Through 1.4.x any page with enough Han characters made the site zh-CN.",
     "g.ssr": "Kana counts as characters. Through 1.4.x only Han was counted, every page read as 47–79 characters, and this gate scored 0 (the site was capped at 40).",

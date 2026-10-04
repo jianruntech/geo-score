@@ -25,6 +25,20 @@
     "sitemap_urls": 4,
     "sitemap_urls_linked": 4
   },
+  "_hreflang": {
+    "pages_searched": 5,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "g.robots": 5,
   "g.reachable": 0,
   "g.ssr": 5,

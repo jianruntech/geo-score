@@ -28,6 +28,20 @@
     "sitemap_urls": 8,
     "sitemap_urls_linked": 7
   },
+  "_hreflang": {
+    "pages_searched": 9,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "g.robots": "Disallow: / for GPTBot, ClaudeBot, CCBot, Google-Extended and Applebot-Extended only, with * Allow: /. Training crawlers and opt-out tokens are not scored (reference/ai-crawlers.md), so full marks and no cap. Before 1.5.0 this read 0 and capped the site at 40.",
     "_gate_capped": "No retrieval crawler is disallowed, so no gate is at zero.",

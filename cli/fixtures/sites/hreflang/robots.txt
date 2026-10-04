@@ -1,0 +1,5 @@
+# Lumen Kettle: every crawler is welcome
+User-agent: *
+Allow: /
+
+Sitemap: {{ORIGIN}}/sitemap.xml

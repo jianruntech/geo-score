@@ -26,6 +26,20 @@
     "sitemap_urls": 5,
     "sitemap_urls_linked": 3
   },
+  "_hreflang": {
+    "pages_searched": 6,
+    "pages_with_hreflang": 0,
+    "annotations": 0,
+    "pages_with_link_header": 0,
+    "no_self_reference": 0,
+    "invalid_codes": 0,
+    "duplicate_codes": 0,
+    "not_absolute": 0,
+    "other_host": 0,
+    "pairs_checked": 0,
+    "one_way": 0,
+    "targets_not_fetched": 0
+  },
   "_notes": {
     "_lang": "German pages (<html lang=\"de\">). Through 1.4.x every site that was not Chinese was en.",
     "p2.answer-passages": "Read in words, 25–120.",
