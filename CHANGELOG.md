@@ -5,6 +5,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Fixed
+- **A run started at one page no longer reads its site navigation as no links.** The server-HTML links
+  observation (new in 1.7.0) kept only links inside the path the run was given, so `geo_score.py example.com/product`
+  counted 0 links on a page with a full navigation bar and flagged it as navigation that appears only after
+  JavaScript runs. Links now count anywhere on the host, the start page itself aside, and the report names that page
+  as the page the run started from rather than the homepage ("links to N pages on this host"). Reported from a live
+  site the day 1.7.0 shipped. Never part of the score.
+
 ## [1.7.0] — 2026-10-04
 
 ### Added

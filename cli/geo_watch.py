@@ -3231,7 +3231,7 @@ def score_summary(gs, res, j):
     # what the run observed outside the score (robots.txt page by page, links in the server HTML, hreflang
     # annotations), in the CLI's words; an older scorer has no access_lines, and its report no access field
     if callable(getattr(gs, "access_lines", None)) and j.get("access"):
-        acc = gs.access_lines(j["access"], "md", gs.shown_origin(j["target"]))
+        acc = gs.access_lines(j["access"], "md", gs.shown_origin(j["target"]), start=j["target"])
         if acc:
             L += ["", "## Outside the score (observed, never scored)", ""] + acc
     L.append("\nReadiness says whether AI *can* cite the site; `run` measures whether it *does*.")

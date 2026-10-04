@@ -2313,7 +2313,13 @@ def server_links(home, pages, sampled, sitemap_urls, hosts, scope=""):
     URLs; `sitemap_urls` the sitemap URLs the access observations check; `hosts` this site's hosts (site_path): the
     audited host, and the one its homepage redirected to. Each page's links are resolved against the URL it was
     answered from. The homepage is where a crawl starts, so it is never held against the links: `sitemap_urls` counts
-    the others. Only these pages are searched, so a URL none of them links to is not shown to be orphaned."""
+    the others. Only these pages are searched, so a URL none of them links to is not shown to be orphaned.
+    A link counts wherever on the site it points, whatever `scope` the run was given: a crawler that lands on
+    /docs/page follows its link to /pricing as readily as one to /docs/other. (1.7.0 kept only links inside the
+    scope, so a run started at one page, example.com/product, read its site navigation as no links at all.) `scope`
+    still names the page the run started from when `home` is None."""
+    scope_key = robots_path(scope).rstrip("/") or "/"
+    scope = ""
     links, seen = [], set()
     for u, r in pages:
         k = link_key(r.url or u, hosts, scope) or link_key(u, hosts, scope)
@@ -2324,7 +2330,7 @@ def server_links(home, pages, sampled, sitemap_urls, hosts, scope=""):
         found.discard(link_key(u, hosts, scope))
         links.append(found)
     reached = set().union(*links) if links else set()
-    home_key = robots_path(scope).rstrip("/") or "/"
+    home_key = (link_key(home[1].url or home[0], hosts) or link_key(home[0], hosts) or scope_key) if home else scope_key
     home_links = page_links(home[1].text, home[1].url or home[0], hosts, scope) - {home_key} if home else None
     others = list(dict.fromkeys(k for k in (link_key(u, hosts, scope) for u in sampled) if k and k != home_key))
     sitemap_urls = [u for u in sitemap_urls if link_key(u, hosts, scope) != home_key]
@@ -2612,10 +2618,11 @@ def shown_origin(root):
     return "%s://%s" % (u.scheme, robots_path(u.netloc))
 
 
-def access_lines(access, fmt="text", origin=None):
+def access_lines(access, fmt="text", origin=None, start=None):
     """The observations outside the score (schema/report.v2.json, `access`) as lines of plain text or Markdown, the
     same in every view: what they found, and at most ACCESS_ROWS pages of each list. `origin` shortens a URL on it to
-    its path. Never part of the score."""
+    its path; `start` is the URL the run started from, so a run given one page calls that page what it is rather than
+    "the homepage". Never part of the score."""
     if not access:
         return []
     md = fmt == "md"
@@ -2675,16 +2682,23 @@ def access_lines(access, fmt="text", origin=None):
     sl = access.get("server_links")
     if sl:
         n = sl["home_links"]
+        # a run given one page starts there, not at the homepage
+        at_root = not start or urllib.parse.urlsplit(start).path in ("", "/")
+        first = "the homepage" if at_root else "the page the run started from"
+        whose = "The homepage's server HTML" if at_root else "The server HTML of %s, %s," % (page(start.rstrip("/")), first)
+        # links count anywhere on the host (server_links): under a path, that is more than the site the run was given
+        on = "this site" if at_root else "this host"
         if n is None:
-            out.append("Links in the server HTML: the homepage was not fetched this run, so its links were not read.")
+            out.append("Links in the server HTML: %s was not fetched this run, so its links were not read." % first)
         elif sl["few_home_links"]:
-            out.append("The homepage's server HTML links to %d page%s on this site (fewer than %d): navigation that "
-                       "appears only after JavaScript runs cannot be followed by crawlers that do not run it. It links "
-                       "to %d of the %d other sampled pages." % (n, "" if n == 1 else "s", FEW_HOME_LINKS,
-                                                                 sl["home_links_to_sampled"], sl["other_sampled"]))
+            out.append(whose + (" links to %d page%s on %s (fewer than %d): navigation that appears only after "
+                                "JavaScript runs cannot be followed by crawlers that do not run it. It links to %d of the "
+                                "%d other sampled pages." % (n, "" if n == 1 else "s", on, FEW_HOME_LINKS,
+                                                             sl["home_links_to_sampled"], sl["other_sampled"])))
         else:
-            out.append("The homepage's server HTML links to %d pages on this site, %d of the %d other sampled pages "
-                       "among them." % (n, sl["home_links_to_sampled"], sl["other_sampled"]))
+            out.append(whose + " links to %d pages on %s" % (n, on) + (
+                ", %d of the %d other sampled pages among them." % (sl["home_links_to_sampled"], sl["other_sampled"])
+                if sl["other_sampled"] else "."))
         m, searched = sl["sitemap_urls"], sl["pages_searched"]
         where = "%d fetched page%s" % (searched, "" if searched == 1 else "s")
         if not m:
@@ -2694,9 +2708,9 @@ def access_lines(access, fmt="text", origin=None):
                        % (m, where))
         else:
             out.append("%d of the %d checked sitemap URLs are linked from the server HTML of at least one of the %s "
-                       "(the homepage, the sampled pages and the section indexes). Only those pages were searched, so "
+                       "(%s, the sampled pages and the section indexes). Only those pages were searched, so "
                        "a URL they do not link to is not necessarily orphaned. Not linked from them:"
-                       % (sl["sitemap_urls_linked"], m, where))
+                       % (sl["sitemap_urls_linked"], m, where, first))
             out += _table(("Page",), [[(page(u),)] for u in sl["unlinked_sitemap_urls"]],
                           m - sl["sitemap_urls_linked"], md)
     hl = access.get("hreflang")
@@ -3989,7 +4003,7 @@ def report(res, args):
         print("  %sNeeds off-site search or judgement: %s%s" % (c.grey, ", ".join(judged), c.r))
     if unseen:
         print("  %sNot observable this run: %s%s" % (c.grey, ", ".join(unseen), c.r))
-    acc = access_lines(res.get("access"), origin=shown_origin(res["root"]))
+    acc = access_lines(res.get("access"), origin=shown_origin(res["root"]), start=res["root"])
     if acc:
         print()
         print("  %sOutside the score%s %s(observed, never scored)%s" % (c.b, c.r, c.grey, c.r))

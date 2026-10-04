@@ -943,6 +943,26 @@ eq(_lines[2:], ["  «site text: /b»", "  «site text: /d»"], "and the sitemap 
 eq(gs.server_links(None, [_a], ["https://x.test/a"], [], _H)["home_links"], None, "a homepage not fetched: not observed")
 eq(gs.access_lines({"server_links": gs.server_links(None, [_a], ["https://x.test/a"], [], _H)})[0],
    "Links in the server HTML: the homepage was not fetched this run, so its links were not read.", "and says so")
+# a run given one page (x.test/product): the scope is that page's path, but a crawler landing there follows the site's
+# navigation anywhere on the host. 1.7.0 kept only links inside the scope, so a page with a full nav read as 0 links
+# and was flagged as navigation that needs JavaScript (seen on a live site, 2026-10-04)
+_prod = ("https://x.test/product/", _resp("https://x.test/product", '<nav><a href="/">h</a><a href="/pricing">p</a>'
+         '<a href="/about">a</a><a href="/product/specs">s</a><a href="/product">self</a></nav>'))
+_sp = gs.server_links(_prod, [_prod], ["https://x.test/product/specs"], ["https://x.test/product/specs"], _H, "/product")
+eq((_sp["home_links"], _sp["few_home_links"], _sp["home_links_to_sampled"], _sp["sitemap_urls_linked"]), (4, False, 1, 1),
+   "a run started at one page counts its links anywhere on the site, the page itself aside")
+_spl = gs.access_lines({"server_links": _sp}, origin="https://x.test", start="https://x.test/product")
+eq(_spl[0], "The server HTML of «site text: /product», the page the run started from, links to 4 pages on this host, "
+            "1 of the 1 other sampled pages among them.", "and names that page for what it is, not as the homepage")
+ok(all("homepage" not in l for l in _spl), "no line calls it the homepage: %r" % _spl)
+eq(gs.access_lines({"server_links": _sp}, origin="https://x.test", start="https://x.test/")[0][:28],
+   "The homepage's server HTML l", "a run started at the root still says homepage")
+eq(gs.access_lines({"server_links": dict(_sp, other_sampled=0, home_links_to_sampled=0)}, start="https://x.test/")[0],
+   "The homepage's server HTML links to 4 pages on this site.", "no other sampled page: no 0-of-0 clause")
+eq(gs.access_lines({"server_links": gs.server_links(None, [_a], ["https://x.test/a"], [], _H)},
+                   start="https://x.test/product")[0],
+   "Links in the server HTML: the page the run started from was not fetched this run, so its links were not read.",
+   "a start page not fetched, named as such")
 
 # ── hreflang annotations, reported outside the score ──
 # codes: the subset of BCP 47 Google's hreflang documentation supports, in any letter case; the common slips are named
