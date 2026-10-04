@@ -3,7 +3,7 @@
   "manifest_version": "0.3",
   "name": "geo-score",
   "display_name": "geo-score",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
   "long_description": "geo-score measures AI visibility at three levels.\n\n- **score_site** (level 1) scores a URL 0-100 against an open rubric: can AI engines reach, parse, trust and cite it. Free, no key, reads public pages only.\n- **ask** (level 2) asks one question to each AI engine you have a key for, through its search-enabled API, and reports who the answer cites.\n- **run**, **list_runs**, **report** and **diff** (level 3) track a question set over time, with intervals and a paired significance test.\n- **status** says what can run right now, without spending anything.\n\nEvery key is optional and stays in your keychain; each is sent only to its own provider. No telemetry. Standard library Python 3.8+, no dependencies.",
   "author": {
@@ -148,7 +148,7 @@
     "watch_config": {
       "type": "file",
       "title": "geo-score-watch.json",
-      "description": "Optional. The config that run, list_runs, report and diff read; create it with `uvx geo-score@1.7.0 watch init`. Runs are saved next to it.",
+      "description": "Optional. The config that run, list_runs, report and diff read; create it with `uvx geo-score@1.7.1 watch init`. Runs are saved next to it.",
       "required": false,
       "default": ""
     }

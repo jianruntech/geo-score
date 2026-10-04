@@ -7,13 +7,13 @@
 `geo_watch.py` 放在它旁边。
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.7.0/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.7.1/cli/geo_score.py \
   | python3 - yoursite.com
 ```
 
-三级都在 PyPI 上的同一个包里：`uvx geo-score@1.7.0 yoursite.com` 不安装直接运行，`pipx install geo-score==1.7.0`
+三级都在 PyPI 上的同一个包里：`uvx geo-score@1.7.1 yoursite.com` 不安装直接运行，`pipx install geo-score==1.7.1`
 装好 `geo-score` 和 `geo-score-mcp` 两个命令。访问不了 PyPI 时，发布的 wheel 包用法一样：
-`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.7.0/geo_score-1.7.0-py3-none-any.whl`。
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.7.1/geo_score-1.7.1-py3-none-any.whl`。
 
 ## <a id="options"></a>参数
 
@@ -393,7 +393,7 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 在 `summary.engines` 和 `summary.share_of_voice` 的每一行里以 `named_first`、`any_named` 和 `mention_share` 给出；1.6.0 之前保存的运行，
 由保存的回答当场算出。
 
-**通过 MCP 使用。** `uvx geo-score@1.7.0 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
+**通过 MCP 使用。** `uvx geo-score@1.7.1 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见
 [guide/mcp.zh-CN.md](../guide/mcp.zh-CN.md)。
