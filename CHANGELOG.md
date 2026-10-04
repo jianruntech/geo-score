@@ -43,12 +43,30 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   be followed by crawlers that do not run it"), and names the checked sitemap URLs no fetched page links to (the
   homepage aside, since a crawl starts there). Only the fetched pages are searched, so a page they do not link to is
   not shown to be orphaned, and the report says so. No request is added, and it is never scored.
-- **The text report, the MCP `score_site` summary and the Action's job summary show both under "Outside the score".**
-  The JSON report carries them in a new optional `access` field (`access.robots_paths`, `access.server_links`),
-  registered in schema/report.v2.json; each lists the first 50 pages, and its counts cover them all. The terminal
-  report quotes a page's path and a robots.txt pattern as `«site text: …»`, the Markdown views as code. A new e2e
-  fixture, `hidden-pages`, has a path rule that closes its pricing page, rules the two readings part on, and a menu
-  only a script writes; every fixture's `expected.json` pins the new counts.
+- **hreflang annotations on the fetched pages, outside the score.** On the same pages, the report reads each
+  `<link rel="alternate" hreflang="…" href="…">` in the server HTML (outside comments, scripts, styles and templates; a
+  feed's alternate left out) and each `rel="alternate"` link with an `hreflang` parameter in the page's HTTP `Link`
+  header, every `Link` line read (a response's repeated `Link` lines used to keep only the last). It says how many
+  pages carry annotations and how many there are, and lists, as found: pages whose annotations leave the page itself
+  out; codes outside the subset of BCP 47 that Google's hreflang documentation supports (an ISO 639-1 language,
+  optionally an ISO 15924 script and an officially assigned ISO 3166-1 alpha-2 region, or `x-default`), so `en_US`,
+  `jp`, `en-UK` and `es-419` are listed, each with why; a code that names more than one URL on one page; hrefs that are
+  not absolute, as written; and URLs on another host, which hreflang allows and the report only notes. Return links are
+  checked only between the pages the run fetched: a pair where one page names the other and is not named back is
+  listed, and the other URLs the annotations name are counted as not checked. A site with none gets one line. The
+  codes are the two-letter language subtags of the IANA Language Subtag Registry (File-Date 2026-09-17) and the 249
+  officially assigned ISO 3166-1 alpha-2 codes among its region subtags; the registry and Google's page (last updated 2026-09-21) were read on
+  2026-10-04. Only the first 1,000 annotations of a page are read, and the rest are counted. No request is added, and
+  it is never scored: rubric v1.1, every tier and the leaderboard are unchanged.
+- **The text report, the MCP `score_site` summary and the Action's job summary show all three under "Outside the
+  score".** The JSON report carries them in a new optional `access` field (`access.robots_paths`,
+  `access.server_links`, `access.hreflang`), registered in schema/report.v2.json; each lists the first 50 pages, and
+  its counts cover them all. The terminal report quotes a page's path, a robots.txt pattern and an hreflang code or
+  href as `«site text: …»`, the Markdown views as code. A new e2e fixture, `hidden-pages`, has a path rule that closes
+  its pricing page, rules the two readings part on, and a menu only a script writes; another, `hreflang`, has a page
+  that is not named back, annotations in two `Link` header lines, and the code and href slips above; the `hostile`
+  fixture carries its injection text in an hreflang code and href. Every fixture's `expected.json` pins the new
+  counts.
 - **The Claude Code skill installs with `npx skills add jianruntech/geo-score`** (the open skills CLI; `-g` for a
   global install). Checked on 2026-10-04: it finds one skill, `geo-score`, and copies the whole repository, about
   9 MB, into `.claude/skills/geo-score`. The README's `git clone` stays as the way without Node.js.

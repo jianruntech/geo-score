@@ -200,7 +200,7 @@ CLI 和一个细心的人判断不一致时，以人为准，量表是裁判。�
 
 ## 分数之外
 
-报告在各检查项之后、**Outside the score** 标题下，给出两项关于爬虫怎样到达站内页面的观测。它们从不计分：不影响任何一档、
+报告在各检查项之后、**Outside the score** 标题下，给出三项观测：爬虫怎样到达站内页面，以及页面告诉爬虫自己有哪些语言版本。它们从不计分：不影响任何一档、
 任何分数和档位，量表里也没有定义。不为它们多发请求，读的是这次运行已经拿到的 robots.txt、sitemap 和页面。JSON 报告放在可选字段
 `access` 里（[`schema/report.v2.json`](../schema/report.v2.json)），MCP `score_site` 摘要和 Action 的 job summary 显示同样的内容，
 `--brief` 不显示。
@@ -224,9 +224,23 @@ CLI 和一个细心的人判断不一致时，以人为准，量表是裁判。�
   因为爬虫照样看得见。报告写明首页链接到本站几个页面、其中有几个是其他抽样页面，以及上面检查的 sitemap URL 里
   （首页除外，爬取从它开始）有几个被至少一个抓到的页面链接到，并列出其余的。首页链接少于 3 个时给出提示：只在 JavaScript 运行后才出现的导航，
   不运行 JavaScript 的爬虫跟不过去。只搜索了抓到的页面，所以没有被它们链接到的页面不能说明是孤立页面。
+- **hreflang 标注**（`access.hreflang`）。在同样这些抓到的页面上，报告读取服务端 HTML 里的每个
+  `<link rel="alternate" hreflang="…" href="…">`（不含注释、script、style、template 里的；`type` 写的不是 HTML 的链接，比如 feed 的，不算），
+  以及页面 HTTP `Link` 响应头（RFC 8288）里每个带 `hreflang` 参数的 `rel="alternate"` 链接，多行 `Link` 头每一行都读。sitemap 里的标注不读。
+  每个 href 按所在页面实际返回的地址解析；两个 URL 的主机、路径（去掉末尾斜杠）和查询参数都相同，就算同一个页面，不管 http 还是 https。
+  报告写明有几个页面带标注、一共几条，并按原样列出：标注里没有指向页面自己的页面；不在
+  [Google 的 hreflang 文档](https://developers.google.com/search/docs/specialty/international/localized-versions)所支持的 BCP 47 子集里的代码
+  （这个子集是：ISO 639-1 语言代码，可选 ISO 15924 文字代码，可选正式分配的 ISO 3166-1 alpha-2 地区代码，或者 `x-default`，不分大小写；
+  所以 `en_US`、`jp`、`en-UK`、`es-419` 都会列出，并写明原因；文字代码只看格式）；同一页面上一个代码指向不止一个 URL 的情况；
+  不是完整 `http`/`https` 地址的 href，照原样列出；以及指向其他主机的 URL，hreflang 允许这样做，报告只是注明。
+  回链只在这次运行抓到的页面之间检查：一个页面指向另一个、对方没有指回来的，列为单向；标注指向的其他 URL 只计数，记为未检查。
+  语言代码取自 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry)（File-Date 2026-09-17）里的两字母子标签，
+  地区代码取自其中 249 个正式分配的 ISO 3166-1 代码，均于 2026-10-04 读取。每个页面只读前 1,000 条标注，其余的计数。
+  抓到的页面上一条标注都没有时，只写一行。
 
-每种视图在每个标题下最多列 10 个页面，并写明还有多少；JSON 最多列前 50 个，计数覆盖全部。页面路径和 robots.txt 规则的模式
-是网站自己的文字：终端报告像引用证据那样写成 `«site text: …»`，Markdown 视图写成代码，都截到 120 个字符。
+每种视图在每个标题下最多列 10 个页面，并写明还有多少；JSON 最多列前 50 个，计数覆盖全部。页面路径、robots.txt 规则的模式、
+hreflang 代码和 href 是网站自己的文字：终端报告像引用证据那样写成 `«site text: …»`，Markdown 视图写成代码，都截到 120 个字符；
+代码和 href 里的空格、控制字符和反引号按百分号编码显示。
 
 ## <a id="watch"></a>第二、三级：实测与追踪
 

@@ -230,9 +230,10 @@ on your site — those reports are how these get better.
 
 ## Outside the score
 
-Two observations about how crawlers reach the site's pages follow the checks in the report, under **Outside the
-score**. They are never scored: no tier, no point and no band moves with them, and the rubric does not define them.
-Nothing is fetched for them; they read the robots.txt, the sitemap and the pages the run already has. The JSON report
+Three observations about how crawlers reach the site's pages, and what the pages tell them about their language
+versions, follow the checks in the report, under **Outside the score**. They are never scored: no tier, no point and
+no band moves with them, and the rubric does not define them. Nothing is fetched for them; they read the robots.txt,
+the sitemap and the pages the run already has. The JSON report
 carries them in its optional `access` field ([`schema/report.v2.json`](../schema/report.v2.json)), the MCP
 `score_site` summary and the Action's job summary show the same lines, and `--brief` leaves them out.
 
@@ -264,10 +265,30 @@ carries them in its optional `access` field ([`schema/report.v2.json`](../schema
   that links to fewer than 3 is flagged: navigation that appears only after JavaScript runs cannot be followed by
   crawlers that do not run it. Only the fetched pages are searched, so a page none of them links to is not shown to be
   orphaned.
+- **hreflang annotations** (`access.hreflang`). On the same fetched pages, the report reads each
+  `<link rel="alternate" hreflang="…" href="…">` in the server HTML (outside comments, scripts, styles and templates;
+  a link whose `type` names something other than HTML, as a feed's does, is left out) and each `rel="alternate"` link
+  with an `hreflang` parameter in the page's HTTP `Link` header (RFC 8288), every `Link` line read. Annotations in a
+  sitemap are not read. Each href resolves against the URL its page was answered from, and two URLs name one page when
+  their host, path (without a trailing slash) and query match, whatever the scheme. The report says how many pages carry
+  annotations and how many there are, and lists, as found: the pages whose annotations do not name the page itself;
+  codes outside the subset of BCP 47 that
+  [Google's hreflang documentation](https://developers.google.com/search/docs/specialty/international/localized-versions)
+  supports, which is an ISO 639-1 language, optionally an ISO 15924 script, optionally an officially assigned ISO
+  3166-1 alpha-2 region, or `x-default`, in any letter case (so `en_US`, `jp`, `en-UK` and `es-419` are listed, each
+  with why; a script is checked for its form only); a code that names more than one URL on one page; hrefs that are not
+  absolute `http` or `https` URLs, as written; and URLs on another host, which hreflang allows and the report only
+  notes. Return links are checked only between the pages the run fetched: a pair where one page names the other and is
+  not named back is listed, and the other URLs the annotations name are counted as not checked. The language codes are
+  the two-letter subtags of the
+  [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry) (File-Date 2026-09-17) and
+  the regions the 249 officially assigned ISO 3166-1 alpha-2 codes among its region subtags, both read on 2026-10-04. Only the first 1,000 annotations
+  of a page are read, and the report counts the rest. A site with no annotation on the fetched pages gets one line.
 
 Each view lists at most 10 pages under each heading and says how many more there are; the JSON lists the first 50,
-and its counts cover them all. A page's path and a robots.txt pattern are the site's text: the terminal report quotes
-them as `«site text: …»`, as evidence quotes a page, and the Markdown views as code, cut at 120 characters.
+and its counts cover them all. A page's path, a robots.txt pattern and an hreflang code or href are the site's text:
+the terminal report quotes them as `«site text: …»`, as evidence quotes a page, and the Markdown views as code, cut at
+120 characters; a code or href is shown with spaces, control characters and backticks percent-encoded.
 
 ## Watch
 

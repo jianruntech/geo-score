@@ -30,9 +30,20 @@
   `javascript:`、`mailto:`、`tel:` 链接也不算。报告写明首页链接到本站几个页面、其中有几个是其他抽样页面；首页链接少于 3 个时
   给出提示（「只在 JavaScript 运行后才出现的导航，不运行 JavaScript 的爬虫跟不过去」）；并列出没有任何一个抓到的页面链接到的、
   被检查的 sitemap URL（首页除外，爬取从它开始）。只搜索了抓到的这些页面，所以它们没链接到的页面不能说明是孤立页面，报告里也这么写。不多发请求，从不计分。
-- **文本报告、MCP `score_site` 摘要和 Action 的 job summary 都在「Outside the score」下显示这两项。** JSON 报告放在新的可选字段
-  `access` 里（`access.robots_paths`、`access.server_links`），已在 schema/report.v2.json 里登记；每项最多列出前 50 个页面，
-  计数覆盖全部。终端报告把页面路径和 robots.txt 规则的模式写成 `«site text: …»`，Markdown 视图写成代码。新增端到端 fixture `hidden-pages`：一条路径规则封掉了它的价格页、有两种读法结论不同的规则、菜单只由脚本写入；
+- **抓到的页面上的 hreflang 标注，在分数之外报告。** 在同样这些页面上，报告读取服务端 HTML 里的每个
+  `<link rel="alternate" hreflang="…" href="…">`（不含注释、script、style、template 里的；feed 的 alternate 链接不算），
+  以及页面 HTTP `Link` 响应头里每个带 `hreflang` 参数的 `rel="alternate"` 链接，多行 `Link` 头每一行都读（以前同一个响应里重复的 `Link` 头只保留最后一行）。
+  报告写明有几个页面带标注、一共几条，并按原样列出：标注里没有指向页面自己的页面；不在 Google 的 hreflang 文档所支持的 BCP 47 子集里的代码
+  （ISO 639-1 语言代码，可选 ISO 15924 文字代码和正式分配的 ISO 3166-1 alpha-2 地区代码，或者 `x-default`），所以 `en_US`、`jp`、`en-UK`、`es-419`
+  都会列出，并写明原因；同一页面上一个代码指向不止一个 URL 的情况；不是完整地址的 href，照原样列出；指向其他主机的 URL，hreflang 允许这样做，报告只是注明。
+  回链只在这次运行抓到的页面之间检查：一个页面指向另一个、对方没有指回来的，列出来；标注指向的其他 URL 只计数，记为未检查。一条标注都没有时只写一行。
+  代码取自 IANA 语言子标签注册表（File-Date 2026-09-17）里的两字母语言子标签，以及其中 249 个正式分配的 ISO 3166-1 地区代码；
+  注册表和 Google 的这一页（最后更新 2026-09-21）均于 2026-10-04 读取。每个页面只读前 1,000 条标注，其余的计数。
+  不多发请求，从不计分：量表 v1.1、每一档和公开榜单都不变。
+- **文本报告、MCP `score_site` 摘要和 Action 的 job summary 都在「Outside the score」下显示这三项。** JSON 报告放在新的可选字段
+  `access` 里（`access.robots_paths`、`access.server_links`、`access.hreflang`），已在 schema/report.v2.json 里登记；每项最多列出前 50 个页面，
+  计数覆盖全部。终端报告把页面路径、robots.txt 规则的模式、hreflang 代码和 href 写成 `«site text: …»`，Markdown 视图写成代码。新增端到端 fixture `hidden-pages`：一条路径规则封掉了它的价格页、有两种读法结论不同的规则、菜单只由脚本写入；
+  另一个 fixture `hreflang`：有一个页面没有被指回来、标注写在两行 `Link` 头里，还有上面那些代码和 href 的问题；`hostile` fixture 把注入文本写进了 hreflang 代码和 href。
   每个 fixture 的 `expected.json` 都固定了新的计数。
 - **Claude Code 技能可以用 `npx skills add jianruntech/geo-score` 安装**（开源的 skills CLI；加 `-g` 是全局安装）。
   2026-10-04 实测：它找到一个技能 `geo-score`，把整个仓库（约 9 MB）复制到 `.claude/skills/geo-score`。

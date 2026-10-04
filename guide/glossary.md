@@ -238,6 +238,19 @@ checks read by rule.
 **Where:** the trust table in the CLI reference; the README's CLI-versus-hand-audit figures.
 **More:** [CLI reference, How far to trust each check](../cli/README.md#how-far-to-trust-each-check)
 
+### hreflang
+
+An annotation by which a page names its versions in other languages or for other regions: a
+`<link rel="alternate" hreflang="de" href="…">` element, the same link in an HTTP `Link` header, or an
+entry in a sitemap. The code is a language, optionally with a script and a region (`de`, `en-GB`,
+`zh-Hant`), or `x-default`. geo-score reads the first two forms on the pages a run fetched and reports
+what it finds outside the score: pages whose annotations leave the page itself out, codes outside the
+subset Google's documentation supports, one code naming two URLs, hrefs that are not absolute, URLs on
+another host, and pairs of fetched pages where one names the other and is not named back.
+
+**Where:** `Outside the score (observed, never scored)` in the terminal report; the JSON field
+`access.hreflang`. **More:** [CLI reference, Outside the score](../cli/README.md#outside-the-score)
+
 ## J
 
 ### JUnit
@@ -373,14 +386,16 @@ reference. **More:** [AI crawler user-agents](../reference/ai-crawlers.md#the-di
 
 ### Outside the score
 
-What a report observes without scoring it: no tier, point or band moves with it. Two observations sit
+What a report observes without scoring it: no tier, point or band moves with it. Three observations sit
 there. **Pages robots.txt blocks** holds the homepage, the sampled pages and the first 200 URLs of the
 sitemap `p1.sitemap` read against each retrieval crawler's rules, read as RFC 9309 says (the longest
 matching rule decides), and **Rules read differently** names the pages where the first-match reading
 of Python's `urllib.robotparser` and many older checkers (rules in file order, the first plain prefix
 decides) reaches the other verdict. **Links in the server HTML** counts the links a crawler that runs
 no JavaScript can follow, flags a homepage that links to fewer than 3 pages of the site, and names the
-sitemap URLs that no fetched page links to; only the fetched pages are searched.
+sitemap URLs that no fetched page links to; only the fetched pages are searched. **hreflang
+annotations** lists what the fetched pages' `hreflang` links and `Link` headers say, with return links
+checked only between the fetched pages (see [hreflang](#hreflang)).
 
 **Where:** `Outside the score (observed, never scored)` after the footer of the terminal report, the
 MCP `score_site` summary and the Action's job summary; the JSON field `access`.

@@ -201,6 +201,17 @@ CLI 和人工结果的一致度，就是拿已发布的人工审计来测的。
 **出现在：** CLI 说明里的可信度表；README 里 CLI 与人工审计的对比数字。
 **详见：** [CLI 说明 · 每个检查项能信几分](../cli/README.zh-CN.md#每个检查项能信几分)
 
+### hreflang（语言版本标注）
+
+页面用来说明自己有哪些其他语言或地区版本的标注：一个 `<link rel="alternate" hreflang="de" href="…">` 元素，
+HTTP `Link` 响应头里同样的链接，或者 sitemap 里的条目。代码是一个语言代码，可以带文字代码和地区代码（`de`、`en-GB`、`zh-Hant`），
+或者 `x-default`。geo-score 在一次运行抓到的页面上读前两种形式，在分数之外报告读到的内容：标注里没有指向页面自己的页面、
+不在 Google 文档所支持子集里的代码、一个代码指向两个 URL、不是完整地址的 href、指向其他主机的 URL，
+以及抓到的页面之间一个指向另一个、对方没有指回来的情况。
+
+**出现在：** 终端报告里的 `Outside the score (observed, never scored)`；JSON 的 `access.hreflang` 字段。
+**详见：** [CLI 参考 · 分数之外](../cli/README.zh-CN.md#分数之外)
+
 ## J
 
 ### JUnit
@@ -315,11 +326,12 @@ CLI 只输出 `scored` 和 `unobservable`。**详见：** [排查指南 · 检�
 
 ### Outside the score（分数之外）
 
-报告观测到、但不计分的内容：不影响任何一档、任何分数和档位。目前有两项。**Pages robots.txt blocks** 拿首页、抽样页面和
+报告观测到、但不计分的内容：不影响任何一档、任何分数和档位。目前有三项。**Pages robots.txt blocks** 拿首页、抽样页面和
 `p1.sitemap` 读到的 sitemap 的前 200 个 URL，对照每个检索爬虫遵守的规则，按 RFC 9309 的读法判断（匹配上的规则里最长的那条说了算）；
 **Rules read differently** 列出 Python `urllib.robotparser` 和许多老检查工具的「第一条匹配」读法（按文件顺序，第一条前缀匹配的规则说了算）
 得出相反结论的页面。**Links in the server HTML** 统计不运行 JavaScript 的爬虫能跟的链接，首页链接到本站页面少于 3 个时给出提示，
-并列出没有任何一个抓到的页面链接到的 sitemap URL；只搜索了抓到的页面。
+并列出没有任何一个抓到的页面链接到的 sitemap URL；只搜索了抓到的页面。**hreflang annotations** 列出抓到的页面的
+`hreflang` 链接和 `Link` 响应头说了什么，回链只在抓到的页面之间检查（见 [hreflang](#hreflang语言版本标注)）。
 
 **出现在：** 终端报告页脚之后的 `Outside the score (observed, never scored)`、MCP `score_site` 摘要和 Action 的 job summary；
 JSON 的 `access` 字段。**详见：** [CLI 参考 · 分数之外](../cli/README.zh-CN.md#分数之外)
