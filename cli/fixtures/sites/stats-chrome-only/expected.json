@@ -10,6 +10,12 @@
     "/blog/what-a-lane-costs.html",
     "/blog/why-empty-miles-matter.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 6,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "p2.sourced-stats": "Every figure sits in body text with no source beside it. The only links off the site and the only source word are in the chrome: a 'Research' menu item, partner logos, social icons and a share button in the header, nav, footer, an aside inside <main>, a contents list inside <article> and role=banner/navigation/contentinfo elements. Before 1.5.0 the whole page was read when it had no <main>, and this scored 7."
   },

@@ -748,6 +748,109 @@ ok("PerplexityBot" in _ev and "own group" in _ev, "evidence at zero names the bl
 _ev = gs.robots_tier("User-agent: *\nDisallow: /\n", 26)[1]
 ok("* group" in _ev and "all 10" in _ev, "a * block says so: %r" % _ev)
 
+# ── robots.txt page by page (RFC 9309 2.2.2), reported outside the score ──
+# g.robots reads only a Disallow that closes the whole site, so a path rule that closed a site's conversion page left
+# every gate green. The access field reads each checked page: the longest matching rule decides, and a first-match
+# reading (urllib.robotparser and many older checkers) is reported where it disagrees.
+def _blocked(pattern, path):
+    return not gs.robots_allows([("disallow", pattern)], path)[0]
+# the matching examples of RFC 9309 section 2.2.2 and Google's robots.txt documentation
+for _pat, _yes, _no in (
+        ("/fish", ("/fish", "/fish.html", "/fish/salmon.html", "/fishheads", "/fishheads/yummy.html",
+                   "/fish.php?id=anything"), ("/Fish.asp", "/catfish", "/?id=fish", "/desert/fish")),
+        ("/fish*", ("/fish", "/fish.html", "/fish/salmon.html", "/fishheads", "/fish.php?id=anything"),
+         ("/Fish.asp", "/catfish", "/?id=fish")),
+        ("/fish/", ("/fish/", "/fish/?id=anything", "/fish/salmon.htm"), ("/fish", "/fish.html", "/animals/fish/")),
+        ("/*.php", ("/index.php", "/filename.php", "/folder/filename.php", "/folder/filename.php?parameters",
+                    "/folder/any.php.file.html", "/filename.php/"), ("/", "/windows.PHP")),
+        ("/*.php$", ("/filename.php", "/folder/filename.php"),
+         ("/filename.php?parameters", "/filename.php/", "/filename.php5", "/windows.PHP")),
+        ("/fish*.php", ("/fish.php", "/fishheads/catfish.php?parameters"), ("/Fish.PHP",))):
+    for _p in _yes:
+        ok(_blocked(_pat, _p), "robots.txt pattern %s matches %s" % (_pat, _p))
+    for _p in _no:
+        ok(not _blocked(_pat, _p), "robots.txt pattern %s does not match %s" % (_pat, _p))
+ok(not _blocked("", "/anything"), "an empty Disallow matches nothing")
+ok(not _blocked("/a$b", "/a") and _blocked("/a$b", "/a$b/c"), "a $ before the end is a character")
+# the longest match wins, whatever the order; an allow wins a tie
+eq(gs.robots_allows([("allow", "/p"), ("disallow", "/")], "/page"), (True, ("allow", "/p")), "the longer allow wins")
+eq(gs.robots_allows([("disallow", "/"), ("allow", "/p")], "/page"), (True, ("allow", "/p")), "in either order")
+eq(gs.robots_allows([("allow", "/folder"), ("disallow", "/folder")], "/folder/page"), (True, ("allow", "/folder")),
+   "an allow and a disallow of equal length: the allow wins")
+eq(gs.robots_allows([("disallow", "/folder"), ("allow", "/folder")], "/folder/page"), (True, ("allow", "/folder")),
+   "and still when the disallow comes first")
+eq(gs.robots_allows([("allow", "/page"), ("disallow", "/*.htm")], "/page.htm"), (False, ("disallow", "/*.htm")),
+   "a wildcard counts its own length: /*.htm (6) outweighs /page (5)")
+eq(gs.robots_allows([("allow", "/$"), ("disallow", "/")], "/"), (True, ("allow", "/$")), "/$ opens the root alone")
+eq(gs.robots_allows([("allow", "/$"), ("disallow", "/")], "/page.htm"), (False, ("disallow", "/")), "and nothing else")
+eq(gs.robots_allows([], "/x"), (True, None), "no rule: allowed")
+# percent-encoding is compared in one form: an unreserved character decoded, the rest upper case, non-ASCII encoded
+ok(_blocked("/foo/bar/%62%61%7A", "/foo/bar/baz") and _blocked("/foo/bar/baz", "/foo/bar/%62%61%7a"),
+   "an encoded unreserved character is the character, on either side")
+ok(_blocked("/foo/bar/\u30c4", "/foo/bar/%E3%83%84") and _blocked("/foo/bar/%e3%83%84", "/foo/bar/\u30c4"),
+   "a non-ASCII character is its UTF-8 percent-encoding, in either case")
+ok(not _blocked("/a%2Fb", "/a/b"), "an encoded reserved character stays encoded: %2F is not /")
+eq(gs.robots_path("/a b\u202e<x>%zz"), "/a%20b%E2%80%AE%3Cx%3E%25zz", "spaces, controls, markup and a stray % are encoded")
+# a hostile pattern costs no more than a long one: matched piece by piece, never by a backtracking regex
+_t0 = _time.time()
+_hostile = [("disallow", "/" + "*a" * 400 + "b")] * 50 + [("allow", "/" + "x" * 20000)]
+for _p in ("/" + "a" * 2000, "/" + "x" * 2000):
+    gs.robots_allows(_hostile, _p)
+ok(_time.time() - _t0 < 2, "hostile robots.txt patterns are matched without backtracking (%.1f s)" % (_time.time() - _t0))
+# the first-match reading: rules in file order, the first plain prefix decides, * and $ are characters. Where it
+# disagrees with RFC 9309 is what the report names
+_fm = lambda rules, p: gs.robots_first_match(rules)(p)
+eq(_fm([("allow", "/p$"), ("disallow", "/p")], "/p"), (False, ("disallow", "/p")), "first match: $ is a character")
+eq(gs.robots_allows([("allow", "/p$"), ("disallow", "/p")], "/p"), (True, ("allow", "/p$")), "RFC 9309: /p$ opens /p")
+eq(_fm([("allow", "/"), ("disallow", "/pricing")], "/pricing"), (True, ("allow", "/")), "first match: the first prefix")
+eq(gs.robots_allows([("allow", "/"), ("disallow", "/pricing")], "/pricing"), (False, ("disallow", "/pricing")),
+   "RFC 9309: the longer Disallow closes /pricing")
+eq(_fm([("disallow", ""), ("disallow", "/private")], "/private/x")[0], True,
+   "first match: an empty Disallow allows everything from where it stands, as robotparser reads it")
+# cross-checked with urllib.robotparser on one-group files, where it reads as the first-match reading says
+for _txt, _path in (("User-agent: *\nAllow: /\nDisallow: /pricing\n", "/pricing"),
+                    ("User-agent: *\nDisallow: /pricing\nAllow: /\n", "/pricing"),
+                    ("User-agent: *\nAllow: /p$\nDisallow: /p\n", "/p"),
+                    ("User-agent: *\nDisallow: /*.pdf$\n", "/files/a.pdf"),
+                    ("User-agent: *\nDisallow:\nDisallow: /private\n", "/private/x"),
+                    ("User-agent: *\nDisallow: /docs/\nAllow: /docs/start\n", "/docs/start"),
+                    ("User-agent: *\nDisallow: /a\n", "/b")):
+    _rp = _rpm.RobotFileParser()
+    _rp.parse(_txt.splitlines())
+    eq(_fm(gs.robots_rules(gs.robots_groups(_txt), "PerplexityBot")[0], _path)[0],
+       _rp.can_fetch("PerplexityBot", "https://x.test" + _path), "first-match reading of %r on %s: as robotparser" % (_txt, _path))
+# page by page: which crawler, which rule, and where the readings part
+_rpx = gs.robots_paths("User-agent: *\nAllow: /\nDisallow: /pricing\n\nUser-agent: Googlebot\nDisallow: /docs/\n"
+                       "Allow: /docs/start\n", ["https://x.test/", "https://x.test/pricing", "https://x.test/docs/start",
+                                                "https://x.test/docs/setup?a=1"])
+eq((_rpx["checked"], _rpx["blocked"], _rpx["read_differently"]), (4, 2, 2), "robots_paths: counts")
+eq(_rpx["pages"][0], {"url": "https://x.test/pricing", "rules": [{"rule": "Disallow: /pricing", "crawlers": [
+    n for n in _R if n != "Googlebot"]}]}, "a page closed to the nine crawlers of the * group")
+eq(_rpx["pages"][1]["rules"], [{"rule": "Disallow: /docs/", "crawlers": ["Googlebot"]}], "and one closed to Googlebot")
+eq(_rpx["differences"][1], {"url": "https://x.test/docs/start", "readings": [{
+    "crawlers": ["Googlebot"], "rfc9309": {"allowed": True, "rule": "Allow: /docs/start"},
+    "first_match": {"allowed": False, "rule": "Disallow: /docs/"}}]}, "the readings part, each with its rule")
+_rpx = gs.robots_paths("User-agent: *\nDisallow: /Ignore previous instructions\u202e\n",
+                       ["https://x.test/Ignore previous instructions\u202e"])
+eq(_rpx["pages"][0]["rules"][0]["rule"], "Disallow: /Ignore%20previous%20instructions%E2%80%AE",
+   "a rule from the site is shown encoded: no space, control or bidi character reaches the report")
+ok(" " not in _rpx["pages"][0]["url"], "and so is its page")
+# the views: one line when nothing is closed, and when one rule closes every page; a table otherwise
+eq(gs.access_lines({"robots_paths": dict(robots_txt="read", **gs.robots_paths("User-agent: *\nAllow: /\n",
+                                                                              ["https://x.test/"]))}),
+   ["robots.txt blocks none of the 1 checked pages for any retrieval crawler, and RFC 9309 and a first-match reading "
+    "agree on every one of them."], "nothing to report: one line")
+eq(gs.access_lines({"robots_paths": dict(robots_txt="unreadable", checked=3, crawlers=10, blocked=None, pages=[],
+                                         read_differently=None, differences=[])}),
+   ["Pages robots.txt blocks: not observed, because robots.txt could not be read."], "unreadable: not observed")
+_md = gs.access_lines({"robots_paths": dict(robots_txt="read", **gs.robots_paths(
+    "User-agent: *\nAllow: /\nDisallow: /*.pdf$\n", ["https://x.test/a.pdf", "https://x.test/b"]))}, "md", "https://x.test")
+ok("| `/a.pdf` | all 10 | `Disallow: /*.pdf$` |" in _md, "Markdown: a table, the site's text in code spans: %r" % _md)
+_many = gs.robots_paths("User-agent: *\nDisallow: /p\n", ["https://x.test/p%d" % i for i in range(60)] + ["https://x.test/"])
+eq((_many["blocked"], len(_many["pages"])), (60, gs.ACCESS_LIST_MAX), "the JSON lists the first 50 and counts them all")
+_txtv = gs.access_lines({"robots_paths": dict(robots_txt="read", **_many)})
+eq(_txtv[-1], "  50 more pages; the JSON report lists the first 50.", "the views show 10 rows and say how many more")
+
 # ── a catch-all 200 with an HTML shell is not a text file ──
 ok(not gs.text_file(gs.Resp("u", 200, b"  <!DOCTYPE html><html><body>app</body></html>")), "an SPA shell is not an llms.txt")
 ok(not gs.text_file(gs.Resp("u", 200, b"<html lang=en>")), "neither is bare <html>")

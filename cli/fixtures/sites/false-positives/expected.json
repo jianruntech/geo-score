@@ -44,5 +44,11 @@
     "/blog/why-linen-shades.html",
     "/products/brass-wall-light.html",
     "/products/linen-pendant.html"
-  ]
+  ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 6,
+    "blocked": 0,
+    "read_differently": 0
+  }
 }

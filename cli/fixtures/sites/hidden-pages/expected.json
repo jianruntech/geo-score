@@ -1,0 +1,52 @@
+{
+  "_normalised": 56,
+  "_band": "Growing",
+  "_gate_capped": false,
+  "_lang": "en",
+  "_sample_source": "sitemap",
+  "_sampled": [
+    "/",
+    "/blog/how-long-a-sensor-battery-lasts.html",
+    "/blog/what-a-cold-room-audit-checks.html",
+    "/blog/why-door-alarms-fire-at-night.html",
+    "/docs/setup.html",
+    "/docs/start.html",
+    "/features/alerts.html",
+    "/pricing.html"
+  ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 11,
+    "blocked": 3,
+    "read_differently": 3
+  },
+  "_notes": {
+    "g.robots": "No Disallow closes the whole site: the * group carries Allow: / and Googlebot's group an Allow, so the gate reads 5 although path rules close three checked pages. That is the case the access field exists for.",
+    "_robots_paths": "Checked: the eight sampled pages (the homepage among them) and the three sitemap URLs that are not among them, /blog/, the PDF and /about.html: 11. Under RFC 9309 Disallow: /pricing (8 characters) outweighs Allow: / and closes /pricing.html to the nine crawlers that read the * group, Disallow: /*.pdf$ closes the PDF to them, and Googlebot's Disallow: /docs/ closes /docs/setup.html. A first-match reading (urllib.robotparser) disagrees on three pages: it lets Allow: / open /pricing.html and the PDF, and lets Disallow: /docs/ close /docs/start.html, which Googlebot's longer Allow opens."
+  },
+  "g.robots": 5,
+  "g.reachable": 5,
+  "g.ssr": 5,
+  "p1.sitemap": 4,
+  "p1.llms-txt": 0,
+  "p1.organization": 0,
+  "p1.breadcrumb": 0,
+  "p1.page-type": 0,
+  "p2.answer-passages": 9,
+  "p2.question-intent": 7,
+  "p2.freshness": 3,
+  "p2.sourced-stats": 3,
+  "p2.named-author": 3,
+  "p3.listings": null,
+  "p3.mentions": null,
+  "p3.knowledge-graph": 0,
+  "p3.sameas": 0,
+  "p3.video": 0,
+  "p4.answer-shape": 4,
+  "p4.question-coverage": null,
+  "p4.cn-engines": null,
+  "b.llms-full": 0,
+  "b.ai-txt": 0,
+  "b.geo-link": 0,
+  "b.speakable": 0
+}

@@ -14,6 +14,12 @@
     "/features/live-tracking.html",
     "/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 9,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "g.robots": "Disallow: / for GPTBot, ClaudeBot, CCBot, Google-Extended and Applebot-Extended only, with * Allow: /. Training crawlers and opt-out tokens are not scored (reference/ai-crawlers.md), so full marks and no cap. Before 1.5.0 this read 0 and capped the site at 40.",
     "_gate_capped": "No retrieval crawler is disallowed, so no gate is at zero.",

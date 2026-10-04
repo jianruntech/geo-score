@@ -14,6 +14,12 @@
     "/docs/install.html",
     "/docs/quickstart.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 7,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "p1.organization": "The logo is the relative IRI 'logo.png' on /docs/. JSON-LD resolves it against that page: /docs/logo.png (200), so 6. Before 1.3.0 the scorer joined it onto the scope root without a trailing slash (/logo.png, 404) and gave 5.",
     "_sampled": "/docs-legacy is a sibling folder, not inside /docs. Before 1.3.0 a bare startswith('/docs') sampled it.",

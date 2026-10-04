@@ -14,6 +14,12 @@
     "/features/zidong-duizhang.html",
     "/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 10,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "p2.freshness": "Dates flush against Chinese text ('更新于2026年8月28日') are read; before 1.3.0 a \\b in the date pattern missed them and this scored 3.",
     "p2.sourced-stats": "Figures flush against Chinese text ('占用了61%的', '样本为1,860家') count, and their source link sits in the next paragraph; before 1.3.0 CJK counted as a word boundary and this scored 3.",

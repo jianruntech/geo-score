@@ -10,6 +10,12 @@
     "/blog/why-plain-text.html",
     "/docs/sync.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 4,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "g.robots": 5,
   "g.reachable": 5,
   "g.ssr": 5,

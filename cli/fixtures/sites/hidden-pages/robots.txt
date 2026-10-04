@@ -1,0 +1,11 @@
+# Frostline: crawlers are welcome, apart from what the path rules below close
+User-agent: *
+Allow: /
+Disallow: /pricing
+Disallow: /*.pdf$
+
+User-agent: Googlebot
+Disallow: /docs/
+Allow: /docs/start.html
+
+Sitemap: {{ORIGIN}}/sitemap.xml

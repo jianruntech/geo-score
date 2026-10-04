@@ -3228,6 +3228,12 @@ def score_summary(gs, res, j):
         L.append("- `%s` %s/%s%s — %s" % (cid, c.get("points"), c.get("max"),
                                           ", +%d at the next tier" % gain if gain else "",
                                           _cut(c.get("evidence", ""), 140)))
+    # what the run observed outside the score (robots.txt page by page), in the CLI's words; an older scorer has no
+    # access_lines, and its report no access field
+    if callable(getattr(gs, "access_lines", None)) and j.get("access"):
+        acc = gs.access_lines(j["access"], "md", gs.shown_origin(j["target"]))
+        if acc:
+            L += ["", "## Outside the score (observed, never scored)", ""] + acc
     L.append("\nReadiness says whether AI *can* cite the site; `run` measures whether it *does*.")
     return "\n".join(L) + "\n"
 

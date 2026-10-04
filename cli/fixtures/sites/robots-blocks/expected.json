@@ -14,9 +14,16 @@
     "/features/live-tracking.html",
     "/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 9,
+    "blocked": 9,
+    "read_differently": 0
+  },
   "_notes": {
     "g.robots": "GPTBot, ClaudeBot and PerplexityBot each get Disallow: / in a group of their own. PerplexityBot is a retrieval crawler, so this stays at 0 and the gate cap; GPTBot and ClaudeBot are training crawlers, named in the evidence and not scored (1.5.0).",
-    "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5."
+    "p2.sourced-stats": "The home page's route count, share and price, and the quote study's figures, are the site's own and carry no source beside them; only the pallet-price post links its source. Before 1.5.0 an outbound link or a source word anywhere on a page attributed all its figures, and this scored 5.",
+    "_robots_paths": "PerplexityBot's own Disallow: / closes every checked page to it, and the access field says so in one line; g.robots already reads the whole-site block and stays 0."
   },
   "g.robots": 0,
   "g.reachable": 5,

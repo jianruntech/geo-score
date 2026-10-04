@@ -14,6 +14,12 @@
     "/ja/features/jido-shogo.html",
     "/ja/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 8,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "_lang": "Japanese pages (<html lang=\"ja\">, kana in the text). Through 1.4.x any page with enough Han characters made the site zh-CN.",
     "g.ssr": "Kana counts as characters. Through 1.4.x only Han was counted, every page read as 47–79 characters, and this gate scored 0 (the site was capped at 40).",

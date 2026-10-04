@@ -12,6 +12,12 @@
     "/hilfe/rechnungen-importieren.html",
     "/preise.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 6,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "_lang": "German pages (<html lang=\"de\">). Through 1.4.x every site that was not Chinese was en.",
     "p2.answer-passages": "Read in words, 25–120.",

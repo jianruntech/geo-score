@@ -14,6 +14,12 @@
     "/features/webhooks",
     "/pricing"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 8,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "p1.llms-txt": "The SPA catch-all answers /llms.txt with its HTML shell: not a text file, so 0. Before 1.3.0 this scored 4.",
     "b.llms-full": "Same catch-all: 0. Before 1.3.0, 2.",

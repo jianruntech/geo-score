@@ -234,5 +234,16 @@
   ],
   "notes": [
     "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
-  ]
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 11,
+      "crawlers": 10,
+      "blocked": 0,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    }
+  }
 }

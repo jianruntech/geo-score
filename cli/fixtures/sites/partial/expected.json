@@ -14,6 +14,12 @@
     "/features/bulk-orders.html",
     "/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 10,
+    "blocked": 1,
+    "read_differently": 0
+  },
   "g.robots": 3,
   "g.reachable": 3,
   "g.ssr": 3,
@@ -40,6 +46,7 @@
   "b.geo-link": 1,
   "b.speakable": 0,
   "_notes": {
-    "p2.answer-passages": "4 of 8 sampled pages open with a qualifying passage: the rubric's 'half the pages' tier (7), not 'a few' (4)."
+    "p2.answer-passages": "4 of 8 sampled pages open with a qualifying passage: the rubric's 'half the pages' tier (7), not 'a few' (4).",
+    "_robots_paths": "The sitemap lists /cart, which the * group's Disallow: /cart closes to every retrieval crawler: one blocked page of the ten checked (the eight sampled pages, the homepage among them, and the sitemap's /blog/ and /cart). Reported outside the score since the access field was added; g.robots stays 3."
   }
 }

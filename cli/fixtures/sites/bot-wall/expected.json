@@ -11,6 +11,12 @@
     "/docs/ruku-liucheng.html",
     "/pricing.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 5,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "g.robots": 5,
   "g.reachable": 0,
   "g.ssr": 5,

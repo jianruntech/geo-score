@@ -12,6 +12,12 @@
     "/docs/getting-started/import-invoices.html",
     "/features/reconciliation.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 11,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "_sampled": "The good site with two of its eight sampled pages behind bot challenges: /pricing.html answers 200 with an Akamai 'Access Denied' page and /blog/why-small-workshops-miss-invoices.html 403 with a Cloudflare 'Just a moment...' page. Both are dropped like failed fetches, and the report says 'Scored on 6 of 8 sampled pages'. Before 1.5.0 the Akamai page was scored as a page, and g.ssr read 3."
   },

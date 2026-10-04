@@ -99,6 +99,10 @@ def main(path, annotate, baseline=None):
         s = "%d/%d" % (c["points"], c["max"]) if c["state"] == "scored" else "—"
         why = _md(_cut(c.get("evidence") or c.get("reason") or "", 150))
         lines.append("| %s %s | %s | %s |" % (NAMES.get(c["id"], ""), _check_id(c["id"]), s, why))
+    # observations outside the score, in the CLI's own words: every value from the site is in a code span there
+    acc = gs.access_lines(d.get("access"), "md", gs.shown_origin(url))
+    if acc:
+        lines += ["", "### Outside the score (observed, never scored)", ""] + acc
     lines += ["", "— means the CLI cannot observe the check; it leaves the denominator instead of scoring 0.",
               "Scored against the open [AIV rubric %s](https://github.com/jianruntech/geo-score/blob/main/rubric/%s.md)."
               % (d["rubric_version"], d["rubric_version"]), ""]

@@ -14,6 +14,12 @@
     "/en-us/payments.html",
     "/en-us/transfers.html"
   ],
+  "_robots_paths": {
+    "robots_txt": "read",
+    "checked": 8,
+    "blocked": 0,
+    "read_differently": 0
+  },
   "_notes": {
     "_lang": "A Chinese homepage and seven English pages: the most common page language. Through 1.4.x the one Chinese page made the site zh-CN.",
     "p2.answer-passages": "Each page in its own unit: the seven English pages in words, the Chinese homepage in characters. Through 1.4.x one Chinese page held every page to 50–200 characters, the English passages were counted in words against it, and this scored 4 (the airwallex.com misreading).",

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc><lastmod>2026-09-20</lastmod></url>
+  <url><loc>{{ORIGIN}}/pricing.html</loc><lastmod>2026-09-20</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/</loc><lastmod>2026-09-20</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/what-a-cold-room-audit-checks.html</loc><lastmod>2026-09-12</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/why-door-alarms-fire-at-night.html</loc><lastmod>2026-09-05</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/how-long-a-sensor-battery-lasts.html</loc><lastmod>2026-08-28</lastmod></url>
+  <url><loc>{{ORIGIN}}/docs/start.html</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>{{ORIGIN}}/docs/setup.html</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>{{ORIGIN}}/features/alerts.html</loc><lastmod>2026-09-10</lastmod></url>
+  <url><loc>{{ORIGIN}}/files/install-guide.pdf</loc><lastmod>2026-09-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/about.html</loc><lastmod>2026-06-30</lastmod></url>
+</urlset>

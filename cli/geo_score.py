@@ -1949,6 +1949,336 @@ def robots_tier(txt, size):
                "explicitly allowed in the groups that apply to them — permitted by default, not by declaration.%s"
                % (size, len(groups), "" if len(groups) == 1 else "s", also))
 
+# ── robots.txt, page by page ──
+# g.robots reads only the Disallow that shuts a crawler out of the whole site. A rule on a path can close one page
+# while every whole-site check reads green, and two readings of one file can disagree on that page: RFC 9309's (the
+# longest matching rule wins) and the first-match reading of Python's urllib.robotparser and many older checkers (rules
+# in file order, the first plain prefix wins). Both are reported outside the score, for the homepage, the sampled
+# pages and the sitemap's first URLs, and neither moves a tier: g.robots reads the file as it always has.
+ROBOTS_PATH_URLS = 200      # sitemap URLs checked against robots.txt, after the homepage and the sampled pages
+ACCESS_LIST_MAX = 50        # pages the JSON lists under each observation; the counts cover them all
+ACCESS_ROWS = 10            # rows the text and Markdown views show
+MAX_URL_CHARS = 2048        # the sitemaps protocol's limit: a longer URL is not checked
+# RFC 9309 2.5: a crawler may stop parsing robots.txt after 500 KiB, the least it must read. The page-by-page reading
+# stops there too, which also bounds its time on a hostile file
+ROBOTS_PARSE_LIMIT = 500 * 1024
+_UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+_PCT = re.compile(r"%([0-9A-Fa-f]{2})")
+
+
+def robots_path(s):
+    """A URL path (with its query) or a robots.txt pattern in the one form RFC 9309 section 2.2.2 compares them in: a
+    percent-encoded unreserved character decoded ("%62" is "b"), every other percent-encoding in upper case, and each
+    character outside printable ASCII, and each of ' <>"{}|\\^`', percent-encoded as UTF-8. A "%" that starts no
+    encoding is itself encoded. "*" and "$" stay as they are: special in a pattern, ordinary characters in a path."""
+    out, i, n = [], 0, len(s)
+    while i < n:
+        ch = s[i]
+        if ch == "%":
+            m = _PCT.match(s, i)
+            if m:
+                d = chr(int(m.group(1), 16))
+                out.append(d if d in _UNRESERVED else "%" + m.group(1).upper())
+                i += 3
+                continue
+            out.append("%25")
+        elif "!" <= ch <= "~" and ch not in UNSAFE:
+            out.append(ch)
+        else:
+            out.append("".join("%%%02X" % b for b in ch.encode("utf-8", "replace")))
+        i += 1
+    return "".join(out)
+
+
+def path_and_query(url):
+    """What a robots.txt rule is matched against: the URL's path ("/" when it has none), and "?" and its query."""
+    try:
+        u = urllib.parse.urlsplit(url)
+    except ValueError:
+        return "/"
+    return (u.path or "/") + ("?" + u.query if u.query else "")
+
+
+def _pattern(pattern):
+    """A robots.txt pattern (robots_path form) split for robots_match: (anchored at the end, its literal pieces)."""
+    anchored = pattern.endswith("$")
+    return anchored, (pattern[:-1] if anchored else pattern).split("*")
+
+
+def robots_match(pattern, path, split=None):
+    """Does a robots.txt pattern match a path from its first character (both in robots_path form)? "*" matches any run
+    of characters and a "$" at the end anchors the end (RFC 9309 2.2.3); a "$" anywhere else is a character. Matched
+    piece by literal piece, with no backtracking, so a hostile pattern costs no more than a long one. `split` is
+    _pattern(pattern), when the caller has it."""
+    anchored, parts = split or _pattern(pattern)
+    if not path.startswith(parts[0]):
+        return False
+    at = len(parts[0])
+    if len(parts) == 1:
+        return at == len(path) if anchored else True
+    for piece in parts[1:-1]:
+        i = path.find(piece, at)
+        if i < 0:
+            return False
+        at = i + len(piece)
+    last = parts[-1]
+    if anchored:
+        return len(path) - len(last) >= at and path.endswith(last)
+    return path.find(last, at) >= 0
+
+
+def _literal(pattern):
+    """The text a path must start with for the pattern to match it: everything before the first "*" (and before a
+    final "$")."""
+    head = pattern.split("*", 1)[0]
+    return head[:-1] if head == pattern and head.endswith("$") else head
+
+
+def robots_matcher(rules):
+    """A function path_and_query -> (allowed, (kind, value) or None) that reads one crawler's rules (robots_rules) as
+    RFC 9309 section 2.2.2 says: of the rules that match, the one with the longest pattern decides, an allow wins a tie
+    with a disallow, and a path no rule matches is allowed. An empty pattern matches nothing. The rules are indexed by
+    the literal text before their first "*", so a path is held only against the rules that can match it."""
+    by_lit = {}
+    for i, (kind, value) in enumerate(rules):
+        if kind not in ("allow", "disallow") or not value:
+            continue
+        pat = robots_path(value)
+        by_lit.setdefault(_literal(pat), []).append(((len(pat), kind == "allow", -i), pat, _pattern(pat), kind, value))
+    lengths = sorted({len(k) for k in by_lit})
+
+    def allows(pq):
+        s = robots_path(pq)
+        best = None
+        for n in lengths:
+            if n > len(s):
+                break
+            for rank, pat, split, kind, value in by_lit.get(s[:n], ()):
+                if (best is None or rank > best[0]) and robots_match(pat, s, split):
+                    best = (rank, kind, value)
+        return (True, None) if best is None else (best[1] == "allow", (best[1], best[2]))
+    return allows
+
+
+def robots_allows(rules, path_and_query):
+    """(allowed, the deciding (kind, value) rule or None) for one path, under RFC 9309 (robots_matcher)."""
+    return robots_matcher(rules)(path_and_query)
+
+
+def robots_first_match(rules):
+    """A function path_and_query -> (allowed, (kind, value) or None) that reads one crawler's rules as Python's
+    urllib.robotparser and many older checkers do: in file order, the first rule whose path is a plain prefix of the
+    URL's decides, "*" and "$" being ordinary characters there, and a path no rule matches is allowed. An empty
+    Disallow, like an empty Allow, allows every path from where it stands, as robotparser reads it. Paths are compared
+    in robots_path form, as the RFC 9309 reading compares them, so the two readings differ only in how they choose a
+    rule."""
+    first = {}
+    for i, (kind, value) in enumerate(rules):
+        if kind in ("allow", "disallow"):
+            first.setdefault(robots_path(value), (i, kind == "allow" or not value, kind, value))
+    lengths = sorted({len(k) for k in first})
+
+    def allows(pq):
+        s = robots_path(pq)
+        hit = None
+        for n in lengths:
+            if n > len(s):
+                break
+            c = first.get(s[:n])
+            if c and (hit is None or c[0] < hit[0]):
+                hit = c
+        return (True, None) if hit is None else (hit[1], (hit[2], hit[3]))
+    return allows
+
+
+def rule_text(rule):
+    """A rule as a report shows it, "Disallow: /pricing", in robots_path form (so no character of it can be markup or a
+    control) and at most 120 characters long; None for no rule."""
+    if rule is None:
+        return None
+    return clip("%s: %s" % (rule[0].capitalize(), robots_path(rule[1])), 120)
+
+
+def shown_url(url):
+    """A URL as a report lists it: scheme and host as given, path and query in robots_path form."""
+    try:
+        u = urllib.parse.urlsplit(url)
+    except ValueError:
+        return robots_path(url)
+    return "%s://%s%s" % (u.scheme, robots_path(u.netloc), robots_path(path_and_query(url)))
+
+
+def site_path(url, host, scope=""):
+    """The URL's path in robots_path form when the URL is on the audited host (`host`, lower case; any letter case and
+    either scheme match it) and inside `scope`, else None."""
+    try:
+        u = urllib.parse.urlsplit(url)
+        netloc = u.netloc.lower()
+    except ValueError:
+        return None
+    if u.scheme.lower() not in ("http", "https") or netloc != host:
+        return None
+    path, sc = robots_path(u.path or "/"), robots_path(scope)
+    return path if not sc or path == sc or path.startswith(sc + "/") else None
+
+
+def checked_urls(root, origin, scope, sampled, served, sitemap_locs):
+    """The URLs the access observations check, none of them fetched for it: the homepage, each sampled page (as the
+    server answered it when it only added or dropped a trailing slash) and the first ROBOTS_PATH_URLS of the sitemap's
+    URLs on this site and inside its path, each once (a trailing slash aside). Returns (urls, the sitemap's URLs among
+    them): a URL longer than MAX_URL_CHARS is not checked."""
+    host = urllib.parse.urlsplit(origin).netloc.lower()
+    seen, out, from_sitemap = {}, [], []
+
+    def key(u):
+        if len(u) > MAX_URL_CHARS:
+            return None
+        p = site_path(u, host, scope)
+        return None if p is None else (p.rstrip("/") or "/", urllib.parse.urlsplit(u).query)
+    for u in [root + "/"] + list(sampled):
+        r = served.get(u)
+        k = key(u)
+        if k is None or k in seen:
+            continue
+        u = r.url if r is not None and r.url and key(r.url) == k else u
+        seen[k] = u
+        out.append(u)
+    for u in sitemap_locs:
+        k = key(u)
+        if k is None:
+            continue
+        if k not in seen:
+            seen[k] = u
+            out.append(u)
+        from_sitemap.append(seen[k])
+        if len(from_sitemap) >= ROBOTS_PATH_URLS:
+            break
+    return out, list(dict.fromkeys(from_sitemap))
+
+
+def robots_paths(txt, urls):
+    """For each URL and each retrieval crawler: does robots.txt `txt` close the page to it, under RFC 9309, and does the
+    first-match reading say otherwise? The `access.robots_paths` object of schema/report.v2.json, robots_txt aside:
+    counts over every URL, and the first ACCESS_LIST_MAX pages of each list. Each crawler reads the group robots_rules()
+    picks for it, in both readings. Only the first ROBOTS_PARSE_LIMIT bytes of the file are read."""
+    raw = txt.encode("utf-8", "replace")
+    if len(raw) > ROBOTS_PARSE_LIMIT:
+        txt = raw[:ROBOTS_PARSE_LIMIT].decode("utf-8", "ignore")
+    groups = robots_groups(txt)
+    readers, crawlers = {}, []
+    for name, _ua in RETRIEVAL_UAS:
+        rules, whose = robots_rules(groups, name)
+        if whose not in readers:
+            readers[whose] = (robots_matcher(rules), robots_first_match(rules))
+        crawlers.append((name, whose))
+    blocked, differ = [], []
+    for u in urls:
+        pq = path_and_query(u)
+        read = {whose: (rfc(pq), first(pq)) for whose, (rfc, first) in readers.items()}
+        by_rule, by_reading = {}, {}
+        for name, whose in crawlers:
+            (ok, rule), (ok_first, rule_first) = read[whose]
+            if not ok:
+                by_rule.setdefault(rule_text(rule), []).append(name)
+            if ok != ok_first:
+                by_reading.setdefault((ok, rule_text(rule), ok_first, rule_text(rule_first)), []).append(name)
+        if by_rule:
+            blocked.append({"url": shown_url(u), "rules": [{"rule": r, "crawlers": names} for r, names in by_rule.items()]})
+        if by_reading:
+            differ.append({"url": shown_url(u), "readings": [
+                {"crawlers": names, "rfc9309": {"allowed": a, "rule": ra}, "first_match": {"allowed": b, "rule": rb}}
+                for (a, ra, b, rb), names in by_reading.items()]})
+    return {"checked": len(urls), "crawlers": len(RETRIEVAL_UAS), "blocked": len(blocked),
+            "pages": blocked[:ACCESS_LIST_MAX], "read_differently": len(differ), "differences": differ[:ACCESS_LIST_MAX]}
+
+
+def crawler_names(names):
+    """Crawler names for one row of a view: "all 10" for every retrieval crawler, "all but Googlebot" for more than
+    half of them, else the names."""
+    every = [n for n, _ua in RETRIEVAL_UAS]
+    if len(names) == len(every):
+        return "all %d" % len(every)
+    if 2 * len(names) > len(every):
+        return "all but " + ", ".join(n for n in every if n not in names)
+    return ", ".join(names)
+
+
+def shown_origin(root):
+    """The scheme and host of a report's target, as shown_url() writes them, so a view can list a page by its path."""
+    try:
+        u = urllib.parse.urlsplit(root)
+    except ValueError:
+        return None
+    return "%s://%s" % (u.scheme, robots_path(u.netloc))
+
+
+def access_lines(access, fmt="text", origin=None):
+    """The observations outside the score (schema/report.v2.json, `access`) as lines of plain text or Markdown, the
+    same in every view: what they found, and at most ACCESS_ROWS pages of each list. `origin` shortens a URL on it to
+    its path. Never part of the score."""
+    if not access:
+        return []
+    md = fmt == "md"
+    code = (lambda s: "`%s`" % s) if md else (lambda s: s)
+    page = lambda u: code(u[len(origin):] if origin and u.startswith(origin + "/") else u)
+    out = []
+    rp = access.get("robots_paths")
+    if rp:
+        n, state = rp["checked"], rp.get("robots_txt")
+        if state == "unreadable":
+            out.append("Pages robots.txt blocks: not observed, because robots.txt could not be read.")
+        elif state == "absent":
+            out.append("robots.txt blocks none of the %d checked pages: the site has no robots.txt." % n)
+        elif not rp["blocked"] and not rp["read_differently"]:
+            out.append("robots.txt blocks none of the %d checked pages for any retrieval crawler, and RFC 9309 and a "
+                       "first-match reading agree on every one of them." % n)
+        elif rp["blocked"] == n == len(rp["pages"]) and not rp["read_differently"] and \
+                all(p["rules"] == rp["pages"][0]["rules"] for p in rp["pages"]) and len(rp["pages"][0]["rules"]) == 1:
+            # one rule closes every page to the same crawlers, as a whole-site Disallow does: one line, not a row a page
+            r = rp["pages"][0]["rules"][0]
+            who = crawler_names(r["crawlers"])
+            out.append("robots.txt blocks all %d checked pages for %s%s, by %s." % (
+                n, who, " retrieval crawlers" if who.startswith("all ") and who[4:].isdigit() else "", code(r["rule"])))
+        else:
+            out.append("robots.txt blocks %d of the %d checked pages for at least one retrieval crawler (RFC 9309: the "
+                       "longest matching rule decides):" % (rp["blocked"], n) if rp["blocked"] else
+                       "robots.txt blocks none of the %d checked pages for any retrieval crawler under RFC 9309 (the "
+                       "longest matching rule decides)." % n)
+            if rp["blocked"]:
+                out += _table(("Page", "Crawlers", "Rule"),
+                              [[(page(p["url"]), crawler_names(r["crawlers"]), code(r["rule"])) for r in p["rules"]]
+                               for p in rp["pages"]], rp["blocked"], md)
+            if rp["read_differently"]:
+                out.append("Rules read differently: on %d of the %d checked pages, RFC 9309 and the first-match reading "
+                           "of urllib.robotparser and many older checkers (rules in file order, the first plain prefix "
+                           "decides) disagree:" % (rp["read_differently"], n))
+
+                def reading(r):
+                    word = "allowed" if r["allowed"] else "blocked"
+                    return "%s by %s" % (word, code(r["rule"])) if r["rule"] else word + ", no rule matches"
+                out += _table(("Page", "Crawlers", "RFC 9309", "First match"),
+                              [[(page(p["url"]), crawler_names(r["crawlers"]), reading(r["rfc9309"]),
+                                 reading(r["first_match"])) for r in p["readings"]] for p in rp["differences"]],
+                              rp["read_differently"], md)
+    return out
+
+
+def _table(head, pages, total, md):
+    """The rows of the first ACCESS_ROWS pages (each page a list of rows), as a Markdown table or indented text, and a
+    line saying how many of the `total` pages are not shown."""
+    rows = [r for p in pages[:ACCESS_ROWS] for r in p]
+    if md:
+        out = ["", "| %s |" % " | ".join(head), "|" + "---|" * len(head)] + ["| %s |" % " | ".join(r) for r in rows]
+    else:
+        w = [min(48, max(len(r[i]) for r in rows)) for i in range(len(head))]
+        out = ["  " + "  ".join(c.ljust(w[i]) for i, c in enumerate(r)).rstrip() for r in rows]
+    rest = total - min(len(pages), ACCESS_ROWS)
+    if rest:
+        out.append("%s%d more page%s; the JSON report lists the first %d." % (
+            "" if md else "  ", rest, "" if rest == 1 else "s", ACCESS_LIST_MAX))
+    return out + ([""] if md else [])
+
+
 def clip(s, n):
     """Cut text for display without cutting a «site text: …» fence open: a quote that loses its closing »
     would let whatever follows read as the tool's own words."""
@@ -2787,12 +3117,30 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # the Accept-Language header (aliyun.com to alibabacloud.com, xiaomi.com to mi.com).
     # Scoring the landing page under the requested label hides that; recording it makes
     # the substitution visible to anyone reading the result.
+    # ── outside the score: robots.txt page by page ──
+    # The homepage, the sampled pages and the first URLs of the sitemap p1.sitemap read, held against robots.txt as
+    # RFC 9309 and a first-match reading choose a rule (robots_paths). Nothing is fetched for it.
+    locs = []
+    if sm and not late(sm) and not re.search(r"<sitemapindex", sm.text, re.I):
+        locs = [html.unescape(x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
+    checked, _from_sitemap = checked_urls(root, origin, scope, urls, pages, locs)
+    if rb.ok:
+        rp = dict(robots_txt="read", **robots_paths(txt, checked))
+    elif rb.status and not transient(rb.status):
+        # no robots.txt: a crawler may fetch anything (RFC 9309 2.3.1.3)
+        rp = dict(robots_txt="absent", checked=len(checked), crawlers=len(RETRIEVAL_UAS), blocked=0, pages=[],
+                  read_differently=0, differences=[])
+    else:
+        rp = dict(robots_txt="unreadable", checked=len(checked), crawlers=len(RETRIEVAL_UAS), blocked=None, pages=[],
+                  read_differently=None, differences=[])
+    access = {"robots_paths": rp}
+
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
     # one last pass: whatever a page managed to put into a string, no control or bidi character leaves here
     ev = {k: _UNSAFE.sub("", v) if isinstance(v, str) else v for k, v in ev.items()}
     landed = _UNSAFE.sub("", landed) if isinstance(landed, str) else landed
     return dict(root=root, landed=landed, urls=list(live), sample_source=sample_source, tier=tier, ev=ev, bonus=bon,
-                lang=audience_language(langs_of.values()), robots_bytes=len(rb.body), sampled=sampled,
+                lang=audience_language(langs_of.values()), robots_bytes=len(rb.body), sampled=sampled, access=access,
                 elapsed_s=round(time.monotonic() - started, 1))
 
 # ── scoring & output ───────────────────────────────────────────────────────
@@ -3063,6 +3411,15 @@ def report(res, args):
         print("  %sNeeds off-site search or judgement: %s%s" % (c.grey, ", ".join(judged), c.r))
     if unseen:
         print("  %sNot observable this run: %s%s" % (c.grey, ", ".join(unseen), c.r))
+    acc = access_lines(res.get("access"), origin=shown_origin(res["root"]))
+    if acc:
+        print()
+        print("  %sOutside the score%s %s(observed, never scored)%s" % (c.b, c.r, c.grey, c.r))
+        for ln in acc:
+            # a table row keeps its columns; a sentence wraps
+            text = "    " + ln if ln.startswith(" ") else textwrap.fill(ln, W + 20, initial_indent="  ",
+                                                                         subsequent_indent="    ")
+            print("%s%s%s" % (c.dim, text, c.r))
     print()
     print("  %sFull rubric and what each tier means:%s" % (c.grey, c.r))
     print("  %s%s%s" % (c.brass, RUBRIC_URL, c.r))
@@ -3091,7 +3448,8 @@ def as_json(res):
                        evidence="Bonus check, outside the denominator.", doc_url=doc_url(bid))
                   for bid, bname, bpts in BONUS],
         notes=["Scored by the geo-score CLI, which measures what a static fetch can observe. "
-               "Checks needing off-site search or human judgement left the denominator."] + sample_notes(res))
+               "Checks needing off-site search or human judgement left the denominator."] + sample_notes(res),
+        **({"access": res["access"]} if res.get("access") else {}))
 
 RUBRIC_URL = "https://github.com/jianruntech/geo-score/blob/v%s/rubric/%s.md" % (__version__, RUBRIC)
 # GitHub heading anchors in rubric/v1.1.md; test_geo_score.py checks every one still exists
