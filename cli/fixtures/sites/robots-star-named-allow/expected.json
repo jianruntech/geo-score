@@ -25,8 +25,8 @@
     "home_links": 4,
     "other_sampled": 7,
     "home_links_to_sampled": 3,
-    "sitemap_urls": 9,
-    "sitemap_urls_linked": 8
+    "sitemap_urls": 8,
+    "sitemap_urls_linked": 7
   },
   "_notes": {
     "g.robots": "* Disallow: / plus one group naming all 10 retrieval crawlers with Allow: /. Under RFC 9309 2.2.1 a crawler with a group of its own ignores the * group, so none is blocked and all 10 are explicitly allowed: 5. Before 1.5.0 the * Disallow read as a block: 0 and the cap.",

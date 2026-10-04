@@ -93,8 +93,9 @@ BEHAVIOUR = {
 # status_for {path: code} answers every request for that path with that code; drip {path: seconds} sends the
 # headers at once and then one byte of the body every that many seconds, so no single read times out and the
 # answer never finishes; drip_ua {user-agent substring: seconds} does the same to every request whose user-agent
-# carries that substring; drop_ua (user-agent substrings) closes every such request without an answer. Every
-# gate in FAULTS must read as it does without the fault.
+# carries that substring; drop_ua (user-agent substrings) closes every such request without an answer; redirect_host
+# answers every request made to 127.0.0.1 with a 301 to the same path on localhost, as an apex host hands every
+# request to www. Every gate in FAULTS must read as it does without the fault.
 FAULTS = {
     "robots-blocks, first robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 1}}),
     "robots-blocks, second robots.txt request dropped": ("robots-blocks", {"drop_nth": {"/robots.txt": 2}}),
@@ -134,6 +135,8 @@ class FixtureHandler(BaseHTTPRequestHandler):
             first_for_ua = (ua, at) not in srv.seen
             srv.seen.add((ua, at))
             srv.requests[(self.command, at, ua)] += 1
+        if srv.faults.get("redirect_host") and self.headers.get("Host", "").startswith("127.0.0.1"):
+            return self._send(301, b"", None, {"Location": "http://localhost:%d%s" % (srv.server_port, self.path)})
         drop = srv.faults.get("drop_nth", {}).get(at)
         if nth == drop or (isinstance(drop, tuple) and nth in drop) or \
                 any(part.lower() in ua.lower() for part in srv.faults.get("drop_ua", ())):
@@ -1040,7 +1043,8 @@ class EndToEnd(unittest.TestCase):
         lines = v["report"].splitlines()
         at = lines.index("  Outside the score (observed, never scored)")
         self.assertTrue(lines[at + 1].startswith("  robots.txt blocks 3 of the 11 checked pages for at least one"), lines[at + 1])
-        self.assertIn("      /pricing.html             all but Googlebot  Disallow: /pricing", lines)
+        self.assertIn("      «site text: /pricing.html»             all but Googlebot  Disallow: «site text: /pricing»",
+                      lines, "the site's path and pattern are fenced; the crawler names and Disallow: are the tool's")
         self.assertTrue(any(x.startswith("  Rules read differently: on 3 of the 11 checked pages") for x in lines))
         self.assertNotIn("Outside the score", v["brief"], "--brief stays what fits in a screenshot")
         # a site that blocks nothing says so in one line
@@ -1067,9 +1071,35 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(report_for("js-shell")["access"]["server_links"]["home_links"], 0)
         good = report_for("good")["access"]["server_links"]
         self.assertEqual((good["home_links"], good["few_home_links"], good["sitemap_urls_linked"], good["sitemap_urls"]),
-                         (7, False, 11, 11))
-        self.assertIn("All 11 checked sitemap URLs are linked from the server HTML", " ".join(views("good")[1]["report"].split()))
+                         (7, False, 10, 10))
+        self.assertIn("All 10 checked sitemap URLs are linked from the server HTML", " ".join(views("good")[1]["report"].split()))
         # nothing is fetched for it: the good fixture's request budget is unchanged (test_no_request_is_sent_twice)
+
+    def test_a_homepage_on_another_host_keeps_its_links(self):
+        # apex to www, or a rename: every request to the audited host is answered from another one, so the homepage's
+        # relative links resolve there and the sitemap names that host. They are still this site's pages: the good
+        # fixture's menu, which is in its server HTML, must not read as a homepage linking to nothing
+        H.start()
+        srv = start_server("good", {"redirect_host": True})
+        srv.origin = "http://localhost:%d" % srv.server_port      # what {{ORIGIN}} becomes: the host the site moved to
+        try:
+            res = gs.run("http://127.0.0.1:%d" % srv.server_port, 8)
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertTrue(res["landed"].startswith("http://localhost:"), res["landed"])
+        good = report_for("good")["access"]
+        sl, rp = res["access"]["server_links"], res["access"]["robots_paths"]
+        self.assertEqual((sl["home_links"], sl["few_home_links"]), (good["server_links"]["home_links"], False), sl)
+        self.assertGreater(sl["home_links"], gs.FEW_HOME_LINKS)
+        self.assertEqual((sl["sitemap_urls"], sl["sitemap_urls_linked"]),
+                         (good["server_links"]["sitemap_urls"], good["server_links"]["sitemap_urls_linked"]), sl)
+        # robots.txt was answered from the host the site moved to, so it rules the sitemap's URLs there too
+        self.assertEqual((rp["robots_txt"], rp["checked"], rp["blocked"]),
+                         ("read", good["robots_paths"]["checked"], 0), rp)
+        text = " ".join(gs.access_lines(res["access"], origin=gs.shown_origin(res["root"])))
+        self.assertNotIn("fewer than", text)
+        self.assertNotIn("No sitemap URL was checked", text)
 
     def test_suite_is_fast(self):
         secs = sum(H.result(n)["secs"] for n in FIXTURES)

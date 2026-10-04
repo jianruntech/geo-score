@@ -239,8 +239,10 @@
     "robots_paths": {
       "robots_txt": "read",
       "checked": 11,
+      "not_checked": 0,
       "crawlers": 10,
       "blocked": 0,
+      "one_rule": false,
       "pages": [],
       "read_differently": 0,
       "differences": []
@@ -251,8 +253,8 @@
       "few_home_links": false,
       "other_sampled": 7,
       "home_links_to_sampled": 2,
-      "sitemap_urls": 11,
-      "sitemap_urls_linked": 11,
+      "sitemap_urls": 10,
+      "sitemap_urls_linked": 10,
       "unlinked_sitemap_urls": []
     }
   }

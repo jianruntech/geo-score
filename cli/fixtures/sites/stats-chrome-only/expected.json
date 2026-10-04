@@ -21,8 +21,8 @@
     "home_links": 3,
     "other_sampled": 3,
     "home_links_to_sampled": 1,
-    "sitemap_urls": 4,
-    "sitemap_urls_linked": 2
+    "sitemap_urls": 3,
+    "sitemap_urls_linked": 1
   },
   "_notes": {
     "p2.sourced-stats": "Every figure sits in body text with no source beside it. The only links off the site and the only source word are in the chrome: a 'Research' menu item, partner logos, social icons and a share button in the header, nav, footer, an aside inside <main>, a contents list inside <article> and role=banner/navigation/contentinfo elements. Before 1.5.0 the whole page was read when it had no <main>, and this scored 7."

@@ -22,27 +22,31 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `summary.searches.modifiers` (`total`, `with_year`, `with_ranking_word`) and `searched_without_queries` on each
   row of `summary.engines`, and schema/watch.v1.json now describes `summary.searches`. A run saved before this
   release gets them computed from its saved answers when it is reported; the run file is not rewritten.
-- **Pages robots.txt blocks by path, and rules two readings disagree on, outside the score.** `g.robots` reads only
-  a Disallow that closes the whole site, so a rule on one path left it green. Each run now holds the homepage, every
-  sampled page and the sitemap's first 200 URLs on the audited host and path against the rules each of the ten
-  retrieval crawlers obeys, read as RFC 9309 section 2.2.2 says: the longest matching pattern decides, an allow wins a
-  tie, `*` and a final `$` are wildcards, and percent-encoding is compared in one form. The report names each page a
-  rule closes, the crawlers and the rule, and the pages where the first-match reading of Python's
-  `urllib.robotparser` and many older checkers (rules in file order, the first plain prefix decides) says otherwise,
-  with the rule each reading chose. Only the first 500 KiB of robots.txt are read, the least RFC 9309 section 2.5
-  asks a crawler to parse. Nothing is fetched for it and it is never scored: rubric v1.1, every tier and the
-  leaderboard are unchanged.
+- **Pages robots.txt blocks by path, and rules two readings disagree on, outside the score.** `g.robots` reads only a
+  Disallow that closes the whole site, so a rule on one path left it green. Each run now holds the homepage, every
+  sampled page and the first 200 URLs on the audited host and path of the sitemap `p1.sitemap` read (the first child
+  of a sitemap index; when the homepage redirects to another host, that host's too, if robots.txt was answered from
+  there) against the rules each of the ten retrieval crawlers obeys, read as RFC 9309 section 2.2.2 says: the longest
+  matching pattern decides, an allow wins a tie, `*` and a final `$` are wildcards, and percent-encoding is compared
+  in one form. The report names each page a rule closes, the crawlers and the rule, and the pages where the
+  first-match reading of Python's `urllib.robotparser` and many older checkers (rules in file order, the first plain
+  prefix decides) says otherwise, with the rule each reading chose. Only the first 500 KiB of robots.txt are read, the
+  least RFC 9309 section 2.5 asks a crawler to parse, and the readings stop after 1,000,000 rule comparisons, counting
+  the URLs left as not checked, so a file of thousands of wildcard rules cannot hold a run up. Nothing is fetched for
+  it and it is never scored: rubric v1.1, every tier and the leaderboard are unchanged.
 - **Whether pages are linked in the server HTML, outside the score.** From the HTML the run already fetched (the
   homepage, the scored sample and the section indexes sampling read), the report counts the `<a href>` links to pages
-  on the audited host and path that a crawler running no JavaScript can follow: links inside comments, scripts,
-  styles and templates do not count, nor do `javascript:`, `mailto:` and `tel:` links. It says how many pages the
-  homepage links to and how many of the other sampled pages among them, flags a homepage that links to fewer than 3
-  ("navigation that appears only after JavaScript runs cannot be followed by crawlers that do not run it"), and
-  names the checked sitemap URLs no fetched page links to. Only the fetched pages are searched, so a page they do not
-  link to is not shown to be orphaned, and the report says so. No request is added, and it is never scored.
+  on the audited host and path, or on the host the homepage redirected to (apex to www), that a crawler running no
+  JavaScript can follow: links inside comments, scripts, styles and templates do not count, nor do `javascript:`,
+  `mailto:` and `tel:` links. It says how many pages the homepage links to and how many of the other sampled pages
+  among them, flags a homepage that links to fewer than 3 ("navigation that appears only after JavaScript runs cannot
+  be followed by crawlers that do not run it"), and names the checked sitemap URLs no fetched page links to (the
+  homepage aside, since a crawl starts there). Only the fetched pages are searched, so a page they do not link to is
+  not shown to be orphaned, and the report says so. No request is added, and it is never scored.
 - **The text report, the MCP `score_site` summary and the Action's job summary show both under "Outside the score".**
   The JSON report carries them in a new optional `access` field (`access.robots_paths`, `access.server_links`),
-  registered in schema/report.v2.json; each lists the first 50 pages, and its counts cover them all. A new e2e
+  registered in schema/report.v2.json; each lists the first 50 pages, and its counts cover them all. The terminal
+  report quotes a page's path and a robots.txt pattern as `«site text: …»`, the Markdown views as code. A new e2e
   fixture, `hidden-pages`, has a path rule that closes its pricing page, rules the two readings part on, and a menu
   only a script writes; every fixture's `expected.json` pins the new counts.
 - **The Claude Code skill installs with `npx skills add jianruntech/geo-score`** (the open skills CLI; `-g` for a

@@ -25,8 +25,8 @@
     "home_links": 4,
     "other_sampled": 7,
     "home_links_to_sampled": 3,
-    "sitemap_urls": 9,
-    "sitemap_urls_linked": 8
+    "sitemap_urls": 8,
+    "sitemap_urls_linked": 7
   },
   "_notes": {
     "g.robots": "Disallow: / for GPTBot, ClaudeBot, CCBot, Google-Extended and Applebot-Extended only, with * Allow: /. Training crawlers and opt-out tokens are not scored (reference/ai-crawlers.md), so full marks and no cap. Before 1.5.0 this read 0 and capped the site at 40.",

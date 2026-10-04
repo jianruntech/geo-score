@@ -1954,7 +1954,8 @@ def robots_tier(txt, size):
 # while every whole-site check reads green, and two readings of one file can disagree on that page: RFC 9309's (the
 # longest matching rule wins) and the first-match reading of Python's urllib.robotparser and many older checkers (rules
 # in file order, the first plain prefix wins). Both are reported outside the score, for the homepage, the sampled
-# pages and the sitemap's first URLs, and neither moves a tier: g.robots reads the file as it always has.
+# pages and the first URLs of the sitemap p1.sitemap read (the first child of a sitemap index), and neither moves a
+# tier: g.robots reads the file as it always has.
 ROBOTS_PATH_URLS = 200      # sitemap URLs checked against robots.txt, after the homepage and the sampled pages
 ACCESS_LIST_MAX = 50        # pages the JSON lists under each observation; the counts cover them all
 ACCESS_ROWS = 10            # rows the text and Markdown views show
@@ -1962,6 +1963,10 @@ MAX_URL_CHARS = 2048        # the sitemaps protocol's limit: a longer URL is not
 # RFC 9309 2.5: a crawler may stop parsing robots.txt after 500 KiB, the least it must read. The page-by-page reading
 # stops there too, which also bounds its time on a hostile file
 ROBOTS_PARSE_LIMIT = 500 * 1024
+# Rule comparisons (a prefix looked up, a pattern tried) the page-by-page reading makes in one run, at most. A file of
+# many wildcard rules makes every URL meet every rule; past this the URLs left are counted as not checked, so the
+# reading never holds a run up by more than about a second
+ROBOTS_WORK_MAX = 1000000
 FEW_HOME_LINKS = 3          # a homepage whose server HTML links to fewer pages of the site than this is flagged
 _UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 _PCT = re.compile(r"%([0-9A-Fa-f]{2})")
@@ -2035,11 +2040,12 @@ def _literal(pattern):
     return head[:-1] if head == pattern and head.endswith("$") else head
 
 
-def robots_matcher(rules):
+def robots_matcher(rules, work=None):
     """A function path_and_query -> (allowed, (kind, value) or None) that reads one crawler's rules (robots_rules) as
     RFC 9309 section 2.2.2 says: of the rules that match, the one with the longest pattern decides, an allow wins a tie
     with a disallow, and a path no rule matches is allowed. An empty pattern matches nothing. The rules are indexed by
-    the literal text before their first "*", so a path is held only against the rules that can match it."""
+    the literal text before their first "*", so a path is held only against the rules that can match it. `work`, a
+    one-item list, counts the comparisons made (ROBOTS_WORK_MAX)."""
     by_lit = {}
     for i, (kind, value) in enumerate(rules):
         if kind not in ("allow", "disallow") or not value:
@@ -2050,13 +2056,17 @@ def robots_matcher(rules):
 
     def allows(pq):
         s = robots_path(pq)
-        best = None
+        best, tried = None, 0
         for n in lengths:
             if n > len(s):
                 break
-            for rank, pat, split, kind, value in by_lit.get(s[:n], ()):
+            cands = by_lit.get(s[:n], ())
+            tried += 1 + len(cands)
+            for rank, pat, split, kind, value in cands:
                 if (best is None or rank > best[0]) and robots_match(pat, s, split):
                     best = (rank, kind, value)
+        if work is not None:
+            work[0] += tried
         return (True, None) if best is None else (best[1] == "allow", (best[1], best[2]))
     return allows
 
@@ -2066,13 +2076,13 @@ def robots_allows(rules, path_and_query):
     return robots_matcher(rules)(path_and_query)
 
 
-def robots_first_match(rules):
+def robots_first_match(rules, work=None):
     """A function path_and_query -> (allowed, (kind, value) or None) that reads one crawler's rules as Python's
     urllib.robotparser and many older checkers do: in file order, the first rule whose path is a plain prefix of the
     URL's decides, "*" and "$" being ordinary characters there, and a path no rule matches is allowed. An empty
     Disallow, like an empty Allow, allows every path from where it stands, as robotparser reads it. Paths are compared
     in robots_path form, as the RFC 9309 reading compares them, so the two readings differ only in how they choose a
-    rule."""
+    rule. `work` counts the comparisons, as for robots_matcher."""
     first = {}
     for i, (kind, value) in enumerate(rules):
         if kind in ("allow", "disallow"):
@@ -2081,13 +2091,16 @@ def robots_first_match(rules):
 
     def allows(pq):
         s = robots_path(pq)
-        hit = None
+        hit, tried = None, 0
         for n in lengths:
             if n > len(s):
                 break
+            tried += 1
             c = first.get(s[:n])
             if c and (hit is None or c[0] < hit[0]):
                 hit = c
+        if work is not None:
+            work[0] += tried
         return (True, None) if hit is None else (hit[1], (hit[2], hit[3]))
     return allows
 
@@ -2109,26 +2122,48 @@ def shown_url(url):
     return "%s://%s%s" % (u.scheme, robots_path(u.netloc), robots_path(path_and_query(url)))
 
 
-def site_path(url, host, scope=""):
-    """The URL's path in robots_path form when the URL is on the audited host (`host`, lower case; any letter case and
-    either scheme match it) and inside `scope`, else None."""
+def host_key(netloc):
+    """A host (with its port) as the access observations compare hosts: lower case, and an internationalised name in
+    punycode, as scope_of() writes the audited host, so "Bücher.example" and "xn--bcher-kva.example" are one host."""
+    netloc = (netloc or "").lower()
+    if any(ord(ch) > 127 for ch in netloc):
+        try:
+            netloc = urllib.parse.urlsplit(idna("http://" + netloc)).netloc.lower()
+        except ValueError:
+            pass
+    return netloc
+
+
+def url_host(url):
+    """host_key() of a URL's host, or None for a URL that does not parse."""
     try:
-        u = urllib.parse.urlsplit(url)
-        netloc = u.netloc.lower()
+        return host_key(urllib.parse.urlsplit(url).netloc)
     except ValueError:
         return None
-    if u.scheme.lower() not in ("http", "https") or netloc != host:
+
+
+def site_path(url, hosts, scope=""):
+    """The URL's path in robots_path form when the URL is on this site and inside `scope`, else None. `hosts` is the
+    site's host (host_key form), or the set of them when the homepage redirected to another host: any letter case, the
+    Unicode or punycode form of the name, and either scheme match it."""
+    hosts = (hosts,) if isinstance(hosts, str) else hosts
+    try:
+        u = urllib.parse.urlsplit(url)
+        netloc = host_key(u.netloc)
+    except ValueError:
+        return None
+    if u.scheme.lower() not in ("http", "https") or netloc not in hosts:
         return None
     path, sc = robots_path(u.path or "/"), robots_path(scope)
     return path if not sc or path == sc or path.startswith(sc + "/") else None
 
 
-def checked_urls(root, origin, scope, sampled, served, sitemap_locs):
+def checked_urls(root, origin, scope, sampled, served, sitemap_locs, hosts=None):
     """The URLs the access observations check, none of them fetched for it: the homepage, each sampled page (as the
     server answered it when it only added or dropped a trailing slash) and the first ROBOTS_PATH_URLS of the sitemap's
-    URLs on this site and inside its path, each once (a trailing slash aside). Returns (urls, the sitemap's URLs among
-    them): a URL longer than MAX_URL_CHARS is not checked."""
-    host = urllib.parse.urlsplit(origin).netloc.lower()
+    URLs on this site (`hosts`, site_path; the origin's host by default) and inside its path, each once (a trailing
+    slash aside). Returns (urls, the sitemap's URLs among them): a URL longer than MAX_URL_CHARS is not checked."""
+    host = hosts or (url_host(origin),)
     seen, out, from_sitemap = {}, [], []
 
     def key(u):
@@ -2160,20 +2195,24 @@ def checked_urls(root, origin, scope, sampled, served, sitemap_locs):
 def robots_paths(txt, urls):
     """For each URL and each retrieval crawler: does robots.txt `txt` close the page to it, under RFC 9309, and does the
     first-match reading say otherwise? The `access.robots_paths` object of schema/report.v2.json, robots_txt aside:
-    counts over every URL, and the first ACCESS_LIST_MAX pages of each list. Each crawler reads the group robots_rules()
-    picks for it, in both readings. Only the first ROBOTS_PARSE_LIMIT bytes of the file are read."""
+    counts over every URL checked, and the first ACCESS_LIST_MAX pages of each list. Each crawler reads the group
+    robots_rules() picks for it, in both readings. Only the first ROBOTS_PARSE_LIMIT bytes of the file are read, and
+    once the readings have made ROBOTS_WORK_MAX comparisons the URLs left are not checked (`not_checked`)."""
     raw = txt.encode("utf-8", "replace")
     if len(raw) > ROBOTS_PARSE_LIMIT:
         txt = raw[:ROBOTS_PARSE_LIMIT].decode("utf-8", "ignore")
     groups = robots_groups(txt)
-    readers, crawlers = {}, []
+    readers, crawlers, work = {}, [], [0]
     for name, _ua in RETRIEVAL_UAS:
         rules, whose = robots_rules(groups, name)
         if whose not in readers:
-            readers[whose] = (robots_matcher(rules), robots_first_match(rules))
+            readers[whose] = (robots_matcher(rules, work), robots_first_match(rules, work))
         crawlers.append((name, whose))
-    blocked, differ = [], []
+    blocked, differ, done, shapes = [], [], 0, set()
     for u in urls:
+        if work[0] >= ROBOTS_WORK_MAX:
+            break
+        done += 1
         pq = path_and_query(u)
         read = {whose: (rfc(pq), first(pq)) for whose, (rfc, first) in readers.items()}
         by_rule, by_reading = {}, {}
@@ -2185,11 +2224,13 @@ def robots_paths(txt, urls):
                 by_reading.setdefault((ok, rule_text(rule), ok_first, rule_text(rule_first)), []).append(name)
         if by_rule:
             blocked.append({"url": shown_url(u), "rules": [{"rule": r, "crawlers": names} for r, names in by_rule.items()]})
+            shapes.add(tuple((r, tuple(names)) for r, names in by_rule.items()))
         if by_reading:
             differ.append({"url": shown_url(u), "readings": [
                 {"crawlers": names, "rfc9309": {"allowed": a, "rule": ra}, "first_match": {"allowed": b, "rule": rb}}
                 for (a, ra, b, rb), names in by_reading.items()]})
-    return {"checked": len(urls), "crawlers": len(RETRIEVAL_UAS), "blocked": len(blocked),
+    return {"checked": done, "not_checked": len(urls) - done, "crawlers": len(RETRIEVAL_UAS), "blocked": len(blocked),
+            "one_rule": len(shapes) == 1 and len(next(iter(shapes))) == 1,
             "pages": blocked[:ACCESS_LIST_MAX], "read_differently": len(differ), "differences": differ[:ACCESS_LIST_MAX]}
 
 
@@ -2232,47 +2273,50 @@ def link_html(h):
         i = end + len(close)
 
 
-def link_key(url, host, scope=""):
+def link_key(url, hosts, scope=""):
     """A page on this site as links name it: its path in robots_path form, without a trailing slash, query or fragment
     ("/" for the root), or None for a URL off the host or outside `scope` (site_path). One rule for the links and the
     pages they are held against, as discover() drops the query and the trailing slash."""
-    p = site_path(url, host, scope)
+    p = site_path(url, hosts, scope)
     return None if p is None else (p.rstrip("/") or "/")
 
 
-def page_links(h, base, host, scope=""):
+def page_links(h, base, hosts, scope=""):
     """The pages on this site that one page's server HTML links to, as link_key()s: each <a href> outside comments,
     scripts, styles and templates (link_html), resolved against `base`. A rel=nofollow link counts: a crawler still sees
     it. javascript:, mailto:, tel: and every other scheme but http and https name no page, and the page itself (an empty
     href, a fragment, a self link) is left out."""
     out = set()
     for href, _text in anchors(link_html(h)):
-        k = link_key(join_link(base, html.unescape(href).strip()).split("#")[0], host, scope)
+        k = link_key(join_link(base, html.unescape(href).strip()).split("#")[0], hosts, scope)
         if k is not None:
             out.add(k)
-    out.discard(link_key(base, host, scope))
+    out.discard(link_key(base, hosts, scope))
     return out
 
 
-def server_links(home, pages, sampled, sitemap_urls, host, scope=""):
+def server_links(home, pages, sampled, sitemap_urls, hosts, scope=""):
     """The `access.server_links` object of schema/report.v2.json. `home` is the homepage's (url, Resp) or None when it
     was not fetched; `pages` every fetched page searched, as (url, Resp), the homepage among them; `sampled` the sampled
-    URLs; `sitemap_urls` the sitemap URLs the access observations check. Only these pages are searched, so a URL none
-    of them links to is not shown to be orphaned."""
+    URLs; `sitemap_urls` the sitemap URLs the access observations check; `hosts` this site's hosts (site_path): the
+    audited host, and the one its homepage redirected to. Each page's links are resolved against the URL it was
+    answered from. The homepage is where a crawl starts, so it is never held against the links: `sitemap_urls` counts
+    the others. Only these pages are searched, so a URL none of them links to is not shown to be orphaned."""
     links, seen = [], set()
     for u, r in pages:
-        k = link_key(r.url or u, host, scope) or link_key(u, host, scope)
+        k = link_key(r.url or u, hosts, scope) or link_key(u, hosts, scope)
         if k is None or k in seen:
             continue
         seen.add(k)
-        found = page_links(r.text, r.url or u, host, scope)
-        found.discard(link_key(u, host, scope))
+        found = page_links(r.text, r.url or u, hosts, scope)
+        found.discard(link_key(u, hosts, scope))
         links.append(found)
     reached = set().union(*links) if links else set()
-    home_key = link_key(home[0], host, scope) if home else None
-    home_links = page_links(home[1].text, home[1].url or home[0], host, scope) - {home_key} if home else None
-    others = list(dict.fromkeys(k for k in (link_key(u, host, scope) for u in sampled) if k and k != home_key))
-    unlinked = [u for u in sitemap_urls if link_key(u, host, scope) not in reached]
+    home_key = robots_path(scope).rstrip("/") or "/"
+    home_links = page_links(home[1].text, home[1].url or home[0], hosts, scope) - {home_key} if home else None
+    others = list(dict.fromkeys(k for k in (link_key(u, hosts, scope) for u in sampled) if k and k != home_key))
+    sitemap_urls = [u for u in sitemap_urls if link_key(u, hosts, scope) != home_key]
+    unlinked = [u for u in sitemap_urls if link_key(u, hosts, scope) not in reached]
     return {"pages_searched": len(links), "home_links": None if home_links is None else len(home_links),
             "few_home_links": home_links is not None and len(home_links) < FEW_HOME_LINKS,
             "other_sampled": len(others),
@@ -2297,8 +2341,16 @@ def access_lines(access, fmt="text", origin=None):
     if not access:
         return []
     md = fmt == "md"
-    code = (lambda s: "`%s`" % s) if md else (lambda s: s)
-    page = lambda u: code(u[len(origin):] if origin and u.startswith(origin + "/") else u)
+    # the site's own text, a page's path or a robots.txt pattern, is data: a code span in Markdown and a «site text: …»
+    # fence in plain text, as evidence quotes it, cut at 120 characters. ("Disallow:" is the tool's word, not the site's)
+    quote = (lambda s: "`%s`" % clip(s, 120)) if md else (lambda s: site_text(s, 120))
+    page = lambda u: quote(u[len(origin):] if origin and u.startswith(origin + "/") else u)
+
+    def code(rule):
+        if md:
+            return quote(rule)
+        kind, sep, value = rule.partition(": ")
+        return "%s: %s" % (kind, quote(value)) if sep else quote(rule)
     out = []
     rp = access.get("robots_paths")
     if rp:
@@ -2310,8 +2362,7 @@ def access_lines(access, fmt="text", origin=None):
         elif not rp["blocked"] and not rp["read_differently"]:
             out.append("robots.txt blocks none of the %d checked pages for any retrieval crawler, and RFC 9309 and a "
                        "first-match reading agree on every one of them." % n)
-        elif rp["blocked"] == n == len(rp["pages"]) and not rp["read_differently"] and \
-                all(p["rules"] == rp["pages"][0]["rules"] for p in rp["pages"]) and len(rp["pages"][0]["rules"]) == 1:
+        elif rp["blocked"] == n and not rp["read_differently"] and rp.get("one_rule"):
             # one rule closes every page to the same crawlers, as a whole-site Disallow does: one line, not a row a page
             r = rp["pages"][0]["rules"][0]
             who = crawler_names(r["crawlers"])
@@ -2338,6 +2389,11 @@ def access_lines(access, fmt="text", origin=None):
                               [[(page(p["url"]), crawler_names(r["crawlers"]), reading(r["rfc9309"]),
                                  reading(r["first_match"])) for r in p["readings"]] for p in rp["differences"]],
                               rp["read_differently"], md)
+        if rp.get("not_checked"):
+            k = rp["not_checked"]
+            out.append("%d more page%s not checked against robots.txt: its rules are so many that matching them stopped "
+                       "after %d comparisons, to keep the run short." % (k, " was" if k == 1 else "s were",
+                                                                         ROBOTS_WORK_MAX))
     sl = access.get("server_links")
     if sl:
         n = sl["home_links"]
@@ -3237,34 +3293,41 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     # Scoring the landing page under the requested label hides that; recording it makes
     # the substitution visible to anyone reading the result.
     # ── outside the score: robots.txt page by page ──
-    # The homepage, the sampled pages and the first URLs of the sitemap p1.sitemap read, held against robots.txt as
-    # RFC 9309 and a first-match reading choose a rule (robots_paths). Nothing is fetched for it.
-    locs = []
-    if sm and not late(sm) and not re.search(r"<sitemapindex", sm.text, re.I):
-        locs = [html.unescape(x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
-    checked, from_sitemap = checked_urls(root, origin, scope, urls, pages, locs)
-    if rb.ok:
-        rp = dict(robots_txt="read", **robots_paths(txt, checked))
-    elif rb.status and not transient(rb.status):
-        # no robots.txt: a crawler may fetch anything (RFC 9309 2.3.1.3)
-        rp = dict(robots_txt="absent", checked=len(checked), crawlers=len(RETRIEVAL_UAS), blocked=0, pages=[],
-                  read_differently=0, differences=[])
-    else:
-        rp = dict(robots_txt="unreadable", checked=len(checked), crawlers=len(RETRIEVAL_UAS), blocked=None, pages=[],
-                  read_differently=None, differences=[])
-    # ── outside the score: links in the server HTML ──
-    # Read from the pages this run already fetched: the homepage, the sampled pages and the section indexes discover()
-    # read (in this run's memo; a pinned sample has none). Nothing is fetched for it.
+    # The homepage, the sampled pages and the first URLs of the sitemap p1.sitemap read (the first child of a sitemap
+    # index), held against robots.txt as RFC 9309 and a first-match reading choose a rule (robots_paths). Nothing is
+    # fetched for it, nor for the links below: they read the pages this run already has, the homepage, the sampled
+    # pages and the section indexes discover() read (in this run's memo; a pinned sample has none).
     with memo.lock:
         got = dict(memo.got)
     fetched = lambda u: pages.get(u) or got.get((u, UA_BROWSER, "GET"))
     is_page = lambda r: r is not None and r.ok and bool(r.body) and not challenge_kind(r)
     home_r = fetched(root + "/")
+    # A homepage that redirects to another host (apex to www, or a rename) moved the site there: its links, and the
+    # sitemap's URLs, name that host. Its robots.txt rules that host's pages only when robots.txt was answered from
+    # there too (the request for it followed the same redirect); otherwise its sitemap URLs are not held against it
+    here = url_host(origin)
+    there = url_host(home_r.url) if home_r is not None and home_r.ok and home_r.url else None
+    site = {here, there} - {None}
+    robots_site = site if rb.ok and rb.url and url_host(rb.url) == there else {here}
+    locs = []
+    if sm and not late(sm) and not re.search(r"<sitemapindex", sm.text, re.I):
+        locs = [html.unescape(x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", sm.text)]
+    checked, from_sitemap = checked_urls(root, origin, scope, urls, pages, locs, robots_site)
+    linked_sitemap = from_sitemap if robots_site == site else checked_urls(root, origin, scope, urls, pages, locs, site)[1]
+    if rb.ok:
+        rp = dict(robots_txt="read", **robots_paths(txt, checked))
+    elif rb.status and not transient(rb.status):
+        # no robots.txt: a crawler may fetch anything (RFC 9309 2.3.1.3)
+        rp = dict(robots_txt="absent", checked=len(checked), not_checked=0, crawlers=len(RETRIEVAL_UAS), blocked=0,
+                  one_rule=False, pages=[], read_differently=0, differences=[])
+    else:
+        rp = dict(robots_txt="unreadable", checked=len(checked), not_checked=0, crawlers=len(RETRIEVAL_UAS),
+                  blocked=None, one_rule=False, pages=[], read_differently=None, differences=[])
+    # ── outside the score: links in the server HTML ──
     home = (root + "/", home_r) if is_page(home_r) else None
     searched = ([home] if home else []) + [(u, r) for u, r in live.items()] + \
         [(u, r) for u, r in ((root + p, got.get((root + p, UA_BROWSER, "GET"))) for p in SECTION_INDEXES) if is_page(r)]
-    access = {"robots_paths": rp, "server_links": server_links(home, searched, list(live), from_sitemap,
-                                                               urllib.parse.urlsplit(origin).netloc.lower(), scope)}
+    access = {"robots_paths": rp, "server_links": server_links(home, searched, list(live), linked_sitemap, site, scope)}
 
     landed = next((r.url for u, r in sorted(live.items()) if r.url), root)
     # one last pass: whatever a page managed to put into a string, no control or bidi character leaves here

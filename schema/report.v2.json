@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/report.v2.json",
   "title": "AIV audit report (rubric v1.1+)",
-  "description": "Emit this and your results are comparable with anyone else's. v2 replaces v1 because rubric v1.1 changed the output shape: a single `score` became `readiness` reported alongside an unscored citation block, checks carry the tier they reached rather than a pass/fail verdict, and gate checks can cap the total. v1 stays published — reports written against rubric v1.0 remain valid under it.",
+  "description": "Emit this and your results are comparable with anyone else's. v2 replaces v1 because rubric v1.1 changed the output shape: a single `score` became `readiness` reported alongside an unscored citation block, checks carry the tier they reached rather than a pass/fail verdict, and gate checks can cap the total. v1 stays published \u2014 reports written against rubric v1.0 remain valid under it.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,7 @@
     "tool": {
       "type": "string",
       "maxLength": 120,
-      "description": "Which implementation produced this report, e.g. \"geo-score-cli/1.1.0\". Optional, but it makes two reports of the same site comparable — a heuristic tool and a human auditor will legitimately differ on the judgement-bound checks."
+      "description": "Which implementation produced this report, e.g. \"geo-score-cli/1.1.0\". Optional, but it makes two reports of the same site comparable \u2014 a heuristic tool and a human auditor will legitimately differ on the judgement-bound checks."
     },
     "audited_at": {
       "type": "string",
@@ -44,7 +44,7 @@
     },
     "audience_language": {
       "type": "string",
-      "description": "BCP 47 primary tag of the most common language among the sampled pages (en, ja, de, …), ties going to the page sampled first; Chinese is written zh-CN, as it was when the field was either that or en, and und means no page's language could be told. Each page is read in its own language: answer passages in characters (50–200) for Chinese, Japanese and Korean pages and in words (25–120) for all others, and the heading, source-phrase and byline lexicons (English and Chinese) read only pages in their languages."
+      "description": "BCP 47 primary tag of the most common language among the sampled pages (en, ja, de, \u2026), ties going to the page sampled first; Chinese is written zh-CN, as it was when the field was either that or en, and und means no page's language could be told. Each page is read in its own language: answer passages in characters (50\u2013200) for Chinese, Japanese and Korean pages and in words (25\u2013120) for all others, and the heading, source-phrase and byline lexicons (English and Chinese) read only pages in their languages."
     },
     "sampled_urls": {
       "type": "array",
@@ -252,7 +252,7 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 100,
-      "description": "min(100, round(100 × readiness / observable_max)), capped at 40 when a gate check scored zero (gate_capped); bonus points count in readiness, so the 100 ceiling matters."
+      "description": "min(100, round(100 \u00d7 readiness / observable_max)), capped at 40 when a gate check scored zero (gate_capped); bonus points count in readiness, so the 100 ceiling matters."
     },
     "band": {
       "type": "string",
@@ -262,11 +262,11 @@
         "Growing",
         "Early",
         "Not started",
-        "领先",
-        "基础扎实",
-        "成长期",
-        "起步期",
-        "未起步"
+        "\u9886\u5148",
+        "\u57fa\u7840\u624e\u5b9e",
+        "\u6210\u957f\u671f",
+        "\u8d77\u6b65\u671f",
+        "\u672a\u8d77\u6b65"
       ],
       "description": "Band name in either English or Chinese, exactly as the rubric spells it."
     },
@@ -440,13 +440,15 @@
           "required": [
             "robots_txt",
             "checked",
+            "not_checked",
             "crawlers",
             "blocked",
+            "one_rule",
             "pages",
             "read_differently",
             "differences"
           ],
-          "description": "robots.txt page by page. g.robots reads only a Disallow that closes the whole site; this holds the homepage, every sampled page and the sitemap's first 200 URLs on the audited host and path against the rules each retrieval crawler of reference/ai-crawlers.md obeys (the group RFC 9309 section 2.2.1 picks for it), read two ways: RFC 9309 section 2.2.2 (the longest matching pattern decides, an allow wins a tie, * and a final $ are wildcards) and the first-match reading of Python's urllib.robotparser and many older checkers (rules in file order, the first plain prefix decides). Only the first 500 KiB of robots.txt are read, the least RFC 9309 section 2.5 asks a crawler to parse. No request is made for it.",
+          "description": "robots.txt page by page. g.robots reads only a Disallow that closes the whole site; this holds the homepage, every sampled page and the first 200 URLs on the audited host and path of the sitemap p1.sitemap read (the first child of a sitemap index) against the rules each retrieval crawler of reference/ai-crawlers.md obeys (the group RFC 9309 section 2.2.1 picks for it), read two ways: RFC 9309 section 2.2.2 (the longest matching pattern decides, an allow wins a tie, * and a final $ are wildcards) and the first-match reading of Python's urllib.robotparser and many older checkers (rules in file order, the first plain prefix decides). When the homepage redirects to another host (apex to www, a rename), the sitemap's URLs on that host are checked too if robots.txt was answered from there. Only the first 500 KiB of robots.txt are read, the least RFC 9309 section 2.5 asks a crawler to parse, and the readings stop after 1,000,000 rule comparisons (see not_checked). No request is made for it.",
           "properties": {
             "robots_txt": {
               "enum": [
@@ -461,6 +463,11 @@
               "minimum": 0,
               "description": "URLs checked: the homepage, the sampled pages and the sitemap URLs, each once."
             },
+            "not_checked": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "URLs left unchecked because robots.txt carries so many rules that the readings reached their limit of 1,000,000 rule comparisons first (a file of thousands of wildcard rules); 0 otherwise. The counts and lists cover the checked URLs only."
+            },
             "crawlers": {
               "type": "integer",
               "minimum": 1,
@@ -473,6 +480,10 @@
               ],
               "minimum": 0,
               "description": "Checked URLs that the RFC 9309 reading closes to at least one retrieval crawler."
+            },
+            "one_rule": {
+              "type": "boolean",
+              "description": "True when every blocked page is closed by one and the same rule to the same crawlers, as a Disallow: / in one group does; the views then say it in one line. False when nothing is blocked or robots.txt was not read."
             },
             "pages": {
               "type": "array",
@@ -619,7 +630,7 @@
             "sitemap_urls_linked",
             "unlinked_sitemap_urls"
           ],
-          "description": "Links in the server HTML: the <a href> links a crawler that runs no JavaScript can follow, read from the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), outside comments, scripts, styles and templates. A link is to a page on this site when it resolves to the audited host and path; fragments, queries and a trailing slash are dropped, and javascript:, mailto: and tel: links are not links to a page. Only the fetched pages are searched, so a URL none of them links to is not shown to be orphaned. No request is made for it.",
+          "description": "Links in the server HTML: the <a href> links a crawler that runs no JavaScript can follow, read from the pages the run fetched (the homepage, the sampled pages and the section indexes its sampling read), outside comments, scripts, styles and templates. Each page's links resolve against the URL it was answered from. A link is to a page on this site when it resolves to the audited host and path, or to the host the homepage redirected to (apex to www, a rename); the host's letter case, Unicode or punycode form and the scheme do not matter, and fragments, queries and a trailing slash are dropped. javascript:, mailto: and tel: links are not links to a page. Only the fetched pages are searched, so a URL none of them links to is not shown to be orphaned. No request is made for it.",
           "properties": {
             "pages_searched": {
               "type": "integer",
@@ -654,7 +665,7 @@
             "sitemap_urls": {
               "type": "integer",
               "minimum": 0,
-              "description": "Sitemap URLs checked: those of access.robots_paths that the sitemap lists."
+              "description": "Sitemap URLs checked: the first 200 on this site that the sitemap p1.sitemap read lists (the first child of a sitemap index), the homepage aside, since a crawl starts there."
             },
             "sitemap_urls_linked": {
               "type": "integer",

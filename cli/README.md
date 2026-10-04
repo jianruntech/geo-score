@@ -237,30 +237,37 @@ carries them in its optional `access` field ([`schema/report.v2.json`](../schema
 `score_site` summary and the Action's job summary show the same lines, and `--brief` leaves them out.
 
 - **Pages robots.txt blocks** (`access.robots_paths`). `g.robots` reads only a Disallow that closes the whole site.
-  Here the homepage, every sampled page and the sitemap's first 200 URLs on the audited host and path are held
-  against the rules each of the ten retrieval crawlers obeys (the group RFC 9309 section 2.2.1 picks for it), read as
-  RFC 9309 section 2.2.2 says: of the rules that match, the one with the longest pattern decides, an allow wins a
-  tie, `*` matches any run of characters and a final `$` anchors the end, and percent-encoding is compared in one form
-  (an encoded unreserved character decoded, non-ASCII characters encoded as UTF-8). The report names each page a rule
-  closes, the crawlers and the rule. **Rules read differently** lists the pages where the first-match reading of
-  Python's `urllib.robotparser` and many older checkers (rules in file order, the first plain prefix decides, `*` and
-  `$` read as characters) reaches the other verdict, with the rule each reading chose: a checker that reads the file
-  that way can call a page open that RFC 9309 closes, or the reverse. Only the first 500 KiB of robots.txt are read,
-  the least RFC 9309 section 2.5 asks a crawler to parse. With no robots.txt (a 4xx) nothing is blocked; one that
-  could not be read leaves the observation not observed.
+  Here the homepage, every sampled page and the first 200 URLs on the audited host and path of the sitemap
+  `p1.sitemap` read (the first child of a sitemap index) are held against the rules each of the ten retrieval crawlers
+  obeys (the group RFC 9309 section 2.2.1 picks for it), read as RFC 9309 section 2.2.2 says: of the rules that match,
+  the one with the longest pattern decides, an allow wins a tie, `*` matches any run of characters and a final `$`
+  anchors the end, and percent-encoding is compared in one form (an encoded unreserved character decoded, non-ASCII
+  characters encoded as UTF-8). The report names each page a rule closes, the crawlers and the rule. **Rules read
+  differently** lists the pages where the first-match reading of Python's `urllib.robotparser` and many older checkers
+  (rules in file order, the first plain prefix decides, `*` and `$` read as characters) reaches the other verdict,
+  with the rule each reading chose: a checker that reads the file that way can call a page open that RFC 9309 closes,
+  or the reverse. When the homepage redirects to another host (apex to www, or a rename), the sitemap's URLs on that
+  host are checked too, if robots.txt was answered from there. Only the first 500 KiB of robots.txt are read, the
+  least RFC 9309 section 2.5 asks a crawler to parse, and the readings stop after 1,000,000 rule comparisons, so a
+  file of thousands of wildcard rules cannot hold the run up: the URLs left are counted as not checked, and the report
+  says how many. With no robots.txt (a 4xx) nothing is blocked; one that could not be read leaves the observation not
+  observed.
 - **Links in the server HTML** (`access.server_links`). A crawler that runs no JavaScript follows only the links the
   server's HTML carries. From the homepage, the scored pages and the section indexes sampling read, the report counts
-  the `<a href>` links to pages on the audited host and path: resolved against their page, without fragment, query
-  or trailing slash, in any letter case of the host and either scheme. Links inside comments, scripts, styles and
-  templates do not count (a menu a script writes is not in the server HTML), nor do `javascript:`, `mailto:` and
+  the `<a href>` links to pages on the audited host and path, or on the host the homepage redirected to (apex to www,
+  or a rename): resolved against the URL their page was answered from, without fragment, query or trailing slash, in
+  any letter case of the host, its Unicode or punycode form, and either scheme. Links inside comments, scripts, styles
+  and templates do not count (a menu a script writes is not in the server HTML), nor do `javascript:`, `mailto:` and
   `tel:` links; a `rel="nofollow"` link does, since a crawler still sees it. The report gives how many pages the
   homepage links to, how many of the other sampled pages among them, and how many of the sitemap URLs checked above
-  at least one fetched page links to, naming the others. A homepage that links to fewer than 3 is flagged:
-  navigation that appears only after JavaScript runs cannot be followed by crawlers that do not run it. Only the
-  fetched pages are searched, so a page none of them links to is not shown to be orphaned.
+  (the homepage aside, since a crawl starts there) at least one fetched page links to, naming the others. A homepage
+  that links to fewer than 3 is flagged: navigation that appears only after JavaScript runs cannot be followed by
+  crawlers that do not run it. Only the fetched pages are searched, so a page none of them links to is not shown to be
+  orphaned.
 
 Each view lists at most 10 pages under each heading and says how many more there are; the JSON lists the first 50,
-and its counts cover them all.
+and its counts cover them all. A page's path and a robots.txt pattern are the site's text: the terminal report quotes
+them as `«site text: …»`, as evidence quotes a page, and the Markdown views as code, cut at 120 characters.
 
 ## Watch
 
