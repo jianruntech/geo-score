@@ -36,6 +36,19 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   guide/watch-methodology.md section 9 gives the definitions, which engines give positions and the papers behind
   them; the glossary gains *Answer share* and *Sources listed, sources used*. Measurement only: rubric v1.1, every
   tier and every score are unchanged.
+- **Repeat consistency per question.** When a run asks a question more than once on an engine, the report adds
+  "Repeat consistency of cited domains": the Jaccard overlap of the domains cited by every two answers that cite,
+  averaged per question, the median per engine, and the least consistent questions (`summary.engines[].consistency`).
+  Answers that cite nothing are left out; one ask per question reads not measured. Descriptive only: `watch diff`
+  does not read it. For scale, the methodology cites arXiv 2604.07585 §5 tables 4 and 6.
+- **A precision hint in the plan.** `watch run --dry-run` (and the MCP run tool's dry run) prints, beside the
+  resolution, the worst-case standard error of one question's cited rate on one engine at the configured `runs`
+  (0.5/√n), and that more asks add no questions. The methodology adds the external reference point of arXiv
+  2604.07585 §7 (at least 7 asks per prompt per day for brands, 8 for sources; one market, one study).
+- **Interfaces are never pooled.** The methodology (section 7) records that one product's web app, mobile app and
+  API cite only partly overlapping sources (arXiv 2607.15771 §4.2, §4.5; no within-interface baseline, §4.1), and
+  states the rule: results from different interfaces are never pooled or paired. Every run's `channel` is `api`
+  today; a manual channel, if added, must record interface, device and sign-in state.
 
 ## [1.7.1] — 2026-10-04
 

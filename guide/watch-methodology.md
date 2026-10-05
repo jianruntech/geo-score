@@ -352,6 +352,15 @@ A run measures what the providers' search-enabled APIs return, and nothing beyon
   searched and read but did not cite is mostly not returned, and the shape of what is returned changes between
   API versions, so a sudden move can be the format rather than the engine. The report and the diff warn when an
   engine's answers stop carrying citations altogether ([Answers with no citation at all](#answers-with-no-citation-at-all)).
+- **Other interfaces of the same product.** The web app, the mobile app and the API of one product do not
+  cite the same sources: in a study of Chinese engines, the source domains of one product's app and web interface
+  overlapped by a Jaccard of only 0.19 to 0.51 (arXiv 2607.15771 §4.2 table 4-1), lowest for some and mostly
+  one side containing the other for others (§4.5 table 4-4). That study pooled three collections per interface
+  and reports no baseline within one interface (§4.1), so part of the gap may be ordinary variation; the rule
+  below is a precaution, not a proven difference. **Results from different interfaces are never pooled or
+  paired.** Today every run's `channel` is `api` (`schema/watch.v1.json`), so no pool or diff mixes them; a
+  manual channel, if one is ever added, has to record the interface, the device and whether the account was
+  signed in, and runs that differ in any of them are not pooled or paired.
 - **Merit.** A citation is presence, not a verdict on quality: it says an engine named and linked a page, not
   that what it said is true or that the page deserved it. Engines also cite misleading and self-promotional
   pages, so a high rate is not evidence that a source is good, and a low one is not evidence that it is bad.
@@ -403,6 +412,23 @@ A set with fewer than k questions gets "this plan cannot detect a change": every
 least k questions must move in the direction of the change, a question that moves the other way never helps,
 and a real change of a few points moves only a few questions. The figure assumes every engine answers every
 question; a run with failures pairs fewer.
+
+**How precise one question is.** Beside the resolution, the dry run prints how precisely one question's cited
+rate on one engine is pinned down with the configured `runs`: with n asks, the binomial standard error is at most
+0.5/√n, at a 50% rate (0.50 for one ask, 0.25 for four, 0.16 for ten, the most `runs` allows). It treats the asks
+as independent draws, which asks minutes apart are not quite. More asks pin down each question; they add no
+question, so the interval over the questions and k stay where they are. For a reference point outside this tool,
+one study of four engines in one market suggests at least 7 asks per prompt per day to track brands and 8 to
+track sources (arXiv 2604.07585 §7 and appendix J); it is a single study of one market, not a standard.
+
+**Repeat consistency.** When a run asks a question more than once on an engine, the report adds a table: for
+each such question, the overlap of the domains cited by every two answers that cite (shared domains over all
+domains of the two, Jaccard), averaged per question, and the median over the questions per engine, with the
+least consistent questions listed. Answers that cite nothing are left out, since two empty lists are not
+agreement. It is descriptive: no interval, no test, never part of the cited rate, and `watch diff` does not read
+it. For scale, that study found the sources cited by asks of one prompt within 24 hours overlapped by a Jaccard
+of 0.32 to 0.43 per industry with the four engines pooled, counting only runs that cited something, and 0.23 to
+0.51 engine by engine (arXiv 2604.07585 §5 tables 4 and 6).
 
 ## 9. How much of the answer your pages support, and sources listed against used
 

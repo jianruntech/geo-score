@@ -4576,6 +4576,60 @@ class OldRuns(Base):
         self.assertEqual(self.main("report", "-c", self.cfgp, "--since", "30")[0], 0)
 
 
+class RepeatConsistency(unittest.TestCase):
+    """Repeat consistency: how far repeated asks of one question cite the same domains. Descriptive only."""
+
+    @staticmethod
+    def ask(qid, *domains):
+        return {"query_id": qid, "status": "ok",
+                "citations": [{"url": "https://%s/x" % d, "title": d, "domain": d} for d in domains]}
+
+    def test_jaccard_per_question_median_and_lowest(self):
+        order = {"q1": 0, "q2": 1, "q3": 2, "q4": 3}
+        rows = [self.ask("q1", "a.test", "b.test"), self.ask("q1", "a.test", "b.test"),    # 1.0
+                self.ask("q2", "a.test", "b.test"), self.ask("q2", "a.test", "c.test"),    # 1/3
+                self.ask("q3", "a.test"), self.ask("q3", "b.test"), self.ask("q3", "a.test"),  # (0 + 1 + 0) / 3
+                self.ask("q4", "a.test")]                                                  # asked once: not measured
+        c = gw.consistency_block(rows, order)
+        self.assertEqual((c["questions"], c["answers"], c["pairs"]), (3, 7, 5))
+        self.assertEqual(c["median"], round(1 / 3.0, 4))
+        self.assertEqual([(x["query_id"], x["answers"], x["jaccard"]) for x in c["lowest"]],
+                         [("q2", 2, round(1 / 3.0, 4)), ("q3", 3, round(1 / 3.0, 4))])   # ties in question order; q1 is 1
+
+    def test_answers_that_cite_nothing_are_left_out_never_read_as_agreement(self):
+        rows = [self.ask("q1"), self.ask("q1"), self.ask("q2", "a.test"), self.ask("q2")]
+        c = gw.consistency_block(rows, {"q1": 0, "q2": 1})
+        self.assertEqual((c["questions"], c["median"], c["lowest"]), (0, None, []))   # not measured, not 1 and not 0
+        bad = {"query_id": "q3", "status": "ok", "citations": [{"url": "https://a.test/"}]}   # no domain: unreadable
+        c = gw.consistency_block([bad, self.ask("q3", "a.test")], {"q3": 0})
+        self.assertEqual(c["questions"], 0)
+
+    def test_lowest_is_capped(self):
+        rows = []
+        for i in range(gw.CONSISTENCY_LOWEST + 2):
+            rows += [self.ask("q%d" % i, "a.test"), self.ask("q%d" % i, "b.test")]
+        c = gw.consistency_block(rows, {})
+        self.assertEqual((c["questions"], len(c["lowest"])), (gw.CONSISTENCY_LOWEST + 2, gw.CONSISTENCY_LOWEST))
+        self.assertEqual(c["median"], 0.0)
+
+    def test_precision_hint_is_the_worst_case_binomial_standard_error(self):
+        one, four = gw.precision_lines(1), gw.precision_lines(4)
+        self.assertIn("up to 0.50 (0.5/√1", one[0])
+        self.assertIn("up to 0.25 (0.5/√4", four[0])
+        self.assertIn("4 asks per question per engine", four[0])
+        self.assertIn("add no questions", four[1])
+        self.assertIn("up to 0.50", gw.precision_lines(0)[0])        # never divides by zero
+
+    def test_a_run_reports_consistency_or_says_why_not(self):
+        run = {"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "competitors": [], "runs": 1,
+               "engines": [{"id": "e1", "provider": "perplexity", "model": "m"}],
+               "queries": [{"query_id": "q1", "query": "best tool"}], "samples": []}
+        self.assertEqual(gw.consistency_lines(run, {"overall": {"answered": 0}, "engines": []}, "text"), [])
+        sm = {"overall": {"answered": 1}, "engines": [{"id": "e1", "status": "measured", "answered": 1,
+                                                       "n_questions": 1, "consistency": gw.consistency_block([], {})}]}
+        self.assertIn("each question was asked once per engine", " ".join(gw.consistency_lines(run, sm, "text")))
+
+
 class PipedDecoy(unittest.TestCase):
     def test_a_geo_watch_py_in_the_current_directory_is_never_loaded(self):
         d = tempfile.mkdtemp(prefix="geo-score-decoy-")

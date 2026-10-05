@@ -52,6 +52,8 @@ MAX_LISTED = 100          # sources one answer lists
 # saved before these existed has no such list, so a report can say the field was never recorded rather than that the
 # engine gave none.
 RECORDED = ("spans", "sources")
+# summary.engines[].consistency lists at most this many questions per engine, the least consistent first
+CONSISTENCY_LOWEST = 3
 DEFAULT_MAX_CALLS = 120
 BOOTSTRAP_REPS = 2000
 ALPHA = 0.05
@@ -163,6 +165,19 @@ SOURCES_NOTES = [
     "recorded.",
     "Cited is read as before: for Perplexity, the sources the text marks, or every listed source when it marks none; "
     "for Gemini's generate_content, every listed source.",
+]
+
+# printed under the "Repeat consistency" table: what the overlap counts and what it is not
+CONSISTENCY_NOTES = [
+    "Repeat consistency: for each question an engine answered more than once in this run, the overlap of the "
+    "domains two of its answers cite, shared domains over all domains of the two (Jaccard), for every two answers, "
+    "averaged per question; the median over questions per engine. 1: every ask cited the same domains; 0: no domain "
+    "in common. Domains are read as everywhere in this report, www dropped; the order of citations is not compared.",
+    "Answers that cite nothing are left out: two empty lists are not agreement, and one empty list is not a 0. On an "
+    "engine, a question with fewer than two answers that cite is not measured. Lowest: up to %d questions per engine "
+    "whose answers did not all cite the same domains, lowest first." % CONSISTENCY_LOWEST,
+    "Descriptive only: no interval and no test, never part of the cited rate, and watch diff does not read it. It "
+    "describes asks minutes apart in one run, which share that day's index; it is not computed over pooled runs.",
 ]
 
 # printed with a pooled report (watch report --since / --runs): what pooling buys and what it does not
@@ -1845,6 +1860,46 @@ def sources_block(rows, brand):
             "you_used": sum(1 for s in m if mine(s["sources_used"]))}
 
 
+def cited_domains(sample):
+    """The set of domains an answer's saved citations name, as the report reads them (host_of: lower case, www
+    dropped). None when the answer cites nothing or its citations cannot be read: repeat consistency leaves it out."""
+    cs = _citation_list(sample.get("citations"))
+    doms = frozenset(c["domain"] for c in cs or [] if c["domain"])
+    return doms or None
+
+
+def jaccard(a, b):
+    """|a & b| / |a | b| for two non-empty sets."""
+    return len(a & b) / float(len(a | b))
+
+
+def consistency_block(rows, order):
+    """summary.engines[].consistency: over one engine's answers (status ok) in one run, each question's mean Jaccard
+    of the cited domains between every two of its answers that cite, the median over the questions with two or more
+    such answers, and the least consistent of them (below 1, lowest first, then in question order). order maps a
+    query_id to its place in the run's questions. A question asked once, or answered with fewer than two answers
+    that cite, is not measured; an answer that cites nothing is never read as an empty set (two empty sets would read
+    as agreement, one as a 0), as the repeated-ask comparison of arXiv 2604.07585 (section 5, table 4) leaves out
+    runs with no citation."""
+    per_q = {}
+    for s in rows:
+        d = cited_domains(s)
+        if d is not None:
+            per_q.setdefault(s["query_id"], []).append(d)
+    vals, pairs, answers = [], 0, 0
+    for qid, sets in per_q.items():
+        if len(sets) < 2:
+            continue
+        js = [jaccard(sets[i], sets[j]) for i in range(len(sets)) for j in range(i + 1, len(sets))]
+        pairs += len(js)
+        answers += len(sets)
+        vals.append((round(sum(js) / len(js), 4), order.get(qid, len(order)), qid, len(sets)))
+    low = sorted(v for v in vals if v[0] < 1)[:CONSISTENCY_LOWEST]
+    return {"questions": len(vals), "answers": answers, "pairs": pairs,
+            "median": round(_median([v[0] for v in vals]), 4) if vals else None,
+            "lowest": [{"query_id": qid, "answers": n, "jaccard": j} for j, _, qid, n in low]}
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1876,6 +1931,7 @@ def summarize(run):
                 "any_named": sum(1 for s in rows if any(sh is not None for _, sh in placed[id(s)])),
                 "mention_share": round(sum(shares) / len(shares), 4) if shares else None}
 
+    order = dict((q["query_id"], i) for i, q in enumerate(run["queries"]))
     engines = []
     for e in run["engines"]:
         es = [s for s in samples if s["engine"] == e["id"]]
@@ -1889,7 +1945,7 @@ def summarize(run):
                    with_searches=sum(1 for s in eo if s["search_queries"]),
                    searched_without_queries=sum(1 for s in eo if searched_without_queries(s, e.get("provider"))),
                    supported_share=support_block(eo, brand), sources=sources_block(eo, brand),
-                   **firsts(eo, 0))
+                   consistency=consistency_block(eo, order), **firsts(eo, 0))
         engines.append(row)
 
     everything = block(ok, "overall")
@@ -1999,15 +2055,15 @@ def summarize(run):
 def summary_of(run):
     """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
     per-question counts, the per-engine citation counts, the tracked pages, the named-first counts, the search
-    counts (answers that searched with no query text, the year and ranking words), or the per-engine answer share and
-    sources listed and used existed.
+    counts (answers that searched with no query text, the year and ranking words), the per-engine answer share and
+    sources listed and used, or the per-engine repeat consistency existed.
     Summaries are derived from the samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
             and "by_question" in sm and "tracked_pages" in sm \
             and "answers_searched_without_queries" in (sm.get("searches") or {}) \
             and all("with_citations" in e and "named_first" in e and "supported_share" in e and "sources" in e
-                    for e in sm.get("engines") or []) \
+                    and "consistency" in e for e in sm.get("engines") or []) \
             and all("named_first" in v for v in sm.get("share_of_voice") or []):
         return sm
     return summarize(run)
@@ -2105,6 +2161,18 @@ def resolution_lines(res):
             "(%s); this plan has %d" % (k, why, q),
             "this plan cannot detect a change: adding questions helps, adding engines raises the %d, and asking each "
             "question more times (--runs) does not lower it" % k]
+
+
+def precision_lines(runs):
+    """What `watch run --dry-run` (and the MCP run tool's dry run) prints, beside the resolution, about how precise
+    one question's cited rate on one engine is with `runs` asks: the binomial standard error at its largest, at a 50%
+    rate, 0.5/sqrt(n). It treats the asks as independent draws. More asks add no question, so they do not narrow
+    the interval over the questions or lower the resolution (guide/watch-methodology.md, section 8)."""
+    n = max(1, int(runs))
+    return ["precision: %s per question per engine, so one question's cited rate on one engine has a standard error "
+            "of up to %.2f (0.5/√%d, the worst case, at a 50%% rate)" % (_n(n, "ask"), 0.5 / math.sqrt(n), n),
+            "more asks pin down each question's rate but add no questions: the interval over all questions and the "
+            "resolution count questions (guide/watch-methodology.md, section 8)"]
 
 
 def diff_runs(a, b):
@@ -2560,6 +2628,39 @@ def sources_lines(run, sm, fmt):
     return L
 
 
+def consistency_lines(run, sm, fmt):
+    """The report's "Repeat consistency of cited domains": per engine, the median overlap of the domains cited by
+    repeated asks of one question, and the least consistent questions; or one line saying why nothing was measured."""
+    if not sm["overall"]["answered"]:
+        return []
+    once = (run.get("runs") or 1) < 2
+    if not any((e.get("consistency") or {}).get("questions") for e in sm["engines"]):
+        return ["", "Repeat consistency of cited domains: not measured; %s." % (
+            "each question was asked once per engine (runs 1)" if once else
+            "no question got two answers that cite from one engine")]
+    rows, low = [], []
+    qtext = dict((q["query_id"], q.get("query") or "") for q in run["queries"])
+    for e in sm["engines"]:
+        c = e.get("consistency") or {}
+        if e["status"] != "measured":
+            rows.append([e["id"], "not measured", "", "", e["status"]])
+        elif not c.get("questions"):
+            rows.append([e["id"], "not measured", "", "", "no answer" if not e["answered"] else
+                         "each question was asked once" if once else "no question got two answers that cite"])
+        else:
+            rows.append([e["id"], "%d/%d" % (c["questions"], e["n_questions"]), c["pairs"], "%.2f" % c["median"], ""])
+            low.extend([x["query_id"], _cut(qtext.get(x["query_id"], ""), 50), e["id"], x["answers"],
+                        "%.2f" % x["jaccard"]] for x in c["lowest"])
+    L = [_h("Repeat consistency of cited domains (per engine; descriptive, not read by diff)", fmt),
+         table(["engine", "questions measured", "pairs", "median Jaccard", ""], rows, fmt)]
+    if low:
+        L += ["", "Least consistent questions (up to %d per engine):" % CONSISTENCY_LOWEST,
+              table(["id", "question", "engine", "answers that cite", "Jaccard"], low, fmt)]
+    L.append("")   # a line right under a markdown table would be read as another row
+    L.extend("- " + n for n in CONSISTENCY_NOTES)
+    return L
+
+
 def headline_lines(sm, name, fmt):
     """The headline rate and the line for questions that name the brand, from a summary or a pooled report."""
     o, h, br = sm["overall"], sm["headline"], sm["branded"]
@@ -2632,6 +2733,7 @@ def render(run, fmt="text"):
             L.append("warning: " + citationless(e["id"], e["n_questions"], e["answered"]))
     L.extend(support_lines(run, sm, fmt))
     L.extend(sources_lines(run, sm, fmt))
+    L.extend(consistency_lines(run, sm, fmt))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
@@ -3262,7 +3364,7 @@ def cmd_run(args):
         if not active:
             print("nothing would be measured: export at least one API key")
         else:
-            print("\n".join(resolution_lines(resolution(len(active), len(queries)))))
+            print("\n".join(resolution_lines(resolution(len(active), len(queries))) + precision_lines(runs)))
         return 0
     if not active:
         print("error: nothing can be measured — export at least one API key", file=sys.stderr)
@@ -4201,7 +4303,8 @@ class MCPServer(object):
                                          if status[e["id"]] != "measured"]}}
         if args.get("dry_run"):
             if active:
-                lines += ["- " + x for x in resolution_lines(resolution(len(active), len(queries)))]
+                lines += ["- " + x for x in resolution_lines(resolution(len(active), len(queries)))
+                          + precision_lines(cfg.runs)]
             return "\n".join(lines) + "\n", out
         if not active:
             raise ConfigError("\n".join(lines + ["no engine can run"]))

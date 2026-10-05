@@ -266,7 +266,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
 | `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），并以 0 退出，有没有 Key 都一样 |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），以及按当前 `--runs` 单个问题的引用率能定得多准（标准误最多 0.5/√n），并以 0 退出，有没有 Key 都一样 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、每题问的次数、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
@@ -407,6 +407,10 @@ in the answer」表按引擎给出每条回答平均列出和用上的来源数�
 Perplexity 未标注来源现在留在这里；`citations` 和 `cited` 的读法不变。OpenAI、Claude、OpenRouter 和 Gemini 的 Interactions API
 只返回一组来源，即对到正文的引用，所以未测量。这两项出现之前保存的运行，报告里会写明没有记录。细节见
 [guide/watch-methodology.zh-CN.md 第 9 节](../guide/watch-methodology.zh-CN.md#9-你的页面支撑了多少答案以及列为来源与正文用上)。
+
+**重复一致性。** `runs` 大于 1 时，「Repeat consistency of cited domains」按引擎给出同一问题的几条回答所引域名有多一致（每两条带引用的回答
+算 Jaccard 重合度，按问题取平均，再取各问题的中位数），并列出最不一致的问题。不带引用的回答不计入；每题只问一次时写「未测量」。
+只是描述，`watch diff` 不读它。JSON：`summary.engines` 每行的 `consistency`。细节见[guide/watch-methodology.zh-CN.md 第 8 节](../guide/watch-methodology.zh-CN.md#8-一次提问一天一个月)。
 
 **通过 MCP 使用。** `uvx geo-score@1.7.1 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
