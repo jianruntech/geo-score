@@ -2,7 +2,7 @@
 name: geo-score
 description: "Score a website's AI answer-engine visibility 0–100 against the open AIV rubric, and, with the user's own API keys, check and track through the OpenAI, Perplexity, Gemini and Anthropic APIs whether AI engines actually cite it. Use when the user wants to know whether AI engines can find, parse, trust and cite their site, or whether they do. Triggers on: 'does ChatGPT cite us', 'AI citation rate', 'share of voice in AI answers', 'track AI visibility weekly', 'AIV', 'AI visibility', 'GEO audit', 'generative engine optimization', 'AEO', 'llms.txt', 'will AI cite my site', 'AI search ranking', 'get cited by ChatGPT'."
 metadata:
-  version: 1.7.1
+  version: 1.8.0
   rubric: "v1.1"
   license: "MIT"
   homepage: "https://github.com/jianruntech/geo-score"

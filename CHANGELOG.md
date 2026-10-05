@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-05
+
 ### Added
 - **How much of the answer your pages support, beside the cited rate.** Where a provider documents where each
   citation sits, every answer now records it (`spans`: start, end, URLs and kind, character offsets into the
@@ -1310,7 +1312,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/jianruntech/geo-score/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jianruntech/geo-score/compare/v1.5.0...v1.6.0

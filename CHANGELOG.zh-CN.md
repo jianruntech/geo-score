@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-05
+
 ### 新增
 - **你的页面支撑了多少答案，和引用率并列报告。** 服务商文档写明了每条引用在正文里的位置时，每条回答现在都会记下来（`spans`：起止、
   URL 和类型，是保存下来的回答里的字符偏移，最多 500 条），只读文档写明的字段：OpenAI 和 OpenRouter `url_citation` 注释的
@@ -845,7 +847,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/jianruntech/geo-score/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jianruntech/geo-score/compare/v1.5.0...v1.6.0

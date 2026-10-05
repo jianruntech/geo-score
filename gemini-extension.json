@@ -1,6 +1,6 @@
 {
   "name": "geo-score",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Can AI engines cite your site, and do they? A free 0-100 readiness score, plus citation checks with your own API keys.",
   "mcpServers": {
     "geo-score": {
