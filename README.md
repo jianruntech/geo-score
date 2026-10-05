@@ -568,8 +568,9 @@ This is the part most tools leave out, so it's stated plainly.
   unscored block and never folded into the 100 — see
   [Two scores](rubric/v1.1.md#two-scores-never-one). Measure it with levels 2 and 3 above.
   One reason it stays out: asked again, the same question gets a largely different set of sources. Repeated
-  runs of a prompt within 24 hours had a source overlap (Jaccard) of 0.32 to 0.43 across four
-  engines in one market ([Schulte et al. 2026](https://arxiv.org/abs/2604.07585), §5, Table 4),
+  runs of a prompt within 24 hours, counting runs that cited something, had a mean source overlap (Jaccard)
+  of 0.32 to 0.43 in each of four industries in one market with four engines pooled, and 0.23 to 0.51 engine
+  by engine ([Schulte et al. 2026](https://arxiv.org/abs/2604.07585), §5, Tables 4 and 6),
   and two runs of Google AI Overviews on the same device and location 0.66
   ([Grossman et al., SIGIR 2026](https://arxiv.org/abs/2604.27790), §4.4, Table 4).
 - **Brand Credibility and the named-author check need human judgement.** "Is this a real

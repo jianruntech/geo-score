@@ -508,7 +508,7 @@
           "https://arxiv.org/abs/2607.15771"
         ],
         "last_verified": "2026-10-05",
-        "note": "Seven LLMs used as rerankers promoted passages given newer injected dates (Fang et al. 2025, preprint); across eight Chinese generative-search interfaces, pages cited for highly time-sensitive questions were newer than those cited for others (median age 18 against 101 days, fitted half-life 39 against 68 days), and recency acted on which pages were cited rather than on their order in the answer (Zhen et al. 2026, arXiv 2607.15771 §2.5 Table 2-5, preprint), which describes the age of cited pages, not the effect of a page showing a date; Bing says freshness signals affect how quickly AI-generated answers reflect updates, and Google documents reading both visible and structured dates and asks that they match; the rule that either kind of date alone earns the middle tier is the rubric's."
+        "note": "Seven LLMs used as rerankers promoted passages given newer injected dates (Fang et al. 2025, preprint); across eight Chinese generative-search interfaces, pages cited for highly time-sensitive questions were newer than those cited for low-time-sensitivity questions (median age 18 against 101 days, fitted half-life 39 against 68 days), and recency acted on which pages were cited rather than on their order in the answer (Zhen et al. 2026, arXiv 2607.15771 §2.5 Table 2-5, preprint), which describes the age of cited pages, not the effect of a page showing a date; Bing says freshness signals affect how quickly AI-generated answers reflect updates, and Google documents reading both visible and structured dates and asks that they match; the rule that either kind of date alone earns the middle tier is the rubric's."
       }
     },
     {
