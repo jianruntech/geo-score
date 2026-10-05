@@ -540,10 +540,12 @@ Read this before quoting the numbers
 权重是有主张的，但不是拍脑袋。影响最大的两项：
 
 - **[Aggarwal et al., *GEO: Generative Engine Optimization*, KDD 2024](https://arxiv.org/abs/2311.09735)**
-  —— 引用来源、加入统计数字、引述专家可以把可见度提升**最多 40%**
-  （度量口径是 Position-Adjusted Word Count，不是引用次数）。
-  值得注意的是，论文发现**「权威语气」没有显著提升**——
-  这正是本口径给结构和出处打分、而不给语气打分的原因。
+  —— 在模拟引擎里一次只改写一个来源，加引用来源、统计数字或专家引语，可以让这个来源在答案里的占比提升**最多约 40%**
+  （度量口径是 Position-Adjusted Word Count，不是引用次数）。论文也发现**「权威语气」没有显著提升**，
+  这正是本口径给结构和出处打分、而不给语气打分的原因。这个增益并不能直接外推：所有来源同时改写时，
+  原本排第一的来源可见度反而降了两到三成（§5.2 表 2）；后来一项按引用名次衡量的基准发现，已发表的方法多数没有显著提升
+  （[C-SEO Bench，arXiv 2506.11097](https://arxiv.org/abs/2506.11097) §6.2）。细节见证据表 `p2.sourced-stats` 一行
+  （[`rubric/evidence-v1.1.zh-CN.md`](rubric/evidence-v1.1.zh-CN.md)）。
 - **[llms.txt 提案，Answer.AI](https://llmstxt.org/)** —— 可被理解支柱里 `p1.llms-txt` 检查的就是它。
 
 每一项检查都注明了权重建立在什么依据上——公开研究、厂商自己的文档、我们自己的实地观察，还是一项没有引擎确认使用过的约定——

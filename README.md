@@ -591,10 +591,14 @@ This is the part most tools leave out, so it's stated plainly.
 The weights are opinionated but not invented. The two findings that most shaped them:
 
 - **[Aggarwal et al., *GEO: Generative Engine Optimization*, KDD 2024](https://arxiv.org/abs/2311.09735)** —
-  citing sources, adding statistics and quoting experts raise visibility by
-  **up to 40%** (measured as Position-Adjusted Word Count, not citation count).
-  Notably, the paper found an *authoritative tone* produced **no significant improvement** —
-  which is why this rubric scores structure and attribution, not voice.
+  in a simulated engine, rewriting one source at a time to cite sources, add statistics or quote experts raised
+  that source's share of the answer by **up to about 40%** (Position-Adjusted Word Count, not citation count).
+  The paper also found an *authoritative tone* produced **no significant improvement**, which is why this rubric
+  scores structure and attribution, not voice. The gain does not carry over cleanly: when every source was
+  rewritten at once, the source that had ranked first lost 20 to 30% of its visibility (§5.2, Table 2), and a
+  later benchmark that measures citation rank found most published methods gave no significant gain
+  ([C-SEO Bench, arXiv 2506.11097](https://arxiv.org/abs/2506.11097) §6.2). The details are in the evidence
+  table, row `p2.sourced-stats` ([`rubric/evidence-v1.1.md`](rubric/evidence-v1.1.md)).
 - **[llms.txt proposal, Answer.AI](https://llmstxt.org/)** — the convention this rubric
   checks for in the Understandable pillar (`p1.llms-txt`).
 
