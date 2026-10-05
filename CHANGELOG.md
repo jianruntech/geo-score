@@ -49,6 +49,35 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   API cite only partly overlapping sources (arXiv 2607.15771 §4.2, §4.5; no within-interface baseline, §4.1), and
   states the rule: results from different interfaces are never pooled or paired. Every run's `channel` is `api`
   today; a manual channel, if added, must record interface, device and sign-in state.
+- **A preregistered validation plan** (`benchmark/PREREGISTRATION.md` + zh), written before any data and registered
+  by the first tagged release that contains it: does AIV readiness go with being cited (watch's citation rate) and
+  with absorption (`supported_share.chars`, computed for every site of a category from the saved `spans`; not
+  measured where a provider documents no positions)? Sites that compete for the same unbranded questions in 12 to 20
+  categories, drawn across the rubric's own band cuts; 8 asks per question per engine per wave (arXiv 2604.07585 §7),
+  two waves 12 weeks apart; every site of a category read on the same answers as its concurrent control (arXiv
+  2606.04362 §5); every site re-scored and logged each wave (arXiv 2506.11097 §6.4); a within-category permutation
+  test and four Holm-corrected secondary analyses written in advance (arXiv 2604.25707 §11.1), and what is published
+  whatever the result. It tests the instrument, not whether GEO works; a causal study would randomise page changes
+  (arXiv 2604.25707 appendix B). Linked from VALIDITY.md (+ zh) through `benchmark/validity.py`. No data collected yet.
+
+### Changed
+- **Evidence table: literature added to five rows, metadata only** (`rubric/evidence-v1.1.md` + zh and the
+  `evidence` objects in `rubric/v1.1.json`). `p2.question-intent` adds arXiv 2603.25500 §5.2 Table 6, 2511.20867 §5.3
+  Table 5 and 2606.04362 §4: thin, slightly contrary. `p2.freshness` adds 2607.15771 §2.5 Table 2-5: pages cited for
+  highly time-sensitive questions are newer than those cited for low-time-sensitivity ones, which describes the age
+  of cited pages, not an effect of showing a date. `p2.sourced-stats` adds the GEO paper's own all-sources result
+  (2311.09735 §5.2 Table 2), the rank-based counter-evidence (2506.11097 §6.2, §6.4) and 2402.11782. `p3.listings`
+  and `p3.mentions` add 2607.15771 §2.1 Table 2-1 and §3.2 Table 3-2, and state 2606.20065 §6.5 exactly (2.9% own
+  domain, 75.2% other companies). Those rows re-verified 2026-10-05. The README's limitations cite the external
+  evidence that two asks of one question differ: source overlap of 0.32 to 0.43 per industry with engines pooled and
+  0.23 to 0.51 per engine (2604.07585 §5 Tables 4 and 6), 0.66 for AI Overviews (2604.27790 §4.4 Table 4). No weight,
+  tier, score or evidence basis changed.
+
+### Fixed
+- **The README no longer quotes the GEO paper's "up to 40%" without its limits.** It now says the gain was
+  measured in a simulated engine with one source rewritten at a time, that the top-ranked source lost 20 to 30%
+  when every source was rewritten (arXiv 2311.09735 §5.2 Table 2), and that a citation-rank benchmark found most
+  methods gave no significant gain (arXiv 2506.11097 §6.2).
 
 ## [1.7.1] — 2026-10-04
 
