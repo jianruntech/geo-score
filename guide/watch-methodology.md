@@ -404,6 +404,110 @@ least k questions must move in the direction of the change, a question that move
 and a real change of a few points moves only a few questions. The figure assumes every engine answers every
 question; a run with failures pairs fewer.
 
+## 9. How much of the answer your pages support, and sources listed against used
+
+A citation says an engine chose a page. It does not say how much of the answer the page carried, and
+research on generative engines measures the two apart: being selected as a source, and being absorbed into
+the answer ([arXiv 2604.25707](https://arxiv.org/abs/2604.25707), §5; §9.2 lists an absorption score
+among the measures a dashboard should carry, next to the selection rate). The first measure of
+generative-engine visibility was of the second kind: the words of the answer's sentences that cite a source,
+over all the answer's words, and the same with each sentence weighted down by its position
+([arXiv 2311.09735](https://arxiv.org/abs/2311.09735), §2.2.1, Eq. 2 and Eq. 3). That paper measured it in a
+simulated engine whose input already held the source, not whether a page gets chosen (§3.1, §9). `watch`
+records two such measures where the providers document what they need. Both are reported beside the cited
+rate and never merged into it; neither enters the headline, the intervals or `watch diff`.
+
+### Answer share: the text your pages support
+
+Each answer records where its citations sit (`spans`: `start`, `end`, `urls`, `kind`, character offsets
+into the answer as saved), read only from fields the provider documents:
+
+| Engine | What the API gives | `kind` | Offsets |
+|---|---|---|---|
+| OpenAI (Responses) | `url_citation` annotations on `output_text`, `start_index` and `end_index`: "the URL citation in the message" ([reference](https://developers.openai.com/api/reference/resources/responses/methods/create), URLCitation) | `marker` | characters of that text part |
+| OpenRouter | `url_citation` annotations on the message, the same two fields ([web search](https://openrouter.ai/docs/guides/features/plugins/web-search)) | `marker` | characters of the message |
+| Perplexity | `[n]` marks in the text, each naming "the result whose `id` is n" ([migration guide](https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/how-to), Inline citations) | `marker` | found in the text |
+| Gemini, Interactions API (default) | `url_citation` annotations on each text block: "a text segment (defined by `start_index` and `end_index`)" ([guide](https://ai.google.dev/gemini-api/docs/google-search)), "measured in bytes" ([reference](https://ai.google.dev/api/interactions-api), UrlCitation) | `segment` | UTF-8 bytes of that block |
+| Gemini, `"api": "generate_content"` | `groundingSupports`: a `segment` (`partIndex`, `startIndex`, `endIndex`, "measured in bytes", and its `text`) and the `groundingChunkIndices` that support it ([reference](https://ai.google.dev/api/generate-content), GroundingSupport, Segment) | `segment` | UTF-8 bytes of that part |
+| Claude | text blocks that carry `citations`: "each text block can contain a claim ... and a list of citations that support the claim" ([citations](https://platform.claude.com/docs/en/build-with-claude/citations)) | `segment` | the block's own text |
+
+A `segment` is the text the provider says a source supports. A `marker` is where the provider says a
+citation sits in the text; the text it supports is read as the sentence it closes: the sentence it sits in
+when text comes before it there, otherwise the sentence before. That rule is geo-score's, not the
+provider's. Google's guide slices the Interactions text
+with its offsets in a Python example, which counts characters, while its reference says bytes; the two agree
+on ASCII text, and `watch` follows the reference.
+
+An answer gets no `spans`, and is **not measured**, never 0, when it has no citation; when any citation came
+without a usable position (one missing, outside its text, cutting a character in two, or a Gemini segment
+whose bytes do not hold the `text` it gives); when it passes a cap (500 citations, 20 URLs on one); and, for
+Perplexity, when the search results carry no `id`. Sonar's documented response shows none, and the
+documentation ties `[n]` to a result only through it, so positions are kept only when every result has an id
+and the ids run 1, 2, 3 in order, the reading `cited` has always used. An OpenAI-compatible `base_url` that
+strips annotations looks like an answer with no citation, which is why that is not measured rather than 0.
+
+From the spans, `supported_share` gives three numbers for the brand. The sentences are those of
+`mention_share` (section 1), split with every marker blanked out, so a mark never counts as text. For a
+sentence s, |s| is its characters (not whitespace, marks left out) and c(s) the part of them a span with a
+URL the brand owns supports, by the matching that decides `cited`: all of |s| when such a marker credits s,
+otherwise the characters of s inside such segments.
+
+- `chars`: Σ c(s) / Σ |s|.
+- `sentences`: the sentences with c(s) > 0, over all sentences.
+- `weighted`: Σ c(s) · e^(−pos(s)/|S|) / Σ |s|, where pos(s) is the sentence's index from 0 and |S| the
+  number of sentences. This is Eq. 3 of arXiv 2311.09735 (§2.2.1) with three choices of ours: characters
+  in place of words, so Chinese and Japanese, written without spaces, count on the same footing; positions
+  from 0, so the first sentence counts in full, a start the paper does not state; and a sentence the brand
+  and other sources support counts in full for the brand, where the paper shares a sentence's words equally
+  among the sources citing it. A marker credits whole sentences, as the paper does; a segment credits only
+  its own characters.
+
+Per engine, `summary.engines[].supported_share` gives the answers measured, the median of each number over
+them, and how many are above zero (`above_zero`); the report prints them in "Answer share your pages
+support", next to the cited rate, with "not measured" and the reason for an engine with no measured answer.
+There is no interval and no test. Medians are over the answers with positions only, so they describe answers
+that cite, and the two readings (a marked sentence, a supported segment) and engines that write at different
+lengths are not on one scale.
+
+This is not `mention_share`. That counts the sentences that name the brand; this counts the text the brand's
+pages support, whether or not it names the brand. An answer can name you in every sentence and rest on other
+people's pages, or carry a paragraph from your docs without naming you. Like the absorption score of the study
+above, it is a proxy built from what the provider attributes, not a check that the text came from the page
+(arXiv 2604.25707 calls its own score a constructed proxy, §5.3, §10.1).
+
+### Sources listed and used
+
+Some APIs return the sources beside the answer and mark in the text the ones it uses. In a study of Chinese
+answer engines that mark sources inline, 39.3% of the sources listed with an answer did not appear in its text
+(10.5 listed and 6.9 in the text per answer; [arXiv 2607.15771](https://arxiv.org/abs/2607.15771), §2.4).
+That study sampled the web and app interfaces of other engines (§1.1); it is context, not a benchmark for
+these APIs.
+
+Where the API gives both, each answer records `sources_listed` (every source returned) and `sources_used` (the
+ones the text marks):
+
+- **Perplexity**: listed are the `search_results` (or the older `citations` list); used are those its `[n]`
+  marks name, the n-th listed source for `[n]`. Before, an answer with marks kept only the marked sources and
+  dropped the rest; they are now kept in `sources_listed`. `citations`, and so `cited`, the rank and the
+  headline, read exactly as before: the marked sources, or every listed source when the text marks none. An
+  answer with no marks records neither list (what it used is unknown), nor does one whose results carry ids
+  that disagree with their order.
+- **Gemini with `"api": "generate_content"`**: listed are the `groundingChunks`; used are those a grounding
+  support names. `cited` reads every chunk, as before.
+- **OpenAI, Claude, OpenRouter and Gemini's Interactions API** return one list, the citations tied to the
+  text, and no list beside it, so listed against used is **not measured**. OpenAI can also return the URLs its search consulted
+  ([guide](https://developers.openai.com/api/docs/guides/tools-web-search), Sources) and Claude returns its
+  search results; those are what the engine read, a different set from a list shown beside the answer, and
+  `watch` neither requests nor records them.
+
+Per engine, `summary.engines[].sources` gives the answers that recorded both lists, the sources listed and used
+summed over them, `used_rate` (used over listed) and how many of those answers list, and use, a URL the brand
+owns. The report prints them per answer in "Sources listed and used in the answer".
+
+A run records what it measured in `recorded` (`spans`, `sources`). A run saved before these existed has no such
+list, and its report says they were not recorded rather than that an engine gave none; its summary is computed
+again when it is reported, and the file is not rewritten.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
@@ -413,7 +517,9 @@ question; a run with failures pairs fewer.
   `summary.share_of_voice`, `mention_order` and `mention_share` on each answer and on each of its
   `competitors`, `summary.by_question`, `brand_in_query`, `competitor_in_query` and `branded` on
   each question, `summary.searches` with its `modifiers` and `answers_searched_without_queries`,
-  and `questions_hash`, which two runs share when they asked the same questions.
+  `questions_hash`, which two runs share when they asked the same questions, and, from section 9,
+  `spans`, `supported_share`, `sources_listed` and `sources_used` on each answer, `supported_share`
+  and `sources` on each row of `summary.engines`, and `recorded`.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool

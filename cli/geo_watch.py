@@ -42,6 +42,16 @@ MAX_QUERY_LEN = 500
 MAX_QUERIES = 200
 MAX_RUNS = 10
 MAX_RESOLVE = 12
+# Caps on what one answer saves of where its citations sit and which sources it listed. An answer over a cap is not
+# measured on that count: a cut list would understate the share your pages support, or the sources the text used.
+MAX_SPANS = 500           # positioned citations in one answer
+MAX_SPAN_URLS = 20        # URLs one positioned citation names
+MAX_LISTED = 100          # sources one answer lists
+# What a run records on each answer beyond the fields every run has, as run["recorded"] names it: "spans" (where the
+# citations sit, and the answer share your pages support) and "sources" (sources listed and sources used). A run
+# saved before these existed has no such list, so a report can say the field was never recorded rather than that the
+# engine gave none.
+RECORDED = ("spans", "sources")
 DEFAULT_MAX_CALLS = 120
 BOOTSTRAP_REPS = 2000
 ALPHA = 0.05
@@ -125,6 +135,34 @@ MENTION_NOTES = [
     "sentence counted the same. A sentence ends at a line break, at 。！？, or at . ! ? before a space.",
     "Both read the answer as saved, which keeps its first {:,} characters; a name that first appears after that is "
     "not seen.".format(MAX_ANSWER),
+]
+
+# printed under the "Answer share your pages support" table: what the three shares are and what they are not
+SUPPORT_NOTES = [
+    "Answer share: in an answer whose citations come with a position, the share of the answer a URL you own "
+    "supports, by characters (whitespace and the citation marks themselves left out), by sentences, and by characters "
+    "weighted by where their sentence sits, the first sentence in full and the one at position i (from 0) by "
+    "e^(-i/sentences), as in the GEO paper's position-adjusted word count (arXiv 2311.09735, section 2.2.1, Eq. 3). "
+    "Medians per engine over the answers measured, and how many of them are above zero; no interval and no test.",
+    "Read it beside the cited rate, never in place of it: cited says your page was chosen, this says how much of the "
+    "answer it carried. Sentence share (under Share of voice) counts sentences that name you; this counts the text "
+    "your pages support, named or not.",
+    "OpenAI, OpenRouter and Perplexity give where a citation sits, so a citation supports the sentence it closes; "
+    "Gemini and Claude give the text a citation supports. The two readings, and engines that write at different "
+    "lengths, are not on one scale.",
+    "Not measured, never 0: an answer with no citation, or with one whose position the provider did not give (an "
+    "endpoint that drops positions or citations looks the same), and Perplexity answers whose search results carry no "
+    "id, the number its documentation maps a [n] mark to.",
+]
+# printed under the "Sources listed and used in the answer" table
+SOURCES_NOTES = [
+    "Listed: every source the API returned beside the answer. Used: those its text marks (Perplexity's [n] marks; "
+    "Gemini's grounding supports, with \"api\": \"generate_content\"). OpenAI, Claude, OpenRouter and Gemini's default "
+    "Interactions API return one list, the citations tied to the text, and none beside it, so they are not measured "
+    "here; the pages OpenAI's and Claude's searches retrieved are another set, what the engine read, and are not "
+    "recorded.",
+    "Cited is read as before: for Perplexity, the sources the text marks, or every listed source when it marks none; "
+    "for Gemini's generate_content, every listed source.",
 ]
 
 # printed with a pooled report (watch report --since / --runs): what pooling buys and what it does not
@@ -517,12 +555,55 @@ def api_post(url, headers, body, secret, timeout=None):
 
 
 # ── engines ───────────────────────────────────────────────────────────────
-def _result(answer, citations, searches, tin, tout, nsearch, cost=None, calls=1, attempts=1):
+def _result(answer, citations, searches, tin, tout, nsearch, cost=None, calls=1, attempts=1, spans=None,
+            listed=None, used=None):
+    """What an adapter read from one answer. citations: [(url, title)], what `cited` reads. spans: where the answer's
+    citations sit, [(start, end, [(url, title)], kind)] with character offsets into answer, or None when the provider
+    gave no positions (see _positioned). listed and used: [(url, title)], every source the API listed with the answer
+    and the ones its text marks, or None when the API returns no list apart from the sources the text marks."""
     return {"answer": answer or "", "citations": citations,
             "search_queries": [q for q in searches if isinstance(q, str) and q.strip()],
             "usage": {"input_tokens": _int(tin), "output_tokens": _int(tout),
                       "search_calls": _int(nsearch), "api_calls": calls},
-            "reported_cost": _num(cost), "attempts": attempts}
+            "reported_cost": _num(cost), "attempts": attempts, "spans": spans, "listed": listed, "used": used}
+
+
+def _offset(x):
+    """A JSON offset: a whole number from 0, else None."""
+    v = _whole(x)
+    return v if v is not None and v >= 0 else None
+
+
+def _located(an, base, size, refs, kind):
+    """One citation's place in the answer from an annotation's start_index and end_index, offsets into a text part of
+    `size` characters that starts at `base` in the answer: (start, end, refs, kind), or None when the two are missing
+    or do not fit inside the part."""
+    s, e = _offset(an.get("start_index")), _offset(an.get("end_index"))
+    if s is None or e is None or not s < e <= size:
+        return None
+    return base + s, base + e, refs, kind
+
+
+def _utf8_span(text, s, e):
+    """Character offsets (start, end) into `text` of its UTF-8 bytes [s, e), for Google's offsets "measured in bytes";
+    None when the bytes fall outside the text or either end cuts a character in two."""
+    raw = text.encode("utf-8", "surrogatepass")
+    if s is None or e is None or not 0 <= s < e <= len(raw):
+        return None
+    try:
+        start = len(raw[:s].decode("utf-8", "surrogatepass"))
+        return start, start + len(raw[s:e].decode("utf-8", "surrogatepass"))
+    except UnicodeDecodeError:
+        return None
+
+
+def _positioned(spans):
+    """An answer's spans as an adapter returns them: None when there is none, when one citation came without a usable
+    position (a partial list would understate what a source supports) or when a cap is passed."""
+    if not spans or any(s is None for s in spans) or len(spans) > MAX_SPANS \
+            or any(len(s[2]) > MAX_SPAN_URLS for s in spans):
+        return None
+    return spans
 
 
 def _endpoint(eng):
@@ -537,7 +618,7 @@ def call_openai(eng, key, question, country):
     # OpenAI-compatible endpoints a base_url points at accept only the list
     body = {"model": eng["model"], "input": [{"role": "user", "content": question}], "tools": [tool]}
     js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key, timeout=eng.get("timeout"))
-    text, cites, searches, nsearch = [], [], [], 0
+    text, cites, searches, nsearch, marks = [], [], [], 0, []
     for item in js.get("output") or []:
         if not isinstance(item, dict):
             continue
@@ -552,13 +633,24 @@ def call_openai(eng, key, question, country):
             for part in item.get("content") or []:
                 if not isinstance(part, dict) or part.get("type") != "output_text":
                     continue
+                base = sum(len(t) for t in text)
                 text.append(part.get("text") or "")
                 for an in part.get("annotations") or []:
                     if isinstance(an, dict) and an.get("type") == "url_citation":
                         cites.append((an.get("url"), an.get("title")))
+                        # The Responses API reference (https://developers.openai.com/api/reference/resources/responses/
+                        # methods/create, URLCitation) documents start_index as "The index of the first character of
+                        # the URL citation in the message" and end_index as "The index of the last character of the URL
+                        # citation in the message"; the guide says the annotation holds the "location of the cited
+                        # source" (https://developers.openai.com/api/docs/guides/tools-web-search, "Output and
+                        # citations"). Where the citation sits in the text, not the claim it supports: a "marker".
+                        # Read as the slice [start_index, end_index) of this output_text part; were end_index the last
+                        # character itself, one character of the mark would stay in the text, which changes no
+                        # sentence the mark credits.
+                        marks.append(_located(an, base, len(text[-1]), [(an.get("url"), an.get("title"))], "marker"))
     u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
     return _result("".join(text), cites, searches, u.get("input_tokens"), u.get("output_tokens"),
-                   nsearch, attempts=n)
+                   nsearch, attempts=n, spans=_positioned(marks))
 
 
 def call_perplexity(eng, key, question, country):
@@ -568,20 +660,57 @@ def call_perplexity(eng, key, question, country):
     js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key, timeout=eng.get("timeout"))
     msg = ((js.get("choices") or [{}])[0] or {}).get("message") or {}
     text = _text(msg.get("content"))
-    cites = [(r.get("url"), r.get("title")) for r in js.get("search_results") or [] if isinstance(r, dict)]
+    results = [r for r in js.get("search_results") or [] if isinstance(r, dict)]
+    cites = [(r.get("url"), r.get("title")) for r in results]
     if not cites:
         cites = [(u, "") for u in js.get("citations") or [] if isinstance(u, str)]
+    listed = list(cites)
     # Sonar numbers its sources [1], [2]… When the answer uses the markers, only the numbered ones were cited.
     used = set(int(m) for m in re.findall(r"\[(\d{1,3})\]", text))
     kept = [c for i, c in enumerate(cites, 1) if i in used]
     if kept:
         cites = kept
+    # Where the markers sit, and which listed sources the text uses, read with the numbering above, which `cited` has
+    # always used: the n-th source counted from 1. Perplexity documents that "Sonar returned inline [n] citations by
+    # default" and that "each [n] marker maps to the result whose id is n"
+    # (https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/how-to, "Inline citations"); a result's id is the
+    # "Stable index used to reference the result in citations", and with markers "Each number then refers to a
+    # result's id" (https://docs.perplexity.ai/docs/agent-api/tools/web-search, the results' fields). Sonar's own
+    # search_results carry no id in its documented response (the "Sonar response" example on
+    # https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview). So the positions are measured only where
+    # the documented mapping can be checked: every result carries an id and the ids are 1, 2, 3... in order. Results
+    # whose ids say otherwise disagree with `cited`'s reading, which stays as it is, and then neither the positions nor
+    # listed against used are recorded. Results with no id at all leave listed against used read as `cited` reads
+    # them (the sources the text marks), and the positions unmeasured.
+    ids = [_whole(r.get("id")) for r in results]
+    ided = bool(results) and all(i is not None for i in ids)
+    clash = (ided and ids != list(range(1, len(results) + 1))) or (not ided and any(i is not None for i in ids))
+    marks = [(m.start(), m.end(), [listed[int(m.group(1)) - 1]], "marker")
+             for m in re.finditer(r"\[(\d{1,3})\]", text) if 1 <= int(m.group(1)) <= len(listed)] if ided else []
+    two = kept and not clash and len(listed) <= MAX_LISTED
     u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
     cost = u.get("cost")
     if isinstance(cost, dict):
         cost = cost.get("total_cost")
     return _result(text, cites, [], u.get("prompt_tokens"), u.get("completion_tokens"), 1,
-                   cost=cost, attempts=n)
+                   cost=cost, attempts=n, spans=None if clash else _positioned(marks),
+                   listed=listed if two else None, used=kept if two else None)
+
+
+def _interaction_span(an, base, text):
+    """One url_citation annotation of the Interactions API as a span of the answer, or None when it cannot be placed.
+    Google's guide: "Each url_citation annotation links a text segment (defined by start_index and end_index) to a
+    source URL" (https://ai.google.dev/gemini-api/docs/google-search, "Understanding the grounding response"), so the
+    text a source supports: a "segment". The API reference (https://ai.google.dev/api/interactions-api, UrlCitation):
+    start_index is the "Start of segment of the response that is attributed to this source. Index indicates the start
+    of the segment, measured in bytes", end_index the "End of the attributed segment, exclusive", both into the text
+    block that carries the annotation. The guide's Python example slices the text with them, which counts characters;
+    the two readings agree on ASCII text, and this follows the reference, as generateContent's Segment does ("measured
+    in bytes"). A start_index left out reads as 0, as Google's Java and Go examples on the guide page read it; a
+    missing end_index, or offsets that cut a character in two, leave the citation unplaced."""
+    s = 0 if an.get("start_index") is None else _offset(an.get("start_index"))
+    at = _utf8_span(text, s, _offset(an.get("end_index")))
+    return None if at is None else (base + at[0], base + at[1], [(an.get("url"), an.get("title"))], "segment")
 
 
 def call_gemini(eng, key, question, country):
@@ -591,7 +720,7 @@ def call_gemini(eng, key, question, country):
         return _gemini_generate_content(eng, key, question)
     body = {"model": eng["model"], "input": question, "tools": [{"type": "google_search"}], "store": False}
     js, n = api_post(_endpoint(eng), {"x-goog-api-key": key}, body, key, timeout=eng.get("timeout"))
-    text, cites, searches = [], [], []
+    text, cites, searches, marks = [], [], [], []
     for step in js.get("steps") or []:
         if not isinstance(step, dict):
             continue
@@ -604,17 +733,64 @@ def call_gemini(eng, key, question, country):
             for part in step.get("content") or []:
                 if not isinstance(part, dict) or part.get("type") != "text":
                     continue
+                before = [t for t in text if t]            # the answer joins the non-empty texts with line breaks
+                base = sum(len(t) + 1 for t in before)
                 text.append(part.get("text") or "")
                 for an in part.get("annotations") or []:
                     if isinstance(an, dict) and an.get("type") == "url_citation":
                         cites.append((an.get("url"), an.get("title")))
+                        marks.append(_interaction_span(an, base, text[-1]))
     u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
     tin = _int(u.get("prompt_tokens") or u.get("input_tokens") or u.get("total_input_tokens"))
     tout = _int(u.get("completion_tokens") or u.get("output_tokens") or u.get("total_output_tokens"))
     if _int(u.get("total_tokens")) > tin + tout:
         tout = _int(u.get("total_tokens")) - tin      # thinking tokens are billed as output
     searches = [q for q in searches if isinstance(q, str) and q.strip()]
-    return _result("\n".join(t for t in text if t), cites, searches, tin, tout, len(searches), attempts=n)
+    return _result("\n".join(t for t in text if t), cites, searches, tin, tout, len(searches), attempts=n,
+                   spans=_positioned(marks))
+
+
+def _gemini_supports(parts, chunks, supports):
+    """generateContent's grounding supports as (spans, used). spans: the segments they support, with character offsets
+    into the answer (the text of the parts that are not thoughts, joined), or None when one cannot be placed. used: the
+    chunks they name, in order. Per https://ai.google.dev/api/generate-content (GroundingSupport, Segment): a support's
+    groundingChunkIndices are "indices (into 'grounding_chunk' ...) specifying the citations associated with the
+    claim", and its segment's partIndex is "the index of a Part object within its parent Content object", with
+    startIndex and endIndex "measured in bytes", start "inclusive", end "exclusive", and text "the text corresponding
+    to the segment". A field at zero may be left out of the JSON (protobuf's JSON mapping omits a default value:
+    https://protobuf.dev/programming-guides/json/, "Presence and default-values"), so a missing partIndex or startIndex
+    reads as 0; a segment whose bytes cut a character in two, or do not equal its own text, is not placed."""
+    at, where = 0, {}
+    for j, p in enumerate(parts):
+        if isinstance(p, dict) and not p.get("thought"):
+            t = p.get("text") or ""
+            where[j] = (at, t)
+            at += len(t)
+    spans, used = [], []
+    for sup in supports:
+        if not isinstance(sup, dict):
+            spans.append(None)
+            continue
+        refs = []
+        for k in sup.get("groundingChunkIndices") or []:
+            k = _offset(k)
+            if k is not None and k < len(chunks) and chunks[k] is not None:
+                refs.append(chunks[k])
+        used += refs
+        if not refs:
+            continue                    # a support of no web source places nothing a URL owns
+        seg = sup.get("segment") if isinstance(sup.get("segment"), dict) else {}
+        j, s, e = (_offset(seg.get(k, 0)) for k in ("partIndex", "startIndex", "endIndex"))
+        if j not in where or s is None or e is None or not isinstance(where[j][1], str):
+            spans.append(None)
+            continue
+        base, t = where[j]
+        at = _utf8_span(t, s, e)
+        if at is None or (isinstance(seg.get("text"), str) and seg["text"] != t[at[0]:at[1]]):
+            spans.append(None)
+            continue
+        spans.append((base + at[0], base + at[1], refs, "segment"))
+    return _positioned(spans), used
 
 
 def _gemini_generate_content(eng, key, question):
@@ -625,15 +801,22 @@ def _gemini_generate_content(eng, key, question):
     parts = (cand.get("content") or {}).get("parts") or []
     text = "".join(p.get("text") or "" for p in parts if isinstance(p, dict) and not p.get("thought"))
     gm = cand.get("groundingMetadata") if isinstance(cand.get("groundingMetadata"), dict) else {}
-    cites = []
+    cites, chunks = [], []          # chunks: one per groundingChunks entry, so a support's indices find theirs
     for ch in gm.get("groundingChunks") or []:
         w = (ch or {}).get("web") if isinstance(ch, dict) else None
         if isinstance(w, dict):
             cites.append((w.get("uri"), w.get("title")))
+        chunks.append((w.get("uri"), w.get("title")) if isinstance(w, dict) else None)
     searches = [q for q in gm.get("webSearchQueries") or [] if isinstance(q, str)]
     um = js.get("usageMetadata") if isinstance(js.get("usageMetadata"), dict) else {}
     tout = _int(um.get("candidatesTokenCount")) + _int(um.get("thoughtsTokenCount"))
-    return _result(text, cites, searches, um.get("promptTokenCount"), tout, len(searches), attempts=n)
+    # `cited` reads every grounding chunk, as it always has: the sources this API lists with the answer. The supports
+    # say which of them the text uses, and where.
+    supports = gm.get("groundingSupports") if isinstance(gm.get("groundingSupports"), list) else []
+    spans, used = _gemini_supports(parts, chunks, supports) if supports and cites else (None, [])
+    two = bool(supports and cites) and len(cites) <= MAX_LISTED
+    return _result(text, cites, searches, um.get("promptTokenCount"), tout, len(searches), attempts=n, spans=spans,
+                   listed=cites if two else None, used=used if two else None)
 
 
 def call_anthropic(eng, key, question, country):
@@ -643,7 +826,7 @@ def call_anthropic(eng, key, question, country):
         tool["user_location"] = {"type": "approximate", "country": country}
     hdr = {"x-api-key": key, "anthropic-version": "2023-06-01"}
     msgs = [{"role": "user", "content": question}]
-    text, cites, searches = [], [], []
+    text, cites, searches, blocks = [], [], [], []
     tin = tout = nsearch = calls = attempts = 0
     for _ in range(3):   # a long search can pause the turn; send it back to continue, at most twice
         body = {"model": eng["model"], "max_tokens": int(eng.get("max_tokens") or 2048),
@@ -656,10 +839,19 @@ def call_anthropic(eng, key, question, country):
             if not isinstance(b, dict):
                 continue
             if b.get("type") == "text":
+                base = sum(len(t) for t in text)
                 text.append(b.get("text") or "")
+                refs = []
                 for c in b.get("citations") or []:
                     if isinstance(c, dict) and c.get("url"):
                         cites.append((c.get("url"), c.get("title")))
+                        refs.append((c.get("url"), c.get("title")))
+                # "each text block can contain a claim that Claude is making and a list of citations that support the
+                # claim" (https://platform.claude.com/docs/en/build-with-claude/citations, "How citations work"); with
+                # web search each is a web_search_result_location with a url (https://platform.claude.com/docs/en/
+                # agents-and-tools/tool-use/web-search-tool, "Citations"). The block's own text is the supported span.
+                if refs and isinstance(text[-1], str) and text[-1]:
+                    blocks.append((base, base + len(text[-1]), refs, "segment"))
             elif b.get("type") == "server_tool_use" and b.get("name") == "web_search":
                 searches.append((b.get("input") or {}).get("query"))
         u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
@@ -669,7 +861,8 @@ def call_anthropic(eng, key, question, country):
         if js.get("stop_reason") != "pause_turn":
             break
         msgs = msgs + [{"role": "assistant", "content": content}]
-    return _result("".join(text), cites, searches, tin, tout, nsearch, calls=calls, attempts=attempts)
+    return _result("".join(text), cites, searches, tin, tout, nsearch, calls=calls, attempts=attempts,
+                   spans=_positioned(blocks))
 
 
 def call_openrouter(eng, key, question, country):
@@ -679,14 +872,22 @@ def call_openrouter(eng, key, question, country):
            "X-Title": "geo-score"}
     js, n = api_post(_endpoint(eng), hdr, body, key, timeout=eng.get("timeout"))
     msg = ((js.get("choices") or [{}])[0] or {}).get("message") or {}
-    cites = []
+    content = msg.get("content")
+    cites, marks = [], []
     for an in msg.get("annotations") or []:
         if isinstance(an, dict) and an.get("type") == "url_citation":
             c = an.get("url_citation") if isinstance(an.get("url_citation"), dict) else an
             cites.append((c.get("url"), c.get("title")))
+            # "start_index": "The index of the first character of the URL citation in the message", "end_index":
+            # "The index of the last character of the URL citation in the message"
+            # (https://openrouter.ai/docs/guides/features/plugins/web-search, "Parsing web search results"): where the
+            # citation sits, a "marker", read as the slice [start_index, end_index) of the message content when that
+            # is one string, as for OpenAI.
+            marks.append(_located(c, 0, len(content), [(c.get("url"), c.get("title"))], "marker")
+                         if isinstance(content, str) else None)
     u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
-    return _result(_text(msg.get("content")), cites, [], u.get("prompt_tokens"), u.get("completion_tokens"),
-                   1, cost=u.get("cost"), attempts=n)
+    return _result(_text(content), cites, [], u.get("prompt_tokens"), u.get("completion_tokens"),
+                   1, cost=u.get("cost"), attempts=n, spans=_positioned(marks))
 
 
 CALLERS = {"openai": call_openai, "perplexity": call_perplexity, "gemini": call_gemini,
@@ -811,11 +1012,20 @@ def mention_positions(text, entities):
     return list(zip(order, share))
 
 
-def normalize_citations(raw, entities, resolve=True):
-    out, seen, resolved = [], set(), 0
-    for item in raw:
-        url, title = (item + (None, None))[:2] if isinstance(item, tuple) else (None, None)
+class _URLReader(object):
+    """How one answer's cited URLs are read: (url, domain) for a raw (url, title), ("", "") for one that cannot be
+    used. A redirect (REDIRECT_HOSTS) is followed only when the exact page matters (a tracked brand) or its title names
+    no domain, at most MAX_RESOLVE times per answer. The citations are read first, exactly as they always were; the
+    spans and the listed and used sources then reuse what that read, so a redirect is not followed twice for them."""
+
+    def __init__(self, entities, resolve=True):
+        self.entities, self.resolve, self.resolved, self.memo = entities, resolve, 0, {}
+
+    def __call__(self, url, title, reuse=True):
         title = title.strip() if isinstance(title, str) else ""
+        key = (url if isinstance(url, str) else "", title)
+        if reuse and key in self.memo:
+            return self.memo[key]
         u = clean_url(url)
         dom = host_of(u) if u else ""
         if dom in REDIRECT_HOSTS:
@@ -823,8 +1033,9 @@ def normalize_citations(raw, entities, resolve=True):
             t = t[4:] if t.startswith("www.") else t
             tdom = t if DOMAIN_RE.match(t) else ""
             # Resolve only when the exact page matters (a tracked brand) or the title names no domain.
-            if resolve and resolved < MAX_RESOLVE and (not tdom or any(e.owns_domain(tdom) for e in entities)):
-                resolved += 1
+            if self.resolve and self.resolved < MAX_RESOLVE and \
+                    (not tdom or any(e.owns_domain(tdom) for e in self.entities)):
+                self.resolved += 1
                 real = clean_url(RESOLVER(u) or "")
                 if real and host_of(real) not in REDIRECT_HOSTS:
                     u, dom = real, host_of(real)
@@ -832,11 +1043,116 @@ def normalize_citations(raw, entities, resolve=True):
                     dom = tdom
             else:
                 dom = tdom
-        if not u or not dom or u in seen:
+        self.memo[key] = (u, dom) if u and dom else ("", "")
+        return self.memo[key]
+
+
+def normalize_citations(raw, entities, resolve=True, reader=None, reuse=False):
+    """[(url, title)] as saved citations: cleaned, redirects read as _URLReader says, unusable ones and repeats
+    dropped. The answer's own citations are read with reuse=False, as before readers were shared."""
+    read = reader or _URLReader(entities, resolve)
+    out, seen = [], set()
+    for item in raw:
+        url, title = (item + (None, None))[:2] if isinstance(item, tuple) else (None, None)
+        u, dom = read(url, title, reuse)
+        if not u or u in seen:
             continue
         seen.add(u)
-        out.append({"url": u, "domain": dom, "title": title[:200]})
+        out.append({"url": u, "domain": dom, "title": (title.strip() if isinstance(title, str) else "")[:200]})
     return out
+
+
+def saved_spans(raw, read, size):
+    """An adapter's spans as a run file keeps them: {start, end, urls, kind}, the URLs read like the citations, cut to
+    the saved answer (its first `size` characters). A span left with no usable URL is dropped. None when none is left:
+    the answer's positions are not measured."""
+    out = []
+    for start, end, refs, kind in raw or []:
+        if start >= size:
+            continue
+        urls = _uniq(read(u, t)[0] for u, t in refs)
+        if urls:
+            out.append({"start": start, "end": min(end, size), "urls": urls, "kind": kind})
+    return out or None
+
+
+# How much of an answer the brand's pages support. A "segment" span is text the provider says a source supports
+# (Gemini, Claude); a "marker" span is where the provider says a citation sits (OpenAI, OpenRouter, Perplexity's [n]),
+# and the text it supports is the sentence it closes. The sentences are mention_share's (sentence_spans), split on the
+# answer with every marker blanked out, so "free.[1] Next" splits as "free. Next" does, and a marker never counts as
+# text of its own. A sentence closed by a marker is the one the marker sits in when text precedes it there, else the
+# sentence before: "Lumo is free. ([lumo.example](…))" credits "Lumo is free.".
+SPAN_KINDS = ("segment", "marker")
+
+
+def _closed(masked, sents, ends, at):
+    """The index of the sentence a marker at offset `at` closes, or None when no sentence comes before it."""
+    i = bisect.bisect_right(ends, at)
+    if i < len(sents) and sents[i][0] <= at and _LETTER_OR_DIGIT.search(masked, sents[i][0], at):
+        return i
+    return i - 1 if i > 0 else None
+
+
+def _merged(pairs):
+    """(start, end) intervals with overlapping or touching ones joined, in order; empty ones dropped."""
+    out = []
+    for a, b in sorted(p for p in pairs if p[0] < p[1]):
+        if out and a <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], b)
+        else:
+            out.append([a, b])
+    return out
+
+
+def answer_support(text, spans, owned):
+    """The share of an answer the sources that `owned` accepts support: {chars, sentences, weighted}, or None when the
+    answer has no sentence. text is the answer as saved; spans its saved spans; owned(url) says whether a URL is the
+    brand's. A span supports the brand when any of its URLs is the brand's. |s| is a sentence's characters, counting
+    its non-whitespace characters with the citation markers left out, and c(s) the characters of s the brand's spans
+    support: all of |s| when a marker credits s, else the characters of s inside a segment.
+      chars: the sum of c(s) over the sum of |s|, over every sentence.
+      sentences: the sentences with c(s) > 0 over all sentences.
+      weighted: the position-adjusted share of the GEO paper (Aggarwal et al., arXiv 2311.09735, section 2.2.1,
+        Eq. 3): the sum over sentences of c(s) * exp(-pos(s) / |S|), over the sum of |s|, where pos(s) is the
+        sentence's index from 0 (the first sentence counts in full; the paper does not say where it starts) and |S|
+        the number of sentences. Where the paper counts words, this counts characters, which keeps Chinese and
+        Japanese, written with no spaces between words, on the same footing. Where the paper shares a sentence cited
+        by several sources equally among them, this counts it in full: it measures the text the brand's pages
+        support, not the brand's part of the credit. Where a citation supports a whole sentence, as a marker does,
+        it is Eq. 3; a segment supports only its own characters."""
+    n = len(text)
+    masked = list(text)
+    for s in spans:
+        if s["kind"] == "marker":
+            for p in range(max(0, s["start"]), min(n, s["end"])):
+                masked[p] = " "
+    masked = "".join(masked)
+    sents = sentence_spans(masked)
+    before = [0]                    # before[p]: the counted characters ahead of offset p
+    for ch in masked:
+        before.append(before[-1] + (0 if ch.isspace() else 1))
+    sizes = [before[b] - before[a] for a, b in sents]
+    total = float(sum(sizes))
+    if not total:
+        return None
+    ends = [b for _, b in sents]
+    marked, segs = set(), []
+    for s in spans:
+        if not any(owned(u) for u in s["urls"]):
+            continue
+        if s["kind"] == "marker":
+            i = _closed(masked, sents, ends, s["start"])
+            if i is not None:
+                marked.add(i)
+        else:
+            segs.append((max(0, s["start"]), min(n, s["end"])))
+    segs = _merged(segs)
+    got = [sizes[i] if i in marked else
+           sum(before[min(b, e)] - before[max(a, s)] for s, e in segs if s < b and e > a)
+           for i, (a, b) in enumerate(sents)]
+    return {"chars": round(sum(got) / total, 4),
+            "sentences": round(sum(1 for k in got if k) / float(len(sents)), 4),
+            "weighted": round(sum(k * math.exp(-i / float(len(sents))) for i, k in enumerate(got)) / total, 4)}
 
 
 def target_hits(cites, brand, target):
@@ -852,8 +1168,19 @@ def target_hits(cites, brand, target):
                         if brand.owns(c["url"], c["domain"]) and host_of(c["url"]) not in REDIRECT_HOSTS)
 
 
+def owner_test(entity, *citation_lists):
+    """owned(url) for answer_support: whether `entity` owns a URL, judged on the domain the answer's citations recorded
+    for it (a Gemini redirect left unresolved keeps the domain its title names), or the URL's host when none did."""
+    doms = {}
+    for cs in citation_lists:
+        for c in cs or []:
+            doms.setdefault(c["url"], c["domain"])
+    return lambda u: entity.owns(u, doms.get(u) or host_of(u))
+
+
 def evaluate(res, brand, rivals, resolve=True, target=None):
-    cites = normalize_citations(res["citations"], [brand] + rivals, resolve)
+    read = _URLReader([brand] + rivals, resolve)
+    cites = normalize_citations(res["citations"], [brand] + rivals, resolve, read)
     answer = res["answer"]
 
     def place(ent):
@@ -873,11 +1200,23 @@ def evaluate(res, brand, rivals, resolve=True, target=None):
         comps[r.name] = {"cited": rr is not None, "rank": rr, "mentioned": r.named_in(answer),
                          "mention_order": order, "mention_share": share}
     hit, others = target_hits(cites, brand, target)
-    return {"cited": rank is not None, "rank": rank, "quoted_url": url, "mentioned": brand.named_in(answer),
-            "mention_order": pos[0][0], "mention_share": pos[0][1], "competitors": comps, "citations": cites,
-            "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
-            "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER,
-            "target_cited": hit, "other_own_cited": None if hit is None else bool(others)}
+    out = {"cited": rank is not None, "rank": rank, "quoted_url": url, "mentioned": brand.named_in(answer),
+           "mention_order": pos[0][0], "mention_share": pos[0][1], "competitors": comps, "citations": cites,
+           "search_queries": _uniq(q.strip() for q in res["search_queries"])[:20],
+           "answer": answer[:MAX_ANSWER], "answer_truncated": len(answer) > MAX_ANSWER,
+           "target_cited": hit, "other_own_cited": None if hit is None else bool(others)}
+    # Read after the citations, so `cited` and everything above are what they were before these were recorded.
+    # Each is left out when the answer does not give it: not measured, never an empty list or a zero.
+    if res.get("listed") is not None and res.get("used") is not None:
+        out["sources_listed"] = normalize_citations(res["listed"], [brand] + rivals, resolve, read, reuse=True)
+        out["sources_used"] = normalize_citations(res["used"], [brand] + rivals, resolve, read, reuse=True)
+    spans = saved_spans(res.get("spans"), lambda u, t: read(u, t, True), len(out["answer"]))
+    if spans is not None:
+        out["spans"] = spans
+        share = answer_support(out["answer"], spans, owner_test(brand, cites, out.get("sources_listed")))
+        if share is not None:
+            out["supported_share"] = share
+    return out
 
 
 def flag_query(q, brand, rivals):
@@ -1361,7 +1700,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
            "interrupted": interrupted, "brand": brand.as_json(),
            "competitors": [r.as_json() for r in rivals], "country": country, "runs": runs,
            "engines": eng_rows, "queries": queries, "questions_hash": questions_hash(queries),
-           "caps": {"max_calls": max_calls, "budget_usd": budget},
+           "recorded": list(RECORDED), "caps": {"max_calls": max_calls, "budget_usd": budget},
            "ledger": ledger.as_json(), "samples": samples, "notes": NOTES}
     run["summary"] = summarize(run)
     return run
@@ -1437,6 +1776,75 @@ def rate_block(rows, seed, hit=lambda s: s["cited"], named=lambda s: s["mentione
             "n_questions": len(per_q), "mentioned": m, "mentioned_rate": rate(m, len(rows))}
 
 
+def _median(xs):
+    xs = sorted(xs)
+    m = len(xs) // 2
+    return xs[m] if len(xs) % 2 else (xs[m - 1] + xs[m]) / 2.0
+
+
+def _fraction(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1
+
+
+def _citation_list(cs):
+    """Saved citations (or listed or used sources) as a report reads them: the list when every entry has a url and a
+    domain, else None."""
+    if not isinstance(cs, list) or not all(isinstance(c, dict) and isinstance(c.get("url"), str)
+                                           and isinstance(c.get("domain"), str) for c in cs):
+        return None
+    return cs
+
+
+def spans_of(sample):
+    """An answer's saved spans when every one is well formed, else None: not measured. A run file is read back as
+    data, so a span that is out of shape leaves the answer unmeasured rather than read half."""
+    spans = sample.get("spans")
+    if not isinstance(spans, list) or not spans or len(spans) > MAX_SPANS:
+        return None
+    for s in spans:
+        if not isinstance(s, dict) or s.get("kind") not in SPAN_KINDS:
+            return None
+        a, b, urls = _offset(s.get("start")), _offset(s.get("end")), s.get("urls")
+        if a is None or b is None or b <= a or not isinstance(urls, list) or not urls or len(urls) > MAX_SPAN_URLS \
+                or not all(isinstance(u, str) for u in urls):
+            return None
+    return spans
+
+
+def support_of(sample, brand):
+    """One answer's supported_share: as saved, or read again from its saved spans; None when it is not measured."""
+    spans = spans_of(sample)
+    if spans is None or not isinstance(sample.get("answer"), str):
+        return None
+    v = sample.get("supported_share")
+    if isinstance(v, dict) and all(_fraction(v.get(k)) for k in ("chars", "sentences", "weighted")):
+        return v
+    return answer_support(sample["answer"], spans, owner_test(brand, _citation_list(sample.get("citations")),
+                                                              _citation_list(sample.get("sources_listed"))))
+
+
+def support_block(rows, brand):
+    """summary.engines[].supported_share: over these answers, those whose answer share is measured, the median of
+    each share and how many are above zero (by characters). Medians are null when no answer is measured."""
+    vals = [v for v in (support_of(s, brand) for s in rows) if v is not None]
+    med = lambda k: round(_median([v[k] for v in vals]), 4) if vals else None
+    return {"answers": len(vals), "chars": med("chars"), "sentences": med("sentences"), "weighted": med("weighted"),
+            "above_zero": sum(1 for v in vals if v["chars"] > 0)}
+
+
+def sources_block(rows, brand):
+    """summary.engines[].sources: over these answers, those that recorded the sources listed and used, the sources
+    each count adds up to, used over listed, and how many of the answers list or use a URL the brand owns."""
+    m = [s for s in rows if _citation_list(s.get("sources_listed")) is not None
+         and _citation_list(s.get("sources_used")) is not None]
+    listed = sum(len(s["sources_listed"]) for s in m)
+    used = sum(len(s["sources_used"]) for s in m)
+    mine = lambda cs: any(brand.owns(c["url"], c["domain"]) for c in cs)
+    return {"answers": len(m), "listed": listed, "used": used, "used_rate": rate(used, listed),
+            "you_listed": sum(1 for s in m if mine(s["sources_listed"])),
+            "you_used": sum(1 for s in m if mine(s["sources_used"]))}
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1480,6 +1888,7 @@ def summarize(run):
                    with_citations=sum(1 for s in eo if s["citations"]),
                    with_searches=sum(1 for s in eo if s["search_queries"]),
                    searched_without_queries=sum(1 for s in eo if searched_without_queries(s, e.get("provider"))),
+                   supported_share=support_block(eo, brand), sources=sources_block(eo, brand),
                    **firsts(eo, 0))
         engines.append(row)
 
@@ -1589,14 +1998,16 @@ def summarize(run):
 
 def summary_of(run):
     """The stored summary, or a fresh one for a run saved before the clustered intervals, the branded split, the
-    per-question counts, the per-engine citation counts, the tracked pages, the named-first counts or the search
-    counts (answers that searched with no query text, the year and ranking words) existed.
+    per-question counts, the per-engine citation counts, the tracked pages, the named-first counts, the search
+    counts (answers that searched with no query text, the year and ranking words), or the per-engine answer share and
+    sources listed and used existed.
     Summaries are derived from the samples, so recomputing one changes no measurement."""
     sm = run.get("summary")
     if isinstance(sm, dict) and "headline" in sm and "n_questions" in (sm.get("overall") or {}) \
             and "by_question" in sm and "tracked_pages" in sm \
             and "answers_searched_without_queries" in (sm.get("searches") or {}) \
-            and all("with_citations" in e and "named_first" in e for e in sm.get("engines") or []) \
+            and all("with_citations" in e and "named_first" in e and "supported_share" in e and "sources" in e
+                    for e in sm.get("engines") or []) \
             and all("named_first" in v for v in sm.get("share_of_voice") or []):
         return sm
     return summarize(run)
@@ -2081,6 +2492,74 @@ def search_lines(sm, fmt):
     return L
 
 
+def share_s(x):
+    """A share for a table: a percent, "<1%" for a share above zero that would print as 0%."""
+    return "—" if x is None else "<1%" if 0 < x < 0.005 else pct(x)
+
+
+def support_lines(run, sm, fmt):
+    """The report's "Answer share your pages support": per engine, beside its cited rate, the median shares of the
+    answers whose citations carry positions, or why the engine is not measured."""
+    if not sm["overall"]["answered"]:
+        return []
+    old = "spans" not in (run.get("recorded") or [])
+    if not any((e.get("supported_share") or {}).get("answers") for e in sm["engines"]):
+        return ["", "Answer share your pages support: not measured; %s." % (
+            "this run was saved before citation positions were recorded" if old else
+            "no answer's citations came with a position the provider documents")]
+    rows = []
+    for e in sm["engines"]:
+        sup = e.get("supported_share") or {}
+        if e["status"] != "measured":
+            rows.append([e["id"], "not measured", "", "", "", "", "", e["status"]])
+        elif not sup.get("answers"):
+            provider = next((x.get("provider") for x in run["engines"] if x["id"] == e["id"]), None)
+            why = "no answer" if not e["answered"] else \
+                "no answer had [n] marks on search results that carry an id" if provider == "perplexity" else \
+                "no answer's citations came with a position"
+            rows.append([e["id"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])), "not measured",
+                         "", "", "", "", why])
+        else:
+            rows.append([e["id"], "%d/%d %s" % (e["cited"], e["answered"], pct(e["cited_rate"])),
+                         "%d/%d" % (sup["answers"], e["answered"]), share_s(sup["chars"]), share_s(sup["sentences"]),
+                         share_s(sup["weighted"]), "%d/%d %s" % (sup["above_zero"], sup["answers"],
+                                                                 pct(rate(sup["above_zero"], sup["answers"]))), ""])
+    L = [_h("Answer share your pages support (median per engine; not part of the cited rate)", fmt),
+         table(["engine", "cited", "answers with positions", "characters", "sentences", "position-weighted",
+                "above zero", ""], rows, fmt), ""]
+    L.extend("- " + n for n in SUPPORT_NOTES)
+    return L
+
+
+def sources_lines(run, sm, fmt):
+    """The report's "Sources listed and used in the answer": per engine whose API lists sources apart from the ones
+    its text marks, how many it listed and used per answer, or one line saying no engine did."""
+    if not sm["overall"]["answered"]:
+        return []
+    old = "sources" not in (run.get("recorded") or [])
+    if not any((e.get("sources") or {}).get("answers") for e in sm["engines"]):
+        return ["", "Sources listed and used in the answer: not measured; %s." % (
+            "this run was saved before listed sources were recorded" if old else
+            "no engine in this run returned a source list apart from the sources its text marks")]
+    rows = []
+    for e in sm["engines"]:
+        so = e.get("sources") or {}
+        if not so.get("answers"):
+            rows.append([e["id"], "not measured", "", "", "", "", "",
+                         e["status"] if e["status"] != "measured" else
+                         "no source list apart from the sources its text marks"])
+            continue
+        n = float(so["answers"])
+        rows.append([e["id"], "%d/%d" % (so["answers"], e["answered"]), "%.1f" % (so["listed"] / n),
+                     "%.1f" % (so["used"] / n), pct(so["used_rate"]), "%d/%d" % (so["you_listed"], so["answers"]),
+                     "%d/%d" % (so["you_used"], so["answers"]), ""])
+    L = [_h("Sources listed and used in the answer", fmt),
+         table(["engine", "answers", "listed per answer", "used per answer", "used / listed", "yours listed",
+                "yours used", ""], rows, fmt), ""]
+    L.extend("- " + n for n in SOURCES_NOTES)
+    return L
+
+
 def headline_lines(sm, name, fmt):
     """The headline rate and the line for questions that name the brand, from a summary or a pooled report."""
     o, h, br = sm["overall"], sm["headline"], sm["branded"]
@@ -2151,6 +2630,8 @@ def render(run, fmt="text"):
         if e["status"] == "measured" and e["n_questions"] >= CITATIONLESS_MIN and e.get("with_citations") == 0:
             L.append("")
             L.append("warning: " + citationless(e["id"], e["n_questions"], e["answered"]))
+    L.extend(support_lines(run, sm, fmt))
+    L.extend(sources_lines(run, sm, fmt))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))

@@ -5,6 +5,38 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **How much of the answer your pages support, beside the cited rate.** Where a provider documents where each
+  citation sits, every answer now records it (`spans`: start, end, URLs and kind, character offsets into the
+  answer as saved, at most 500), read only from documented fields: the `start_index`/`end_index` of OpenAI's and
+  OpenRouter's `url_citation` annotations (where the citation sits), Perplexity's `[n]` marks when its search
+  results carry the `id` its documentation maps them to, Gemini's `url_citation` annotations (Interactions API)
+  and grounding supports (`generate_content`), both measured in bytes as Google's reference says, and the text
+  of Claude's text blocks that carry citations. From them each answer gets `supported_share`: the share of the
+  answer a URL the brand owns supports, by characters, by sentences, and by characters weighted by their
+  sentence's position, e^(−position / sentences), after the position-adjusted word count of arXiv 2311.09735,
+  §2.2.1, Eq. 3 (characters for words; a sentence several sources support counts in full). A mark supports the
+  sentence it closes; a segment, its own characters. The report's new "Answer share your pages support" table
+  gives, per engine and next to its cited rate, never merged into it, the answers measured, the median of each
+  share and how many are above zero; `summary.engines[].supported_share` carries the same. An answer with no
+  citation, or with one that came without a usable position (an OpenAI-compatible `base_url` that strips
+  annotations looks the same), is not measured, never 0, and so is every Perplexity answer whose results carry
+  no id. It is not `mention_share`: that counts sentences naming the brand, this counts text its pages support.
+- **Sources listed and sources used.** Perplexity's adapter kept only the sources the text marks with `[n]` and
+  dropped the rest; Gemini's `generate_content` lists grounding chunks and ties supports to some of them. Such
+  answers now record `sources_listed` and `sources_used`, and a new table, "Sources listed and used in the
+  answer", gives per engine the sources listed and used per answer, used over listed, and the answers that list
+  and use a URL of yours (`summary.engines[].sources`). `citations`, `cited`, the rank and the headline rate read
+  exactly as before for the same responses, which a test holds against 1.7.1's reading. OpenAI, Claude,
+  OpenRouter and Gemini's Interactions API return one list, the citations tied to the text, so they are not
+  measured.
+- A run records what it measured in `recorded`. A run saved before has none, and its report says the answer share
+  and the sources were not recorded rather than that the engines gave none; its summary is computed again when it
+  is reported, and the file is not rewritten. schema/watch.v1.json registers every new field, closed and capped;
+  guide/watch-methodology.md section 9 gives the definitions, which engines give positions and the papers behind
+  them; the glossary gains *Answer share* and *Sources listed, sources used*. Measurement only: rubric v1.1, every
+  tier and every score are unchanged.
+
 ## [1.7.1] — 2026-10-04
 
 ### Fixed

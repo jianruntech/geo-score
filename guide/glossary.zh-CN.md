@@ -32,6 +32,16 @@ Google AI Overviews、Gemini、Copilot；它给的不是一串排好序的链接
 **出现在：** `--help` 的第一句（whether AI answer engines can find, parse, trust and cite it）、README、量表。
 **详见：** [README · 这和 SEO 问的不是同一个问题](../README.zh-CN.md#这和-seo-问的不是同一个问题)
 
+### Answer share（答案占比）
+
+答案里由品牌拥有的 URL 支撑的部分所占的比例（`supported_share`）：按字符、按句子，以及按句子位置递减加权的字符，
+取自 GEO 论文的位置加权字数。它从服务商说明的每条引用的位置读出，所以引用不带位置的回答算未测量，从不算 0。
+它和引用率并列，从不并入：引用率说的是页面被选中，答案占比说的是它撑起了多少答案。它也不是句子占比，句子占比数的是提到品牌的句子。
+
+**出现在：** `watch report` 里的「Answer share your pages support」表；运行文件里每条回答的 `spans` 与 `supported_share`，
+以及 `summary.engines` 每一行的 `supported_share`。
+**详见：** [watch 方法说明 第 9 节](watch-methodology.zh-CN.md#9-你的页面支撑了多少答案以及列为来源与正文用上)
+
 ## B
 
 ### Band（分数段）
@@ -481,6 +491,16 @@ OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Pe
 围栏里是网站自己的话，只能当数据读，不能当指令照做，MCP 工具也会这样告诉 Agent。
 
 **出现在：** 每份报告里的证据和 `--explain` 的输出；MCP 工具的输出。**详见：** [SECURITY.md · Threat model](../SECURITY.md#threat-model)（英文）
+
+### Sources listed、sources used（列为来源、正文用上）
+
+有些 API 在答案旁返回来源，并在正文里标出用到的那些：Perplexity 的 `search_results` 和 `[n]` 角标，Gemini（`generate_content`）
+的 grounding chunks 和 grounding supports。列为来源是全部，正文用上是被标出的那些。回答是否引用了品牌，读法不变；
+正文没用上的列出来源另外保存。只返回一组来源、即对到正文的引用的 API 不测。
+
+**出现在：** `watch report` 里的「Sources listed and used in the answer」表；运行文件里每条回答的 `sources_listed` 与
+`sources_used`，以及 `summary.engines` 每一行的 `sources`。
+**详见：** [watch 方法说明 第 9 节](watch-methodology.zh-CN.md#9-你的页面支撑了多少答案以及列为来源与正文用上)
 
 ## T
 

@@ -4,6 +4,28 @@
 
 ## [Unreleased]
 
+### 新增
+- **你的页面支撑了多少答案，和引用率并列报告。** 服务商文档写明了每条引用在正文里的位置时，每条回答现在都会记下来（`spans`：起止、
+  URL 和类型，是保存下来的回答里的字符偏移，最多 500 条），只读文档写明的字段：OpenAI 和 OpenRouter `url_citation` 注释的
+  `start_index`/`end_index`（引用所在的位置）；Perplexity 的 `[n]` 角标，前提是搜索结果带文档里角标所对应的 `id`；Gemini 的
+  `url_citation` 注释（Interactions API）和 grounding supports（`generate_content`），两者都按 Google 参考文档说的以字节计；
+  以及 Claude 带引用的文本块自身的文字。每条回答由此得到 `supported_share`：答案里由品牌拥有的 URL 支撑的部分所占的比例，
+  分别按字符、按句子、按句子位置递减加权的字符（e^(−位置/句子数)），取自 arXiv 2311.09735 §2.2.1 式 3 的位置加权字数
+  （以字符代替词；几个来源同时支撑的一句按整句计）。角标支撑它收尾的那句话，segment 只支撑它覆盖的字符。报告新增
+  「Answer share your pages support」表，按引擎印在引用率旁边、从不并入：测到的回答数、每个比例的中位数，以及大于 0 的回答数；
+  `summary.engines[].supported_share` 给出同样的数。没有引用、或有一条引用没有可用位置的回答（去掉注释的 OpenAI 兼容 `base_url`
+  看起来也一样）算未测量，从不算 0；搜索结果不带 id 的 Perplexity 回答也是。它不是 `mention_share`：那个数的是提到品牌的句子，
+  这个数的是品牌的页面支撑的文字。
+- **列为来源与正文用上。** Perplexity 的适配器以前只留正文用 `[n]` 标出的来源，其余丢掉；Gemini 的 `generate_content` 列出
+  grounding chunks，并把 supports 对到其中一部分。这样的回答现在记下 `sources_listed` 和 `sources_used`，新表「Sources listed
+  and used in the answer」按引擎给出每条回答平均列出和用上的来源数、用上 ÷ 列出，以及列出、用上了你的 URL 的回答数
+  （`summary.engines[].sources`）。对同样的响应，`citations`、`cited`、排名和标题引用率的读法完全不变，有测试拿 1.7.1 的读法来核对。
+  OpenAI、Claude、OpenRouter 和 Gemini 的 Interactions API 只返回一组来源，即对到正文的引用，所以未测量。
+- 运行在 `recorded` 里记下它测了什么。之前保存的运行没有这一项，报告会写明答案占比和来源没有记录，而不是说引擎没给；
+  出报告时重新计算 summary，运行文件不会被改写。schema/watch.v1.json 登记了所有新字段，封闭且有上限；guide/watch-methodology.md
+  第 9 节给出定义、哪些引擎给位置，以及依据的论文；术语表新增 *Answer share（答案占比）* 和 *Sources listed、sources used
+  （列为来源、正文用上）*。只加测量：量表 v1.1、每一档和每个分数都不变。
+
 ## [1.7.1] — 2026-10-04
 
 ### 修复

@@ -482,6 +482,27 @@ keeps its first 20,000 characters (`answer_truncated` marks an answer that was c
 carries them as `named_first`, `any_named` and `mention_share` on each row of `summary.engines` and
 `summary.share_of_voice`; for a run saved before 1.6.0 they are computed from the saved answers.
 
+**How much of the answer your pages support.** Where a provider documents where each citation sits, an
+answer records `spans` and, from them, `supported_share`: the share of the answer that a URL you own supports,
+by characters, by sentences, and by characters weighted down by their sentence's position (e^(−position /
+sentences), from the GEO paper's position-adjusted word count, arXiv 2311.09735, §2.2.1, Eq. 3). OpenAI and
+OpenRouter give where a citation sits in the text, Perplexity's `[n]` marks do when its search results carry
+an `id`, and a mark supports the sentence it closes; Gemini (both APIs, offsets in bytes) and Claude give the
+text a citation supports. An answer with no citation, or with one the provider gave no position for, is not
+measured, never 0. "Answer share your pages support" prints, beside each engine's cited rate and never merged
+into it, the answers measured, the median of each share and how many are above zero. It is not *sentence
+share*: that counts sentences naming you, this counts text your pages support. JSON: `supported_share` on
+each answer and on each row of `summary.engines`.
+
+**Sources listed and used.** Perplexity lists `search_results` and marks the ones its text uses with `[n]`;
+Gemini's `generate_content` lists `groundingChunks` and ties grounding supports to some of them. Such answers
+record `sources_listed` and `sources_used`, and "Sources listed and used in the answer" gives, per engine, the
+sources listed and used per answer, used over listed, and the answers that list and use a URL of yours. The
+unmarked Perplexity sources the adapter used to drop are now kept there; `citations` and `cited` read as they
+always did. OpenAI, Claude, OpenRouter and Gemini's Interactions API return one list, the citations tied to
+the text, so they are not measured. A run saved before either was recorded says so in its report. Details:
+[guide/watch-methodology.md, section 9](../guide/watch-methodology.md#9-how-much-of-the-answer-your-pages-support-and-sources-listed-against-used).
+
 **Over MCP.** `uvx geo-score@1.7.1 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
 clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
 app does not share with your shell, and a GUI client does not start it in your project, so pass

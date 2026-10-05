@@ -37,6 +37,19 @@ retrieves passages, decides whether a source is worth quoting, and cites it.
 **Where:** `--help` ("whether AI answer engines can find, parse, trust and cite it"), the README and
 the rubric. **More:** [README, Why this is a different question from SEO](../README.md#why-this-is-a-different-question-from-seo)
 
+### Answer share
+
+The share of an answer that a URL the brand owns supports (`supported_share`): by characters, by
+sentences, and by characters weighted down by their sentence's position, after the GEO paper's
+position-adjusted word count. It is read from where the provider says each citation sits, so an answer
+whose citations come without a position is not measured, never 0. It sits beside the cited rate, never
+in it: cited says a page was chosen, answer share how much of the answer it carried. It is not
+sentence share, which counts the sentences that name the brand.
+
+**Where:** "Answer share your pages support" in `watch report`; `spans` and `supported_share` on each
+answer and `supported_share` on each row of `summary.engines` in run files.
+**More:** [watch methodology, section 9](watch-methodology.md#9-how-much-of-the-answer-your-pages-support-and-sources-listed-against-used)
+
 ## B
 
 ### Band
@@ -573,6 +586,18 @@ be read as data and never followed as instructions, and the MCP tools tell the a
 
 **Where:** the evidence in every report and under `--explain`; the output of the MCP tools.
 **More:** [SECURITY.md, Threat model](../SECURITY.md#threat-model)
+
+### Sources listed, sources used
+
+Some APIs return sources beside an answer and mark in its text the ones it uses: Perplexity's
+`search_results` and `[n]` marks, Gemini's grounding chunks and grounding supports (`generate_content`).
+Listed are all of them, used the marked ones. Whether an answer cites the brand is read as it always
+was; the listed sources the text does not use are kept apart. APIs that return one list, the citations
+tied to the text, are not measured.
+
+**Where:** "Sources listed and used in the answer" in `watch report`; `sources_listed` and
+`sources_used` on each answer and `sources` on each row of `summary.engines` in run files.
+**More:** [watch methodology, section 9](watch-methodology.md#9-how-much-of-the-answer-your-pages-support-and-sources-listed-against-used)
 
 ## T
 

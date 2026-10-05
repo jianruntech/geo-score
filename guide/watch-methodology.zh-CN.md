@@ -264,9 +264,83 @@ Questions that name Acme (2, kept out of the headline): cited in 100% (6 of 6, 9
 至少要有 k 个问题朝变化的方向变动，反方向变动的问题永远帮不上忙，而几个百分点的真实变化只会让少数几个问题变动。
 这个数假定每个引擎都回答了每个问题；有失败的运行，能配对的问题更少。
 
+## 9. 你的页面支撑了多少答案，以及列为来源与正文用上
+
+被引用说明引擎选中了某一页，说明不了这一页在答案里占了多少分量。生成式引擎的研究把这两件事分开量：被选为来源，和被吸收进答案
+（[arXiv 2604.25707](https://arxiv.org/abs/2604.25707)，§5；§9.2 把吸收分列为面板该有的指标之一，和选中率并列）。最早的生成式引擎
+可见度指标就属于后一种：答案里引用某个来源的句子的字数占全部字数的比例，以及按句子位置递减加权的同一比例
+（[arXiv 2311.09735](https://arxiv.org/abs/2311.09735)，§2.2.1，式 2、式 3）。那篇论文是在输入里已经有这个来源的模拟引擎里量的，
+没有量页面能不能被选中（§3.1、§9）。`watch` 在服务商文档写明了所需字段的地方，记下两个这类量。两者都和引用率并列报告，从不并入；
+都不进标题引用率、区间和 `watch diff`。
+
+### 答案占比：你的页面支撑的文字
+
+每条回答记下它的引用在答案里的位置（`spans`：`start`、`end`、`urls`、`kind`，是保存下来的回答里的字符偏移），只读服务商文档写明的字段：
+
+| 引擎 | API 给出什么 | `kind` | 偏移单位 |
+|---|---|---|---|
+| OpenAI（Responses） | `output_text` 上 `url_citation` 注释的 `start_index` 与 `end_index`：「the URL citation in the message」（[参考文档](https://developers.openai.com/api/reference/resources/responses/methods/create)，URLCitation） | `marker` | 该文本段的字符 |
+| OpenRouter | 消息上 `url_citation` 注释的同样两个字段（[web search](https://openrouter.ai/docs/guides/features/plugins/web-search)） | `marker` | 消息的字符 |
+| Perplexity | 正文里的 `[n]` 角标，每个指向「the result whose `id` is n」（[迁移指南](https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/how-to)，Inline citations） | `marker` | 在正文里找 |
+| Gemini，Interactions API（默认） | 每个文本块上的 `url_citation` 注释：「a text segment (defined by `start_index` and `end_index`)」（[指南](https://ai.google.dev/gemini-api/docs/google-search)），「measured in bytes」（[参考文档](https://ai.google.dev/api/interactions-api)，UrlCitation） | `segment` | 该文本块的 UTF-8 字节 |
+| Gemini，`"api": "generate_content"` | `groundingSupports`：一个 `segment`（`partIndex`、`startIndex`、`endIndex`，「measured in bytes」，以及它的 `text`）和支撑它的 `groundingChunkIndices`（[参考文档](https://ai.google.dev/api/generate-content)，GroundingSupport、Segment） | `segment` | 该 part 的 UTF-8 字节 |
+| Claude | 带 `citations` 的文本块：「each text block can contain a claim ... and a list of citations that support the claim」（[citations](https://platform.claude.com/docs/en/build-with-claude/citations)） | `segment` | 文本块自身的文字 |
+
+`segment` 是服务商说某个来源支撑的那段文字。`marker` 是服务商说的引用在正文里的位置；它支撑的文字按「它收尾的那句」来读：
+角标所在的句子里角标前面有文字，就是这一句，否则是上一句。这条规则是 geo-score 定的，不是服务商的。Google 的指南在一个 Python
+例子里用这两个偏移切 Interactions 的文字，这是按字符数；它的参考文档说的是字节。两种读法在纯 ASCII 文字上一致，`watch` 按参考文档读。
+
+以下情况回答不记 `spans`，算**未测量**，从不算 0：回答没有任何引用；任何一条引用没有可用的位置（缺失、超出所在文字、把一个字符切成两半，
+或 Gemini 的 segment 按字节取出的文字和它给的 `text` 对不上）；超过上限（500 条引用、一条引用 20 个 URL）；以及 Perplexity 的搜索结果
+不带 `id`。Sonar 文档里的响应示例不带 id，而文档只通过 id 把 `[n]` 对到某条结果，所以只有每条结果都带 id、且 id 依次是 1、2、3 时才记位置，
+这和 `cited` 一直以来的读法一致。`base_url` 指向的 OpenAI 兼容接口把注释去掉时，看起来和没有引用的回答一样，这也是没有引用算未测量、
+不算 0 的原因。
+
+`supported_share` 从这些位置给出品牌的三个数。句子和 `mention_share` 的一样（第 1 节），只是先把所有角标涂成空白再切，所以角标本身从不算文字。
+对一句话 s，|s| 是它的字符数（不含空白，不含角标），c(s) 是其中由品牌拥有的 URL（按决定 `cited` 的同一套匹配）的位置支撑的部分：
+这样的 marker 落在 s 上时是整句 |s|，否则是 s 落在这样的 segment 里的字符数。
+
+- `chars`：Σ c(s) / Σ |s|。
+- `sentences`：c(s) > 0 的句子数 ÷ 全部句子数。
+- `weighted`：Σ c(s) · e^(−pos(s)/|S|) / Σ |s|，pos(s) 是句子从 0 开始的序号，|S| 是句子总数。这就是 arXiv 2311.09735（§2.2.1）的式 3，
+  另有三处是我们的取舍：用字符数代替词数，这样不在词间加空格的中文、日文能同等计算；位置从 0 起算，第一句按全额计，论文没写从几起算；
+  一句话同时由品牌和别的来源支撑时，对品牌按整句计，论文是把这句的字数平分给引用它的各个来源。marker 按整句计，和论文一样；segment 只计它覆盖的字符。
+
+每个引擎在 `summary.engines[].supported_share` 里给出测到的回答数、三个数各自的中位数，以及大于 0 的回答数（`above_zero`）；
+报告在「Answer share your pages support」表里把它们印在引用率旁边，没有测到任何回答的引擎印「not measured」并写明原因。不附区间，也不做检验。
+中位数只在带位置的回答里取，所以描述的是有引用的回答；两种读法（marker 落到的整句、segment 覆盖的字符）之间，以及回答长短不同的引擎之间，
+都不在同一把尺子上。
+
+它不是 `mention_share`。那个数的是提到品牌的句子；这个数的是品牌的页面支撑的文字，不管有没有提到品牌。一条回答可以每句都提到你，
+却全靠别人的页面撑着；也可以整段用了你的文档，却一次都没提你的名字。和上面那项研究的吸收分一样，它是由服务商的归属信息构造的代理，
+不核对文字是否真的来自那一页（arXiv 2604.25707 也说自己的分数是构造出来的代理，§5.3、§10.1）。
+
+### 列为来源与正文用上
+
+有些 API 在答案旁列出来源，又在正文里标出用到了哪些。一项研究看了正文带行内角标的中文回答引擎：每个回答列出的来源里，有 39.3% 没有进正文
+（每个回答平均列 10.5 个、进正文 6.9 个；[arXiv 2607.15771](https://arxiv.org/abs/2607.15771)，§2.4）。那项研究采的是别家引擎的
+Web 和 App 界面（§1.1），只能当背景，不是这些 API 的基准。
+
+API 两样都给时，每条回答记下 `sources_listed`（返回的全部来源）和 `sources_used`（正文标出的那些）：
+
+- **Perplexity**：列出的是 `search_results`（或较早的 `citations` 列表）；用上的是 `[n]` 角标指向的那些，`[n]` 指第 n 个列出的来源。
+  以前，正文有角标的回答只留被标出的来源，其余丢掉；现在它们留在 `sources_listed` 里。`citations`，以及由它决定的 `cited`、排名和标题引用率，
+  读法完全不变：正文有角标时取被标出的来源，没有角标时取全部列出的来源。正文没有角标的回答两张表都不记（用了哪些不知道）；
+  搜索结果带的 id 和它们的顺序对不上时也不记。
+- **Gemini，`"api": "generate_content"`**：列出的是 `groundingChunks`；用上的是某条 grounding support 指向的那些。`cited` 照旧读全部 chunk。
+- **OpenAI、Claude、OpenRouter 和 Gemini 的 Interactions API** 只返回一组来源，即对到正文的引用，答案旁没有另一份列表，所以列为来源与正文用上**未测量**。OpenAI 还能返回
+  它的搜索查过的 URL（[指南](https://developers.openai.com/api/docs/guides/tools-web-search)，Sources），Claude 会返回它的搜索结果；
+  那些是引擎读过的东西，和答案旁列出的来源不是同一组，`watch` 既不请求也不记录。
+
+每个引擎在 `summary.engines[].sources` 里给出两张表都记了的回答数、这些回答列出和用上的来源总数、`used_rate`（用上 ÷ 列出），以及其中
+有几条回答列出了、用上了品牌拥有的 URL。报告在「Sources listed and used in the answer」表里按每条回答的平均数印出来。
+
+一次运行在 `recorded`（`spans`、`sources`）里记下它测了什么。在这些字段出现之前保存的运行没有这一项，它的报告会写明「没有记录」，
+而不是说引擎没给；出报告时重新计算它的 summary，运行文件本身不会被改写。
+
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，以及 `questions_hash`：两次运行问的是同一组问题时，它们的 `questions_hash` 相同。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

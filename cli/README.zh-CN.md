@@ -393,6 +393,21 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 在 `summary.engines` 和 `summary.share_of_voice` 的每一行里以 `named_first`、`any_named` 和 `mention_share` 给出；1.6.0 之前保存的运行，
 由保存的回答当场算出。
 
+**你的页面支撑了多少答案。** 服务商文档写明了每条引用在正文里的位置时，回答会记下 `spans`，并由此算出 `supported_share`：
+答案里由你拥有的 URL 支撑的部分所占的比例，分别按字符、按句子、按句子位置递减加权的字符（e^(−位置/句子数)，取自 GEO 论文的
+位置加权字数，arXiv 2311.09735，§2.2.1，式 3）。OpenAI 和 OpenRouter 给出引用在正文里所在的位置，Perplexity 的 `[n]` 角标在搜索结果
+带 `id` 时也算，这类角标支撑它收尾的那句话；Gemini（两种 API，偏移按字节）和 Claude 给出引用支撑的那段文字。没有引用、或有一条引用
+服务商没给位置的回答，算未测量，从不算 0。「Answer share your pages support」表把它印在每个引擎的引用率旁边，从不并入：测到的回答数、
+每个比例的中位数，以及大于 0 的回答数。它不是 *sentence share*：那个数的是提到你的句子，这个数的是你的页面支撑的文字。JSON：
+每条回答和 `summary.engines` 每一行上的 `supported_share`。
+
+**列为来源与正文用上。** Perplexity 列出 `search_results`，并用 `[n]` 标出正文用到的那些；Gemini 的 `generate_content` 列出
+`groundingChunks`，并把 grounding support 对到其中一部分。这样的回答会记下 `sources_listed` 和 `sources_used`，「Sources listed and used
+in the answer」表按引擎给出每条回答平均列出和用上的来源数、用上 ÷ 列出，以及列出、用上了你的 URL 的回答数。适配器以前丢掉的
+Perplexity 未标注来源现在留在这里；`citations` 和 `cited` 的读法不变。OpenAI、Claude、OpenRouter 和 Gemini 的 Interactions API
+只返回一组来源，即对到正文的引用，所以未测量。这两项出现之前保存的运行，报告里会写明没有记录。细节见
+[guide/watch-methodology.zh-CN.md 第 9 节](../guide/watch-methodology.zh-CN.md#9-你的页面支撑了多少答案以及列为来源与正文用上)。
+
 **通过 MCP 使用。** `uvx geo-score@1.7.1 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见

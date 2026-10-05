@@ -4,7 +4,7 @@ at the transport layer.
 
     python3 cli/test_geo_watch.py
 """
-import contextlib, datetime, http.server, inspect, io, json, os, queue, re, shutil, socket, subprocess, sys, tempfile
+import contextlib, datetime, http.server, inspect, io, json, math, os, queue, re, shutil, socket, subprocess, sys, tempfile
 import threading, time, unittest, urllib.request
 from unittest import mock
 
@@ -560,7 +560,7 @@ class Reading(Base):
 # every keyword validate() applies, and the ones that only annotate; a test holds both schemas to this list, so a
 # keyword added to a schema later cannot be skipped here without a word
 VALIDATED = ("$ref", "type", "const", "enum", "pattern", "minLength", "maxLength", "minimum", "maximum", "required",
-             "properties", "additionalProperties", "propertyNames", "items", "minItems", "anyOf", "allOf", "not",
+             "properties", "additionalProperties", "propertyNames", "items", "minItems", "maxItems", "anyOf", "allOf", "not",
              "if", "then", "else")
 ANNOTATIONS = ("$schema", "$id", "$defs", "title", "description", "default", "format")
 
@@ -629,6 +629,8 @@ def validate(inst, schema, root=None, path="$"):
     if isinstance(inst, list):
         if len(inst) < schema.get("minItems", 0):
             errs.append("%s: fewer than %d items" % (path, schema["minItems"]))
+        if "maxItems" in schema and len(inst) > schema["maxItems"]:
+            errs.append("%s: more than %d items" % (path, schema["maxItems"]))
         if "items" in schema:
             for i, v in enumerate(inst):
                 errs += validate(v, schema["items"], root, "%s[%d]" % (path, i))
@@ -4045,6 +4047,459 @@ class Pooling(Base):
         r = srv.call({"name": "report", "arguments": {"since": 30}})
         self.assertTrue(r["isError"])
         self.assertIn("cannot pool: 1 of the 5 runs", r["content"][0]["text"])
+
+
+# ── where citations sit: answer share and sources listed against used ────
+# One recorded answer per provider shape, as each vendor's current documentation describes it (the URLs are cited in
+# geo_watch.py, beside the code that reads each field). Every offset below is the one the provider would send for
+# this text; the tests check each against the text it points at.
+OPENAI_TEXT = ("Lumo gives new accounts 15 free credits a month. ([lumo.example](https://lumo.example/pricing?utm_source=openai)) "
+               "Pixa's free plan adds a watermark. ([pixa.example](https://pixa.example/plans?utm_source=openai))\n\n"
+               "For short clips, either works.")
+
+
+def openai_recorded(annotations=True):
+    """The Responses API: url_citation annotations whose start_index and end_index frame the citation in the text."""
+    ans = [{"type": "url_citation", "start_index": 49, "end_index": 113,
+            "url": "https://lumo.example/pricing?utm_source=openai", "title": "Lumo pricing"},
+           {"type": "url_citation", "start_index": 149, "end_index": 211,
+            "url": "https://pixa.example/plans?utm_source=openai", "title": "Pixa plans"}]
+    return {"id": "resp_rec", "output": [
+        {"type": "web_search_call", "id": "ws_1", "status": "completed",
+         "action": {"type": "search", "query": "free ai video generator credits"}},
+        {"type": "message", "role": "assistant", "content": [
+            {"type": "output_text", "text": OPENAI_TEXT, "annotations": ans if annotations else []}]}],
+        "usage": {"input_tokens": 900, "output_tokens": 120}}
+
+
+OPENROUTER_TEXT = ("Lumo is the cheapest at $0 to start [lumo.example](https://lumo.example/pricing). Reelcraft starts at "
+                   "$12 [reelcraft.example](https://reelcraft.example/pricing).")
+
+
+def openrouter_recorded():
+    """OpenRouter's web plugin: url_citation annotations nested under url_citation, as in its documentation."""
+    return {"choices": [{"message": {"role": "assistant", "content": OPENROUTER_TEXT, "annotations": [
+        {"type": "url_citation", "url_citation": {"url": "https://lumo.example/pricing", "title": "Lumo pricing",
+                                                  "content": "", "start_index": 36, "end_index": 80}},
+        {"type": "url_citation", "url_citation": {"url": "https://reelcraft.example/pricing", "title": "Reelcraft",
+                                                  "content": "", "start_index": 106, "end_index": 160}}]}}],
+            "usage": {"prompt_tokens": 900, "completion_tokens": 150, "cost": 0.002}}
+
+
+def anthropic_recorded():
+    """The Messages API with web search: text blocks, the cited ones carrying web_search_result_location citations."""
+    cite = lambda u, t: [{"type": "web_search_result_location", "url": u, "title": t, "encrypted_index": "Eo8B",
+                          "cited_text": "..."}]
+    return {"content": [
+        {"type": "server_tool_use", "id": "srv_1", "name": "web_search", "input": {"query": "lumo free credits"}},
+        {"type": "web_search_tool_result", "tool_use_id": "srv_1", "content": [
+            {"type": "web_search_result", "url": "https://lumo.example/pricing", "title": "Lumo pricing",
+             "encrypted_content": "Eqgf", "page_age": "September 1, 2026"}]},
+        {"type": "text", "text": "Based on the search results, "},
+        {"type": "text", "text": "Lumo gives new accounts 15 free credits a month.",
+         "citations": cite("https://lumo.example/pricing", "Lumo pricing")},
+        {"type": "text", "text": "\n\n"},
+        {"type": "text", "text": "Pixa adds a watermark on its free plan.",
+         "citations": cite("https://pixa.example/plans", "Pixa plans")},
+        {"type": "text", "text": " Overall, Lumo is the cheaper start."}],
+        "stop_reason": "end_turn",
+        "usage": {"input_tokens": 6039, "output_tokens": 931, "server_tool_use": {"web_search_requests": 1}}}
+
+
+GEMINI_PARTS = ("鹿末每月送15个免费额度。Pixa的免费版带水印。", "Reddit上的讨论更推荐鹿末。")
+
+
+def interactions_recorded(first=None):
+    """The Interactions API: url_citation annotations on each text block, offsets measured in bytes."""
+    first = first if first is not None else [
+        {"type": "url_citation", "url": "https://lumo.example/pricing", "title": "lumo.example",
+         "start_index": 0, "end_index": 35},
+        {"type": "url_citation", "url": "https://pixa.example/plans", "title": "pixa.example",
+         "start_index": 35, "end_index": 63}]
+    return {"id": "int_rec", "status": "completed", "steps": [
+        {"type": "google_search_call", "arguments": {"queries": ["免费 AI 视频 工具"]}},
+        {"type": "google_search_result", "call_id": "s1", "result": [{"search_suggestions": "<div>"}]},
+        {"type": "model_output", "content": [
+            {"type": "text", "text": GEMINI_PARTS[0], "annotations": first},
+            {"type": "text", "text": GEMINI_PARTS[1], "annotations": [
+                {"type": "url_citation", "url": "https://www.reddit.com/r/aivideo/x", "title": "reddit.com",
+                 "start_index": 0, "end_index": 36}]}]}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 30}}
+
+
+GC_TEXT = ("Lumo gives new accounts 15 free credits a month — no card needed. Pixa adds a watermark on its free plan. "
+           "Reddit threads lean towards Lumo.")
+REDIRECT = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/"
+
+
+def generate_content_recorded(supports=None):
+    """generateContent: groundingChunks, and groundingSupports whose segments are measured in bytes. The first
+    segment starts at 0, which protobuf's JSON leaves out."""
+    if supports is None:
+        supports = [{"segment": {"partIndex": 1, "endIndex": 67,
+                                 "text": "Lumo gives new accounts 15 free credits a month — no card needed."},
+                     "groundingChunkIndices": [0], "confidenceScores": [0.9]},
+                    {"segment": {"partIndex": 1, "startIndex": 68, "endIndex": 107,
+                                 "text": "Pixa adds a watermark on its free plan."},
+                     "groundingChunkIndices": [1], "confidenceScores": [0.8]},
+                    {"segment": {"partIndex": 1, "startIndex": 108, "endIndex": 141,
+                                 "text": "Reddit threads lean towards Lumo."},
+                     "groundingChunkIndices": [2], "confidenceScores": [0.7]}]
+    return {"candidates": [{"content": {"parts": [{"text": "Looking at plans.", "thought": True}, {"text": GC_TEXT}]},
+                            "groundingMetadata": {
+                                "webSearchQueries": ["lumo free credits"],
+                                "groundingChunks": [{"web": {"uri": REDIRECT + "A", "title": "lumo.example"}},
+                                                    {"web": {"uri": REDIRECT + "B", "title": "pixa.example"}},
+                                                    {"web": {"uri": REDIRECT + "C", "title": "reddit.com"}},
+                                                    {"web": {"uri": REDIRECT + "D", "title": "youtube.com"}}],
+                                "groundingSupports": supports}}],
+            "usageMetadata": {"promptTokenCount": 50, "candidatesTokenCount": 200}}
+
+
+PPLX_TEXT = ("Lumo gives new accounts 15 free credits a month[1]. Pixa adds a watermark on its free plan[2][3].\n\n"
+             "Most reviewers start with Lumo[1].")
+PPLX_RESULTS = [("https://lumo.example/pricing", "Lumo pricing"), ("https://pixa.example/plans", "Pixa plans"),
+                ("https://www.reddit.com/r/aivideo/x", "thread"), ("https://www.youtube.com/watch?v=x", "video")]
+
+
+def pplx_recorded(ids=None, text=PPLX_TEXT, results=PPLX_RESULTS):
+    """Sonar Chat Completions: search_results, with an id on each result when ids is given (the Agent API's
+    numbering, which its documentation maps [n] to)."""
+    js = pplx_resp(text, results)
+    if ids is not None:
+        for r, i in zip(js["search_results"], ids):
+            r["id"] = i
+    return js
+
+
+def pplx_citations_1_7_1(js):
+    """What call_perplexity of 1.7.1 kept as citations, verbatim: every result, or only the [n]-numbered ones."""
+    text = gw._text(((js.get("choices") or [{}])[0] or {}).get("message", {}).get("content"))
+    cites = [(r.get("url"), r.get("title")) for r in js.get("search_results") or [] if isinstance(r, dict)]
+    if not cites:
+        cites = [(u, "") for u in js.get("citations") or [] if isinstance(u, str)]
+    used = set(int(m) for m in re.findall(r"\[(\d{1,3})\]", text))
+    kept = [c for i, c in enumerate(cites, 1) if i in used]
+    return kept or cites
+
+
+def sentences_of(text):
+    return [text[a:b] for a, b in gw.sentence_spans(text)]
+
+
+def size(s):
+    return sum(1 for ch in s if not ch.isspace())
+
+
+class AnswerShare(Base):
+    """Answer share: how much of an answer the brand's pages support, per provider shape."""
+
+    def run_one(self, provider, js, eng=None):
+        host = {"openai": "api.openai.com", "openrouter": "openrouter.ai", "anthropic": "api.anthropic.com",
+                "gemini": "generativelanguage.googleapis.com", "perplexity": "api.perplexity.ai"}[provider]
+        self.fake({host: lambda u, h, b: js})
+        eng = eng or {"id": provider, "provider": provider, "model": gw.PROVIDERS[provider]["model"]}
+        res = gw.CALLERS[provider](eng, "k" * 10, "q", None)
+        return res, gw.evaluate(res, brand(), rivals())
+
+    def test_openai_marks_the_sentence_each_citation_closes(self):
+        self.assertEqual(OPENAI_TEXT[49:113], "([lumo.example](https://lumo.example/pricing?utm_source=openai))")
+        self.assertEqual(OPENAI_TEXT[149:211], "([pixa.example](https://pixa.example/plans?utm_source=openai))")
+        res, s = self.run_one("openai", openai_recorded())
+        self.assertEqual(s["spans"], [
+            {"start": 49, "end": 113, "urls": ["https://lumo.example/pricing"], "kind": "marker"},
+            {"start": 149, "end": 211, "urls": ["https://pixa.example/plans"], "kind": "marker"}])
+        # three sentences once the marks are blanked; the Lumo mark closes the first
+        blanked = OPENAI_TEXT[:49] + " " * 64 + OPENAI_TEXT[113:149] + " " * 62 + OPENAI_TEXT[211:]
+        sents = sentences_of(blanked)
+        self.assertEqual([x.strip() for x in sents], ["Lumo gives new accounts 15 free credits a month.",
+                                                      "Pixa's free plan adds a watermark.", "For short clips, either works."])
+        sizes = [size(x) for x in sents]
+        self.assertEqual(sizes, [40, 29, 26])
+        self.assertEqual(s["supported_share"], {"chars": round(40 / 95.0, 4), "sentences": round(1 / 3.0, 4),
+                                                "weighted": round(40 / 95.0, 4)})
+        # naming is not supporting: mention_share reads the answer as saved, marks included, and the domain in the
+        # Lumo mark names Lumo in a second of its four sentences
+        self.assertEqual(s["mention_share"], 0.5)
+        self.assertNotIn("sources_listed", s)              # OpenAI returns one list, the citations in its text
+        self.assertEqual((s["cited"], s["rank"]), (True, 1))
+
+    def test_a_later_sentence_weighs_less_and_text_parts_add_up(self):
+        p1 = "Pixa adds a watermark. ([pixa.example](https://pixa.example/))"
+        p2 = " Lumo does not. ([lumo.example](https://lumo.example/))"
+        js = {"output": [{"type": "message", "content": [
+            {"type": "output_text", "text": p1, "annotations": [
+                {"type": "url_citation", "start_index": 23, "end_index": 62, "url": "https://pixa.example/", "title": ""}]},
+            {"type": "output_text", "text": p2, "annotations": [
+                {"type": "url_citation", "start_index": 16, "end_index": 55, "url": "https://lumo.example/", "title": ""}]}]}]}
+        res, s = self.run_one("openai", js)
+        self.assertEqual(s["spans"][1], {"start": 62 + 16, "end": 62 + 55, "urls": ["https://lumo.example/"],
+                                         "kind": "marker"})
+        # "Pixa adds a watermark." (19) then "Lumo does not." (12), the second at position 1 of 2
+        self.assertEqual(s["supported_share"], {"chars": round(12 / 31.0, 4), "sentences": 0.5,
+                                                "weighted": round(12 * math.exp(-1 / 2.0) / 31, 4)})
+
+    def test_a_relay_that_drops_annotations_or_positions_is_not_measured(self):
+        res, s = self.run_one("openai", openai_recorded(annotations=False))
+        self.assertIsNone(res["spans"])
+        self.assertNotIn("spans", s)
+        self.assertNotIn("supported_share", s)
+        self.assertFalse(s["cited"])                       # no citation at all: cited reads it as before
+        js = openai_recorded()
+        del js["output"][1]["content"][0]["annotations"][1]["start_index"]      # one citation without its place
+        res, s = self.run_one("openai", js)
+        self.assertNotIn("supported_share", s)            # a partial list would understate the answer share
+        self.assertTrue(s["cited"])
+        js = openai_recorded()
+        js["output"][1]["content"][0]["annotations"][0]["end_index"] = len(OPENAI_TEXT) + 1     # past the text
+        self.assertNotIn("spans", self.run_one("openai", js)[1])
+
+    def test_openrouter_marks_are_read_from_the_message(self):
+        self.assertEqual(OPENROUTER_TEXT[36:80], "[lumo.example](https://lumo.example/pricing)")
+        self.assertEqual(OPENROUTER_TEXT[106:160], "[reelcraft.example](https://reelcraft.example/pricing)")
+        res, s = self.run_one("openrouter", openrouter_recorded())
+        self.assertEqual([(x["start"], x["end"], x["kind"]) for x in s["spans"]], [(36, 80, "marker"), (106, 160, "marker")])
+        self.assertEqual(s["supported_share"], {"chars": round(29 / 50.0, 4), "sentences": 0.5,
+                                                "weighted": round(29 / 50.0, 4)})
+        js = openrouter_recorded()
+        js["choices"][0]["message"]["content"] = [{"type": "text", "text": OPENROUTER_TEXT}]   # not one string
+        self.assertNotIn("supported_share", self.run_one("openrouter", js)[1])
+
+    def test_claude_supports_the_text_of_its_cited_blocks(self):
+        res, s = self.run_one("anthropic", anthropic_recorded())
+        lead = len("Based on the search results, ")
+        self.assertEqual(s["answer"][lead:lead + 48], "Lumo gives new accounts 15 free credits a month.")
+        self.assertEqual(s["spans"][0], {"start": lead, "end": lead + 48, "urls": ["https://lumo.example/pricing"],
+                                         "kind": "segment"})
+        self.assertEqual(s["spans"][1]["kind"], "segment")
+        sizes = [size(x) for x in sentences_of(s["answer"])]
+        self.assertEqual(sizes, [64, 32, 30])            # the first sentence holds the uncited lead-in too
+        self.assertEqual(s["supported_share"], {"chars": round(40 / 126.0, 4), "sentences": round(1 / 3.0, 4),
+                                                "weighted": round(40 / 126.0, 4)})
+        self.assertNotIn("sources_listed", s)            # search results are what Claude read, not a source list
+
+    def test_gemini_interactions_offsets_are_bytes(self):
+        self.assertEqual(GEMINI_PARTS[0].encode("utf-8")[:35].decode("utf-8"), "鹿末每月送15个免费额度。")
+        res, s = self.run_one("gemini", interactions_recorded())
+        self.assertEqual(s["answer"], GEMINI_PARTS[0] + "\n" + GEMINI_PARTS[1])
+        self.assertEqual([(x["start"], x["end"], x["kind"]) for x in s["spans"]],
+                         [(0, 13, "segment"), (13, 25, "segment"), (26, 42, "segment")])
+        self.assertEqual(s["answer"][13:25], "Pixa的免费版带水印。")
+        self.assertEqual(s["supported_share"], {"chars": round(13 / 41.0, 4), "sentences": round(1 / 3.0, 4),
+                                                "weighted": round(13 / 41.0, 4)})
+        # read as characters, 35 to 63 would not even fit in the 25-character block; an offset inside a character,
+        # or a missing end, leaves the answer unmeasured
+        for bad in ({"start_index": 0, "end_index": 34}, {"start_index": 1, "end_index": 35}, {"start_index": 0}):
+            an = dict({"type": "url_citation", "url": "https://lumo.example/", "title": "lumo.example"}, **bad)
+            self.assertNotIn("spans", self.run_one("gemini", interactions_recorded([an]))[1], bad)
+        # a start_index left out is 0, as Google's own Java and Go examples read it
+        an = {"type": "url_citation", "url": "https://lumo.example/", "title": "lumo.example", "end_index": 35}
+        self.assertEqual(self.run_one("gemini", interactions_recorded([an]))[1]["spans"][0]["end"], 13)
+
+    def test_generate_content_supports_are_bytes_of_their_part(self):
+        self.assertEqual(GC_TEXT.encode("utf-8")[68:107].decode("utf-8"), "Pixa adds a watermark on its free plan.")
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        res, s = self.run_one("gemini", generate_content_recorded(), eng)
+        # the dash is three bytes: the second segment starts at byte 68, character 66
+        self.assertEqual([(x["start"], x["end"]) for x in s["spans"]], [(0, 65), (66, 105), (106, 139)])
+        self.assertEqual(s["spans"][0]["urls"], [REDIRECT + "A"])      # unresolved: owned through its title's domain
+        self.assertEqual(s["supported_share"], {"chars": round(53 / 114.0, 4), "sentences": round(1 / 3.0, 4),
+                                                "weighted": round(53 / 114.0, 4)})
+        bad = generate_content_recorded()["candidates"][0]["groundingMetadata"]["groundingSupports"]
+        bad[1]["segment"]["text"] = "Pixa adds a watermark."              # the bytes do not hold the text it gives
+        self.assertNotIn("spans", self.run_one("gemini", generate_content_recorded(bad), eng)[1])
+        bad = generate_content_recorded()["candidates"][0]["groundingMetadata"]["groundingSupports"]
+        bad[0]["segment"]["partIndex"] = 0                                  # the thought is not the answer
+        self.assertNotIn("spans", self.run_one("gemini", generate_content_recorded(bad), eng)[1])
+
+    def test_perplexity_marks_are_placed_only_with_documented_ids(self):
+        marks = [(m.start(), m.end()) for m in re.finditer(r"\[\d\]", PPLX_TEXT)]
+        self.assertEqual(marks, [(47, 50), (90, 93), (93, 96), (129, 132)])
+        res, s = self.run_one("perplexity", pplx_recorded(ids=[1, 2, 3, 4]))
+        self.assertEqual([(x["start"], x["urls"][0]) for x in s["spans"]],
+                         [(47, PPLX_RESULTS[0][0]), (90, PPLX_RESULTS[1][0]), (93, PPLX_RESULTS[2][0]),
+                          (129, PPLX_RESULTS[0][0])])
+        self.assertEqual([size(x) for x in sentences_of(PPLX_TEXT.replace("[1]", "   ").replace("[2]", "   ")
+                                                        .replace("[3]", "   "))], [40, 32, 27])
+        self.assertEqual(s["supported_share"], {"chars": round(67 / 99.0, 4), "sentences": round(2 / 3.0, 4),
+                                                "weighted": round((40 + 27 * math.exp(-2 / 3.0)) / 99, 4)})
+        # Sonar's search results carry no id: which source a mark names is not documented, so no positions
+        res, s = self.run_one("perplexity", pplx_recorded())
+        self.assertIsNone(res["spans"])
+        self.assertNotIn("supported_share", s)
+
+    def test_answer_support_edge_cases(self):
+        own = lambda u: "lumo.example" in u
+        mark = lambda a, b, u="https://lumo.example/": {"start": a, "end": b, "urls": [u], "kind": "marker"}
+        seg = lambda a, b, u="https://lumo.example/": {"start": a, "end": b, "urls": [u], "kind": "segment"}
+        self.assertEqual(gw.answer_support("[1] Lumo is free.", [mark(0, 3)], own)["chars"], 0)   # closes nothing
+        # overlapping segments count each character once; a segment covers only its characters
+        t = "Lumo is free and fast."
+        self.assertEqual(gw.answer_support(t, [seg(0, 12), seg(5, 12)], own),
+                         {"chars": round(10 / 18.0, 4), "sentences": 1.0, "weighted": round(10 / 18.0, 4)})
+        # a sentence another source supports too still counts in full for the brand
+        self.assertEqual(gw.answer_support(t, [seg(0, 22), seg(0, 22, "https://pixa.example/")], own)["chars"], 1.0)
+        self.assertEqual(gw.answer_support(t, [seg(0, 22, "https://pixa.example/")], own)["chars"], 0.0)
+        self.assertIsNone(gw.answer_support("| --- |", [seg(0, 3)], own))     # no sentence: nothing to share
+        # a URL prefix the brand owns on someone else's site counts, through the brand's own matcher
+        b = brand()
+        owned = gw.owner_test(b, [{"url": "https://www.amazon.com/stores/Lumo/page", "domain": "amazon.com",
+                                   "title": ""}])
+        self.assertTrue(owned("https://www.amazon.com/stores/Lumo/page"))
+        self.assertFalse(owned("https://www.amazon.com/stores/Pixa/page"))
+
+    def test_caps_leave_the_answer_unmeasured(self):
+        ans = [{"type": "url_citation", "start_index": 0, "end_index": 1, "url": "https://lumo.example/%d" % i,
+                "title": ""} for i in range(gw.MAX_SPANS + 1)]
+        js = {"output": [{"type": "message", "content": [{"type": "output_text", "text": "Lumo.", "annotations": ans}]}]}
+        res, s = self.run_one("openai", js)
+        self.assertNotIn("spans", s)
+        self.assertTrue(s["cited"])
+        many = [("https://site%d.example/" % i, "s") for i in range(gw.MAX_LISTED + 1)]
+        res, s = self.run_one("perplexity", pplx_recorded(text="Lumo [1].", results=many))
+        self.assertNotIn("sources_listed", s)
+        self.assertEqual(len(s["citations"]), 1)          # cited still reads the marked source
+
+    def test_a_saved_span_out_of_shape_is_not_measured(self):
+        res, s = self.run_one("openai", openai_recorded())
+        s = dict(s, query_id="q01", engine="chatgpt-api", run=1, status="ok")
+        self.assertEqual(gw.support_of(s, brand()), s["supported_share"])
+        recomputed = dict(s)
+        del recomputed["supported_share"]
+        self.assertEqual(gw.support_of(recomputed, brand()), s["supported_share"])     # read again from the spans
+        for bad in ({"start": 5, "end": 5}, {"start": -1}, {"kind": "claim"}, {"urls": []}, {"urls": "x"}):
+            broken = dict(s, spans=[dict(s["spans"][0], **bad)])
+            self.assertIsNone(gw.support_of(broken, brand()), bad)
+
+
+class SourcesListedUsed(Base):
+    """Sources listed and used: every source returned beside the answer, and the ones its text uses."""
+
+    def run_one(self, js, eng=None):
+        self.fake({"api.perplexity.ai": lambda u, h, b: js, "generativelanguage.googleapis.com": lambda u, h, b: js})
+        eng = eng or engines("perplexity-api")[0]
+        res = gw.CALLERS[eng["provider"]](eng, "k" * 10, "q", None)
+        return res, gw.evaluate(res, brand(), rivals())
+
+    def test_perplexity_keeps_the_unmarked_sources_apart(self):
+        res, s = self.run_one(pplx_recorded())
+        self.assertEqual([c["url"] for c in s["citations"]], [u for u, _ in PPLX_RESULTS[:3]])
+        self.assertEqual([c["url"] for c in s["sources_listed"]], [u for u, _ in PPLX_RESULTS])
+        self.assertEqual(s["sources_used"], s["citations"])
+        # no [n] marks: what was used is unknown, so neither list is recorded
+        res, s = self.run_one(pplx_recorded(text="Lumo and Pixa both have free plans."))
+        self.assertNotIn("sources_listed", s)
+        self.assertEqual(len(s["citations"]), 4)
+        # ids that disagree with the order cited has always read: neither positions nor lists
+        res, s = self.run_one(pplx_recorded(ids=[4, 3, 2, 1]))
+        self.assertNotIn("sources_listed", s)
+        self.assertNotIn("spans", s)
+        # the older citations list, when search_results is empty
+        js = pplx_recorded(results=())
+        js["citations"] = [u for u, _ in PPLX_RESULTS]
+        res, s = self.run_one(js)
+        self.assertEqual((len(s["sources_listed"]), len(s["sources_used"])), (4, 3))
+
+    def test_cited_reads_every_recorded_response_as_1_7_1_did(self):
+        """The headline rate does not move: for the same responses, citations, and so cited, rank and quoted_url,
+        are what 1.7.1 recorded."""
+        shapes = [pplx_recorded(), pplx_recorded(ids=[1, 2, 3, 4]), pplx_recorded(ids=[4, 3, 2, 1]),
+                  pplx_recorded(text="no marks at all"), pplx_recorded(text="see [9]"),
+                  dict(pplx_recorded(results=()), citations=[u for u, _ in PPLX_RESULTS])]
+        for js in shapes:
+            res, s = self.run_one(js)
+            self.assertEqual(res["citations"], pplx_citations_1_7_1(js))
+        eng = dict(engines("gemini-api")[0], api="generate_content")
+        js = generate_content_recorded()
+        res, s = self.run_one(js, eng)
+        chunks = js["candidates"][0]["groundingMetadata"]["groundingChunks"]
+        self.assertEqual(res["citations"], [(c["web"]["uri"], c["web"]["title"]) for c in chunks])  # 1.7.1: all chunks
+        self.assertEqual((len(s["sources_listed"]), len(s["sources_used"])), (4, 3))
+        # a whole run: its summary rates equal those of the same run with the new fields taken out
+        self.fake({"api.perplexity.ai": lambda u, h, b: pplx_recorded(ids=[1, 2, 3, 4]),
+                   "generativelanguage.googleapis.com": lambda u, h, b: generate_content_recorded(),
+                   "api.openai.com": lambda u, h, b: openai_recorded()})
+        run = gw.execute(brand(), rivals(), [engines("chatgpt-api")[0], engines("perplexity-api")[0], eng], queries(4))
+        self.assertTrue(any("spans" in x and "sources_listed" in x for x in run["samples"]))
+        bare = json.loads(json.dumps(run))
+        for x in bare["samples"]:
+            for k in ("spans", "supported_share", "sources_listed", "sources_used"):
+                x.pop(k, None)
+        bare.pop("recorded")
+        old = gw.summarize(bare)
+        rate_keys = ("answered", "cited", "cited_rate", "cited_ci", "cited_ci_clustered", "mentioned")
+        for k in ("overall", "headline"):
+            self.assertEqual([run["summary"][k][x] for x in rate_keys], [old[k][x] for x in rate_keys])
+        self.assertEqual([[e[x] for x in rate_keys] for e in run["summary"]["engines"]],
+                         [[e[x] for x in rate_keys] for e in old["engines"]])
+        # and the new fields of the stripped run read as not measured, never as zero
+        self.assertEqual([e["supported_share"]["answers"] for e in old["engines"]], [0, 0, 0])
+        self.assertEqual([e["supported_share"]["chars"] for e in old["engines"]], [None, None, None])
+
+    def test_report_and_schema(self):
+        del os.environ["OPENROUTER_API_KEY"]
+        self.fake({"api.perplexity.ai": lambda u, h, b: pplx_recorded(),
+                   "generativelanguage.googleapis.com": lambda u, h, b: interactions_recorded(),
+                   "api.openai.com": lambda u, h, b: openai_recorded(),
+                   "api.anthropic.com": lambda u, h, b: anthropic_recorded()})
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api", "gemini-api", "claude-api"),
+                         queries(3), max_calls=100)
+        self.assertEqual(run["recorded"], ["spans", "sources"])
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        if jsonschema is not None:
+            jsonschema.validate(json.loads(json.dumps(run)), watch_schema())
+        rows = dict((e["id"], e) for e in run["summary"]["engines"])
+        self.assertEqual(rows["chatgpt-api"]["supported_share"],
+                         {"answers": 3, "chars": round(40 / 95.0, 4), "sentences": round(1 / 3.0, 4),
+                          "weighted": round(40 / 95.0, 4), "above_zero": 3})
+        self.assertEqual(rows["perplexity-api"]["supported_share"],
+                         {"answers": 0, "chars": None, "sentences": None, "weighted": None, "above_zero": 0})
+        self.assertEqual(rows["perplexity-api"]["sources"],
+                         {"answers": 3, "listed": 12, "used": 9, "used_rate": 0.75, "you_listed": 3, "you_used": 3})
+        self.assertEqual(rows["claude-api"]["sources"]["answers"], 0)
+        for fmt in ("text", "md"):
+            text = gw.render(run, fmt)
+            self.assertIn("Answer share your pages support", text)
+            self.assertIn("Sources listed and used in the answer", text)
+        text = gw.render(run)
+        line = next(x for x in text.splitlines() if x.strip().startswith("chatgpt-api") and "42%" in x)
+        self.assertIn("3/3 100%", line)                    # cited, then answers with positions, ..., above zero
+        self.assertRegex(text, r"perplexity-api\s+3/3 100%\s+not measured\s+no answer had \[n\] marks on search results "
+                               r"that carry an id")
+        self.assertRegex(text, r"perplexity-api\s+3/3\s+4\.0\s+3\.0\s+75%\s+3/3\s+3/3")
+        self.assertRegex(text, r"chatgpt-api\s+not measured\s+no source list apart from the sources its text marks")
+
+    def test_old_runs_say_these_were_not_recorded(self):
+        cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
+        with io.open(cfgp, "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        cfg = gw.Config(cfgp)
+        os.makedirs(cfg.runs_dir())
+        for name in sorted(os.listdir(FIXTURES)):                       # saved by 1.2.0
+            shutil.copy(os.path.join(FIXTURES, name), cfg.runs_dir())
+        last = synth("20260927T083000Z", {("q01", "chatgpt-api"): [True], ("q02", "chatgpt-api"): [False]})
+        for e in last["summary"]["engines"]:                            # as 1.7.1 saved it
+            del e["supported_share"], e["sources"]
+        gw.save_run(cfg, last)
+        sc = watch_schema()
+        for rid in gw.list_run_ids(cfg):
+            run = gw.load_run(cfg, rid)
+            self.assertNotIn("recorded", run)
+            self.assertTrue(all("supported_share" not in e for e in run["summary"]["engines"]))
+            sm = gw.summary_of(run)                                     # recomputed: the stored one predates them
+            self.assertTrue(all(e["supported_share"]["answers"] == 0 and e["supported_share"]["chars"] is None
+                                and e["sources"]["answers"] == 0 and e["sources"]["used_rate"] is None
+                                for e in sm["engines"]))
+            self.assertEqual(validate(json.loads(json.dumps(dict(run, summary=sm))), sc), [])
+            text = gw.render(run)
+            self.assertIn("Answer share your pages support: not measured; this run was saved before citation "
+                          "positions were recorded.", text)
+            self.assertIn("Sources listed and used in the answer: not measured; this run was saved before listed "
+                          "sources were recorded.", text)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(gw.main(["report", "-c", cfgp, "20260919T083000Z", "--format", "json"]), 0)
+        self.assertEqual(json.loads(out.getvalue())["summary"]["engines"][0]["supported_share"]["answers"], 0)
 
 
 class OldRuns(Base):
