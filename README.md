@@ -567,6 +567,11 @@ This is the part most tools leave out, so it's stated plainly.
   factors no external audit can observe. Citation performance is reported as a separate,
   unscored block and never folded into the 100 — see
   [Two scores](rubric/v1.1.md#two-scores-never-one). Measure it with levels 2 and 3 above.
+  One reason it stays out: asked again, the same question gets a largely different set of sources. Repeated
+  runs of a prompt within 24 hours had a source overlap (Jaccard) of 0.32 to 0.43 across four
+  engines in one market ([Schulte et al. 2026](https://arxiv.org/abs/2604.07585), §5, Table 4),
+  and two runs of Google AI Overviews on the same device and location 0.66
+  ([Grossman et al., SIGIR 2026](https://arxiv.org/abs/2604.27790), §4.4, Table 4).
 - **Brand Credibility and the named-author check need human judgement.** "Is this a real
   identifiable person" and "is this mention independent" are not fully automatable.
   Treat those ~24 points as assisted, not automatic.

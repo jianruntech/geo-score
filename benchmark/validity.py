@@ -269,6 +269,10 @@ def write_md(v):
           "on the same pages (`--urls` pinned to the audit's `sampled_urls`), and every check both of them scored was "
           "compared tier for tier: %d check pairs." % (v["n_sites"], v["n_check_pairs"]),
           "",
+          "This compares the CLI with a human reading of the same rubric. Whether the readiness score goes with being "
+          "cited is a separate question, set out before any data in the "
+          "[preregistered validation plan](PREREGISTRATION.md).",
+          "",
           "## Result",
           ""] + headline(v, "en") + [
           "- **Same tier on %s of check pairs.** Checks read by rule agreed on %s (%d pairs); checks the CLI approximates "
@@ -305,6 +309,9 @@ def write_md(v):
           "",
           "[examples/audits/v1.1](../examples/audits/v1.1/) 里公开的 %d 份人工审计，逐一用 CLI 在相同页面上重评"
           "（`--urls` 固定为审计的 `sampled_urls`），两边都打了分的检查项逐档比较，共 %d 对。" % (v["n_sites"], v["n_check_pairs"]),
+          "",
+          "这里比较的是 CLI 与人工按同一量表的读数。就绪度分数和被不被引用有没有关系是另一个问题，"
+          "在收集任何数据之前写定在[预注册的验证方案](PREREGISTRATION.zh-CN.md)里。",
           "",
           "## 结果",
           ""] + headline(v, "zh") + [

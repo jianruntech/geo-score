@@ -463,10 +463,13 @@
         "sources": [
           "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#what-v11-changed",
           "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
-          "https://arxiv.org/abs/2604.25707"
+          "https://arxiv.org/abs/2604.25707",
+          "https://arxiv.org/abs/2603.25500",
+          "https://arxiv.org/abs/2511.20867",
+          "https://arxiv.org/abs/2606.04362"
         ],
-        "last_verified": "2026-09-27",
-        "note": "No primary source we found ties heading phrasing to citation: Google says its AI features match meaning and synonyms without content being rewritten for them, and one observational preprint found Q&A-formatted pages 5.7% less influential; the substance-over-format criterion comes from the calibration audits and the 7-point weight is the authors' judgement. Implementation note: through 1.4.x the CLI's Chinese heading lexicon matched question words and tutorial or guide terms but not the task and explanation headings its English lexicon matches (the Chinese forms of 'create your first app' or 'how workflows work'), so Chinese pages could read lower on this check; 1.5.0 adds those forms."
+        "last_verified": "2026-10-05",
+        "note": "No primary source we found ties heading phrasing to citation, and the studies that come near it are thin and point slightly the other way: Google says its AI features match meaning and synonyms without content being rewritten for them; one observational preprint found Q&A-formatted pages 5.7% less influential, which its authors say does not show the format is harmful (Zhang et al. 2026, arXiv 2604.25707 §8.2, §8.6); test sites that put a question before every paragraph beat the unmodified baseline on 3 of 7 LLM search products at the retrieval stage and were the strongest technique on none (Chen et al., WWW 2026, arXiv 2603.25500 §5.2 Table 6); adding an FAQ to product descriptions moved their mean rank by +0.05 across five LLM rerankers, and by −0.14 and −0.17 on two of them (Bagga et al. 2025, arXiv 2511.20867 §5.3 Table 5, preprint); and a single-site field study turned titles into questions inside a bundle of changes whose parts it could not separate (Watanabe and Nakayashiki 2026, arXiv 2606.04362 §4, preprint). The substance-over-format criterion comes from the calibration audits and the 7-point weight is the authors' judgement. Implementation note: through 1.4.x the CLI's Chinese heading lexicon matched question words and tutorial or guide terms but not the task and explanation headings its English lexicon matches (the Chinese forms of 'create your first app' or 'how workflows work'), so Chinese pages could read lower on this check; 1.5.0 adds those forms."
       }
     },
     {
@@ -501,10 +504,11 @@
         "sources": [
           "https://arxiv.org/abs/2509.11353",
           "https://developers.google.com/search/docs/appearance/publication-dates",
-          "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/"
+          "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/",
+          "https://arxiv.org/abs/2607.15771"
         ],
-        "last_verified": "2026-09-27",
-        "note": "Seven LLMs used as rerankers promoted passages given newer injected dates (Fang et al. 2025, preprint), Bing says freshness signals affect how quickly AI-generated answers reflect updates, and Google documents reading both visible and structured dates and asks that they match; the rule that either kind of date alone earns the middle tier is the rubric's."
+        "last_verified": "2026-10-05",
+        "note": "Seven LLMs used as rerankers promoted passages given newer injected dates (Fang et al. 2025, preprint); across eight Chinese generative-search interfaces, pages cited for highly time-sensitive questions were newer than those cited for others (median age 18 against 101 days, fitted half-life 39 against 68 days), and recency acted on which pages were cited rather than on their order in the answer (Zhen et al. 2026, arXiv 2607.15771 §2.5 Table 2-5, preprint), which describes the age of cited pages, not the effect of a page showing a date; Bing says freshness signals affect how quickly AI-generated answers reflect updates, and Google documents reading both visible and structured dates and asks that they match; the rule that either kind of date alone earns the middle tier is the rubric's."
       }
     },
     {
@@ -544,10 +548,12 @@
         "sources": [
           "https://arxiv.org/abs/2311.09735",
           "https://arxiv.org/abs/2510.11438",
-          "https://arxiv.org/abs/2604.25707"
+          "https://arxiv.org/abs/2604.25707",
+          "https://arxiv.org/abs/2506.11097",
+          "https://arxiv.org/abs/2402.11782"
         ],
-        "last_verified": "2026-09-27",
-        "note": "The strongest external evidence in the rubric: adding statistics, quotations or cited sources raised visibility by 30–40% on a position-adjusted word-count metric in a controlled experiment (Aggarwal et al., KDD 2024; a simulated engine plus a Perplexity subset), and two later preprints agree; the requirement that the source be clickable and checkable is the rubric's own."
+        "last_verified": "2026-10-05",
+        "note": "The strongest external evidence in the rubric, and the most contested: adding statistics, quotations or cited sources raised visibility by 30–40% on a position-adjusted word-count metric in a controlled experiment (Aggarwal et al., KDD 2024; a simulated engine plus a Perplexity subset), and two later preprints agree; but when every source in that experiment was rewritten at once, the source ranked first lost 20–30% under each of those three methods (Aggarwal et al., arXiv 2311.09735 §5.2 Table 2); measured by rank in the answer's citation list rather than by word count, published rewriting methods mostly failed even for a single adopter, with 3 of 54 cases improving significantly and added statistics lowering the rank in 19 of 24 settings, a gap the authors put down to the metric, and for the two methods that did help, each adopter gained less as more sources adopted them (Puerto et al., NeurIPS 2025, arXiv 2506.11097 §6.2, §6.4 Fig. 5); and language models choosing between conflicting web pages leaned on relevance and largely ignored whether a page carries scientific references (Wan et al., ACL 2024, arXiv 2402.11782 abstract). These qualify the claim that adding statistics gets a page cited more often or trusted more; the requirement that the source be clickable and checkable is the rubric's own."
       }
     },
     {
@@ -624,10 +630,11 @@
         "sources": [
           "https://arxiv.org/abs/2509.08919",
           "https://arxiv.org/abs/2606.20065",
-          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed",
+          "https://arxiv.org/abs/2607.15771"
         ],
-        "last_verified": "2026-09-27",
-        "note": "AI search engines drew far more of their citations than Google from earned sources, a class that includes review and comparison sites (Chen et al. 2025, preprint), but a vendor-run preprint put G2 and Capterra at 1.1% of citations, no study we found isolates directory or app-store presence, and all five calibration sites scored full marks: thin and mixed."
+        "last_verified": "2026-10-05",
+        "note": "AI search engines drew far more of their citations than Google from earned sources, a class that includes review and comparison sites (Chen et al. 2025, preprint), and in Chinese engines news, vertical portals and social or self-media made up about 69% of citations against 12.9% for brand and corporate sites, while a brand mentioned in more of an answer's cited pages was far more often named in it (Zhen et al. 2026, arXiv 2607.15771 §2.1 Table 2-1, §3.2 Table 3-2, preprint); but a vendor-run preprint put G2 and Capterra at 1.1% of citations, the tracked brand's own domain at 2.9% and other companies' sites at 75.2% (Kumar 2026, arXiv 2606.20065 §6.5), no study we found isolates directory or app-store presence, and all five calibration sites scored full marks: thin and mixed."
       }
     },
     {
@@ -667,10 +674,12 @@
         "sources": [
           "https://arxiv.org/abs/2509.08919",
           "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
-          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed"
+          "https://github.com/jianruntech/geo-score/blob/main/rubric/calibration-v1.1.md#four-structural-problems-the-audits-exposed",
+          "https://arxiv.org/abs/2607.15771",
+          "https://arxiv.org/abs/2606.20065"
         ],
-        "last_verified": "2026-09-27",
-        "note": "AI search engines favoured earned, third-party sources over brand-owned content far more than Google did (Chen et al. 2025, preprint), and Google says its AI features show what is said about products across the web while warning that inauthentic mentions do not help; the tier boundaries are the auditor's judgement."
+        "last_verified": "2026-10-05",
+        "note": "AI search engines favoured earned, third-party sources over brand-owned content far more than Google did (Chen et al. 2025, preprint); in Chinese engines news, vertical portals and social or self-media made up about 69% of citations and brand or corporate sites 12.9% (Zhen et al. 2026, arXiv 2607.15771 §2.1 Table 2-1, preprint), and the number of an answer's citations that mention a brand was the strongest predictor of the brand being named in the answer, from 2.1% at one citation to 59.9% at eleven or more (same paper, §3.2 Table 3-2), though that count does not say whether the citing sources are independent of each other; a vendor-run preprint found 2.9% of citations going to the tracked brand's own domain and 75.2% to other companies' sites (Kumar 2026, arXiv 2606.20065 §6.5); and Google says its AI features show what is said about products across the web while warning that inauthentic mentions do not help. The tier boundaries are the auditor's judgement."
       }
     },
     {
