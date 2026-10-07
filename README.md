@@ -198,10 +198,13 @@ runs level 1.
 
 Classic SEO asks *where do I rank*. Answer engines don't rank — they retrieve passages,
 decide whether a source is worth quoting, and cite it. Different question, different
-failure modes: a site can sit at position 3 on Google and never be quoted, while a page
-nobody links to gets cited daily because its passages are clean.
+failure modes: a site can sit at position 3 on Google and never be quoted. Because
+engines retrieve passages, this rubric gives Content Citability the most weight. That is
+a design choice, not a measured effect: the evidence for how much passage shape matters
+is thin, and the [evidence table](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)
+says where.
 
-Most of what determines this is **mechanical and cheap to fix** — a `robots.txt` line, a
+Most of what the rubric checks is **mechanical and cheap to fix** — a `robots.txt` line, a
 JSON-LD block, a date in a template, a paragraph rewritten so it stands on its own. The
 hard part is knowing which of them you are missing, and what each one is worth.
 
@@ -218,9 +221,10 @@ denominator. Full specification: **[rubric/v1.1.md](rubric/v1.1.md)** · [简体
 | **Brand Credibility** | 18 | Why should an engine trust it? Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
 | **Answer Fit** | 10 | Is the content shaped to be lifted into an answer? |
 
-Content Citability carries the most weight on purpose: answer engines retrieve
-**passages**, not domains. Passage shape beats domain authority more often than classic
-SEO intuition expects.
+Content Citability carries the most weight by design: answer engines retrieve
+**passages**, not domains. Whether passage shape outweighs domain authority is not
+established: the heaviest single check, `p2.answer-passages`, rests on thin support
+([where the evidence is thinnest](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)).
 
 **Every scored check is tiered** — 2 to 4 tiers, each naming a count out of the 8 sampled
 pages, so two people scoring the same site agree on the arithmetic. **Three checks are

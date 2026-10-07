@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### 变更
+- **加一个站不再需要重跑榜单。** CONTRIBUTING.md 改为指向
+  [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) 表单，或请贡献者在 PR 里给出
+  `benchmark/sites.json` 的那一行和该站自己的 `geo_score.py --json` 报告；榜单由维护者重跑，整张榜来自同一轮。重新生成的命令
+  移到面向维护者的小节下，PR 模板的清单也随之改了。
+- **维护方统一写作见润科技（Jianrun Tech）。** LICENSE 的版权行改为 `Jianrun Tech (见润科技)`，README.zh-CN.md 维护方一行写作
+  「见润科技（深圳）」。
+
 ### 修正
 - **README 里托管服务的价格过时了。** README.md 写的是 AEO delivery system 每 3 个月 US$5,780 起，实际是每季度 US$7,790 起
   （年付 US$30,590），与官网价格页一致。README.zh-CN.md 也改成按季度报价并补上年付价（¥38,888 起 / 季度，年付 ¥152,888）。
@@ -33,6 +41,9 @@
   所以标准一在当前这一轮不满足。档位线不动，正文仍是 2026-09-27 那一轮的记录。
 - STABILITY.md 和 SECURITY.md 把 `server.json` 称为为 MCP Registry 准备的文件：服务还没有在 Registry 上架。报 bug 表单里版本号的
   占位符不再写 1.3.0。README.zh-CN.md 里「已定掉的歧义」改链到中文页。
+- **README 不再说段落干净就会被引用。** 「一个没人链接的页面天天被引，因为它的段落干净」和「段落的结构比域名的权威更常起决定作用」
+  都超出了证据表的支撑（`p2.answer-passages`：支撑偏弱）。README.md 和 README.zh-CN.md 改为：内容可被引用权重最高是设计上的
+  取舍，因为回答引擎检索的是段落；段落形态到底有多大作用，证据还很薄，并链到证据表里「证据最薄的几项」。
 
 ## [1.8.0] — 2026-10-05
 

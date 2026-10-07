@@ -5,16 +5,35 @@ weight or a pass condition is wrong** — not new features.
 
 ## The easiest useful contribution
 
-**Add a site to the benchmark.** [`benchmark/sites.json`](benchmark/sites.json) is a
-plain list. Add an entry, run `python3 benchmark/run.py`, and open a PR with the
-regenerated `results.json` and `README.md`:
+**Add a site to the benchmark.** The quickest way is the
+[Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) form: the site,
+its sector and the line `--share` prints. Or open a PR with two things:
 
-```json
-{"url": "example.com", "sector": "Ecommerce"}
-```
+1. the entry in [`benchmark/sites.json`](benchmark/sites.json), reusing an existing sector where one fits:
 
-Everything below is generated from `results.json` and `benchmark/raw/`, and all of it must be
-regenerated in the same PR; `validate.py` re-runs the generators and fails on any drift:
+   ```json
+   {"url": "example.com", "sector": "Ecommerce"}
+   ```
+
+2. that site's own report, from `python3 cli/geo_score.py example.com --json > example.com.json`,
+   attached to the PR or pasted into it.
+
+Please do not re-run the leaderboard or regenerate its files. Maintainers re-run it, so every row on
+the board comes from one run, with one release of the tool and from one place; a PR that regenerates
+`results.json` elsewhere would mix two runs. Your report is what we check the entry against before that run.
+
+We especially want **sectors and languages the list is thin on** — non-English sites,
+regulated industries, marketplaces, media. Every site added makes the sector medians
+mean more, and the medians are what let a reader place their own score.
+
+Two rules: the site must be publicly reachable without a login, and you should not add
+your own employer's site without saying so in the PR or the issue. We will still take it — a score is
+a score — but a reader deserves to know.
+
+### Regenerating the board (maintainers)
+
+Everything below is generated from `results.json` and `benchmark/raw/`, and all of it is
+regenerated together; `validate.py` re-runs the generators and fails on any drift:
 
 ```
 python3 benchmark/run.py            # scores the sites: results.json, raw/, then the files --readme-only writes
@@ -29,16 +48,9 @@ python3 benchmark/build_page.py     # docs/index.html, docs/zh.html, docs/llms.t
 The pages name each share card with a fingerprint of the PNG (`og.png?v=…`), so build the cards first and the
 pages after them.
 
-If you have no Chrome, say so in the PR and leave the two cards alone — we will
-regenerate them. Do not hand-edit a generated file: the next generator run overwrites it.
-
-We especially want **sectors and languages the list is thin on** — non-English sites,
-regulated industries, marketplaces, media. Every site added makes the sector medians
-mean more, and the medians are what let a reader place their own score.
-
-Two rules: the site must be publicly reachable without a login, and you should not add
-your own employer's site without saying so in the PR. We will still take it — a score is
-a score — but a reader deserves to know.
+A PR that changes a generator regenerates what that generator writes, without re-scoring the sites; if you
+have no Chrome, say so in the PR and leave the two cards alone — we will regenerate them. Do not hand-edit a
+generated file: the next generator run overwrites it.
 
 ## What we most want
 

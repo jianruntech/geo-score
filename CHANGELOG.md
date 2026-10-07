@@ -5,6 +5,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Changed
+- **Adding a site no longer means re-running the leaderboard.** CONTRIBUTING.md points to the
+  [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) form, or asks for a PR with
+  the `benchmark/sites.json` entry and that site's own `geo_score.py --json` report. Maintainers re-run the board, so
+  every row comes from one run. The regeneration commands move under a heading for maintainers, and the PR template's
+  checklist follows.
+- **The maintainer is named Jianrun Tech (见润科技).** LICENSE's copyright line reads `Jianrun Tech (见润科技)`, and
+  README.zh-CN.md's maintainer line reads `见润科技（深圳）`.
+
 ### Fixed
 - **The README's price for the managed service was out of date.** README.md said the AEO delivery system starts at
   US$5,780 per 3 months; it starts at US$7,790 per quarter (US$30,590 paid yearly), as the pricing page says.
@@ -45,6 +54,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - STABILITY.md and SECURITY.md call `server.json` the file prepared for the MCP Registry: the server is not listed
   there yet. The bug-report form's version placeholder no longer names 1.3.0. README.zh-CN.md links the Chinese page
   of the resolved ambiguities.
+- **The README no longer says clean passages get a page cited.** "A page nobody links to gets cited daily because its
+  passages are clean" and "passage shape beats domain authority more often than classic SEO intuition expects" claimed
+  more than the evidence table supports (`p2.answer-passages`: thin support). README.md and README.zh-CN.md now say
+  Content Citability carries the most weight by design, because answer engines retrieve passages, that the evidence
+  for how much passage shape matters is thin, and link the evidence table's list of where it is thinnest.
 
 ## [1.8.0] — 2026-10-05
 
