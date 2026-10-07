@@ -21,7 +21,7 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   40. A crawler that got only 429s on every try now leaves the count, as one that got no answer does, and the
   evidence names it under "Rate-limited (HTTP 429)". With fewer than half the crawlers answering, the check is not
   observed instead of 0. Any other refusal (403, a challenge page) still counts. Found scoring 62 Chinese brands'
-  overseas stores in a burst, where 24 of 30 capped stores were capped by 429s alone.
+  overseas stores in a burst, where 15 of the 30 capped stores were capped by rate limits alone (only 429s, or 429s and no answer).
 - **The README's price for the managed service was out of date.** README.md said the AEO delivery system starts at
   US$5,780 per 3 months; it starts at US$7,790 per quarter (US$30,590 paid yearly), as the pricing page says.
   README.zh-CN.md now gives the quarterly price and the yearly one too (from ¥38,888 per quarter, ¥152,888
