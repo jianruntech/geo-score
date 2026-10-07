@@ -488,7 +488,7 @@ Read this before quoting the numbers
 | 引擎 | OpenAI、Perplexity、Gemini、Anthropic，以及 OpenRouter 上的模型 | ChatGPT（联网）、Perplexity、Gemini、Google AI Overviews、Copilot；做国内市场再加国内引擎 |
 | 报告 | 文本、Markdown、CSV、JSON | 周报和 AIV 看板：引用率趋势、分引擎结果、AI 说错你的事实、就绪度历史 |
 | 引用掉了怎么办 | 不在工具范围内 | 我们来改 |
-| 价格 | 你的 API 账单 | GEO 落地系统，¥38,888 起 / 3 个月，含 AIV 看板。[看价格](https://www.jianruntech.com/#pricing) |
+| 价格 | 你的 API 账单 | GEO 落地系统，¥38,888 起 / 季度（年付 ¥152,888），含 AIV 看板。[看价格](https://www.jianruntech.com/#pricing) |
 
 ## 为什么发布口径，而不只发工具
 

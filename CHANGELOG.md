@@ -5,6 +5,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Fixed
+- **The README's price for the managed service was out of date.** README.md said the AEO delivery system starts at
+  US$5,780 per 3 months; it starts at US$7,790 per quarter (US$30,590 paid yearly), as the pricing page says.
+  README.zh-CN.md now gives the quarterly price and the yearly one too (from ¥38,888 per quarter, ¥152,888
+  paid yearly). The PyPI page shows the README of the release it was built from, so it keeps the old price until
+  the next release.
+
 ## [1.8.0] — 2026-10-05
 
 ### Added

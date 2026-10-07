@@ -532,7 +532,7 @@ rather than an API, [Jianrun](https://www.jianruntech.com/en/) does as a service
 | Engines | OpenAI, Perplexity, Gemini, Anthropic, anything on OpenRouter | ChatGPT with search, Perplexity, Gemini, Google AI Overviews, Copilot; Chinese engines when you sell into China |
 | Report | Text, Markdown, CSV, JSON | A weekly report with the AIV dashboard: citation trend, per-engine rates, facts AI gets wrong about you, readiness history |
 | When citations drop | Out of scope | We do the fixing |
-| Price | Your API bill | AEO delivery system, from US$5,780 per 3 months, AIV dashboard included. [See pricing](https://www.jianruntech.com/en/#pricing) |
+| Price | Your API bill | AEO delivery system, from US$7,790 per quarter (US$30,590 paid yearly), AIV dashboard included. [See pricing](https://www.jianruntech.com/en/#pricing) |
 
 ## Why a rubric, not just a tool
 
