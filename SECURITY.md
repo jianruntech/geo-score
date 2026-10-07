@@ -97,7 +97,7 @@ opens no port. stdout carries MCP messages only; diagnostics go to stderr. What 
 ## Verifying a download
 
 Every release attaches `SHA256SUMS` covering `geo_score.py`, `geo_watch.py`, the wheel and the sdist,
-and from 1.4.0 the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` and the MCP Registry's `server.json`.
+and from 1.4.0 the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` and the `server.json` prepared for the MCP Registry.
 Download it with the files and check them before running anything:
 
 ```bash
@@ -109,8 +109,8 @@ grep -E ' geo_(score|watch)\.py$' SHA256SUMS | shasum -a 256 -c
 
 The `.mcpb` is a zip of the same two files (under `server/`), its manifest and the licence, built
 reproducibly by `scripts/release.py`. Check it before you open it in Claude Desktop, check that
-`server.json` names the same checksum (the registry and the clients that install from it rely on
-`fileSha256`), and check that its `server/` files are the released ones byte for byte:
+`server.json` names the same checksum (once the server is listed, the registry and the clients that install
+from it rely on `fileSha256`; it is not listed yet), and check that its `server/` files are the released ones byte for byte:
 
 ```bash
 mcpb="geo-score-${v#v}.mcpb"

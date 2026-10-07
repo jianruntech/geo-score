@@ -28,6 +28,23 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   pages and the sitemap. The share cards' URLs carry a fingerprint of the PNG (`og.png?v=…`), so a cache that keeps
   images for a year fetches a new card when its figures change; run `build_og.py` before `build_page.py`, and
   validate.py rule 17 checks the fingerprint.
+- **The README's levels 2 and 3 describe 1.8.0.** The level-3 table gains answer share, sources listed and used, and
+  repeat consistency. The watch sample is now what 1.8.0 prints for the same canned run: saved by 1.2.0, so answer
+  share and listed sources read not measured, and with the repeat-consistency table. The stripe.com output says it
+  predates the "Outside the score" lines and links them; the `watch run --dry-run` line mentions the precision hint.
+- **Three checks need off-site search or human judgement, not four** (README.md, README.zh-CN.md): `p3.listings`,
+  `p3.mentions` and `p4.question-coverage`. `p4.cn-engines` leaves the denominator only when the site does not serve
+  Chinese.
+- **The `git clone` lines check out the release.** The README (the skills folder, levels 2 and 3) and guide/mcp.md
+  (+ zh) clone with `--branch v1.8.0 --depth 1`; `release.py --bump` moves that tag with the other pins, and
+  validate.py rule 27 fails a clone of main. `npx skills add` copies the default branch, and the README says so.
+- **The glossary defines repeat consistency** (EN and zh).
+- **rubric/bands-analysis.md (+ zh) has a dated note for the 2026-10-02 run**: Leading is reached by 21 of 324 sites
+  (6%; 8% of the uncapped), so criterion 1 is not met on the current run. No cut changes, and the body stays the
+  record of the 2026-09-27 run.
+- STABILITY.md and SECURITY.md call `server.json` the file prepared for the MCP Registry: the server is not listed
+  there yet. The bug-report form's version placeholder no longer names 1.3.0. README.zh-CN.md links the Chinese page
+  of the resolved ambiguities.
 
 ## [1.8.0] — 2026-10-05
 

@@ -20,7 +20,7 @@ body:
     attributes:
       label: Tool version
       description: The output of `geo-score --version` (or `python3 geo_score.py --version`).
-      placeholder: "geo-score 1.3.0 (rubric v1.1)"
+      placeholder: "geo-score X.Y.Z (rubric v1.1)"
     validations: { required: true }
   - type: input
     id: check

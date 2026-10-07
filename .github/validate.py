@@ -731,6 +731,9 @@ for root_, dirs_, files_ in os.walk("."):
         if not f.startswith("CHANGELOG"):
             check(not re.search(r"git\+https://github\.com/jianruntech/geo-score(?!@v)(?![\w.-])", t),
                   f"{pth}: installs from the git URL without a release tag (@vX.Y.Z)")
+            # a git clone in a document checks out the release, as release.py --bump pins it, never main
+            check(not re.search(r"git clone (?!--branch v\d+\.\d+\.\d+ --depth 1 )[^\n`]*github\.com/jianruntech/geo-score", t),
+                  f"{pth}: clones main; use git clone --branch vX.Y.Z --depth 1 https://github.com/jianruntech/geo-score")
 
 # ── 28. 每个发布过的 tag 在中英两份更新日志里都有自己的一节 ──
 import subprocess as _sp

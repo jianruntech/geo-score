@@ -399,6 +399,16 @@ Answer Fit；SARIF 每条规则的 `pillar` 属性。**详见：** [README · �
 
 ## R
 
+### Repeat consistency（重复一致性）
+
+一次运行里同一个问题在同一个引擎上问了不止一次时，引擎每次引用的域名有多一致。对每个问题，取每两条带引用的回答所引域名的
+Jaccard 重合度（两者共有的域名除以两者全部的域名），求平均；再在每个引擎内取各问题的中位数。1 表示每次引用的域名完全相同，
+0 表示没有一个相同。没有引用的回答不计入，带引用的回答不足两条的问题算未测量。只作描述：没有区间、没有检验，从不并入引用率，
+`watch diff` 也不读它。
+
+**出现在：** `watch report` 里的「Repeat consistency of cited domains」表；运行文件 `summary.engines` 每一行的 `consistency`。
+**详见：** [watch 方法说明 · 一次提问、一天、一个月](watch-methodology.zh-CN.md#8-一次提问一天一个月)
+
 ### Resolution（分辨力）
 
 一套 watch 计划在运行之前就能知道的事：两次运行之间至少要有 k 个问题朝同一方向变动，`watch diff` 才可能判定变化。

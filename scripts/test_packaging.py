@@ -102,6 +102,9 @@ def check_pins(version):
        "--bump rewrites %s%sX.Y.Z and %s%sX.Y.Z, and leaves %s%sv1 and %s%sjianruntech" % (pkg, at, pkg, eq, pkg, at, pkg, at))
     ok(release.stale_pins(old, "9.9.9") == sorted([pkg + eq + "1.2.3", pkg + at + "1.2.3", "jianruntech/%s%sv1.2.3" % (pkg, at)]),
        "preflight names each PyPI pin that is not the release (%s)" % release.stale_pins(old, "9.9.9"))
+    clone = "git clone --branch v1.2.3 --depth 1 https://github.com/jianruntech/%s && cd %s/cli" % (pkg, pkg)
+    ok(release.repin(clone, "9.9.9") == clone.replace("v1.2.3", "v9.9.9"), "--bump rewrites the tag a clone line checks out")
+    ok(release.stale_pins(clone, "9.9.9") == ["git clone --branch v1.2.3"], "preflight names a clone line on an old tag")
     with tempfile.TemporaryDirectory() as tmp:
         io.open(os.path.join(tmp, release.wheel_name(version)), "wb").close()
         ok(release.wheel_problem(version, tmp) is None, "--execute goes on when the build made %s" % release.wheel_name(version))

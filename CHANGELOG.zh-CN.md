@@ -20,6 +20,19 @@
   `sameAs` 去掉了首页自己；Dataset 在中英两页用同一个 `@id`（`https://www.jianruntech.com/leaderboard#dataset`）。页面和站点地图
   的 `hreflang` 改用 `zh-CN`，并加上 `x-default`。分享卡的地址带上 PNG 的内容指纹（`og.png?v=…`），缓存一年的图片在卡片数字变了
   之后也会取新图；要先跑 `build_og.py` 再跑 `build_page.py`，validate.py 第 17 条会核对指纹。
+- **README 的第二、三级按 1.8.0 描述。** 第三级的表加了答案占比、列为来源与正文用上、重复一致性三行。watch 示例换成
+  1.8.0 对同一个预设运行打印的结果：这次运行由 1.2.0 保存，所以答案占比和列出的来源显示未测量，并多了重复一致性表。stripe.com
+  的完整输出注明它早于「分数之外」那几行，并给出链接；`watch run --dry-run` 那一行提到了精度提示。
+- **需要站外检索或人工判断的是三项，不是四项**（README.md、README.zh-CN.md）：`p3.listings`、`p3.mentions` 和
+  `p4.question-coverage`。`p4.cn-engines` 只在站点不面向中文时退出分母。
+- **`git clone` 改为检出发布版。** README（技能目录、第二三级）和 guide/mcp.md（含中文版）里的克隆改用
+  `--branch v1.8.0 --depth 1`；`release.py --bump` 会随其他锁定一起改这个标签，validate.py 第 27 条会拦住克隆 main 的写法。
+  `npx skills add` 取的是默认分支，README 写明了这一点。
+- **术语表补上「重复一致性」**（中英两份）。
+- **rubric/bands-analysis.md（含中文版）加了一段 2026-10-02 那一轮的注记：** 324 个站中 21 个达到领先（6%；未封顶的站里 8%），
+  所以标准一在当前这一轮不满足。档位线不动，正文仍是 2026-09-27 那一轮的记录。
+- STABILITY.md 和 SECURITY.md 把 `server.json` 称为为 MCP Registry 准备的文件：服务还没有在 Registry 上架。报 bug 表单里版本号的
+  占位符不再写 1.3.0。README.zh-CN.md 里「已定掉的歧义」改链到中文页。
 
 ## [1.8.0] — 2026-10-05
 

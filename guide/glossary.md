@@ -478,6 +478,19 @@ answered, its reason starts `Only N of 10 retrieval user-agents got an answer`.
 
 ## R
 
+### Repeat consistency
+
+How far an engine cites the same domains when a run asks it one question more than once. For each question, the
+Jaccard overlap (shared domains over all domains of the two) of the domains cited by every two answers that cite,
+averaged; then the median over the questions, per engine. 1 means every ask cited the same domains, 0 that no
+domain was in common. Answers that cite nothing are left out, and a question with fewer than two answers that cite
+is not measured. Descriptive only: no interval and no test, never part of the cited rate, and `watch diff` does
+not read it.
+
+**Where:** "Repeat consistency of cited domains" in `watch report`; `consistency` on each row of
+`summary.engines` in run files.
+**More:** [watch methodology, One ask, one day, one month](watch-methodology.md#8-one-ask-one-day-one-month)
+
 ### Resolution
 
 What a watch plan can tell before it is run: the fewest questions, k, that must move the same way between two

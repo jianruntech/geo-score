@@ -81,7 +81,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.0/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0.</sub>
+<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0. From 1.7.0 the report also prints three observations under **Outside the score** after the checks (robots.txt rules page by page, links in the server HTML, hreflang), which never move the score; this recording predates them. See [cli/README.md](cli/README.md#outside-the-score).</sub>
 
 </details>
 
@@ -326,7 +326,7 @@ schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
 
 A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads exactly 40 and passes `fail-under: 40`. `fail-on-gate: true` fails any capped site.
 
-**Claude Code skill** — the CLI measures what a static fetch can see. Four checks need
+**Claude Code skill** — the CLI measures what a static fetch can see. Three checks need
 off-site search or human judgement, and the skill does those too.
 
 ```bash
@@ -335,11 +335,13 @@ npx skills add jianruntech/geo-score     # add -g for a global install
 ```
 
 `npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
-repository, `geo-score`, and copies the whole repository (about 9 MB) into `.claude/skills/geo-score` for
-Claude Code. Without Node.js, clone the repository into your own skills folder instead:
-`git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
+repository, `geo-score`, and copies the whole repository (about 9 MB) as it is on the default branch, main,
+into `.claude/skills/geo-score` for Claude Code. Without Node.js, or for the release rather than main, clone the
+release tag into your own skills folder instead:
+`git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
 
-The CLI leaves those four checks out of the denominator rather than guessing. Re-scoring
+The CLI leaves those three checks out of the denominator rather than guessing (and a fourth,
+`p4.cn-engines`, unless the site serves Chinese). Re-scoring
 the five published hand audits on the same pages, it matched the auditor's tier on 80% of
 84 check pairs (92% where it reads a rule, 69% where it approximates a judgement). On the checks
 both scored it read 2.4 points lower on average (per site from 12 lower to 10 higher; mean absolute
@@ -360,19 +362,19 @@ you, your competitors, or the third-party pages (forums, review sites) the engin
 instead. Keys are read from the environment; geo-score never writes them anywhere.
 
 ```bash
-git clone https://github.com/jianruntech/geo-score && cd geo-score/cli
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
 export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # any subset of engines works
 python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # level 2
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
 # put the questions your buyers ask an AI assistant into queries.csv, then:
-python3 geo_score.py watch run --dry-run            # the plan, the caps and what a diff could detect; no calls, no cost
+python3 geo_score.py watch run --dry-run            # the plan, the caps, what a diff could detect and how precise one question's rate is; no calls, no cost
 python3 geo_score.py watch run                      # level 3: every question on every engine, saved
 python3 geo_score.py watch diff                     # this run against the last, with a significance test
 python3 geo_score.py watch report --since 30        # the last 30 days pooled, one interval over questions
 ```
 
 <details>
-<summary>What a watch run prints (illustrative: made-up brands and canned answers, not a real measurement)</summary>
+<summary>What a watch run prints (illustrative: made-up brands and canned answers, not a real measurement; a run saved by 1.2.0, printed by 1.8.0)</summary>
 
 ```
 geo-score watch · Lumo · run 20260926T083000Z · api channel
@@ -390,6 +392,25 @@ By engine
   gemini-api      gemini-3.8-flash  not measured                                                       no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
 
 These rows, and the tables below, count every question, the 2 that name Lumo included.
+
+Answer share your pages support: not measured; this run was saved before citation positions were recorded.
+
+Sources listed and used in the answer: not measured; this run was saved before listed sources were recorded.
+
+Repeat consistency of cited domains (per engine; descriptive, not read by diff)
+  engine          questions measured  pairs  median Jaccard
+  chatgpt-api     6/6                 6      1.00
+  perplexity-api  5/6                 5      1.00
+  gemini-api      not measured                               no_key
+
+Least consistent questions (up to 3 per engine):
+  id   question                         engine          answers that cite  Jaccard
+  q02  ai video tool with no watermark  chatgpt-api     2                  0.50
+  q01  best free ai video generator     perplexity-api  2                  0.50
+
+- Repeat consistency: for each question an engine answered more than once in this run, the overlap of the domains two of its answers cite, shared domains over all domains of the two (Jaccard), for every two answers, averaged per question; the median over questions per engine. 1: every ask cited the same domains; 0: no domain in common. Domains are read as everywhere in this report, www dropped; the order of citations is not compared.
+- Answers that cite nothing are left out: two empty lists are not agreement, and one empty list is not a 0. On an engine, a question with fewer than two answers that cite is not measured. Lowest: up to 3 questions per engine whose answers did not all cite the same domains, lowest first.
+- Descriptive only: no interval and no test, never part of the cited rate, and watch diff does not read it. It describes asks minutes apart in one run, which share that day's index; it is not computed over pooled runs.
 
 Share of voice
               cited  95% CI  mentioned  named first (tracked)  sentence share
@@ -451,6 +472,7 @@ Read this before quoting the numbers
 - A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.
 - Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
 - This measures citations. It does not predict traffic, rankings or revenue.
+- This run was saved before questions were flagged at run time. Questions that name the brand were found when this report was made, from the saved question text and the run's brand name, aliases and domains.
 ```
 </details>
 
@@ -468,6 +490,9 @@ see what the engines say today, not to measure a rate.
 | **mentioned** | The answer names you, one of your `aliases` or your domain. Chinese, Japanese and Korean names match anywhere; all other names match whole words only |
 | **share of voice** | The same two rates for each competitor, over the same answers |
 | **sources** | The third-party domains cited most often: the pages the engines trust in your category |
+| **answer share** | How much of each answer your pages support (`supported_share`): by characters, by sentences and by position-weighted characters, read from where the provider says each citation sits. Printed beside the cited rate, never merged into it; an answer whose citations carry no position is not measured |
+| **sources listed and used** | Perplexity and Gemini (`generate_content`) return sources beside the answer and mark the ones the text uses: sources listed and used per answer, used over listed, and the answers that list and use a URL of yours. APIs that return one list are not measured |
+| **repeat consistency** | When a run asks a question more than once on an engine: how far the cited domains agree between asks (Jaccard, the median over questions per engine), and the least consistent questions. Descriptive only; `watch diff` does not read it |
 | **gaps** | Questions where a competitor is cited and you are not, in any answer |
 | **searches** | The searches the engine actually ran before answering, where the API exposes them (OpenAI, Gemini, Claude). This is the query fan-out, observed rather than guessed. The report counts how many contain a year or a ranking or comparison word, and says so when answers searched but the endpoint returned no query text |
 | **ledger** | Questions asked, API requests, tokens, searches and cost. Every run keeps its own ledger |

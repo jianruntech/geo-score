@@ -33,6 +33,8 @@ PINS = [(re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d
         (re.compile(r"(git\+https://github\.com/jianruntech/geo-score@)v\d+\.\d+\.\d+"), "v"),
         (re.compile(r"(?m)(^v=)v\d+\.\d+\.\d+"), "v"),
         (re.compile(r"(jianruntech/geo-score --ref )v\d+\.\d+\.\d+"), "v"),
+        # a clone of the release (git clone --branch vX.Y.Z --depth 1, then the repository's URL)
+        (re.compile(r"(git clone --branch )v\d+\.\d+\.\d+(?= --depth 1 https://github\.com/jianruntech/geo-score)"), "v"),
         (re.compile(r"(?<![\w.-])(geo_score-)\d+\.\d+\.\d+(?=-py3-none-any\.whl)"), ""),
         # the package on PyPI: uvx's geo-score@X.Y.Z and pip's geo-score==X.Y.Z. No "v", and never the Action's
         # jianruntech/geo-score@v1 or the plugin's geo-score@jianruntech, which have no digits after the @

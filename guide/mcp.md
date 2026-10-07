@@ -256,7 +256,7 @@ Zed uses MCP tools and prompts but not resources, so it does not show the rubric
 No uv, only Python 3.8 or later. `cli/geo_watch.py` has to stay next to `cli/geo_score.py`.
 
 ```bash
-git clone https://github.com/jianruntech/geo-score    # check out a release tag for a fixed version
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score    # the release, not main
 claude mcp add --scope user geo-score -- python3 /absolute/path/geo-score/cli/geo_score.py mcp -c /absolute/path/geo-score-watch.json
 ```
 
@@ -315,7 +315,7 @@ to be installed.
 Build it locally: no image is published yet. From 1.4.0 the repository has a `Dockerfile`:
 
 ```bash
-git clone https://github.com/jianruntech/geo-score && cd geo-score
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score
 docker build -t geo-score-mcp .
 ```
 

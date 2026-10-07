@@ -2,6 +2,14 @@
 
 简体中文：[bands-analysis.zh-CN.md](bands-analysis.zh-CN.md)
 
+> **Update for the 2026-10-02 run.** The benchmark was re-run on 2026-10-02 with geo-score 1.5.0, and
+> percentiles.json now holds that run, not the one this document analyses; no cut changes. On it, Leading (83) is
+> reached by 21 of 324 sites, 6% (21 of the 251 sites no gate capped, 8%), so **Criterion 1 is not met on the
+> current run**. Solid (66) is reached by 100 sites (31%), Growing (51) by 183 (56%) and Early (31) by 275 (85%).
+> 195 of the 324 sites score within 6.1 points of a cut (SEM 3.09, from the same retest), and Early, the band the
+> gate cap falls in, holds 92 sites, 37 of them capped. The sections below remain the record of the 2026-09-27 run
+> (317 sites, geo-score 1.3.0). Moving any cut is a separate v1.2 decision for the maintainer.
+
 **Status:** analysis only. The v1.1 cuts (Early from 31, Growing from 51, Solid from 66, Leading from
 83) do not change. Adopting any cut discussed here would be a new rubric version, and that decision
 belongs to the maintainer.

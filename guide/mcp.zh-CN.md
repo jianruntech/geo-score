@@ -241,7 +241,7 @@ Zed 支持 MCP 的工具和提示词，不支持资源，所以看不到量表�
 不用 uv，只要 Python 3.8 及以上。`cli/geo_watch.py` 必须和 `cli/geo_score.py` 放在一起。
 
 ```bash
-git clone https://github.com/jianruntech/geo-score    # 想固定版本就 checkout 一个发布 tag
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score    # 发布版，不是 main
 claude mcp add --scope user geo-score -- python3 /absolute/path/geo-score/cli/geo_score.py mcp -c /absolute/path/geo-score-watch.json
 ```
 
@@ -296,7 +296,7 @@ Claude Desktop 会遮住输入并当作机密保存。扩展用本机的 `python
 需要自己在本地构建：目前没有发布镜像。从 1.4.0 起仓库里有 `Dockerfile`：
 
 ```bash
-git clone https://github.com/jianruntech/geo-score && cd geo-score
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score
 docker build -t geo-score-mcp .
 ```
 

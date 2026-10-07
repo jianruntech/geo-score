@@ -79,7 +79,7 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.0/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。</sub>
+<sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。从 1.7.0 起，报告在各项检查之后还会列出三项**分数之外**的观察（robots.txt 按页面的规则、服务器 HTML 里的链接、hreflang），它们从不改变分数；这段录制早于它们。见 [cli/README.zh-CN.md](cli/README.zh-CN.md#分数之外)。</sub>
 
 </details>
 
@@ -304,7 +304,7 @@ python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # C
 门槛项得 0 分时分数封顶 40：本来能得 40 分及以上的站正好停在 40，能通过 `fail-under: 40`；`fail-on-gate: true` 会让任何被封顶的站失败。
 
 **Claude Code 技能** —— CLI 只能测静态抓取看得见的东西。
-有四项需要站外检索或人的判断，技能把这些也做了。
+有三项需要站外检索或人的判断，技能把这些也做了。
 
 ```bash
 npx skills add jianruntech/geo-score     # 加 -g 是全局安装
@@ -312,10 +312,11 @@ npx skills add jianruntech/geo-score     # 加 -g 是全局安装
 ```
 
 `npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
-把整个仓库（约 9 MB）复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js 的话，改为把仓库克隆到你自己的技能目录：
-`git clone https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
+把整个仓库（约 9 MB）按默认分支 main 当前的样子复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js，或者想装发布版而不是 main，
+就把发布标签克隆到你自己的技能目录：
+`git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
 
-CLI 会把那四项**退出分母**而不是猜。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
+CLI 会把那三项**退出分母**而不是猜（第四项 `p4.cn-engines` 在站点不面向中文时也退出）。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
 （按规则读取的项 92%，靠启发式近似判断的项 69%）。只看两边都打了分的检查项，CLI 平均低 2.4 分
 （逐站从低 12 分到高 10 分，平均绝对差 8.8 分）；按完整的归一化分算平均低 5.2 分，范围从低 16 分到高 7 分，
 因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
@@ -331,19 +332,19 @@ Gemini 和 Claude，记下每条回答引用了谁：是你、是竞品，还是
 Key 只从环境变量读，geo-score 不会把它写到任何地方。
 
 ```bash
-git clone https://github.com/jianruntech/geo-score && cd geo-score/cli
+git clone --branch v1.8.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
 export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # 有几个 Key 就测几个引擎
 python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # 第二级
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
 # 把买家会问 AI 的问题写进 queries.csv，然后：
-python3 geo_score.py watch run --dry-run            # 只看计划、上限和能测出多大的变化，不调用、不花钱
+python3 geo_score.py watch run --dry-run            # 只看计划、上限、能测出多大的变化和单个问题引用率的精度，不调用、不花钱
 python3 geo_score.py watch run                      # 第三级：每个问题问每个引擎，并保存
 python3 geo_score.py watch diff                     # 和上一次比，带显著性检验
 python3 geo_score.py watch report --since 30        # 合并最近 30 天的运行，按问题算一个区间
 ```
 
 <details>
-<summary>watch 跑一次的输出（示意：虚构的品牌和预设的回答，不是真实测量）</summary>
+<summary>watch 跑一次的输出（示意：虚构的品牌和预设的回答，不是真实测量；1.2.0 保存的运行，用 1.8.0 打印）</summary>
 
 ```
 geo-score watch · Lumo · run 20260926T083000Z · api channel
@@ -361,6 +362,25 @@ By engine
   gemini-api      gemini-3.8-flash  not measured                                                       no_key: set GEMINI_API_KEY or GOOGLE_API_KEY
 
 These rows, and the tables below, count every question, the 2 that name Lumo included.
+
+Answer share your pages support: not measured; this run was saved before citation positions were recorded.
+
+Sources listed and used in the answer: not measured; this run was saved before listed sources were recorded.
+
+Repeat consistency of cited domains (per engine; descriptive, not read by diff)
+  engine          questions measured  pairs  median Jaccard
+  chatgpt-api     6/6                 6      1.00
+  perplexity-api  5/6                 5      1.00
+  gemini-api      not measured                               no_key
+
+Least consistent questions (up to 3 per engine):
+  id   question                         engine          answers that cite  Jaccard
+  q02  ai video tool with no watermark  chatgpt-api     2                  0.50
+  q01  best free ai video generator     perplexity-api  2                  0.50
+
+- Repeat consistency: for each question an engine answered more than once in this run, the overlap of the domains two of its answers cite, shared domains over all domains of the two (Jaccard), for every two answers, averaged per question; the median over questions per engine. 1: every ask cited the same domains; 0: no domain in common. Domains are read as everywhere in this report, www dropped; the order of citations is not compared.
+- Answers that cite nothing are left out: two empty lists are not agreement, and one empty list is not a 0. On an engine, a question with fewer than two answers that cite is not measured. Lowest: up to 3 questions per engine whose answers did not all cite the same domains, lowest first.
+- Descriptive only: no interval and no test, never part of the cited rate, and watch diff does not read it. It describes asks minutes apart in one run, which share that day's index; it is not computed over pooled runs.
 
 Share of voice
               cited  95% CI  mentioned  named first (tracked)  sentence share
@@ -422,6 +442,7 @@ Read this before quoting the numbers
 - A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.
 - Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.
 - This measures citations. It does not predict traffic, rankings or revenue.
+- This run was saved before questions were flagged at run time. Questions that name the brand were found when this report was made, from the saved question text and the run's brand name, aliases and domains.
 ```
 </details>
 
@@ -437,6 +458,9 @@ Read this before quoting the numbers
 | **被提及（mentioned）** | 回答正文里出现了你的名字、`aliases` 里的别名或域名。中文、日文、韩文名按包含匹配，其他名字（包括带重音的拉丁字母）按整词匹配 |
 | **声量份额** | 同一批回答里，每个竞品的被引用率和被提及率 |
 | **来源** | 被引用最多的第三方域名，也就是 AI 在你这个品类里信得过的那些页面 |
+| **答案占比** | 每条回答里有多少文字由你的页面支撑（`supported_share`）：按字符、按句子、按位置加权的字符，依据服务商标出的每条引用在正文里的位置。和引用率并列印出，从不并入；引用不带位置的回答算未测量 |
+| **列为来源与正文用上** | Perplexity 和 Gemini（`generate_content`）会在回答旁列出来源，并标出正文用上了哪些：每条回答列出多少、用上多少，用上占列出的比例，以及列出、用上你的网址的回答数。只返回一份列表的 API 不测 |
+| **重复一致性** | 一次运行里同一个问题在同一个引擎上问了不止一次时：各次回答引用的域名重合多少（Jaccard，每个引擎取各问题的中位数），并列出最不一致的问题。只作描述，`watch diff` 不读它 |
 | **缺口** | 竞品被引用、你一次都没被引用的问题 |
 | **实际搜索词** | 引擎回答前真正搜了什么（OpenAI、Gemini、Claude 的 API 会给出）。这就是 query fan-out，是实际记下来的，不是猜的。报告统计其中几条含年份、几条含排名或比较类的词；回答搜索过、接口却没返回搜索词时，报告会写明 |
 | **账本** | 问了几个问题、发了几次请求、用了多少 token 和搜索、花了多少钱。每次运行一本 |
@@ -529,7 +553,7 @@ Read this before quoting the numbers
   「这条提及是不是独立的」没法完全自动化。这 24 分左右应当视为辅助判定。
 - **阶梯降低分歧，但消不掉分歧。** 每一档都写成 8 个抽样页里的具体页数，
   所以两个审计者在算术上不会分歧；但「这一段算不算自足答案」仍然是判断。
-  [已定掉的歧义](rubric/open-questions.md)是我们发现的那些，一定还有别的。
+  [已定掉的歧义](rubric/open-questions.zh-CN.md)是我们发现的那些，一定还有别的。
 - **重客户端渲染的站会打低分，有时不公平。** 如果内容要 hydration 之后才出现，
   大部分检查读到的是 hydration 之前的 HTML——那也大致就是爬虫看到的，
   所以低分通常是对的，但值得人工复核一遍。
