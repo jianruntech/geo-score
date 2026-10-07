@@ -22,9 +22,12 @@ python3 benchmark/run.py --readme-only   # benchmark/README.md, results.csv, che
 python3 benchmark/stats.py          # stats.json: the intervals and the China-gap breakdown
 python3 benchmark/percentiles.py    # percentiles.json: where the band cuts fall
 python3 benchmark/sensitivity.py    # sensitivity.json, SENSITIVITY.md, SENSITIVITY.zh-CN.md
-python3 benchmark/build_page.py     # docs/index.html, docs/zh.html, docs/llms.txt, docs/sitemap.xml
 python3 benchmark/build_og.py       # docs/og.png + docs/og.zh.png  (needs Chrome)
+python3 benchmark/build_page.py     # docs/index.html, docs/zh.html, docs/llms.txt, docs/sitemap.xml
 ```
+
+The pages name each share card with a fingerprint of the PNG (`og.png?v=…`), so build the cards first and the
+pages after them.
 
 If you have no Chrome, say so in the PR and leave the two cards alone — we will
 regenerate them. Do not hand-edit a generated file: the next generator run overwrites it.

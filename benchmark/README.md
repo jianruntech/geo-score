@@ -99,19 +99,19 @@ scored sites gets no median: the number would print like a real one and mean muc
 | Sector | Sites | Median | 95% CI |
 |---|:-:|:-:|:-:|
 | Cloud & DevOps | 25 | **77** | 60–81 |
-| Payments / Fintech | 12 | **69.0** | 62–72 |
+| Payments / Fintech | 12 | **69** | 62–72 |
 | AI | 29 | **67** | 58–76 |
 | Marketing / CRM | 17 | **66** | 65–77 |
-| Developer tools | 38 | **60.5** | 56–74 |
-| SaaS / Productivity | 22 | **58.5** | 51–66 |
-| Education | 14 | **51.0** | 40–60 |
+| Developer tools | 38 | **60** | 56–74 |
+| SaaS / Productivity | 22 | **58** | 51–66 |
+| Education | 14 | **51** | 40–60 |
 | Healthcare | 13 | **46** | 40–60 |
 | China / AI | 13 | **40** | 26–49 |
 | China / consumer | 23 | **40** | 28–45 |
 | Cross-border services | 21 | **40** | 33–47 |
 | Logistics / Freight | 11 | **40** | 25–62 |
 | Media / Publishing | 13 | **40** | 40–53 |
-| China / enterprise | 10 | **38.5** | 21–53 |
+| China / enterprise | 10 | **38** | 21–53 |
 | Manufacturing / Industrial | 11 | **38** | 31–56 |
 | China / no-code | 11 | **35** | 20–43 |
 | Ecommerce | 15 | **32** | 24–67 |
@@ -518,8 +518,9 @@ These are **readiness** scores from a static fetch: whether an answer engine *ca
 find, parse and cite the site. They do not measure whether one *does* — that depends
 on competition and query intent, and no site-side audit can observe it.
 
-Four checks worth 12 points need off-site search or human judgement and are left out
-of the denominator, so these run a little lower than a full audit. The
+Three checks worth 12 points need off-site search or human judgement and are left out
+of the denominator, and a fourth, `p4.cn-engines` (2 points), unless the site serves Chinese,
+so these run a little lower than a full audit. The
 [five reference audits](../examples/audits/v1.1/) score all 21 checks by hand.
 
 Sites change. Every number here carries the date it was measured, and re-running

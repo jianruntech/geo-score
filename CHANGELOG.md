@@ -11,6 +11,23 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   README.zh-CN.md now gives the quarterly price and the yearly one too (from ¥38,888 per quarter, ¥152,888
   paid yearly). The PyPI page shows the README of the release it was built from, so it keeps the old price until
   the next release.
+- **The leaderboard page names its sources and its groups.** A one-line source now sits under the headline figures
+  and inside the China-gap finding: the tool and day that measured the data (geo-score 1.5.0, 2026-10-02) and the
+  results.json at the release tag that publishes it, linked. The gate-capped sites showed two groups that added up
+  to 61 of 73; the 12 sites whose server refuses crawler user-agents now have their own card ("Deliberate or
+  accidental"), and the sentence above the cards counts the groups it shows. The footer's links to the rubric, the
+  data, the script and REPRODUCIBILITY.md, and the Dataset's citation, now point at the release tag like its
+  downloads, not at main. Sector medians print as whole numbers, as the headline median and stats.json do (60, not
+  60.5). The footer said four checks need off-site search; three do, and a fourth, Chinese engine readiness, leaves
+  the denominator unless the site serves Chinese (benchmark/README.md said the same and is fixed too). A small nav
+  links the maintainer's homepage, its geo-score page and its contact form in the page's language.
+- **The leaderboard's markup.** The JSON-LD refers to the Organization, founder and WebSite the maintainer's homepage
+  defines (`https://www.jianruntech.com/#organization`, `/#founder`, `/#website` and `/en#website`) instead of
+  declaring a second set on the same host, drops the homepage from `sameAs`, and gives the Dataset one `@id` on both
+  pages (`https://www.jianruntech.com/leaderboard#dataset`). `hreflang` uses `zh-CN` and adds `x-default` in the
+  pages and the sitemap. The share cards' URLs carry a fingerprint of the PNG (`og.png?v=…`), so a cache that keeps
+  images for a year fetches a new card when its figures change; run `build_og.py` before `build_page.py`, and
+  validate.py rule 17 checks the fingerprint.
 
 ## [1.8.0] — 2026-10-05
 

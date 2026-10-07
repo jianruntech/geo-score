@@ -30,6 +30,17 @@ REPO = "https://github.com/jianruntech/geo-score"
 with io.open(os.path.join(ROOT, "cli", "geo_score.py"), encoding="utf-8") as _f:
     VERSION = re.search(r'^__version__ = "([^"]+)"', _f.read(), re.M).group(1)
 DOWNLOAD = "https://raw.githubusercontent.com/jianruntech/geo-score/v%s/benchmark/" % VERSION
+# the footer's links to the rubric, the data and the scripts follow the same tag, for the same reason
+BLOB = "%s/blob/v%s/" % (REPO, VERSION)
+# the maintainer's site. Its homepage defines the Organization, the founder and the WebSite (one per language), so
+# the leaderboard refers to those @ids instead of declaring a second Organization, Person and WebSite on the host
+HOME = "https://www.jianruntech.com"
+ORG_ID = HOME + "/#organization"
+FOUNDER_ID = HOME + "/#founder"
+WEBSITE_ID = {"en": HOME + "/en#website", "zh": HOME + "/#website"}
+# the site's own pages in the page's language, for the nav: the homepage, its geo-score page and its contact form
+NAV = {"en": ((HOME + "/en", "Jianrun Tech"), (HOME + "/en/geo-score", "geo-score"), (HOME + "/en#contact", "Contact")),
+       "zh": ((HOME + "/", "见润科技"), (HOME + "/geo-score", "geo-score"), (HOME + "/#contact", "联系我们"))}
 # the Dataset's data dictionary: each name is a key of every scored row in results.json (validate.py checks it)
 VARIABLES = [
     ("normalised", "0-100 percentage: readiness over observable_max, capped at 100, and capped at 40 when a gate "
@@ -77,6 +88,11 @@ def old_crawler_reading(tool, fix=CRAWLER_FIX):
     fix, else None."""
     m = re.search(r"(\d+)\.(\d+)\.(\d+)", tool or "")
     return m.group(0) if m and tuple(int(x) for x in m.groups()) < fix else None
+
+def tool_version(tool):
+    """The version in results.json's tool string ('geo-score-cli/1.5.0' gives '1.5.0'), or None."""
+    m = re.search(r"\d+\.\d+\.\d+", tool or "")
+    return m.group(0) if m else None
 
 def crawler_note(tool, lang):
     """The qualifier on the robots.txt group ("en", "zh", or "short" for llms.txt), or "" when the data was
@@ -139,6 +155,62 @@ def share_words(pct, lang):
             return en if lang == "en" else zh
     return ("%d%%" % pct) if lang == "en" else ("%d%%" % pct)
 
+def card_url(name):
+    """The share card's URL with a fingerprint of the committed PNG, so a cache that keeps images for a year
+    fetches the new card when the figures on it change. Run build_og.py first: the fingerprint is of the file
+    in docs/, and validate.py rule 17 fails a page whose fingerprint is not its card's."""
+    import hashlib
+    path = os.path.join(ROOT, "docs", name)
+    if not os.path.exists(path):
+        return SITE + "/" + name
+    with io.open(path, "rb") as f:
+        return "%s/%s?v=%s" % (SITE, name, hashlib.sha256(f.read()).hexdigest()[:10])
+
+def nav(lang):
+    """The links to the maintainer's site, in the page's language."""
+    return "".join('<a href="%s">%s</a>' % (u, label) for u, label in NAV[lang])
+
+def source_line(lang, v):
+    """Where the figures beside it come from: the tool and day that measured them, and the data at the tag that
+    publishes it. They differ, because data can predate the release that publishes it (see DOWNLOAD)."""
+    data = '<a href="%sresults.json">%s</a>' % (
+        DOWNLOAD, ("results.json at tag v%s" % VERSION) if lang == "en" else ("v%s 标签下的 results.json" % VERSION))
+    tool = (" with geo-score %s" % v["tool_v"]) if lang == "en" and v["tool_v"] else (
+        (" geo-score %s " % v["tool_v"]) if v["tool_v"] else "")
+    if lang == "en":
+        return "Source: the geo-score benchmark, measured%s on %s; data: %s." % (tool, v["date"], data)
+    return "数据来源：geo-score 公开基准，%s 用%s实测；数据：%s。" % (v["date"], tool or " geo-score ", data)
+
+def gate_groups(lang, v):
+    """The gate-capped sites in their groups, as cards: robots.txt, refused, JavaScript. A group with no site gets
+    no card. Returns (cards html, number of cards)."""
+    en = lang == "en"
+    groups = (
+        ("DELIBERATE" if en else "主动屏蔽", v["nblk"], v["blk"],
+         ("Their <code>robots.txt</code> disallows AI retrieval crawlers by name. A site "
+          "that does not want to be quoted is not misconfigured, and this rubric reports "
+          "it as it is." + (" " + crawler_note(v["tool"], "en") if crawler_note(v["tool"], "en") else "")) if en else
+         ("它们的 <code>robots.txt</code> 点名禁止了 AI 检索爬虫。"
+          "一个不希望被引用的站不是配置错了，量表照实记录即可。" + crawler_note(v["tool"], "zh"))),
+        ("DELIBERATE OR ACCIDENTAL" if en else "主动或无意", v["nerr"], v["err"],
+         ("The server refuses crawler user-agents. The probes carry the crawlers' user-agent strings but come from "
+          "the auditor's own address, unverified, so a server that checks a crawler by its IP address may refuse "
+          "them and still serve the real crawler. From outside, a policy and a bot-protection default look the "
+          "same.") if en else
+         ("服务器拒绝了爬虫 user-agent。探测带的是各家爬虫的 user-agent 字符串，但发自审计方自己的地址、未经身份验证，"
+          "所以按 IP 核验爬虫的服务器可能拒绝探测、却照常放行真正的爬虫。从外面看，有意的策略和 bot 防护的默认设置是一个样。")),
+        ("ACCIDENTAL" if en else "无意失效", v["njs"], v["js"],
+         " ".join(x for x in (
+             "Body copy only exists after JavaScript runs. The content is there and a browser "
+             "sees it; a retrieval crawler gets an empty shell. This group almost certainly "
+             "did not choose it.", thin_words(v["njs_thin"], "en"), challenge_note(v["tool"], "en")) if x) if en else
+         ("正文只在 JavaScript 跑完之后才存在。内容是有的，浏览器看得见；"
+          "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。"
+          + thin_words(v["njs_thin"], "zh") + challenge_note(v["tool"], "zh"))))
+    cards = ['<div><h3>%s &mdash; %d</h3><p>%s<br><br><code class="list">%s</code></p></div>' % (label, n, text, sites)
+             for label, n, sites, text in groups if n]
+    return "\n".join(cards), len(cards)
+
 def _fmt(x):
     """中位数与四分位数取整。
 
@@ -154,14 +226,13 @@ def jsonld(lang, v):
     from an undeclared table."""
     page = PAGE[lang]
     zh = lang == "zh"
+    # one dataset, so one @id on both pages (and on the site's geo-score pages, which point at it)
+    dataset = PAGE["en"] + "#dataset"
     return json.dumps({"@context": "https://schema.org", "@graph": [
-      {"@type": "Organization", "@id": SITE + "/#org", "name": "见润科技" if zh else "Jianrun Tech",
-       "alternateName": ["Jianrun Tech", "见润科技"], "url": "https://www.jianruntech.com/",
-       "logo": "https://www.jianruntech.com/icon-192.png",
-       "sameAs": [REPO, "https://www.jianruntech.com/"]},
-      {"@type": "Person", "@id": SITE + "/#author", "name": "多祝" if zh else "Duozhu",
-       "affiliation": {"@id": SITE + "/#org"}, "url": "https://www.jianruntech.com/"},
-      {"@type": "Dataset", "@id": page + "#dataset",
+      {"@type": "Organization", "@id": ORG_ID, "name": "见润科技" if zh else "Jianrun Tech",
+       "alternateName": ["Jianrun Tech", "见润科技"], "url": HOME + "/"},
+      {"@type": "Person", "@id": FOUNDER_ID, "name": "多祝" if zh else "Duozhu", "affiliation": {"@id": ORG_ID}},
+      {"@type": "Dataset", "@id": dataset,
        "name": ("AI 可见度公开基准：%d 个站点的实测评分" % v["n"]) if zh
                else "The state of AI visibility: %d sites scored" % v["n"],
        "description": (
@@ -174,8 +245,7 @@ def jsonld(lang, v):
          % (v["n"], v["med"], v["mn"], v["mx"])),
        "url": page, "license": "https://opensource.org/licenses/MIT",
        "isAccessibleForFree": True, "dateModified": v["date"], "datePublished": v["date"],
-       "creator": {"@id": SITE + "/#org"}, "author": {"@id": SITE + "/#author"},
-       "publisher": {"@id": SITE + "/#org"},
+       "creator": {"@id": ORG_ID}, "author": {"@id": FOUNDER_ID}, "publisher": {"@id": ORG_ID},
        "inLanguage": "zh-CN" if zh else "en",
        "keywords": ["generative engine optimization", "GEO", "AEO", "AI search visibility",
                     "llms.txt", "structured data", "AI crawlers"],
@@ -186,12 +256,10 @@ def jsonld(lang, v):
        "distribution": [{"@type": "DataDownload", "name": f, "encodingFormat": fmt, "contentUrl": DOWNLOAD + f}
                         for f, fmt in (("results.json", "application/json"), ("results.csv", "text/csv"),
                                        ("checks.csv", "text/csv"))],
-       "citation": REPO + "/blob/main/rubric/v1.1.md"},
-      {"@type": "WebSite", "@id": SITE + "/#website", "url": PAGE["en"],
-       "name": "geo-score", "publisher": {"@id": SITE + "/#org"}},
+       "citation": BLOB + "rubric/v1.1.md"},
       {"@type": "WebPage", "@id": page + "#webpage", "url": page,
-       "isPartOf": {"@id": SITE + "/#website"}, "about": {"@id": page + "#dataset"},
-       "author": {"@id": SITE + "/#author"}, "dateModified": v["date"],
+       "isPartOf": {"@id": WEBSITE_ID[lang]}, "about": {"@id": dataset},
+       "author": {"@id": FOUNDER_ID}, "dateModified": v["date"],
        "inLanguage": "zh-CN" if zh else "en"}]}, ensure_ascii=False, separators=(",", ":"))
 
 def strings(lang, v):
@@ -200,7 +268,7 @@ def strings(lang, v):
         return dict(
             htmllang="en", on_en="on", on_zh="",
             canon=PAGE["en"], oglocale="en_US",
-            ogimg=SITE + "/og.png",
+            ogimg=card_url("og.png"), nav=nav("en"), src=source_line("en", v),
             ogalt="Share card: %(cappct)d%% of %(n)d well-known sites are unreadable to AI answer "
                    "engines' crawlers. Median %(med)s, range %(mn)d-%(mx)d." % v,
             t_title="The state of AI visibility — %(n)d sites scored" % v,
@@ -218,22 +286,17 @@ def strings(lang, v):
             l_cap="UNREADABLE TO AI",
             t_h2gate=share_words(v["cappct"], "en") + " of the field is unreadable to AI crawlers",
             t_pgate="%(cap)d sites have a gate check at zero — a retrieval crawler cannot get the "
-                    "content, so nothing else on the page matters. Two very different problems "
-                    "live inside that number." % v,
-            l_delib="DELIBERATE", l_accid="ACCIDENTAL",
-            t_delib="Their <code>robots.txt</code> disallows AI retrieval crawlers by name. A site "
-                    "that does not want to be quoted is not misconfigured, and this rubric reports "
-                    "it as it is." + (" " + crawler_note(v["tool"], "en") if crawler_note(v["tool"], "en") else ""),
-            t_accid=" ".join(x for x in (
-                    "Body copy only exists after JavaScript runs. The content is there and a browser "
-                    "sees it; a retrieval crawler gets an empty shell. This group almost certainly "
-                    "did not choose it.", thin_words(v["njs_thin"], "en"), challenge_note(v["tool"], "en")) if x),
+                    "content, so nothing else on the page matters." % v + (
+                    " %s very different problems live inside that number." % num_words(gate_groups("en", v)[1], "en").capitalize()
+                    if gate_groups("en", v)[1] > 1 else ""),
+            groups=gate_groups("en", v)[0],
             t_china=("<b>Sites in the %(ncs_en)s China sectors score %(gap)d points lower</b> — median %(cn)s "
                      "against %(row)s for everyone else." % v) + ((
                      " Grouped by the language a site serves instead, Chinese-language sites score %(lgap)d "
                      "lower; within matched sector families the gap runs from %(flo)d to %(fhi)d points. "
                      "%(hshare)d%% of it sits in checks the tool reads with a heuristic, so at most that much could "
-                     "be the tool reading Chinese pages conservatively rather than the sites." % v) if v["lgap"] is not None else ""),
+                     "be the tool reading Chinese pages conservatively rather than the sites." % v) if v["lgap"] is not None else "")
+                    + '<br><small>' + source_line("en", v) + "</small>",
             t_h2dist="Where everyone lands",
             t_pdist="Bars are counts of sites per ten-point band. The rubric is not graded on a "
                     "curve; this is the distribution that falls out of it.",
@@ -252,26 +315,27 @@ def strings(lang, v):
             l_gaps="BIGGEST GAPS", l_pill="UNREADABLE", l_thin="THIN SAMPLE",
             l_count='"{a} of {b} sites"',
             t_h2sec="By sector",
-            t_footer=('Scored with <a href="%(repo)s/blob/main/rubric/v1.1.md">AIV rubric v1.1</a> on '
-                     '%(date)s · <a href="%(repo)s/blob/main/benchmark/results.json">raw data</a> '
-                     '(<a href="%(repo)s/blob/main/benchmark/results.csv">CSV</a>) · '
-                     '<a href="%(repo)s/blob/main/benchmark/run.py">the script</a> · '
-                     '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">how reproducible a single run is</a> · '
+            t_footer=('Scored with <a href="%(blob)srubric/v1.1.md">AIV rubric v1.1</a> on '
+                     '%(date)s · <a href="%(blob)sbenchmark/results.json">raw data</a> '
+                     '(<a href="%(blob)sbenchmark/results.csv">CSV</a>) · '
+                     '<a href="%(blob)sbenchmark/run.py">the script</a> · '
+                     '<a href="%(blob)sbenchmark/REPRODUCIBILITY.md">how reproducible a single run is</a> · '
                      '<a href="%(repo)s">the repository</a><br><br>'
                      "We ran the whole benchmark twice on %(rp_date)s, with %(rp_tool)s, and compared every site: <strong>%(rp_w5)d%% of sites land within &plusmn;5</strong> and %(rp_same)d%% land identically, so read one site's number as &plusmn;5 rather than as exact. Medians are stable. "
                      + ("The unstable part is the gate checks &mdash; %(rp_flips_en)s sites flipped because their bot protection answered a crawler differently between the two runs, which is a property of those sites rather than of the measurement. "
                         if v["rp_legacy"] else "The gate-cap state flipped on %(rp_flips)d sites between the two runs. ") +
                      "This measures readiness, not outcomes: whether an engine <em>can</em> cite a "
                      "site. Whether one <em>does</em> depends on competition and query intent, which "
-                     "no site-side audit can observe. Four checks needing off-site search are left "
-                     "out of the denominator rather than guessed, so these run lower than a "
+                     "no site-side audit can observe. Three checks that need off-site search or human "
+                     "judgement are left out of the denominator rather than guessed, and a fourth, "
+                     "Chinese engine readiness, unless the site serves Chinese, so these run lower than a "
                      "hand-scored audit. Sites change; every number carries the date it was "
                      'measured.<br><br>Built by <a href="https://www.jianruntech.com">Jianrun Tech</a>. MIT.')
-                     % dict(v, repo=REPO))
+                     % dict(v, repo=REPO, blob=BLOB))
     return dict(
         htmllang="zh-CN", on_en="", on_zh="on",
         canon=PAGE["zh"], oglocale="zh_CN",
-        ogimg=SITE + "/og.zh.png",
+        ogimg=card_url("og.zh.png"), nav=nav("zh"), src=source_line("zh", v),
         ogalt="分享卡：%(n)d 个知名网站里 %(cappct)d%% 的内容 AI 回答引擎的爬虫读不到，"
               "中位数 %(med)s，区间 %(mn)d-%(mx)d。" % v,
         t_title="AI 可见度现状 — %(n)d 个站点实测" % v,
@@ -289,17 +353,15 @@ def strings(lang, v):
         l_cap="AI 读不到",
         t_h2gate=share_words(v["cappct"], "zh") + "的站，AI 爬虫读不到",
         t_pgate="%(cap)d 个站有门槛项得 0 分——检索爬虫压根拿不到内容，"
-                "页面上其余的事都不再重要。而这个数字里装着两件性质完全不同的事。" % v,
-        l_delib="主动屏蔽", l_accid="无意失效",
-        t_delib="它们的 <code>robots.txt</code> 点名禁止了 AI 检索爬虫。"
-                "一个不希望被引用的站不是配置错了，量表照实记录即可。" + crawler_note(v["tool"], "zh"),
-        t_accid="正文只在 JavaScript 跑完之后才存在。内容是有的，浏览器看得见；"
-                "检索爬虫拿到的是一个空壳。这一组几乎肯定不是有意的。"
-                + thin_words(v["njs_thin"], "zh") + challenge_note(v["tool"], "zh"),
+                "页面上其余的事都不再重要。" % v + (
+                "而这个数字里装着%s件性质完全不同的事。" % num_words(gate_groups("zh", v)[1], "zh")
+                if gate_groups("zh", v)[1] > 1 else ""),
+        groups=gate_groups("zh", v)[0],
         t_china=("<b>%(ncs_zh)s个中国行业的站比其余站低 %(gap)d 分</b>——中位数 %(cn)s 对 %(row)s。" % v) + ((
                 "改按站点面向的语言分组，中文站低 %(lgap)d 分；在相近的行业之间一一对比，差距在 %(flo)d 到 %(fhi)d 分之间。"
                 "其中 %(hshare)d%% 落在工具靠启发式判断的检查项上，所以最多这么多可能是工具对中文页面判得偏严，"
-                "而不是网站本身。" % v) if v["lgap"] is not None else ""),
+                "而不是网站本身。" % v) if v["lgap"] is not None else "")
+                + "<br><small>" + source_line("zh", v) + "</small>",
         t_h2dist="大家都落在哪",
         t_pdist="每根柱子是该十分段内的站点数。这套口径不按曲线给分，这就是它跑出来的分布。",
         t_h2check="测测你自己的站",
@@ -315,11 +377,11 @@ def strings(lang, v):
         l_gaps="最大缺口", l_pill="读不到", l_thin="样本少",
         l_count='"共 {b} 个，当前显示 {a} 个"',
         t_h2sec="分行业",
-        t_footer=('按 <a href="%(repo)s/blob/main/rubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
-                 '%(date)s 实测 · <a href="%(repo)s/blob/main/benchmark/results.json">原始数据</a>'
-                 '（<a href="%(repo)s/blob/main/benchmark/results.csv">CSV</a>）· '
-                 '<a href="%(repo)s/blob/main/benchmark/run.py">跑分脚本</a> · '
-                 '<a href="%(repo)s/blob/main/benchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
+        t_footer=('按 <a href="%(blob)srubric/v1.1.zh-CN.md">AIV 量表 v1.1</a> 于 '
+                 '%(date)s 实测 · <a href="%(blob)sbenchmark/results.json">原始数据</a>'
+                 '（<a href="%(blob)sbenchmark/results.csv">CSV</a>）· '
+                 '<a href="%(blob)sbenchmark/run.py">跑分脚本</a> · '
+                 '<a href="%(blob)sbenchmark/REPRODUCIBILITY.md">单次重跑的精度</a> · '
                  '<a href="%(repo)s">仓库</a> · '
                  '<a href="https://www.jianruntech.com/geo-score">中文说明页</a><br><br>'
                  "整个榜单我们于 %(rp_date)s 用%(rp_tool_zh)s跑了两遍并逐站比对：<strong>%(rp_w5)d%% 的站落在 &plusmn;5 以内</strong>，%(rp_same)d%% 完全一致。所以单个站的分数请按 &plusmn;5 读，不要当成精确值；中位数是稳的。"
@@ -327,19 +389,21 @@ def strings(lang, v):
                     if v["rp_legacy"] else "两次之间有 %(rp_flips)d 个站的门槛封顶状态翻转。") +
                  "这里测的是就绪度，不是结果：引擎<em>能不能</em>引用一个站。"
                  "它<em>会不会</em>引用，取决于竞争与提问意图，任何站外审计都观察不到。"
-                 "四项需要站外检索的检查退出了分母而不是靠猜，所以这些分比人工逐项审计略低。"
+                 "三项需要站外检索或人工判断的检查退出了分母而不是靠猜，第四项「中文引擎就绪度」在站点不面向中文时也退出，"
+                 "所以这些分比人工逐项审计略低。"
                  "站点会变；每个数字都带着它被测量的日期。"
                  '<br><br>由<a href="https://www.jianruntech.com">见润科技</a>构建。MIT 许可。')
-                 % dict(v, repo=REPO))
+                 % dict(v, repo=REPO, blob=BLOB))
 
 def data():
     d = json.load(io.open(os.path.join(HERE, "results.json"), encoding="utf-8"))
     ok = [r for r in d["results"] if "error" not in r]
-    err = [r for r in d["results"] if "error" in r]
+    unscored = [r for r in d["results"] if "error" in r]
     s = d["stats"]
     cap = [r for r in ok if r.get("gate_capped")]
     blk = sorted(r["site"] for r in cap if r.get("gate_reason") == "blocks crawlers")
     js = sorted(r["site"] for r in cap if r.get("gate_reason") == "content needs JavaScript")
+    err = sorted(r["site"] for r in cap if r.get("gate_reason") == "serves crawlers an error")
     def _med(xs):
         """statistics.median 在样本数为偶数时返回浮点，页面上会印成「60.0」。
         整数就按整数印。"""
@@ -380,12 +444,13 @@ def data():
                  c=bool(r.get("gate_capped")), w=r.get("gate_reason") or "",
                  g=r.get("top_gaps", []), r=r["readiness"], m=r["observable_max"], t=sn[r["site"]]) for r in ok]
     rows += [dict(s=r["site"], n=None, b="Not scored", k=r["sector"], c=False,
-                  w=r.get("error", ""), g=[], r=None, m=None, t=None) for r in err]
+                  w=r.get("error", ""), g=[], r=None, m=None, t=None) for r in unscored]
     return dict(
         n=s["n"], med=_fmt(s["median"]), p75=_fmt(s["p75"]), mn=s["min"], mx=s["max"], cap=len(cap),
         cappct=int(round(100.0 * len(cap) / s["n"])),
-        nerr=sum(1 for r in cap if r.get("gate_reason") == "serves crawlers an error"),
+        nerr=len(err), err=", ".join(err),
         nblk=len(blk), njs=len(js), blk=", ".join(blk), js=", ".join(js),
+        tool_v=tool_version(d.get("tool")),
         nthin=len(thin_rows), thin_n=bstats.THIN_N, thin_en=num_words(bstats.THIN_N, "en"), njs_thin=sum(1 for x in js if x in thin_rows),
         js_note=(" (%s)" % challenge_note(d.get("tool"), "short")) if challenge_note(d.get("tool"), "short") else "",
         gap=round(row - cn), cn=cn, row=row, date=d["measured_at"], url_en=PAGE["en"], url_zh=PAGE["zh"],
@@ -402,9 +467,9 @@ def data():
                         '<td class="bar"><small>n &lt; %d</small></td></tr>' % (k, v["n"], bstats.MIN_N))
                        if k in thin else
                        ('<tr><td>%s</td><td class="num">%d</td>'
-                        '<td class="num" style="color:var(--green)">%s</td>'
+                        '<td class="num" style="color:var(--green)">%d</td>'
                         '<td class="bar"><i style="width:%d%%"></i></td></tr>'
-                        % (k, v["n"], v["median"], v["median"])) for k, v in sec),
+                        % (k, v["n"], _fmt(v["median"]), _fmt(v["median"]))) for k, v in sec),
         data=json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
 
 LLMS = """# geo-score
@@ -458,13 +523,15 @@ SITEMAP = """<?xml version="1.0" encoding="UTF-8"?>
     <loc>%(url_en)s</loc>
     <lastmod>%(date)s</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="%(url_en)s"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="%(url_zh)s"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="%(url_zh)s"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="%(url_en)s"/>
   </url>
   <url>
     <loc>%(url_zh)s</loc>
     <lastmod>%(date)s</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="%(url_en)s"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="%(url_zh)s"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="%(url_zh)s"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="%(url_en)s"/>
   </url>
 </urlset>
 """

@@ -120,7 +120,8 @@ merges unless it passes.
   `test_geo_score.py` compiles it with warnings as errors.
 - Regenerate benchmark outputs instead of editing them: `python3 benchmark/run.py --readme-only` writes
   benchmark/README.md, stats.json, percentiles.json, the sensitivity study and the CSVs without scoring;
-  `python3 benchmark/build_page.py` writes docs/; `python3 benchmark/retest.py` writes the reproducibility
+  `python3 benchmark/build_page.py` writes docs/ (after `build_og.py`: the pages carry the cards' fingerprints, which
+  `validate.py` rule 17 checks); `python3 benchmark/retest.py` writes the reproducibility
   figures and tables; `python3 benchmark/validity.py --md-only` writes VALIDITY*.md.
 - `benchmark/stats.py` draws every new bootstrap after the existing ones on the same seeded generator;
   one inserted earlier moves every published interval after it.

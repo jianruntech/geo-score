@@ -616,7 +616,8 @@ def write_readme(p):
         if us[k]["median"] is None:
             A("| %s | %d | — | fewer than %d sites |" % (k, v["n"], u["min_n"]))
         else:
-            A("| %s | %d | **%s** | %d–%d |" % (k, v["n"], v["median"], us[k]["ci"][0], us[k]["ci"][1]))
+            # stats.py's whole-number median, as stats.json and the page print it: never 60.5 here and 60 there
+            A("| %s | %d | **%d** | %d–%d |" % (k, v["n"], us[k]["median"], us[k]["ci"][0], us[k]["ci"][1]))
     A("\n## Every site\n")
     A("The same rows, flat: [results.csv](results.csv) has one row per listed site and one column per check,")
     A("[checks.csv](checks.csv) one row per scored site and check. The full reports are in [raw/](raw/).\n")
@@ -647,8 +648,9 @@ def write_readme(p):
     A("These are **readiness** scores from a static fetch: whether an answer engine *can*")
     A("find, parse and cite the site. They do not measure whether one *does* — that depends")
     A("on competition and query intent, and no site-side audit can observe it.\n")
-    A("Four checks worth 12 points need off-site search or human judgement and are left out")
-    A("of the denominator, so these run a little lower than a full audit. The")
+    A("Three checks worth 12 points need off-site search or human judgement and are left out")
+    A("of the denominator, and a fourth, `p4.cn-engines` (2 points), unless the site serves Chinese,")
+    A("so these run a little lower than a full audit. The")
     A("[five reference audits](../examples/audits/v1.1/) score all 21 checks by hand.\n")
     A("Sites change. Every number here carries the date it was measured, and re-running")
     A("gives slightly different results — which is the point of publishing the tool alongside")

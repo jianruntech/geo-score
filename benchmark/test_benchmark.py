@@ -189,6 +189,99 @@ class Labels(unittest.TestCase):
             build_page.SITE, build_page.PAGE = saved
 
 
+class Page(unittest.TestCase):
+    """What build_page.py writes from the committed data: the markup engines read and the figures people quote."""
+    @classmethod
+    def setUpClass(cls):
+        cls.v = build_page.data()
+
+    def graph(self, lang):
+        return json.loads(build_page.jsonld(lang, self.v))["@graph"]
+
+    def test_the_leaderboard_names_the_homepage_entities_and_one_dataset(self):
+        ids = {}
+        for lang in ("en", "zh"):
+            g = self.graph(lang)
+            types = [x["@type"] for x in g]
+            self.assertNotIn("WebSite", types)                       # the homepage declares the site
+            self.assertEqual(types.count("Dataset"), 1)
+            for x in g:
+                self.assertFalse(x["@id"].startswith(build_page.SITE + "/#"), x["@id"])
+                self.assertNotIn(build_page.HOME + "/", x.get("sameAs", []))
+            byt = {x["@type"]: x for x in g}
+            self.assertEqual(byt["Organization"]["@id"], build_page.ORG_ID)
+            self.assertEqual(byt["Person"]["@id"], build_page.FOUNDER_ID)
+            self.assertEqual(byt["Dataset"]["creator"], {"@id": build_page.ORG_ID})
+            self.assertEqual(byt["WebPage"]["isPartOf"], {"@id": build_page.WEBSITE_ID[lang]})
+            self.assertEqual(byt["WebPage"]["about"], {"@id": byt["Dataset"]["@id"]})
+            ids[lang] = byt["Dataset"]["@id"]
+        self.assertEqual(ids["en"], ids["zh"])
+        self.assertEqual(ids["en"], build_page.PAGE["en"] + "#dataset")
+
+    def test_links_to_the_data_name_the_release_tag(self):
+        tag = "/blob/v%s/" % build_page.VERSION
+        for lang in ("en", "zh"):
+            s = build_page.strings(lang, self.v)
+            self.assertNotIn("/blob/main/", s["t_footer"])
+            self.assertIn(tag + "benchmark/results.json", s["t_footer"])
+            self.assertIn(tag + "rubric/", s["t_footer"])
+            self.assertNotIn("/blob/main/", build_page.jsonld(lang, self.v))
+            # the source beside the headline and the China gap: the tool that measured, the tag that publishes
+            for text in (s["src"], s["t_china"]):
+                self.assertIn(build_page.DOWNLOAD + "results.json", text)
+                self.assertIn("v" + build_page.VERSION, text)
+                self.assertIn(build_page.tool_version(self.v["tool"]), text)
+                self.assertIn(self.v["date"], text)
+
+    def test_every_gate_capped_group_has_a_card(self):
+        for lang in ("en", "zh"):
+            cards, n = build_page.gate_groups(lang, self.v)
+            groups = [k for k in ("nblk", "nerr", "njs") if self.v[k]]
+            self.assertEqual(n, len(groups))
+            self.assertEqual(cards.count("<h3>"), n)
+            self.assertEqual(sum(self.v[k] for k in groups), self.v["cap"])
+            self.assertIn(build_page.num_words(n, lang).capitalize(), build_page.strings(lang, self.v)["t_pgate"])
+        self.assertEqual(self.v["err"].split(", ")[0], "airbnb.com")
+
+    def test_sector_medians_print_as_whole_numbers(self):
+        self.assertFalse(re.search(r'color:var\(--green\)">\d+\.\d', self.v["sectbl"]), self.v["sectbl"][:300])
+        with io.open(os.path.join(HERE, "stats.json"), encoding="utf-8") as f:
+            med = json.load(f)["sectors"]
+        for k, cell in re.findall(r'<tr><td>([^<]+)</td><td class="num">\d+</td><td class="num" style="[^"]*">(\d+)<',
+                                  self.v["sectbl"]):
+            self.assertEqual(int(cell), med[k]["median"], k)
+
+    def test_the_share_card_url_carries_its_fingerprint(self):
+        tmp = tempfile.mkdtemp()
+        saved = build_page.ROOT
+        try:
+            build_page.ROOT = tmp
+            self.assertEqual(build_page.card_url("og.png"), build_page.SITE + "/og.png")
+            os.makedirs(os.path.join(tmp, "docs"))
+            urls = []
+            for body in (b"one", b"two"):
+                with io.open(os.path.join(tmp, "docs", "og.png"), "wb") as f:
+                    f.write(body)
+                urls.append(build_page.card_url("og.png"))
+            self.assertTrue(all(re.fullmatch(re.escape(build_page.SITE) + r"/og\.png\?v=[0-9a-f]{10}", u) for u in urls))
+            self.assertNotEqual(urls[0], urls[1])
+        finally:
+            build_page.ROOT = saved
+            shutil.rmtree(tmp)
+
+    def test_hreflang_and_nav(self):
+        from _page_tpl import TPL
+        self.assertIn('hreflang="zh-CN"', TPL)
+        self.assertIn('hreflang="x-default" href="%(url_en)s"', TPL)
+        self.assertNotIn('hreflang="zh"', TPL)
+        self.assertNotIn('hreflang="zh"', build_page.SITEMAP)
+        for lang in ("en", "zh"):
+            hrefs = re.findall(r'href="([^"]+)"', build_page.nav(lang))
+            self.assertEqual(len(hrefs), 3)
+            self.assertTrue(all(u.startswith(build_page.HOME + "/") for u in hrefs))
+            self.assertTrue(hrefs[-1].endswith("#contact"))
+
+
 class Stats(unittest.TestCase):
     def test_gap_is_suppressed_below_min_n(self):
         import random

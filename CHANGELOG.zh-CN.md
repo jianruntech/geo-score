@@ -8,6 +8,18 @@
 - **README 里托管服务的价格过时了。** README.md 写的是 AEO delivery system 每 3 个月 US$5,780 起，实际是每季度 US$7,790 起
   （年付 US$30,590），与官网价格页一致。README.zh-CN.md 也改成按季度报价并补上年付价（¥38,888 起 / 季度，年付 ¥152,888）。
   PyPI 页面显示的是构建那一版时的 README，所以要到下一次发版才换成新价格。
+- **榜单页写明数据来源，门槛组不再漏一组。** 头部数字下方和中国差距那段里，各加了一行来源：测这批数据的工具和日期
+  （geo-score 1.5.0，2026-10-02），以及发布它的那个 release 标签下的 results.json，带链接。门槛封顶的站原来只列了两组，
+  加起来 61 个，而总数是 73；服务器拒绝爬虫 user-agent 的 12 个站现在有了自己的一组（「主动或无意」），卡片上方那句话
+  按实际列出的组数来写。页脚指向量表、数据、跑分脚本和 REPRODUCIBILITY.md 的链接，以及 Dataset 的 citation，现在和下载链接
+  一样指向 release 标签，不再指向 main。分行业中位数按整数印，和头部中位数、stats.json 一致（印 60，不印 60.5）。页脚原来说
+  四项检查需要站外检索；其实是三项，第四项「中文引擎就绪度」在站点不面向中文时退出分母（benchmark/README.md 有同样的话，
+  一并改了）。页面顶部加了一个小导航，按页面语言链到维护方的首页、geo-score 介绍页和联系表单。
+- **榜单页的结构化数据。** JSON-LD 改为引用维护方首页定义的 Organization、创始人和 WebSite
+  （`https://www.jianruntech.com/#organization`、`/#founder`、`/#website` 和 `/en#website`），不再在同一个域名下另立一套；
+  `sameAs` 去掉了首页自己；Dataset 在中英两页用同一个 `@id`（`https://www.jianruntech.com/leaderboard#dataset`）。页面和站点地图
+  的 `hreflang` 改用 `zh-CN`，并加上 `x-default`。分享卡的地址带上 PNG 的内容指纹（`og.png?v=…`），缓存一年的图片在卡片数字变了
+  之后也会取新图；要先跑 `build_og.py` 再跑 `build_page.py`，validate.py 第 17 条会核对指纹。
 
 ## [1.8.0] — 2026-10-05
 

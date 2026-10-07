@@ -20,13 +20,14 @@ TPL = '''<!doctype html>
 <meta name="twitter:image" content="%(ogimg)s">
 <link rel="canonical" href="%(canon)s">
 <link rel="alternate" hreflang="en" href="%(url_en)s">
-<link rel="alternate" hreflang="zh" href="%(url_zh)s">
+<link rel="alternate" hreflang="zh-CN" href="%(url_zh)s">
+<link rel="alternate" hreflang="x-default" href="%(url_en)s">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>%(css)s</style>
 <script type="application/ld+json">%(jsonld)s</script>
 </head><body>
-<nav class="langs"><a href="./" class="%(on_en)s">EN</a><a href="./zh.html" class="%(on_zh)s">中文</a></nav>
+<div class="top"><nav class="site">%(nav)s</nav><nav class="langs"><a href="./" class="%(on_en)s">EN</a><a href="./zh.html" class="%(on_zh)s">中文</a></nav></div>
 <div class="wrap">
 
 <header>
@@ -41,13 +42,13 @@ TPL = '''<!doctype html>
 <div class="stat"><b>%(cap)d</b><span>%(l_cap)s</span></div>
 </div>
 </header>
+<p class="src">%(src)s</p>
 
 <h2>%(t_h2gate)s</h2>
 <p>%(t_pgate)s</p>
 
-<div class="two">
-<div><h3>%(l_delib)s &mdash; %(nblk)d</h3><p>%(t_delib)s<br><br><code class="list">%(blk)s</code></p></div>
-<div><h3>%(l_accid)s &mdash; %(njs)d</h3><p>%(t_accid)s<br><br><code class="list">%(js)s</code></p></div>
+<div class="groups">
+%(groups)s
 </div>
 
 <div class="finding">%(t_china)s</div>

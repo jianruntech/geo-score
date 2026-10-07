@@ -411,14 +411,14 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
     # 推上去的提交里却还是旧页面。
     for f, old in before.items():
         io.open(os.path.join("docs", f), "w", encoding="utf-8").write(old)
-    # 双语页必须成对存在，且各自声明了 hreflang
+    # 双语页必须成对存在，且各自声明了 hreflang（中文用 zh-CN，与官网其他页一致），外加 x-default
     for f in ("index.html", "zh.html"):
         pth = os.path.join("docs", f)
         check(os.path.exists(pth), f"{pth} missing —— 榜单页要中英成对")
         if os.path.exists(pth):
             t = io.open(pth, encoding="utf-8").read()
-            check('hreflang="en"' in t and 'hreflang="zh"' in t,
-                  f"docs/{f}: 缺少 hreflang，另一种语言的读者与搜索引擎都找不到对应版本")
+            check('hreflang="en"' in t and 'hreflang="zh-CN"' in t and 'hreflang="x-default"' in t,
+                  f"docs/{f}: 缺少 hreflang（en、zh-CN、x-default），另一种语言的读者与搜索引擎都找不到对应版本")
             check("%(" not in t, f"docs/{f}: 有未替换的模板占位符")
 
     # ── 17. 分享卡：声明的尺寸必须等于 PNG 真实尺寸 ──
@@ -439,8 +439,14 @@ if os.path.isdir("docs") and os.path.exists("benchmark/build_page.py"):
         check('name="twitter:card" content="summary_large_image"' in t,
               f"docs/{f}: 缺 twitter:card，X 上只会显示一条窄链接")
         _base = os.environ.get("GEO_SITE_BASE", SITE_DEFAULT).rstrip("/")
-        check(f'og:image" content="{_base}/{card}"' in t,
-              f"docs/{f}: og:image 没指向 {card}")
+        # 分享卡带内容指纹（?v=）：官网对 PNG 设了一年的 immutable 缓存，卡片原地覆盖时，没有指纹的地址会一直给出旧数字
+        _fp = ""
+        if os.path.exists(cpth):
+            import hashlib
+            _fp = "?v=" + hashlib.sha256(io.open(cpth, "rb").read()).hexdigest()[:10]
+        for _meta in ('property="og:image"', 'name="twitter:image"'):
+            check(f'{_meta} content="{_base}/{card}{_fp}"' in t,
+                  f"docs/{f}: {_meta} 没指向 {card}{_fp}（先跑 build_og.py，再跑 build_page.py）")
         check("rel=\"canonical\"" in t, f"docs/{f}: 缺 canonical")
         if os.path.exists(cpth):
             wh = png_size(cpth)

@@ -5,12 +5,14 @@
     <loc>https://www.jianruntech.com/leaderboard</loc>
     <lastmod>2026-10-02</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.jianruntech.com/leaderboard"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://www.jianruntech.com/leaderboard/zh"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://www.jianruntech.com/leaderboard/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.jianruntech.com/leaderboard"/>
   </url>
   <url>
     <loc>https://www.jianruntech.com/leaderboard/zh</loc>
     <lastmod>2026-10-02</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.jianruntech.com/leaderboard"/>
-    <xhtml:link rel="alternate" hreflang="zh" href="https://www.jianruntech.com/leaderboard/zh"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://www.jianruntech.com/leaderboard/zh"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.jianruntech.com/leaderboard"/>
   </url>
 </urlset>
