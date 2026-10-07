@@ -3242,9 +3242,14 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
     per = {}
     for name, r in results: per.setdefault(name, []).append(r)
     nua = len(RETRIEVAL_UAS)
-    refused = [name for name, rs in per.items() if any(x.status and not x.ok for x in rs)]
-    silent = [name for name, rs in per.items() if name not in refused and not any(x.ok for x in rs)]
-    reached = [name for name in per if name not in refused and name not in silent]
+    # HTTP 429 is "slow down", not "keep out": the burst of probes from one address trips rate limits that
+    # a real crawler pacing its own requests does not meet. A crawler that got only 429s leaves the count, as
+    # one with no answer does; any other refusal on a page still counts
+    refused = [name for name, rs in per.items() if any(x.status and x.status != 429 and not x.ok for x in rs)]
+    throttled = [name for name, rs in per.items()
+                 if name not in refused and not any(x.ok for x in rs) and any(x.status == 429 for x in rs)]
+    silent = [name for name, rs in per.items() if name not in refused and name not in throttled and not any(x.ok for x in rs)]
+    reached = [name for name in per if name not in refused and name not in silent and name not in throttled]
     okc = len(reached)
     base_len = {u: len(visible_text(live[u].text)) for u in probe}
     consistent, differ = 0, []
@@ -3267,19 +3272,24 @@ def run(base, sample=8, verbose=False, urls=None, *, timeout=None):
         got = "/".join("HTTP %d" % st if st else "no answer" for st in sorted({x.status for x in per[name] if not x.ok}))
         failed.setdefault(got, []).append(name)
     ev["g.reachable"] = clip("%d of %d retrieval user-agents returned 200 on %d sampled pages; "
-                             "%d of those served content matching what a browser receives.%s%s%s%s"
+                             "%d of those served content matching what a browser receives.%s%s%s%s%s"
                              % (okc, nua, len(probe), consistent,
                                 " Not reached — %s." % "; ".join(
                                     "%s: %s" % (got, "all %d" % nua if len(names) == nua else ", ".join(names))
                                     for got, names in failed.items()) if failed else "",
                                 " No answer on any page, so not counted: %s." % ", ".join(silent) if silent else "",
+                                " Rate-limited (HTTP 429) on every try, so not counted: %s." % ", ".join(throttled)
+                                if throttled else "",
                                 " Content differed: %s." % ", ".join(differ) if differ else "",
                                 " (Unverified probes: vendor user-agent strings sent from this machine's address.)"
-                                if failed or silent else ""), 480)
+                                if failed or silent or throttled else ""), 480)
     if tier["g.reachable"] is None:
-        ev["g.reachable"] = clip("Only %d of %d retrieval user-agents got an answer on any sampled page (no answer: %s), "
+        unseen = "; ".join(part for part in ("no answer: " + ", ".join(silent) if silent else "",
+                                             "rate-limited, HTTP 429: " + ", ".join(throttled) if throttled else "")
+                           if part)
+        ev["g.reachable"] = clip("Only %d of %d retrieval user-agents got an answer on any sampled page (%s), "
                                  "so too little was observed; not observed. A browser reached the same pages."
-                                 % (okc + len(refused), nua, ", ".join(silent)), 480)
+                                 % (okc + len(refused), nua, unseen), 480)
     if late(*(r for _, r in results)):
         # a probe the deadline stopped says nothing about that crawler: the gate is not observed, never zero
         not_reached("g.reachable", "every crawler probe")

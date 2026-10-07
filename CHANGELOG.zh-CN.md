@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### 修复
+- **限流不再被当成挡爬虫。** `g.reachable` 一波把十个检索类 user-agent 发给抽样页。Shopify 和 Cloudflare 上的店常对这种一波请求回 HTTP 429（请求太多），而只拿到 429 的爬虫原来算「被拒」，于是根本没挡 AI 爬虫的店被封顶在 40。现在每次都只拿到 429 的爬虫和「没回应」的一样不计数，证据里列在「Rate-limited (HTTP 429)」下；回应的爬虫不到一半时，这一项记「未观测」，不记 0。其他拒绝（403、挑战页）照旧计。是给 62 个中国品牌的海外独立站成批打分时发现的：30 个被封顶的站里，24 个只是因为 429。
+
 ### 变更
 - **加一个站不再需要重跑榜单。** CONTRIBUTING.md 改为指向
   [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) 表单，或请贡献者在 PR 里给出

@@ -15,6 +15,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   README.zh-CN.md's maintainer line reads `见润科技（深圳）`.
 
 ### Fixed
+- **A rate limit no longer reads as a crawler being blocked.** `g.reachable` sends ten retrieval user-agents to the
+  sampled pages in one burst. Shopify and Cloudflare stores often answer such a burst with HTTP 429 (too many
+  requests), and a crawler that got only 429s counted as refused, so stores that block no AI crawler were capped at
+  40. A crawler that got only 429s on every try now leaves the count, as one that got no answer does, and the
+  evidence names it under "Rate-limited (HTTP 429)". With fewer than half the crawlers answering, the check is not
+  observed instead of 0. Any other refusal (403, a challenge page) still counts. Found scoring 62 Chinese brands'
+  overseas stores in a burst, where 24 of 30 capped stores were capped by 429s alone.
 - **The README's price for the managed service was out of date.** README.md said the AEO delivery system starts at
   US$5,780 per 3 months; it starts at US$7,790 per quarter (US$30,590 paid yearly), as the pricing page says.
   README.zh-CN.md now gives the quarterly price and the yearly one too (from ¥38,888 per quarter, ¥152,888

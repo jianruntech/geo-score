@@ -166,6 +166,8 @@ class FixtureHandler(BaseHTTPRequestHandler):
             except OSError:
                 pass                            # the scorer stopped reading and closed the connection
             return
+        if ua != gs.UA_BROWSER and any(part.lower() in ua.lower() for part in srv.faults.get("throttle_ua", ())):
+            return self._send(429, b"slow down", TEXT_TYPES[".txt"], {"Retry-After": "0"})
         if srv.faults.get("429_once_per_ua") and ua != gs.UA_BROWSER and first_for_ua:
             return self._send(429, b"slow down", TEXT_TYPES[".txt"], {"Retry-After": "0"})
         if at in srv.faults.get("status_for", {}):
@@ -818,6 +820,30 @@ class EndToEnd(unittest.TestCase):
                 srv.server_close()
             self.assertEqual(res["tier"]["g.reachable"], want, (faults, res["ev"]["g.reachable"]))
             self.assertIn(word, res["ev"]["g.reachable"])
+
+    def test_crawlers_that_are_only_rate_limited_are_not_a_block(self):
+        # HTTP 429 on every try is a rate limit met by a burst of probes from one address, not a refusal of the
+        # crawler: like a crawler with no answer, it leaves the count. Three throttled leave seven that answered
+        # 200, which reads 5; six throttled leave fewer than half, which is not observed, never the gate. Four
+        # 403s beside two throttled crawlers still read 3, from the refusals alone
+        H.start()
+        names = [name for name, _ in gs.RETRIEVAL_UAS]
+        cases = [({"throttle_ua": tuple(names[:3])}, 5, "Rate-limited (HTTP 429)"),
+                 ({"throttle_ua": tuple(names[:6])}, None, "rate-limited, HTTP 429"),
+                 ({"throttle_ua": tuple(names)}, None, "not observed"),
+                 ({"throttle_ua": tuple(names[4:6]), "deny_ua_extra": tuple(names[:4])}, 3, "HTTP 403")]
+        for faults, want, word in cases:
+            srv = start_server("good", faults)
+            if "deny_ua_extra" in faults:
+                srv.rules = dict(srv.rules, deny_ua=faults["deny_ua_extra"])
+            try:
+                res = gs.run(srv.origin, 8, timeout=1)
+            finally:
+                srv.shutdown()
+                srv.server_close()
+            self.assertEqual(res["tier"]["g.reachable"], want, (faults, res["ev"]["g.reachable"]))
+            self.assertIn(word, res["ev"]["g.reachable"])
+            self.assertFalse(res["tier"]["g.reachable"] == 0, "a rate limit never reads as the gate")
 
     def test_an_llms_txt_that_gets_no_answer_is_not_observed(self):
         # every try at /llms.txt is dropped without an answer: that says nothing about whether the file exists
