@@ -231,7 +231,7 @@ def jsonld(lang, v):
     return json.dumps({"@context": "https://schema.org", "@graph": [
       {"@type": "Organization", "@id": ORG_ID, "name": "见润科技" if zh else "Jianrun Tech",
        "alternateName": ["Jianrun Tech", "见润科技"], "url": HOME + "/"},
-      {"@type": "Person", "@id": FOUNDER_ID, "name": "多祝" if zh else "Duozhu", "affiliation": {"@id": ORG_ID}},
+      {"@type": "Person", "@id": FOUNDER_ID, "name": "西予" if zh else "Xiyu", "affiliation": {"@id": ORG_ID}},
       {"@type": "Dataset", "@id": dataset,
        "name": ("AI 可见度公开基准：%d 个站点的实测评分" % v["n"]) if zh
                else "The state of AI visibility: %d sites scored" % v["n"],
