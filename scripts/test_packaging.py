@@ -266,8 +266,8 @@ def check_fetch_retries():
 
 def check_pythons():
     """pyproject.toml's requires-python and classifiers say what check.sh tests, PY_OLDEST to PY_NEWEST; the
-    workflow's matrix and RELEASING.md's Windows run and --strict hint name those two ends."""
-    print("\n  Python versions: pyproject.toml, validate.yml and RELEASING.md against check.sh's PY_OLDEST and PY_NEWEST")
+    workflow's matrix and .github/RELEASING.md's Windows run and --strict hint name those two ends."""
+    print("\n  Python versions: pyproject.toml, validate.yml and .github/RELEASING.md against check.sh's PY_OLDEST and PY_NEWEST")
     gate, pp = rd("scripts/check.sh"), rd("pyproject.toml")
     lo, hi = (re.search(r"^%s=3\.(\d+)$" % k, gate, re.M) for k in ("PY_OLDEST", "PY_NEWEST"))
     ok(lo is not None and hi is not None, "check.sh sets PY_OLDEST and PY_NEWEST")
@@ -288,13 +288,13 @@ def check_pythons():
     got = re.findall(r"^\s*runs-on:\s*(\S+)", wf, re.M)
     ok(bool(got) and not [r for r in got if r.endswith("-latest")],
        "validate.yml runs on a named image, not a moving -latest one (%s)" % ", ".join(got))
-    rel = rd("RELEASING.md")
+    rel = rd(".github/RELEASING.md")
     got = sorted(set(re.findall(r"\bpy -(3\.\d+)", rel)), key=lambda x: int(x[2:]))
-    ok(got == ends, "RELEASING.md's Windows run uses py -%s and py -%s (%s)" % (ends[0], ends[1], ", ".join(got)))
+    ok(got == ends, ".github/RELEASING.md's Windows run uses py -%s and py -%s (%s)" % (ends[0], ends[1], ", ".join(got)))
     got = re.search(r"uv python install (3\.\d+) (3\.\d+)", rel)
-    ok(got is not None and list(got.groups()) == ends, "RELEASING.md's --strict hint is uv python install %s" % " ".join(ends))
+    ok(got is not None and list(got.groups()) == ends, ".github/RELEASING.md's --strict hint is uv python install %s" % " ".join(ends))
     got = {v for pair in re.findall(r"Python (3\.\d+)(?: and (3\.\d+))?", rel) for v in pair if v}
-    ok(got <= set(ends), "RELEASING.md names no other Python (%s)" % ", ".join(sorted(got, key=lambda x: int(x[2:]))))
+    ok(got <= set(ends), ".github/RELEASING.md names no other Python (%s)" % ", ".join(sorted(got, key=lambda x: int(x[2:]))))
 
 
 def loose_uses(text):

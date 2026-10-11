@@ -34,7 +34,7 @@ for root, dirs, files in os.walk("."):
         # config and data legitimately live.
         langs = ("typescript", "javascript", "jsonld", "html", "python")
         JSON_OK = ("./rubric", "./schema", "./benchmark", "./cli", "./examples/ci")
-        if not (root.startswith(JSON_OK) or p in ("./CONTRIBUTING.md",)):
+        if not (root.startswith(JSON_OK) or p in ("./.github/CONTRIBUTING.md",)):
             langs = langs + ("json",)
         for lang in langs:
             check(f"```{lang}" not in s,
@@ -42,8 +42,8 @@ for root, dirs, files in os.walk("."):
                   f"fix templates belong in the private repo")
 
 # 3 · required files
-for f in ["README.md", "README.zh-CN.md", "LICENSE", "SKILL.md", "CONTRIBUTING.md",
-          "CODE_OF_CONDUCT.md", "SECURITY.md", "CHANGELOG.md", "CITATION.cff"]:
+for f in ["README.md", "README.zh-CN.md", "LICENSE", "SKILL.md", ".github/CONTRIBUTING.md",
+          ".github/CODE_OF_CONDUCT.md", ".github/SECURITY.md", "CHANGELOG.md", "CITATION.cff"]:
     check(os.path.exists(f), f"missing required file: {f}")
 
 # 4 · SKILL.md must declare the rubric version it implements
@@ -342,14 +342,14 @@ ALLOW = re.compile(r'<a [^>]*>[^<]*简体中文[^<]*</a>'            # HTML 形�
                    r'|\[[^\]]*简体中文[^\]]*\]\([^)]*\)'      # Markdown 形式
                    r'|(?:简体中文|中文版|同一张表的中文版见)\s*[：:]?\s*\[[^\]]*\]\([^)]*\)'
                    r'|\(见润科技\)')                            # 公司中文名
-EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md",
-              "CODE_OF_CONDUCT.md", "rubric/README.md", "examples/README.md",
+EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", ".github/CONTRIBUTING.md", ".github/SECURITY.md",
+              ".github/CODE_OF_CONDUCT.md", "rubric/README.md", "examples/README.md",
               "examples/sample-report.md", "reference/ai-crawlers.md",
               "reference/platform-source-selection.md"]
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
-EN_PRIMARY += ["AGENTS.md", "STABILITY.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
+EN_PRIMARY += ["AGENTS.md", "guide/stability.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
                "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md", "benchmark/PREREGISTRATION.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
@@ -517,7 +517,7 @@ ZERO_MARK = ("zero", " 0 ", "得 0 分", "0 分", "为零", "零分", "at the ti
 def cap_sentences(text):
     flat = re.sub(r"\*\*|`", "", re.sub(r"\s+", " ", text))
     return [x for x in re.split(r"(?<=[.。!?！？；;])\s*", flat) if CAP_RE.search(x)]
-_cap_files = (["README.md", "README.zh-CN.md", "SKILL.md", "cli/README.md", "CONTRIBUTING.md"]
+_cap_files = (["README.md", "README.zh-CN.md", "SKILL.md", "cli/README.md", ".github/CONTRIBUTING.md"]
               + [os.path.join("rubric", f) for f in sorted(os.listdir("rubric"))
                  if f.endswith(".md") and not f.startswith("v1.0")]
               + [os.path.join("examples", f) for f in sorted(os.listdir("examples")) if f.endswith(".md")]
@@ -667,7 +667,7 @@ if os.path.exists("benchmark/validity.json"):
 # 贡献者和写代码的 agent 从这里读规矩；它提到的入口一旦改名或删掉，这份说明就会悄悄失效。
 if os.path.exists("AGENTS.md"):
     ag = io.open("AGENTS.md", encoding="utf-8").read()
-    for need in ("scripts/check.sh", "rubric/v1.1.json", "schema/report.v2.json", "schema/watch.v1.json", "STABILITY.md"):
+    for need in ("scripts/check.sh", "rubric/v1.1.json", "schema/report.v2.json", "schema/watch.v1.json", "guide/stability.md"):
         check(need in ag, f"AGENTS.md must mention {need}")
         check(os.path.exists(need), f"AGENTS.md points at {need}, which does not exist")
     vsrc = io.open(".github/validate.py", encoding="utf-8").read()

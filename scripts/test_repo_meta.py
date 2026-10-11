@@ -181,7 +181,7 @@ def check_support():
         ok(re.search(r"^    url: %s\s*$" % re.escape(u), cfg, re.M) is not None, "config.yml links %s" % u)
     # every absolute link into this repository from the chooser, the forms, SUPPORT.md and the PR template
     texts = [(".github/ISSUE_TEMPLATE/" + f, rd(".github/ISSUE_TEMPLATE/" + f)) for f in forms() + ["config.yml"]]
-    texts += [("SUPPORT.md", rd("SUPPORT.md")), (".github/PULL_REQUEST_TEMPLATE.md", rd(".github/PULL_REQUEST_TEMPLATE.md"))]
+    texts += [(".github/SUPPORT.md", rd(".github/SUPPORT.md")), (".github/PULL_REQUEST_TEMPLATE.md", rd(".github/PULL_REQUEST_TEMPLATE.md"))]
     seen, targets = 0, 0
     for name, text in texts:
         for url in re.findall(REPO_LINK, text):
@@ -197,12 +197,13 @@ def check_support():
                       (REPO + "/blob/main/benchmark/raw", "not a file"), (REPO + "/tree/main/README.md", "no directory"),
                       (REPO + "/issues/new?template=tool_problem.yml", None),
                       (REPO + "/issues/new?template=nope.yml", "no issue form"), (REPO + "#scope", None),
-                      (REPO + "/wiki/Home", "cannot check"), (REPO + "/blob/main/SUPPORT.md.", None)):
+                      (REPO + "/wiki/Home", "cannot check"), (REPO + "/blob/main/.github/SUPPORT.md.", None)):
         got = resolve(url)[0]
         ok(got == want or (want and got and want in got), "resolve(%s): %s" % (url[len(REPO):] or "/", want or "resolves"))
-    sup = rd("SUPPORT.md")
+    sup = rd(".github/SUPPORT.md")
     for path, anchor in re.findall(r"\]\(([\w./-]+\.md)#([\w-]+)\)", sup):
         seen += 1
+        path = os.path.normpath(os.path.join(".github", path))   # SUPPORT.md lives in .github/; its links are relative to it
         ok(os.path.exists(os.path.join(ROOT, path)) and anchor_exists(path, anchor), "SUPPORT.md: %s#%s is a heading there"
            % (path, anchor))
     ok(seen >= 6, "the chooser, the forms and SUPPORT.md link %d headings, all checked" % seen)
@@ -271,7 +272,7 @@ RUBRIC_FILES = ("rubric/vV.md", "rubric/vV.zh-CN.md", "rubric/vV.json", "rubric/
 
 def check_rubric_steps():
     print("rubric: CONTRIBUTING.md and the PR template name every file a new rubric version needs")
-    con = rd("CONTRIBUTING.md")
+    con = rd(".github/CONTRIBUTING.md")
     sec = con[con.index("## Changing the rubric"):]
     sec = sec[:sec.index("\n## ", 1)]
     ver = re.search(r"`rubric/v(\d+\.\d+)\.md`", sec)

@@ -13,7 +13,7 @@
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
 [![AIV readiness of the leaderboard page, measured 2026-10-05 with geo-score 1.8.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
@@ -92,6 +92,12 @@ a score against a **published, versioned rubric** — not a black box.
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
 > Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
+
+**Contents:** [MCP server](#mcp-server) · [Three levels](#three-levels-one-tool) · [What it checks](#what-it-checks) ·
+[Leaderboard](#324-sites-scored-in-public) · [Ways to run it](#ways-to-run-it) ·
+[Does AI cite you?](#levels-2-and-3--does-ai-actually-cite-you) · [Scope](#scope--what-this-does-not-do) ·
+[Install and stability](#stability-privacy-and-install-options) · [Repository layout](#repository-layout) ·
+[Contributing](#contributing)
 
 ---
 
@@ -664,17 +670,17 @@ this repo deliberately excludes.
   The Claude Code skill: `npx skills add jianruntech/geo-score` (`-g` for a global install), or a clone into
   `~/.claude/skills/geo-score` ([Ways to run it](#ways-to-run-it)).
   Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
-  sdist on PyPI match it byte for byte ([how to check](SECURITY.md#verifying-a-download)).
+  sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
 - **Stability:** the rubric and the tool are versioned separately, and the report schema, check
   ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts. What may change in
-  which release: [STABILITY.md](STABILITY.md).
+  which release: the [stability policy](guide/stability.md).
 - **No telemetry.** geo-score sends nothing to us or anyone else. Level 1 fetches the site you
   name (following its redirects), the URLs its markup and robots.txt point to (`sameAs` profiles, logo,
   sitemap), and Wikidata and Wikipedia search; levels 2 and 3
   call only the AI providers whose keys you set.
 - **Security:** text quoted from the audited site is fenced as data in every report, the MCP
   server's `score_site` connects only to public addresses, and keys never reach a file. Threat model and reporting:
-  [SECURITY.md](SECURITY.md).
+  [security policy](.github/SECURITY.md).
 
 **Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the
 spread measured with a 1.1.x build is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
@@ -685,10 +691,29 @@ More answers: [troubleshooting](guide/troubleshooting.md). Every term the README
 use is defined in the [glossary](guide/glossary.md); every flag, exit code and watch command is in the
 [CLI reference](cli/README.md) ([简体中文](cli/README.zh-CN.md)).
 
+## Repository layout
+
+| Path | What is there |
+|---|---|
+| [`cli/`](cli/) | `geo_score.py` (level 1: one file, no dependencies), `geo_watch.py` (levels 2 and 3), their tests and the [CLI reference](cli/README.md) |
+| [`rubric/`](rubric/) | The rubric ([v1.1](rubric/v1.1.md) and its JSON), the evidence behind each weight, calibration, band analysis and open questions |
+| [`benchmark/`](benchmark/) | The 324-site leaderboard: results, one raw report per site, the preregistration, reproducibility and validity records |
+| [`docs/`](docs/) | The GitHub Pages copy of the leaderboard, `llms.txt` and the badge at the top of this page |
+| [`guide/`](guide/) | MCP setup, troubleshooting, the glossary, watch methodology and the [stability policy](guide/stability.md) |
+| [`reference/`](reference/) | Background the checks rely on: known AI crawlers, and which sources each platform draws from |
+| [`schema/`](schema/) | JSON Schemas for reports, diffs, errors and watch files |
+| [`examples/`](examples/) | A sample report, the published hand audits and CI workflows |
+| [`action.yml`](action.yml), [`action/`](action/) | The GitHub Action |
+| [`SKILL.md`](SKILL.md), [`.claude-plugin/`](.claude-plugin/), [`gemini-extension.json`](gemini-extension.json), [`mcpb/`](mcpb/), [`server.json`](server.json), [`Dockerfile`](Dockerfile) | Packaging for Claude Code, Gemini CLI, MCP clients, the MCP registry and Docker. They stay at the top level because the installers look for them there |
+| [`scripts/`](scripts/) | The repository's checks (`scripts/check.sh` runs all of them) and the release script |
+| [`.github/`](.github/) | [Contributing](.github/CONTRIBUTING.md), [support](.github/SUPPORT.md), [security](.github/SECURITY.md), [code of conduct](.github/CODE_OF_CONDUCT.md), the [release process](.github/RELEASING.md), issue forms and the CI workflow |
+| [`AGENTS.md`](AGENTS.md) | A map of the repository for coding agents (`CLAUDE.md` points to it) |
+
 ## Who maintains this
 
-Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen —
-we run GEO and AI-adoption programs for cross-border commerce companies. The rubric came
+Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen. We run GEO and
+AI-adoption programs for companies in China and abroad: B2B exporters, software companies, professional
+services, local businesses, education providers and cross-border e-commerce. The rubric came
 out of client work and out of optimizing our own products; publishing it is how we'd like
 AI visibility to be measured consistently, including by people who never become our clients.
 
@@ -698,8 +723,8 @@ consulting work. You do not need our permission, and there is no separate commer
 ## Contributing
 
 The most valuable contribution is evidence about the weights.
-See [CONTRIBUTING.md](CONTRIBUTING.md). Which issue form takes a wrong score, a disputed leaderboard
-row or a tool that does not work: [SUPPORT.md](SUPPORT.md).
+See the [contributing guide](.github/CONTRIBUTING.md). Which issue form takes a wrong score, a disputed leaderboard
+row or a tool that does not work: [getting help](.github/SUPPORT.md).
 
 ## Citation
 

@@ -7,7 +7,7 @@ contact_links:
     url: https://github.com/jianruntech/geo-score/blob/main/guide/mcp.md#troubleshooting
     about: The server does not start, cannot find its config or keys, or times out behind a proxy.
   - name: Security vulnerability
-    url: https://github.com/jianruntech/geo-score/blob/main/SECURITY.md#reporting-a-vulnerability
+    url: https://github.com/jianruntech/geo-score/blob/main/.github/SECURITY.md#reporting-a-vulnerability
     about: Please report security problems by email, not in a public issue.
   - name: Remediation / how do I fix this
     url: https://github.com/jianruntech/geo-score#scope--what-this-does-not-do

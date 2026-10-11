@@ -7,7 +7,7 @@ on:
 # the gate only reads the repository
 permissions: {contents: read}
 jobs:
-  # v1 moves only when scripts/release.py publishes a release (RELEASING.md), never on a push.
+  # v1 moves only when scripts/release.py publishes a release (.github/RELEASING.md), never on a push.
   # One gate, one script: scripts/check.sh is what maintainers run before every merge (hosted Actions
   # has not run on this organisation so far). Running the same script here means the two cannot drift.
   check:

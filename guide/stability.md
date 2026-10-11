@@ -24,7 +24,7 @@ tool, or a new rubric version, and a changelog entry that says what to change.
 | Watch run files | `schema/watch.v1.json` (`format: geo-score/watch.v1`) | A new `format` value; old files stay readable or the changelog says they are not |
 | Watch config | `schema/watch-config.v1.json` (the keys of `geo-score-watch.json`) | Removing or renaming a key, narrowing what a key accepts, or making an optional key required. A key the tool does not read stays a warning, never an error |
 | CLI flags and subcommands | `geo_score.py --help`, `geo_score.py diff --help` (the `diff` subcommand, 1.5.0), `geo_score.py watch --help` (also `geo-score` and `geo-score-mcp` after a pip install) | Removing or renaming one, or changing its default |
-| Exit codes | [cli/README.md](cli/README.md#options) | Any change |
+| Exit codes | [cli/README.md](../cli/README.md#options) | Any change |
 | GitHub Action inputs and outputs | `action.yml` (1.5.0 adds the inputs `fail-on-gate`, `assert`, `badge` and `baseline`, and the outputs `badge-path`, `delta` and `dropped-checks`) | Removing or renaming one |
 | Release wheel | `geo_score-X.Y.Z-py3-none-any.whl`, attached to every release from 1.4.0 at `releases/download/vX.Y.Z/`. The documented install lines for a machine without PyPI download it by that name, and `release.py --execute` refuses a build that names it differently | Renaming it, or a release without it |
 | PyPI package | `geo-score` on PyPI from 1.5.0: each release's wheel and sdist, byte for byte the files attached to the GitHub release (1.5.0's were checked against its `SHA256SUMS` once uploaded; from 1.6.0 `release.py --execute` uploads them and checks each SHA-256 against `SHA256SUMS`). The documented install lines run `uvx geo-score@X.Y.Z` and `pipx install geo-score==X.Y.Z`, and the `server.json` prepared for the MCP Registry names it (the server is not listed there yet; publishing it is the maintainer's step) | Renaming the package, or a release missing from it |
@@ -99,7 +99,7 @@ when you need a score to stay put between runs.
 `requires-python` is `>=3.8`. `release.py --execute` tests a release on Python 3.8 and on the newest
 stable Python (3.14, `PY_NEWEST` in `scripts/check.sh`): it runs `check.sh --live --strict`, which stops
 when either is missing. Before a minor or major release the owner also runs the CLI suites and
-the MCP conformance check on Windows with both ([RELEASING.md](RELEASING.md), step 6).
+the MCP conformance check on Windows with both ([RELEASING.md](../.github/RELEASING.md), step 6).
 
 ## Benchmark data
 

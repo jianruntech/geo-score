@@ -473,7 +473,7 @@ OpenRouter 引擎只能在配置文件里定义。没有 Key 的引擎记为未�
   调用服务商时发送 `geo-score-watch/<版本>`。
 - **没有遥测。** 不向我们或任何人发送数据。
 
-完整的威胁模型见 [SECURITY.md](../SECURITY.md)。
+完整的威胁模型见 [SECURITY.md](../.github/SECURITY.md)。
 
 ## 排查
 

@@ -1316,7 +1316,7 @@ def _oserr(fn, *a):
     except OSError as e: raise RuntimeError(str(e)) from None
 
 # ── the guard at connect time: the address that was checked is the one connected to ──
-# SECURITY.md promises that a direct connection goes to the address that passed the check, so a name cannot resolve
+# .github/SECURITY.md promises that a direct connection goes to the address that passed the check, so a name cannot resolve
 # to something else a moment later (DNS rebinding). That promise rests on private CPython attributes; these tests
 # run the connect-time path itself, and fail loudly if a Python release stops reading them.
 import http.client as _hc, socketserver as _ss
@@ -1401,7 +1401,7 @@ finally:
     gs.socket.getaddrinfo = _gai
 
 # ── a hostile page cannot end the run ──
-# SECURITY.md names the audited site as an adversary. {"@type": {"@id": "Organization"}} used to raise TypeError out
+# .github/SECURITY.md names the audited site as an adversary. {"@type": {"@id": "Organization"}} used to raise TypeError out
 # of types_of(), a malformed link ("http://[::1") ValueError out of urljoin(), and a lone "\ud800" escape in a name
 # UnicodeEncodeError at the first print: each ended the run with a traceback and exit 1, which CI reads as "below
 # --fail-under". Fixed cases first, then seeded random pages, dates, bylines and robots.txt files.

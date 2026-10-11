@@ -5,11 +5,11 @@
 | Version | Security fixes |
 |---|---|
 | 1.8.x (latest) | Yes |
-| 1.7.x and older | No. Upgrade; the report format is compatible (see [STABILITY.md](STABILITY.md)) |
+| 1.7.x and older | No. Upgrade; the report format is compatible (see [STABILITY.md](../guide/stability.md)) |
 
 Pin an exact tag in CI (`jianruntech/geo-score@v1.8.0`) if you need a fixed version, and move
 the pin when a security release comes out. Every security fix is listed under **Security** in the
-[changelog](CHANGELOG.md).
+[changelog](../CHANGELOG.md).
 
 ## What geo-score is, and what it touches
 
@@ -89,7 +89,7 @@ opens no port. stdout carries MCP messages only; diagnostics go to stderr. What 
   maps no keys and uses the variables exported in your shell.
 - **User agents.** `score_site` fetches with a desktop browser's user agent and repeats the
   reachability check with the user agents of the ten retrieval crawlers in
-  [reference/ai-crawlers.md](reference/ai-crawlers.md) (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
+  [reference/ai-crawlers.md](../reference/ai-crawlers.md) (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
   Claude-User, PerplexityBot, Perplexity-User, Googlebot, Bingbot, Applebot and Amazonbot), sent from
   the machine running it. Provider calls send `geo-score-watch/<version>`.
 - The address guard, the fencing of site text and the spending caps above apply to every MCP call.

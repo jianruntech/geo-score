@@ -21,7 +21,7 @@ BAND_ZH = {"Leading": "领先", "Solid": "基础扎实", "Growing": "成长期",
            "Early": "起步期", "Not started": "未起步", "Not scored": "未打分"}
 
 REPO = "https://github.com/jianruntech/geo-score"
-# the page is rebuilt at every release (RELEASING.md step 4), so its downloads point at that release's tag: a file
+# the page is rebuilt at every release (.github/RELEASING.md step 4), so its downloads point at that release's tag: a file
 # at a tag never moves, where a blob/main link moves with every run. The tool version recorded in results.json
 # would be the wrong tag, because the data can predate the release that publishes it. The same rule orders a
 # re-run: its results land before the tag that publishes them, or ship in a release of their own. A page rebuilt

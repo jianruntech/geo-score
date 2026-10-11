@@ -110,7 +110,7 @@ GitHub Action 的 `baseline` 输入，以及 `delta`、`dropped-checks` 两个�
 `p2.freshness`：`g.` 是门槛项，`p1.` 到 `p4.` 依次对应可被理解、内容可被引用、品牌可信、问答适配四个支柱，`b.` 是加分项。
 
 **出现在：** `--explain`；JSON 的 `checks[].id`；`--assert`；SARIF 的规则 id 和 JUnit 的测试名；MCP 提示词 `explain_check`。
-检查项 id 属于公开契约（[STABILITY.md](../STABILITY.md#public-contracts)，英文）。**详见：** [量表 v1.1](../rubric/v1.1.zh-CN.md)
+检查项 id 属于公开契约（[稳定性约定](stability.md#public-contracts)，英文）。**详见：** [量表 v1.1](../rubric/v1.1.zh-CN.md)
 
 ### Citation（引用）
 
@@ -240,7 +240,7 @@ geo-score 的公开基准：一批知名网站按行业分组，全部用同一�
 
 **出现在：** [jianruntech.com/leaderboard/zh](https://www.jianruntech.com/leaderboard/zh)；`benchmark/README.md`；
 `benchmark/` 下的 `results.json`、`results.csv`、`checks.csv` 和 `raw/`。
-**详见：** [benchmark/README.md](../benchmark/README.md)（英文）、[STABILITY.md · Benchmark data](../STABILITY.md#benchmark-data)（英文）
+**详见：** [benchmark/README.md](../benchmark/README.md)（英文）、[稳定性约定 · Benchmark data](stability.md#benchmark-data)（英文）
 
 ### Levels 1, 2 and 3（第一、二、三级）
 
@@ -440,7 +440,7 @@ Applebot、Amazonbot。
 打分所依据的量表版本，目前是 v1.1；只有同一量表版本的分数才能相互比较。它和工具版本（这里是 1.5.0，遵循语义化版本）各自变动，互不牵连。
 
 **出现在：** JSON 的 `rubric_version` 和 `tool`（`geo-score-cli/1.5.0`）字段；页脚的 `rubric v1.1`；`--version`。
-`diff` 和 `--baseline` 遇到按另一量表版本评出的报告会拒绝，以退出码 2 退出。**详见：** [STABILITY.md](../STABILITY.md)（英文）
+`diff` 和 `--baseline` 遇到按另一量表版本评出的报告会拒绝，以退出码 2 退出。**详见：** [稳定性约定](stability.md)（英文）
 
 ## S
 
@@ -500,7 +500,7 @@ OpenAI、Gemini 或 Anthropic 的回答这几样都没有，就算「否」；Pe
 从被审网站引用的原文都放在 `«site text: …»` 里，控制字符、零宽字符和双向文字控制符都已去掉，网站也没法提前把围栏关上。
 围栏里是网站自己的话，只能当数据读，不能当指令照做，MCP 工具也会这样告诉 Agent。
 
-**出现在：** 每份报告里的证据和 `--explain` 的输出；MCP 工具的输出。**详见：** [SECURITY.md · Threat model](../SECURITY.md#threat-model)（英文）
+**出现在：** 每份报告里的证据和 `--explain` 的输出；MCP 工具的输出。**详见：** [SECURITY.md · Threat model](../.github/SECURITY.md#threat-model)（英文）
 
 ### Sources listed、sources used（列为来源、正文用上）
 

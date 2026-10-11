@@ -1465,7 +1465,7 @@ MCP_FIXTURES = os.path.join(HERE, "fixtures", "mcp")
 
 
 class MCPSurface(Base):
-    """What a client sees before it calls anything: the tool list is a contract (STABILITY.md) and a snapshot."""
+    """What a client sees before it calls anything: the tool list is a contract (guide/stability.md) and a snapshot."""
     def server(self):
         return gw.MCPServer(os.path.join(self.tmp, "none.json"), out=io.StringIO())
 

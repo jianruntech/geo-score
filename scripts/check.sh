@@ -179,7 +179,7 @@ PY
     if ! command -v gh >/dev/null 2>&1; then echo "gh not installed: skipped (https://cli.github.com)"
     elif ! gh auth status >/dev/null 2>&1; then echo "gh not authenticated: skipped (gh auth login)"
     else python3 scripts/sync_labels.py --check || {
-      echo "labels: python3 scripts/sync_labels.py --apply creates any that are missing (RELEASING.md, step 5)"; exit 1; }
+      echo "labels: python3 scripts/sync_labels.py --apply creates any that are missing (.github/RELEASING.md, step 5)"; exit 1; }
     fi
   fi
 fi

@@ -525,7 +525,7 @@ From 1.4.0 the server speaks two eras of MCP in the same process:
   agents, to see what those crawlers are served. Provider calls send `geo-score-watch/<version>`.
 - **No telemetry.** Nothing is sent to us or anyone else.
 
-The full threat model: [SECURITY.md](../SECURITY.md).
+The full threat model: [SECURITY.md](../.github/SECURITY.md).
 
 ## Troubleshooting
 

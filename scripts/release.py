@@ -9,7 +9,7 @@
     python3 scripts/release.py 1.3.0 --pack     # only build dist/geo-score-1.3.0.mcpb and dist/server.json, to try them
 
 Hosted Actions have never run on this organisation, so nothing here happens automatically, and the
-moving `v1` tag in particular has fallen behind main before. The steps are in RELEASING.md.
+moving `v1` tag in particular has fallen behind main before. The steps are in .github/RELEASING.md.
 """
 import argparse, datetime, hashlib, http.client, io, json, os, re, shutil, subprocess, sys, time, zipfile
 import urllib.error, urllib.request
@@ -22,8 +22,8 @@ MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", 
 # files whose one-line install or download is pinned to a release tag
 # (scripts/test_packaging.py fails when a tracked file names a release and is not listed here)
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "cli/README.zh-CN.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
-          "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", "SECURITY.md",
-          "STABILITY.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
+          "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", ".github/SECURITY.md",
+          "guide/stability.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
           "guide/mcp.zh-CN.md"] + MANIFESTS
 # every way a document pins a release, as (pattern, prefix): group 1 is kept, and the version after it is rewritten
 # to prefix + version. A tag carries a "v"; the wheel's file name, which follows the tag in a download URL, does not
@@ -253,8 +253,8 @@ def preflight(v):
     elif subprocess.run([sys.executable, MCP_DOCS, "--check"], cwd=ROOT, capture_output=True, text=True).returncode:
         problems.append("the generated MCP blocks in README*/guide/mcp* are stale: run python3 %s" % MCP_DOCS)
     minor = ".".join(v.split(".")[:2])
-    if "| %s.x (latest) | Yes |" % minor not in rd("SECURITY.md"):
-        problems.append("SECURITY.md: the supported-versions table does not say '| %s.x (latest) | Yes |'" % minor)
+    if "| %s.x (latest) | Yes |" % minor not in rd(".github/SECURITY.md"):
+        problems.append(".github/SECURITY.md: the supported-versions table does not say '| %s.x (latest) | Yes |'" % minor)
     rub = re.search(r'^RUBRIC = "v([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     cff = re.search(r'^version: "([^"]+)"', rd("CITATION.cff"), re.M)
     if not cff or cff.group(1) != rub:

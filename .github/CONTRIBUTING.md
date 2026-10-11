@@ -9,7 +9,7 @@ weight or a pass condition is wrong** — not new features.
 [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) form: the site,
 its sector and the line `--share` prints. Or open a PR with two things:
 
-1. the entry in [`benchmark/sites.json`](benchmark/sites.json), reusing an existing sector where one fits:
+1. the entry in [`benchmark/sites.json`](../benchmark/sites.json), reusing an existing sector where one fits:
 
    ```json
    {"url": "example.com", "sector": "Ecommerce"}
@@ -60,21 +60,21 @@ generated file: the next generator run overwrites it.
    line does not match what is actually on the page, that is a bug worth reporting. Paste
    the URL and the line. These are the highest-signal reports we get.
 2. **Evidence about weights.** If you have data showing a check matters more or less
-   than we scored it, open a [rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml).
+   than we scored it, open a [rubric proposal](ISSUE_TEMPLATE/rubric_proposal.yml).
    Say what you observed, on how many sites, and over what period. A well-argued
    proposal with a small sample beats an assertion with none.
 3. **New checks for engines we don't cover.** Especially non-English engines. Include
    what signal you can actually observe from outside the engine.
-4. **An independent implementation.** The rubric is [machine-readable](rubric/v1.1.json)
-   and reports have a [schema](schema/report.v2.json). If you build a scorer in another
+4. **An independent implementation.** The rubric is [machine-readable](../rubric/v1.1.json)
+   and reports have a [schema](../schema/report.v2.json). If you build a scorer in another
    language and it disagrees with ours on a real site, that disagreement is the most
    useful thing anyone can send us — it means the specification is ambiguous somewhere,
-   and that is exactly what [open-questions.md](rubric/open-questions.md) exists to record.
+   and that is exactly what [open-questions.md](../rubric/open-questions.md) exists to record.
 
 ## What we will decline
 
 - **Fix templates, content rewriting rules, remediation playbooks.** This repository is
-  scoped to measurement — see [Scope](README.md#scope--what-this-does-not-do). This is a
+  scoped to measurement — see [Scope](../README.md#scope--what-this-does-not-do). This is a
   scope decision, not a judgement on the contribution.
 - **Checks that cannot be observed from outside the site.** If verifying it requires
   access to an engine's internals or to private analytics, it can't be part of a rubric
@@ -122,7 +122,7 @@ script and will take over if Actions is enabled. The suites need nothing beyond 
 - `scripts/test_repo_meta.py`: checks the issue forms, `.github/labels.json`, the PR template, `SUPPORT.md`
   and the README badge against each other.
 
-See [AGENTS.md](AGENTS.md) for the invariants each check enforces.
+See [AGENTS.md](../AGENTS.md) for the invariants each check enforces.
 
 ## Adding an engine to watch (levels 2 and 3)
 

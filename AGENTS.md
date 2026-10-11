@@ -34,7 +34,7 @@ merges unless it passes.
 | `reference/ai-crawlers.md` | The crawlers `g.robots` and `g.reachable` read. `RETRIEVAL_UAS` in `cli/geo_score.py` is tested against its retrieval table |
 | `action.yml`, `action/summary.py`, `scripts/test_action.py` | The GitHub Action and its emulation test |
 | `examples/ci/`, `scripts/test_ci_examples.py` | Copyable CI for GitHub Actions and GitLab, the JUnit directives for other CIs, and their emulation test |
-| `.github/ISSUE_TEMPLATE/`, `.github/labels.json`, `scripts/sync_labels.py`, `.github/PULL_REQUEST_TEMPLATE.md`, `SUPPORT.md`, `scripts/test_repo_meta.py` | Contributor routes: the issue forms, the labels they apply and the script that syncs them to GitHub, the PR template, SUPPORT.md, and their test |
+| `.github/ISSUE_TEMPLATE/`, `.github/labels.json`, `scripts/sync_labels.py`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/SUPPORT.md`, `scripts/test_repo_meta.py` | Contributor routes: the issue forms, the labels they apply and the script that syncs them to GitHub, the PR template, SUPPORT.md, and their test |
 | `docs/aiv-badge.svg`, `docs/aiv-badge.json` | The README badge and the recorded run it shows |
 | `benchmark/` | The public leaderboard data: `results.json`, the per-site reports in `raw/`, and `results.csv` and `checks.csv` flattened from them |
 | `benchmark/run.py`, `stats.py`, `percentiles.py`, `sensitivity.py` | `run.py` scores the list; `--readme-only` regenerates README.md, stats.json, percentiles.json, the sensitivity study (SENSITIVITY*.md) and the CSVs without scoring |
@@ -44,8 +44,8 @@ merges unless it passes.
 | `rubric/bands-analysis.md` | Where the v1.1 band cuts fall in the benchmark: a dated record of one run, with candidates for v1.2 |
 | `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics and the MCP guide, in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
-| `STABILITY.md` | What is a public contract and what semver means here |
-| `RELEASING.md`, `scripts/release.py` | How a release is cut, pinned, checksummed and published to PyPI |
+| `guide/stability.md` | What is a public contract and what semver means here |
+| `.github/RELEASING.md`, `scripts/release.py` | How a release is cut, pinned, checksummed and published to PyPI |
 
 ## Invariants
 
@@ -54,7 +54,7 @@ merges unless it passes.
 | **Measurement is public, remediation is private.** No fix templates, no markup to paste, no implementation fields in the rubric | `validate.py` rules 2 and 10 |
 | **Not measured is never zero.** A check the tool cannot observe leaves the denominator; an engine without a key is "not measured" | `test_geo_score.py` (excluded checks), fixture `expected.json` nulls, `test_geo_watch.py` |
 | **The CLI implements the published rubric.** Check ids, points, every tier's points and wording, bands and caps equal `rubric/v1.1.json` | `test_geo_score.py` rubric parity; `validate.py` rules 1 and 9 |
-| **Check ids are permanent and schemas grow only.** Add optional fields; never rename, remove or retype one | `validate.py` rule 11; `STABILITY.md`; the e2e schema test |
+| **Check ids are permanent and schemas grow only.** Add optional fields; never rename, remove or retype one | `validate.py` rule 11; `guide/stability.md`; the e2e schema test |
 | **The score is 0–100**, and a gate caps it at 40 only when the gate scores zero, in the code and in every document | `test_geo_score.py`; `validate.py` rule 20 |
 | **Every published number can be recomputed.** Sample report, hand audits, leaderboard, per-site reports, CSVs, validity, reproducibility, sensitivity and band-cut figures | `validate.py` rules 6, 13, 16, 18, 23, 29, 31, 32, 33, 35, 36, 37 and 38 |
 | **Benchmark outputs are regenerated, never edited by hand.** docs/ is what `build_page.py` writes; percentiles.json, sensitivity.json with SENSITIVITY*.md, reproducibility.json's figures with REPRODUCIBILITY.md's tables, and results.csv and checks.csv are what their scripts derive; the China-gap, band-cut and sample text in benchmark/README.md matches its data (the commands are under Conventions) | `validate.py` rules 16, 31, 32, 33, 35, 36 and 37 |
@@ -75,7 +75,7 @@ merges unless it passes.
 | **Every release pin moves with the release.** Every tracked file that names a release is one `release.py --bump` rewrites, and every release-wheel URL's tag and file name equal `__version__` | `scripts/test_packaging.py` (`check_pins`); `release.py` preflight |
 | **Install lines run the PyPI package, pinned.** The generated install blocks run `uvx geo-score@X.Y.Z mcp`, with the release wheel only on their no-PyPI line and the git install only on their "From source (needs git)" line; every `geo-score@X.Y.Z`, `geo-score==X.Y.Z` and wheel URL names the current release, and `server.json`'s pypi package runs the same command. A `git clone` in a document checks out the release (`--branch vX.Y.Z --depth 1`), never main | `mcp_docs.py --check`; `scripts/test_packaging.py` (`check_pins`, the server.json checks); `validate.py` rule 27 |
 | **The gate's tools and actions are pinned.** ruff and jsonschema in `check.sh`, the same versions in validate.yml; actions by commit SHA with a `# vX.Y.Z` comment, top-level `permissions`, `persist-credentials: false`; the Docker base by digest; twine, which the PyPI upload runs with the token, in `TWINE_VERSION` in `release.py` | `scripts/test_packaging.py` (`check_gate_pins`, `check_pypi_publish`, and the Dockerfile check) |
-| **pyproject.toml's classifiers cover `PY_OLDEST` to `PY_NEWEST`** from `check.sh`, and validate.yml and RELEASING.md name those two | `scripts/test_packaging.py` (`check_pythons`) |
+| **pyproject.toml's classifiers cover `PY_OLDEST` to `PY_NEWEST`** from `check.sh`, and validate.yml and .github/RELEASING.md name those two | `scripts/test_packaging.py` (`check_pythons`) |
 | **A new test suite joins the gate by its name**: `scripts/test_*.py` and `benchmark/test_*.py` | `scripts/check.sh` |
 | **The CLI's crawler list is the reference's.** `RETRIEVAL_UAS` equals the retrieval table in `reference/ai-crawlers.md`; training crawlers and opt-out tokens (`NOT_SCORED_TOKENS`) are never scored | `test_geo_score.py` parity test (it fails if GPTBot is added back) |
 | **robots.txt rules are chosen as RFC 9309 2.2.1 says:** a crawler's own group replaces `*` | `test_geo_score.py` robots.txt case table, cross-checked with `urllib.robotparser` |
@@ -96,7 +96,7 @@ merges unless it passes.
 | **Every label an issue form applies exists** in `.github/labels.json`; `sync_labels.py` never deletes a label | `scripts/test_repo_meta.py`; the owner runs `sync_labels.py --apply` |
 | **The CI examples score once, from a pinned, checksum-verified release**, and the workflow examples pin third-party actions by SHA with a version comment | `scripts/test_ci_examples.py` |
 | **The README badge is a recorded run.** The SVG shows `normalised` and `band` from `docs/aiv-badge.json`; in README.md the badge links to the page it measured, and a date in its alt text is the report's `audited_at` | `scripts/test_repo_meta.py` |
-| **Links in the chooser, the issue forms and the PR template are absolute**, and every link from them and SUPPORT.md into this repository reaches a file and heading that exist | `scripts/test_repo_meta.py` |
+| **Links in the chooser, the issue forms and the PR template are absolute**, and every link from them and .github/SUPPORT.md into this repository reaches a file and heading that exist | `scripts/test_repo_meta.py` |
 
 ## What the tool may claim
 

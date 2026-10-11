@@ -8,6 +8,12 @@
 - **限流不再被当成挡爬虫。** `g.reachable` 一波把十个检索类 user-agent 发给抽样页。Shopify 和 Cloudflare 上的店常对这种一波请求回 HTTP 429（请求太多），而只拿到 429 的爬虫原来算「被拒」，于是根本没挡 AI 爬虫的店被封顶在 40。现在每次都只拿到 429 的爬虫和「没回应」的一样不计数，证据里列在「Rate-limited (HTTP 429)」下；回应的爬虫不到一半时，这一项记「未观测」，不记 0。其他拒绝（403、挑战页）照旧计。是给 62 个中国品牌的海外独立站成批打分时发现的：30 个被封顶的站里，15 个只是因为限流（只有 429，或 429 加没回应）。
 
 ### 变更
+- **根目录只留工具必须在那里找的文件。** CODE_OF_CONDUCT.md、CONTRIBUTING.md、SECURITY.md、SUPPORT.md 和 RELEASING.md
+  移到 `.github/`，GitHub 的社区页面照样能找到它们；STABILITY.md 移到 `guide/stability.md`。README、各篇指南、issue 表单、
+  PR 模板、AGENTS.md 和自检脚本里的链接都已跟着改。指向某个发布标签下旧路径的链接仍然有效；指向 main 上旧路径的链接失效，
+  请改链新路径。
+- **README 加了目录行和「仓库结构」。** GEO 定义下面一行链到各主要章节；「谁在维护」之前新增「仓库结构」，说明每个目录放什么、
+  打包文件为什么留在根目录。「谁在维护」改为列出见润科技服务的行业，国内外都有，不再只写跨境出海。英文 README 同样改了。
 - **加一个站不再需要重跑榜单。** CONTRIBUTING.md 改为指向
   [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) 表单，或请贡献者在 PR 里给出
   `benchmark/sites.json` 的那一行和该站自己的 `geo_score.py --json` 报告；榜单由维护者重跑，整张榜来自同一轮。重新生成的命令

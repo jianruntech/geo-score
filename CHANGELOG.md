@@ -6,6 +6,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Changed
+- **The top level holds only what tools need there.** CODE_OF_CONDUCT.md, CONTRIBUTING.md, SECURITY.md,
+  SUPPORT.md and RELEASING.md moved to `.github/`, where GitHub still lists them on the repository's community
+  pages; STABILITY.md moved to `guide/stability.md`. Every link in the READMEs, the guides, the issue forms, the PR
+  template, AGENTS.md and the checks follows. Links to the old paths at a release tag keep working; links to them on
+  main do not, so link the new paths.
+- **The README has a contents line and a repository layout.** The line under the GEO definition links the main
+  sections; a new "Repository layout" section, before "Who maintains this", says what each folder holds and why
+  the packaging files stay at the top level. "Who maintains this" now lists the industries Jianrun Tech works with,
+  in China and abroad, not cross-border commerce alone. README.zh-CN.md has the same changes.
 - **Adding a site no longer means re-running the leaderboard.** CONTRIBUTING.md points to the
   [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) form, or asks for a PR with
   the `benchmark/sites.json` entry and that site's own `geo_score.py --json` report. Maintainers re-run the board, so

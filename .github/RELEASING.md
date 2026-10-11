@@ -7,7 +7,7 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
 
 1. **Everything is in `[Unreleased]`** in both `CHANGELOG.md` and `CHANGELOG.zh-CN.md`, and the gate
    passes: `bash scripts/check.sh`.
-2. **Choose the version** by [STABILITY.md](STABILITY.md): a new flag, output or optional field is a
+2. **Choose the version** by [STABILITY.md](../guide/stability.md): a new flag, output or optional field is a
    minor release; a fix is a patch; removing or renaming a contract is a major release.
 3. **Bump:** `python3 scripts/release.py X.Y.Z --bump`. It rewrites `__version__` in both CLI files,
    `SKILL.md`, every install line and download pinned to a tag, including the tag and the version in each

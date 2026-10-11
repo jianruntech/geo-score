@@ -109,7 +109,7 @@ market and leaves the denominator when it does not. Other regional markets are n
 scored, because we have not done the observation work to define tiers we could defend.
 
 **We do not currently document regional engines in detail.** This is a known gap and a
-good contribution — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+good contribution — see [CONTRIBUTING.md](../.github/CONTRIBUTING.md).
 
 ## Sources
 

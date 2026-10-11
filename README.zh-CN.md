@@ -11,7 +11,7 @@
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
 [![榜单页的 AIV 就绪度，2026-10-05 用 geo-score 1.8.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
@@ -90,6 +90,10 @@ Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
 > Gemini、Copilot 引用你。与地理、地图无关。
+
+**目录：** [MCP 服务](#mcp-服务) · [三级用法](#一个工具三级用法) · [查什么](#查什么) ·
+[公开榜单](#324-个站点公开打分) · [几种跑法](#几种跑法) · [AI 有没有引用你](#第二三级--ai-到底有没有引用你) ·
+[边界](#边界--这个仓库不做什么) · [安装与稳定性](#稳定性隐私与安装) · [仓库结构](#仓库结构) · [参与贡献](#参与贡献)
 
 ---
 
@@ -603,13 +607,13 @@ Read this before quoting the numbers
   从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.0`。
   Claude Code 技能：`npx skills add jianruntech/geo-score`（加 `-g` 是全局安装），或者克隆到 `~/.claude/skills/geo-score`
   （见[几种跑法](#几种跑法)）。每种方式都只用 Python 标准库。
-  发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](SECURITY.md#verifying-a-download)）。
+  发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](.github/SECURITY.md#verifying-a-download)）。
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
-  MCP 工具都是公开契约，哪个版本允许改什么，见 [STABILITY.md](STABILITY.md)。
+  MCP 工具都是公开契约，哪个版本允许改什么，见[稳定性约定](guide/stability.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站（包括它的跳转）、它的标记和 robots.txt 指向的地址
   （`sameAs` 主页链接、logo、声明的 sitemap，检查是否有效），以及 Wikidata 和维基百科的搜索接口；第二、三级只调用你配了 Key 的 AI 服务商。
 - **安全：** 报告里引用的网站原文一律标注为数据，MCP 服务的 `score_site` 只连接公网地址，Key 从不写进任何文件。
-  威胁模型与漏洞报告方式见 [SECURITY.md](SECURITY.md)。
+  威胁模型与漏洞报告方式见[安全策略](.github/SECURITY.md)。
 
 **为什么我的分数变了 4 分？** 每次运行最多抽 8 个页面，每次抽到的不完全一样，用 1.1.x 版本实测的波动是 ±5
 （[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--baseline last.json` 重评同一批页面，它还会逐项列出哪里变了（`--urls-from last.json` 只重评、不对比）。
@@ -627,10 +631,28 @@ Read this before quoting the numbers
 
 MIT 协议不需要找我们授权，也没有单独的商业许可证。
 
+## 仓库结构
+
+| 路径 | 里面是什么 |
+|---|---|
+| [`cli/`](cli/) | `geo_score.py`（第一级，单文件、无依赖）、`geo_watch.py`（第二、三级）、测试，以及 [CLI 说明](cli/README.zh-CN.md) |
+| [`rubric/`](rubric/) | 评分口径本身（[v1.1](rubric/v1.1.zh-CN.md) 及其 JSON）、每项权重的依据、校准记录、分数段分析和待定问题 |
+| [`benchmark/`](benchmark/) | 324 站公开榜单：结果、每个站一份原始报告、预注册、可重复性与效度记录 |
+| [`docs/`](docs/) | 榜单的 GitHub Pages 副本、`llms.txt`，以及本页顶部的徽章 |
+| [`guide/`](guide/) | MCP 配置、排查指南、术语表、watch 方法说明和[稳定性约定](guide/stability.md) |
+| [`reference/`](reference/) | 检查项依赖的背景资料：已知的 AI 爬虫，各平台从哪些来源取材 |
+| [`schema/`](schema/) | 报告、对比、错误和 watch 文件的 JSON Schema |
+| [`examples/`](examples/) | 示例报告、公开的人工审计和 CI 工作流 |
+| [`action.yml`](action.yml)、[`action/`](action/) | GitHub Action |
+| [`SKILL.md`](SKILL.md)、[`.claude-plugin/`](.claude-plugin/)、[`gemini-extension.json`](gemini-extension.json)、[`mcpb/`](mcpb/)、[`server.json`](server.json)、[`Dockerfile`](Dockerfile) | Claude Code、Gemini CLI、MCP 客户端、MCP 注册表和 Docker 的打包文件。安装工具会到仓库根目录找它们，所以留在根目录 |
+| [`scripts/`](scripts/) | 仓库自检（`scripts/check.sh` 一次跑全部）和发版脚本 |
+| [`.github/`](.github/) | [贡献指南](.github/CONTRIBUTING.md)、[求助渠道](.github/SUPPORT.md)、[安全策略](.github/SECURITY.md)、[行为准则](.github/CODE_OF_CONDUCT.md)、[发版流程](.github/RELEASING.md)、issue 表单和 CI 工作流 |
+| [`AGENTS.md`](AGENTS.md) | 写给编程智能体的仓库地图（`CLAUDE.md` 指向它） |
+
 ## 谁在维护
 
-由 **[见润科技](https://www.jianruntech.com)**（深圳）建立并维护——
-我们为跨境出海企业做 GEO 与 AI 落地。这套口径来自客户项目和优化我们自己产品的过程；
+由 **[见润科技](https://www.jianruntech.com)**（深圳）建立并维护。我们为国内外企业做 GEO 与 AI 落地：
+外贸 B2B、软件公司、专业服务、本地生活、教育机构和跨境电商。这套口径来自客户项目和优化我们自己产品的过程；
 把它公开，是希望 AI 可见度能有一个一致的衡量方式，**包括被那些永远不会成为我们客户的人使用**。
 
 本仓库的商业使用不受限制（MIT），包括用在付费咨询项目里。
@@ -638,8 +660,8 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 
 ## 参与贡献
 
-最有价值的贡献是**关于权重的证据**。见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-分数不对、对榜单某一行有异议、工具用不了，各自用哪张 issue 表单，见 [SUPPORT.md](SUPPORT.md)。
+最有价值的贡献是**关于权重的证据**。见[贡献指南](.github/CONTRIBUTING.md)。
+分数不对、对榜单某一行有异议、工具用不了，各自用哪张 issue 表单，见[求助渠道](.github/SUPPORT.md)。
 
 ## 引用
 

@@ -130,7 +130,7 @@ gates, `p1.` to `p4.` for the Understandable, Content Citability, Brand Credibil
 pillars, and `b.` for the bonus checks.
 
 **Where:** `--explain`; the JSON field `checks[].id`; `--assert`; SARIF rule ids and JUnit test names;
-the MCP prompt `explain_check`. Check ids are a public contract ([STABILITY.md](../STABILITY.md#public-contracts)).
+the MCP prompt `explain_check`. Check ids are a public contract ([stability policy](stability.md#public-contracts)).
 **More:** [rubric v1.1](../rubric/v1.1.md)
 
 ### Citation
@@ -284,7 +284,7 @@ measurement, not a contract, and its data records the tool version and the day i
 
 **Where:** [jianruntech.com/leaderboard](https://www.jianruntech.com/leaderboard); `benchmark/README.md`;
 `results.json`, `results.csv`, `checks.csv` and `raw/` in `benchmark/`.
-**More:** [benchmark/README.md](../benchmark/README.md), [STABILITY.md, Benchmark data](../STABILITY.md#benchmark-data)
+**More:** [benchmark/README.md](../benchmark/README.md), [stability policy, Benchmark data](stability.md#benchmark-data)
 
 ### Levels 1, 2 and 3
 
@@ -528,7 +528,7 @@ Semantic Versioning.
 
 **Where:** the JSON fields `rubric_version` and `tool` (`geo-score-cli/1.5.0`); `rubric v1.1` in the
 footer; `--version`. `diff` and `--baseline` refuse a report scored against another rubric version
-(exit 2). **More:** [STABILITY.md](../STABILITY.md)
+(exit 2). **More:** [stability policy](stability.md)
 
 ## S
 
@@ -598,7 +598,7 @@ characters removed, and the site cannot close the fence early. What is inside is
 be read as data and never followed as instructions, and the MCP tools tell the agent so.
 
 **Where:** the evidence in every report and under `--explain`; the output of the MCP tools.
-**More:** [SECURITY.md, Threat model](../SECURITY.md#threat-model)
+**More:** [SECURITY.md, Threat model](../.github/SECURITY.md#threat-model)
 
 ### Sources listed, sources used
 
