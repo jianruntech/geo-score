@@ -14,7 +14,7 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 - **The README has a contents line and a repository layout.** The line under the GEO definition links the main
   sections; a new "Repository layout" section, before "Who maintains this", says what each folder holds and why
   the packaging files stay at the top level. "Who maintains this" now lists the industries Jianrun Tech works with,
-  in China and abroad, not cross-border commerce alone. README.zh-CN.md has the same changes.
+  in China and abroad, with cross-border e-commerce listed under companies going global. README.zh-CN.md has the same changes.
 - **Adding a site no longer means re-running the leaderboard.** CONTRIBUTING.md points to the
   [Add a site](https://github.com/jianruntech/geo-score/issues/new?template=add_site.yml) form, or asks for a PR with
   the `benchmark/sites.json` entry and that site's own `geo_score.py --json` report. Maintainers re-run the board, so

@@ -713,7 +713,8 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 
 Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen. We run GEO and
 AI-adoption programs for companies in China and abroad: B2B exporters, software companies, professional
-services, local businesses, education providers and cross-border e-commerce. The rubric came
+services, local businesses, education providers, and companies going global, cross-border e-commerce
+included. The rubric came
 out of client work and out of optimizing our own products; publishing it is how we'd like
 AI visibility to be measured consistently, including by people who never become our clients.
 
