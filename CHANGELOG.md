@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.8.2] — 2026-10-12
+
 ### Added
 - **Round 0 of the preregistered study has its frozen sample.** The sampling run scored the 272 candidates with
   1.8.1 (230 scored, 42 not), and the recorded draw kept 16 categories and 83 sites
@@ -1410,7 +1412,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.2...HEAD
+[1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1

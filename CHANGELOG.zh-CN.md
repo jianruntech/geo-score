@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.8.2] — 2026-10-12
+
 ### 新增
 - **预注册研究第 0 轮的样本已冻结。** 抽样运行用 1.8.1 给 272 个候选站打分（230 个打出分，42 个打不了），按记录的随机种子抽取后保留 16 个类别、83 个站（`benchmark/prereg/round0/sample.json`，运行报告在 `sampling/`）。benchmark/PREREGISTRATION.md（含中文）新增一条带日期的修订：去掉的类别、三天的收集安排（2,560 个回答），以及检验力——以 80% 检验力能检出的最小平均 T 是 0.289。还没有收集任何回答。
 
@@ -913,7 +915,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.1...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.2...HEAD
+[1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1

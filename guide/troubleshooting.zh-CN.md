@@ -178,10 +178,10 @@ CLI 使用 Python 的标准代理设置：`HTTPS_PROXY`、`HTTP_PROXY` 和 `NO_P
 **原因。** 第二、三级在 `cli/geo_watch.py` 里。一行命令 `curl … | python3 -` 只运行第一级，
 而且从不加载当前目录下的 `geo_watch.py`。
 
-**怎么办。** 从 PyPI 安装这个包，两个文件它都有：`pipx install geo-score==1.8.1`，
-或者不安装直接运行 `uvx geo-score@1.8.1 watch …`。访问不了 PyPI 时，安装发布的 wheel 包
-（`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.1/geo_score-1.8.1-py3-none-any.whl`；
-从源码安装需要 git：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.1`）。或者克隆仓库，
+**怎么办。** 从 PyPI 安装这个包，两个文件它都有：`pipx install geo-score==1.8.2`，
+或者不安装直接运行 `uvx geo-score@1.8.2 watch …`。访问不了 PyPI 时，安装发布的 wheel 包
+（`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.2/geo_score-1.8.2-py3-none-any.whl`；
+从源码安装需要 git：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.2`）。或者克隆仓库，
 或者从同一个版本下载 `cli/geo_score.py` 和 `cli/geo_watch.py` 放在同一个文件夹。两个文件的版本必须一致。
 
 ## `watch run` 退出码 3
