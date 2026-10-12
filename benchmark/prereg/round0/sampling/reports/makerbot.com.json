@@ -1,0 +1,338 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 14.1,
+  "target": "https://makerbot.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://makerbot.com/",
+    "https://makerbot.com/legal/privacy-and-cookie-statement",
+    "https://makerbot.com/3d-printers/district-level-solution",
+    "https://makerbot.com/stories/inspiring-the-next-generation-of-engineers-at-maayanot-high-school",
+    "https://makerbot.com/resources",
+    "https://makerbot.com/3d-printers",
+    "https://makerbot.com/quote-request",
+    "https://makerbot.com/${printer.permalink || "
+  ],
+  "sample_source": "sitemap",
+  "readiness": 56,
+  "observable_max": 86,
+  "normalised": 40,
+  "band": "Early",
+  "gate_capped": true,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (190 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "2 of 10 retrieval user-agents returned 200 on 3 sampled pages; 2 of those served content matching what a browser receives. Not reached — HTTP 404: OAI-SearchBot, ChatGPT-User, Claude-SearchBot, PerplexityBot, Googlebot, Bingbot, Applebot; HTTP 403: Amazonbot. (Unverified probes: vendor user-agent strings sent from this machine's address.)",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some are blocked, or the body differs from what a browser receives",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.makerbot.com/post-sitemap.xml»): HTTP 200, 315 <loc>, 315 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 7553 bytes, 10 '##' sections, 10 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only WebSite found (8 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 3 of 3 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 1 of 8 sampled pages; 1 of them with real field values.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 0,
+      "max": 9,
+      "evidence": "0 of 8 pages open with a self-contained passage of 25–120 words.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+4) needs: on a few pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a date a reader or a crawler can see; 8 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "51 figures on 6 pages; 2 attributed in the same block or the next, 0 of them with a link. Of the 5 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: MakerBot» (also tried «site text: The Only 3D Printing Ecosystem Dedicated to Education»). Entity found — en.wikipedia: «site text: MakerBot»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 8 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "8 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 8,
+      "home_links": 35,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 6,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 10,
+      "unlinked_sitemap_urls": [
+        "https://www.makerbot.com/stories/roi-3d-printing-for-advanced-manufacturing-applications/",
+        "https://www.makerbot.com/stories/pro-webinar-setting-up-a-work-from-home-professional-3d-printing-studio/",
+        "https://www.makerbot.com/stories/everything-you-need-to-know-about-petg-3d-printing/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-achieve-real-printed-part-dimensional-accuracy-in-3d-printing/",
+        "https://www.makerbot.com/stories/edu-webinar-3d-printing-through-different-grade-levels/",
+        "https://www.makerbot.com/stories/what-is-3d-printing/",
+        "https://www.makerbot.com/stories/pro-webinar-3d-printing-third-party-materials-on-makerbot-method/",
+        "https://www.makerbot.com/stories/edu-webinar-elevating-student-design-thinking-with-industrial-3d-printing/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-engineer-a-smart-technology-product-like-tesla/",
+        "https://www.makerbot.com/stories/edu-webinar-3d-printing-for-different-stages-of-learning/",
+        "https://www.makerbot.com/stories/how-much-do-3d-printers-cost/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-3d-print-carbon-fiber-with-makerbot-method/",
+        "https://www.makerbot.com/stories/live-event-3d-printing-collaboration-from-anywhere-cloudprint-launch/",
+        "https://www.makerbot.com/stories/3d-printing-buying-in-house-vs-outsourcing-to-3d-printing-service/",
+        "https://www.makerbot.com/stories/pro-webinar-additive-manufacturing-for-aerospace-ready-for-takeoff/",
+        "https://www.makerbot.com/stories/choosing-the-right-3d-printer-fdm-vs-sla/",
+        "https://www.makerbot.com/stories/edu-webinar-open-forum-3d-printing-in-a-virtual-classroom/",
+        "https://www.makerbot.com/stories/edu-webinar-3d-printing-in-a-hybrid-classroom/",
+        "https://www.makerbot.com/stories/free-guide-2020-guide-to-3d-printing-materials/",
+        "https://www.makerbot.com/stories/3d-printed-nylon-carbon-fiber/",
+        "https://www.makerbot.com/stories/lightning-talk-virtual-labs-series-robotics/",
+        "https://www.makerbot.com/stories/pro-webinar-nylon-6-66-carbon-fiber-vs-nylon-12-carbon-fiber/",
+        "https://www.makerbot.com/stories/webinar-recording-lightning-talk-virtual-labs-series-edu/",
+        "https://www.makerbot.com/stories/pro-webinar-how-the-method-modular-extruder-platform-works/",
+        "https://www.makerbot.com/stories/webinar-recording-lightning-talk-virtual-labs-series-automotive/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-3d-print-carbon-fiber-on-makerbot-method/",
+        "https://www.makerbot.com/stories/free-guide-2021-guide-to-3d-printing-carbon-fiber/",
+        "https://www.makerbot.com/stories/what-is-additive-manufacturing/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-3d-print-in-a-safe-environment/",
+        "https://www.makerbot.com/stories/pro-webinar-material-showdown-pt-4-kevlar-vs-carbon-fiber-vs-abs/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-3d-print-in-metal-on-the-makerbot-method/",
+        "https://www.makerbot.com/stories/pro-webinar-pro-mind-melding-series-episode-1/",
+        "https://www.makerbot.com/stories/free-guide-2021-guide-to-3d-printing-materials/",
+        "https://www.makerbot.com/stories/3d-printing-prototypes-to-supercharge-your-design-process/",
+        "https://www.makerbot.com/stories/whats-new-with-makerbot-cloudprint/",
+        "https://www.makerbot.com/stories/a-quick-guide-to-3d-printing-software-cloud-edition/",
+        "https://www.makerbot.com/stories/pro-webinar-how-the-method-modular-extruder-platform-works-2/",
+        "https://www.makerbot.com/stories/pro-webinar-metal-vs-nylon-12-carbon-fiber-vs-abs-3d-printed-on-makerbot-method/",
+        "https://www.makerbot.com/stories/pro-webinar-cloud-based-design-and-3d-printing-with-onshape-makerbot/",
+        "https://www.makerbot.com/stories/pro-webinar-prototyping-and-3d-printing-with-fusion-360-method/",
+        "https://www.makerbot.com/stories/pro-webinar-pro-mind-melding-series-episode-2/",
+        "https://www.makerbot.com/stories/pro-webinar-top-5-real-world-3d-printing-applications-for-nylon-carbon-fiber/",
+        "https://www.makerbot.com/stories/pro-webinar-cloud-based-design-and-3d-printing-with-onshape-makerbot-medical-devices/",
+        "https://www.makerbot.com/stories/pro-webinar-how-to-set-up-a-safe-3d-printing-environment-with-the-new-clean-air-system-for-method/",
+        "https://www.makerbot.com/stories/case-study-3d-printing-in-a-pandemic-thinking-outside-the-box/",
+        "https://www.makerbot.com/stories/free-lesson-build-a-prosthetic-hand-with-3d-printing/",
+        "https://www.makerbot.com/stories/pro-webinar-should-i-3d-print-in-carbon-fiber-or-metal/",
+        "https://www.makerbot.com/stories/pro-webinar-the-secret-to-3d-printing-stronger-parts-with-method/",
+        "https://www.makerbot.com/stories/pro-webinar-tips-tricks-designing-for-3d-printing-with-fusion-360-and-method/",
+        "https://www.makerbot.com/stories/webinar-recording-racing-for-speed-and-performance-additive-manufacturing-and-motorsports/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 8,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

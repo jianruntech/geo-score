@@ -1,0 +1,716 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 4.4,
+  "target": "https://udacity.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://udacity.com/",
+    "https://udacity.com/school/product-management",
+    "https://udacity.com/course/product-manager-nanodegree--nd036",
+    "https://udacity.com/en-US/legal/terms-of-use",
+    "https://udacity.com/enterprise/case-study/elm",
+    "https://udacity.com/enterprise/case-study/global-tech-and-eng-case-study",
+    "https://udacity.com/school/devops"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 61,
+  "observable_max": 86,
+  "normalised": 71,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (1173 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all. It also disallows Applebot-Extended (training crawlers / opt-out tokens, not scored).",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "7 of 7 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.udacity.com/sitemap.xml»): HTTP 200, 216 <loc>, 216 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (1 of 7 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 3 of 6 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 1 of 7 sampled pages; 1 of them with real field values.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "evidence": "5 of 7 pages open with a self-contained passage of 25–120 words. e.g. «site text: Product management offers valuable skills in strategic planning, market research, customer…»",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "4 of 7 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 7 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "91 figures on 7 pages; 8 attributed in the same block or the next, 4 of them with a link. Of the 7 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 7 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Udacity» (also tried «site text: Learn the Latest Tech Skills; Advance Your Career»). Entity found — Wikidata Q766546 «site text: for-profit educational organization»; en.wikipedia: «site text: Udacity»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "5 sameAs declared; of the first 5, 3 resolve, 0 are gone (404/410), 2 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 1 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "6 of 7 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Scored on 7 of 8 sampled pages; 1 returned an error, 0 were bot challenges."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 206,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 8,
+      "one_rule": false,
+      "pages": [
+        {
+          "url": "https://udacity.com/flag/claude-engineer-2026/[variant]",
+          "rules": [
+            {
+              "rule": "Disallow: /flag/*",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/assessments",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/certificates",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/enrollments",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/career-goals",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/learning-preferences",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/skills",
+          "rules": [
+            {
+              "rule": "Disallow: /dashboard",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        }
+      ],
+      "read_differently": 8,
+      "differences": [
+        {
+          "url": "https://udacity.com/flag/claude-engineer-2026/[variant]",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /flag/*"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/assessments",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/certificates",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/enrollments",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/career-goals",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/learning-preferences",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        },
+        {
+          "url": "https://www.udacity.com/dashboard/personalization/skills",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /dashboard"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": "Allow: /"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "server_links": {
+      "pages_searched": 10,
+      "home_links": 62,
+      "few_home_links": false,
+      "other_sampled": 6,
+      "home_links_to_sampled": 6,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 22,
+      "unlinked_sitemap_urls": [
+        "https://www.udacity.com/ai",
+        "https://www.udacity.com/contact",
+        "https://www.udacity.com/course-collection/agentic-ai",
+        "https://www.udacity.com/dashboard/assessments",
+        "https://www.udacity.com/dashboard/certificates",
+        "https://www.udacity.com/dashboard/enrollments",
+        "https://www.udacity.com/dashboard/personalization",
+        "https://www.udacity.com/dashboard/personalization/career-goals",
+        "https://www.udacity.com/dashboard/personalization/learning-preferences",
+        "https://www.udacity.com/dashboard/personalization/skills",
+        "https://www.udacity.com/enterprise/overview/analytics-integrations",
+        "https://www.udacity.com/enterprise/overview/cohorts",
+        "https://www.udacity.com/enterprise/overview/human-ai-support",
+        "https://www.udacity.com/enterprise/overview/project-based-learning",
+        "https://www.udacity.com/enterprise/overview/skills",
+        "https://www.udacity.com/error",
+        "https://www.udacity.com/free-trial/layoffs",
+        "https://www.udacity.com/get-personalized-discount",
+        "https://www.udacity.com/get-reimbursed",
+        "https://www.udacity.com/get-started/government",
+        "https://www.udacity.com/get-started/government-success",
+        "https://www.udacity.com/get-started/partnerships",
+        "https://www.udacity.com/get-started/sponsor-a-scholarship",
+        "https://www.udacity.com/get-started/sponsor-a-scholarship-success",
+        "https://www.udacity.com/microsoft-ai-skills-fest",
+        "https://www.udacity.com/personalized-discount",
+        "https://www.udacity.com/plans",
+        "https://www.udacity.com/preregister/gemini-api-by-google",
+        "https://www.udacity.com/schools",
+        "https://www.udacity.com/sessions",
+        "https://www.udacity.com/sessions/book",
+        "https://www.udacity.com/tech-requirements",
+        "https://www.udacity.com/404",
+        "https://www.udacity.com/500",
+        "https://www.udacity.com/ar-SA/catalog",
+        "https://www.udacity.com/de-DE/catalog",
+        "https://www.udacity.com/el-GR/catalog",
+        "https://www.udacity.com/en-US/catalog",
+        "https://www.udacity.com/en-AE/catalog",
+        "https://www.udacity.com/en-EG/catalog",
+        "https://www.udacity.com/en-IN/catalog",
+        "https://www.udacity.com/en-EU/catalog",
+        "https://www.udacity.com/en-SA/catalog",
+        "https://www.udacity.com/es-ES/catalog",
+        "https://www.udacity.com/fr-CA/catalog",
+        "https://www.udacity.com/fr-FR/catalog",
+        "https://www.udacity.com/id-ID/catalog",
+        "https://www.udacity.com/it-IT/catalog",
+        "https://www.udacity.com/ja/catalog",
+        "https://www.udacity.com/ko-KR/catalog"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 10,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

@@ -1,0 +1,333 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 2.8,
+  "target": "https://atlantic.net",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://atlantic.net/",
+    "https://atlantic.net/about-us/corporate-contact"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 69,
+  "observable_max": 86,
+  "normalised": 80,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 3,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (1579 bytes): no Disallow applies to retrieval crawlers; 6 named with an explicit permission (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, PerplexityBot, Perplexity-User, Amazonbot).",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 2 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "2 of 2 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.atlantic.net/sitemap.xml»): HTTP 200, 2520 <loc>, 2520 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 8830 bytes, 7 '##' sections, 7 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "Organization + WebSite on 2 of 2 pages; logo resolves (HTTP 200); 4 sameAs declared.",
+      "tier_reason": "tier 4 of 4 — top tier: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 1 of 1 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 2 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "evidence": "1 of 2 pages open with a self-contained passage of 25–120 words. e.g. «site text: For over 32 years, Atlantic.Net has delivered enterprise-grade cloud, dedicated, and clust…»",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "2 of 2 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 2 pages carry a date a reader or a crawler can see; 1 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "25 figures on 2 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 2 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 2 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Atlantic.Net» (also tried «site text: Atlantic.Net, Inc.», «site text: Secure Cloud Hosting & Infrastructure»). Entity found — Wikidata Q4816254 «site text: »; en.wikipedia: «site text: Atlantic.net»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "4 sameAs declared; of the first 4, 3 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 4 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "2 of 2 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 2,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 1,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Sampled 2 of the 8 pages asked for: no more were found (sample source: sitemap)."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 201,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 5,
+      "home_links": 132,
+      "few_home_links": false,
+      "other_sampled": 1,
+      "home_links_to_sampled": 1,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 43,
+      "unlinked_sitemap_urls": [
+        "https://www.atlantic.net/press-releases/atlantic-net-announces-secure-block-storage-v2-in-dallas-cloud-region/",
+        "https://www.atlantic.net/cloud-platform/how-to-set-up-hermes-agent-on-an-atlantic-net-cloud-server/",
+        "https://www.atlantic.net/cloud-platform/how-to-install-openclaw-on-an-atlantic-net-cloud-server/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/hipaa-security-rule-hosting-readiness/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/what-is-protected-health-information/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/top-13-difficult-questions-your-hipaa-consultant-should-be-asking-you/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/five-cloud-computing-myths/",
+        "https://www.atlantic.net/announcements/cloud-services-newsletter-september-2012/",
+        "https://www.atlantic.net/life-sciences-pharma-biotech/applied-cloud-computing-in-higher-education/",
+        "https://www.atlantic.net/disaster-recovery/what-is-a-3-2-1-backup-strategy/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/what-is-a-hipaa-certification/",
+        "https://www.atlantic.net/life-sciences-pharma-biotech/healthcare-cloud-service-adoption-2022-how-cloud-providers-are-mitigating-risk-with-patient-health-records/",
+        "https://www.atlantic.net/cookie-policy/",
+        "https://www.atlantic.net/cloud-platform/cloud-asset-management/",
+        "https://www.atlantic.net/cloud-platform/edge-vs-traditional-data-centers/",
+        "https://www.atlantic.net/cloud-platform/backup-vs-disaster-recovery/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/top-10-healthcare-software-development-companies/",
+        "https://www.atlantic.net/gpu-server-hosting/top-ml-development-companies/",
+        "https://www.atlantic.net/cloud-platform/aws-alternatives/",
+        "https://www.atlantic.net/vps-hosting/how-to-enable-audio-windows-server-2008-r2/",
+        "https://www.atlantic.net/managed-services/top-object-storage-providers-2026-a-guide-to-the-best-solutions-available/",
+        "https://www.atlantic.net/cloud-platform/public-vs-private-vs-hybrid-cloud/",
+        "https://www.atlantic.net/disaster-recovery/best-cloud-disaster-recovery-providers/",
+        "https://www.atlantic.net/gpu-server-hosting/ai-infrastructure-hosting-guide/",
+        "https://www.atlantic.net/pci-compliant-hosting/black-friday-pci-compliant-hosting/",
+        "https://www.atlantic.net/hipaa-compliant-hosting/atlantic-net-hipaa-hosting-alternative-luxsci/",
+        "https://www.atlantic.net/press-releases/atlantic-net-adds-one-click-agentic-ai-deployments-for-openclaw-and-hermes-agent/",
+        "https://www.atlantic.net/cloud-platform/web-hosting-red-flags/",
+        "https://www.atlantic.net/managed-services/server-hardening-standards-security-compliance/",
+        "https://www.atlantic.net/gpu-server-hosting/integrated-vs-discrete-graphics/",
+        "https://www.atlantic.net/cloud-platform/openclaw-vs-hermes-which-ai-agent-should-you-deploy/",
+        "https://www.atlantic.net/gpu-server-hosting/gpu-memory-bandwidth/",
+        "https://www.atlantic.net/cloud-platform/zero-trust-implementation-roadmap/",
+        "https://www.atlantic.net/cloud-platform/hot-standby-server-high-availability-disaster-recovery/",
+        "https://www.atlantic.net/hipaa-data-centers/singapore-hosting/",
+        "https://www.atlantic.net/hipaa-data-centers/toronto-canada-hosting/",
+        "https://www.atlantic.net/hipaa-data-centers/san-francisco-california-hosting/",
+        "https://www.atlantic.net/hipaa-data-centers/london-uk-hosting/",
+        "https://www.atlantic.net/hipaa-data-centers/ashburn-virginia-hosting/",
+        "https://www.atlantic.net/hipaa-data-centers/dallas-texas-hosting/",
+        "https://www.atlantic.net/dedicated-server-hosting/bare-metal-vs-rtos-embedded-design/",
+        "https://www.atlantic.net/dedicated-server-hosting/dedicated-server-game-hosting/",
+        "https://www.atlantic.net/cloud-platform/how-to-connect-openclaw-hermes-to-openai-anthropic-or-openrouter/",
+        "https://www.atlantic.net/cloud-platform/how-to-secure-a-self-hosted-openclaw-deployment/",
+        "https://www.atlantic.net/cloud-platform/cloud-vs-traditional-data-center/",
+        "https://www.atlantic.net/cloud-platform/on-premises-vs-colocation-vs-cloud-2026/",
+        "https://www.atlantic.net/cloud-platform/hyper-converged-vs-traditional-infrastructure/",
+        "https://www.atlantic.net/cloud-platform/best-rackspace-alternatives-enterprise-hosting/",
+        "https://www.atlantic.net/dedicated-server-hosting/bare-metal-automation-provisioning-tools-lifecycle-management/",
+        "https://www.atlantic.net/gpu-server-hosting/ai-in-networking-models-infrastructure-strategy-2/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 5,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

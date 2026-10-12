@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best e-commerce platforms for starting an online store?,list
+q02,Which shopping cart software works best for a growing online business?,list
+q03,What are the best open-source e-commerce platforms?,list
+q04,I sell handmade candles at local markets and want to start taking orders online. What should I use to build my store?,problem
+q05,Our online store crashes during holiday sales and the plugins keep conflicting. Which platform should we migrate to?,problem
+q06,Which e-commerce platform is best for a small clothing brand?,persona
+q07,What e-commerce software should a B2B wholesaler with thousands of products use?,persona
+q08,How much does it cost per month to run an online store on a hosted e-commerce platform?,pricing
+q09,Which e-commerce platforms charge no transaction fees?,pricing
+q10,Which e-commerce platforms are easiest to set up without a developer?,list

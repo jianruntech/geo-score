@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best payment processors for an online business?,list
+q02,Which payment gateways are best for accepting credit cards on a website?,list
+q03,Which payment providers support international customers and multiple currencies?,list
+q04,Our online store's payment provider keeps declining legitimate customer cards. Which providers should we consider switching to?,problem
+q05,I run a subscription business and need recurring billing with automatic card retries. What payment provider should I use?,problem
+q06,What is the best way for a freelancer to accept card payments from clients online?,persona
+q07,Which payment processor is best for a high-volume marketplace that pays out to many sellers?,persona
+q08,How much do online payment processors charge per transaction?,pricing
+q09,Which payment processors have the lowest fees for small businesses?,pricing
+q10,Which payment providers let an online store accept digital wallets and cryptocurrency?,list

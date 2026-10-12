@@ -1,0 +1,338 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 4.4,
+  "target": "https://ledgersmb.org",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://ledgersmb.org/",
+    "https://ledgersmb.org/release/15",
+    "https://ledgersmb.org/release/12",
+    "https://ledgersmb.org/release/13",
+    "https://ledgersmb.org/index.php/content/features",
+    "https://ledgersmb.org/content/features",
+    "https://ledgersmb.org/community-guide/community-guide/development/writing-tests/tests-ui",
+    "https://ledgersmb.org/community-guide/community-guide/development/coding-guidelines/coding-translation"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 43,
+  "observable_max": 86,
+  "normalised": 40,
+  "band": "Early",
+  "gate_capped": true,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (2141 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "3 of 10 retrieval user-agents returned 200 on 3 sampled pages; 3 of those served content matching what a browser receives. Not reached — HTTP 403: OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, Googlebot, Bingbot, Applebot. (Unverified probes: vendor user-agent strings sent from this machine's address.)",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some are blocked, or the body differs from what a browser receives",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "7 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap at the conventional path («site text: https://ledgersmb.org/sitemap.xml»): HTTP 200, 643 <loc>, 642 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 403.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "7 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: The LedgerSMB project provides small and mid-size businesses with solid open source accoun…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "7 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "5 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "88 figures on 6 pages; 16 attributed in the same block or the next, 16 of them with a link. Of the 5 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: LedgerSMB» (also tried «site text: Open Source ERP», «site text: accounting, invoicing and more»). Entity found — Wikidata Q6512653 «site text: accounting software planning system»; en.wikipedia: «site text: LedgerSMB»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "5 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 204,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 41,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 1,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 37,
+      "unlinked_sitemap_urls": [
+        "https://ledgersmb.org/community-guide/community-guide/development/coding-guidelines/coding-translation",
+        "https://ledgersmb.org/community-guide/community-guide/development/writing-tests/tests-ui",
+        "https://ledgersmb.org/content/distributed-ledgersmb-development-dvcs-git",
+        "https://ledgersmb.org/content/freebsd-installation-1313",
+        "https://ledgersmb.org/content/openbsd-installation-ledgersmb-13x-openbsd-current",
+        "https://ledgersmb.org/content/osx-install-ledgersmb-13-apple-osx",
+        "https://ledgersmb.org/content/source-tree-layout",
+        "https://ledgersmb.org/content/ubuntu-installation-tutorial-ledgersmb-13-series",
+        "https://ledgersmb.org/faq/accounting/im-not-accountant-how-do-i-learn-how-keep-my-books",
+        "https://ledgersmb.org/faq/administration/i-cant-login",
+        "https://ledgersmb.org/faq/contributing/what-community-code-conduct",
+        "https://ledgersmb.org/faq/installation/i-just-installed-ledgersmb-httplocalhostledgersmbloginpl-says-forbidden",
+        "https://ledgersmb.org/faq/using-cpan-module-generate-print-barcodes",
+        "https://ledgersmb.org/faq/what-difference-between-sales-invoice-and-sales-order-ledgersmb",
+        "https://ledgersmb.org/faq/what-ledgersmb",
+        "https://ledgersmb.org/news/1337-released",
+        "https://ledgersmb.org/news/1342-released",
+        "https://ledgersmb.org/news/1343-released",
+        "https://ledgersmb.org/news/141-released-important-update",
+        "https://ledgersmb.org/news/142-and-1344-released",
+        "https://ledgersmb.org/news/143-released",
+        "https://ledgersmb.org/news/144-released",
+        "https://ledgersmb.org/news/145-and-1345-released",
+        "https://ledgersmb.org/news/146-and-1346-released",
+        "https://ledgersmb.org/news/147-released",
+        "https://ledgersmb.org/news/heartbleed-and-ledgersmb",
+        "https://ledgersmb.org/news/ledgersmb-1335-released",
+        "https://ledgersmb.org/news/ledgersmb-core-team-proud-release-1336",
+        "https://ledgersmb.org/news/ledgersmb-has-been-accepted-debian",
+        "https://ledgersmb.org/news/security-advisory-fixed-1337",
+        "https://ledgersmb.org/news/security-advisory-multiple-vulnerabilities",
+        "https://ledgersmb.org/release/announcing-1220",
+        "https://ledgersmb.org/release/1221-available-download",
+        "https://ledgersmb.org/release/ledgersmb-1222-available-download",
+        "https://ledgersmb.org/release/ledgersmb-1223-release-candidate-1-available",
+        "https://ledgersmb.org/release/ledgersmb-1224-released",
+        "https://ledgersmb.org/content/security-advisory-sql-injection-ledgersmb-1224-and-lower",
+        "https://ledgersmb.org/release/1225-released",
+        "https://ledgersmb.org/release/ledgersmb-130-released",
+        "https://ledgersmb.org/release/131-released",
+        "https://ledgersmb.org/release/ledgersmb-132-released",
+        "https://ledgersmb.org/release/133-released",
+        "https://ledgersmb.org/release/134-released",
+        "https://ledgersmb.org/release/ledgersmb-135-released",
+        "https://ledgersmb.org/release/ledgersmb-136-released",
+        "https://ledgersmb.org/release/137-released",
+        "https://ledgersmb.org/release/138-released",
+        "https://ledgersmb.org/release/139-released",
+        "https://ledgersmb.org/release/1311-released",
+        "https://ledgersmb.org/release/1313-released-includes-important-fixes"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

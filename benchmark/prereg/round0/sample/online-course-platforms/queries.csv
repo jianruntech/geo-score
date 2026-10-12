@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best websites for taking online courses?,list
+q02,Which online learning platforms offer certificates that employers recognize?,list
+q03,What are the best free online course websites?,list
+q04,I want to switch careers into data analysis but can't go back to college full time. Where can I learn online?,problem
+q05,Our company needs to train employees in new software skills without sending them to classes. Which online course platforms work for teams?,problem
+q06,Which online course platform is best for a high school student preparing for college?,persona
+q07,What online learning site is best for a working adult who wants university-level courses?,persona
+q08,How much do online course subscriptions cost per month?,pricing
+q09,Which online course platforms let you take courses for free and pay only for a certificate?,pricing
+q10,Which websites offer the best online courses for learning to code?,list

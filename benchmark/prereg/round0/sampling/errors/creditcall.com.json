@@ -1,0 +1,1 @@
+{"error": {"kind": "timeout", "message": "could not fetch https://www.creditcall.com (timeout): www.creditcall.com did not answer within 15 s on any try (--timeout sets the wait); see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#timeout-no-answer-in-time", "target": "https://www.creditcall.com"}, "tool": "geo-score-cli/1.8.1"}

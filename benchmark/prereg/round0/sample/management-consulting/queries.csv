@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the top management consulting firms?,list
+q02,Which consulting firms are best for business strategy work?,list
+q03,Which consulting firms specialize in digital transformation?,list
+q04,Our company's growth has stalled and the board wants an outside review of our strategy. Which consulting firms should we talk to?,problem
+q05,We're merging with a competitor and need help integrating the two organizations. Which firms do post-merger integration?,problem
+q06,Which consulting firms work with mid-size companies rather than only large corporations?,persona
+q07,What consulting firm should a hospital system hire to cut operating costs?,persona
+q08,How much do management consulting firms charge for a strategy project?,pricing
+q09,What are typical daily rates for management consultants?,pricing
+q10,Which consulting firms are best at restructuring and turnaround work?,list

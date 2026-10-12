@@ -1,0 +1,1 @@
+{"error": {"kind": "slow", "message": "could not fetch https://www.irisl.net (slow): www.irisl.net kept its answer coming too slowly to finish within 30 s, the most one request may take; see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#slow-the-answer-never-finished", "target": "https://www.irisl.net"}, "tool": "geo-score-cli/1.8.1"}

@@ -1,0 +1,383 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 4.1,
+  "target": "https://instructure.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://instructure.com/",
+    "https://instructure.com/resources/blog/disease-and-cure-technology-and-academic-fraud-generative-age",
+    "https://instructure.com/resources/blog/looking-back-musings-instructures-learning-strategy-team-instructurecon-2026",
+    "https://instructure.com/resources/blog/finding-sensible-middle-ai-literacy-cognitive-offloading-and-student-voice-classroom",
+    "https://instructure.com/products",
+    "https://instructure.com/services",
+    "https://instructure.com/resources/videos/exploring-canvas",
+    "https://instructure.com/resources/ebooks/external-education-playbook"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 64,
+  "observable_max": 86,
+  "normalised": 74,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (2102 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.instructure.com/sitemap.xml»): HTTP 200, 5248 <loc>, 5248 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 576732 bytes, 8 '##' sections, 8 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (1 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 5 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: When diplomas, portfolios, and entire identities can be faked at the click of a button, ho…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "3 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "13 figures on 3 pages; 8 attributed in the same block or the next, 6 of them with a link. Of the 2 pages carrying three or more, 1 attribute most of theirs, 1 with a link.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most are attributed and the source is clickable and checkable",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Instructure» (also tried «site text: Leading EdTech for K», «site text: 12, Higher Ed & Business»). Entity found — Wikidata Q3019900 «site text: American technology company»; en.wikipedia: «site text: Instructure»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "4 sameAs declared; of the first 4, 1 resolve, 2 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 9 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "6 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 207,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 11,
+      "home_links": 111,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 10,
+      "unlinked_sitemap_urls": [
+        "https://www.instructure.com/press-release/instructure-and-partners-urge-bidenharris-administration-address-ongoing-issues",
+        "https://www.instructure.com/press-release/instructure-acquire-certica-solutions-make-learning-personal-every-student",
+        "https://www.instructure.com/press-release/safeguard-hand-soap-brand-partners-canvas-reach-classrooms-nationwide-free-hygiene",
+        "https://www.instructure.com/press-release/instructure-use-microsoft-teams-default-conferencing-tool-canvas",
+        "https://www.instructure.com/press-release/canvas-releases-global-research-report-state-higher-education-during-covid-19",
+        "https://www.instructure.com/press-release/13-states-partner-canvas-lms-support-educators-students-and-parents",
+        "https://www.instructure.com/press-release/canvas-and-aws-educate-make-extensive-teaching-resources-available-cloud-computing",
+        "https://www.instructure.com/press-release/google-assignments-now-available-directly-within-canvas-lms",
+        "https://www.instructure.com/press-release/instructure-names-steve-daly-chief-executive-officer",
+        "https://www.instructure.com/press-release/canvas-wins-edtech-digest-cool-tool-award",
+        "https://www.instructure.com/press-release/unizin-extends-partnership-instructure-keeps-canvas-its-foundational-learning",
+        "https://www.instructure.com/press-release/new-survey-shows-parents-top-challenges-online-learning",
+        "https://www.instructure.com/press-release/instructure-award-25000-through-national-student-scholarship-contest",
+        "https://www.instructure.com/press-release/adobe-creative-cloud-integrates-canvas-deliver-creativity-imagination-opportunities",
+        "https://www.instructure.com/press-release/instructure-included-2020-shatter-list-helping-break-glass-ceiling-technology",
+        "https://www.instructure.com/press-release/instructure-announces-immersive-reader-available-free-canvas-users",
+        "https://www.instructure.com/press-release/case-benchmark-assessments-math-receive-louisiana-tier-1-rating",
+        "https://www.instructure.com/press-release/certicas-data-and-analytics-solutions-selected-california-ed-tech-joint-powers",
+        "https://www.instructure.com/press-release/instructure-announces-new-masteryview-assessments-help-schools-assess-and-address",
+        "https://www.instructure.com/press-release/instructure-releases-research-state-k-12-explores-pandemics-impact-us-schools",
+        "https://www.instructure.com/press-release/instructure-launches-canvas-elementary-user-experience-back-school",
+        "https://www.instructure.com/press-release/instructure-files-registration-statement-sec-initial-public-offering",
+        "https://www.instructure.com/press-release/instructure-acquire-eesysoft-help-educators-and-students-improve-adoption-educational",
+        "https://www.instructure.com/press-release/instructure-launches-new-edtech-collective-program-its-community-500-global-partners",
+        "https://www.instructure.com/press-release/instructure-announces-launch-initial-public-offering",
+        "https://www.instructure.com/press-release/instructure-announces-pricing-initial-public-offering",
+        "https://www.instructure.com/press-release/alabama-community-colleges-system-and-instructure-expand-canvas-relationship",
+        "https://www.instructure.com/press-release/instructure-announce-second-quarter-2021-financial-results-august-17-2021",
+        "https://www.instructure.com/press-release/instructure-announces-financial-results-second-quarter-fiscal-year-2021",
+        "https://www.instructure.com/press-release/vermont-virtual-learning-cooperative-use-instructures-masteryconnect-statewide",
+        "https://www.instructure.com/press-release/william-angela-duckworth-dr-knatokie-ford-lauren-bush-lauren-headline-instructurecon",
+        "https://www.instructure.com/press-release/instructure-research-reveals-changing-definitions-success-higher-education-towards",
+        "https://www.instructure.com/press-release/instructure-recognizes-six-outstanding-us-educators-redefining-teaching-covid-19-era",
+        "https://www.instructure.com/press-release/instructure-expands-partnerships-popular-edtech-solution-providers-inspace-k16-canva",
+        "https://www.instructure.com/press-release/angela-duckworths-grit-lab-launch-new-course-high-school-students-instructures-canvas",
+        "https://www.instructure.com/press-release/instructure-shares-updates-canvas-lms-canvas-studio-and-canvas-catalog-instructurecon",
+        "https://www.instructure.com/press-release/new-impact-instructure-now-available-k-12-institutions-improve-edtech-tool-usage-and",
+        "https://www.instructure.com/press-release/miami-dade-college-selects-canvas-lms-empower-its-more-120000-students",
+        "https://www.instructure.com/press-release/instructure-utah-jazz-team-honor-educators-season-long-educator-appreciation-program",
+        "https://www.instructure.com/press-release/instructure-acquire-kimono-expand-integration-and-interoperability-instructure",
+        "https://www.instructure.com/press-release/instructure-helps-districts-tackle-chronic-absenteeism-assessment-analytics-and",
+        "https://www.instructure.com/press-release/instructure-announce-fourth-quarter-and-fiscal-year-2021-financial-results-february",
+        "https://www.instructure.com/press-release/instructures-new-data-shows-schools-pivotal-moment-changing-k-12-assessment",
+        "https://www.instructure.com/press-release/instructure-present-upcoming-investor-conferences",
+        "https://www.instructure.com/press-release/instructure-announces-fourth-quarter-and-fiscal-year-2021-financial-results",
+        "https://www.instructure.com/press-release/instructure-partners-nonprofit-organization-better-days-deliver-educational-course",
+        "https://www.instructure.com/press-release/zadkine-college-selects-canvas-lms-support-innovative-vocational-learning-students",
+        "https://www.instructure.com/press-release/instructure-acquires-concentric-sky-makers-badgr",
+        "https://www.instructure.com/press-release/instructure-announces-first-quarter-2022-financial-results",
+        "https://www.instructure.com/press-release/simone-giertz-and-adam-grant-keynote-instructurecon-2022-virtual-conference"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 11,
+      "pages_with_hreflang": 11,
+      "annotations": 80,
+      "pages_with_link_header": 11,
+      "annotations_in_link_header": 11,
+      "pages": [
+        {
+          "url": "https://www.instructure.com/",
+          "annotations": 12
+        },
+        {
+          "url": "https://www.instructure.com/resources/blog/disease-and-cure-technology-and-academic-fraud-generative-age",
+          "annotations": 4
+        },
+        {
+          "url": "https://www.instructure.com/resources/blog/looking-back-musings-instructures-learning-strategy-team-instructurecon-2026",
+          "annotations": 4
+        },
+        {
+          "url": "https://www.instructure.com/resources/blog/finding-sensible-middle-ai-literacy-cognitive-offloading-and-student-voice-classroom",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.instructure.com/products",
+          "annotations": 12
+        },
+        {
+          "url": "https://www.instructure.com/services",
+          "annotations": 10
+        },
+        {
+          "url": "https://www.instructure.com/resources/videos/exploring-canvas",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.instructure.com/resources/ebooks/external-education-playbook",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.instructure.com/resources/blog",
+          "annotations": 9
+        },
+        {
+          "url": "https://www.instructure.com/news",
+          "annotations": 8
+        },
+        {
+          "url": "https://www.instructure.com/resources",
+          "annotations": 12
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 47,
+      "not_read": 0
+    }
+  }
+}

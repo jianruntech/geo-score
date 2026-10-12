@@ -1,0 +1,338 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 3.4,
+  "target": "https://attio.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://attio.com/",
+    "https://attio.com/changelog/2025/teams",
+    "https://attio.com/changelog/2026/new-apps",
+    "https://attio.com/changelog/2022/iso-27001",
+    "https://attio.com/help/reference/imports-and-exports/import-data-into-attio",
+    "https://attio.com/help/reference/imports-and-exports/migrate-data-from-another-crm",
+    "https://attio.com/platform/ask",
+    "https://attio.com/platform/mcp"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 57,
+  "observable_max": 86,
+  "normalised": 66,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 2,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (658 bytes): no Disallow applies to retrieval crawlers; 4 named with an explicit permission (OAI-SearchBot, ChatGPT-User, PerplexityBot, Amazonbot); 6 fall under the * group, which carries an explicit allow-all. It also disallows CCBot, cohere-ai, Bytespider (training crawlers / opt-out tokens, not scored).",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "5 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://attio.com/sitemap.xml»): HTTP 200, 988 <loc>, 680 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 9242 bytes, 10 '##' sections, 7 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "Organization + WebSite on 1 of 8 pages; logo resolves (HTTP 200); 6 sameAs declared.",
+      "tier_reason": "tier 4 of 4 — top tier: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 3 of 8 sampled pages; 3 of them with real field values.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "3 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: For example, filter views or reports by team to track only the deals owned by your Enterpr…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "5 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "6 of 8 pages carry a date a reader or a crawler can see; 2 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "19 figures on 4 pages; 1 attributed in the same block or the next, 1 of them with a link. Of the 2 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Brand read as «site text: Attio» (also tried «site text: The CRM for agentic revenue»). No entity whose label matches exactly, in Wikidata or Wikipedia (en); 4 of 4 lookups answered.",
+      "tier_reason": "tier 1 of 2 — tier 2 (+4) needs: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "6 sameAs declared; of the first 6, 5 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 62 channel links and 4 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "4 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 2,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 207,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 10,
+      "home_links": 60,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 4,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 11,
+      "unlinked_sitemap_urls": [
+        "https://attio.com/agentic-readiness",
+        "https://attio.com/agentic-readiness/foundations",
+        "https://attio.com/agentic-readiness/orchestration",
+        "https://attio.com/agentic-readiness/scaling",
+        "https://attio.com/agentic-sales-report",
+        "https://attio.com/apps/2048",
+        "https://attio.com/apps/aanrich-app",
+        "https://attio.com/apps/ada-ai-email-marketing-employee",
+        "https://attio.com/apps/addtocrm",
+        "https://attio.com/apps/agentteams",
+        "https://attio.com/apps/aircall",
+        "https://attio.com/apps/airstride",
+        "https://attio.com/apps/airtable",
+        "https://attio.com/apps/albacross",
+        "https://attio.com/apps/apollo",
+        "https://attio.com/apps/apollo-enrichment",
+        "https://attio.com/apps/arcade-dev",
+        "https://attio.com/apps/arka-analytics",
+        "https://attio.com/apps/asana",
+        "https://attio.com/apps/aside",
+        "https://attio.com/apps/asyntai-ai-chatbot",
+        "https://attio.com/apps/attibooks",
+        "https://attio.com/apps/audit",
+        "https://attio.com/apps/autoscaled",
+        "https://attio.com/apps/autotouch-ai",
+        "https://attio.com/apps/azava",
+        "https://attio.com/apps/base-44",
+        "https://attio.com/apps/bird",
+        "https://attio.com/apps/bitscale-app",
+        "https://attio.com/apps/bound",
+        "https://attio.com/apps/box",
+        "https://attio.com/apps/breakout",
+        "https://attio.com/apps/brusnika-lms",
+        "https://attio.com/apps/bubbla-v",
+        "https://attio.com/apps/caddie-ai",
+        "https://attio.com/apps/cal-sync",
+        "https://attio.com/apps/calendly-events",
+        "https://attio.com/apps/callpal",
+        "https://attio.com/apps/caretta",
+        "https://attio.com/apps/central-ai",
+        "https://attio.com/apps/check-for-duplicates",
+        "https://attio.com/apps/checkredirects",
+        "https://attio.com/apps/circleback",
+        "https://attio.com/apps/civic-iq",
+        "https://attio.com/apps/claap",
+        "https://attio.com/apps/clay",
+        "https://attio.com/apps/click-up",
+        "https://attio.com/apps/cloudtalk",
+        "https://attio.com/apps/cometly",
+        "https://attio.com/apps/comp-code"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 10,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

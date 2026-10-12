@@ -5,6 +5,13 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **Round 0 of the preregistered study has its frozen sample.** The sampling run scored the 272 candidates with
+  1.8.1 (230 scored, 42 not), and the recorded draw kept 16 categories and 83 sites
+  (`benchmark/prereg/round0/sample.json`, with the run's reports under `sampling/`). A dated amendment to
+  benchmark/PREREGISTRATION.md (+ zh) records the drops, the three-day collection schedule (2,560 answers) and the
+  power figure: 0.289 is the smallest mean T detected with 80% power. No answer has been collected yet.
+
 ## [1.8.1] — 2026-10-12
 
 ### Added

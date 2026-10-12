@@ -1,0 +1,394 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 10.3,
+  "target": "https://hawaiianairlines.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://hawaiianairlines.com/",
+    "https://hawaiianairlines.com/content/help-center/lei-greeting",
+    "https://hawaiianairlines.com/content/help-center/Infant-Bassinets",
+    "https://hawaiianairlines.com/content/help-center/donation-requests",
+    "https://hawaiianairlines.com/content/help-center/Main-Cabin-Preferred",
+    "https://hawaiianairlines.com/content/help-center/traveling-with-cremated-remains"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 26,
+  "observable_max": 86,
+  "normalised": 30,
+  "band": "Not started",
+  "gate_capped": true,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (1871 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "0 of 10 retrieval user-agents returned 200 on 3 sampled pages; 0 of those served content matching what a browser receives. Not reached — HTTP 403: all 10. (Unverified probes: vendor user-agent strings sent from this machine's address.)",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some are blocked, or the body differs from what a browser receives",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "2 of 6 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: present on some sampled pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap at the conventional path («site text: https://www.hawaiianairlines.com/v3/assets/blt2cefe12c88e9dd91/blta56a579834f5489d/sitemap.xml»): HTTP 200, 6522 <loc>, 6522 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 403.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 5 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 6 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "2 of 6 pages open with a self-contained passage of 25–120 words. e.g. «site text: Contributions to this fund have recently been donated to organizations including American…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "1 of 6 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: about half do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 6 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "4 figures on 1 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 1 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 6 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Alaska Airlines» (also tried «site text: Hawaiian Airlines», «site text: Flights to Hawaii, Plane Tickets & Airfare»). Entity found — Wikidata Q822614 «site text: major American airline»; en.wikipedia: «site text: Alaska Airlines»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 29 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "6 of 6 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Scored on 6 of 7 sampled pages; 1 returned an error, 0 were bot challenges.",
+    "Sampled 7 of the 8 pages asked for: no more were found (sample source: sitemap)."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 200,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 6,
+      "home_links": 0,
+      "few_home_links": true,
+      "other_sampled": 5,
+      "home_links_to_sampled": 0,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 0,
+      "unlinked_sitemap_urls": [
+        "https://www.hawaiianairlines.com/content/help-center/Infant-Bassinets",
+        "https://www.hawaiianairlines.com/content/help-center/Main-Cabin-Preferred",
+        "https://hawaiianairlines.com/content/help-center/donation-request",
+        "https://hawaiianairlines.com/content/help-center/donation-requests",
+        "https://www.hawaiianairlines.com/content/help-center/lei-greeting",
+        "https://hawaiianairlines.com/content/help-center/traveling-with-cremated-remains",
+        "https://www.hawaiianairlines.com/ja-jp/",
+        "https://www.hawaiianairlines.com/en-au/",
+        "https://www.hawaiianairlines.com/en-nz/",
+        "https://www.hawaiianairlines.com/ko-kr/",
+        "https://www.hawaiianairlines.com/atmosrewards/account/login",
+        "https://www.hawaiianairlines.com/ja-jp/atmosrewards/account/login",
+        "https://www.hawaiianairlines.com/en-au/atmosrewards/account/login",
+        "https://www.hawaiianairlines.com/en-nz/atmosrewards/account/login",
+        "https://www.hawaiianairlines.com/ko-kr/atmosrewards/account/login",
+        "https://www.hawaiianairlines.com/car-rental",
+        "https://www.hawaiianairlines.com/ja-jp/car-rental",
+        "https://www.hawaiianairlines.com/en-au/car-rental",
+        "https://www.hawaiianairlines.com/en-nz/car-rental",
+        "https://www.hawaiianairlines.com/ko-kr/car-rental",
+        "https://www.hawaiianairlines.com/content/about-us",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us",
+        "https://www.hawaiianairlines.com/en-au/content/about-us",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us",
+        "https://www.hawaiianairlines.com/content/about-us/alaska/announcement",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us/alaska/announcement",
+        "https://www.hawaiianairlines.com/en-au/content/about-us/alaska/announcement",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us/alaska/announcement",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us/alaska/announcement",
+        "https://www.hawaiianairlines.com/content/about-us/alaska/faq",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us/alaska/faq",
+        "https://www.hawaiianairlines.com/en-au/content/about-us/alaska/faq",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us/alaska/faq",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us/alaska/faq",
+        "https://www.hawaiianairlines.com/content/about-us/alaska/loyalty-benefit-changes",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us/alaska/loyalty-benefit-changes",
+        "https://www.hawaiianairlines.com/en-au/content/about-us/alaska/loyalty-benefit-changes",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us/alaska/loyalty-benefit-changes",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us/alaska/loyalty-benefit-changes",
+        "https://www.hawaiianairlines.com/content/about-us/alaska/loyalty-updates",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us/alaska/loyalty-updates",
+        "https://www.hawaiianairlines.com/en-au/content/about-us/alaska/loyalty-updates",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us/alaska/loyalty-updates",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us/alaska/loyalty-updates",
+        "https://www.hawaiianairlines.com/content/about-us/customer-commitment/customer-commitment-delay-choices",
+        "https://www.hawaiianairlines.com/ja-jp/content/about-us/customer-commitment/customer-commitment-delay-choices",
+        "https://www.hawaiianairlines.com/en-au/content/about-us/customer-commitment/customer-commitment-delay-choices",
+        "https://www.hawaiianairlines.com/en-nz/content/about-us/customer-commitment/customer-commitment-delay-choices",
+        "https://www.hawaiianairlines.com/ko-kr/content/about-us/customer-commitment/customer-commitment-delay-choices"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 6,
+      "pages_with_hreflang": 5,
+      "annotations": 33,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.hawaiianairlines.com/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/content/help-center/lei-greeting",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/content/help-center/Infant-Bassinets",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "annotations": 9
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/content/help-center/Main-Cabin-Preferred",
+          "annotations": 6
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 1,
+      "no_self_reference_pages": [
+        "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate"
+      ],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 8,
+      "other_host_hrefs": [
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/en-au/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/en-nz/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/en-gb/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/es-us/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/it-it/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/ja-jp/atmosrewards/content/buy-share-gift-points/donate"
+        },
+        {
+          "url": "https://www.hawaiianairlines.com/atmosrewards/content/buy-share-gift-points/donate",
+          "href": "https://www.alaskaair.com/ko-kr/atmosrewards/content/buy-share-gift-points/donate"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 24,
+      "not_read": 0
+    }
+  }
+}

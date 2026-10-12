@@ -1,0 +1,391 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 127.1,
+  "target": "https://kuaishou.com",
+  "audience_language": "und",
+  "sampled_urls": [
+    "https://kuaishou.com/"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 9,
+  "observable_max": 73,
+  "normalised": 12,
+  "band": "Not started",
+  "gate_capped": true,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "robots.txt (604 bytes): a Disallow: / applies to 4 of the 10 retrieval crawlers — Claude-SearchBot, Claude-User, Applebot, Amazonbot, through the * group, having no group of their own.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: no explicit Disallow, but no explicit Allow either",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "unobservable",
+      "reason": "Only 2 of 10 retrieval user-agents got an answer on any sampled page (no answer: OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Googlebot, Applebot, Amazonbot), so too little was observed; not observed. A browser reached the same pages.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "0 of 1 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: present on some sampled pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.kuaishou.com/sitemap.xml»): HTTP 200, 10 <loc>, 0 <lastmod>.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "unobservable",
+      "reason": "/llms.txt got no answer after its retries (timed out); not observed.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "unobservable",
+      "reason": "No nested pages in the sample — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 1 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 0,
+      "max": 9,
+      "evidence": "0 of 1 pages open with a self-contained passage of 25–120 words.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+4) needs: on a few pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "0 of 1 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: a few headings read like a question someone would ask",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 1 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "Few numeric claims in the sample (0 figures on 0 pages), so there is little to attribute.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 1 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Kuaishou». Entity found — Wikidata Q47015540 «site text: short-video platform»; en.wikipedia: «site text: Kuaishou»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "0 of 1 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: subheadings present but paragraphs run long",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Sampled 1 of the 8 pages asked for: no more were found (sample source: sitemap)."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 8,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 8,
+      "one_rule": true,
+      "pages": [
+        {
+          "url": "https://www.kuaishou.com/",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/?isHome=1",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/new-reco",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/samecity",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/brilliant",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/ott",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/cn",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://www.kuaishou.com/search/video",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "Claude-SearchBot",
+                "Claude-User",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        }
+      ],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 2,
+      "home_links": 0,
+      "few_home_links": true,
+      "other_sampled": 0,
+      "home_links_to_sampled": 0,
+      "sitemap_urls": 6,
+      "sitemap_urls_linked": 1,
+      "unlinked_sitemap_urls": [
+        "https://www.kuaishou.com/samecity",
+        "https://www.kuaishou.com/brilliant",
+        "https://www.kuaishou.com/ott",
+        "https://www.kuaishou.com/cn",
+        "https://www.kuaishou.com/search/video"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 2,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

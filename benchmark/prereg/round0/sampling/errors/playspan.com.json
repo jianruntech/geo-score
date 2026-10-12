@@ -1,0 +1,1 @@
+{"error": {"kind": "dropped", "message": "could not fetch https://www.playspan.com (dropped): www.playspan.com closed the connection without answering, on every try; see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#dropped-no_response-no-answer-came-back", "target": "https://www.playspan.com"}, "tool": "geo-score-cli/1.8.1"}

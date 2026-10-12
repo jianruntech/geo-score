@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best online marketplaces for shopping?,list
+q02,Which shopping sites have the cheapest prices on household goods?,list
+q03,Where can I buy secondhand clothes online?,list
+q04,I need a phone case and a charger quickly but don't want to pay full retail price. Which shopping sites should I check?,problem
+q05,I'm looking for unique handmade gifts that I can't find in stores. Where should I shop online?,problem
+q06,Which online marketplace is best for a college student furnishing a dorm room on a budget?,persona
+q07,Where should a parent shop online for affordable kids' clothes?,persona
+q08,Which online marketplaces have the best free shipping?,pricing
+q09,Are ultra-cheap shopping apps really cheaper than big retail stores?,pricing
+q10,Which online marketplaces are the most trustworthy for buying electronics?,list

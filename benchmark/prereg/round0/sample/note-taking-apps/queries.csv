@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What is the best note-taking app?,list
+q02,Which note-taking apps work well across phone and computer?,list
+q03,What are the best note-taking apps that store notes as plain text files?,list
+q04,"My notes are scattered across sticky notes, emails and documents and I can never find anything. What app should I use?",problem
+q05,I want to link my research notes together and see how ideas connect. Which apps do that?,problem
+q06,Which note-taking app is best for a college student?,persona
+q07,What note-taking app should a writer use to organize a long book project?,persona
+q08,How much do note-taking apps cost per year?,pricing
+q09,What are the best free note-taking apps?,pricing
+q10,Which note-taking apps are best for privacy and offline use?,list

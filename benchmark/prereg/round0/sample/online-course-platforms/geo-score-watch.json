@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Alison",
+    "domains": [
+      "alison.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Codecademy",
+      "domains": [
+        "codecademy.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "edX",
+      "domains": [
+        "edx.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "iversity",
+      "domains": [
+        "iversity.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Pluralsight",
+      "domains": [
+        "pluralsight.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Shaw Academy",
+      "domains": [
+        "shawacademy.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

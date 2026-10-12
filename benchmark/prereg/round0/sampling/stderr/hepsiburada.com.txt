@@ -1,0 +1,1 @@
+could not fetch https://www.hepsiburada.com (http_403): every page asked for answered with an HTTP error (HTTP 403); see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#http_nnn-the-pages-answered-with-an-http-error

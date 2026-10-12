@@ -1,0 +1,408 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 6.2,
+  "target": "https://mixpanel.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://mixpanel.com/",
+    "https://mixpanel.com/teams/product-teams",
+    "https://mixpanel.com/platform/experiments",
+    "https://mixpanel.com/partners/experts/matchmaking",
+    "https://mixpanel.com/m/resource/2025-forrester-tei-study-mixpanel",
+    "https://mixpanel.com/ai/mcp",
+    "https://mixpanel.com/ai/agents",
+    "https://mixpanel.com/legal/dpa"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 43,
+  "observable_max": 86,
+  "normalised": 50,
+  "band": "Early",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (314 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "7 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://mixpanel.com/static-sitemap/marketing-site-0.xml»): HTTP 200, 147 <loc>, 0 <lastmod>.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "1 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: This Data Processing Addendum (“ DPA ”) sets forth obligations for the Processing and secu…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "6 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "85 figures on 5 pages; 14 attributed in the same block or the next, 0 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Mixpanel» (also tried «site text: Product Intelligence Platform for the AI Era»). Entity found — Wikidata Q107384441 «site text: Python library»; en.wikipedia: «site text: Mixpanel»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 20 channel links and 3 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "5 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 154,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 1,
+      "one_rule": true,
+      "pages": [
+        {
+          "url": "https://mixpanel.com/m/resource/2025-forrester-tei-study-mixpanel",
+          "rules": [
+            {
+              "rule": "Disallow: /m/*",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        }
+      ],
+      "read_differently": 1,
+      "differences": [
+        {
+          "url": "https://mixpanel.com/m/resource/2025-forrester-tei-study-mixpanel",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Perplexity-User",
+                "Googlebot",
+                "Bingbot",
+                "Applebot",
+                "Amazonbot"
+              ],
+              "rfc9309": {
+                "allowed": false,
+                "rule": "Disallow: /m/*"
+              },
+              "first_match": {
+                "allowed": true,
+                "rule": null
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "server_links": {
+      "pages_searched": 11,
+      "home_links": 59,
+      "few_home_links": false,
+      "other_sampled": 8,
+      "home_links_to_sampled": 5,
+      "sitemap_urls": 147,
+      "sitemap_urls_linked": 28,
+      "unlinked_sitemap_urls": [
+        "https://mixpanel.com/best-product-analytics/",
+        "https://mixpanel.com/customers/all/",
+        "https://mixpanel.com/free-plan/",
+        "https://mixpanel.com/legal/dpa/",
+        "https://mixpanel.com/legal/gen-ai-features/",
+        "https://mixpanel.com/legal/privacy-policy-prior-to-aug-2026/",
+        "https://mixpanel.com/legal/supplemental-terms-prior-to-june-2026/",
+        "https://mixpanel.com/legal/supplier-code-of-conduct/",
+        "https://mixpanel.com/legal/tc-for-goods-and-services/",
+        "https://mixpanel.com/legal/terms-of-use-prior-to-feb-2026/",
+        "https://mixpanel.com/legal/terms-of-use-prior-to-june-2026/",
+        "https://mixpanel.com/legal/terms-of-use-prior-to-sept-2024/",
+        "https://mixpanel.com/legal/transparency-report-jan-2023/",
+        "https://mixpanel.com/legal/transparency-report-jan-2024/",
+        "https://mixpanel.com/legal/transparency-report-jan-2025/",
+        "https://mixpanel.com/legal/transparency-report-july-2022/",
+        "https://mixpanel.com/legal/transparency-report-july-2023/",
+        "https://mixpanel.com/legal/transparency-report-july-2024/",
+        "https://mixpanel.com/legal/transparency-report-july-2025/",
+        "https://mixpanel.com/mejor-analisis-producto/",
+        "https://mixpanel.com/scale-up/",
+        "https://mixpanel.com/sem-lander-ent-free-plan/",
+        "https://mixpanel.com/sem-lander-mm-free-plan/",
+        "https://mixpanel.com/customers/how-acid-labs-runs-mixpanel-headless-claude-code/",
+        "https://mixpanel.com/customers/how-howbout-uses-mixpanel-agent-for-self-serve-analytics/",
+        "https://mixpanel.com/customers/how-clip-made-mixpanel-the-starting-point-for-every-product-decision/",
+        "https://mixpanel.com/customers/ovoko-analytics-faster-insights-using-mixpanel/",
+        "https://mixpanel.com/customers/dana-mixpanel-mcp-ai-analytics/",
+        "https://mixpanel.com/customers/how-migros-one-accelerated-growth-campaigns-with-mixpanel-omtera/",
+        "https://mixpanel.com/customers/how-olio-increased-subscription-revenue-by-50-with-self-serve-analytics/",
+        "https://mixpanel.com/customers/how-syarah-boosted-conversion-page-traffic-to-79-with-mixpanel/",
+        "https://mixpanel.com/customers/movember-full-funnel-visibility-privacy-compliance/",
+        "https://mixpanel.com/customers/how-spin-turned-data-complexity-into-competitive-advantage/",
+        "https://mixpanel.com/customers/tribun-network-media-engagement-super-app-mixpanel/",
+        "https://mixpanel.com/customers/tata-1mg-product-led-growth-self-serve-analytics/",
+        "https://mixpanel.com/customers/how-vodafone-oman-increased-engagement-by-264-with-mixpanel/",
+        "https://mixpanel.com/customers/case-study-banglalink-telco-analytics-growth/",
+        "https://mixpanel.com/customers/how-jazz-grew-simosa-app-to-21-million-users-with-mixpanel/",
+        "https://mixpanel.com/customers/disco-uses-mixpanel-session-replay-to-turn-what-into-why-for-faster-better-ux-decisions/",
+        "https://mixpanel.com/customers/how-prizepicks-scaled-with-self-serve-analytics-in-mixpanel/",
+        "https://mixpanel.com/customers/how-buffer-democratized-data-and-drove-growth-with-mixpanel/",
+        "https://mixpanel.com/customers/how-fawry-increases-conversion-and-boosts-retention-with-deeper-insights/",
+        "https://mixpanel.com/customers/how-tactiq-leveraged-mixpanel-to-scale-from-10000-to-1-million-users/",
+        "https://mixpanel.com/customers/how-lemon-uses-mixpanel-to-power-growth-in-latin-americas-crypto-wallet-market-2/",
+        "https://mixpanel.com/customers/how-observe-ai-optimized-its-product-development-and-customer-experience-with-mixpanel/",
+        "https://mixpanel.com/customers/how-kolon-mall-uses-mixpanel-to-build-a-culture-of-experimentation-enabling-data-driven-growth/",
+        "https://mixpanel.com/customers/how-neon-transformed-product-development-with-1400-experiments-leading-to-a-168-increase-in-revenue/",
+        "https://mixpanel.com/customers/how-sprout-social-achieved-faster-time-to-insight-accelerating-product-development-with-mixpanel/",
+        "https://mixpanel.com/customers/how-xmind-increased-conversion-by-5x-and-streamlined-user-insights-with-mixpanel/",
+        "https://mixpanel.com/customers/how-firstcry-uses-mixpanel-to-optimize-user-engagement-and-drive-business-growth/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 10,
+      "pages_with_hreflang": 5,
+      "annotations": 25,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://mixpanel.com/home/",
+          "annotations": 5
+        },
+        {
+          "url": "https://mixpanel.com/teams/product-teams/",
+          "annotations": 5
+        },
+        {
+          "url": "https://mixpanel.com/platform/experiments/",
+          "annotations": 5
+        },
+        {
+          "url": "https://mixpanel.com/ai/mcp",
+          "annotations": 5
+        },
+        {
+          "url": "https://mixpanel.com/ai/agents",
+          "annotations": 5
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 15,
+      "not_read": 0
+    }
+  }
+}

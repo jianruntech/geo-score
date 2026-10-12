@@ -1,0 +1,1 @@
+could not fetch https://www.prototypejs.org (tls): the TLS handshake with www.prototypejs.org failed: its certificate is invalid, expired or for another name, or something between here and the site interferes with HTTPS; see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#tls-the-https-handshake-failed

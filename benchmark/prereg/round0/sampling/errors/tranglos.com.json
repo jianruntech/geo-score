@@ -1,0 +1,1 @@
+{"error": {"kind": "no_content", "message": "could not fetch https://www.tranglos.com (no_content): www.tranglos.com answered with an empty page; see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#no_content-the-page-came-back-empty", "target": "https://www.tranglos.com"}, "tool": "geo-score-cli/1.8.1"}

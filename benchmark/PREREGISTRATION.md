@@ -352,6 +352,31 @@ questions, configs, analysis code and VM scripts are in [prereg/round0/](prereg/
    figure depends on the sites drawn, so it is added by a further amendment once the sample is drawn and before the
    first answer is collected.
 
+### 2026-10-12: round 0's frozen sample and its power
+
+Written after the sampling run and the draw, before any answer was collected, and registered by the first tagged
+release that contains it, published before wave 0 starts. The frozen sample is
+[prereg/round0/sample.json](prereg/round0/sample.json), with the sampling run's reports and errors under
+[prereg/round0/sampling/](prereg/round0/sampling/).
+
+1. **Sampling run (section 5.2).** The frozen CLI, geo-score 1.8.1 (tag `v1.8.1`, the release that registered the
+   2026-10-12 amendment above), scored each of the 272 remaining candidates once on 2026-10-12, one site at a time and
+   30 seconds apart, from a Vercel Sandbox in iad1 (US East). 230 were scored; 42 could not be, each with its reason
+   recorded.
+2. **Draw (sections 5.3–5.4).** Strata use the rubric's band edges; up to two sites per stratum per category, drawn
+   with the seeds recorded in `sample.json`. 16 categories kept 4 to 6 sites each, 83 sites in all. Four were dropped
+   because fewer than four sites or a single stratum remained after the thin-sample and unscorable exclusions:
+   ai-video-generators, web-analytics, container-shipping-lines and us-airlines. 16 is within the 18-category cap set
+   for the Gemini quota, so no category was cut by draw, and above the 12-category minimum.
+3. **Collection schedule (section 7).** Day 1: large-language-models, vector-databases, cloud-infrastructure,
+   javascript-web-frameworks, ecommerce-platforms, crm-software. Day 2: online-payment-providers, buy-now-pay-later,
+   online-course-platforms, language-learning, management-consulting, project-management-software. Day 3:
+   note-taking-apps, 3d-printers, accounting-software, online-marketplaces. That is 16 × 10 questions × 2 engines × 8
+   runs = 2,560 answers, at most 480 Gemini answers on any day. The Tranco list is `4672X`.
+4. **Power (section 11).** `analysis.py power --round benchmark/prereg/round0`, simulating this frozen sample, gives
+   **0.289** as the smallest mean T detected with 80% power at α = 0.05. A null result in wave 0 is read against it:
+   an association weaker than that could exist and go undetected.
+
 ## Sources
 
 | Source | Used for |

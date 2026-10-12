@@ -1,0 +1,360 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 5.9,
+  "target": "https://dolibarr.org",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://dolibarr.org/",
+    "https://dolibarr.org/forum.php",
+    "https://dolibarr.org/index.php",
+    "https://dolibarr.org/downloads.php",
+    "https://dolibarr.org/resources.php",
+    "https://dolibarr.org/onlinedemo.php",
+    "https://dolibarr.org/git-sources.php",
+    "https://dolibarr.org/bugs-manager.php"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 48,
+  "observable_max": 83,
+  "normalised": 58,
+  "band": "Growing",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (215 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.dolibarr.org/sitemap.xml»): HTTP 200, 557 <loc>, 557 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (2 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "unobservable",
+      "reason": "No nested pages in the sample — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: There are several official forums for Dolibarr ERP and CRM, depending on the language. Eac…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "2 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: about half do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "19 figures on 1 pages; 15 attributed in the same block or the next, 15 of them with a link. Of the 1 pages carrying three or more, 1 attribute most of theirs, 1 with a link.",
+      "tier_reason": "tier 4 of 4 — top tier: most are attributed and the source is clickable and checkable",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Brand read as «site text: Association Dolibarr» (also tried «site text: Dolibarr Open Source ERP and CRM», «site text: Web suite for business»). No entity whose label matches exactly, in Wikidata or Wikipedia (en); 6 of 6 lookups answered.",
+      "tier_reason": "tier 1 of 2 — tier 2 (+4) needs: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "6 sameAs declared; of the first 6, 4 resolve, 1 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 11 channel links and 6 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "4 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 202,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 8,
+      "home_links": 53,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 19,
+      "unlinked_sitemap_urls": [
+        "https://www.dolibarr.org/fr/Facturationelectronique2026toutcomprendre.php",
+        "https://www.dolibarr.org/partners.php",
+        "https://www.dolibarr.org/fr/dolibarr-sinvite-a-la-chaux-de-fonds-pour-un-dolidej-convivial.php",
+        "https://www.dolibarr.org/fr/prestalidaire-dolibarr-preferred-partner-au-village-partenaires-du-gros-evenement-cpme25.php",
+        "https://www.dolibarr.org/fr/dolibarr-et-la-loi-de-finance-2025.php",
+        "https://www.dolibarr.org/partner.php",
+        "https://www.dolibarr.org/feedback-of-the-devcamp-nancy-2024.php",
+        "https://www.dolibarr.org/feedback-of-the-devcamp_angouleme-2025_whats-new-in-v23.php",
+        "https://www.dolibarr.org/fr/dolidej-a-pontarlier-deux-rendez-vous-pour-decouvrir-dolibarr-autour-dun-cafe.php",
+        "https://www.dolibarr.org/fr/trombinoscope-du-devcamp-de-noisy-le-grand-2026.php",
+        "https://www.dolibarr.org/dolibarr-was-presented-at-kigali.php",
+        "https://www.dolibarr.org/last-stable-version.php",
+        "https://www.dolibarr.org/certifications.php",
+        "https://www.dolibarr.org/dolibarr-24-beta-freeze.php",
+        "https://www.dolibarr.org/search.php",
+        "https://www.dolibarr.org/dolibarr-devcamp-spring-2026-noisy-le-grand.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v23-has-been-released.php",
+        "https://www.dolibarr.org/fr/v18ltsactivity2025.php",
+        "https://www.dolibarr.org/fr/form-download-engagement-certification-dolibarr.php",
+        "https://www.dolibarr.org/dolibarr-at-the-fosdem-2026-in-bruxelles-saturday-30th-january_sunday-1-february.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v2204-maintenance-release-for-branch-220-is-available.php",
+        "https://www.dolibarr.org/fr/dolibarr-at-the-salon-solutions-2025-in-paris_partners.php",
+        "https://www.dolibarr.org/fr/une-contribution-sur-dolistore_.php",
+        "https://www.dolibarr.org/dolibarr-23-beta-freeze.php",
+        "https://www.dolibarr.org/onlinecheckarchive.php",
+        "https://www.dolibarr.org/dolibarr-devcamp-winter-2025-angouleme.php",
+        "https://www.dolibarr.org/fr/salon-solutions.php",
+        "https://www.dolibarr.org/dolibarr-salon-solutions-erp-2023.php",
+        "https://www.dolibarr.org/fr/dolibarr-at-the-salon-solutions-2025-in-paris-october.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v1808-maintenance-release-for-branch-180-is-available.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v1807-maintenance-release-for-branch-180-is-available.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v2202-maintenance-release-for-branch-220-is-available.php",
+        "https://www.dolibarr.org/knowledge.php",
+        "https://www.dolibarr.org/the-dolibarr-association.php",
+        "https://www.dolibarr.org/fr/dolibarr-et-la-loi-de-finance-2016.php",
+        "https://www.dolibarr.org/branch-for-dolibarr-v22-beta-has-been-created.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v22-has-been-released.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v21-has-been-released.php",
+        "https://www.dolibarr.org/dolibarr-on-new-social-networks.php",
+        "https://www.dolibarr.org/branch-for-dolibarr-v20-beta-has-been-created-the-branch-develop-is-now-open-to-developers-for-new-features.php",
+        "https://www.dolibarr.org/feedback-of-the-summer-devcamp_valence-2025_whats-new-in-v22.php",
+        "https://www.dolibarr.org/dolibarr-22-beta-freeze.php",
+        "https://www.dolibarr.org/dolibarr-devcamp-spring-2025-valence.php",
+        "https://www.dolibarr.org/fr/nouveau-processus-de-traduction.php",
+        "https://www.dolibarr.org/new-translations-process-using-transifex.php",
+        "https://www.dolibarr.org/fr/quelles-sont-les-dernieres-attentes-de-la-communaute-dolibarr.php",
+        "https://www.dolibarr.org/fr/dolibarr-day-a-bayonne-le-04-avril-2025.php",
+        "https://www.dolibarr.org/dolibarr-erp-crm-v2004-maintenance-release-for-branch-200-is-available.php",
+        "https://www.dolibarr.org/fr/retour-du-devcamp-dolibarr-de-nantes.php",
+        "https://www.dolibarr.org/dolibarr-devcamp-summer-montpellier-2024.php"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 8,
+      "pages_with_hreflang": 6,
+      "annotations": 6,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.dolibarr.org/forum.php",
+          "annotations": 1
+        },
+        {
+          "url": "https://www.dolibarr.org/downloads.php",
+          "annotations": 1
+        },
+        {
+          "url": "https://www.dolibarr.org/resources.php",
+          "annotations": 1
+        },
+        {
+          "url": "https://www.dolibarr.org/onlinedemo.php",
+          "annotations": 1
+        },
+        {
+          "url": "https://www.dolibarr.org/git-sources.php",
+          "annotations": 1
+        },
+        {
+          "url": "https://www.dolibarr.org/bugs-manager.php",
+          "annotations": 1
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

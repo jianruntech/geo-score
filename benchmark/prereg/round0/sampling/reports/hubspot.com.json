@@ -1,0 +1,407 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 5.3,
+  "target": "https://hubspot.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://hubspot.com/"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 65,
+  "observable_max": 83,
+  "normalised": 78,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (12606 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 1 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "1 of 1 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap at the conventional path («site text: https://www.hubspot.com/sitemap.xml»): HTTP 200, 3071 <loc>, 3071 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 35564 bytes, 29 '##' sections, 27 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "Organization + WebSite on 1 of 1 pages; logo resolves (HTTP 200); 7 sameAs declared.",
+      "tier_reason": "tier 4 of 4 — top tier: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "unobservable",
+      "reason": "No nested pages in the sample — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 1 of 1 sampled pages; 1 of them with real field values.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "1 of 1 pages open with a self-contained passage of 25–120 words. e.g. «site text: HubSpot brings together your teams, tools, AI, and customer data on the same platform, so…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "1 of 1 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 1 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "9 figures on 1 pages; 1 attributed in the same block or the next, 0 of them with a link. Of the 1 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 1 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: HubSpot» (also tried «site text: Homepage», «site text: Software & Tools for your Business»). Entity found — Wikidata Q5926631 «site text: American marketing software company»; en.wikipedia: «site text: HubSpot»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "7 sameAs declared; of the first 7, 6 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 1 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "1 of 1 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Sampled 1 of the 8 pages asked for: no more were found (sample source: sitemap)."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 201,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 6,
+      "home_links": 77,
+      "few_home_links": false,
+      "other_sampled": 0,
+      "home_links_to_sampled": 0,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 3,
+      "unlinked_sitemap_urls": [
+        "https://www.hubspot.com/company-news/hubspots-inbound-2013-conference-kicks-off-today-in-downtown-boston",
+        "https://www.hubspot.com/blog/bid/12490/hubspot-unveils-social-mobile-innovation-at-q2-customer-event",
+        "https://www.hubspot.com/blog/bid/31882/hubspot-launches-new-conversion-assists-report",
+        "https://www.hubspot.com/company/board-of-directors/mike-berry",
+        "https://www.hubspot.com/company/management/rajkumari-neogy",
+        "https://www.hubspot.com/blog/bid/5284/hubspot-authors-create-book-grader-to-track-success-of-inbound-marketing-book",
+        "https://www.hubspot.com/careers-blog/campus-to-career-caroline-fernandes",
+        "https://www.hubspot.com/glossary/opportunity-management",
+        "https://www.hubspot.com/company-news/adarsh-noronha-sales-director-india",
+        "https://www.hubspot.com/blog/bid/34205/hubspot-continues-rapid-trajectory-with-82-revenue-growth",
+        "https://www.hubspot.com/company/advisory-board/mamobo-ogoro",
+        "https://www.hubspot.com/case-studies/nuvei-streamlines-its-digital-campaigns-and-improves-reporting",
+        "https://www.hubspot.com/company-news/hubspot-named-a-leader-in-the-2025-gartner-magic-quadrant",
+        "https://www.hubspot.com/company-news/hubspot-receives-top-honors-at-the-masstlc-leadership-awards-gala",
+        "https://www.hubspot.com/blog/bid/6480/agenda-published-for-hug-2010-packed-inbound-marketing-agenda",
+        "https://www.hubspot.com/services/onboarding/customer-platform",
+        "https://www.hubspot.com/blog/bid/33500/hubspot-launches-workflows-a-powerful-way-to-nurture-manage-your-marketing-database",
+        "https://www.hubspot.com/case-studies/sendle",
+        "https://www.hubspot.com/blog/bid/18569/hubspot-customers-also-winning-awards",
+        "https://www.hubspot.com/case-studies/apm-property-management-apm",
+        "https://www.hubspot.com/startups/team/caragh-kennedy",
+        "https://www.hubspot.com/careers-blog/day-in-the-life-kennedy-singleton-marketing-intern",
+        "https://www.hubspot.com/case-studies/the-linux-foundation",
+        "https://www.hubspot.com/company-news/meet-unbound",
+        "https://www.hubspot.com/glossary/sales-development-representative",
+        "https://www.hubspot.com/services/professional/technical-consulting/partner-technical-accelerator",
+        "https://www.hubspot.com/products/marketing/aeo",
+        "https://www.hubspot.com/startups/the-startup-growth-playbook",
+        "https://www.hubspot.com/company-news/hubspot-introduces-conversation-intelligence",
+        "https://www.hubspot.com/sales-hub-for-consumer-goods",
+        "https://www.hubspot.com/company-news/theres-a-social-evolution-happening-in-latam-according-to-hubspots-state-of-inbound-2016-report",
+        "https://www.hubspot.com/company/advisory-board/claire-hughes-johnson",
+        "https://www.hubspot.com/technology-partner-case-studies/aircall",
+        "https://www.hubspot.com/spotlight/spring2026/scale-support",
+        "https://www.hubspot.com/blog/bid/16943/hubspot-acquires-marketing-automation-company-performable",
+        "https://www.hubspot.com/careers-blog/stigma-in-support",
+        "https://www.hubspot.com/blog/bid/4126/hubspot-named-as-finalist-for-the-2008-mitx-technology-awards",
+        "https://www.hubspot.com/company-news/hubspot-releases-the-state-of-platforms-report",
+        "https://www.hubspot.com/careers-blog/5-simple-ways-to-de-stress-at-work",
+        "https://www.hubspot.com/company/board-of-directors/dharmesh-shah",
+        "https://www.hubspot.com/company-news/hubspot-ranks-1-in-venturebeat-marketing-automation-index",
+        "https://www.hubspot.com/careers-blog/relocating-for-a-job-the-ultimate-moving-checklist",
+        "https://www.hubspot.com/company-news/hubspot-named-one-of-bostons-best-places-to-work-by-boston-business-journal",
+        "https://www.hubspot.com/careers-blog/3-reasons-why-starting-at-the-bottom-is-the-catalyst-to-getting-to-the-top",
+        "https://www.hubspot.com/careers-blog/first-week-new-job-tips",
+        "https://www.hubspot.com/careers/marketing/jobs",
+        "https://www.hubspot.com/careers-blog/5-ways-to-stay-competitive-without-a-summer-internship",
+        "https://www.hubspot.com/marketing-hub-for-healthcare",
+        "https://www.hubspot.com/increase-conversion-rates-for-healthcare",
+        "https://www.hubspot.com/company-news/the-state-and-future-of-inbound-2016-finds-a-socially-connected-and-aligned-inbound-world"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 6,
+      "pages_with_hreflang": 3,
+      "annotations": 21,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.hubspot.com/",
+          "annotations": 7
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "annotations": 7
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "annotations": 7
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 16,
+      "other_host_hrefs": [
+        {
+          "url": "https://www.hubspot.com/",
+          "href": "https://www.hubspot.es/"
+        },
+        {
+          "url": "https://www.hubspot.com/",
+          "href": "https://www.hubspot.fr/"
+        },
+        {
+          "url": "https://www.hubspot.com/",
+          "href": "https://www.hubspot.de/"
+        },
+        {
+          "url": "https://www.hubspot.com/",
+          "href": "https://www.hubspot.jp/"
+        },
+        {
+          "url": "https://www.hubspot.com/",
+          "href": "https://br.hubspot.com/"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://blog.hubspot.com/marketing"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://blog.hubspot.es/marketing"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://blog.hubspot.fr/marketing"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://blog.hubspot.de/marketing"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://blog.hubspot.jp/marketing"
+        },
+        {
+          "url": "https://blog.hubspot.com/marketing",
+          "href": "https://br.hubspot.com/blog/marketing"
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "href": "https://www.hubspot.es/resources"
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "href": "https://www.hubspot.fr/resources"
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "href": "https://www.hubspot.de/resources"
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "href": "https://www.hubspot.jp/resources"
+        },
+        {
+          "url": "https://www.hubspot.com/resources",
+          "href": "https://br.hubspot.com/resources"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 15,
+      "not_read": 0
+    }
+  }
+}

@@ -1,0 +1,580 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 7.6,
+  "target": "https://acumatica.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://acumatica.com/",
+    "https://acumatica.com/partners/services",
+    "https://acumatica.com/cloud-erp-software/product-editions",
+    "https://acumatica.com/cloud-erp-software/retail-management/point-of-sale",
+    "https://acumatica.com/partners/isv",
+    "https://acumatica.com/partners/var",
+    "https://acumatica.com/industries/retail",
+    "https://acumatica.com/apex/construction"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 54,
+  "observable_max": 86,
+  "normalised": 63,
+  "band": "Growing",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (2376 bytes, 3 user-agents named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.acumatica.com/post-sitemap.xml»): HTTP 200, 469 <loc>, 469 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (1 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 1 of 8 sampled pages; 1 of them with real field values.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "1 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Acumatica Cloud ERP offers an award-winning, user-friendly interface that’s easy to naviga…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "5 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a date a reader or a crawler can see; 5 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "14 figures on 4 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Acumatica» (also tried «site text: Acumatica, Inc.», «site text: Acumatica Cloud ERP»). Entity found — Wikidata Q2823803 «site text: cloud business management software compa…»; en.wikipedia: «site text: Acumatica»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "4 sameAs declared; of the first 4, 3 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "2 pages declare VideoObject; 9 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 3 of 3 — top tier: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "6 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 12,
+      "home_links": 101,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 2,
+      "unlinked_sitemap_urls": [
+        "https://www.acumatica.com/blog/achieving-sustainability/",
+        "https://www.acumatica.com/blog/competitor-misinformation-response/",
+        "https://www.acumatica.com/blog/technical-tuesday-printing-shipping-labels-using-acumatica/",
+        "https://www.acumatica.com/blog/acumatica-summit-2024-the-virtual-experience/",
+        "https://www.acumatica.com/blog/acumatica-summit-2024-the-social-event-lineup/",
+        "https://www.acumatica.com/blog/join-acumatica-acuconnect-2024/",
+        "https://www.acumatica.com/blog/adding-custom-actions-folders/",
+        "https://www.acumatica.com/blog/imts-2024-recap/",
+        "https://www.acumatica.com/blog/3-reasons-you-should-attend-acumatica-summit-2025/",
+        "https://www.acumatica.com/blog/acumatica-summit-2025-partner-experience/",
+        "https://www.acumatica.com/blog/acumatica-2024-r2-construction/",
+        "https://www.acumatica.com/blog/technical-tuesday-using-hidden-folders-to-manage-access-rights/",
+        "https://www.acumatica.com/blog/acumatica-2024-r2-what-it-means-for-distribution/",
+        "https://www.acumatica.com/blog/acumatica-summit-helping-distributors-manage-industry-changes/",
+        "https://www.acumatica.com/blog/acumatica-summit-2024-know-before-you-go/",
+        "https://www.acumatica.com/blog/acumatica-2023-r2-intelligent-technology/",
+        "https://www.acumatica.com/blog/using-the-endpoint-model-generator-tool-for-rest-api-client/",
+        "https://www.acumatica.com/blog/from-basic-accounting-to-erp/",
+        "https://www.acumatica.com/blog/acumatica-counter-sales-with-pos/",
+        "https://www.acumatica.com/blog/business-management-solutions-for-the-flexible-workforce/",
+        "https://www.acumatica.com/blog/acumaticas-powerful-add-on-enhancements/",
+        "https://www.acumatica.com/blog/quality-assurance-and-regulatory-compliance-with-acumatica-and-eworkplace-apps/",
+        "https://www.acumatica.com/blog/metrics-for-manufacturers/",
+        "https://www.acumatica.com/blog/report-designer-tips-tricks-part-2/",
+        "https://www.acumatica.com/blog/technical-tuesday-moving-dashboards-between-deployments/",
+        "https://www.acumatica.com/blog/acumatica-3g-pacejet-retail-compliance/",
+        "https://www.acumatica.com/blog/introducing-acumaticas-new-directed-paperless-picking/",
+        "https://www.acumatica.com/blog/acumatica-2024-r1-benefits-businesses-developers/",
+        "https://www.acumatica.com/blog/acumatica-2024-r1/",
+        "https://www.acumatica.com/blog/configure-to-order-cto/",
+        "https://www.acumatica.com/blog/earth-day-2024-commitment-to-sustainability/",
+        "https://www.acumatica.com/blog/editing-acumatica-portal-home-page/",
+        "https://www.acumatica.com/blog/manufacturing-materials-shortage/",
+        "https://www.acumatica.com/blog/modular-construction/",
+        "https://www.acumatica.com/blog/shoptalk-2024-acumatica-is-ready-to-talk-shop-with-retailers/",
+        "https://www.acumatica.com/blog/acumatica-customization-theming-white-labeling/",
+        "https://www.acumatica.com/blog/4th-annual-acuconnect-virtual-conference/",
+        "https://www.acumatica.com/blog/technical-tuesday-changing-field-labels-in-acumatica/",
+        "https://www.acumatica.com/blog/smart-supply-chain-strategies-for-smbs/",
+        "https://www.acumatica.com/blog/acumatica-summit-2024-building-construction-schedule/",
+        "https://www.acumatica.com/blog/27-acumatica-vars-make-bob-scotts-latest-var-stars-list/",
+        "https://www.acumatica.com/blog/acumatica-2024-r2-manufacturers/",
+        "https://www.acumatica.com/blog/acumatica-2024-r1-2/",
+        "https://www.acumatica.com/blog/the-acumatica-difference-customize-the-system-to-fit-your-business/",
+        "https://www.acumatica.com/blog/configuration-of-the-device-hub/",
+        "https://www.acumatica.com/blog/women-in-tech-career-advancement/",
+        "https://www.acumatica.com/blog/acumatica-customer-spotlight-portacool-polywood/",
+        "https://www.acumatica.com/blog/acumatica-masters-implementers-workshop-september/",
+        "https://www.acumatica.com/blog/acumatica-master-implementers-program/",
+        "https://www.acumatica.com/blog/report-designer-tips-tricks-part-1/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 12,
+      "pages_with_hreflang": 12,
+      "annotations": 72,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.acumatica.com/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/partners/services/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/retail-management/point-of-sale/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/partners/isv/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/partners/var/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/industries/retail/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/apex/construction/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/blog/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/corporate-newsroom/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/resources/articles/",
+          "annotations": 6
+        },
+        {
+          "url": "https://www.acumatica.com/resources/",
+          "annotations": 6
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 48,
+      "other_host_hrefs": [
+        {
+          "url": "https://www.acumatica.com/",
+          "href": "https://fr-ca.acumatica.com/"
+        },
+        {
+          "url": "https://www.acumatica.com/",
+          "href": "https://fr.acumatica.com/"
+        },
+        {
+          "url": "https://www.acumatica.com/",
+          "href": "https://es.acumatica.com/"
+        },
+        {
+          "url": "https://www.acumatica.com/",
+          "href": "https://en-gb.acumatica.com/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/services/",
+          "href": "https://fr-ca.acumatica.com/partners/services/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/services/",
+          "href": "https://fr.acumatica.com/partners/services/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/services/",
+          "href": "https://es.acumatica.com/partners/services/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/services/",
+          "href": "https://en-gb.acumatica.com/partners/services/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+          "href": "https://fr-ca.acumatica.com/cloud-erp-software/product-editions/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+          "href": "https://fr.acumatica.com/cloud-erp-software/product-editions/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+          "href": "https://es.acumatica.com/cloud-erp-software/product-editions/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+          "href": "https://en-gb.acumatica.com/cloud-erp-software/product-editions/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/retail-management/point-of-sale/",
+          "href": "https://fr-ca.acumatica.com/cloud-erp-software/retail-management/point-of-sale/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/retail-management/point-of-sale/",
+          "href": "https://fr.acumatica.com/cloud-erp-software/retail-management/point-of-sale/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/retail-management/point-of-sale/",
+          "href": "https://es.acumatica.com/cloud-erp-software/retail-management/point-of-sale/"
+        },
+        {
+          "url": "https://www.acumatica.com/cloud-erp-software/retail-management/point-of-sale/",
+          "href": "https://en-gb.acumatica.com/cloud-erp-software/retail-management/point-of-sale/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/isv/",
+          "href": "https://fr-ca.acumatica.com/partners/isv/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/isv/",
+          "href": "https://fr.acumatica.com/partners/isv/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/isv/",
+          "href": "https://es.acumatica.com/partners/isv/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/isv/",
+          "href": "https://en-gb.acumatica.com/partners/isv/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/var/",
+          "href": "https://fr-ca.acumatica.com/partners/var/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/var/",
+          "href": "https://fr.acumatica.com/partners/var/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/var/",
+          "href": "https://es.acumatica.com/partners/var/"
+        },
+        {
+          "url": "https://www.acumatica.com/partners/var/",
+          "href": "https://en-gb.acumatica.com/partners/var/"
+        },
+        {
+          "url": "https://www.acumatica.com/industries/retail/",
+          "href": "https://fr-ca.acumatica.com/industries/retail/"
+        },
+        {
+          "url": "https://www.acumatica.com/industries/retail/",
+          "href": "https://fr.acumatica.com/industries/retail/"
+        },
+        {
+          "url": "https://www.acumatica.com/industries/retail/",
+          "href": "https://es.acumatica.com/industries/retail/"
+        },
+        {
+          "url": "https://www.acumatica.com/industries/retail/",
+          "href": "https://en-gb.acumatica.com/industries/retail/"
+        },
+        {
+          "url": "https://www.acumatica.com/apex/construction/",
+          "href": "https://fr-ca.acumatica.com/apex/construction/"
+        },
+        {
+          "url": "https://www.acumatica.com/apex/construction/",
+          "href": "https://fr.acumatica.com/apex/construction/"
+        },
+        {
+          "url": "https://www.acumatica.com/apex/construction/",
+          "href": "https://es.acumatica.com/apex/construction/"
+        },
+        {
+          "url": "https://www.acumatica.com/apex/construction/",
+          "href": "https://en-gb.acumatica.com/apex/construction/"
+        },
+        {
+          "url": "https://www.acumatica.com/blog/",
+          "href": "https://fr-ca.acumatica.com/blog/"
+        },
+        {
+          "url": "https://www.acumatica.com/blog/",
+          "href": "https://fr.acumatica.com/blog/"
+        },
+        {
+          "url": "https://www.acumatica.com/blog/",
+          "href": "https://es.acumatica.com/blog/"
+        },
+        {
+          "url": "https://www.acumatica.com/blog/",
+          "href": "https://en-gb.acumatica.com/blog/"
+        },
+        {
+          "url": "https://www.acumatica.com/corporate-newsroom/",
+          "href": "https://fr-ca.acumatica.com/corporate-newsroom/"
+        },
+        {
+          "url": "https://www.acumatica.com/corporate-newsroom/",
+          "href": "https://fr.acumatica.com/corporate-newsroom/"
+        },
+        {
+          "url": "https://www.acumatica.com/corporate-newsroom/",
+          "href": "https://es.acumatica.com/corporate-newsroom/"
+        },
+        {
+          "url": "https://www.acumatica.com/corporate-newsroom/",
+          "href": "https://en-gb.acumatica.com/corporate-newsroom/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/articles/",
+          "href": "https://fr-ca.acumatica.com/resources/articles/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/articles/",
+          "href": "https://fr.acumatica.com/resources/articles/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/articles/",
+          "href": "https://es.acumatica.com/resources/articles/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/articles/",
+          "href": "https://en-gb.acumatica.com/resources/articles/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/",
+          "href": "https://fr-ca.acumatica.com/resources/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/",
+          "href": "https://fr.acumatica.com/resources/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/",
+          "href": "https://es.acumatica.com/resources/"
+        },
+        {
+          "url": "https://www.acumatica.com/resources/",
+          "href": "https://en-gb.acumatica.com/resources/"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 48,
+      "not_read": 0
+    }
+  }
+}

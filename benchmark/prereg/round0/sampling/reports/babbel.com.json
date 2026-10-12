@@ -1,0 +1,375 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 2.3,
+  "target": "https://www.babbel.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://www.babbel.com/legal/terms/groupplan",
+    "https://www.babbel.com/learn-spanish/grammar/verbs",
+    "https://www.babbel.com/learn-spanish/travel/shopping",
+    "https://www.babbel.com/learn-spanish/vocab-guide/home",
+    "https://www.babbel.com/learn-spanish/newcomer/spanish-x",
+    "https://www.babbel.com/learn-spanish/vocab-guide/career",
+    "https://www.babbel.com/learn-spanish/vocab-guide/numbers"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 65,
+  "observable_max": 83,
+  "normalised": 78,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (1657 bytes, 47 user-agents named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration. It also disallows GPTBot, ClaudeBot, Google-Extended, anthropic-ai, Bytespider, Meta-ExternalAgent (training crawlers / opt-out tokens, not scored).",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "7 of 7 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.babbel.com/sitemap-index.xml»): HTTP 200, 247 <loc>, 0 <lastmod>.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 42429 bytes, 10 '##' sections, 8 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 5,
+      "max": 6,
+      "evidence": "Organization + WebSite on 5 of 7 pages; no sameAs declared.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+1) needs: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 5 of 7 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 6 of 7 sampled pages; 6 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "7 of 7 pages open with a self-contained passage of 25–120 words. e.g. «site text: For the avoidance of doubt, the Babbel End User Terms and Clause 14 thereof shall apply to…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "6 of 7 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 7 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "11 figures on 2 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 2 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "1 of 7 pages carry a personal byline; 1 link that name to a verifiable identity page.",
+      "tier_reason": "tier 3 of 3 — top tier: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Babbel» (also tried «site text: Babbel GmbH», «site text: Group Plan»). Entity found — Wikidata Q264351 «site text: online language learning platform»; en.wikipedia: «site text: Babbel»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "unobservable",
+      "reason": "No sameAs declared on the Organization entity. The homepage, where this usually sits, could not be fetched this run, so this is not observed.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "6 of 7 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator.",
+    "Scored on 7 of 8 sampled pages; 1 returned an error, 0 were bot challenges."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 200,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 7,
+      "home_links": null,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": null,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 65,
+      "unlinked_sitemap_urls": [
+        "https://www.babbel.com/learn-spanish/beginner/chatgpt-learnning-spanish-pros-cons-alternatives",
+        "https://www.babbel.com/learn-spanish/beginner/babbel-vs-chatgpt-learning-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-lessons",
+        "https://www.babbel.com/learn-spanish/newcomer/group-learning-vs-individual",
+        "https://www.babbel.com/learn-spanish/newcomer/italian-vs-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/bad-bunny-god-bless-american-explanation",
+        "https://www.babbel.com/learn-spanish/beginner/mexican-vacation-cheat-sheet",
+        "https://www.babbel.com/learn-spanish/intermediate/terms-of-endearment-in-spanish",
+        "https://www.babbel.com/learn-spanish/advanced/who-is-learning-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-podcasts",
+        "https://www.babbel.com/learn-spanish/newcomer/spanish-family-vocabulary",
+        "https://www.babbel.com/learn-spanish/newcomer/goodbye-in-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-songs-for-learning",
+        "https://www.babbel.com/learn-spanish/upper-intermediate/spanish-insults",
+        "https://www.babbel.com/learn-spanish/intermediate/spanish-tongue-twisters",
+        "https://www.babbel.com/learn-spanish/advanced/dia-de-los-muertos",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-for-travel",
+        "https://www.babbel.com/learn-spanish/intermediate/spanish-adverbs",
+        "https://www.babbel.com/learn-spanish/intermediate/countries-and-nationalities-in-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/bebidas-en-espana",
+        "https://www.babbel.com/learn-spanish/newcomer/best-online-spanish-classes",
+        "https://www.babbel.com/learn-spanish/intermediate/love-in-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-false-cognates",
+        "https://www.babbel.com/learn-spanish/intermediate/spanish-movies",
+        "https://www.babbel.com/learn-spanish/intermediate/common-spanish-mistakes",
+        "https://www.babbel.com/learn-spanish/advanced/costa-rican-sayings",
+        "https://www.babbel.com/learn-spanish/advanced/spanish-language-history",
+        "https://www.babbel.com/learn-spanish/intermediate/hard-spanish-words-to-pronounce",
+        "https://www.babbel.com/learn-spanish/beginner/plaza-de-espana",
+        "https://www.babbel.com/learn-spanish/beginner/hobbies-in-spanish",
+        "https://www.babbel.com/learn-spanish/advanced/flamenco-vocabulary",
+        "https://www.babbel.com/learn-spanish/advanced/bolivia-spanish",
+        "https://www.babbel.com/learn-spanish/newcomer/spanish-emotions",
+        "https://www.babbel.com/learn-spanish/intermediate/spanish-prepositions",
+        "https://www.babbel.com/learn-spanish/newcomer/animals-in-spanish",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-question-mark",
+        "https://www.babbel.com/learn-spanish/real-world-spanish-video",
+        "https://www.babbel.com/learn-spanish/learn-spanish-before-your-vacation-video",
+        "https://www.babbel.com/learn-spanish/learn-spanish-fast-video",
+        "https://www.babbel.com/learn-spanish/advanced/latin-american-christmas-traditions",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-dictionary",
+        "https://www.babbel.com/learn-spanish/intermediate/phrases-spanish-speakers-never-use",
+        "https://www.babbel.com/learn-spanish/intermediate/spanish-grammatical-gender",
+        "https://www.babbel.com/learn-spanish/newcomer/spanish-food-vocabulary",
+        "https://www.babbel.com/learn-spanish/beginner/leyendas-del-norte-de-espana",
+        "https://www.babbel.com/learn-spanish/beginner/spanish-tu-vs-usted",
+        "https://www.babbel.com/learn-spanish/newcomer/how-to-learn-spanish-as-an-adult",
+        "https://www.babbel.com/learn-spanish/beginner/el-camino-de-santiago",
+        "https://www.babbel.com/learn-spanish/intermediate/vosotros-in-spanish",
+        "https://www.babbel.com/learn-spanish/advanced/books-about-mexico-city"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 7,
+      "pages_with_hreflang": 1,
+      "annotations": 9,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "annotations": 9
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 1,
+      "no_self_reference_pages": [
+        "https://www.babbel.com/legal/terms/groupplan"
+      ],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 8,
+      "other_host_hrefs": [
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://fr.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://it.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://pl.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://es.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://se.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://pt.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://de.babbel.com/terms/groupplan"
+        },
+        {
+          "url": "https://www.babbel.com/legal/terms/groupplan",
+          "href": "https://ua.babbel.com/terms/groupplan"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 9,
+      "not_read": 0
+    }
+  }
+}

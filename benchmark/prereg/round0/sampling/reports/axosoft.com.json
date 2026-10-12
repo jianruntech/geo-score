@@ -1,0 +1,335 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 51.3,
+  "target": "https://axosoft.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://axosoft.com/",
+    "https://axosoft.com/pricing",
+    "https://axosoft.com/contact",
+    "https://axosoft.com/privacy",
+    "https://axosoft.com/support",
+    "https://axosoft.com/dev-blog",
+    "https://axosoft.com/help-desk-wiki",
+    "https://axosoft.com/scrum-bug-tracking"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 31,
+  "observable_max": 83,
+  "normalised": 37,
+  "band": "Early",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (90 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "7 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap at the conventional path («site text: https://www.axosoft.com/sitemap.xml»): HTTP 200, 116 <loc>, 116 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt answered 200 with an HTML page (a catch-all route), not a text file.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "unobservable",
+      "reason": "No nested pages in the sample — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "2 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: It's easier to plan sprints efficiently when you use Axosoft Release Planner to view the c…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "3 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: about half do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: some pages carry a visible date or datePublished",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "9 figures on 4 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 2 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Brand read as «site text: Axosoft.com» (also tried «site text: Axosoft», «site text: Scrum Software»). No entity whose label matches exactly, in Wikidata or Wikipedia (en); 6 of 6 lookups answered.",
+      "tier_reason": "tier 1 of 2 — tier 2 (+4) needs: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 4 channel links and 4 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "5 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 117,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 14,
+      "home_links": 11,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 115,
+      "sitemap_urls_linked": 61,
+      "unlinked_sitemap_urls": [
+        "https://www.axosoft.com/auth",
+        "https://www.axosoft.com/axosoft-jira-comparison",
+        "https://www.axosoft.com/bug-tracking-guide",
+        "https://www.axosoft.com/buy",
+        "https://www.axosoft.com/careers",
+        "https://www.axosoft.com/careers/apply",
+        "https://www.axosoft.com/demo",
+        "https://www.axosoft.com/downloads/archive",
+        "https://www.axosoft.com/gdpr",
+        "https://www.axosoft.com/gkgame/",
+        "https://www.axosoft.com/jira-vs-axosoft",
+        "https://www.axosoft.com/lp-agile",
+        "https://www.axosoft.com/lp-gitkraken-promo",
+        "https://www.axosoft.com/lp-gitkraken",
+        "https://www.axosoft.com/lp-kanban",
+        "https://www.axosoft.com/lp-scrum-board",
+        "https://www.axosoft.com/lp-scrum",
+        "https://www.axosoft.com/lp-testuff-promo",
+        "https://www.axosoft.com/maintenance",
+        "https://www.axosoft.com/newsletter",
+        "https://www.axosoft.com/onboarding",
+        "https://www.axosoft.com/partners",
+        "https://www.axosoft.com/project-management",
+        "https://www.axosoft.com/resources/implementing-scrum-guide",
+        "https://www.axosoft.com/scrum-alliance",
+        "https://www.axosoft.com/scrum-guide",
+        "https://www.axosoft.com/scrum",
+        "https://www.axosoft.com/sponsorships",
+        "https://www.axosoft.com/status/slack-status",
+        "https://www.axosoft.com/students",
+        "https://www.axosoft.com/thank-you/buy",
+        "https://www.axosoft.com/thank-you/demo",
+        "https://www.axosoft.com/thank-you/gitkraken",
+        "https://www.axosoft.com/thank-you/newsletter",
+        "https://www.axosoft.com/thank-you/partners",
+        "https://www.axosoft.com/thank-you/students",
+        "https://www.axosoft.com/thank-you/try",
+        "https://www.axosoft.com/tour-old-two",
+        "https://www.axosoft.com/tour-old",
+        "https://www.axosoft.com/tour/customer-support",
+        "https://www.axosoft.com/tour/integrations",
+        "https://www.axosoft.com/tour/release-planning",
+        "https://www.axosoft.com/tour/reporting",
+        "https://www.axosoft.com/tour/team-collaboration",
+        "https://www.axosoft.com/tour/workflow",
+        "https://www.axosoft.com/trial",
+        "https://www.axosoft.com/try-free",
+        "https://www.axosoft.com/try-promo",
+        "https://www.axosoft.com/try",
+        "https://www.axosoft.com/why-axosoft"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 14,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

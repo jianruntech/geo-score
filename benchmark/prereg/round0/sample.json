@@ -1,0 +1,3616 @@
+{
+ "format": "geo-score/prereg-round0-sample.v1",
+ "plan": "benchmark/PREREGISTRATION.md",
+ "drawn_at": "2026-10-12T15:16:51Z",
+ "cli": [
+  "geo-score 1.8.1 (rubric v1.1)",
+  "tag v1.8.1",
+  "commit 622ae83ffd16d837c9a5039c475854f425559244",
+  "python 3.14.4",
+  "host Linux 6.18.49 x86_64",
+  "started 2026-10-12T11:54:26Z",
+  "finished 2026-10-12T15:15:44Z"
+ ],
+ "cli_version": "1.8.1",
+ "cli_tag": "v1.8.1",
+ "rubric": "v1.1",
+ "strata": {
+  "low": [
+   null,
+   51
+  ],
+  "mid": [
+   51,
+   66
+  ],
+  "high": [
+   66,
+   null
+  ]
+ },
+ "min_pages": 4,
+ "category_cut": null,
+ "results_not_read": "benchmark/results.json, benchmark/results.csv and benchmark/raw/ were not read to draw this sample; only the sampling run's reports were",
+ "status": "frozen",
+ "tranco": {
+  "list_id": "4672X",
+  "metadata": {
+   "list_id": "4672X",
+   "available": true,
+   "failed": false,
+   "download": "https://tranco-list.eu/download/4672X/1000000",
+   "created_on": "2026-10-11T22:00:02.355906",
+   "configuration": {
+    "combinationMethod": "dowdall",
+    "isDailyList": true,
+    "startDate": "2026-09-12",
+    "endDate": "2026-10-11",
+    "filterTLD": "false",
+    "providers": [
+     "crux",
+     "farsight",
+     "majestic",
+     "radar",
+     "umbrella"
+    ],
+    "filterPLD": "on",
+    "listPrefix": "1000000"
+   }
+  },
+  "unlisted_rank": 1000001
+ },
+ "engines": [
+  {
+   "id": "openai",
+   "provider": "openai",
+   "model": "gpt-5.6-luna",
+   "base_url": "https://openai-compatible.invalid/v1/responses",
+   "key_env": "OPENAI_COMPAT_API_KEY",
+   "timeout": 300
+  },
+  {
+   "id": "gemini",
+   "provider": "gemini",
+   "model": "gemini-2.5-flash",
+   "api": "generate_content",
+   "key_env": "GEMINI_API_KEY"
+  }
+ ],
+ "runs": 8,
+ "country": "US",
+ "openai_endpoint": "an OpenAI-compatible endpoint given at run time (OPENAI_COMPAT_BASE_URL); not api.openai.com",
+ "collection_schedule": {
+  "per_day": 6,
+  "days": [
+   [
+    "large-language-models",
+    "vector-databases",
+    "cloud-infrastructure",
+    "javascript-web-frameworks",
+    "ecommerce-platforms",
+    "crm-software"
+   ],
+   [
+    "online-payment-providers",
+    "buy-now-pay-later",
+    "online-course-platforms",
+    "language-learning",
+    "management-consulting",
+    "project-management-software"
+   ],
+   [
+    "note-taking-apps",
+    "3d-printers",
+    "accounting-software",
+    "online-marketplaces"
+   ]
+  ]
+ },
+ "categories": [
+  {
+   "id": "large-language-models",
+   "name": "Large language models",
+   "definition": "Large language models that people and businesses in the US use through an app or an API, and the companies that develop them.",
+   "eligible": 9,
+   "by_stratum": {
+    "low": 4,
+    "mid": 3,
+    "high": 2
+   },
+   "draw": {
+    "seed": 15403821538879225850,
+    "seed_from": "geo-score prereg round0 draw|large-language-models",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "alibabacloud.com",
+     "site": "alibabacloud.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "bloomberg.com",
+     "site": "bloomberg.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "meta.com",
+     "site": "meta.com",
+     "reason": "the CLI could not score it (http_400)"
+    },
+    {
+     "id": "openai.com",
+     "site": "openai.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "perplexity.ai",
+     "site": "perplexity.ai",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "stepfun.com",
+     "site": "stepfun.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "01.ai",
+     "site": "01.ai",
+     "name": "01.AI",
+     "aliases": [],
+     "domains": [
+      "01.ai"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://01.ai",
+     "sampling_score": 61,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 631211,
+     "tranco_listed": true
+    },
+    {
+     "id": "mistral.ai",
+     "site": "mistral.ai",
+     "name": "Mistral AI",
+     "aliases": [
+      "Mistral"
+     ],
+     "domains": [
+      "mistral.ai"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://mistral.ai",
+     "sampling_score": 81,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 6925,
+     "tranco_listed": true
+    },
+    {
+     "id": "navercorp.com",
+     "site": "navercorp.com",
+     "name": "Naver",
+     "aliases": [
+      "HyperCLOVA X",
+      "HyperCLOVA"
+     ],
+     "domains": [
+      "navercorp.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://navercorp.com",
+     "sampling_score": 47,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 10095,
+     "tranco_listed": true
+    },
+    {
+     "id": "sarvam.ai",
+     "site": "sarvam.ai",
+     "name": "Sarvam AI",
+     "aliases": [
+      "Sarvam"
+     ],
+     "domains": [
+      "sarvam.ai"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://sarvam.ai",
+     "sampling_score": 81,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 47496,
+     "tranco_listed": true
+    },
+    {
+     "id": "tii.ae",
+     "site": "tii.ae",
+     "name": "Technology Innovation Institute",
+     "aliases": [
+      "TII",
+      "Falcon LLM"
+     ],
+     "domains": [
+      "tii.ae"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://tii.ae",
+     "sampling_score": 55,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 213678,
+     "tranco_listed": true
+    },
+    {
+     "id": "x.ai",
+     "site": "x.ai",
+     "name": "xAI",
+     "aliases": [
+      "Grok"
+     ],
+     "domains": [
+      "x.ai"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://x.ai",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 4764,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best large language models for building a customer support chatbot?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which AI model APIs are most reliable for production applications right now?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "Which open-weight language models can a company run on its own servers?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our support team spends hours answering the same customer emails and I want software that can draft the replies automatically. What should I look at?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I need to summarize hundreds of long contracts every week without sending them to a provider that trains on our data. What are my options?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "What is the best AI model for a small law firm that wants help drafting documents?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "Which AI model API should a two-person startup use to add a writing assistant to its app?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does it cost to use a large language model API for about a million requests a month?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which AI chat assistants have a good free tier for everyday work?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "What are the leading AI labs building frontier language models today?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "280b1d3aed2293b42865118f6a54a6dc4be2b39586b93f69be1bd83b66cc9bf2",
+   "status": "kept",
+   "config": "sample/large-language-models/geo-score-watch.json"
+  },
+  {
+   "id": "vector-databases",
+   "name": "Vector databases",
+   "definition": "Databases that store and search vector embeddings, offered to developers and businesses in the US.",
+   "eligible": 13,
+   "by_stratum": {
+    "low": 3,
+    "mid": 1,
+    "high": 9
+   },
+   "draw": {
+    "seed": 17889628907062821881,
+    "seed_from": "geo-score prereg round0 draw|vector-databases",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "couchbase.com",
+     "site": "couchbase.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "datastax.com",
+     "site": "datastax.com",
+     "reason": "scored on 3 sampled pages, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "clickhouse.com",
+     "site": "clickhouse.com",
+     "name": "ClickHouse",
+     "aliases": [],
+     "domains": [
+      "clickhouse.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://clickhouse.com",
+     "sampling_score": 81,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 29679,
+     "tranco_listed": true
+    },
+    {
+     "id": "crate.io",
+     "site": "crate.io",
+     "name": "CrateDB",
+     "aliases": [],
+     "domains": [
+      "crate.io"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://crate.io",
+     "sampling_score": 48,
+     "sampling_pages": 7,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 481169,
+     "tranco_listed": true
+    },
+    {
+     "id": "llamaindex.ai",
+     "site": "llamaindex.ai",
+     "name": "LlamaIndex",
+     "aliases": [],
+     "domains": [
+      "llamaindex.ai"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://llamaindex.ai",
+     "sampling_score": 65,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 59890,
+     "tranco_listed": true
+    },
+    {
+     "id": "opensearch.org",
+     "site": "opensearch.org",
+     "name": "OpenSearch",
+     "aliases": [],
+     "domains": [
+      "opensearch.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://opensearch.org",
+     "sampling_score": 78,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 46638,
+     "tranco_listed": true
+    },
+    {
+     "id": "oracle.com",
+     "site": "oracle.com",
+     "name": "Oracle",
+     "aliases": [
+      "Oracle Database"
+     ],
+     "domains": [
+      "oracle.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Oracle' is a common English word (web2 headword 'oracle', rank 4125 in count_1w)"
+     ],
+     "sampling_url": "https://www.oracle.com",
+     "sampling_score": 40,
+     "sampling_pages": 7,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 208,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best vector databases for retrieval-augmented generation?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which databases support fast similarity search over embeddings?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the most popular open-source vector databases?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our semantic search over two million product descriptions has become slow. What database should we move the embeddings to?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I want to add vector search without running a separate database next to our main one. What options exist?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which vector database is best for a small startup building an AI chatbot over its documentation?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What vector database should an enterprise with strict compliance requirements choose?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does a managed vector database cost for about 10 million vectors?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which vector databases have a free tier for small projects?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which vector databases scale best to billions of embeddings?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "3ee936c70990d1fdabd2c6e6c20278793eb6a00fc01a4ee8f96beb11805afdf2",
+   "status": "kept",
+   "config": "sample/vector-databases/geo-score-watch.json"
+  },
+  {
+   "id": "cloud-infrastructure",
+   "name": "Cloud infrastructure",
+   "definition": "Public cloud infrastructure (virtual machines, storage and networking) that businesses in the US rent.",
+   "eligible": 8,
+   "by_stratum": {
+    "low": 2,
+    "mid": 4,
+    "high": 2
+   },
+   "draw": {
+    "seed": 1842987449063536987,
+    "seed_from": "geo-score prereg round0 draw|cloud-infrastructure",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "alibabacloud.com",
+     "site": "alibabacloud.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "atlantic.net",
+     "site": "atlantic.net",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "godaddy.com",
+     "site": "godaddy.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "ibm.com",
+     "site": "ibm.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "ovhcloud.com",
+     "site": "ovhcloud.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "digitalocean.com",
+     "site": "digitalocean.com",
+     "name": "DigitalOcean",
+     "aliases": [],
+     "domains": [
+      "digitalocean.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://digitalocean.com",
+     "sampling_score": 50,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 555,
+     "tranco_listed": true
+    },
+    {
+     "id": "google.com",
+     "site": "cloud.google.com",
+     "name": "Google",
+     "aliases": [
+      "Google Cloud",
+      "Google Cloud Platform",
+      "GCP"
+     ],
+     "domains": [
+      "google.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://cloud.google.com",
+     "sampling_score": 65,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 1,
+     "tranco_listed": true
+    },
+    {
+     "id": "hetzner.com",
+     "site": "hetzner.com",
+     "name": "Hetzner",
+     "aliases": [],
+     "domains": [
+      "hetzner.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://hetzner.com",
+     "sampling_score": 63,
+     "sampling_pages": 7,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 1995,
+     "tranco_listed": true
+    },
+    {
+     "id": "microsoft.com",
+     "site": "azure.microsoft.com",
+     "name": "Microsoft",
+     "aliases": [
+      "Microsoft Azure"
+     ],
+     "domains": [
+      "microsoft.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://azure.microsoft.com",
+     "sampling_score": 67,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 8,
+     "tranco_listed": true
+    },
+    {
+     "id": "oracle.com",
+     "site": "oracle.com",
+     "name": "Oracle",
+     "aliases": [
+      "Oracle Cloud",
+      "OCI"
+     ],
+     "domains": [
+      "oracle.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Oracle' is a common English word (web2 headword 'oracle', rank 4125 in count_1w)"
+     ],
+     "sampling_url": "https://www.oracle.com",
+     "sampling_score": 40,
+     "sampling_pages": 7,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 208,
+     "tranco_listed": true
+    },
+    {
+     "id": "scaleway.com",
+     "site": "scaleway.com",
+     "name": "Scaleway",
+     "aliases": [],
+     "domains": [
+      "scaleway.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://scaleway.com",
+     "sampling_score": 69,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 16418,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best cloud providers for hosting virtual machines?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which cloud infrastructure providers are the most reliable for a production web application?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are good alternatives to the three biggest cloud providers for a small company?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our cloud bill keeps growing and most of it is a few always-on virtual servers. Where can we run them for less?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "We need servers in both the US and Europe with predictable monthly pricing. Which providers should we compare?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which cloud provider is best for a solo developer who wants a simple virtual server?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What cloud platform should a mid-size healthcare company choose for HIPAA-compliant infrastructure?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does a cloud virtual machine with 4 CPUs and 16 GB of RAM cost per month?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which cloud providers offer a free tier or free credits for new accounts?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which cloud providers offer GPU servers for training machine learning models?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "c30c60b8d0bd7899eecdf1fb976126ea479270781268834dcc3a6d49440acaf7",
+   "status": "kept",
+   "config": "sample/cloud-infrastructure/geo-score-watch.json"
+  },
+  {
+   "id": "javascript-web-frameworks",
+   "name": "JavaScript web frameworks",
+   "definition": "JavaScript and TypeScript frameworks for building websites and web applications, which developers in the US choose for a project.",
+   "eligible": 13,
+   "by_stratum": {
+    "low": 6,
+    "mid": 4,
+    "high": 3
+   },
+   "draw": {
+    "seed": 16787554322400622771,
+    "seed_from": "geo-score prereg round0 draw|javascript-web-frameworks",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "enyojs.com",
+     "site": "enyojs.com",
+     "reason": "the CLI could not score it (tls)"
+    },
+    {
+     "id": "prototypejs.org",
+     "site": "prototypejs.org",
+     "reason": "the CLI could not score it (tls)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "astro.build",
+     "site": "astro.build",
+     "name": "Astro",
+     "aliases": [],
+     "domains": [
+      "astro.build"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://astro.build",
+     "sampling_score": 58,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 17545,
+     "tranco_listed": true
+    },
+    {
+     "id": "backbonejs.org",
+     "site": "backbonejs.org",
+     "name": "Backbone.js",
+     "aliases": [
+      "BackboneJS"
+     ],
+     "domains": [
+      "backbonejs.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://backbonejs.org",
+     "sampling_score": 35,
+     "sampling_pages": 6,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 121695,
+     "tranco_listed": true
+    },
+    {
+     "id": "dojo.io",
+     "site": "dojo.io",
+     "name": "Dojo",
+     "aliases": [
+      "Dojo Toolkit"
+     ],
+     "domains": [
+      "dojo.io"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://dojo.io",
+     "sampling_score": 53,
+     "sampling_pages": 7,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "sencha.com",
+     "site": "sencha.com",
+     "name": "Ext JS",
+     "aliases": [
+      "Sencha",
+      "ExtJS"
+     ],
+     "domains": [
+      "sencha.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://sencha.com",
+     "sampling_score": 78,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 40716,
+     "tranco_listed": true
+    },
+    {
+     "id": "nuxt.com",
+     "site": "nuxt.com",
+     "name": "Nuxt",
+     "aliases": [
+      "Nuxt.js"
+     ],
+     "domains": [
+      "nuxt.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://nuxt.com",
+     "sampling_score": 78,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 37242,
+     "tranco_listed": true
+    },
+    {
+     "id": "zkoss.org",
+     "site": "zkoss.org",
+     "name": "ZK Framework",
+     "aliases": [],
+     "domains": [
+      "zkoss.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://zkoss.org",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 237799,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best JavaScript frameworks for building a web application?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which front-end frameworks are most popular with web developers today?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best frameworks for building a fast content website with JavaScript?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our single-page app loads slowly and ranks poorly in search. Which framework would help us render pages on the server?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "We maintain an old web app full of hand-written DOM code and want to move to a modern framework. Where should we start?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which JavaScript framework is easiest for a beginner to learn?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What framework should a large enterprise team choose for a long-lived internal web application?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "Are there JavaScript frameworks with paid enterprise support or licenses?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which JavaScript frameworks have the best TypeScript support?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which full-stack JavaScript frameworks handle routing and data loading out of the box?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "5190e4b1b04a50cd6d4644bf2ac5d2630bd954c26dca6658a5b7eadb0d9e8412",
+   "status": "kept",
+   "config": "sample/javascript-web-frameworks/geo-score-watch.json"
+  },
+  {
+   "id": "ecommerce-platforms",
+   "name": "E-commerce platforms",
+   "definition": "Software and hosted platforms that merchants in the US use to run an online store.",
+   "eligible": 11,
+   "by_stratum": {
+    "low": 5,
+    "mid": 2,
+    "high": 4
+   },
+   "draw": {
+    "seed": 18220329962700767425,
+    "seed_from": "geo-score prereg round0 draw|ecommerce-platforms",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "bigcommerce.com",
+     "site": "bigcommerce.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "nopcommerce.com",
+     "site": "nopcommerce.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "opencart.com",
+     "site": "opencart.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "wix.com",
+     "site": "wix.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "pimcore.org",
+     "site": "pimcore.org",
+     "name": "Pimcore",
+     "aliases": [],
+     "domains": [
+      "pimcore.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://pimcore.org",
+     "sampling_score": 70,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 999755,
+     "tranco_listed": true
+    },
+    {
+     "id": "prestashop-project.org",
+     "site": "prestashop-project.org",
+     "name": "PrestaShop",
+     "aliases": [],
+     "domains": [
+      "prestashop-project.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://prestashop-project.org",
+     "sampling_score": 49,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 18463,
+     "tranco_listed": true
+    },
+    {
+     "id": "spreecommerce.org",
+     "site": "spreecommerce.org",
+     "name": "Spree Commerce",
+     "aliases": [],
+     "domains": [
+      "spreecommerce.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://spreecommerce.org",
+     "sampling_score": 71,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 747674,
+     "tranco_listed": true
+    },
+    {
+     "id": "supadupa.me",
+     "site": "supadupa.me",
+     "name": "SupaDupa",
+     "aliases": [],
+     "domains": [
+      "supadupa.me"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://supadupa.me",
+     "sampling_score": 55,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "virtuemart.net",
+     "site": "virtuemart.net",
+     "name": "VirtueMart",
+     "aliases": [],
+     "domains": [
+      "virtuemart.net"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://virtuemart.net",
+     "sampling_score": 63,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 153415,
+     "tranco_listed": true
+    },
+    {
+     "id": "zen-cart.com",
+     "site": "zen-cart.com",
+     "name": "Zen Cart",
+     "aliases": [],
+     "domains": [
+      "zen-cart.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://zen-cart.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 59499,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best e-commerce platforms for starting an online store?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which shopping cart software works best for a growing online business?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best open-source e-commerce platforms?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I sell handmade candles at local markets and want to start taking orders online. What should I use to build my store?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "Our online store crashes during holiday sales and the plugins keep conflicting. Which platform should we migrate to?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which e-commerce platform is best for a small clothing brand?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What e-commerce software should a B2B wholesaler with thousands of products use?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does it cost per month to run an online store on a hosted e-commerce platform?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which e-commerce platforms charge no transaction fees?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which e-commerce platforms are easiest to set up without a developer?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "dea2829f641220ec128cc1856d0940d357176e0efed97c7e6079d1ab668b6f02",
+   "status": "kept",
+   "config": "sample/ecommerce-platforms/geo-score-watch.json"
+  },
+  {
+   "id": "crm-software",
+   "name": "CRM software",
+   "definition": "Customer relationship management software that companies in the US use to manage contacts, deals and customer communication.",
+   "eligible": 10,
+   "by_stratum": {
+    "low": 0,
+    "mid": 7,
+    "high": 3
+   },
+   "draw": {
+    "seed": 12236120798839369602,
+    "seed_from": "geo-score prereg round0 draw|crm-software",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "adobe.com",
+     "site": "adobe.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "getbase.com",
+     "site": "getbase.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "hubspot.com",
+     "site": "hubspot.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "reallysimplesystems.com",
+     "site": "reallysimplesystems.com",
+     "reason": "the CLI could not score it (timeout)"
+    },
+    {
+     "id": "salesforce.com",
+     "site": "salesforce.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "adempiere.io",
+     "site": "adempiere.io",
+     "name": "ADempiere",
+     "aliases": [],
+     "domains": [
+      "adempiere.io"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://adempiere.io",
+     "sampling_score": 55,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "attio.com",
+     "site": "attio.com",
+     "name": "Attio",
+     "aliases": [],
+     "domains": [
+      "attio.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://attio.com",
+     "sampling_score": 66,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 56453,
+     "tranco_listed": true
+    },
+    {
+     "id": "pipedrive.com",
+     "site": "pipedrive.com",
+     "name": "Pipedrive",
+     "aliases": [],
+     "domains": [
+      "pipedrive.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://pipedrive.com",
+     "sampling_score": 86,
+     "sampling_pages": 4,
+     "sampling_gate_capped": false,
+     "sampling_band": "Leading",
+     "stratum": "high",
+     "tranco_rank": 10208,
+     "tranco_listed": true
+    },
+    {
+     "id": "suitecrm.com",
+     "site": "suitecrm.com",
+     "name": "SuiteCRM",
+     "aliases": [],
+     "domains": [
+      "suitecrm.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://suitecrm.com",
+     "sampling_score": 65,
+     "sampling_pages": 7,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 190946,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best CRM software for small businesses?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which CRM systems are easiest for a sales team to adopt?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best open-source CRM systems?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our sales reps track leads in spreadsheets and follow-ups keep slipping. What software would fix this?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "We lose track of which customers we emailed and what they bought. What tool should we use to keep it all in one place?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which CRM is best for a real estate agent?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What CRM should a B2B software startup with five salespeople choose?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does CRM software cost per user per month?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which CRM tools have a good free plan?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which CRM platforms are best for large enterprises?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "262e2425bb898bf9915cee6936eb464f4ec5916219e4db619570d8d62d1323bf",
+   "status": "kept",
+   "config": "sample/crm-software/geo-score-watch.json"
+  },
+  {
+   "id": "online-payment-providers",
+   "name": "Online payment providers",
+   "definition": "Services that let businesses in the US accept payments online.",
+   "eligible": 10,
+   "by_stratum": {
+    "low": 0,
+    "mid": 5,
+    "high": 5
+   },
+   "draw": {
+    "seed": 12801454730299666317,
+    "seed_from": "geo-score prereg round0 draw|online-payment-providers",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "creditcall.com",
+     "site": "creditcall.com",
+     "reason": "the CLI could not score it (timeout)"
+    },
+    {
+     "id": "heartlandpaymentsystems.com",
+     "site": "heartlandpaymentsystems.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "payoneer.com",
+     "site": "payoneer.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "playspan.com",
+     "site": "playspan.com",
+     "reason": "the CLI could not score it (dropped)"
+    },
+    {
+     "id": "wepay.com",
+     "site": "go.wepay.com",
+     "reason": "the CLI could not score it (dns)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "amazon.com",
+     "site": "pay.amazon.com",
+     "name": "Amazon",
+     "aliases": [
+      "Amazon Pay"
+     ],
+     "domains": [
+      "amazon.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://pay.amazon.com",
+     "sampling_score": 59,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 27,
+     "tranco_listed": true
+    },
+    {
+     "id": "apple.com",
+     "site": "apple.com",
+     "name": "Apple",
+     "aliases": [
+      "Apple Pay"
+     ],
+     "domains": [
+      "apple.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Apple' is a common English word (web2 headword 'apple', rank 1643 in count_1w)"
+     ],
+     "sampling_url": "https://apple.com",
+     "sampling_score": 67,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 9,
+     "tranco_listed": true
+    },
+    {
+     "id": "paymentwall.com",
+     "site": "paymentwall.com",
+     "name": "Paymentwall",
+     "aliases": [],
+     "domains": [
+      "paymentwall.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://paymentwall.com",
+     "sampling_score": 55,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 229270,
+     "tranco_listed": true
+    },
+    {
+     "id": "stripe.com",
+     "site": "stripe.com",
+     "name": "Stripe",
+     "aliases": [],
+     "domains": [
+      "stripe.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Stripe' is a common English word (web2 headword 'stripe', rank 11575 in count_1w)"
+     ],
+     "sampling_url": "https://stripe.com",
+     "sampling_score": 72,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 237,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best payment processors for an online business?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which payment gateways are best for accepting credit cards on a website?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "Which payment providers support international customers and multiple currencies?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our online store's payment provider keeps declining legitimate customer cards. Which providers should we consider switching to?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I run a subscription business and need recurring billing with automatic card retries. What payment provider should I use?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "What is the best way for a freelancer to accept card payments from clients online?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "Which payment processor is best for a high-volume marketplace that pays out to many sellers?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much do online payment processors charge per transaction?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which payment processors have the lowest fees for small businesses?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which payment providers let an online store accept digital wallets and cryptocurrency?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "f22626face8ce81c861b5850db80335361b8e2aba10888e269934af072235f39",
+   "status": "kept",
+   "config": "sample/online-payment-providers/geo-score-watch.json"
+  },
+  {
+   "id": "buy-now-pay-later",
+   "name": "Buy now, pay later",
+   "definition": "Services that let shoppers in the US split a purchase into installments at checkout.",
+   "eligible": 6,
+   "by_stratum": {
+    "low": 0,
+    "mid": 4,
+    "high": 2
+   },
+   "draw": {
+    "seed": 15483989503465468131,
+    "seed_from": "geo-score prereg round0 draw|buy-now-pay-later",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [],
+   "sites": [
+    {
+     "id": "apple.com",
+     "site": "apple.com",
+     "name": "Apple",
+     "aliases": [
+      "Apple Pay Later",
+      "Apple Pay"
+     ],
+     "domains": [
+      "apple.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Apple' is a common English word (web2 headword 'apple', rank 1643 in count_1w)"
+     ],
+     "sampling_url": "https://apple.com",
+     "sampling_score": 67,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 9,
+     "tranco_listed": true
+    },
+    {
+     "id": "klarna.com",
+     "site": "klarna.com",
+     "name": "Klarna",
+     "aliases": [],
+     "domains": [
+      "klarna.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://klarna.com",
+     "sampling_score": 55,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 2384,
+     "tranco_listed": true
+    },
+    {
+     "id": "paypal.com",
+     "site": "paypal.com",
+     "name": "PayPal",
+     "aliases": [
+      "PayPal Pay Later",
+      "PayPal Pay in 4"
+     ],
+     "domains": [
+      "paypal.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://paypal.com",
+     "sampling_score": 70,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 169,
+     "tranco_listed": true
+    },
+    {
+     "id": "sezzle.com",
+     "site": "sezzle.com",
+     "name": "Sezzle",
+     "aliases": [],
+     "domains": [
+      "sezzle.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://sezzle.com",
+     "sampling_score": 63,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 11766,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best buy now, pay later services for online shopping?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which buy now, pay later apps are accepted at the most stores?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "Which buy now, pay later providers can an online store offer at checkout?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I need a new laptop for school but can't pay the full price at once. Which installment payment services should I compare?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "Customers abandon carts on our furniture site because of the price. How can we let them pay over time?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which buy now, pay later service is best for someone trying to build credit?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What pay-over-time option is best for a small online boutique to offer its customers?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "Do buy now, pay later services charge interest or late fees?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "How much does it cost a merchant to offer buy now, pay later at checkout?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which buy now, pay later companies report payments to credit bureaus?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "6ecc50e247fbf019b7fcd7f04625e645f473426ee5749fc54792dcec647ac501",
+   "status": "kept",
+   "config": "sample/buy-now-pay-later/geo-score-watch.json"
+  },
+  {
+   "id": "online-course-platforms",
+   "name": "Online course platforms",
+   "definition": "Websites that offer online courses to learners in the US.",
+   "eligible": 8,
+   "by_stratum": {
+    "low": 2,
+    "mid": 2,
+    "high": 4
+   },
+   "draw": {
+    "seed": 5336865590968969315,
+    "seed_from": "geo-score prereg round0 draw|online-course-platforms",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "freecodecamp.org",
+     "site": "freecodecamp.org",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "futurelearn.com",
+     "site": "futurelearn.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "khanacademy.org",
+     "site": "khanacademy.org",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "openlearning.com",
+     "site": "openlearning.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "skillshare.com",
+     "site": "skillshare.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "stanford.edu",
+     "site": "online.stanford.edu",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "wikiversity.org",
+     "site": "wikiversity.org",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "alison.com",
+     "site": "alison.com",
+     "name": "Alison",
+     "aliases": [],
+     "domains": [
+      "alison.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Alison' is a common English word (web2 headword 'alison', rank 11960 in count_1w)"
+     ],
+     "sampling_url": "https://alison.com",
+     "sampling_score": 78,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 13864,
+     "tranco_listed": true
+    },
+    {
+     "id": "codecademy.com",
+     "site": "codecademy.com",
+     "name": "Codecademy",
+     "aliases": [],
+     "domains": [
+      "codecademy.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://codecademy.com",
+     "sampling_score": 49,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 5718,
+     "tranco_listed": true
+    },
+    {
+     "id": "edx.org",
+     "site": "edx.org",
+     "name": "edX",
+     "aliases": [],
+     "domains": [
+      "edx.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://edx.org",
+     "sampling_score": 74,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 3547,
+     "tranco_listed": true
+    },
+    {
+     "id": "iversity.org",
+     "site": "iversity.org",
+     "name": "iversity",
+     "aliases": [],
+     "domains": [
+      "iversity.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://iversity.org",
+     "sampling_score": 49,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 203225,
+     "tranco_listed": true
+    },
+    {
+     "id": "pluralsight.com",
+     "site": "pluralsight.com",
+     "name": "Pluralsight",
+     "aliases": [],
+     "domains": [
+      "pluralsight.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://pluralsight.com",
+     "sampling_score": 58,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 12577,
+     "tranco_listed": true
+    },
+    {
+     "id": "shawacademy.com",
+     "site": "shawacademy.com",
+     "name": "Shaw Academy",
+     "aliases": [],
+     "domains": [
+      "shawacademy.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://shawacademy.com",
+     "sampling_score": 55,
+     "sampling_pages": 5,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 629650,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best websites for taking online courses?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which online learning platforms offer certificates that employers recognize?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best free online course websites?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I want to switch careers into data analysis but can't go back to college full time. Where can I learn online?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "Our company needs to train employees in new software skills without sending them to classes. Which online course platforms work for teams?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which online course platform is best for a high school student preparing for college?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What online learning site is best for a working adult who wants university-level courses?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much do online course subscriptions cost per month?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which online course platforms let you take courses for free and pay only for a certificate?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which websites offer the best online courses for learning to code?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "92bea30841007feb022e3bd32dc029a126cb7123ebb5dd23591ea81604f8c98d",
+   "status": "kept",
+   "config": "sample/online-course-platforms/geo-score-watch.json"
+  },
+  {
+   "id": "language-learning",
+   "name": "Language learning",
+   "definition": "Apps, courses and self-study programs that learners in the US use to learn a foreign language.",
+   "eligible": 12,
+   "by_stratum": {
+    "low": 5,
+    "mid": 2,
+    "high": 5
+   },
+   "draw": {
+    "seed": 14284896114841151345,
+    "seed_from": "geo-score prereg round0 draw|language-learning",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "harpercollins.com",
+     "site": "harpercollins.com",
+     "reason": "scored on 3 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "linguaphonegroup.com",
+     "site": "linguaphonegroup.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "peacecorps.gov",
+     "site": "peacecorps.gov",
+     "reason": "the CLI could not score it (bot_challenge)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "languagedrops.com",
+     "site": "languagedrops.com",
+     "name": "Drops",
+     "aliases": [
+      "Language Drops"
+     ],
+     "domains": [
+      "languagedrops.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Drops' is a common English word (web2 headword 'drop', rank 2158 in count_1w)"
+     ],
+     "sampling_url": "https://languagedrops.com",
+     "sampling_score": 58,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 111672,
+     "tranco_listed": true
+    },
+    {
+     "id": "langenscheidt.de",
+     "site": "langenscheidt.de",
+     "name": "Langenscheidt",
+     "aliases": [],
+     "domains": [
+      "langenscheidt.de"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://langenscheidt.de",
+     "sampling_score": 44,
+     "sampling_pages": 5,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 617848,
+     "tranco_listed": true
+    },
+    {
+     "id": "mangolanguages.com",
+     "site": "mangolanguages.com",
+     "name": "Mango Languages",
+     "aliases": [],
+     "domains": [
+      "mangolanguages.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://mangolanguages.com",
+     "sampling_score": 84,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Leading",
+     "stratum": "high",
+     "tranco_rank": 81104,
+     "tranco_listed": true
+    },
+    {
+     "id": "memrise.com",
+     "site": "memrise.com",
+     "name": "Memrise",
+     "aliases": [],
+     "domains": [
+      "memrise.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://memrise.com",
+     "sampling_score": 75,
+     "sampling_pages": 4,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 23407,
+     "tranco_listed": true
+    },
+    {
+     "id": "mondly.com",
+     "site": "mondly.com",
+     "name": "Mondly",
+     "aliases": [],
+     "domains": [
+      "mondly.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://mondly.com",
+     "sampling_score": 40,
+     "sampling_pages": 5,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 101488,
+     "tranco_listed": true
+    },
+    {
+     "id": "tandem.net",
+     "site": "tandem.net",
+     "name": "Tandem",
+     "aliases": [],
+     "domains": [
+      "tandem.net"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Tandem' is a common English word (web2 headword 'tandem', rank 15630 in count_1w)"
+     ],
+     "sampling_url": "https://tandem.net",
+     "sampling_score": 54,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 24782,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best app for learning a new language?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which language learning programs actually get you speaking?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best audio courses for learning a language while commuting?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I'm moving to Spain in six months and know no Spanish. What's the fastest way to learn enough to get by?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I studied French in school but forgot most of it. What program would help me get it back?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "What is the best language learning app for kids?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "Which language course is best for a business traveler who needs conversational Japanese?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much do language learning apps cost per year?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which language learning apps are free?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which language learning programs are best for practicing with a native speaker?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "fd164ca2fedda9338db11a07b2e315bc07715d9a52fa12eb44fae1b1047b1b9c",
+   "status": "kept",
+   "config": "sample/language-learning/geo-score-watch.json"
+  },
+  {
+   "id": "management-consulting",
+   "name": "Management consulting firms",
+   "definition": "Firms that companies in the US hire for management consulting.",
+   "eligible": 8,
+   "by_stratum": {
+    "low": 2,
+    "mid": 4,
+    "high": 2
+   },
+   "draw": {
+    "seed": 8042414784270931590,
+    "seed_from": "geo-score prereg round0 draw|management-consulting",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "atkearney.com",
+     "site": "atkearney.com",
+     "reason": "the CLI could not score it (http_403)"
+    },
+    {
+     "id": "bcg.com",
+     "site": "bcg.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "infosys.com",
+     "site": "infosys.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "occstrategy.com",
+     "site": "occstrategy.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "publicissapient.com",
+     "site": "publicissapient.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "pwc.com",
+     "site": "pwc.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "tcs.com",
+     "site": "tcs.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "grantthornton.global",
+     "site": "grantthornton.global",
+     "name": "Grant Thornton",
+     "aliases": [],
+     "domains": [
+      "grantthornton.global"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://grantthornton.global",
+     "sampling_score": 71,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 260599,
+     "tranco_listed": true
+    },
+    {
+     "id": "huronconsultinggroup.com",
+     "site": "huronconsultinggroup.com",
+     "name": "Huron Consulting Group",
+     "aliases": [],
+     "domains": [
+      "huronconsultinggroup.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://huronconsultinggroup.com",
+     "sampling_score": 50,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 139721,
+     "tranco_listed": true
+    },
+    {
+     "id": "protiviti.com",
+     "site": "protiviti.com",
+     "name": "Protiviti",
+     "aliases": [],
+     "domains": [
+      "protiviti.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://protiviti.com",
+     "sampling_score": 69,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 42949,
+     "tranco_listed": true
+    },
+    {
+     "id": "rsmus.com",
+     "site": "rsmus.com",
+     "name": "RSM",
+     "aliases": [
+      "RSM US",
+      "McGladrey"
+     ],
+     "domains": [
+      "rsmus.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://rsmus.com",
+     "sampling_score": 59,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 58859,
+     "tranco_listed": true
+    },
+    {
+     "id": "sia-partners.com",
+     "site": "sia-partners.com",
+     "name": "Sia Partners",
+     "aliases": [],
+     "domains": [
+      "sia-partners.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://sia-partners.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 302787,
+     "tranco_listed": true
+    },
+    {
+     "id": "westmonroepartners.com",
+     "site": "westmonroepartners.com",
+     "name": "West Monroe",
+     "aliases": [
+      "West Monroe Partners"
+     ],
+     "domains": [
+      "westmonroepartners.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://westmonroepartners.com",
+     "sampling_score": 62,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": null,
+     "tranco_listed": false
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the top management consulting firms?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which consulting firms are best for business strategy work?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "Which consulting firms specialize in digital transformation?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our company's growth has stalled and the board wants an outside review of our strategy. Which consulting firms should we talk to?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "We're merging with a competitor and need help integrating the two organizations. Which firms do post-merger integration?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which consulting firms work with mid-size companies rather than only large corporations?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What consulting firm should a hospital system hire to cut operating costs?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much do management consulting firms charge for a strategy project?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "What are typical daily rates for management consultants?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which consulting firms are best at restructuring and turnaround work?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "b964cb7ebc94d88d97f01132bb260dad68686305c0318af5019c6fdaee2c3562",
+   "status": "kept",
+   "config": "sample/management-consulting/geo-score-watch.json"
+  },
+  {
+   "id": "project-management-software",
+   "name": "Project management software",
+   "definition": "Software that teams in the US use to plan, assign and track project work.",
+   "eligible": 8,
+   "by_stratum": {
+    "low": 3,
+    "mid": 1,
+    "high": 4
+   },
+   "draw": {
+    "seed": 16455589519524182224,
+    "seed_from": "geo-score prereg round0 draw|project-management-software",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "assembla.com",
+     "site": "assembla.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "kidasa.com",
+     "site": "kidasa.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "rationalplan.com",
+     "site": "rationalplan.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "smartsheet.com",
+     "site": "smartsheet.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "spiderproject.com",
+     "site": "spiderproject.com",
+     "reason": "the CLI could not score it (http_301)"
+    },
+    {
+     "id": "thoughtworks.com",
+     "site": "thoughtworks.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "visma.fi",
+     "site": "visma.fi",
+     "reason": "the CLI could not score it (http_403)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "axosoft.com",
+     "site": "axosoft.com",
+     "name": "Axosoft",
+     "aliases": [
+      "Axosoft OnTime"
+     ],
+     "domains": [
+      "axosoft.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://axosoft.com",
+     "sampling_score": 37,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 369640,
+     "tranco_listed": true
+    },
+    {
+     "id": "gforge.com",
+     "site": "gforge.com",
+     "name": "GForge",
+     "aliases": [
+      "FusionForge"
+     ],
+     "domains": [
+      "gforge.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://gforge.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "onlyoffice.com",
+     "site": "onlyoffice.com",
+     "name": "ONLYOFFICE",
+     "aliases": [],
+     "domains": [
+      "onlyoffice.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://onlyoffice.com",
+     "sampling_score": 54,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 20895,
+     "tranco_listed": true
+    },
+    {
+     "id": "planisware.com",
+     "site": "planisware.com",
+     "name": "Planisware",
+     "aliases": [],
+     "domains": [
+      "planisware.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://planisware.com",
+     "sampling_score": 67,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 436406,
+     "tranco_listed": true
+    },
+    {
+     "id": "shortcut.com",
+     "site": "shortcut.com",
+     "name": "Shortcut",
+     "aliases": [],
+     "domains": [
+      "shortcut.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Shortcut': an ordinary word that web2 (1934) predates"
+     ],
+     "sampling_url": "https://shortcut.com",
+     "sampling_score": 80,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 77883,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best project management software for teams?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which project management tools are easiest to learn?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best open-source project management tools?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "Our team tracks tasks in email threads and deadlines keep getting missed. What software should we use?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "We run several client projects at once and can't see who is overloaded. Which tools show resource workload?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which project management software is best for a small marketing agency?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What project management tool should a construction company use for scheduling jobs?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does project management software cost per user?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Which project management tools have a free plan for small teams?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which project management tools have the best Gantt charts?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "0a9791977407f6f84bd9f878a95f18457258814f0578a35d67d991a4e6481a1c",
+   "status": "kept",
+   "config": "sample/project-management-software/geo-score-watch.json"
+  },
+  {
+   "id": "note-taking-apps",
+   "name": "Note-taking apps",
+   "definition": "Apps that people in the US use to write, organize and search their notes.",
+   "eligible": 10,
+   "by_stratum": {
+    "low": 8,
+    "mid": 1,
+    "high": 1
+   },
+   "draw": {
+    "seed": 16850854076375067013,
+    "seed_from": "geo-score prereg round0 draw|note-taking-apps",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "google.com",
+     "site": "keep.google.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "icloud.com",
+     "site": "icloud.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "office.com",
+     "site": "products.office.com",
+     "reason": "scored on 3 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "tranglos.com",
+     "site": "tranglos.com",
+     "reason": "the CLI could not score it (no_content)"
+    },
+    {
+     "id": "ulyssesapp.com",
+     "site": "ulyssesapp.com",
+     "reason": "the CLI could not score it (tls)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "dayoneapp.com",
+     "site": "dayoneapp.com",
+     "name": "Day One",
+     "aliases": [],
+     "domains": [
+      "dayoneapp.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Day One': \"day one\" is an everyday phrase"
+     ],
+     "sampling_url": "https://dayoneapp.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 131720,
+     "tranco_listed": true
+    },
+    {
+     "id": "notational.net",
+     "site": "notational.net",
+     "name": "Notational Velocity",
+     "aliases": [],
+     "domains": [
+      "notational.net"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://notational.net",
+     "sampling_score": 38,
+     "sampling_pages": 5,
+     "sampling_gate_capped": false,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "tagspaces.org",
+     "site": "tagspaces.org",
+     "name": "TagSpaces",
+     "aliases": [],
+     "domains": [
+      "tagspaces.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://tagspaces.org",
+     "sampling_score": 80,
+     "sampling_pages": 7,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 909896,
+     "tranco_listed": true
+    },
+    {
+     "id": "zoho.com",
+     "site": "zoho.com",
+     "name": "Zoho",
+     "aliases": [
+      "Zoho Notebook"
+     ],
+     "domains": [
+      "zoho.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://zoho.com",
+     "sampling_score": 52,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 837,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best note-taking app?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which note-taking apps work well across phone and computer?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best note-taking apps that store notes as plain text files?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "My notes are scattered across sticky notes, emails and documents and I can never find anything. What app should I use?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I want to link my research notes together and see how ideas connect. Which apps do that?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which note-taking app is best for a college student?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What note-taking app should a writer use to organize a long book project?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much do note-taking apps cost per year?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "What are the best free note-taking apps?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which note-taking apps are best for privacy and offline use?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "0dc716c519f42b38e006703f620883c122ae25db93b5e062ca9da48dd0678824",
+   "status": "kept",
+   "config": "sample/note-taking-apps/geo-score-watch.json"
+  },
+  {
+   "id": "3d-printers",
+   "name": "3D printers",
+   "definition": "3D printers sold to hobbyists and businesses in the US.",
+   "eligible": 11,
+   "by_stratum": {
+    "low": 7,
+    "mid": 3,
+    "high": 1
+   },
+   "draw": {
+    "seed": 13554560249585728619,
+    "seed_from": "geo-score prereg round0 draw|3d-printers",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "cellink.com",
+     "site": "cellink.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "somosmaker.com",
+     "site": "somosmaker.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "stanleyblackanddecker.com",
+     "site": "stanleyblackanddecker.com",
+     "reason": "the CLI could not score it (timeout)"
+    },
+    {
+     "id": "voxeljet.com",
+     "site": "voxeljet.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "3dsystems.com",
+     "site": "3dsystems.com",
+     "name": "3D Systems",
+     "aliases": [],
+     "domains": [
+      "3dsystems.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://3dsystems.com",
+     "sampling_score": 65,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 42654,
+     "tranco_listed": true
+    },
+    {
+     "id": "bambulab.com",
+     "site": "bambulab.com",
+     "name": "Bambu Lab",
+     "aliases": [
+      "Bambu"
+     ],
+     "domains": [
+      "bambulab.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://bambulab.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 7139,
+     "tranco_listed": true
+    },
+    {
+     "id": "creality.com",
+     "site": "creality.com",
+     "name": "Creality",
+     "aliases": [],
+     "domains": [
+      "creality.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://creality.com",
+     "sampling_score": 52,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 26801,
+     "tranco_listed": true
+    },
+    {
+     "id": "prusa3d.com",
+     "site": "prusa3d.com",
+     "name": "Prusa",
+     "aliases": [
+      "Prusa Research",
+      "Original Prusa"
+     ],
+     "domains": [
+      "prusa3d.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://prusa3d.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 14076,
+     "tranco_listed": true
+    },
+    {
+     "id": "stratasys.com",
+     "site": "stratasys.com",
+     "name": "Stratasys",
+     "aliases": [],
+     "domains": [
+      "stratasys.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://stratasys.com",
+     "sampling_score": 71,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 57534,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best 3D printer for beginners?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which 3D printers are the most reliable for printing all day?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best resin 3D printers?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I keep breaking small plastic parts around the house and want to print replacements. What 3D printer should I buy?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "Our engineering team waits weeks for test parts from suppliers. Which 3D printers could make them in-house?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which 3D printer is best for a high school classroom?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What industrial 3D printer should a manufacturer use for metal parts?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does a good 3D printer cost?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "What are the best 3D printers under $500?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which 3D printers can print in multiple colors?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "0182817d58673b25ada5a47dd8da1c18ae115352cfab836302bec695c9909bfa",
+   "status": "kept",
+   "config": "sample/3d-printers/geo-score-watch.json"
+  },
+  {
+   "id": "accounting-software",
+   "name": "Accounting software",
+   "definition": "Accounting software that small and midsize businesses in the US use for bookkeeping, invoicing and financial reports.",
+   "eligible": 12,
+   "by_stratum": {
+    "low": 5,
+    "mid": 3,
+    "high": 4
+   },
+   "draw": {
+    "seed": 10629350654486690980,
+    "seed_from": "geo-score prereg round0 draw|accounting-software",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "amesoft.com",
+     "site": "amesoft.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "compiere.com",
+     "site": "compiere.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "microsoft.com",
+     "site": "microsoft.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "24sevenoffice.com",
+     "site": "24sevenoffice.com",
+     "name": "24SevenOffice",
+     "aliases": [],
+     "domains": [
+      "24sevenoffice.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://24sevenoffice.com",
+     "sampling_score": 69,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 266519,
+     "tranco_listed": true
+    },
+    {
+     "id": "acumatica.com",
+     "site": "acumatica.com",
+     "name": "Acumatica",
+     "aliases": [],
+     "domains": [
+      "acumatica.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://acumatica.com",
+     "sampling_score": 63,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 53403,
+     "tranco_listed": true
+    },
+    {
+     "id": "gnucash.org",
+     "site": "gnucash.org",
+     "name": "GnuCash",
+     "aliases": [],
+     "domains": [
+      "gnucash.org"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://gnucash.org",
+     "sampling_score": 31,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 64322,
+     "tranco_listed": true
+    },
+    {
+     "id": "pass-port.com",
+     "site": "pass-port.com",
+     "name": "Passport Software",
+     "aliases": [],
+     "domains": [
+      "pass-port.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://pass-port.com",
+     "sampling_score": 65,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": null,
+     "tranco_listed": false
+    },
+    {
+     "id": "tallysolutions.com",
+     "site": "tallysolutions.com",
+     "name": "Tally",
+     "aliases": [
+      "TallyPrime",
+      "Tally Solutions"
+     ],
+     "domains": [
+      "tallysolutions.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'Tally' is a common English word (web2 headword 'tally', rank 18615 in count_1w)"
+     ],
+     "sampling_url": "https://tallysolutions.com",
+     "sampling_score": 74,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Solid",
+     "stratum": "high",
+     "tranco_rank": 32257,
+     "tranco_listed": true
+    },
+    {
+     "id": "xero.com",
+     "site": "xero.com",
+     "name": "Xero",
+     "aliases": [],
+     "domains": [
+      "xero.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://xero.com",
+     "sampling_score": 40,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Early",
+     "stratum": "low",
+     "tranco_rank": 3230,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What is the best accounting software for small businesses?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which accounting software is easiest for someone without an accounting background?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "What are the best open-source accounting programs?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I'm a freelancer and spend hours every month creating invoices and tracking expenses in spreadsheets. What software should I use?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "Our company has outgrown its basic bookkeeping software and needs multi-entity reporting. What should we move to?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which accounting software is best for a restaurant owner?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "What accounting software should a nonprofit use for fund accounting?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "How much does accounting software cost per month?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Is there free accounting software for small businesses?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which accounting software works best with an outside bookkeeper or accountant?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "8fd938f6faf080521cb82005979507b0a5c3d4e26fee499ef254993ce908d3ad",
+   "status": "kept",
+   "config": "sample/accounting-software/geo-score-watch.json"
+  },
+  {
+   "id": "online-marketplaces",
+   "name": "Online marketplaces",
+   "definition": "Online marketplaces where shoppers in the US buy consumer goods from many sellers.",
+   "eligible": 8,
+   "by_stratum": {
+    "low": 6,
+    "mid": 2,
+    "high": 0
+   },
+   "draw": {
+    "seed": 7404790104700341379,
+    "seed_from": "geo-score prereg round0 draw|online-marketplaces",
+    "method": "per stratum (low, mid, high), random.Random(seed).sample(sorted ids, min(2, n))"
+   },
+   "excluded": [
+    {
+     "id": "aliexpress.com",
+     "site": "aliexpress.com",
+     "reason": "the CLI could not score it (http_302)"
+    },
+    {
+     "id": "etsy.com",
+     "site": "etsy.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "flipkart.com",
+     "site": "flipkart.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "hepsiburada.com",
+     "site": "hepsiburada.com",
+     "reason": "the CLI could not score it (http_403)"
+    },
+    {
+     "id": "trendyol.com",
+     "site": "trendyol.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "walmart.com",
+     "site": "walmart.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "wish.com",
+     "site": "wish.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    {
+     "id": "amazon.com",
+     "site": "amazon.com",
+     "name": "Amazon",
+     "aliases": [],
+     "domains": [
+      "amazon.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://amazon.com",
+     "sampling_score": 23,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Not started",
+     "stratum": "low",
+     "tranco_rank": 27,
+     "tranco_listed": true
+    },
+    {
+     "id": "asseenontv.com",
+     "site": "asseenontv.com",
+     "name": "As Seen On TV",
+     "aliases": [],
+     "domains": [
+      "asseenontv.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": true,
+     "ordinary_word_reasons": [
+      "'As Seen On TV': \"as seen on TV\" is an everyday phrase"
+     ],
+     "sampling_url": "https://asseenontv.com",
+     "sampling_score": 65,
+     "sampling_pages": 8,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 962709,
+     "tranco_listed": true
+    },
+    {
+     "id": "farmigo.com",
+     "site": "farmigo.com",
+     "name": "Farmigo",
+     "aliases": [],
+     "domains": [
+      "farmigo.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://farmigo.com",
+     "sampling_score": 58,
+     "sampling_pages": 6,
+     "sampling_gate_capped": false,
+     "sampling_band": "Growing",
+     "stratum": "mid",
+     "tranco_rank": 921296,
+     "tranco_listed": true
+    },
+    {
+     "id": "shein.com",
+     "site": "shein.com",
+     "name": "Shein",
+     "aliases": [],
+     "domains": [
+      "shein.com"
+     ],
+     "url_prefixes": [],
+     "ordinary_word": false,
+     "ordinary_word_reasons": [],
+     "sampling_url": "https://shein.com",
+     "sampling_score": 17,
+     "sampling_pages": 8,
+     "sampling_gate_capped": true,
+     "sampling_band": "Not started",
+     "stratum": "low",
+     "tranco_rank": 496,
+     "tranco_listed": true
+    }
+   ],
+   "questions": [
+    {
+     "query_id": "q01",
+     "query": "What are the best online marketplaces for shopping?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q02",
+     "query": "Which shopping sites have the cheapest prices on household goods?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q03",
+     "query": "Where can I buy secondhand clothes online?",
+     "intent_tier": "list"
+    },
+    {
+     "query_id": "q04",
+     "query": "I need a phone case and a charger quickly but don't want to pay full retail price. Which shopping sites should I check?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q05",
+     "query": "I'm looking for unique handmade gifts that I can't find in stores. Where should I shop online?",
+     "intent_tier": "problem"
+    },
+    {
+     "query_id": "q06",
+     "query": "Which online marketplace is best for a college student furnishing a dorm room on a budget?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q07",
+     "query": "Where should a parent shop online for affordable kids' clothes?",
+     "intent_tier": "persona"
+    },
+    {
+     "query_id": "q08",
+     "query": "Which online marketplaces have the best free shipping?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q09",
+     "query": "Are ultra-cheap shopping apps really cheaper than big retail stores?",
+     "intent_tier": "pricing"
+    },
+    {
+     "query_id": "q10",
+     "query": "Which online marketplaces are the most trustworthy for buying electronics?",
+     "intent_tier": "list"
+    }
+   ],
+   "questions_hash": "55862e86450efd0372d7a547db8434a5a367da67ef3cea667bb0b9dc623ecddc",
+   "status": "kept",
+   "config": "sample/online-marketplaces/geo-score-watch.json"
+  }
+ ],
+ "dropped_categories": [
+  {
+   "id": "ai-video-generators",
+   "status": "dropped: 3 sites drawn, in high, low",
+   "eligible": 7,
+   "by_stratum": {
+    "low": 1,
+    "mid": 0,
+    "high": 6
+   },
+   "excluded": [
+    {
+     "id": "bytedance.com",
+     "site": "bytedance.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "kuaishou.com",
+     "site": "kuaishou.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "lightricks.com",
+     "site": "lightricks.com",
+     "reason": "scored on 3 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "midjourney.com",
+     "site": "midjourney.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "openai.com",
+     "site": "openai.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    }
+   ],
+   "sites": [
+    "alibabagroup.com",
+    "runway.com",
+    "synthesia.io"
+   ]
+  },
+  {
+   "id": "web-analytics",
+   "status": "dropped: 3 sites drawn, in high, low",
+   "eligible": 12,
+   "by_stratum": {
+    "low": 11,
+    "mid": 0,
+    "high": 1
+   },
+   "excluded": [
+    {
+     "id": "adobe.com",
+     "site": "business.adobe.com",
+     "reason": "the CLI could not score it (dns)"
+    },
+    {
+     "id": "ibm.com",
+     "site": "ibm.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "yandex.ru",
+     "site": "metrika.yandex.ru",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    }
+   ],
+   "sites": [
+    "mixpanel.com",
+    "plausible.io",
+    "w3perl.com"
+   ]
+  },
+  {
+   "id": "container-shipping-lines",
+   "status": "dropped: 3 sites drawn, in low, mid",
+   "eligible": 5,
+   "by_stratum": {
+    "low": 4,
+    "mid": 1,
+    "high": 0
+   },
+   "excluded": [
+    {
+     "id": "cma-cgm.com",
+     "site": "cma-cgm.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "grimaldi.napoli.it",
+     "site": "grimaldi.napoli.it",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "hapag-lloyd.com",
+     "site": "hapag-lloyd.com",
+     "reason": "the CLI could not score it (http_403)"
+    },
+    {
+     "id": "hmm21.com",
+     "site": "hmm21.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "irisl.net",
+     "site": "irisl.net",
+     "reason": "the CLI could not score it (slow)"
+    },
+    {
+     "id": "maersk.com",
+     "site": "maersk.com",
+     "reason": "the CLI could not score it (timeout)"
+    },
+    {
+     "id": "msc.com",
+     "site": "msc.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "wanhai.com",
+     "site": "wanhai.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "yangming.com",
+     "site": "yangming.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "zim.com",
+     "site": "zim.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    }
+   ],
+   "sites": [
+    "evergreen-marine.com",
+    "pilship.com",
+    "sinotrans.com"
+   ]
+  },
+  {
+   "id": "us-airlines",
+   "status": "dropped: 2 sites drawn, in low",
+   "eligible": 2,
+   "by_stratum": {
+    "low": 2,
+    "mid": 0,
+    "high": 0
+   },
+   "excluded": [
+    {
+     "id": "aa.com",
+     "site": "aa.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "alaskaair.com",
+     "site": "alaskaair.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "allegiantair.com",
+     "site": "allegiantair.com",
+     "reason": "the CLI could not score it (bot_challenge)"
+    },
+    {
+     "id": "flyfrontier.com",
+     "site": "flyfrontier.com",
+     "reason": "scored on 2 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "jetblue.com",
+     "site": "jetblue.com",
+     "reason": "scored on 3 sampled pages, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "southwest.com",
+     "site": "southwest.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "suncountry.com",
+     "site": "suncountry.com",
+     "reason": "scored on 1 sampled page, fewer than 4 (a thin sample)"
+    },
+    {
+     "id": "united.com",
+     "site": "united.com",
+     "reason": "the CLI could not score it (timeout)"
+    }
+   ],
+   "sites": [
+    "delta.com",
+    "hawaiianairlines.com"
+   ]
+  }
+ ]
+}

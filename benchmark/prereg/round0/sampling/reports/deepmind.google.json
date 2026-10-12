@@ -1,0 +1,338 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 2.4,
+  "target": "https://deepmind.google",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://deepmind.google/",
+    "https://deepmind.google/blog/a-return-to-paris",
+    "https://deepmind.google/blog/alphagos-next-move",
+    "https://deepmind.google/blog/objects-that-sound",
+    "https://deepmind.google/models/gemma/gemmaverse/gaia",
+    "https://deepmind.google/models/gemma/gemmaverse/levro",
+    "https://deepmind.google/models/gemma/gemmaverse/quarks",
+    "https://deepmind.google/models/gemma/gemmaverse/insait"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 61,
+  "observable_max": 86,
+  "normalised": 71,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 2,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (69 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://deepmind.google/sitemap.xml»): HTTP 200, 739 <loc>, 739 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 6928 bytes, 4 '##' sections, 4 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "7 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Lorsque nous avons établi notre siège à Londres en 2010, nous voulions faire de DeepMind l…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "6 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "3 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "22 figures on 6 pages; 6 attributed in the same block or the next, 4 of them with a link. Of the 5 pages carrying three or more, 1 attribute most of theirs, 1 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Google DeepMind» (also tried «site text: Deepmind»). Entity found — Wikidata Q15733006 «site text: artificial intelligence company owned by…»; en.wikipedia: «site text: Google DeepMind»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 16 channel links and 11 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "5 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 2,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 203,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 37,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 0,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 25,
+      "unlinked_sitemap_urls": [
+        "https://deepmind.google/models/gemini/pro/",
+        "https://deepmind.google/models/gemini/flash/",
+        "https://deepmind.google/models/gemini/flash-lite/",
+        "https://deepmind.google/models/gemini/deep-think/",
+        "https://deepmind.google/models/gemini/embedding/",
+        "https://deepmind.google/models/gemini/cyber/",
+        "https://deepmind.google/models/veo/prompt-guide/",
+        "https://deepmind.google/models/gemma/gemma-scope/",
+        "https://deepmind.google/models/gemma/gemma-3n/",
+        "https://deepmind.google/models/gemma/codegemma/",
+        "https://deepmind.google/models/gemma/datagemma/",
+        "https://deepmind.google/models/gemma/gemma-aps/",
+        "https://deepmind.google/models/gemma/medgemma/",
+        "https://deepmind.google/models/gemma/paligemma-2/",
+        "https://deepmind.google/models/gemma/recurrentgemma/",
+        "https://deepmind.google/models/gemma/txgemma/",
+        "https://deepmind.google/models/gemma/gemmaverse/epermit/",
+        "https://deepmind.google/models/gemma/gemmaverse/adaptiveml/",
+        "https://deepmind.google/models/gemma/gemmaverse/quarks/",
+        "https://deepmind.google/models/gemma/gemmaverse/sarvam-ai/",
+        "https://deepmind.google/models/gemma/gemmaverse/gemma-2-llama-swallow/",
+        "https://deepmind.google/models/gemma/gemmaverse/gaia/",
+        "https://deepmind.google/models/gemma/gemmaverse/insait/",
+        "https://deepmind.google/models/gemma/gemmaverse/omniaudio/",
+        "https://deepmind.google/models/gemma/gemmaverse/sea-lion/",
+        "https://deepmind.google/models/gemma/gemmaverse/roboflow/",
+        "https://deepmind.google/models/gemma/gemmaverse/craneai/",
+        "https://deepmind.google/models/gemma/gemmaverse/typhoon/",
+        "https://deepmind.google/models/gemma/gemmaverse/levro/",
+        "https://deepmind.google/models/gemma/gemmaverse/k-health/",
+        "https://deepmind.google/models/gemma/gemmaverse/sea-lion-v4/",
+        "https://deepmind.google/models/gemma/gemmaverse/hirundo/",
+        "https://deepmind.google/models/gemma/gemmaverse/navatech/",
+        "https://deepmind.google/models/gemma/gemmaverse/cue-ai/",
+        "https://deepmind.google/models/gemma/dolphingemma/",
+        "https://deepmind.google/models/gemma/embeddinggemma/",
+        "https://deepmind.google/models/gemma/t5gemma/",
+        "https://deepmind.google/models/gemma/vaultgemma/",
+        "https://deepmind.google/models/gemma/functiongemma/",
+        "https://deepmind.google/models/gemma/diffusiongemma/",
+        "https://deepmind.google/models/project-astra/",
+        "https://deepmind.google/models/gemini-robotics/embodied-reasoning/",
+        "https://deepmind.google/models/gemini-robotics/vla/",
+        "https://deepmind.google/models/gemini-robotics/on-device/",
+        "https://deepmind.google/models/gemini-robotics/responsibly-advancing-ai-and-robotics/",
+        "https://deepmind.google/models/lyria/lyria-realtime/",
+        "https://deepmind.google/models/lyria/prompt-guide/",
+        "https://deepmind.google/models/gemini-diffusion/",
+        "https://deepmind.google/models/synthid/",
+        "https://deepmind.google/models/model-cards/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

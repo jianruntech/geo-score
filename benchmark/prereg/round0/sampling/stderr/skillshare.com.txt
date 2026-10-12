@@ -1,0 +1,1 @@
+bot challenge served to a browser user-agent (Cloudflare): a static fetch cannot measure this site

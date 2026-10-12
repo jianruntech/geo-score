@@ -1,0 +1,306 @@
+site	url	exit	kind	started	finished
+01.ai	https://01.ai	0		2026-10-12T11:54:26Z	2026-10-12T11:54:42Z
+24sevenoffice.com	https://24sevenoffice.com	0		2026-10-12T11:55:12Z	2026-10-12T11:55:21Z
+3dsystems.com	https://3dsystems.com	0		2026-10-12T11:55:51Z	2026-10-12T11:55:54Z
+aa.com	https://aa.com	2	bot_challenge	2026-10-12T11:56:24Z	2026-10-12T11:56:24Z
+acumatica.com	https://acumatica.com	0		2026-10-12T11:56:54Z	2026-10-12T11:57:02Z
+adempiere.io	https://adempiere.io	0		2026-10-12T11:57:32Z	2026-10-12T11:57:33Z
+adobe.com	https://adobe.com	2	bot_challenge	2026-10-12T11:58:03Z	2026-10-12T11:58:04Z
+adyen.com	https://adyen.com	0		2026-10-12T11:58:34Z	2026-10-12T11:58:41Z
+aerospike.com	https://aerospike.com	0		2026-10-12T11:59:11Z	2026-10-12T11:59:15Z
+affirm.com	https://affirm.com	0		2026-10-12T11:59:45Z	2026-10-12T11:59:51Z
+airwallex.com	https://airwallex.com	0		2026-10-12T12:00:21Z	2026-10-12T12:00:27Z
+alaskaair.com	https://alaskaair.com	0		2026-10-12T12:00:57Z	2026-10-12T12:01:06Z
+alibabacloud.com	https://alibabacloud.com	0		2026-10-12T12:01:36Z	2026-10-12T12:01:52Z
+alibabagroup.com	https://alibabagroup.com	0		2026-10-12T12:02:22Z	2026-10-12T12:03:05Z
+aliexpress.com	https://aliexpress.com	2	http_302	2026-10-12T12:03:35Z	2026-10-12T12:03:41Z
+aliexpress.com	https://www.aliexpress.com	2	http_302	2026-10-12T12:03:46Z	2026-10-12T12:03:48Z
+alison.com	https://alison.com	0		2026-10-12T12:04:18Z	2026-10-12T12:04:37Z
+alixpartners.com	https://alixpartners.com	0		2026-10-12T12:05:07Z	2026-10-12T12:05:14Z
+allegiantair.com	https://allegiantair.com	2	bot_challenge	2026-10-12T12:05:44Z	2026-10-12T12:05:45Z
+allegrograph.com	https://allegrograph.com	0		2026-10-12T12:06:15Z	2026-10-12T12:06:20Z
+amazon.com	https://amazon.com	0		2026-10-12T12:06:50Z	2026-10-12T12:07:31Z
+amesoft.com	https://amesoft.com	0		2026-10-12T12:08:01Z	2026-10-12T12:08:06Z
+angular.dev	https://angular.dev	0		2026-10-12T12:08:36Z	2026-10-12T12:08:38Z
+apple.com	https://apple.com	0		2026-10-12T12:09:08Z	2026-10-12T12:09:21Z
+asseenontv.com	https://asseenontv.com	0		2026-10-12T12:09:51Z	2026-10-12T12:09:56Z
+assembla.com	https://assembla.com	0		2026-10-12T12:10:26Z	2026-10-12T12:10:50Z
+astro.build	https://astro.build	0		2026-10-12T12:11:20Z	2026-10-12T12:11:24Z
+atkearney.com	https://atkearney.com	2	http_403	2026-10-12T12:11:54Z	2026-10-12T12:11:54Z
+atkearney.com	https://www.atkearney.com	2	http_403	2026-10-12T12:11:59Z	2026-10-12T12:12:00Z
+atlantic.net	https://atlantic.net	0		2026-10-12T12:12:30Z	2026-10-12T12:12:33Z
+attio.com	https://attio.com	0		2026-10-12T12:13:03Z	2026-10-12T12:13:07Z
+aws.amazon.com	https://aws.amazon.com	0		2026-10-12T12:13:37Z	2026-10-12T12:13:39Z
+awstats.org	https://awstats.org	0		2026-10-12T12:14:09Z	2026-10-12T12:14:18Z
+axosoft.com	https://axosoft.com	0		2026-10-12T12:14:48Z	2026-10-12T12:15:40Z
+azure.microsoft.com	https://azure.microsoft.com	0		2026-10-12T12:16:10Z	2026-10-12T12:19:49Z
+babbel.com	https://babbel.com	2	http_307	2026-10-12T12:20:19Z	2026-10-12T12:20:19Z
+babbel.com	https://www.babbel.com	0		2026-10-12T12:20:24Z	2026-10-12T12:20:27Z
+backbonejs.org	https://backbonejs.org	0		2026-10-12T12:20:57Z	2026-10-12T12:20:58Z
+bambulab.com	https://bambulab.com	0		2026-10-12T12:21:28Z	2026-10-12T12:21:35Z
+bcg.com	https://bcg.com	2	bot_challenge	2026-10-12T12:22:05Z	2026-10-12T12:22:07Z
+berlitz.com	https://berlitz.com	0		2026-10-12T12:22:37Z	2026-10-12T12:22:42Z
+bigcommerce.com	https://bigcommerce.com	0		2026-10-12T12:23:12Z	2026-10-12T12:23:18Z
+bing.com	https://bing.com	0		2026-10-12T12:23:48Z	2026-10-12T12:23:51Z
+bitpay.com	https://bitpay.com	0		2026-10-12T12:24:21Z	2026-10-12T12:24:25Z
+bitsmithsoft.com	https://bitsmithsoft.com	0		2026-10-12T12:24:55Z	2026-10-12T12:24:59Z
+bloomberg.com	https://bloomberg.com	0		2026-10-12T12:25:29Z	2026-10-12T12:25:32Z
+booksy.com	https://booksy.com	0		2026-10-12T12:26:02Z	2026-10-12T12:26:18Z
+business.adobe.com	https://business.adobe.com	2	timeout	2026-10-12T12:26:48Z	2026-10-12T12:27:33Z
+business.adobe.com	https://www.business.adobe.com	2	dns	2026-10-12T12:27:38Z	2026-10-12T12:27:38Z
+bytedance.com	https://bytedance.com	0		2026-10-12T12:28:08Z	2026-10-12T12:28:29Z
+capsulecrm.com	https://capsulecrm.com	0		2026-10-12T12:28:59Z	2026-10-12T12:29:02Z
+cellink.com	https://cellink.com	0		2026-10-12T12:29:32Z	2026-10-12T12:29:49Z
+checkout.com	https://checkout.com	0		2026-10-12T12:30:19Z	2026-10-12T12:30:22Z
+ciil.org	https://ciil.org	0		2026-10-12T12:30:52Z	2026-10-12T12:31:08Z
+clickhouse.com	https://clickhouse.com	0		2026-10-12T12:31:38Z	2026-10-12T12:31:42Z
+cloud.google.com	https://cloud.google.com	0		2026-10-12T12:32:12Z	2026-10-12T12:32:21Z
+cma-cgm.com	https://cma-cgm.com	2	bot_challenge	2026-10-12T12:32:51Z	2026-10-12T12:32:53Z
+codecademy.com	https://codecademy.com	0		2026-10-12T12:33:23Z	2026-10-12T12:33:32Z
+compiere.com	https://compiere.com	0		2026-10-12T12:34:02Z	2026-10-12T12:34:04Z
+couchbase.com	https://couchbase.com	0		2026-10-12T12:34:34Z	2026-10-12T12:34:36Z
+crate.io	https://crate.io	0		2026-10-12T12:35:06Z	2026-10-12T12:35:10Z
+creality.com	https://creality.com	0		2026-10-12T12:35:40Z	2026-10-12T12:35:47Z
+creditcall.com	https://creditcall.com	2	timeout	2026-10-12T12:36:17Z	2026-10-12T12:37:02Z
+creditcall.com	https://www.creditcall.com	2	timeout	2026-10-12T12:37:07Z	2026-10-12T12:37:52Z
+datastax.com	https://datastax.com	0		2026-10-12T12:38:22Z	2026-10-12T12:38:24Z
+dayoneapp.com	https://dayoneapp.com	0		2026-10-12T12:38:54Z	2026-10-12T12:39:06Z
+deepmind.google	https://deepmind.google	0		2026-10-12T12:39:36Z	2026-10-12T12:39:38Z
+deloitte.com	https://deloitte.com	0		2026-10-12T12:40:08Z	2026-10-12T12:40:13Z
+delta.com	https://delta.com	2	refused	2026-10-12T12:40:43Z	2026-10-12T12:40:43Z
+delta.com	https://www.delta.com	0		2026-10-12T12:40:48Z	2026-10-12T12:40:50Z
+digitalocean.com	https://digitalocean.com	0		2026-10-12T12:41:20Z	2026-10-12T12:41:24Z
+dojo.io	https://dojo.io	0		2026-10-12T12:41:54Z	2026-10-12T12:41:55Z
+dolibarr.org	https://dolibarr.org	0		2026-10-12T12:42:25Z	2026-10-12T12:42:31Z
+drupalcommerce.org	https://drupalcommerce.org	0		2026-10-12T12:43:01Z	2026-10-12T12:43:06Z
+ebay.com	https://ebay.com	2	http_403	2026-10-12T12:43:36Z	2026-10-12T12:43:39Z
+ebay.com	https://www.ebay.com	0		2026-10-12T12:43:44Z	2026-10-12T12:45:47Z
+edx.org	https://edx.org	0		2026-10-12T12:46:17Z	2026-10-12T12:46:22Z
+enyojs.com	https://enyojs.com	2	tls	2026-10-12T12:46:52Z	2026-10-12T12:46:52Z
+enyojs.com	https://www.enyojs.com	2	tls	2026-10-12T12:46:57Z	2026-10-12T12:46:57Z
+etsy.com	https://etsy.com	2	bot_challenge	2026-10-12T12:47:27Z	2026-10-12T12:47:28Z
+evergreen-marine.com	https://evergreen-marine.com	2	refused	2026-10-12T12:47:58Z	2026-10-12T12:47:59Z
+evergreen-marine.com	https://www.evergreen-marine.com	0		2026-10-12T12:48:04Z	2026-10-12T12:48:26Z
+farmigo.com	https://farmigo.com	0		2026-10-12T12:48:56Z	2026-10-12T12:49:01Z
+financialforce.com	https://financialforce.com	2	timeout	2026-10-12T12:49:31Z	2026-10-12T12:50:17Z
+financialforce.com	https://www.financialforce.com	0		2026-10-12T12:50:22Z	2026-10-12T12:50:26Z
+flipkart.com	https://flipkart.com	0		2026-10-12T12:50:56Z	2026-10-12T12:51:18Z
+flyfrontier.com	https://flyfrontier.com	0		2026-10-12T12:51:48Z	2026-10-12T12:51:50Z
+freecodecamp.org	https://freecodecamp.org	0		2026-10-12T12:52:20Z	2026-10-12T12:52:21Z
+freshbooks.com	https://freshbooks.com	0		2026-10-12T12:52:51Z	2026-10-12T12:53:00Z
+futurelearn.com	https://futurelearn.com	2	bot_challenge	2026-10-12T12:53:30Z	2026-10-12T12:53:30Z
+getbase.com	https://getbase.com	0		2026-10-12T12:54:00Z	2026-10-12T12:54:05Z
+gforge.com	https://gforge.com	0		2026-10-12T12:54:35Z	2026-10-12T12:54:44Z
+gnu.org	https://gnu.org	0		2026-10-12T12:55:14Z	2026-10-12T12:57:09Z
+gnucash.org	https://gnucash.org	0		2026-10-12T12:57:39Z	2026-10-12T12:57:45Z
+go.wepay.com	https://go.wepay.com	2	tls	2026-10-12T12:58:15Z	2026-10-12T12:58:15Z
+go.wepay.com	https://www.go.wepay.com	2	dns	2026-10-12T12:58:20Z	2026-10-12T12:58:20Z
+goaccess.io	https://goaccess.io	0		2026-10-12T12:58:50Z	2026-10-12T12:58:54Z
+godaddy.com	https://godaddy.com	2	bot_challenge	2026-10-12T12:59:24Z	2026-10-12T12:59:25Z
+grantthornton.global	https://grantthornton.global	0		2026-10-12T12:59:55Z	2026-10-12T13:00:03Z
+grimaldi.napoli.it	https://grimaldi.napoli.it	2	tls	2026-10-12T13:00:33Z	2026-10-12T13:00:33Z
+grimaldi.napoli.it	https://www.grimaldi.napoli.it	0		2026-10-12T13:00:38Z	2026-10-12T13:00:45Z
+group-office.com	https://group-office.com	0		2026-10-12T13:01:15Z	2026-10-12T13:01:22Z
+gwtproject.org	https://gwtproject.org	0		2026-10-12T13:01:52Z	2026-10-12T13:01:54Z
+hapag-lloyd.com	https://hapag-lloyd.com	2	timeout	2026-10-12T13:02:24Z	2026-10-12T13:03:10Z
+hapag-lloyd.com	https://www.hapag-lloyd.com	2	http_403	2026-10-12T13:03:15Z	2026-10-12T13:03:17Z
+harpercollins.com	https://harpercollins.com	2	http_429	2026-10-12T13:03:47Z	2026-10-12T13:03:58Z
+harpercollins.com	https://www.harpercollins.com	0		2026-10-12T13:04:04Z	2026-10-12T13:04:17Z
+hawaiianairlines.com	https://hawaiianairlines.com	0		2026-10-12T13:04:47Z	2026-10-12T13:04:57Z
+heartlandpaymentsystems.com	https://heartlandpaymentsystems.com	2	bot_challenge	2026-10-12T13:05:27Z	2026-10-12T13:05:27Z
+hepsiburada.com	https://hepsiburada.com	2	http_403	2026-10-12T13:05:58Z	2026-10-12T13:06:00Z
+hepsiburada.com	https://www.hepsiburada.com	2	http_403	2026-10-12T13:06:05Z	2026-10-12T13:06:06Z
+hetzner.com	https://hetzner.com	0		2026-10-12T13:06:36Z	2026-10-12T13:06:56Z
+hmm21.com	https://hmm21.com	0		2026-10-12T13:07:26Z	2026-10-12T13:11:01Z
+huawei.com	https://huawei.com	0		2026-10-12T13:11:31Z	2026-10-12T13:11:52Z
+hubspot.com	https://hubspot.com	0		2026-10-12T13:12:22Z	2026-10-12T13:12:28Z
+huronconsultinggroup.com	https://huronconsultinggroup.com	0		2026-10-12T13:12:58Z	2026-10-12T13:13:01Z
+ibm.com	https://ibm.com	0		2026-10-12T13:13:31Z	2026-10-12T13:13:37Z
+icloud.com	https://icloud.com	0		2026-10-12T13:14:07Z	2026-10-12T13:14:08Z
+infosys.com	https://infosys.com	2	bot_challenge	2026-10-12T13:14:38Z	2026-10-12T13:14:41Z
+instructure.com	https://instructure.com	0		2026-10-12T13:15:11Z	2026-10-12T13:15:16Z
+irisl.net	https://irisl.net	2	slow	2026-10-12T13:15:46Z	2026-10-12T13:16:16Z
+irisl.net	https://www.irisl.net	2	slow	2026-10-12T13:16:21Z	2026-10-12T13:16:52Z
+iversity.org	https://iversity.org	0		2026-10-12T13:17:22Z	2026-10-12T13:17:28Z
+jetblue.com	https://jetblue.com	0		2026-10-12T13:17:58Z	2026-10-12T13:18:00Z
+jquery.com	https://jquery.com	0		2026-10-12T13:18:30Z	2026-10-12T13:18:34Z
+jqwidgets.com	https://jqwidgets.com	0		2026-10-12T13:19:04Z	2026-10-12T13:19:22Z
+keep.google.com	https://keep.google.com	0		2026-10-12T13:19:52Z	2026-10-12T13:19:54Z
+khanacademy.org	https://khanacademy.org	0		2026-10-12T13:20:24Z	2026-10-12T13:20:25Z
+kidasa.com	https://kidasa.com	0		2026-10-12T13:20:55Z	2026-10-12T13:23:19Z
+klarna.com	https://klarna.com	0		2026-10-12T13:23:49Z	2026-10-12T13:23:57Z
+kuaishou.com	https://kuaishou.com	0		2026-10-12T13:24:27Z	2026-10-12T13:26:34Z
+kudo3d.com	https://kudo3d.com	0		2026-10-12T13:27:04Z	2026-10-12T13:27:15Z
+langenscheidt.de	https://langenscheidt.de	0		2026-10-12T13:27:45Z	2026-10-12T13:27:56Z
+languagedrops.com	https://languagedrops.com	0		2026-10-12T13:28:26Z	2026-10-12T13:28:29Z
+ledgersmb.org	https://ledgersmb.org	0		2026-10-12T13:28:59Z	2026-10-12T13:29:03Z
+lightricks.com	https://lightricks.com	0		2026-10-12T13:29:33Z	2026-10-12T13:29:35Z
+linguaphonegroup.com	https://linguaphonegroup.com	0		2026-10-12T13:30:05Z	2026-10-12T13:30:07Z
+llamaindex.ai	https://llamaindex.ai	0		2026-10-12T13:30:37Z	2026-10-12T13:30:39Z
+lumalabs.ai	https://lumalabs.ai	0		2026-10-12T13:31:10Z	2026-10-12T13:31:14Z
+maersk.com	https://maersk.com	2	timeout	2026-10-12T13:31:44Z	2026-10-12T13:32:29Z
+maersk.com	https://www.maersk.com	2	timeout	2026-10-12T13:32:34Z	2026-10-12T13:33:20Z
+makerbot.com	https://makerbot.com	0		2026-10-12T13:33:50Z	2026-10-12T13:34:04Z
+mangolanguages.com	https://mangolanguages.com	0		2026-10-12T13:34:34Z	2026-10-12T13:34:37Z
+marfeel.com	https://marfeel.com	0		2026-10-12T13:35:07Z	2026-10-12T13:35:11Z
+markforged.com	https://markforged.com	0		2026-10-12T13:35:41Z	2026-10-12T13:35:45Z
+materialise.com	https://materialise.com	0		2026-10-12T13:36:15Z	2026-10-12T13:36:34Z
+matson.com	https://matson.com	0		2026-10-12T13:37:04Z	2026-10-12T13:37:33Z
+meituan.com	https://meituan.com	2	timeout	2026-10-12T13:38:03Z	2026-10-12T13:38:48Z
+meituan.com	https://www.meituan.com	0		2026-10-12T13:38:53Z	2026-10-12T13:39:04Z
+memrise.com	https://memrise.com	0		2026-10-12T13:39:34Z	2026-10-12T13:39:37Z
+meta.com	https://meta.com	2	http_400	2026-10-12T13:40:07Z	2026-10-12T13:40:09Z
+meta.com	https://www.meta.com	2	http_400	2026-10-12T13:40:14Z	2026-10-12T13:40:17Z
+metrika.yandex.ru	https://metrika.yandex.ru	0		2026-10-12T13:40:47Z	2026-10-12T13:40:50Z
+michelthomas.com	https://michelthomas.com	0		2026-10-12T13:41:20Z	2026-10-12T13:41:24Z
+microsoft.com	https://microsoft.com	0		2026-10-12T13:41:54Z	2026-10-12T13:42:12Z
+midjourney.com	https://midjourney.com	2	bot_challenge	2026-10-12T13:42:42Z	2026-10-12T13:42:42Z
+mistral.ai	https://mistral.ai	0		2026-10-12T13:43:12Z	2026-10-12T13:43:15Z
+mixpanel.com	https://mixpanel.com	0		2026-10-12T13:43:45Z	2026-10-12T13:43:52Z
+mondly.com	https://mondly.com	0		2026-10-12T13:44:22Z	2026-10-12T13:45:02Z
+msc.com	https://msc.com	2	bot_challenge	2026-10-12T13:45:32Z	2026-10-12T13:45:33Z
+navercorp.com	https://navercorp.com	0		2026-10-12T13:46:03Z	2026-10-12T13:46:15Z
+neo4j.com	https://neo4j.com	0		2026-10-12T13:46:45Z	2026-10-12T13:46:57Z
+newviews.com	https://newviews.com	0		2026-10-12T13:47:27Z	2026-10-12T13:47:36Z
+nopcommerce.com	https://nopcommerce.com	2	bot_challenge	2026-10-12T13:48:06Z	2026-10-12T13:48:06Z
+notational.net	https://notational.net	0		2026-10-12T13:48:36Z	2026-10-12T13:48:39Z
+nuxt.com	https://nuxt.com	0		2026-10-12T13:49:09Z	2026-10-12T13:49:12Z
+obsidian.md	https://obsidian.md	0		2026-10-12T13:49:42Z	2026-10-12T13:49:44Z
+occstrategy.com	https://occstrategy.com	0		2026-10-12T13:50:14Z	2026-10-12T13:50:16Z
+one-line.com	https://one-line.com	0		2026-10-12T13:50:46Z	2026-10-12T13:51:01Z
+online.stanford.edu	https://online.stanford.edu	0		2026-10-12T13:51:31Z	2026-10-12T13:51:34Z
+onlyoffice.com	https://onlyoffice.com	0		2026-10-12T13:52:04Z	2026-10-12T13:52:06Z
+openai.com	https://openai.com	2	bot_challenge	2026-10-12T13:52:36Z	2026-10-12T13:52:37Z
+opencart.com	https://opencart.com	2	bot_challenge	2026-10-12T13:53:07Z	2026-10-12T13:53:07Z
+openlearning.com	https://openlearning.com	0		2026-10-12T13:53:37Z	2026-10-12T13:53:44Z
+opensearch.org	https://opensearch.org	0		2026-10-12T13:54:14Z	2026-10-12T13:54:23Z
+oracle.com	https://oracle.com	2	http_403	2026-10-12T13:54:53Z	2026-10-12T13:54:55Z
+oracle.com	https://www.oracle.com	0		2026-10-12T13:55:00Z	2026-10-12T13:55:02Z
+osas.com	https://osas.com	0		2026-10-12T13:55:32Z	2026-10-12T13:55:36Z
+ovhcloud.com	https://ovhcloud.com	0		2026-10-12T13:56:06Z	2026-10-12T13:56:08Z
+pass-port.com	https://pass-port.com	0		2026-10-12T13:56:38Z	2026-10-12T13:56:44Z
+pay.amazon.com	https://pay.amazon.com	0		2026-10-12T13:57:14Z	2026-10-12T13:57:23Z
+paymentwall.com	https://paymentwall.com	0		2026-10-12T13:57:53Z	2026-10-12T13:58:01Z
+payoneer.com	https://payoneer.com	0		2026-10-12T13:58:31Z	2026-10-12T13:58:36Z
+paypal.com	https://paypal.com	0		2026-10-12T13:59:06Z	2026-10-12T13:59:14Z
+peacecorps.gov	https://peacecorps.gov	2	bot_challenge	2026-10-12T13:59:44Z	2026-10-12T13:59:44Z
+perplexity.ai	https://perplexity.ai	2	bot_challenge	2026-10-12T14:00:14Z	2026-10-12T14:00:15Z
+pika.art	https://pika.art	0		2026-10-12T14:00:45Z	2026-10-12T14:00:49Z
+pilship.com	https://pilship.com	2	dropped	2026-10-12T14:01:19Z	2026-10-12T14:01:24Z
+pilship.com	https://www.pilship.com	0		2026-10-12T14:01:29Z	2026-10-12T14:01:59Z
+pimcore.org	https://pimcore.org	0		2026-10-12T14:02:29Z	2026-10-12T14:02:53Z
+pimsleur.com	https://pimsleur.com	0		2026-10-12T14:03:23Z	2026-10-12T14:03:27Z
+pinduoduo.com	https://pinduoduo.com	0		2026-10-12T14:03:57Z	2026-10-12T14:04:07Z
+pingcap.com	https://pingcap.com	0		2026-10-12T14:04:37Z	2026-10-12T14:04:43Z
+pipedrive.com	https://pipedrive.com	0		2026-10-12T14:05:13Z	2026-10-12T14:05:19Z
+planisware.com	https://planisware.com	0		2026-10-12T14:05:49Z	2026-10-12T14:05:56Z
+plausible.io	https://plausible.io	0		2026-10-12T14:06:27Z	2026-10-12T14:06:27Z
+playspan.com	https://playspan.com	2	dropped	2026-10-12T14:06:57Z	2026-10-12T14:07:02Z
+playspan.com	https://www.playspan.com	2	dropped	2026-10-12T14:07:07Z	2026-10-12T14:07:12Z
+pluralsight.com	https://pluralsight.com	0		2026-10-12T14:07:42Z	2026-10-12T14:08:00Z
+prestashop-project.org	https://prestashop-project.org	0		2026-10-12T14:08:30Z	2026-10-12T14:08:34Z
+products.office.com	https://products.office.com	0		2026-10-12T14:09:04Z	2026-10-12T14:09:23Z
+projectmanager.com	https://projectmanager.com	0		2026-10-12T14:09:53Z	2026-10-12T14:10:01Z
+protiviti.com	https://protiviti.com	0		2026-10-12T14:10:31Z	2026-10-12T14:10:37Z
+prototypejs.org	https://prototypejs.org	2	tls	2026-10-12T14:11:07Z	2026-10-12T14:11:07Z
+prototypejs.org	https://www.prototypejs.org	2	tls	2026-10-12T14:11:12Z	2026-10-12T14:11:12Z
+prusa3d.com	https://prusa3d.com	0		2026-10-12T14:11:43Z	2026-10-12T14:11:53Z
+publicissapient.com	https://publicissapient.com	0		2026-10-12T14:12:23Z	2026-10-12T14:12:25Z
+pwc.com	https://pwc.com	2	bot_challenge	2026-10-12T14:12:55Z	2026-10-12T14:12:56Z
+qiqqa.com	https://qiqqa.com	0		2026-10-12T14:13:26Z	2026-10-12T14:13:28Z
+qooxdoo.org	https://qooxdoo.org	0		2026-10-12T14:13:58Z	2026-10-12T14:13:59Z
+qownnotes.org	https://qownnotes.org	0		2026-10-12T14:14:29Z	2026-10-12T14:14:36Z
+rackspace.com	https://rackspace.com	0		2026-10-12T14:15:06Z	2026-10-12T14:15:40Z
+rationalplan.com	https://rationalplan.com	0		2026-10-12T14:16:10Z	2026-10-12T14:16:32Z
+reallysimplesystems.com	https://reallysimplesystems.com	2	timeout	2026-10-12T14:17:02Z	2026-10-12T14:17:47Z
+reallysimplesystems.com	https://www.reallysimplesystems.com	2	timeout	2026-10-12T14:17:53Z	2026-10-12T14:18:38Z
+rosettastone.com	https://rosettastone.com	0		2026-10-12T14:19:08Z	2026-10-12T14:19:13Z
+rsmus.com	https://rsmus.com	0		2026-10-12T14:19:43Z	2026-10-12T14:19:46Z
+runway.com	https://runway.com	0		2026-10-12T14:20:16Z	2026-10-12T14:20:21Z
+salesforce.com	https://salesforce.com	0		2026-10-12T14:20:51Z	2026-10-12T14:21:01Z
+sarvam.ai	https://sarvam.ai	0		2026-10-12T14:21:31Z	2026-10-12T14:21:39Z
+scaleway.com	https://scaleway.com	0		2026-10-12T14:22:09Z	2026-10-12T14:22:32Z
+sciaky.com	https://sciaky.com	0		2026-10-12T14:23:02Z	2026-10-12T14:23:13Z
+scylladb.com	https://scylladb.com	0		2026-10-12T14:23:43Z	2026-10-12T14:23:52Z
+sencha.com	https://sencha.com	0		2026-10-12T14:24:22Z	2026-10-12T14:24:33Z
+sezzle.com	https://sezzle.com	0		2026-10-12T14:25:03Z	2026-10-12T14:25:06Z
+shawacademy.com	https://shawacademy.com	0		2026-10-12T14:25:36Z	2026-10-12T14:25:38Z
+shein.com	https://shein.com	0		2026-10-12T14:26:08Z	2026-10-12T14:26:19Z
+shopify.com	https://shopify.com	0		2026-10-12T14:26:49Z	2026-10-12T14:26:55Z
+shopline.com	https://shopline.com	0		2026-10-12T14:27:25Z	2026-10-12T14:27:30Z
+shortcut.com	https://shortcut.com	0		2026-10-12T14:28:00Z	2026-10-12T14:28:02Z
+sia-partners.com	https://sia-partners.com	0		2026-10-12T14:28:32Z	2026-10-12T14:28:40Z
+simplenote.com	https://simplenote.com	0		2026-10-12T14:29:10Z	2026-10-12T14:29:12Z
+sinotrans.com	https://sinotrans.com	2	dns	2026-10-12T14:29:42Z	2026-10-12T14:29:43Z
+sinotrans.com	https://www.sinotrans.com	0		2026-10-12T14:29:48Z	2026-10-12T14:30:06Z
+skillshare.com	https://skillshare.com	2	bot_challenge	2026-10-12T14:30:36Z	2026-10-12T14:30:43Z
+smartsheet.com	https://smartsheet.com	0		2026-10-12T14:31:13Z	2026-10-12T14:31:16Z
+somosmaker.com	https://somosmaker.com	0		2026-10-12T14:31:46Z	2026-10-12T14:34:13Z
+southwest.com	https://southwest.com	0		2026-10-12T14:34:43Z	2026-10-12T14:34:46Z
+spiderproject.com	https://spiderproject.com	2	http_301	2026-10-12T14:35:16Z	2026-10-12T14:35:22Z
+spiderproject.com	https://www.spiderproject.com	2	http_301	2026-10-12T14:35:27Z	2026-10-12T14:35:28Z
+splunk.com	https://splunk.com	0		2026-10-12T14:35:58Z	2026-10-12T14:36:05Z
+spreecommerce.org	https://spreecommerce.org	0		2026-10-12T14:36:35Z	2026-10-12T14:36:42Z
+squareup.com	https://squareup.com	0		2026-10-12T14:37:12Z	2026-10-12T14:37:22Z
+stanleyblackanddecker.com	https://stanleyblackanddecker.com	2	timeout	2026-10-12T14:37:52Z	2026-10-12T14:38:38Z
+stanleyblackanddecker.com	https://www.stanleyblackanddecker.com	2	timeout	2026-10-12T14:38:43Z	2026-10-12T14:39:28Z
+statcounter.com	https://statcounter.com	0		2026-10-12T14:39:58Z	2026-10-12T14:40:07Z
+stepfun.com	https://stepfun.com	0		2026-10-12T14:40:37Z	2026-10-12T14:40:58Z
+stratasys.com	https://stratasys.com	0		2026-10-12T14:41:28Z	2026-10-12T14:41:38Z
+stripe.com	https://stripe.com	0		2026-10-12T14:42:08Z	2026-10-12T14:42:14Z
+sugarcrm.com	https://sugarcrm.com	0		2026-10-12T14:42:44Z	2026-10-12T14:42:52Z
+suitecrm.com	https://suitecrm.com	0		2026-10-12T14:43:22Z	2026-10-12T14:43:41Z
+suncountry.com	https://suncountry.com	0		2026-10-12T14:44:11Z	2026-10-12T14:44:12Z
+supabase.com	https://supabase.com	0		2026-10-12T14:44:42Z	2026-10-12T14:44:45Z
+supadupa.me	https://supadupa.me	0		2026-10-12T14:45:15Z	2026-10-12T14:45:18Z
+sybiz.com	https://sybiz.com	0		2026-10-12T14:45:48Z	2026-10-12T14:46:02Z
+synthesia.io	https://synthesia.io	0		2026-10-12T14:46:32Z	2026-10-12T14:46:45Z
+tagspaces.org	https://tagspaces.org	0		2026-10-12T14:47:15Z	2026-10-12T14:47:19Z
+tallysolutions.com	https://tallysolutions.com	0		2026-10-12T14:47:49Z	2026-10-12T14:48:03Z
+tandem.net	https://tandem.net	0		2026-10-12T14:48:33Z	2026-10-12T14:48:43Z
+tanstack.com	https://tanstack.com	0		2026-10-12T14:49:13Z	2026-10-12T14:49:24Z
+tcs.com	https://tcs.com	2	bot_challenge	2026-10-12T14:49:54Z	2026-10-12T14:49:58Z
+temu.com	https://temu.com	0		2026-10-12T14:50:28Z	2026-10-12T14:50:32Z
+thinkingmachines.ai	https://thinkingmachines.ai	0		2026-10-12T14:51:02Z	2026-10-12T14:51:04Z
+thoughtworks.com	https://thoughtworks.com	0		2026-10-12T14:51:34Z	2026-10-12T14:51:36Z
+tiddlywiki.com	https://tiddlywiki.com	0		2026-10-12T14:52:06Z	2026-10-12T14:52:14Z
+tii.ae	https://tii.ae	0		2026-10-12T14:52:44Z	2026-10-12T14:52:58Z
+tranglos.com	https://tranglos.com	2	no_content	2026-10-12T14:53:28Z	2026-10-12T14:53:28Z
+tranglos.com	https://www.tranglos.com	2	no_content	2026-10-12T14:53:33Z	2026-10-12T14:53:33Z
+trendyol.com	https://trendyol.com	0		2026-10-12T14:54:04Z	2026-10-12T14:54:07Z
+ucoz.com	https://ucoz.com	0		2026-10-12T14:54:37Z	2026-10-12T14:54:47Z
+udacity.com	https://udacity.com	0		2026-10-12T14:55:17Z	2026-10-12T14:55:22Z
+ulyssesapp.com	https://ulyssesapp.com	2	tls	2026-10-12T14:55:52Z	2026-10-12T14:55:52Z
+ulyssesapp.com	https://www.ulyssesapp.com	2	tls	2026-10-12T14:55:57Z	2026-10-12T14:55:58Z
+united.com	https://united.com	2	timeout	2026-10-12T14:56:28Z	2026-10-12T14:57:13Z
+united.com	https://www.united.com	2	timeout	2026-10-12T14:57:18Z	2026-10-12T14:58:03Z
+upstash.com	https://upstash.com	0		2026-10-12T14:58:33Z	2026-10-12T14:58:37Z
+utopaistudios.com	https://utopaistudios.com	0		2026-10-12T14:59:07Z	2026-10-12T14:59:11Z
+vinted.com	https://vinted.com	0		2026-10-12T14:59:41Z	2026-10-12T14:59:53Z
+virtuemart.net	https://virtuemart.net	0		2026-10-12T15:00:23Z	2026-10-12T15:00:28Z
+visma.fi	https://visma.fi	2	http_403	2026-10-12T15:00:58Z	2026-10-12T15:00:59Z
+visma.fi	https://www.visma.fi	2	http_403	2026-10-12T15:01:04Z	2026-10-12T15:01:04Z
+voxeljet.com	https://voxeljet.com	0		2026-10-12T15:01:34Z	2026-10-12T15:01:42Z
+vuejs.org	https://vuejs.org	0		2026-10-12T15:02:12Z	2026-10-12T15:02:14Z
+w3perl.com	https://w3perl.com	0		2026-10-12T15:02:44Z	2026-10-12T15:02:46Z
+walmart.com	https://walmart.com	0		2026-10-12T15:03:16Z	2026-10-12T15:03:18Z
+wanhai.com	https://wanhai.com	2	dns	2026-10-12T15:03:48Z	2026-10-12T15:03:48Z
+wanhai.com	https://www.wanhai.com	2	bot_challenge	2026-10-12T15:03:53Z	2026-10-12T15:03:54Z
+webalizer.net	https://webalizer.net	0		2026-10-12T15:04:24Z	2026-10-12T15:04:28Z
+webflow.com	https://webflow.com	0		2026-10-12T15:04:58Z	2026-10-12T15:05:01Z
+westmonroepartners.com	https://westmonroepartners.com	0		2026-10-12T15:05:31Z	2026-10-12T15:05:45Z
+wikiversity.org	https://wikiversity.org	0		2026-10-12T15:06:15Z	2026-10-12T15:06:16Z
+wish.com	https://wish.com	0		2026-10-12T15:06:46Z	2026-10-12T15:06:51Z
+wix.com	https://wix.com	0		2026-10-12T15:07:21Z	2026-10-12T15:07:27Z
+woopra.com	https://woopra.com	0		2026-10-12T15:07:57Z	2026-10-12T15:09:01Z
+x.ai	https://x.ai	0		2026-10-12T15:09:31Z	2026-10-12T15:09:32Z
+xero.com	https://xero.com	0		2026-10-12T15:10:02Z	2026-10-12T15:10:14Z
+yahoo.com	https://yahoo.com	0		2026-10-12T15:10:44Z	2026-10-12T15:10:54Z
+yangming.com	https://yangming.com	2	dns	2026-10-12T15:11:24Z	2026-10-12T15:11:25Z
+yangming.com	https://www.yangming.com	0		2026-10-12T15:11:30Z	2026-10-12T15:11:34Z
+zen-cart.com	https://zen-cart.com	0		2026-10-12T15:12:04Z	2026-10-12T15:12:19Z
+zim.com	https://zim.com	2	bot_challenge	2026-10-12T15:12:49Z	2026-10-12T15:12:51Z
+zip.co	https://zip.co	0		2026-10-12T15:13:21Z	2026-10-12T15:13:25Z
+zkoss.org	https://zkoss.org	0		2026-10-12T15:13:55Z	2026-10-12T15:14:00Z
+zoho.com	https://zoho.com	0		2026-10-12T15:14:30Z	2026-10-12T15:14:35Z
+zortrax.com	https://zortrax.com	0		2026-10-12T15:15:05Z	2026-10-12T15:15:14Z

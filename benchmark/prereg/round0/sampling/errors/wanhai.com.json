@@ -1,0 +1,1 @@
+{"error": {"kind": "bot_challenge", "message": "bot challenge served to a browser user-agent (Imperva): a static fetch cannot measure this site", "target": "https://www.wanhai.com"}, "tool": "geo-score-cli/1.8.1"}

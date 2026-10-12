@@ -1,0 +1,1 @@
+{"error": {"kind": "dns", "message": "cannot resolve www.business.adobe.com: check the spelling, or your DNS/proxy settings (HTTPS_PROXY); see https://github.com/jianruntech/geo-score/blob/v1.8.1/guide/troubleshooting.md#dns-the-name-does-not-resolve", "target": "https://www.business.adobe.com"}, "tool": "geo-score-cli/1.8.1"}

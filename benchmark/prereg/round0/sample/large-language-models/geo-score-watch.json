@@ -1,0 +1,88 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "01.AI",
+    "domains": [
+      "01.ai"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Mistral AI",
+      "domains": [
+        "mistral.ai"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Mistral"
+      ]
+    },
+    {
+      "name": "Naver",
+      "domains": [
+        "navercorp.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "HyperCLOVA X",
+        "HyperCLOVA"
+      ]
+    },
+    {
+      "name": "Sarvam AI",
+      "domains": [
+        "sarvam.ai"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Sarvam"
+      ]
+    },
+    {
+      "name": "Technology Innovation Institute",
+      "domains": [
+        "tii.ae"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "TII",
+        "Falcon LLM"
+      ]
+    },
+    {
+      "name": "xAI",
+      "domains": [
+        "x.ai"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Grok"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

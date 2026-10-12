@@ -1,0 +1,7 @@
+geo-score 1.8.1 (rubric v1.1)
+tag v1.8.1
+commit 622ae83ffd16d837c9a5039c475854f425559244
+python 3.14.4
+host Linux 6.18.49 x86_64
+started 2026-10-12T11:54:26Z
+finished 2026-10-12T15:15:44Z

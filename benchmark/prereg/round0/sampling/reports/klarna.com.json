@@ -1,0 +1,379 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 7.6,
+  "target": "https://klarna.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://klarna.com/",
+    "https://klarna.com/us/help",
+    "https://klarna.com/us/shopping",
+    "https://klarna.com/us/klarna-app",
+    "https://klarna.com/us/campaign-app",
+    "https://klarna.com/us/what-is-klarna",
+    "https://klarna.com/us/klarna-balance",
+    "https://klarna.com/us/buyer-protection"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 47,
+  "observable_max": 86,
+  "normalised": 55,
+  "band": "Growing",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (1520 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 4 of those served content matching what a browser receives. Content differed: OAI-SearchBot, ChatGPT-User, Claude-User, PerplexityBot, Perplexity-User, Applebot.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.klarna.com/us/api/klarna-web-bff/api/sitemap/us/sitemap.xml»): HTTP 200, 71 <loc>, 0 <lastmod>.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 8503 bytes, 10 '##' sections, 10 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 4 of 8 sampled pages; 4 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "3 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Klarna is your everyday money app, helping you manage spending, payments, and rewards. All…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "43 figures on 7 pages; 3 attributed in the same block or the next, 3 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Klarna» (also tried «site text: Klarna US», «site text: A secure, flexible way to manage your money»). Entity found — Wikidata Q1165072 «site text: Swedish fintech company»; en.wikipedia: «site text: Klarna»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "7 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 73,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 16,
+      "few_home_links": false,
+      "other_sampled": 8,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 70,
+      "sitemap_urls_linked": 32,
+      "unlinked_sitemap_urls": [
+        "https://www.klarna.com/us/about-nift-partnership/",
+        "https://www.klarna.com/us/about-us/",
+        "https://www.klarna.com/us/about-us/contact/",
+        "https://www.klarna.com/us/accessibility/",
+        "https://www.klarna.com/us/applefromklarna-return-policy/",
+        "https://www.klarna.com/us/articles/",
+        "https://www.klarna.com/us/browser-extension/",
+        "https://www.klarna.com/us/complaints/",
+        "https://www.klarna.com/us/contact-information-for-authorities/",
+        "https://www.klarna.com/us/cookies/",
+        "https://www.klarna.com/us/credit-card/",
+        "https://www.klarna.com/us/financial-hardship-support/",
+        "https://www.klarna.com/us/gift-cards/",
+        "https://www.klarna.com/us/investments/",
+        "https://www.klarna.com/us/klarna-google-pay/",
+        "https://www.klarna.com/us/klarna-mobile-sweepstakes/",
+        "https://www.klarna.com/us/klarna-onepay/",
+        "https://www.klarna.com/us/legal/",
+        "https://www.klarna.com/us/loyalty-cards/",
+        "https://www.klarna.com/us/manage-an-estate/",
+        "https://www.klarna.com/us/payments/pay-in-30-days/",
+        "https://www.klarna.com/us/payments/pay-in-4/",
+        "https://www.klarna.com/us/payments/pay-in-full/",
+        "https://www.klarna.com/us/payments/pay-over-time/",
+        "https://www.klarna.com/us/payments/schedule-payments/",
+        "https://www.klarna.com/us/phishing-and-scams/",
+        "https://www.klarna.com/us/phone-reset/",
+        "https://www.klarna.com/us/pricerunner-info/",
+        "https://www.klarna.com/us/refer-a-friend/",
+        "https://www.klarna.com/us/resell/",
+        "https://www.klarna.com/us/special-circumstances/",
+        "https://www.klarna.com/us/store-page-09f4d635-0452-4f63-9455-c45420d95669/",
+        "https://www.klarna.com/us/store-page-ba94b586-39bc-4ade-a765-9cae8561779d/",
+        "https://www.klarna.com/us/store-page/",
+        "https://www.klarna.com/us/terms-of-use/",
+        "https://www.klarna.com/us/travel-esim/",
+        "https://www.klarna.com/us/wikipink/",
+        "https://www.klarna.com/us/wikipink/a-smarter-framework-for-buy-now-pay-later/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 9,
+      "annotations": 221,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.klarna.com/us/?grs=%2F&grr=empty",
+          "annotations": 38
+        },
+        {
+          "url": "https://www.klarna.com/us/help/",
+          "annotations": 33
+        },
+        {
+          "url": "https://www.klarna.com/us/shopping/",
+          "annotations": 13
+        },
+        {
+          "url": "https://www.klarna.com/us/klarna-app/",
+          "annotations": 33
+        },
+        {
+          "url": "https://www.klarna.com/us/campaign-app/",
+          "annotations": 7
+        },
+        {
+          "url": "https://www.klarna.com/us/what-is-klarna/",
+          "annotations": 31
+        },
+        {
+          "url": "https://www.klarna.com/us/klarna-balance/",
+          "annotations": 20
+        },
+        {
+          "url": "https://www.klarna.com/us/buyer-protection/",
+          "annotations": 35
+        },
+        {
+          "url": "https://www.klarna.com/us/articles/?grs=%2Farticles%2F&grr=empty",
+          "annotations": 11
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 2,
+      "no_self_reference_pages": [
+        "https://www.klarna.com/us/?grs=%2F&grr=empty",
+        "https://www.klarna.com/us/articles/?grs=%2Farticles%2F&grr=empty"
+      ],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 3,
+      "other_host_hrefs": [
+        {
+          "url": "https://www.klarna.com/us/shopping/",
+          "href": "https://www.pricerunner.dk/"
+        },
+        {
+          "url": "https://www.klarna.com/us/shopping/",
+          "href": "https://www.pricerunner.se/"
+        },
+        {
+          "url": "https://www.klarna.com/us/shopping/",
+          "href": "https://www.pricerunner.com/"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 214,
+      "not_read": 0
+    }
+  }
+}

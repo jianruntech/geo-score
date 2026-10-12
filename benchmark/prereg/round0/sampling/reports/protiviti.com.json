@@ -1,0 +1,385 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 5.9,
+  "target": "https://protiviti.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://protiviti.com/",
+    "https://protiviti.com/us-en/survey/ai-pulse",
+    "https://protiviti.com/us-en/survey/transformation-survey",
+    "https://protiviti.com/us-en/survey/global-finance-trends-survey",
+    "https://protiviti.com/us-en/survey/executive-perspectives-top-risks",
+    "https://protiviti.com/us-en/client-story/protiviti-launches-anthropics-claude",
+    "https://protiviti.com/us-en/client-story/ai-enablement-protiviti-claude-agentic-ai",
+    "https://protiviti.com/us-en/client-story/defense-contractor-strategic-sourcing-savings"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 59,
+  "observable_max": 86,
+  "normalised": 69,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (6221 bytes): no Disallow applies to retrieval crawlers; 5 named with an explicit permission (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot).",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.protiviti.com/ae-en/sitemap.xml»): HTTP 200, 373 <loc>, 373 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (8 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 7 of 8 sampled pages; 7 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "8 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: By caring about your priorities, listening to you and understanding your business needs, w…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "5 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "7 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "94 figures on 8 pages; 49 attributed in the same block or the next, 0 of them with a link. Of the 6 pages carrying three or more, 2 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Protiviti» (also tried «site text: Protiviti US», «site text: Protiviti United States»). Entity found — Wikidata Q60738775 «site text: consulting firm»; en.wikipedia: «site text: Protiviti»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "5 sameAs declared; of the first 5, 4 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 31 channel links and 15 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "8 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 125,
+      "few_home_links": false,
+      "other_sampled": 8,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 0,
+      "unlinked_sitemap_urls": [
+        "https://www.protiviti.com/ae-en/your-well-being",
+        "https://www.protiviti.com/ae-en/making-impact",
+        "https://www.protiviti.com/ae-en/experienced-hires",
+        "https://www.protiviti.com/ae-en/meet-our-people",
+        "https://www.protiviti.com/ae-en/students-graduates",
+        "https://www.protiviti.com/ae-en/careers",
+        "https://www.protiviti.com/ae-en/experienced-professionals-work-we-do",
+        "https://www.protiviti.com/ae-en/experienced-professionals-our-recruiting-process",
+        "https://www.protiviti.com/ae-en/experienced-professionals-developing-your-career",
+        "https://www.protiviti.com/ae-en/students-and-graduates-work-we-do",
+        "https://www.protiviti.com/ae-en/students-and-graduates-our-recruiting-process",
+        "https://www.protiviti.com/ae-en/students-and-graduates-developing-your-career",
+        "https://www.protiviti.com/ae-en/data-privacy-consulting",
+        "https://www.protiviti.com/ae-en/cloud-consulting-services",
+        "https://www.protiviti.com/ae-en/internal-audit-services",
+        "https://www.protiviti.com/ae-en/data-and-analytics-services",
+        "https://www.protiviti.com/ae-en/cybersecurity-consulting",
+        "https://www.protiviti.com/ae-en/data-and-analytics-strategy-services",
+        "https://www.protiviti.com/ae-en/customer-experience",
+        "https://www.protiviti.com/ae-en/sustainability-consulting",
+        "https://www.protiviti.com/ae-en/technology-consulting-services",
+        "https://www.protiviti.com/ae-en/transaction-services",
+        "https://www.protiviti.com/ae-en/intelligent-automation",
+        "https://www.protiviti.com/ae-en/employee-experience",
+        "https://www.protiviti.com/ae-en/audit-innovation",
+        "https://www.protiviti.com/ae-en/audit-transformation",
+        "https://www.protiviti.com/ae-en/knowledgeleader",
+        "https://www.protiviti.com/ae-en/capital-projects-consulting",
+        "https://www.protiviti.com/ae-en/sarbanes-oxley-compliance-sox",
+        "https://www.protiviti.com/ae-en/controls-advisory",
+        "https://www.protiviti.com/ae-en/technology-audit-services",
+        "https://www.protiviti.com/ae-en/fraud-risk-management",
+        "https://www.protiviti.com/ae-en/risk-management-consulting",
+        "https://www.protiviti.com/ae-en/advanced-analytics-and-ai",
+        "https://www.protiviti.com/ae-en/data-architecture-and-engineering-services",
+        "https://www.protiviti.com/ae-en/digital-transformation",
+        "https://www.protiviti.com/ae-en/cloud-data-enablement-services",
+        "https://www.protiviti.com/ae-en/analytics-managed-services",
+        "https://www.protiviti.com/ae-en/finance-transformation",
+        "https://www.protiviti.com/ae-en/enterprise-data-governance",
+        "https://www.protiviti.com/ae-en/master-data-management",
+        "https://www.protiviti.com/ae-en/ipo-readiness",
+        "https://www.protiviti.com/ae-en/ma-consulting",
+        "https://www.protiviti.com/ae-en/sustainability-governance-and-reporting",
+        "https://www.protiviti.com/ae-en/esg-strategy-and-planning",
+        "https://www.protiviti.com/ae-en/sustainable-operations-performance-and-improvement",
+        "https://www.protiviti.com/ae-en/power-utilities-and-renewables",
+        "https://www.protiviti.com/ae-en/healthcare",
+        "https://www.protiviti.com/ae-en/transportation-logistics",
+        "https://www.protiviti.com/ae-en/operations-consulting"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 9,
+      "annotations": 191,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.protiviti.com/us-en",
+          "annotations": 30
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/survey/ai-pulse",
+          "annotations": 28
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/survey/transformation-survey",
+          "annotations": 24
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/survey/global-finance-trends-survey",
+          "annotations": 28
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/survey/executive-perspectives-top-risks",
+          "annotations": 25
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/client-story/protiviti-launches-anthropics-claude",
+          "annotations": 14
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/client-story/ai-enablement-protiviti-claude-agentic-ai",
+          "annotations": 13
+        },
+        {
+          "url": "https://www.protiviti.com/us-en/client-story/defense-contractor-strategic-sourcing-savings",
+          "annotations": 13
+        },
+        {
+          "url": "https://www.protiviti.com/gl-en/insights",
+          "annotations": 16
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 1,
+      "duplicates": [
+        {
+          "url": "https://www.protiviti.com/us-en",
+          "hreflang": "en-in",
+          "urls": 2,
+          "hrefs": [
+            "https://www.protiviti.com/in-en",
+            "https://www.protiviti.com/in-pcc"
+          ]
+        }
+      ],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 174,
+      "not_read": 0
+    }
+  }
+}

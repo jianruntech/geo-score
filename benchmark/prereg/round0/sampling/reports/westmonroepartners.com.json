@@ -1,0 +1,339 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 13.8,
+  "target": "https://westmonroepartners.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://westmonroepartners.com/",
+    "https://westmonroepartners.com/insights/why-speed-matters",
+    "https://westmonroepartners.com/insights/building-the-ai-native-enterprise",
+    "https://westmonroepartners.com/services/operations",
+    "https://westmonroepartners.com/services/finance-operations",
+    "https://westmonroepartners.com/about/clonal",
+    "https://westmonroepartners.com/about/intellio",
+    "https://westmonroepartners.com/about/our-team"
+  ],
+  "sample_source": "sitemap",
+  "landed": "https://www.westmonroe.com/",
+  "readiness": 53,
+  "observable_max": 86,
+  "normalised": 62,
+  "band": "Growing",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (105 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "9 of 10 retrieval user-agents returned 200 on 3 sampled pages; 9 of those served content matching what a browser receives. Not reached — HTTP 403: Amazonbot. (Unverified probes: vendor user-agent strings sent from this machine's address.)",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "5 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.westmonroe.com/sitemap.xml»): HTTP 200, 1372 <loc>, 1372 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only Organization found (8 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 4 of 8 sampled pages; 4 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "evidence": "5 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Most organizations don’t realize how much growth they’re leaving on the table. Not because…»",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "7 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a date a reader or a crawler can see; 2 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "14 figures on 5 pages; 4 attributed in the same block or the next, 0 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: West Monroe» (also tried «site text: @westmonroe», «site text: Global business and technology consulting firm»). Entity found — Wikidata Q727095 «site text: suburb city of Monroe, located in Ouachi…»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "5 sameAs declared; of the first 5, 4 resolve, 0 are gone (404/410), 1 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 48 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "4 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 10,
+      "home_links": 43,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 2,
+      "unlinked_sitemap_urls": [
+        "https://www.westmonroe.com/company-highlight/student-conservation-association-to-present-corporate-trailblazer-award-to-west-monroe",
+        "https://www.westmonroe.com/company-highlight/consulting-magazines-best-firms-to-work-for-list",
+        "https://www.westmonroe.com/press-releases/great-place-to-work-names-west-monroe-to-2017-best-small-and-medium-workplaces-in-chicago-list",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-a-2023-best-workplace-for-parents-by-fortune-and-great-place-to-work",
+        "https://www.westmonroe.com/company-highlight/christina-powers-melanie-prestridge-winners-2022-women-leaders-technology",
+        "https://www.westmonroe.com/press-releases/west-monroe-acquires-verys-to-scale-digital-product-engineering-capabilities",
+        "https://www.westmonroe.com/press-releases/west-monroes-kevin-mccarty-named-one-of-consulting-magazines-top-25-consultants-of-2013",
+        "https://www.westmonroe.com/company-highlight/2020-top-100-places-to-work-dallas-morning-news",
+        "https://www.westmonroe.com/company-highlight/josh-udoma-from-west-monroe-named-as-an-honoree-for-the-network-journals-40-under-forty-awards",
+        "https://www.westmonroe.com/press-releases/west-monroe-sells-managed-services-division-to-private-equity-firm-mc",
+        "https://www.westmonroe.com/press-releases/west-monroe-announces-2022-class-of-fischer-global-service-fellows",
+        "https://www.westmonroe.com/company-highlight/data-ai-world-tour-chicago",
+        "https://www.westmonroe.com/company-highlight/jordan-mouhan-madeline-verbeten-winners-ma-advisors-14th-annual-emerging-leaders-award",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-one-of-2020-best-workplaces-for-millennials",
+        "https://www.westmonroe.com/press-releases/west-monroe-completes-investment-from-msd-partners",
+        "https://www.westmonroe.com/press-releases/west-monroe-joins-10-years-of-workplace-excellence",
+        "https://www.westmonroe.com/press-releases/west-monroe-announces-new-ai-workforce-offerings-pioneering-a-bold-approach-to-ai-adoption",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-top-consulting-firm-in-united-kingdom",
+        "https://www.westmonroe.com/press-releases/west-monroe-acquires-waterstone-management-group",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-one-of-the-2018-best-workplaces-for-millennials-by-great-place-to-work-and-fortune",
+        "https://www.westmonroe.com/press-releases/west-monroe-study-finds-the-age-of-the-traditional-doctors-office-visit-is-over",
+        "https://www.westmonroe.com/press-releases/accenture-executive-john-rosato-to-lead-tech-ex",
+        "https://www.westmonroe.com/company-highlight/west-monroe-again-named-iaop-worlds-best-outsourcing-advisors-list",
+        "https://www.westmonroe.com/company-highlight/west-monroe-recognized-as-netsuite-vertical-alliance-partner-of-the-year-for-services",
+        "https://www.westmonroe.com/company-highlight/best-workplaces-texas-great-place-to-work-2021",
+        "https://www.westmonroe.com/company-highlight/best-places-to-work-los-angeles-business-journal",
+        "https://www.westmonroe.com/company-highlight/west-monroe-ranks-5-chicago-tribunes-top-workplaces-list",
+        "https://www.westmonroe.com/company-highlight/west-monroe-honored-with-naturebridge-corporate-sustainability-award",
+        "https://www.westmonroe.com/company-highlight/west-monroe-wins-2019-brandon-hall-group-excellence-bronze-award",
+        "https://www.westmonroe.com/company-highlight/west-monroe-again-named-to-crains-annual-list-of-best-places-to-work-new-york-city",
+        "https://www.westmonroe.com/press-releases/brian-paulen-to-assume-leadership-for-west-monroes-seattle-office",
+        "https://www.westmonroe.com/press-releases/march-16-a-message-to-our-clients-and-community-about-covid-19",
+        "https://www.westmonroe.com/company-highlight/2022-best-workplaces-women-great-place-work-fortune",
+        "https://www.westmonroe.com/press-releases/west-monroe-acquires-pace-harmon",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-to-top-workplaces-usa-2025-list",
+        "https://www.westmonroe.com/press-releases/west-monroe-announces-new-director-appointments-and-promotions",
+        "https://www.westmonroe.com/press-releases/west-monroe-named-to-crains-2012-fast-fifty",
+        "https://www.westmonroe.com/company-highlight/great-place-to-work-and-fortune-name-west-monroe-one-of-the-2020-fortune-100-best-companies-to-work-",
+        "https://www.westmonroe.com/company-highlight/west-monroe-again-named-chicago-tribune-top-workplaces",
+        "https://www.westmonroe.com/press-releases/west-monroe-partners-named-one-of-consulting-magazines-2014-best-firms-to-work-for",
+        "https://www.westmonroe.com/press-releases/west-monroe-appoints-ted-ceo-jay-herratti-to-board-of-directors",
+        "https://www.westmonroe.com/press-releases/west-monroe-announces-250-million-investment-to-expand-digital-consulting-services",
+        "https://www.westmonroe.com/press-releases/west-monroe-names-8-employees-to-2019-class-of-fischer-global-service-fellows",
+        "https://www.westmonroe.com/press-releases/2025-salesforce-consulting-services-landscape",
+        "https://www.westmonroe.com/company-highlight/chicago-tribune-names-west-monroe-a-winner-of-the-chicagoland-top-workplaces-2023-award",
+        "https://www.westmonroe.com/company-highlight/best-workplace-list-new-york-2021",
+        "https://www.westmonroe.com/press-releases/incentive-program-directors",
+        "https://www.westmonroe.com/press-releases/americans-are-spending-more-on-subscriptions-and-are-less-aware-of-spending",
+        "https://www.westmonroe.com/company-highlight/west-monroe-named-no-2-best-place-to-work-in-los-angeles",
+        "https://www.westmonroe.com/company-highlight/west-monroe-wins-deal-of-the-year-at-the-22nd-manda-advisor-awards"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 10,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

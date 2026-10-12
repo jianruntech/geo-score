@@ -274,6 +274,27 @@ URL 的引用片段所支撑的字符数，除以全部字符数；字符只数�
    提交，最后一次改动在 `30a25c0`（功效模拟默认用更细的效应量网格）。功效数字取决于抽中的站，所以在样本抽定之后、收集第一个
    回答之前，以另一条修订记入。
 
+### 2026-10-12：第 0 轮冻结的样本及其检验力
+
+在抽样运行和抽取之后、收集任何回答之前写定，和本方案一样，以第一个包含它的发布版本完成登记，该版本在第 0 波开始前发布。
+冻结的样本是 [prereg/round0/sample.json](prereg/round0/sample.json)，抽样运行的报告和错误在
+[prereg/round0/sampling/](prereg/round0/sampling/)。
+
+1. **抽样运行（第 5.2 节）。** 冻结的命令行 geo-score 1.8.1（标签 `v1.8.1`，即登记上面那条 2026-10-12 修订的版本）于
+   2026-10-12 在 iad1（美国东部）的 Vercel Sandbox 上，一次一个站、站间隔 30 秒，给其余 272 个候选站各打一次分。
+   230 个打出了分；42 个打不了，每个都记下了原因。
+2. **抽取（第 5.3–5.4 节）。** 分层用量表自己的分档界线；每个类别每层最多抽 2 个站，随机种子记在 `sample.json` 里。
+   保留 16 个类别，每类 4 到 6 个站，共 83 个站。去掉的 4 个类别是：ai-video-generators、web-analytics、
+   container-shipping-lines、us-airlines——排除样本过少和打不了分的站之后，它们剩下不足 4 个站或只剩一层。
+   16 个类别没有超过为 Gemini 配额设的 18 个上限，所以没有按随机抽取删类别；也高于 12 个的最低要求。
+3. **收集安排（第 7 节）。** 第 1 天：large-language-models、vector-databases、cloud-infrastructure、
+   javascript-web-frameworks、ecommerce-platforms、crm-software。第 2 天：online-payment-providers、buy-now-pay-later、
+   online-course-platforms、language-learning、management-consulting、project-management-software。第 3 天：
+   note-taking-apps、3d-printers、accounting-software、online-marketplaces。共 16 × 10 个问题 × 2 个引擎 × 8 次
+   = 2,560 个回答，任何一天的 Gemini 回答不超过 480 个。Tranco 列表编号 `4672X`。
+4. **检验力（第 11 节）。** 用 `analysis.py power --round benchmark/prereg/round0` 模拟这个冻结样本，在 α = 0.05 下
+   以 80% 检验力能检出的最小平均 T 是 **0.289**。第 0 波若是零结果，要对照这个数来读：比它弱的关系可能存在而没被检出。
+
 ## 来源
 
 | 来源 | 用在哪里 |

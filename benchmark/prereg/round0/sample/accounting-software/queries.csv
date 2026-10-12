@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What is the best accounting software for small businesses?,list
+q02,Which accounting software is easiest for someone without an accounting background?,list
+q03,What are the best open-source accounting programs?,list
+q04,I'm a freelancer and spend hours every month creating invoices and tracking expenses in spreadsheets. What software should I use?,problem
+q05,Our company has outgrown its basic bookkeeping software and needs multi-entity reporting. What should we move to?,problem
+q06,Which accounting software is best for a restaurant owner?,persona
+q07,What accounting software should a nonprofit use for fund accounting?,persona
+q08,How much does accounting software cost per month?,pricing
+q09,Is there free accounting software for small businesses?,pricing
+q10,Which accounting software works best with an outside bookkeeper or accountant?,list
