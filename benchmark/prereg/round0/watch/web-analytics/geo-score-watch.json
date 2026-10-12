@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Adobe",
+    "domains": [
+      "adobe.com"
+    ],
+    "url_prefixes": [],
+    "aliases": [
+      "Adobe Analytics"
+    ]
+  },
+  "competitors": [
+    {
+      "name": "AWStats",
+      "domains": [
+        "awstats.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Bing",
+      "domains": [
+        "bing.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Bing Webmaster Tools"
+      ]
+    },
+    {
+      "name": "GoAccess",
+      "domains": [
+        "goaccess.io"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "IBM",
+      "domains": [
+        "ibm.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Tealeaf"
+      ]
+    },
+    {
+      "name": "Marfeel",
+      "domains": [
+        "marfeel.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Mixpanel",
+      "domains": [
+        "mixpanel.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Plausible",
+      "domains": [
+        "plausible.io"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Plausible Analytics"
+      ]
+    },
+    {
+      "name": "Splunk",
+      "domains": [
+        "splunk.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "StatCounter",
+      "domains": [
+        "statcounter.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "W3Perl",
+      "domains": [
+        "w3perl.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Webalizer",
+      "domains": [
+        "webalizer.net"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Woopra",
+      "domains": [
+        "woopra.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Yahoo",
+      "domains": [
+        "yahoo.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Yahoo Web Analytics"
+      ]
+    },
+    {
+      "name": "Yandex",
+      "domains": [
+        "yandex.ru"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Yandex Metrica",
+        "Yandex.Metrica",
+        "Yandex Metrika"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

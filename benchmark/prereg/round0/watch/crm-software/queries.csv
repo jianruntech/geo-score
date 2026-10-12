@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What is the best CRM software for small businesses?,list
+q02,Which CRM systems are easiest for a sales team to adopt?,list
+q03,What are the best open-source CRM systems?,list
+q04,Our sales reps track leads in spreadsheets and follow-ups keep slipping. What software would fix this?,problem
+q05,We lose track of which customers we emailed and what they bought. What tool should we use to keep it all in one place?,problem
+q06,Which CRM is best for a real estate agent?,persona
+q07,What CRM should a B2B software startup with five salespeople choose?,persona
+q08,How much does CRM software cost per user per month?,pricing
+q09,Which CRM tools have a good free plan?,pricing
+q10,Which CRM platforms are best for large enterprises?,list

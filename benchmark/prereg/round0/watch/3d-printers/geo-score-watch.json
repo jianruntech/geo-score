@@ -1,0 +1,155 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "3D makeR Technologies",
+    "domains": [
+      "somosmaker.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "3D Systems",
+      "domains": [
+        "3dsystems.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Bambu Lab",
+      "domains": [
+        "bambulab.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Bambu"
+      ]
+    },
+    {
+      "name": "Cellink",
+      "domains": [
+        "cellink.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "BICO"
+      ]
+    },
+    {
+      "name": "Creality",
+      "domains": [
+        "creality.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Kudo3D",
+      "domains": [
+        "kudo3d.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "MakerBot",
+      "domains": [
+        "makerbot.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Markforged",
+      "domains": [
+        "markforged.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Materialise",
+      "domains": [
+        "materialise.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Prusa",
+      "domains": [
+        "prusa3d.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Prusa Research",
+        "Original Prusa"
+      ]
+    },
+    {
+      "name": "Sciaky",
+      "domains": [
+        "sciaky.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Stanley Black & Decker",
+      "domains": [
+        "stanleyblackanddecker.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Stratasys",
+      "domains": [
+        "stratasys.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "voxeljet",
+      "domains": [
+        "voxeljet.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Zortrax",
+      "domains": [
+        "zortrax.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

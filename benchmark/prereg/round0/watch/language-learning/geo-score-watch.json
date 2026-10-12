@@ -1,0 +1,154 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Babbel",
+    "domains": [
+      "babbel.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Berlitz",
+      "domains": [
+        "berlitz.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Central Institute of Indian Languages",
+      "domains": [
+        "ciil.org"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "CIIL"
+      ]
+    },
+    {
+      "name": "Drops",
+      "domains": [
+        "languagedrops.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Language Drops"
+      ]
+    },
+    {
+      "name": "HarperCollins",
+      "domains": [
+        "harpercollins.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Langenscheidt",
+      "domains": [
+        "langenscheidt.de"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Linguaphone",
+      "domains": [
+        "linguaphonegroup.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Mango Languages",
+      "domains": [
+        "mangolanguages.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Memrise",
+      "domains": [
+        "memrise.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Michel Thomas",
+      "domains": [
+        "michelthomas.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Michel Thomas Method"
+      ]
+    },
+    {
+      "name": "Mondly",
+      "domains": [
+        "mondly.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Peace Corps",
+      "domains": [
+        "peacecorps.gov"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Pimsleur",
+      "domains": [
+        "pimsleur.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Rosetta Stone",
+      "domains": [
+        "rosettastone.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Tandem",
+      "domains": [
+        "tandem.net"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

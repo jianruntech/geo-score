@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best JavaScript frameworks for building a web application?,list
+q02,Which front-end frameworks are most popular with web developers today?,list
+q03,What are the best frameworks for building a fast content website with JavaScript?,list
+q04,Our single-page app loads slowly and ranks poorly in search. Which framework would help us render pages on the server?,problem
+q05,We maintain an old web app full of hand-written DOM code and want to move to a modern framework. Where should we start?,problem
+q06,Which JavaScript framework is easiest for a beginner to learn?,persona
+q07,What framework should a large enterprise team choose for a long-lived internal web application?,persona
+q08,Are there JavaScript frameworks with paid enterprise support or licenses?,pricing
+q09,Which JavaScript frameworks have the best TypeScript support?,list
+q10,Which full-stack JavaScript frameworks handle routing and data loading out of the box?,list

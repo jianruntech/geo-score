@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Affirm",
+    "domains": [
+      "affirm.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Apple",
+      "domains": [
+        "apple.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Apple Pay Later",
+        "Apple Pay"
+      ]
+    },
+    {
+      "name": "Klarna",
+      "domains": [
+        "klarna.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "PayPal",
+      "domains": [
+        "paypal.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "PayPal Pay Later",
+        "PayPal Pay in 4"
+      ]
+    },
+    {
+      "name": "Sezzle",
+      "domains": [
+        "sezzle.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Zip",
+      "domains": [
+        "zip.co"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Quadpay",
+        "Zip Co",
+        "Zip Pay"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

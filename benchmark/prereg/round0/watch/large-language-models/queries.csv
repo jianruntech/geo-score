@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best large language models for building a customer support chatbot?,list
+q02,Which AI model APIs are most reliable for production applications right now?,list
+q03,Which open-weight language models can a company run on its own servers?,list
+q04,Our support team spends hours answering the same customer emails and I want software that can draft the replies automatically. What should I look at?,problem
+q05,I need to summarize hundreds of long contracts every week without sending them to a provider that trains on our data. What are my options?,problem
+q06,What is the best AI model for a small law firm that wants help drafting documents?,persona
+q07,Which AI model API should a two-person startup use to add a writing assistant to its app?,persona
+q08,How much does it cost to use a large language model API for about a million requests a month?,pricing
+q09,Which AI chat assistants have a good free tier for everyday work?,pricing
+q10,What are the leading AI labs building frontier language models today?,list

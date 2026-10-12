@@ -1,0 +1,152 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Adyen",
+    "domains": [
+      "adyen.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Airwallex",
+      "domains": [
+        "airwallex.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Amazon",
+      "domains": [
+        "amazon.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Amazon Pay"
+      ]
+    },
+    {
+      "name": "Apple",
+      "domains": [
+        "apple.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Apple Pay"
+      ]
+    },
+    {
+      "name": "BitPay",
+      "domains": [
+        "bitpay.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Checkout.com",
+      "domains": [
+        "checkout.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Creditcall",
+      "domains": [
+        "creditcall.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Heartland Payment Systems",
+      "domains": [
+        "heartlandpaymentsystems.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Paymentwall",
+      "domains": [
+        "paymentwall.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Payoneer",
+      "domains": [
+        "payoneer.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "PayPal",
+      "domains": [
+        "paypal.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "PlaySpan",
+      "domains": [
+        "playspan.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Square",
+      "domains": [
+        "squareup.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Stripe",
+      "domains": [
+        "stripe.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "WePay",
+      "domains": [
+        "wepay.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

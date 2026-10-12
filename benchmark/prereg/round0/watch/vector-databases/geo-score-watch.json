@@ -1,0 +1,157 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Aerospike",
+    "domains": [
+      "aerospike.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "AllegroGraph",
+      "domains": [
+        "allegrograph.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "ClickHouse",
+      "domains": [
+        "clickhouse.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Couchbase",
+      "domains": [
+        "couchbase.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "CrateDB",
+      "domains": [
+        "crate.io"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "DataStax",
+      "domains": [
+        "datastax.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Astra DB"
+      ]
+    },
+    {
+      "name": "LlamaIndex",
+      "domains": [
+        "llamaindex.ai"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Microsoft",
+      "domains": [
+        "microsoft.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Azure Cosmos DB",
+        "Cosmos DB"
+      ]
+    },
+    {
+      "name": "Neo4j",
+      "domains": [
+        "neo4j.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "OpenSearch",
+      "domains": [
+        "opensearch.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Oracle",
+      "domains": [
+        "oracle.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Oracle Database"
+      ]
+    },
+    {
+      "name": "ScyllaDB",
+      "domains": [
+        "scylladb.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Supabase",
+      "domains": [
+        "supabase.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "TiDB",
+      "domains": [
+        "pingcap.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "PingCAP"
+      ]
+    },
+    {
+      "name": "Upstash",
+      "domains": [
+        "upstash.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

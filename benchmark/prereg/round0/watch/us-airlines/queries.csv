@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What is the best US airline for domestic flights?,list
+q02,Which US airlines have the best on-time records?,list
+q03,Which airlines in the US have the most comfortable economy seats?,list
+q04,I fly between New York and Los Angeles every month and my flights keep getting delayed. Which airline should I switch to?,problem
+q05,I'm taking my family of five on vacation and checked bags are adding up. Which airlines let you check bags for free?,problem
+q06,Which US airline is best for a business traveler who wants elite status?,persona
+q07,What airline is best for a student on a tight budget flying home for the holidays?,persona
+q08,Which US airlines have the cheapest fares?,pricing
+q09,How much do US airlines charge for a checked bag?,pricing
+q10,Which US airlines have the best frequent flyer programs?,list

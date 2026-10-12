@@ -1,0 +1,128 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Alaska",
+    "domains": [
+      "alaskaair.com"
+    ],
+    "url_prefixes": [],
+    "aliases": [
+      "Alaska Airlines"
+    ]
+  },
+  "competitors": [
+    {
+      "name": "Allegiant",
+      "domains": [
+        "allegiantair.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Allegiant Air"
+      ]
+    },
+    {
+      "name": "American",
+      "domains": [
+        "aa.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "American Airlines"
+      ]
+    },
+    {
+      "name": "Delta",
+      "domains": [
+        "delta.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Delta Air Lines"
+      ]
+    },
+    {
+      "name": "Frontier",
+      "domains": [
+        "flyfrontier.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Frontier Airlines"
+      ]
+    },
+    {
+      "name": "Hawaiian",
+      "domains": [
+        "hawaiianairlines.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Hawaiian Airlines"
+      ]
+    },
+    {
+      "name": "JetBlue",
+      "domains": [
+        "jetblue.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "JetBlue Airways"
+      ]
+    },
+    {
+      "name": "Southwest",
+      "domains": [
+        "southwest.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Southwest Airlines"
+      ]
+    },
+    {
+      "name": "Sun Country",
+      "domains": [
+        "suncountry.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Sun Country Airlines"
+      ]
+    },
+    {
+      "name": "United",
+      "domains": [
+        "united.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "United Airlines"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

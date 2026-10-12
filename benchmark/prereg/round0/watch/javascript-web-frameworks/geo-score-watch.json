@@ -1,0 +1,167 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Angular",
+    "domains": [
+      "angular.dev"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Astro",
+      "domains": [
+        "astro.build"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Backbone.js",
+      "domains": [
+        "backbonejs.org"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "BackboneJS"
+      ]
+    },
+    {
+      "name": "Dojo",
+      "domains": [
+        "dojo.io"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Dojo Toolkit"
+      ]
+    },
+    {
+      "name": "Enyo",
+      "domains": [
+        "enyojs.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Ext JS",
+      "domains": [
+        "sencha.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Sencha",
+        "ExtJS"
+      ]
+    },
+    {
+      "name": "Google Web Toolkit",
+      "domains": [
+        "gwtproject.org"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "GWT"
+      ]
+    },
+    {
+      "name": "jQuery",
+      "domains": [
+        "jquery.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "jQWidgets",
+      "domains": [
+        "jqwidgets.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Nuxt",
+      "domains": [
+        "nuxt.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Nuxt.js"
+      ]
+    },
+    {
+      "name": "Prototype",
+      "domains": [
+        "prototypejs.org"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Prototype.js",
+        "Prototype JavaScript Framework"
+      ]
+    },
+    {
+      "name": "qooxdoo",
+      "domains": [
+        "qooxdoo.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "TanStack",
+      "domains": [
+        "tanstack.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "TanStack Start"
+      ]
+    },
+    {
+      "name": "Vue.js",
+      "domains": [
+        "vuejs.org"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Vue",
+        "VueJS"
+      ]
+    },
+    {
+      "name": "ZK Framework",
+      "domains": [
+        "zkoss.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}
