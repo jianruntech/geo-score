@@ -3,7 +3,7 @@
 #
 #   bash scripts/check.sh           # offline: structure, generated MCP docs, lint, unit + end-to-end tests,
 #                                   # the Action, the packaging manifests and the .mcpb, and every other
-#                                   # scripts/test_*.py and benchmark/test_*.py
+#                                   # scripts/test_*.py, benchmark/test_*.py and benchmark/prereg/test_*.py
 #   bash scripts/check.sh --live    # also score example.com, check the JSON and --fail-under, run the
 #                                   # MCP server through the official Inspector CLI, and, when gh is logged
 #                                   # in, check that .github/labels.json's labels exist on GitHub
@@ -137,8 +137,9 @@ python3 scripts/test_action.py
 step "packaging: the manifests against the code; the .mcpb builds, starts and serves its tools (test_packaging.py)"
 python3 scripts/test_packaging.py
 
-# every other scripts/test_*.py and benchmark/test_*.py: a new suite joins the gate by its name alone
-for t in scripts/test_*.py benchmark/test_*.py; do
+# every other scripts/test_*.py, benchmark/test_*.py and benchmark/prereg/test_*.py: a new suite joins the gate by its
+# name alone
+for t in scripts/test_*.py benchmark/test_*.py benchmark/prereg/test_*.py; do
   case "$t" in scripts/test_action.py|scripts/test_packaging.py) continue ;; esac
   [ -f "$t" ] || continue       # a pattern that matched nothing stays as written
   step "extra tests: $t"

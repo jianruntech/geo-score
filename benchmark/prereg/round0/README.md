@@ -150,3 +150,32 @@ passes `geo_score.py watch check` with no error or warning and validates against
 
 `benchmark/results.json`, `benchmark/results.csv` and `benchmark/raw/` had not been opened when these questions were
 committed (see step 1 for what was read).
+
+## Step 3: the analysis code and its synthetic test
+
+[analysis.py](../analysis.py) is section 11 of the plan as code, committed before any answer is collected;
+[test_analysis.py](../test_analysis.py) runs it on synthetic rounds and joins the gate (`bash scripts/check.sh` runs
+every `benchmark/prereg/test_*.py`). Standard library only, as AGENTS.md requires.
+
+- **Inputs:** `sample.json` (step 4's draw), `runs/wave<N>/<category>/*.json` (the `watch` run files) and
+  `readiness/wave<N>/run{1,2}/<site>.json` (the CLI's reports).
+- **Measures:** X is the mean of the wave's scored runs; R and N are read from `cited` and `mentioned` (the brand's,
+  and `competitors.<name>` for the others), every engine and ask pooled; A is the mean, over the answers that cite the
+  site and carry `spans`, of the share by characters a span with a URL the site owns supports, computed for every site
+  with `watch`'s own `answer_support` and ownership test, and absent below 5 such answers.
+- **Tests:** P1 (mean Kendall tau-b, within-category permutation of X, 10,000 permutations, observed one counted;
+  95% percentile bootstrap over categories, 10,000 draws), D, S1 to S4 with Holm's correction (S3 leaves the family
+  when fewer than 8 categories have 3 sites with an A), the described quantities, L1 for wave 1, and the wording table.
+  The default seed is 20261012; every seed is written into the output.
+- **Power:** `analysis.py power --round benchmark/prereg/round0` simulates the frozen design (its sampled sites'
+  sampling-run scores) and reports the smallest mean T detected with 80% power at alpha 0.05. Its figure is added to
+  the plan by amendment after the draw and before the first answer (section 11).
+
+The synthetic test plants an association (each site's citation probability rises with its readiness rank in its
+category) in 14 categories of 5 sites and checks that P1, S1, S2 and S4 call it (T 0.99, p 0.0005 with 2,000
+permutations), and runs the same design with the probability unrelated to readiness and checks that nothing is
+called (T −0.06, p 0.63). It also checks tau-b with ties, Holm against `watch`'s, the permutation p, the rubric's
+strata, that an engine whose answers carry no citation leaves the wave, that a stopped engine is read from its
+rerun, that an ordinary-word site has no N, that X survives one failed run, that S1 drops a gate-capped site, that A
+for a competitor is `watch`'s rule and is never 0 when unmeasured, that S3 leaves the family without spans, and that
+the power simulation rises with the effect.
