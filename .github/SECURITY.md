@@ -7,7 +7,7 @@
 | 1.8.x (latest) | Yes |
 | 1.7.x and older | No. Upgrade; the report format is compatible (see [STABILITY.md](../guide/stability.md)) |
 
-Pin an exact tag in CI (`jianruntech/geo-score@v1.8.0`) if you need a fixed version, and move
+Pin an exact tag in CI (`jianruntech/geo-score@v1.8.1`) if you need a fixed version, and move
 the pin when a security release comes out. Every security fix is listed under **Security** in the
 [changelog](../CHANGELOG.md).
 
@@ -101,7 +101,7 @@ and from 1.4.0 the Claude Desktop bundle `geo-score-X.Y.Z.mcpb` and the `server.
 Download it with the files and check them before running anything:
 
 ```bash
-v=v1.8.0
+v=v1.8.1
 base=https://github.com/jianruntech/geo-score/releases/download/$v
 curl -sSfLO "$base/geo_score.py" -O "$base/geo_watch.py" -O "$base/SHA256SUMS"
 grep -E ' geo_(score|watch)\.py$' SHA256SUMS | shasum -a 256 -c

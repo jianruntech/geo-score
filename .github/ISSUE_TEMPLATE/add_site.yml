@@ -14,7 +14,7 @@ body:
         **Score it first.** One command, no install:
 
         ```
-        curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.0/cli/geo_score.py \
+        curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.1/cli/geo_score.py \
           | python3 - example.com --share
         ```
 

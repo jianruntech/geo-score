@@ -227,10 +227,10 @@ pages with `--urls-from` on it.
 **Cause.** Levels 2 and 3 live in `cli/geo_watch.py`. The one-line `curl … | python3 -` install runs
 level 1 only, and never loads a `geo_watch.py` from the current directory.
 
-**What to do.** Install the package from PyPI, which carries both files: `pipx install geo-score==1.8.0`,
-or run it without installing, `uvx geo-score@1.8.0 watch …`. Without access to PyPI, install the release
-wheel (`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.0/geo_score-1.8.0-py3-none-any.whl`;
-from source, which needs git: `pipx install git+https://github.com/jianruntech/geo-score@v1.8.0`). Or
+**What to do.** Install the package from PyPI, which carries both files: `pipx install geo-score==1.8.1`,
+or run it without installing, `uvx geo-score@1.8.1 watch …`. Without access to PyPI, install the release
+wheel (`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.1/geo_score-1.8.1-py3-none-any.whl`;
+from source, which needs git: `pipx install git+https://github.com/jianruntech/geo-score@v1.8.1`). Or
 clone the repository, or download `cli/geo_score.py` and `cli/geo_watch.py` from the same release into
 one folder. The two files must carry the same version.
 

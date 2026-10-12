@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.8.1] — 2026-10-12
+
 ### Added
 - **Reproducibility is re-measured with the current tool.** On 2026-10-12, 1.8.0 scored the whole list three times
   the same day from one vantage (a Vercel Sandbox in iad1), the third run re-reading the first run's pages. On the
@@ -1401,7 +1403,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/jianruntech/geo-score/compare/v1.6.0...v1.7.0

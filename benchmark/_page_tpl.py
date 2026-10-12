@@ -60,7 +60,7 @@ TPL = '''<!doctype html>
 
 <h2>%(t_h2check)s</h2>
 <p>%(t_pcheck)s</p>
-<pre>curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.0/cli/geo_score.py \\
+<pre>curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.1/cli/geo_score.py \\
   | python3 - <b>yoursite.com</b></pre>
 <p style="color:var(--dim);font-size:13.5px">%(t_flags)s</p>
 

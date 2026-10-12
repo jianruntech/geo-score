@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.8.1] — 2026-10-12
+
 ### 新增
 - **用当前版本重测了可复现性。** 2026-10-12 用 1.8.0 在同一处（iad1 的 Vercel Sandbox）同一天把整个榜单跑了三遍，第三遍重读第一遍抽到的页面。三遍都打出分的 317 个站里，前两遍 99.1% 在 ±5 以内、81.4% 完全一致；三遍合起来 ICC 0.992、SEM 1.86。研究记录在 benchmark/REPRODUCIBILITY.md 和 reproducibility.json，由 retest.py 算出；两份 README 引用新数字，并保留 1.1.x 的测量作对照。
 - **预注册验证研究的第 0 轮已准备到抽样运行之前。** `benchmark/prereg/round0/` 里有：20 个面向美国买家的类别，每个附一份
@@ -908,7 +910,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/jianruntech/geo-score/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/jianruntech/geo-score/compare/v1.6.0...v1.7.0
