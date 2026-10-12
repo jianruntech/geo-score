@@ -179,3 +179,55 @@ strata, that an engine whose answers carry no citation leaves the wave, that a s
 rerun, that an ordinary-word site has no N, that X survives one failed run, that S1 drops a gate-capped site, that A
 for a competitor is `watch`'s rule and is never 0 when unmeasured, that S3 leaves the family without spans, and that
 the power simulation rises with the effect.
+
+## Step 4: the VM scripts
+
+In [vm/](vm/), for a fresh Ubuntu VM in a US region (`sudo apt-get install -y git python3`); none of them has been
+run. Nothing in round 0 is scored or asked from any other machine.
+
+| Script | What it does | Writes (in the clone it makes) |
+|---|---|---|
+| [score_candidates.sh](vm/score_candidates.sh) `TAG` | The sampling run (plan section 5.2): clones the repository at `TAG`, whose CLI is the frozen one, and scores every remaining candidate's site once, one at a time, 30 s apart, `--json-out` per site; a site that fails is tried once on its www host, as benchmark/run.py does. Resumable | `sampling/reports/`, `sampling/errors/`, `sampling/log.tsv`, `sampling/cli.txt` |
+| [draw.py](vm/draw.py) | Sections 5.2 to 5.4 and 6: drops candidates the CLI could not score or scored on fewer than 4 pages, bands the rest (below 51, 51 to 65, 66 and above), draws up to 2 per stratum per category with recorded seeds, drops categories left with fewer than 4 sites or one stratum, stops below 12 categories (exit 3), cuts to 18 by a recorded draw above 18, records the current Tranco list id and each site's rank, and writes the frozen sample and its configs (the OpenAI-compatible model set from `OPENAI_COMPAT_MODEL`) | `sample.json`, `sample/<category>/` |
+| [collect.sh](vm/collect.sh) `DATA_TAG DAY` | Section 7: one day's 6 categories (of the schedule in sample.json), with the frozen CLI and configs, the endpoint put in place of the placeholder from `OPENAI_COMPAT_BASE_URL`; a preflight question on day 1; an engine that stopped is run once more; Gemini's answers per day are capped at 500. `DRY_RUN=1` prints the plans and calls nothing | `runs/wave<N>/<category>/`, `collection/wave<N>/log.tsv` |
+| [watch_run.py](vm/watch_run.py) | Used by collect.sh: the frozen CLI's `watch`, with HTTP 429 and 5xx answers retried after 15, 30, 60, 120 and 120 s (a daily-quota 429 is not) | — |
+| [readiness_runs.sh](vm/readiness_runs.sh) `DATA_TAG RUN` | Section 6: every sampled site scored once more with the frozen CLI at the URL its sampling run scored; run 2 refuses the UTC day run 1 started and warns past 6 days | `readiness/wave<N>/run<RUN>/` |
+
+Tested here without touching a candidate site or an API: the retry wrapper against a fake transport; draw.py on
+synthetic sampling reports and a fake Tranco file (20 categories cut to 18, configs passing `watch check`); and
+collect.sh against a local repository with test tags, both `DRY_RUN=1` and a full day against a local
+OpenAI-compatible fake (preflight, 6 runs, harvest, a stopped engine run once more, the analysis reading the files).
+
+### On the VM, in order
+
+1. **Sampling run**, after the release `T1` that contains steps 1 to 4 (its CLI becomes the frozen one; about 270
+   sites, 5 to 7 hours):
+   ```bash
+   T1=vX.Y.Z
+   curl -fsSLO "https://raw.githubusercontent.com/jianruntech/geo-score/$T1/benchmark/prereg/round0/vm/score_candidates.sh"
+   nohup bash score_candidates.sh "$T1" > sampling.out 2>&1 &
+   ```
+2. **The draw**, when it has finished (needs the model id the endpoint serves):
+   ```bash
+   cd ~/prereg-round0/geo-score-$T1
+   OPENAI_COMPAT_MODEL=gpt-5.6-luna python3 benchmark/prereg/round0/vm/draw.py
+   tar czf ~/round0-sample.tgz benchmark/prereg/round0/sampling benchmark/prereg/round0/sample.json benchmark/prereg/round0/sample
+   ```
+3. **Off the VM:** commit the tarball's contents; run `python3 benchmark/prereg/analysis.py power --round
+   benchmark/prereg/round0` and add its figure to the plan by amendment (section 11), with the analysis code's
+   commit; release `T2`. Wave 0 starts only after `T2` is published.
+4. **Wave 0**, three consecutive days, from the same VM (keys in the environment; nothing prints them):
+   ```bash
+   export OPENAI_COMPAT_BASE_URL=... OPENAI_COMPAT_API_KEY=... OPENAI_COMPAT_MODEL=gpt-5.6-luna GEMINI_API_KEY=...
+   T2=vX.Y.Z
+   for f in collect.sh readiness_runs.sh; do curl -fsSLO "https://raw.githubusercontent.com/jianruntech/geo-score/$T2/benchmark/prereg/round0/vm/$f"; done
+   DRY_RUN=1 bash collect.sh "$T2" 1                  # the plans, no call
+   nohup bash readiness_runs.sh "$T2" 1 > r1.out 2>&1 &  # day 1; start it first, it makes the clones
+   nohup bash collect.sh "$T2" 1 > day1.out 2>&1 &       # day 1, about 6 hours
+   nohup bash collect.sh "$T2" 2 > day2.out 2>&1 &       # day 2
+   nohup bash readiness_runs.sh "$T2" 2 > r2.out 2>&1 &  # day 2 to 6, a different UTC day from run 1
+   nohup bash collect.sh "$T2" 3 > day3.out 2>&1 &       # day 3
+   ```
+5. **Off the VM:** copy back `runs/`, `collection/` and `readiness/`, commit them, and run
+   `python3 benchmark/prereg/analysis.py analyze --round benchmark/prereg/round0 --wave 0 --power-t <figure> --out
+   benchmark/prereg/round0/results-wave0.json`.

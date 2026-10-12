@@ -524,7 +524,7 @@ def main(argv=None):
     a2.add_argument("--sims", type=int, default=200)
     a2.add_argument("--perms", type=int, default=999)
     a2.add_argument("--seed", type=int, default=SEED)
-    a2.add_argument("--betas", default="0,0.15,0.3,0.45,0.6,0.8,1.0,1.3")
+    a2.add_argument("--betas", default="0,0.05,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.7,1.0")
     a2.add_argument("--out")
     a = ap.parse_args(argv)
     if a.cmd == "analyze":
