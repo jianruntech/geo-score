@@ -291,13 +291,14 @@ above was measured with 1.5.0, so its figures include that change. And statistic
 and a named, verifiable byline are among the three largest gaps on more than half the sites.
 
 Every number here is reproducible with the command at the top of this page (the benchmark
-was run with 1.5.0 on 2026-10-02) — and we measured how reproducible, though with an older tool.
-Running the whole benchmark twice on 2026-09-09 with a 1.1.x build, before the 1.1.2 variance fixes,
-and comparing every site: **96% landed within ±5, 45% identically** (ICC 0.97, SEM 3.1). It has not
-been re-measured with the current tool yet; [benchmark/retest.py](benchmark/retest.py) is the committed
-study that will. Read one site's score as ±5 rather than as exact; medians are stable. The unstable
-part is the gate checks, where five sites flipped
-between runs because their bot protection answered a crawler differently.
+was run with 1.5.0 on 2026-10-02) — and we measured how reproducible. On 2026-10-12, 1.8.0 scored
+the whole list three times from one place the same day (the third run re-reading the first run's pages):
+of the 317 sites scored every time, **99% landed within ±5 between the first two runs and 81% scored
+identically** (ICC 0.99, SEM 1.9; [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md), derived by
+[benchmark/retest.py](benchmark/retest.py)). An older 1.1.x build, measured on 2026-09-09, put 96% within ±5
+and 45% identical. Read one site's score as ±5 rather than as exact; medians are stable. Most of what still
+moves is the knowledge-graph lookup, which went unanswered on most sites from that vantage, and the gate
+checks of sites whose bot protection answers a crawler differently from one run to the next.
 The band, the control experiment and the per-site pairs are in
 [benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md).
 
@@ -682,8 +683,8 @@ this repo deliberately excludes.
   server's `score_site` connects only to public addresses, and keys never reach a file. Threat model and reporting:
   [security policy](.github/SECURITY.md).
 
-**Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; the
-spread measured with a 1.1.x build is ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
+**Why did my score move 4 points?** Each run samples up to 8 pages, and the sample changes; in a
+same-day retest with 1.8.0, 99% of sites stayed within ±5 ([REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)). To compare before and
 after a change, re-score the same pages with `--baseline last.json`, which also prints what changed,
 check by check (`--urls-from last.json` re-scores them without the comparison).
 **Why does a check show `—`?** It was not measured, so it left the denominator instead of scoring 0.

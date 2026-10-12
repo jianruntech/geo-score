@@ -43,7 +43,44 @@ medians and the distribution as stable.
 
 <!-- retest:study -->
 
-No retest with the current tool is recorded yet. The runs cost nothing but time and are the maintainer's to make (see [Reproducing this](#reproducing-this)); until then the only measured band is the one above, and it describes a 1.1.x build.
+| Run | Tool | Measured | Python | Vantage (declared) | Pages | Sites scored |
+|---|---|---|---|---|---|--:|
+| A | geo-score-cli/1.8.0 | 2026-10-12 | 3.14.4 | Vercel Sandbox, iad1 (US East), 2 vCPU | sampled | 319 of 370 |
+| B | geo-score-cli/1.8.0 | 2026-10-12 | 3.14.4 | Vercel Sandbox, iad1 (US East), 2 vCPU | sampled | 318 of 370 |
+| C | geo-score-cli/1.8.0 | 2026-10-12 | 3.14.4 | Vercel Sandbox, iad1 (US East), 2 vCPU | pinned to A's pages | 317 of 370 |
+
+| Pair | Sites | Identical | Within ±2 | Within ±5 | ICC(A,1) | SEM | Band changed | Gate flips |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| A–B | 317 | 81.4% | 92.7% | 99.1% | 0.995 | 1.41 | 9 | 1 |
+| A–C | 317 | 80.8% | 90.9% | 98.4% | 0.989 | 2.19 | 11 | 2 |
+| B–C | 317 | 82.6% | 93.1% | 98.7% | 0.992 | 1.9 | 8 | 1 |
+
+Across every run, on the 317 sites all of them scored: ICC(A,1) 0.992, SEM 1.86 points.
+
+Tier flips per check (share of sites whose tier or observability changed), and the share of scored sites where the check was unobservable in each run:
+
+| Check | Flips A–B | Flips A–C | Flips B–C | Unobservable A | Unobservable B | Unobservable C |
+|---|--:|--:|--:|--:|--:|--:|
+| `g.robots` | 0.3% | 0.3% | 0.0% | 0.6% | 0.9% | 0.9% |
+| `g.reachable` | 1.9% | 2.5% | 1.9% | 0.6% | 0.6% | 0.6% |
+| `g.ssr` | 0.6% | 0.3% | 0.3% | 0.0% | 0.0% | 0.0% |
+| `p1.sitemap` | 0.6% | 0.6% | 0.0% | 0.0% | 0.0% | 0.0% |
+| `p1.llms-txt` | 0.0% | 0.0% | 0.0% | 0.6% | 0.6% | 0.6% |
+| `p1.organization` | 0.3% | 1.6% | 1.3% | 1.6% | 1.3% | 0.0% |
+| `p1.breadcrumb` | 0.0% | 0.0% | 0.0% | 20.1% | 20.1% | 19.9% |
+| `p1.page-type` | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| `p2.answer-passages` | 0.3% | 0.3% | 0.6% | 0.0% | 0.0% | 0.0% |
+| `p2.question-intent` | 1.3% | 0.3% | 0.9% | 0.9% | 0.9% | 0.9% |
+| `p2.freshness` | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
+| `p2.sourced-stats` | 1.9% | 0.9% | 1.6% | 0.6% | 0.6% | 0.6% |
+| `p2.named-author` | 0.6% | 0.3% | 0.3% | 0.9% | 0.9% | 0.9% |
+| `p3.knowledge-graph` | 20.2% | 18.0% | 16.1% | 83.7% | 83.6% | 92.1% |
+| `p3.sameas` | 0.3% | 2.2% | 1.9% | 2.5% | 2.2% | 0.3% |
+| `p3.video` | 0.3% | 0.3% | 0.0% | 0.0% | 0.0% | 0.0% |
+| `p4.answer-shape` | 0.3% | 0.3% | 0.0% | 0.0% | 0.0% | 0.0% |
+| `p4.cn-engines` | 0.6% | 0.9% | 0.3% | 85.0% | 85.2% | 85.2% |
+
+Not shown: `p3.listings`, `p3.mentions`, `p4.question-coverage`, unobservable on every site in every run.
 
 <!-- /retest:study -->
 
