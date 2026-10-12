@@ -294,7 +294,63 @@ say so in the same paragraph.
 
 ## Amendments
 
-None yet.
+### 2026-10-12: round 0 at two engines, and how it is run
+
+Written before any round-0 candidate was scored and before any answer was collected, and registered, as the header
+says, by the first tagged release that contains it, published before wave 0 starts. Round 0's categories, frames,
+questions, configs, analysis code and VM scripts are in [prereg/round0/](prereg/round0/README.md).
+
+1. **Two engines (sections 3 and 7).** Round 0 runs the number of engines the plan sets as the minimum for the primary
+   test, two, both searching the web on every call: an OpenAI model, `gpt-5.6-luna`, and Gemini 2.5 Flash,
+   `gemini-2.5-flash`, through generateContent with the Google Search tool on Google's free tier. Perplexity and
+   Anthropic are not run in round 0. Neither model is the default of the geo-score release (`gpt-6-luna`,
+   `gemini-3.8-flash`); Gemini's free tier grounds answers only for the 2.5 models. The frozen sample records the
+   model ids, and the collection refuses to run with another.
+2. **The OpenAI answers come through a third-party endpoint, not api.openai.com.** They are collected through an
+   OpenAI-compatible third-party endpoint whose address is given at run time and is not published. What that can
+   change: the model behind the endpoint cannot be verified beyond the id it reports, and its answers may differ from
+   the official API's. In tests on 2026-10-03 and 2026-10-12 it returned `url_citation` annotations with their
+   positions, so `cited`, `spans` and A are measured for it as for the official API; its `web_search_call` items carry
+   no `action`, so the search queries of OpenAI answers are not observable, while Gemini's are. It answers in about
+   40 seconds, so the engine waits up to 300. How it is reported: the results call this engine "an OpenAI model
+   through an OpenAI-compatible third-party endpoint", never the OpenAI API, and give T for each engine (section 11).
+   A replication should use the official API.
+3. **Location (section 7).** Every config sets `country` to `US`. The OpenAI engine passes it to its web search;
+   Gemini's generateContent takes no location, so its answers follow where the request comes from, and collection
+   runs from a virtual machine in the US.
+4. **At most 18 categories (sections 3 and 5.4).** Gemini's free tier answers about 500 grounded questions a day and
+   a wave's runs fall within 3 days (section 7), which holds 1,440 Gemini answers: 18 categories of 10 questions asked
+   8 times. If more than 18 categories survive section 5's screening, 18 are drawn at random with a recorded seed
+   before any answer is collected, and the rest are recorded as dropped. Collection runs 6 categories a day on three
+   consecutive days, in the order the frozen sample records. A wave is then at most 18 × 10 × 2 × 8 = 2,880 answers.
+5. **Failed answers and reruns (sections 7 and 10).** The CLI runs unchanged, but collection retries an answer of HTTP
+   429 or 5xx after 15, 30, 60, 120 and 120 seconds before the CLI's own retries see it, because Gemini's free tier
+   answered "high demand" to two of three test requests; a 429 saying that a daily quota is used up is not retried.
+   An answer that still fails stays in the run file as an error and is reported per engine and category; only
+   answered answers count. Section 10's rerun applies per engine: when the CLI stops an engine in a category's run
+   (after three answers in a row fail), that engine alone is run once more inside the wave's window and its answers
+   from the stopped run are not used; if it stops again, the category has no answers from that engine in that wave,
+   which is reported, and its analyses use the engine that ran. An engine none of whose answers in a wave carries a
+   citation, over at least 5 questions, has failed for that wave (section 7).
+6. **How round 0 reads section 5.** The public lists are English Wikipedia articles at recorded revisions. A listed
+   vendor's website is the official website (P856) of the Wikidata item the list links, at a recorded item revision;
+   two were replaced by hand, with the reason recorded. A candidate is the part of a host its owner holds, as `watch`
+   reads it, so a large company's listed product is the company's site. benchmark/sites.json sites were matched to a
+   category by hand when they sell its product to buyers in the US, and three lists' own location, country or
+   industry columns limited their rows to the US or to consumer goods. A name is an ordinary English word (section
+   5.6) when it is a lowercase headword of Webster's Second International that is also among the 30,000 most frequent
+   words of the Google Web Trillion Word Corpus counts, or when it is judged so by hand with the reason recorded. No
+   frozen question names a candidate, so none was excluded for it.
+7. **Two readings of section 6.** X is the mean of the wave's runs that the CLI scored, so when one of a site's two
+   runs fails, X is the other one. A is read from the run file for the configured brand and computed for every other
+   site by the analysis script with `watch`'s own code, which applies section 6's definition.
+8. **What was read before the questions.** The questions were written without opening benchmark/results.json.
+   benchmark/README.md, which is generated from it, was read for its sector list and its thin-sample rule, and a text
+   search of it printed some sites' v1.1 scores before the categories were chosen. No score was used.
+9. **The analysis code (section 11)** is benchmark/prereg/analysis.py, tested by benchmark/prereg/test_analysis.py,
+   committed in `37c872d` and last changed in `30a25c0` (a finer default grid for the power simulation). The power
+   figure depends on the sites drawn, so it is added by a further amendment once the sample is drawn and before the
+   first answer is collected.
 
 ## Sources
 

@@ -5,6 +5,19 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **Round 0 of the preregistered validation study is prepared, up to the sampling run.**
+  `benchmark/prereg/round0/` holds 20 categories for buyers in the US, each with an English Wikipedia list at a recorded
+  revision, its candidates' own websites from Wikidata and the benchmark sites that sell in it (`categories.json`,
+  `build_frames.py`); then each candidate's `watch` entry, 10 frozen questions per category naming no product, and one
+  `watch` config per category (`candidates.json`, `watch/`, `build_configs.py`); and the scripts a VM runs next: the
+  sampling run, the seeded draw into the frozen sample, the collection and the readiness runs (`vm/`). Nothing has been
+  scored or asked. `benchmark/prereg/analysis.py` is section 11 of the plan as code, with a test on synthetic rounds
+  that recovers a planted association and calls none where there is none, and `scripts/check.sh` now runs
+  `benchmark/prereg/test_*.py`. The plan's first amendment (2026-10-12) records that round 0 runs two engines, an
+  OpenAI model through an OpenAI-compatible third-party endpoint and Gemini 2.5 Flash on the free tier, at most 18
+  categories, and how failed answers are retried and rerun.
+
 ### Changed
 - **The top level holds only what tools need there.** CODE_OF_CONDUCT.md, CONTRIBUTING.md, SECURITY.md,
   SUPPORT.md and RELEASING.md moved to `.github/`, where GitHub still lists them on the repository's community

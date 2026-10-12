@@ -231,3 +231,11 @@ OpenAI-compatible fake (preflight, 6 runs, harvest, a stopped engine run once mo
 5. **Off the VM:** copy back `runs/`, `collection/` and `readiness/`, commit them, and run
    `python3 benchmark/prereg/analysis.py analyze --round benchmark/prereg/round0 --wave 0 --power-t <figure> --out
    benchmark/prereg/round0/results-wave0.json`.
+
+## Step 5: the amendment
+
+What round 0 does differently from the plan's text is in the plan's dated amendment of 2026-10-12
+([PREREGISTRATION.md](../../PREREGISTRATION.md#amendments), [中文](../../PREREGISTRATION.zh-CN.md#修订)): two engines,
+the OpenAI answers through an OpenAI-compatible third-party endpoint, Gemini without a location, at most 18
+categories, and per-engine retries and reruns; with how round 0 reads sections 5 and 6, what was read before the
+questions, and the analysis code's commits. The power figure follows in a further amendment once the sample is drawn.
