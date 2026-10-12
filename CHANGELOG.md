@@ -6,6 +6,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Added
+- **Reproducibility is re-measured with the current tool.** On 2026-10-12, 1.8.0 scored the whole list three times
+  the same day from one vantage (a Vercel Sandbox in iad1), the third run re-reading the first run's pages. On the
+  317 sites scored every time, 99.1% stayed within ±5 and 81.4% scored identically between the first two runs;
+  ICC 0.992 and SEM 1.86 across all three. benchmark/REPRODUCIBILITY.md and reproducibility.json carry the study,
+  derived by retest.py; the READMEs quote it and keep the 1.1.x measurement for comparison.
 - **Round 0 of the preregistered validation study is prepared, up to the sampling run.**
   `benchmark/prereg/round0/` holds 20 categories for buyers in the US, each with an English Wikipedia list at a recorded
   revision, its candidates' own websites from Wikidata and the benchmark sites that sell in it (`categories.json`,

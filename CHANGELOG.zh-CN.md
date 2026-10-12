@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### 新增
+- **用当前版本重测了可复现性。** 2026-10-12 用 1.8.0 在同一处（iad1 的 Vercel Sandbox）同一天把整个榜单跑了三遍，第三遍重读第一遍抽到的页面。三遍都打出分的 317 个站里，前两遍 99.1% 在 ±5 以内、81.4% 完全一致；三遍合起来 ICC 0.992、SEM 1.86。研究记录在 benchmark/REPRODUCIBILITY.md 和 reproducibility.json，由 retest.py 算出；两份 README 引用新数字，并保留 1.1.x 的测量作对照。
 - **预注册验证研究的第 0 轮已准备到抽样运行之前。** `benchmark/prereg/round0/` 里有：20 个面向美国买家的类别，每个附一份
   记下修订版本号的英文维基百科列表、从维基数据取得的候选厂商官网，以及卖这类产品的基准站点（`categories.json`、
   `build_frames.py`）；接着是每个候选站的 `watch` 条目、每类 10 个冻结的、不点名任何产品的问题，以及每类一份 `watch` 配置
