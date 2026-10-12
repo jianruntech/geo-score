@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the largest container shipping lines?,list
+q02,Which ocean carriers are the most reliable for shipping containers from Asia to the US West Coast?,list
+q03,Which container shipping companies have the best on-time performance?,list
+q04,We import furniture from Vietnam and our containers keep arriving late. Which carriers should we book with instead?,problem
+q05,I need to ship a few containers of machinery from Germany to Texas each month. Which shipping lines serve that route?,problem
+q06,Which container shipping line is best for a small importer shipping a few containers a year?,persona
+q07,What ocean carrier should a large retailer use for weekly shipments from China?,persona
+q08,How much does it cost to ship a 40-foot container from China to Los Angeles?,pricing
+q09,Which shipping lines offer the best contract rates for importers?,pricing
+q10,Which container lines offer online booking and shipment tracking?,list

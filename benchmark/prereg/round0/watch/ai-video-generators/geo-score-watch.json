@@ -1,0 +1,151 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "Alibaba",
+    "domains": [
+      "alibabagroup.com"
+    ],
+    "url_prefixes": [],
+    "aliases": [
+      "Alibaba Group"
+    ]
+  },
+  "competitors": [
+    {
+      "name": "ByteDance",
+      "domains": [
+        "bytedance.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Seedance"
+      ]
+    },
+    {
+      "name": "Google",
+      "domains": [
+        "about.google",
+        "deepmind.google"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Google DeepMind",
+        "Veo"
+      ]
+    },
+    {
+      "name": "Kuaishou",
+      "domains": [
+        "kuaishou.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Kling"
+      ]
+    },
+    {
+      "name": "Lightricks",
+      "domains": [
+        "lightricks.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "LTX Studio",
+        "LTX Video"
+      ]
+    },
+    {
+      "name": "Luma AI",
+      "domains": [
+        "lumalabs.ai"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Luma",
+        "Luma Labs",
+        "Dream Machine"
+      ]
+    },
+    {
+      "name": "Midjourney",
+      "domains": [
+        "midjourney.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "OpenAI",
+      "domains": [
+        "openai.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Sora"
+      ]
+    },
+    {
+      "name": "Pika",
+      "domains": [
+        "pika.art"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Pika Labs"
+      ]
+    },
+    {
+      "name": "Runway",
+      "domains": [
+        "runway.com",
+        "runwayml.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "RunwayML",
+        "Runway ML"
+      ]
+    },
+    {
+      "name": "Synthesia",
+      "domains": [
+        "synthesia.io"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Utopai Studios",
+      "domains": [
+        "utopaistudios.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Utopai"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

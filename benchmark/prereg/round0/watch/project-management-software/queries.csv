@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What is the best project management software for teams?,list
+q02,Which project management tools are easiest to learn?,list
+q03,What are the best open-source project management tools?,list
+q04,Our team tracks tasks in email threads and deadlines keep getting missed. What software should we use?,problem
+q05,We run several client projects at once and can't see who is overloaded. Which tools show resource workload?,problem
+q06,Which project management software is best for a small marketing agency?,persona
+q07,What project management tool should a construction company use for scheduling jobs?,persona
+q08,How much does project management software cost per user?,pricing
+q09,Which project management tools have a free plan for small teams?,pricing
+q10,Which project management tools have the best Gantt charts?,list

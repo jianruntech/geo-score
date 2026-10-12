@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best web analytics tools for tracking website visitors?,list
+q02,Which website analytics tools respect visitor privacy and work without cookies?,list
+q03,What are the best self-hosted web analytics tools?,list
+q04,I want to know which pages on my blog bring in readers and where they come from. What should I install?,problem
+q05,Our cookie banner hurts conversions and we still need traffic numbers. How can we measure visits without one?,problem
+q06,Which web analytics tool is best for a small business website?,persona
+q07,What analytics software should a large e-commerce site use to analyze customer journeys?,persona
+q08,"How much do web analytics tools cost for a site with 100,000 monthly visits?",pricing
+q09,Which website analytics tools are free?,pricing
+q10,Which tools analyze server log files to report website traffic?,list

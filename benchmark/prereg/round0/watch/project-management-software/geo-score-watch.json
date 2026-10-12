@@ -1,0 +1,161 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "24SevenOffice",
+    "domains": [
+      "24sevenoffice.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Assembla",
+      "domains": [
+        "assembla.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Axosoft",
+      "domains": [
+        "axosoft.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Axosoft OnTime"
+      ]
+    },
+    {
+      "name": "GForge",
+      "domains": [
+        "gforge.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "FusionForge"
+      ]
+    },
+    {
+      "name": "Group-Office",
+      "domains": [
+        "group-office.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "GroupOffice"
+      ]
+    },
+    {
+      "name": "KIDASA",
+      "domains": [
+        "kidasa.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Milestones Professional"
+      ]
+    },
+    {
+      "name": "ONLYOFFICE",
+      "domains": [
+        "onlyoffice.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Planisware",
+      "domains": [
+        "planisware.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "ProjectManager",
+      "domains": [
+        "projectmanager.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "ProjectManager.com"
+      ]
+    },
+    {
+      "name": "RationalPlan",
+      "domains": [
+        "rationalplan.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Shortcut",
+      "domains": [
+        "shortcut.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Smartsheet",
+      "domains": [
+        "smartsheet.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Spider Project",
+      "domains": [
+        "spiderproject.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Thoughtworks",
+      "domains": [
+        "thoughtworks.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Visma",
+      "domains": [
+        "visma.fi"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Severa",
+        "Visma Severa"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

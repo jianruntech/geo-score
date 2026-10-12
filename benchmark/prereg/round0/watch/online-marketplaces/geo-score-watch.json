@@ -1,0 +1,149 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "AliExpress",
+    "domains": [
+      "aliexpress.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Amazon",
+      "domains": [
+        "amazon.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "As Seen On TV",
+      "domains": [
+        "asseenontv.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "eBay",
+      "domains": [
+        "ebay.com",
+        "ebayinc.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Etsy",
+      "domains": [
+        "etsy.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Farmigo",
+      "domains": [
+        "farmigo.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Flipkart",
+      "domains": [
+        "flipkart.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Hepsiburada",
+      "domains": [
+        "hepsiburada.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Pinduoduo",
+      "domains": [
+        "pinduoduo.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Shein",
+      "domains": [
+        "shein.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Temu",
+      "domains": [
+        "temu.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Trendyol",
+      "domains": [
+        "trendyol.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Vinted",
+      "domains": [
+        "vinted.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Walmart",
+      "domains": [
+        "walmart.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Wish",
+      "domains": [
+        "wish.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

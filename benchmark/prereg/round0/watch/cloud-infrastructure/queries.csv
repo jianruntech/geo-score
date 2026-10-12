@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best cloud providers for hosting virtual machines?,list
+q02,Which cloud infrastructure providers are the most reliable for a production web application?,list
+q03,What are good alternatives to the three biggest cloud providers for a small company?,list
+q04,Our cloud bill keeps growing and most of it is a few always-on virtual servers. Where can we run them for less?,problem
+q05,We need servers in both the US and Europe with predictable monthly pricing. Which providers should we compare?,problem
+q06,Which cloud provider is best for a solo developer who wants a simple virtual server?,persona
+q07,What cloud platform should a mid-size healthcare company choose for HIPAA-compliant infrastructure?,persona
+q08,How much does a cloud virtual machine with 4 CPUs and 16 GB of RAM cost per month?,pricing
+q09,Which cloud providers offer a free tier or free credits for new accounts?,pricing
+q10,Which cloud providers offer GPU servers for training machine learning models?,list

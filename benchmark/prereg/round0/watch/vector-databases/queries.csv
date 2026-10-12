@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,What are the best vector databases for retrieval-augmented generation?,list
+q02,Which databases support fast similarity search over embeddings?,list
+q03,What are the most popular open-source vector databases?,list
+q04,Our semantic search over two million product descriptions has become slow. What database should we move the embeddings to?,problem
+q05,I want to add vector search without running a separate database next to our main one. What options exist?,problem
+q06,Which vector database is best for a small startup building an AI chatbot over its documentation?,persona
+q07,What vector database should an enterprise with strict compliance requirements choose?,persona
+q08,How much does a managed vector database cost for about 10 million vectors?,pricing
+q09,Which vector databases have a free tier for small projects?,pricing
+q10,Which vector databases scale best to billions of embeddings?,list

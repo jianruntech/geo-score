@@ -83,3 +83,70 @@ and `benchmark/raw/` were not opened. [benchmark/README.md](../../README.md) was
 thin-sample rule; it is generated from results.json, and a text search of it for "thin" printed about 60 rows of its
 leaderboard table, with those sites' v1.1 scores, before the categories were chosen. No score was used for anything
 here. As the plan says (section 4), some candidates' v1.1 scores were public before the questions were written.
+
+## Step 2: names, questions and watch configs (frozen)
+
+[candidates.json](candidates.json) records, in the order the plan sets (section 5.2), each frame candidate's `watch`
+entry, then the questions, then the candidates the questions name; [build_configs.py](build_configs.py) writes it and
+the configs, and `--check` rebuilds and compares. The questions and configs are frozen from this commit: no question
+is added, dropped or reworded, and no candidate is added.
+
+**Names, written first.** Each candidate's entry has the name answers usually give it, its `domains` from step 1, no
+URL prefix, and other names as `aliases` only where they are not ordinary English words. A candidate that is a large
+company's site carries the company's name, with the listed product as an alias (Microsoft, alias Azure Cosmos DB).
+
+**Ordinary English words (section 5.6).** A one-word name or alias is ordinary when its lowercase form, or its singular,
+is a lowercase headword of Webster's Second International (`web2` as BSD and macOS ship it, SHA-256 `be41ad97…2bbab9`)
+or a day or month name, and is among the 30,000 most frequent words of the Google Web Trillion Word Corpus counts
+Peter Norvig published (`count_1w.txt`, SHA-256 `51df159f…059e690`). No alias passes that test. Eight names were
+judged by hand, each with its reason in `ordinary_words.phrases`: phrases (Day One, As Seen On TV), places and
+adjectives answers about US flights use (Alaska, Hawaiian, American), a word newer than web2 (Shortcut), a word
+answers about language models use in its own sense (Perplexity) and an interjection (HMM). A flagged candidate has
+no N, and S4 runs without it; its R and A, read from cited URLs, are unaffected.
+
+**Questions.** Ten English questions per category for a buyer in the US, naming no product, vendor or site, with the
+unbranded `intent_tier` labels, all four in every category: four `list`, two `problem`, two `persona` and two
+`pricing` questions (JavaScript web frameworks: five `list` and one `pricing`). They are in `watch/<category>/queries.csv`.
+
+**Candidates the questions name.** None: by watch's own matcher (`Entity.named_in`, which sets `brand_in_query` and
+`competitor_in_query`: name, aliases and domains, whole words), no frozen question names any candidate, so every
+frame candidate remains and every question will carry both flags false.
+
+| Category | Candidates remaining | `brand` (first by name) | Ordinary-word names (no N) |
+|---|:-:|---|---|
+| `large-language-models` | 15 | 01.AI | Meta, Perplexity |
+| `ai-video-generators` | 12 | Alibaba | Runway |
+| `vector-databases` | 15 | Aerospike | Oracle |
+| `cloud-infrastructure` | 13 | Alibaba Cloud | Oracle |
+| `javascript-web-frameworks` | 15 | Angular | Angular, Prototype |
+| `ecommerce-platforms` | 15 | BigCommerce | — |
+| `crm-software` | 15 | ADempiere | Adobe |
+| `web-analytics` | 15 | Adobe | Adobe, Bing, Plausible, Yahoo |
+| `online-payment-providers` | 15 | Adyen | Apple, Square, Stripe |
+| `buy-now-pay-later` | 6 | Affirm | Affirm, Apple, Zip |
+| `online-course-platforms` | 15 | Alison | Alison |
+| `language-learning` | 15 | Babbel | Drops, Tandem |
+| `container-shipping-lines` | 15 | CMA CGM | Evergreen, HMM |
+| `management-consulting` | 15 | AlixPartners | — |
+| `project-management-software` | 15 | 24SevenOffice | Shortcut |
+| `note-taking-apps` | 15 | Apple Notes | Day One, KeyNote |
+| `3d-printers` | 15 | 3D makeR Technologies | — |
+| `us-airlines` | 10 | Alaska | American, Alaska, Delta, Frontier, Hawaiian, Southwest, United |
+| `accounting-software` | 15 | 24SevenOffice | Tally |
+| `online-marketplaces` | 15 | AliExpress | As Seen On TV, Wish |
+
+**Configs.** `watch/<category>/geo-score-watch.json`: the remaining candidates, the first by name as `brand` and the
+rest as `competitors`; `runs: 8`, `country: US`, `max_calls: 160` (10 questions × 2 engines × 8), no budget. Two
+engines, both searching the web on every call (see the plan's [amendments](../../PREREGISTRATION.md#amendments)):
+
+| Engine id | Provider | Model | How it is reached |
+|---|---|---|---|
+| `openai` | openai (Responses API, `web_search` tool) | `gpt-5.6-luna` | an OpenAI-compatible endpoint whose address is given at run time: `collect.sh` puts `OPENAI_COMPAT_BASE_URL` in place of the placeholder `https://openai-compatible.invalid/v1/responses`; key in `OPENAI_COMPAT_API_KEY`; the model id is `OPENAI_COMPAT_MODEL`, recorded in the frozen sample; `timeout: 300` |
+| `gemini` | gemini (`"api": "generate_content"`, Google Search tool) | `gemini-2.5-flash` | key in `GEMINI_API_KEY` |
+
+geo-score 1.8.0's own defaults are `gpt-6-luna` and `gemini-3.8-flash`; round 0 pins the models above. Every config
+passes `geo_score.py watch check` with no error or warning and validates against
+[schema/watch-config.v1.json](../../../schema/watch-config.v1.json).
+
+`benchmark/results.json`, `benchmark/results.csv` and `benchmark/raw/` had not been opened when these questions were
+committed (see step 1 for what was read).

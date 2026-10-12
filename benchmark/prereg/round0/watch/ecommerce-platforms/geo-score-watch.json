@@ -1,0 +1,151 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "BigCommerce",
+    "domains": [
+      "bigcommerce.com",
+      "commerce.com"
+    ],
+    "url_prefixes": [],
+    "aliases": [
+      "Commerce.com"
+    ]
+  },
+  "competitors": [
+    {
+      "name": "Drupal Commerce",
+      "domains": [
+        "drupalcommerce.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "nopCommerce",
+      "domains": [
+        "nopcommerce.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "OpenCart",
+      "domains": [
+        "opencart.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Pimcore",
+      "domains": [
+        "pimcore.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "PrestaShop",
+      "domains": [
+        "prestashop-project.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Shopify",
+      "domains": [
+        "shopify.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "SHOPLINE",
+      "domains": [
+        "shopline.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Spree Commerce",
+      "domains": [
+        "spreecommerce.org"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "SupaDupa",
+      "domains": [
+        "supadupa.me"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "uCoz",
+      "domains": [
+        "ucoz.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "VirtueMart",
+      "domains": [
+        "virtuemart.net"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Webflow",
+      "domains": [
+        "webflow.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Wix",
+      "domains": [
+        "wix.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Zen Cart",
+      "domains": [
+        "zen-cart.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}

@@ -1,0 +1,11 @@
+query_id,query,intent_tier
+q01,"What are the best buy now, pay later services for online shopping?",list
+q02,"Which buy now, pay later apps are accepted at the most stores?",list
+q03,"Which buy now, pay later providers can an online store offer at checkout?",list
+q04,I need a new laptop for school but can't pay the full price at once. Which installment payment services should I compare?,problem
+q05,Customers abandon carts on our furniture site because of the price. How can we let them pay over time?,problem
+q06,"Which buy now, pay later service is best for someone trying to build credit?",persona
+q07,What pay-over-time option is best for a small online boutique to offer its customers?,persona
+q08,"Do buy now, pay later services charge interest or late fees?",pricing
+q09,"How much does it cost a merchant to offer buy now, pay later at checkout?",pricing
+q10,"Which buy now, pay later companies report payments to credit bureaus?",list

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json",
+  "brand": {
+    "name": "AlixPartners",
+    "domains": [
+      "alixpartners.com"
+    ],
+    "url_prefixes": [],
+    "aliases": []
+  },
+  "competitors": [
+    {
+      "name": "Boston Consulting Group",
+      "domains": [
+        "bcg.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "BCG"
+      ]
+    },
+    {
+      "name": "Deloitte",
+      "domains": [
+        "deloitte.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Grant Thornton",
+      "domains": [
+        "grantthornton.global"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Huron Consulting Group",
+      "domains": [
+        "huronconsultinggroup.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Infosys",
+      "domains": [
+        "infosys.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "Infosys Consulting"
+      ]
+    },
+    {
+      "name": "Kearney",
+      "domains": [
+        "atkearney.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "A.T. Kearney",
+        "AT Kearney"
+      ]
+    },
+    {
+      "name": "OC&C Strategy Consultants",
+      "domains": [
+        "occstrategy.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "OC&C"
+      ]
+    },
+    {
+      "name": "Protiviti",
+      "domains": [
+        "protiviti.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Publicis Sapient",
+      "domains": [
+        "publicissapient.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "PwC",
+      "domains": [
+        "pwc.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "PricewaterhouseCoopers"
+      ]
+    },
+    {
+      "name": "RSM",
+      "domains": [
+        "rsmus.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "RSM US",
+        "McGladrey"
+      ]
+    },
+    {
+      "name": "Sia Partners",
+      "domains": [
+        "sia-partners.com"
+      ],
+      "url_prefixes": [],
+      "aliases": []
+    },
+    {
+      "name": "Tata Consultancy Services",
+      "domains": [
+        "tcs.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "TCS"
+      ]
+    },
+    {
+      "name": "West Monroe",
+      "domains": [
+        "westmonroepartners.com"
+      ],
+      "url_prefixes": [],
+      "aliases": [
+        "West Monroe Partners"
+      ]
+    }
+  ],
+  "queries": "queries.csv",
+  "engines": [
+    {
+      "id": "openai",
+      "provider": "openai",
+      "model": "gpt-5.6-luna",
+      "base_url": "https://openai-compatible.invalid/v1/responses",
+      "key_env": "OPENAI_COMPAT_API_KEY",
+      "timeout": 300
+    },
+    {
+      "id": "gemini",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "api": "generate_content",
+      "key_env": "GEMINI_API_KEY"
+    }
+  ],
+  "country": "US",
+  "runs": 8,
+  "max_calls": 160,
+  "budget_usd": null,
+  "prices": {}
+}
