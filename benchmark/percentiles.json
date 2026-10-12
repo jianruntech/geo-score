@@ -589,23 +589,23 @@
   }
  },
  "noise": {
-  "sem": 3.09,
-  "window": 6.1,
-  "retest": "2026-09-09, a 1.1.x build, before the 1.1.2 variance fixes",
-  "retest_band_changes": 18,
-  "retest_compared": 229,
+  "sem": 1.41,
+  "window": 2.8,
+  "retest": "2026-10-12, geo-score-cli/1.8.0",
+  "retest_band_changes": 9,
+  "retest_compared": 317,
   "band_widths": {
    "Early": 20,
    "Growing": 15,
    "Solid": 17
   },
   "near_cut": {
-   "31": 35,
-   "51": 59,
-   "66": 56,
-   "83": 45
+   "31": 20,
+   "51": 33,
+   "66": 28,
+   "83": 17
   },
-  "near_any_cut": 195
+  "near_any_cut": 98
  },
  "candidates": {
   "v1.1": {
@@ -622,7 +622,7 @@
     "66": 100,
     "83": 21
    },
-   "near_any_cut": 195
+   "near_any_cut": 98
   },
   "shares_overall": {
    "cuts": [40, 55, 70, 79],
@@ -638,7 +638,7 @@
     "70": 82,
     "79": 38
    },
-   "near_any_cut": 220
+   "near_any_cut": 130
   },
   "shares_uncapped": {
    "cuts": [49, 60, 74, 81],
@@ -654,7 +654,7 @@
     "74": 66,
     "81": 26
    },
-   "near_any_cut": 188
+   "near_any_cut": 113
   }
  }
 }
