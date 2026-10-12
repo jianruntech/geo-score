@@ -5,6 +5,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **The README answers "how accurate is it?"** in one table: the 1.8.0 retest, recomputation, agreement with a person reading the rubric, weight sensitivity, and the preregistered test of whether higher-scoring sites are cited more often, each linked to its record (README.zh-CN.md too).
+
 ## [1.8.2] — 2026-10-12
 
 ### Added

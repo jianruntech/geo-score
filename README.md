@@ -96,7 +96,8 @@ a score against a **published, versioned rubric** — not a black box.
 **Contents:** [MCP server](#mcp-server) · [Three levels](#three-levels-one-tool) · [What it checks](#what-it-checks) ·
 [Leaderboard](#324-sites-scored-in-public) · [Ways to run it](#ways-to-run-it) ·
 [Does AI cite you?](#levels-2-and-3--does-ai-actually-cite-you) · [Scope](#scope--what-this-does-not-do) ·
-[Install and stability](#stability-privacy-and-install-options) · [Repository layout](#repository-layout) ·
+[How accurate is it?](#how-accurate-is-it) · [Install and stability](#stability-privacy-and-install-options) ·
+[Repository layout](#repository-layout) ·
 [Contributing](#contributing)
 
 ---
@@ -569,6 +570,18 @@ rather than an API, [Jianrun](https://www.jianruntech.com/en/) does as a service
 | Report | Text, Markdown, CSV, JSON | A weekly report with the AIV dashboard: citation trend, per-engine rates, facts AI gets wrong about you, readiness history |
 | When citations drop | Out of scope | We do the fixing |
 | Price | Your API bill | AEO delivery system, from US$7,790 per quarter (US$30,590 paid yearly), AIV dashboard included. [See pricing](https://www.jianruntech.com/en/#pricing) |
+
+## How accurate is it?
+
+Five questions people ask, and where this repository answers each one:
+
+| Question | Answer | Record |
+|---|---|---|
+| Score the same site twice: how far apart? | A same-day retest with 1.8.0 on 2026-10-12: 99% of 317 sites within ±5 and 81% identical (ICC 0.99) | [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md) |
+| Can anyone recompute it? | Yes: every check, tier and weight is published, so the same pages give the same score whoever runs it | [rubric/v1.1.md](rubric/v1.1.md) |
+| Does it match a person reading the same rubric? | 80% of 84 check pairs land in the same tier; only 5 sites, all of them calibration sites | [VALIDITY.md](benchmark/VALIDITY.md) |
+| Do the weights decide the ranking? | With equal weights, or 300 random perturbations of them, the rank correlation stays at 0.99 or above | [SENSITIVITY.md](benchmark/SENSITIVITY.md) |
+| Are higher-scoring sites cited more often by AI? | Being tested under a plan registered before any data was collected: 16 categories, 83 sites, two engines with web search. The result will be published whichever way it goes | [PREREGISTRATION.md](benchmark/PREREGISTRATION.md) |
 
 ## Why a rubric, not just a tool
 
