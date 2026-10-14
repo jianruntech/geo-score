@@ -1,0 +1,6689 @@
+{
+ "format": "geo-score/prereg-results.v1",
+ "plan": "benchmark/PREREGISTRATION.md",
+ "wave": 0,
+ "computed_at": "2026-10-14T15:02:35Z",
+ "seed": 20261012,
+ "permutations": 10000,
+ "bootstrap": 10000,
+ "engines": {
+  "openai": {
+   "answered": 1280,
+   "with_citations": 1266,
+   "questions": 160
+  }
+ },
+ "failed_engines": [],
+ "run_files": {
+  "large-language-models": {
+   "runs": [
+    {
+     "run_id": "20261012T153929Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T15:39:29Z"
+    },
+    {
+     "run_id": "20261012T153929Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T15:39:29Z"
+    },
+    {
+     "run_id": "20261012T163231Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T16:32:31Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T153929Z"
+   }
+  },
+  "vector-databases": {
+   "runs": [
+    {
+     "run_id": "20261012T163334Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T16:33:34Z"
+    },
+    {
+     "run_id": "20261012T163334Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T16:33:34Z"
+    },
+    {
+     "run_id": "20261012T172524Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T17:25:24Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T163334Z"
+   }
+  },
+  "cloud-infrastructure": {
+   "runs": [
+    {
+     "run_id": "20261012T172544Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T17:25:44Z"
+    },
+    {
+     "run_id": "20261012T172544Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T17:25:44Z"
+    },
+    {
+     "run_id": "20261012T180951Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T18:09:51Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T172544Z"
+   }
+  },
+  "javascript-web-frameworks": {
+   "runs": [
+    {
+     "run_id": "20261012T181010Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T18:10:10Z"
+    },
+    {
+     "run_id": "20261012T181010Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T18:10:10Z"
+    },
+    {
+     "run_id": "20261012T184259Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T18:42:59Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T181010Z"
+   }
+  },
+  "ecommerce-platforms": {
+   "runs": [
+    {
+     "run_id": "20261012T184331Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T18:43:31Z"
+    },
+    {
+     "run_id": "20261012T184331Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T18:43:31Z"
+    },
+    {
+     "run_id": "20261012T192239Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T19:22:39Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T184331Z"
+   }
+  },
+  "crm-software": {
+   "runs": [
+    {
+     "run_id": "20261012T192300Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T19:23:00Z"
+    },
+    {
+     "run_id": "20261012T192300Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T19:23:00Z"
+    },
+    {
+     "run_id": "20261012T200605Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-12T20:06:05Z"
+    },
+    {
+     "run_id": "20261012T200624Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-12T20:06:24Z"
+    }
+   ],
+   "used": {
+    "openai": "20261012T200624Z"
+   }
+  },
+  "online-payment-providers": {
+   "runs": [
+    {
+     "run_id": "20261013T091344Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T09:13:44Z"
+    },
+    {
+     "run_id": "20261013T091344Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T09:13:44Z"
+    },
+    {
+     "run_id": "20261013T095712Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T09:57:12Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T091344Z"
+   }
+  },
+  "buy-now-pay-later": {
+   "runs": [
+    {
+     "run_id": "20261013T095731Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T09:57:31Z"
+    },
+    {
+     "run_id": "20261013T095731Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T09:57:31Z"
+    },
+    {
+     "run_id": "20261013T103859Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T10:38:59Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T095731Z"
+   }
+  },
+  "online-course-platforms": {
+   "runs": [
+    {
+     "run_id": "20261013T103919Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T10:39:19Z"
+    },
+    {
+     "run_id": "20261013T103919Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T10:39:19Z"
+    },
+    {
+     "run_id": "20261013T111704Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T11:17:04Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T103919Z"
+   }
+  },
+  "language-learning": {
+   "runs": [
+    {
+     "run_id": "20261013T111723Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T11:17:23Z"
+    },
+    {
+     "run_id": "20261013T111723Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T11:17:23Z"
+    },
+    {
+     "run_id": "20261013T115043Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T11:50:43Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T111723Z"
+   }
+  },
+  "management-consulting": {
+   "runs": [
+    {
+     "run_id": "20261013T115102Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T11:51:02Z"
+    },
+    {
+     "run_id": "20261013T115102Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T11:51:02Z"
+    },
+    {
+     "run_id": "20261013T123446Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T12:34:46Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T115102Z"
+   }
+  },
+  "project-management-software": {
+   "runs": [
+    {
+     "run_id": "20261013T123505Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-13T12:35:05Z"
+    },
+    {
+     "run_id": "20261013T123505Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T12:35:05Z"
+    },
+    {
+     "run_id": "20261013T131417Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-13T13:14:17Z"
+    }
+   ],
+   "used": {
+    "openai": "20261013T123505Z"
+   }
+  },
+  "note-taking-apps": {
+   "runs": [
+    {
+     "run_id": "20261014T100141Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-14T10:01:41Z"
+    },
+    {
+     "run_id": "20261014T100141Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T10:01:41Z"
+    },
+    {
+     "run_id": "20261014T103613Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T10:36:13Z"
+    }
+   ],
+   "used": {
+    "openai": "20261014T100141Z"
+   }
+  },
+  "3d-printers": {
+   "runs": [
+    {
+     "run_id": "20261014T103644Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-14T10:36:44Z"
+    },
+    {
+     "run_id": "20261014T103644Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T10:36:44Z"
+    },
+    {
+     "run_id": "20261014T112112Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T11:21:12Z"
+    }
+   ],
+   "used": {
+    "openai": "20261014T103644Z"
+   }
+  },
+  "accounting-software": {
+   "runs": [
+    {
+     "run_id": "20261014T112132Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-14T11:21:32Z"
+    },
+    {
+     "run_id": "20261014T112132Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T11:21:32Z"
+    },
+    {
+     "run_id": "20261014T115600Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T11:56:00Z"
+    }
+   ],
+   "used": {
+    "openai": "20261014T112132Z"
+   }
+  },
+  "online-marketplaces": {
+   "runs": [
+    {
+     "run_id": "20261014T115619Z",
+     "engine": "openai",
+     "model": "gpt-5.6-luna",
+     "measured": true,
+     "stopped": null,
+     "started_at": "2026-10-14T11:56:19Z"
+    },
+    {
+     "run_id": "20261014T115619Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T11:56:19Z"
+    },
+    {
+     "run_id": "20261014T123046Z",
+     "engine": "gemini",
+     "model": "gemini-2.5-flash",
+     "measured": false,
+     "stopped": "engine_failed",
+     "started_at": "2026-10-14T12:30:46Z"
+    }
+   ],
+   "used": {
+    "openai": "20261014T115619Z"
+   }
+  }
+ },
+ "categories_missing": [],
+ "P1": {
+  "x": "X",
+  "y": "R",
+  "n_categories": 14,
+  "left_out": [
+   "project-management-software",
+   "note-taking-apps"
+  ],
+  "tau": {
+   "large-language-models": 0.0,
+   "vector-databases": -0.119523,
+   "cloud-infrastructure": 0.066667,
+   "javascript-web-frameworks": 0.694365,
+   "ecommerce-platforms": -0.34641,
+   "crm-software": 0.912871,
+   "online-payment-providers": 0.707107,
+   "buy-now-pay-later": 0.0,
+   "online-course-platforms": 0.50128,
+   "language-learning": 0.596285,
+   "management-consulting": -0.258199,
+   "3d-printers": -0.737865,
+   "accounting-software": -0.745356,
+   "online-marketplaces": -0.235702
+  },
+  "T": 0.073966,
+  "p": 0.512949,
+  "ci": [
+   -0.19189,
+   0.344304
+  ],
+  "minimum_met": true,
+  "permutations": 10000,
+  "bootstrap": 10000,
+  "seed": 20261012,
+  "D": {
+   "n_categories": 12,
+   "by_category": {
+    "large-language-models": 0.05625,
+    "vector-databases": 0.03125,
+    "cloud-infrastructure": -0.18125,
+    "javascript-web-frameworks": 0.1625,
+    "ecommerce-platforms": -0.01875,
+    "online-course-platforms": 0.325,
+    "language-learning": 0.13125,
+    "management-consulting": -0.05,
+    "project-management-software": 0.0,
+    "note-taking-apps": 0.0,
+    "3d-printers": -0.5125,
+    "accounting-software": -0.275
+   },
+   "D": -0.027604,
+   "ci": [
+    -0.151563,
+    0.085417
+   ]
+  }
+ },
+ "S1": {
+  "x": "X",
+  "y": "R",
+  "n_categories": 13,
+  "left_out": [
+   "project-management-software",
+   "note-taking-apps",
+   "online-marketplaces"
+  ],
+  "tau": {
+   "large-language-models": 0.5,
+   "vector-databases": 0.235702,
+   "cloud-infrastructure": -0.2,
+   "javascript-web-frameworks": 0.666667,
+   "ecommerce-platforms": -0.632456,
+   "crm-software": 0.912871,
+   "online-payment-providers": 0.707107,
+   "buy-now-pay-later": 0.0,
+   "online-course-platforms": 0.50128,
+   "language-learning": 0.527046,
+   "management-consulting": -0.258199,
+   "3d-printers": -0.333333,
+   "accounting-software": -0.707107
+  },
+  "T": 0.14766,
+  "p": 0.275572,
+  "ci": [
+   -0.133437,
+   0.420594
+  ],
+  "minimum_met": true,
+  "permutations": 10000,
+  "bootstrap": 10000,
+  "seed": 20261012,
+  "p_holm": 0.551144
+ },
+ "S2": {
+  "x": "X_resid",
+  "y": "R",
+  "n_categories": 14,
+  "left_out": [
+   "project-management-software",
+   "note-taking-apps"
+  ],
+  "tau": {
+   "large-language-models": 0.086066,
+   "vector-databases": 0.119523,
+   "cloud-infrastructure": 0.066667,
+   "javascript-web-frameworks": 0.447214,
+   "ecommerce-platforms": -0.11547,
+   "crm-software": 0.182574,
+   "online-payment-providers": 0.707107,
+   "buy-now-pay-later": 0.333333,
+   "online-course-platforms": 0.214834,
+   "language-learning": 0.447214,
+   "management-consulting": -0.258199,
+   "3d-printers": 0.0,
+   "accounting-software": -0.447214,
+   "online-marketplaces": 0.707107
+  },
+  "T": 0.177911,
+  "p": 0.117988,
+  "ci": [
+   0.011015,
+   0.345874
+  ],
+  "minimum_met": true,
+  "permutations": 10000,
+  "bootstrap": 10000,
+  "seed": 20261012,
+  "p_holm": 0.353964
+ },
+ "S3": {
+  "x": "X",
+  "y": "A",
+  "n_categories": 11,
+  "left_out": [
+   "ecommerce-platforms",
+   "online-payment-providers",
+   "project-management-software",
+   "note-taking-apps",
+   "online-marketplaces"
+  ],
+  "tau": {
+   "large-language-models": 1.0,
+   "vector-databases": 1.0,
+   "cloud-infrastructure": 0.4,
+   "javascript-web-frameworks": 0.0,
+   "crm-software": 1.0,
+   "buy-now-pay-later": 0.333333,
+   "online-course-platforms": 1.0,
+   "language-learning": 0.333333,
+   "management-consulting": -1.0,
+   "3d-printers": -0.816497,
+   "accounting-software": -1.0
+  },
+  "T": 0.204561,
+  "p": 0.386761,
+  "ci": [
+   -0.266605,
+   0.642424
+  ],
+  "minimum_met": false,
+  "permutations": 10000,
+  "bootstrap": 10000,
+  "seed": 20261012,
+  "estimable": false,
+  "categories_with_3_sites_with_A": 7,
+  "p_holm": null,
+  "note": "not estimable: fewer than 8 categories have 3 sites with an A; S3 left the family"
+ },
+ "S4": {
+  "x": "X",
+  "y": "N",
+  "n_categories": 14,
+  "left_out": [
+   "project-management-software",
+   "note-taking-apps"
+  ],
+  "tau": {
+   "large-language-models": 0.077152,
+   "vector-databases": 0.235702,
+   "cloud-infrastructure": -0.2,
+   "javascript-web-frameworks": 0.694365,
+   "ecommerce-platforms": -0.34641,
+   "crm-software": 1.0,
+   "online-payment-providers": 1.0,
+   "buy-now-pay-later": -0.333333,
+   "online-course-platforms": 0.67082,
+   "language-learning": 0.912871,
+   "management-consulting": 0.066667,
+   "3d-printers": -0.737865,
+   "accounting-software": -0.737865,
+   "online-marketplaces": -0.333333
+  },
+  "T": 0.140626,
+  "p": 0.323268,
+  "ci": [
+   -0.171669,
+   0.460738
+  ],
+  "minimum_met": true,
+  "permutations": 10000,
+  "bootstrap": 10000,
+  "seed": 20261012,
+  "p_holm": 0.551144
+ },
+ "holm_family": [
+  "S1",
+  "S2",
+  "S4"
+ ],
+ "described": {
+  "T_by_engine": {
+   "openai": {
+    "T": 0.073966,
+    "n_categories": 14,
+    "ci": [
+     -0.19189,
+     0.344304
+    ]
+   }
+  },
+  "by_stratum": {
+   "low": {
+    "sites": 26,
+    "R": 0.125481,
+    "n_R": 26,
+    "A": 0.060982,
+    "n_A": 11,
+    "N": 0.163043,
+    "n_N": 23
+   },
+   "mid": {
+    "sites": 29,
+    "R": 0.087931,
+    "n_R": 29,
+    "A": 0.052009,
+    "n_A": 10,
+    "N": 0.137019,
+    "n_N": 26
+   },
+   "high": {
+    "sites": 28,
+    "R": 0.159821,
+    "n_R": 28,
+    "A": 0.06438,
+    "n_A": 13,
+    "N": 0.20625,
+    "n_N": 22
+   }
+  },
+  "pillar_tau_with_R": {
+   "Reachable": {
+    "mean_tau": -0.230852,
+    "n_categories": 13
+   },
+   "Understandable": {
+    "mean_tau": 0.123876,
+    "n_categories": 14
+   },
+   "Content Citability": {
+    "mean_tau": 0.012247,
+    "n_categories": 14
+   },
+   "Brand Credibility": {
+    "mean_tau": 0.214769,
+    "n_categories": 13
+   },
+   "Answer Fit": {
+    "mean_tau": -0.097586,
+    "n_categories": 13
+   }
+  },
+  "R_given_any_citation": {
+   "01.ai@large-language-models": 0.0,
+   "mistral.ai@large-language-models": 0.1875,
+   "navercorp.com@large-language-models": 0.0,
+   "sarvam.ai@large-language-models": 0.0,
+   "tii.ae@large-language-models": 0.0,
+   "x.ai@large-language-models": 0.075,
+   "clickhouse.com@vector-databases": 0.0,
+   "crate.io@vector-databases": 0.0,
+   "llamaindex.ai@vector-databases": 0.0,
+   "opensearch.org@vector-databases": 0.1375,
+   "oracle.com@vector-databases": 0.075,
+   "digitalocean.com@cloud-infrastructure": 0.525,
+   "google.com@cloud-infrastructure": 0.575,
+   "hetzner.com@cloud-infrastructure": 0.425,
+   "microsoft.com@cloud-infrastructure": 0.5375,
+   "oracle.com@cloud-infrastructure": 0.3875,
+   "scaleway.com@cloud-infrastructure": 0.0125,
+   "astro.build@javascript-web-frameworks": 0.208955223880597,
+   "backbonejs.org@javascript-web-frameworks": 0.0,
+   "dojo.io@javascript-web-frameworks": 0.0,
+   "sencha.com@javascript-web-frameworks": 0.11940298507462686,
+   "nuxt.com@javascript-web-frameworks": 0.26865671641791045,
+   "zkoss.org@javascript-web-frameworks": 0.0,
+   "pimcore.org@ecommerce-platforms": 0.0,
+   "prestashop-project.org@ecommerce-platforms": 0.0375,
+   "spreecommerce.org@ecommerce-platforms": 0.0,
+   "supadupa.me@ecommerce-platforms": 0.0,
+   "virtuemart.net@ecommerce-platforms": 0.0,
+   "zen-cart.com@ecommerce-platforms": 0.0,
+   "adempiere.io@crm-software": 0.0,
+   "attio.com@crm-software": 0.0625,
+   "pipedrive.com@crm-software": 0.4,
+   "suitecrm.com@crm-software": 0.0625,
+   "amazon.com@online-payment-providers": 0.0,
+   "apple.com@online-payment-providers": 0.0,
+   "paymentwall.com@online-payment-providers": 0.0,
+   "stripe.com@online-payment-providers": 0.9875,
+   "apple.com@buy-now-pay-later": 0.05,
+   "klarna.com@buy-now-pay-later": 0.4625,
+   "paypal.com@buy-now-pay-later": 0.7125,
+   "sezzle.com@buy-now-pay-later": 0.2,
+   "alison.com@online-course-platforms": 0.1,
+   "codecademy.com@online-course-platforms": 0.1,
+   "edx.org@online-course-platforms": 0.65,
+   "iversity.org@online-course-platforms": 0.0,
+   "pluralsight.com@online-course-platforms": 0.1375,
+   "shawacademy.com@online-course-platforms": 0.0,
+   "languagedrops.com@language-learning": 0.0,
+   "langenscheidt.de@language-learning": 0.0,
+   "mangolanguages.com@language-learning": 0.17721518987341772,
+   "memrise.com@language-learning": 0.08860759493670886,
+   "mondly.com@language-learning": 0.0,
+   "tandem.net@language-learning": 0.11392405063291139,
+   "grantthornton.global@management-consulting": 0.0,
+   "huronconsultinggroup.com@management-consulting": 0.1,
+   "protiviti.com@management-consulting": 0.0,
+   "rsmus.com@management-consulting": 0.1125,
+   "sia-partners.com@management-consulting": 0.0,
+   "westmonroepartners.com@management-consulting": 0.0,
+   "axosoft.com@project-management-software": 0.0,
+   "gforge.com@project-management-software": 0.0,
+   "onlyoffice.com@project-management-software": 0.0,
+   "planisware.com@project-management-software": 0.0,
+   "shortcut.com@project-management-software": 0.0,
+   "dayoneapp.com@note-taking-apps": 0.0,
+   "notational.net@note-taking-apps": 0.0,
+   "tagspaces.org@note-taking-apps": 0.0,
+   "zoho.com@note-taking-apps": 0.0,
+   "3dsystems.com@3d-printers": 0.025,
+   "bambulab.com@3d-printers": 0.6375,
+   "creality.com@3d-printers": 0.225,
+   "prusa3d.com@3d-printers": 0.4875,
+   "stratasys.com@3d-printers": 0.05,
+   "24sevenoffice.com@accounting-software": 0.0,
+   "acumatica.com@accounting-software": 0.0375,
+   "gnucash.org@accounting-software": 0.1875,
+   "pass-port.com@accounting-software": 0.0,
+   "tallysolutions.com@accounting-software": 0.0,
+   "xero.com@accounting-software": 0.3625,
+   "amazon.com@online-marketplaces": 0.2875,
+   "asseenontv.com@online-marketplaces": 0.0,
+   "farmigo.com@online-marketplaces": 0.0,
+   "shein.com@online-marketplaces": 0.0
+  },
+  "readiness_run_difference": {
+   "n": 83,
+   "mean": 0.2169,
+   "median": 0,
+   "max": 5,
+   "above_5": 0
+  },
+  "engine_answers": {
+   "openai": {
+    "answered": 1280,
+    "with_citations": 1266,
+    "questions": 160
+   }
+  }
+ },
+ "categories": [
+  {
+   "id": "large-language-models",
+   "sites": [
+    {
+     "id": "01.ai",
+     "name": "01.AI",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.800174558638744,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 1,
+     "N": 0.0125,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 61.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 61,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 12,
+        "Content Citability": 15,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 61,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 12,
+        "Content Citability": 15,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 12.0,
+      "Content Citability": 15.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 1,
+       "N": 0.0125,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -3.429664512040361
+    },
+    {
+     "id": "mistral.ai",
+     "name": "Mistral AI",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 3.840419777736486,
+     "answered": 80,
+     "cited": 15,
+     "R": 0.1875,
+     "mentioned": 25,
+     "N": 0.3125,
+     "R_given_any_citation": 0.1875,
+     "A_answers": 15,
+     "A": 0.03741333333333333,
+     "X": 81.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 19.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 15,
+       "R": 0.1875,
+       "mentioned": 25,
+       "N": 0.3125,
+       "R_given_any_citation": 0.1875,
+       "A_answers": 15,
+       "A": 0.03741333333333333
+      }
+     },
+     "X_resid": 21.574134479825524
+    },
+    {
+     "id": "navercorp.com",
+     "name": "Naver",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 4.004106323279658,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 48.5,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 50,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 0,
+        "Content Citability": 10,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 47,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 0,
+        "Content Citability": 10,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 3,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 0.0,
+      "Content Citability": 10.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -11.343802794548083
+    },
+    {
+     "id": "sarvam.ai",
+     "name": "Sarvam AI",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.676657035918002,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 81.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 19.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 19.43898818998057
+    },
+    {
+     "id": "tii.ae",
+     "name": "Technology Innovation Institute",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.329759810088996,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 56.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 10,
+        "Content Citability": 22,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 57,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 10,
+        "Content Citability": 22,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 2,
+     "pillars": {
+      "Reachable": 9.0,
+      "Understandable": 10.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -7.228564829829935
+    },
+    {
+     "id": "x.ai",
+     "name": "xAI",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 3.67797175281074,
+     "answered": 80,
+     "cited": 6,
+     "R": 0.075,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.075,
+     "A_answers": 6,
+     "A": 0.034216666666666666,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 16,
+        "Content Citability": 26,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 16,
+        "Content Citability": 26,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 10.0,
+      "Understandable": 16.0,
+      "Content Citability": 26.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 6,
+       "R": 0.075,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.075,
+       "A_answers": 6,
+       "A": 0.034216666666666666
+      }
+     },
+     "X_resid": -19.0110905333877
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "vector-databases",
+   "sites": [
+    {
+     "id": "clickhouse.com",
+     "name": "ClickHouse",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.472449263797072,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 81.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 29,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 81,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 29,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 20.0,
+      "Content Citability": 29.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 18.103651085824353
+    },
+    {
+     "id": "crate.io",
+     "name": "CrateDB",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.682297639526867,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 48.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 48,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 4,
+        "Content Citability": 18,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 48,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 4,
+        "Content Citability": 18,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 9.0,
+      "Understandable": 4.0,
+      "Content Citability": 18.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -21.668853339977233
+    },
+    {
+     "id": "llamaindex.ai",
+     "name": "LlamaIndex",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.777354313084209,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 8,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 8,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 8.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 0.39684977322121995
+    },
+    {
+     "id": "opensearch.org",
+     "name": "OpenSearch",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.6687399180891305,
+     "answered": 80,
+     "cited": 11,
+     "R": 0.1375,
+     "mentioned": 34,
+     "N": 0.425,
+     "R_given_any_citation": 0.1375,
+     "A_answers": 11,
+     "A": 0.032318181818181815,
+     "X": 78.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 16,
+        "Content Citability": 26,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 16,
+        "Content Citability": 26,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 16.0,
+      "Content Citability": 26.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 11,
+       "R": 0.1375,
+       "mentioned": 34,
+       "N": 0.425,
+       "R_given_any_citation": 0.1375,
+       "A_answers": 11,
+       "A": 0.032318181818181815
+      }
+     },
+     "X_resid": 14.004852797043284
+    },
+    {
+     "id": "oracle.com",
+     "name": "Oracle",
+     "stratum": "low",
+     "ordinary_word": true,
+     "log10_rank": 2.3180633349627615,
+     "answered": 80,
+     "cited": 6,
+     "R": 0.075,
+     "mentioned": 8,
+     "N": null,
+     "R_given_any_citation": 0.075,
+     "A_answers": 6,
+     "A": 0.023016666666666668,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 7,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 7,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 7.0,
+      "Content Citability": 16.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 6,
+       "R": 0.075,
+       "mentioned": 8,
+       "N": null,
+       "R_given_any_citation": 0.075,
+       "A_answers": 6,
+       "A": 0.023016666666666668
+      }
+     },
+     "X_resid": -10.836500316111604
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "cloud-infrastructure",
+   "sites": [
+    {
+     "id": "digitalocean.com",
+     "name": "DigitalOcean",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 2.7442929831226763,
+     "answered": 80,
+     "cited": 42,
+     "R": 0.525,
+     "mentioned": 50,
+     "N": 0.625,
+     "R_given_any_citation": 0.525,
+     "A_answers": 42,
+     "A": 0.05796190476190476,
+     "X": 50.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 50,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 2,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 50,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 2,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 2.0,
+      "Content Citability": 16.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 42,
+       "R": 0.525,
+       "mentioned": 50,
+       "N": 0.625,
+       "R_given_any_citation": 0.525,
+       "A_answers": 42,
+       "A": 0.05796190476190476
+      }
+     },
+     "X_resid": -8.746352000122783
+    },
+    {
+     "id": "google.com",
+     "name": "Google",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 0.0,
+     "answered": 80,
+     "cited": 46,
+     "R": 0.575,
+     "mentioned": 61,
+     "N": 0.7625,
+     "R_given_any_citation": 0.575,
+     "A_answers": 46,
+     "A": 0.06041086956521739,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 10.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 46,
+       "R": 0.575,
+       "mentioned": 61,
+       "N": 0.7625,
+       "R_given_any_citation": 0.575,
+       "A_answers": 46,
+       "A": 0.06041086956521739
+      }
+     },
+     "X_resid": 4.854506030090469
+    },
+    {
+     "id": "hetzner.com",
+     "name": "Hetzner",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 3.299942900022767,
+     "answered": 80,
+     "cited": 34,
+     "R": 0.425,
+     "mentioned": 44,
+     "N": 0.55,
+     "R_given_any_citation": 0.425,
+     "A_answers": 34,
+     "A": 0.04280294117647059,
+     "X": 63.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 6,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 6,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 6.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 34,
+       "R": 0.425,
+       "mentioned": 44,
+       "N": 0.55,
+       "R_given_any_citation": 0.425,
+       "A_answers": 34,
+       "A": 0.04280294117647059
+      }
+     },
+     "X_resid": 4.536938859863604
+    },
+    {
+     "id": "microsoft.com",
+     "name": "Microsoft",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 0.9030899869919435,
+     "answered": 80,
+     "cited": 43,
+     "R": 0.5375,
+     "mentioned": 56,
+     "N": 0.7,
+     "R_given_any_citation": 0.5375,
+     "A_answers": 43,
+     "A": 0.05875348837209303,
+     "X": 67.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 10,
+        "Content Citability": 23,
+        "Brand Credibility": 8,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 10,
+        "Content Citability": 23,
+        "Brand Credibility": 8,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 10.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 8.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 43,
+       "R": 0.5375,
+       "mentioned": 56,
+       "N": 0.7,
+       "R_given_any_citation": 0.5375,
+       "A_answers": 43,
+       "A": 0.05875348837209303
+      }
+     },
+     "X_resid": 7.314934676399517
+    },
+    {
+     "id": "oracle.com",
+     "name": "Oracle",
+     "stratum": "low",
+     "ordinary_word": true,
+     "log10_rank": 2.3180633349627615,
+     "answered": 80,
+     "cited": 31,
+     "R": 0.3875,
+     "mentioned": 33,
+     "N": null,
+     "R_given_any_citation": 0.3875,
+     "A_answers": 31,
+     "A": 0.05566451612903226,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 7,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 7,
+        "Content Citability": 16,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 7.0,
+      "Content Citability": 16.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 31,
+       "R": 0.3875,
+       "mentioned": 33,
+       "N": null,
+       "R_given_any_citation": 0.3875,
+       "A_answers": 31,
+       "A": 0.05566451612903226
+      }
+     },
+     "X_resid": -18.963659624773484
+    },
+    {
+     "id": "scaleway.com",
+     "name": "Scaleway",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.21532025132993,
+     "answered": 80,
+     "cited": 1,
+     "R": 0.0125,
+     "mentioned": 3,
+     "N": 0.0375,
+     "R_given_any_citation": 0.0125,
+     "A_answers": 1,
+     "A": null,
+     "X": 69.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 13,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 13,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 13.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 1,
+       "R": 0.0125,
+       "mentioned": 3,
+       "N": 0.0375,
+       "R_given_any_citation": 0.0125,
+       "A_answers": 1,
+       "A": null
+      }
+     },
+     "X_resid": 11.003632058542678
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "javascript-web-frameworks",
+   "sites": [
+    {
+     "id": "astro.build",
+     "name": "Astro",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.244153372551425,
+     "answered": 80,
+     "cited": 14,
+     "R": 0.175,
+     "mentioned": 21,
+     "N": 0.2625,
+     "R_given_any_citation": 0.208955223880597,
+     "A_answers": 14,
+     "A": 0.06840714285714286,
+     "X": 58.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 2,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 2,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 2.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 14,
+       "R": 0.175,
+       "mentioned": 21,
+       "N": 0.2625,
+       "R_given_any_citation": 0.208955223880597,
+       "A_answers": 14,
+       "A": 0.06840714285714286
+      }
+     },
+     "X_resid": -9.844578120921767
+    },
+    {
+     "id": "backbonejs.org",
+     "name": "Backbone.js",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.085272735033534,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 35.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 35,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 0,
+        "Content Citability": 13,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 6
+      },
+      {
+       "run": 2,
+       "normalised": 35,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 0,
+        "Content Citability": 13,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 6
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 0.0,
+      "Content Citability": 13.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -20.4665776293877
+    },
+    {
+     "id": "dojo.io",
+     "name": "Dojo",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 53.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 53,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 0,
+        "Content Citability": 25,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 53,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 0,
+        "Content Citability": 25,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 0.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 10.994650843176409
+    },
+    {
+     "id": "sencha.com",
+     "name": "Ext JS",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.609765105692743,
+     "answered": 80,
+     "cited": 8,
+     "R": 0.1,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.11940298507462686,
+     "A_answers": 8,
+     "A": 0.0767375,
+     "X": 78.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 26,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 26,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 15.0,
+      "Content Citability": 26.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 8,
+       "R": 0.1,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.11940298507462686,
+       "A_answers": 8,
+       "A": 0.0767375
+      }
+     },
+     "X_resid": 15.535802374872745
+    },
+    {
+     "id": "nuxt.com",
+     "name": "Nuxt",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.57103299576904,
+     "answered": 80,
+     "cited": 18,
+     "R": 0.225,
+     "mentioned": 40,
+     "N": 0.5,
+     "R_given_any_citation": 0.26865671641791045,
+     "A_answers": 18,
+     "A": 0.057211111111111115,
+     "X": 78.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 20,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 20,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 20.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 18,
+       "R": 0.225,
+       "mentioned": 40,
+       "N": 0.5,
+       "R_given_any_citation": 0.26865671641791045,
+       "A_answers": 18,
+       "A": 0.057211111111111115
+      }
+     },
+     "X_resid": 14.965816595138733
+    },
+    {
+     "id": "zkoss.org",
+     "name": "ZK Framework",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.376210023977395,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 8,
+        "Content Citability": 20,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 8,
+        "Content Citability": 20,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 10.0,
+      "Understandable": 8.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -11.185114062878384
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "ecommerce-platforms",
+   "sites": [
+    {
+     "id": "pimcore.org",
+     "name": "Pimcore",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.999893584815541,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 70.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 70,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 25,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 70,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 25,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 11.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 4.296804762039443
+    },
+    {
+     "id": "prestashop-project.org",
+     "name": "PrestaShop",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 4.266302269690385,
+     "answered": 80,
+     "cited": 3,
+     "R": 0.0375,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.0375,
+     "A_answers": 3,
+     "A": null,
+     "X": 49.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 49,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 23,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 49,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 23,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 4.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 3,
+       "R": 0.0375,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.0375,
+       "A_answers": 3,
+       "A": null
+      }
+     },
+     "X_resid": 4.291203699052183
+    },
+    {
+     "id": "spreecommerce.org",
+     "name": "Spree Commerce",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.87371227852971,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 71.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 18,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 18,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 17.0,
+      "Content Citability": 18.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 6.8249046431621565
+    },
+    {
+     "id": "supadupa.me",
+     "name": "SupaDupa",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 55.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 22,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 22,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 4.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -10.704489222628666
+    },
+    {
+     "id": "virtuemart.net",
+     "name": "VirtueMart",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.185867824402713,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 62.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 61,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 2,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 10.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 6.154942265386502
+    },
+    {
+     "id": "zen-cart.com",
+     "name": "Zen Cart",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 4.77450966660029,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 26,
+        "Brand Credibility": 0,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 26,
+        "Brand Credibility": 0,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 8.0,
+      "Content Citability": 26.0,
+      "Brand Credibility": 0.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -10.863366147011583
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "crm-software",
+   "sites": [
+    {
+     "id": "adempiere.io",
+     "name": "ADempiere",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 55.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 2,
+        "Content Citability": 26,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 2,
+        "Content Citability": 26,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 2.0,
+      "Content Citability": 26.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 1.4327210194588815
+    },
+    {
+     "id": "attio.com",
+     "name": "Attio",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.751687025956762,
+     "answered": 80,
+     "cited": 5,
+     "R": 0.0625,
+     "mentioned": 10,
+     "N": 0.125,
+     "R_given_any_citation": 0.0625,
+     "A_answers": 5,
+     "A": 0.04214,
+     "X": 66.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 66,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 18,
+        "Brand Credibility": 5,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 66,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 18,
+        "Brand Credibility": 5,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 17.0,
+      "Content Citability": 18.0,
+      "Brand Credibility": 5.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 5,
+       "R": 0.0625,
+       "mentioned": 10,
+       "N": 0.125,
+       "R_given_any_citation": 0.0625,
+       "A_answers": 5,
+       "A": 0.04214
+      }
+     },
+     "X_resid": -5.615213002951307
+    },
+    {
+     "id": "pipedrive.com",
+     "name": "Pipedrive",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.008940661377087,
+     "answered": 80,
+     "cited": 32,
+     "R": 0.4,
+     "mentioned": 40,
+     "N": 0.5,
+     "R_given_any_citation": 0.4,
+     "A_answers": 32,
+     "A": 0.0551375,
+     "X": 85.5,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 85,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 19,
+        "Content Citability": 28,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 4
+      },
+      {
+       "run": 2,
+       "normalised": 86,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 19,
+        "Content Citability": 28,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 4
+      }
+     ],
+     "readiness_difference": 1,
+     "pillars": {
+      "Reachable": 9.5,
+      "Understandable": 19.0,
+      "Content Citability": 28.0,
+      "Brand Credibility": 10.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 32,
+       "R": 0.4,
+       "mentioned": 40,
+       "N": 0.5,
+       "R_given_any_citation": 0.4,
+       "A_answers": 32,
+       "A": 0.0551375
+      }
+     },
+     "X_resid": 3.1462678929626833
+    },
+    {
+     "id": "suitecrm.com",
+     "name": "SuiteCRM",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.280910565060093,
+     "answered": 80,
+     "cited": 5,
+     "R": 0.0625,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.0625,
+     "A_answers": 5,
+     "A": 0.02848,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 10.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 5,
+       "R": 0.0625,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.0625,
+       "A_answers": 5,
+       "A": 0.02848
+      }
+     },
+     "X_resid": 1.0362240905297568
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "online-payment-providers",
+   "sites": [
+    {
+     "id": "amazon.com",
+     "name": "Amazon",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 1.4313637641589874,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 2,
+     "N": 0.025,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 59.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 59,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 8,
+        "Content Citability": 24,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 59,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 8,
+        "Content Citability": 24,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 8.0,
+      "Content Citability": 24.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 2,
+       "N": 0.025,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -6.681793883186913
+    },
+    {
+     "id": "apple.com",
+     "name": "Apple",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 0.9542425094393249,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 26,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 67.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 15.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 26,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 0.2622831134783894
+    },
+    {
+     "id": "paymentwall.com",
+     "name": "Paymentwall",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.360347230975766,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 55.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 22,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 22,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 4.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -1.9865115387205918
+    },
+    {
+     "id": "stripe.com",
+     "name": "Stripe",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 2.374748346010104,
+     "answered": 80,
+     "cited": 79,
+     "R": 0.9875,
+     "mentioned": 80,
+     "N": null,
+     "R_given_any_citation": 0.9875,
+     "A_answers": 79,
+     "A": 0.07761898734177215,
+     "X": 72.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 72,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 21,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 72,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 17,
+        "Content Citability": 21,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 17.0,
+      "Content Citability": 21.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 79,
+       "R": 0.9875,
+       "mentioned": 80,
+       "N": null,
+       "R_given_any_citation": 0.9875,
+       "A_answers": 79,
+       "A": 0.07761898734177215
+      }
+     },
+     "X_resid": 8.406022308429115
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "buy-now-pay-later",
+   "sites": [
+    {
+     "id": "apple.com",
+     "name": "Apple",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 0.9542425094393249,
+     "answered": 80,
+     "cited": 4,
+     "R": 0.05,
+     "mentioned": 12,
+     "N": null,
+     "R_given_any_citation": 0.05,
+     "A_answers": 4,
+     "A": null,
+     "X": 67.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 15,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 15.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 4,
+       "R": 0.05,
+       "mentioned": 12,
+       "N": null,
+       "R_given_any_citation": 0.05,
+       "A_answers": 4,
+       "A": null
+      }
+     },
+     "X_resid": -1.4877930237492762
+    },
+    {
+     "id": "klarna.com",
+     "name": "Klarna",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 3.377306251068199,
+     "answered": 80,
+     "cited": 37,
+     "R": 0.4625,
+     "mentioned": 64,
+     "N": 0.8,
+     "R_given_any_citation": 0.4625,
+     "A_answers": 37,
+     "A": 0.0467972972972973,
+     "X": 55.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 17,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 17,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 11.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 37,
+       "R": 0.4625,
+       "mentioned": 64,
+       "N": 0.8,
+       "R_given_any_citation": 0.4625,
+       "A_answers": 37,
+       "A": 0.0467972972972973
+      }
+     },
+     "X_resid": -6.747845485166756
+    },
+    {
+     "id": "paypal.com",
+     "name": "PayPal",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 2.2278867046136734,
+     "answered": 80,
+     "cited": 57,
+     "R": 0.7125,
+     "mentioned": 61,
+     "N": 0.7625,
+     "R_given_any_citation": 0.7125,
+     "A_answers": 57,
+     "A": 0.059577192982456145,
+     "X": 70.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 70,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 17,
+        "Content Citability": 23,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 70,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 17,
+        "Content Citability": 23,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 9.0,
+      "Understandable": 17.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 57,
+       "R": 0.7125,
+       "mentioned": 61,
+       "N": 0.7625,
+       "R_given_any_citation": 0.7125,
+       "A_answers": 57,
+       "A": 0.059577192982456145
+      }
+     },
+     "X_resid": 5.054951193340358
+    },
+    {
+     "id": "sezzle.com",
+     "name": "Sezzle",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.070628844051428,
+     "answered": 80,
+     "cited": 16,
+     "R": 0.2,
+     "mentioned": 22,
+     "N": 0.275,
+     "R_given_any_citation": 0.2,
+     "A_answers": 16,
+     "A": 0.04213125,
+     "X": 63.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 9,
+        "Content Citability": 22,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 9,
+        "Content Citability": 22,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 9.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 16,
+       "R": 0.2,
+       "mentioned": 22,
+       "N": 0.275,
+       "R_given_any_citation": 0.2,
+       "A_answers": 16,
+       "A": 0.04213125
+      }
+     },
+     "X_resid": 3.1806873155756676
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "online-course-platforms",
+   "sites": [
+    {
+     "id": "alison.com",
+     "name": "Alison",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 4.14188854970586,
+     "answered": 80,
+     "cited": 8,
+     "R": 0.1,
+     "mentioned": 8,
+     "N": null,
+     "R_given_any_citation": 0.1,
+     "A_answers": 8,
+     "A": 0.0854375,
+     "X": 78.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 16,
+        "Content Citability": 23,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 78,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 16,
+        "Content Citability": 23,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 16.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 8,
+       "R": 0.1,
+       "mentioned": 8,
+       "N": null,
+       "R_given_any_citation": 0.1,
+       "A_answers": 8,
+       "A": 0.0854375
+      }
+     },
+     "X_resid": 14.924737726034039
+    },
+    {
+     "id": "codecademy.com",
+     "name": "Codecademy",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 3.75724415102197,
+     "answered": 80,
+     "cited": 8,
+     "R": 0.1,
+     "mentioned": 11,
+     "N": 0.1375,
+     "R_given_any_citation": 0.1,
+     "A_answers": 8,
+     "A": 0.0488625,
+     "X": 52.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 7,
+        "Content Citability": 12,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 7,
+        "Content Citability": 12,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 7.0,
+      "Content Citability": 12.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 8,
+       "R": 0.1,
+       "mentioned": 11,
+       "N": 0.1375,
+       "R_given_any_citation": 0.1,
+       "A_answers": 8,
+       "A": 0.0488625
+      }
+     },
+     "X_resid": -13.729690920969247
+    },
+    {
+     "id": "edx.org",
+     "name": "edX",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 3.549861188471943,
+     "answered": 80,
+     "cited": 52,
+     "R": 0.65,
+     "mentioned": 53,
+     "N": 0.6625,
+     "R_given_any_citation": 0.65,
+     "A_answers": 52,
+     "A": 0.07780384615384615,
+     "X": 74.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 74,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 18,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 74,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 20,
+        "Content Citability": 18,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 20.0,
+      "Content Citability": 18.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 52,
+       "R": 0.65,
+       "mentioned": 53,
+       "N": 0.6625,
+       "R_given_any_citation": 0.65,
+       "A_answers": 52,
+       "A": 0.07780384615384615
+      }
+     },
+     "X_resid": 6.839160520578446
+    },
+    {
+     "id": "iversity.org",
+     "name": "iversity",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.307977132225089,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 49.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 49,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 17,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 49,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 17,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 4.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -6.028092085154029
+    },
+    {
+     "id": "pluralsight.com",
+     "name": "Pluralsight",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.099577060916708,
+     "answered": 80,
+     "cited": 11,
+     "R": 0.1375,
+     "mentioned": 11,
+     "N": 0.1375,
+     "R_given_any_citation": 0.1375,
+     "A_answers": 11,
+     "A": 0.059227272727272726,
+     "X": 58.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 7,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 7,
+        "Content Citability": 17,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 7.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 11,
+       "R": 0.1375,
+       "mentioned": 11,
+       "N": 0.1375,
+       "R_given_any_citation": 0.1375,
+       "A_answers": 11,
+       "A": 0.059227272727272726
+      }
+     },
+     "X_resid": -5.367253599781641
+    },
+    {
+     "id": "shawacademy.com",
+     "name": "Shaw Academy",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.799099207695827,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 55.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 3,
+        "Content Citability": 19,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 5
+      },
+      {
+       "run": 2,
+       "normalised": 55,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 3,
+        "Content Citability": 19,
+        "Brand Credibility": 7,
+        "Answer Fit": 4
+       },
+       "pages": 5
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 3.0,
+      "Content Citability": 19.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 3.3611383592924184
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "language-learning",
+   "sites": [
+    {
+     "id": "languagedrops.com",
+     "name": "Drops",
+     "stratum": "mid",
+     "ordinary_word": true,
+     "log10_rank": 5.047944294244873,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 57.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 56,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 5,
+        "Content Citability": 22,
+        "Brand Credibility": 0,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 5,
+        "Content Citability": 22,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 2,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 5.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -0.728782157413228
+    },
+    {
+     "id": "langenscheidt.de",
+     "name": "Langenscheidt",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.790881645184844,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 47.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 47,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 14,
+        "Content Citability": 4,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 5
+      },
+      {
+       "run": 2,
+       "normalised": 47,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 14,
+        "Content Citability": 4,
+        "Brand Credibility": 6,
+        "Answer Fit": 2
+       },
+       "pages": 5
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 14.0,
+      "Content Citability": 4.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -0.47366375667463956
+    },
+    {
+     "id": "mangolanguages.com",
+     "name": "Mango Languages",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.909042273879327,
+     "answered": 80,
+     "cited": 14,
+     "R": 0.175,
+     "mentioned": 14,
+     "N": 0.175,
+     "R_given_any_citation": 0.17721518987341772,
+     "A_answers": 14,
+     "A": 0.08,
+     "X": 84.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 84,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 17,
+        "Content Citability": 27,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 84,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 17,
+        "Content Citability": 27,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 17.0,
+      "Content Citability": 27.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 14,
+       "R": 0.175,
+       "mentioned": 14,
+       "N": 0.175,
+       "R_given_any_citation": 0.17721518987341772,
+       "A_answers": 14,
+       "A": 0.08
+      }
+     },
+     "X_resid": 24.353887043228994
+    },
+    {
+     "id": "memrise.com",
+     "name": "Memrise",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.36934575513467,
+     "answered": 80,
+     "cited": 7,
+     "R": 0.0875,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.08860759493670886,
+     "A_answers": 7,
+     "A": 0.09678571428571428,
+     "X": 75.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 75,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 13,
+        "Content Citability": 23,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 4
+      },
+      {
+       "run": 2,
+       "normalised": 75,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 13,
+        "Content Citability": 23,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 4
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 13.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 7,
+       "R": 0.0875,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.08860759493670886,
+       "A_answers": 7,
+       "A": 0.09678571428571428
+      }
+     },
+     "X_resid": 7.904198730761735
+    },
+    {
+     "id": "mondly.com",
+     "name": "Mondly",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.0064146940533885,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 14,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 5
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 14,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 5
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 8.0,
+      "Content Citability": 14.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -18.30203502531679
+    },
+    {
+     "id": "tandem.net",
+     "name": "Tandem",
+     "stratum": "mid",
+     "ordinary_word": true,
+     "log10_rank": 4.394136352641888,
+     "answered": 80,
+     "cited": 9,
+     "R": 0.1125,
+     "mentioned": 10,
+     "N": null,
+     "R_given_any_citation": 0.11392405063291139,
+     "A_answers": 9,
+     "A": 0.06207777777777777,
+     "X": 54.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 54,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 17,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 54,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 17,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 10.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 9,
+       "R": 0.1125,
+       "mentioned": 10,
+       "N": null,
+       "R_given_any_citation": 0.11392405063291139,
+       "A_answers": 9,
+       "A": 0.06207777777777777
+      }
+     },
+     "X_resid": -12.753604834586113
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "management-consulting",
+   "sites": [
+    {
+     "id": "grantthornton.global",
+     "name": "Grant Thornton",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.415972744855786,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 7,
+     "N": 0.0875,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 71.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 14,
+        "Content Citability": 22,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 14,
+        "Content Citability": 22,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 14.0,
+      "Content Citability": 22.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 7,
+       "N": 0.0875,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 13.547976098525567
+    },
+    {
+     "id": "huronconsultinggroup.com",
+     "name": "Huron Consulting Group",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.145261685274568,
+     "answered": 80,
+     "cited": 8,
+     "R": 0.1,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.1,
+     "A_answers": 8,
+     "A": 0.06265,
+     "X": 50.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 50,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 17,
+        "Brand Credibility": 7,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 50,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 17,
+        "Brand Credibility": 7,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 4.0,
+      "Content Citability": 17.0,
+      "Brand Credibility": 7.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 8,
+       "R": 0.1,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.1,
+       "A_answers": 8,
+       "A": 0.06265
+      }
+     },
+     "X_resid": -8.685608797616396
+    },
+    {
+     "id": "protiviti.com",
+     "name": "Protiviti",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.632953056420164,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 69.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 11,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 11,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 11.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 7.9798867026574385
+    },
+    {
+     "id": "rsmus.com",
+     "name": "RSM",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.769812879269349,
+     "answered": 80,
+     "cited": 9,
+     "R": 0.1125,
+     "mentioned": 9,
+     "N": 0.1125,
+     "R_given_any_citation": 0.1125,
+     "A_answers": 9,
+     "A": 0.04263333333333333,
+     "X": 59.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 59,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 7,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 59,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 7,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 7.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 9,
+       "R": 0.1125,
+       "mentioned": 9,
+       "N": 0.1125,
+       "R_given_any_citation": 0.1125,
+       "A_answers": 9,
+       "A": 0.04263333333333333
+      }
+     },
+     "X_resid": -1.39646603809652
+    },
+    {
+     "id": "sia-partners.com",
+     "name": "Sia Partners",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.481137225023995,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 1,
+     "N": 0.0125,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 38.5,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 11,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 37,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 9,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 3,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 4.0,
+      "Content Citability": 10.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 1,
+       "N": 0.0125,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -18.655080294424174
+    },
+    {
+     "id": "westmonroepartners.com",
+     "name": "West Monroe",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 12,
+     "N": 0.15,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 62.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 62,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 62,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 11.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 12,
+       "N": 0.15,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 7.209292328954078
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "project-management-software",
+   "sites": [
+    {
+     "id": "axosoft.com",
+     "name": "Axosoft",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 5.567778961572183,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 37.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 37,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 10,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 37,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 4,
+        "Content Citability": 10,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 4.0,
+      "Content Citability": 10.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -15.528032720621994
+    },
+    {
+     "id": "gforge.com",
+     "name": "GForge",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 22,
+        "Content Citability": 28,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 22,
+        "Content Citability": 28,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 10.0,
+      "Understandable": 22.0,
+      "Content Citability": 28.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -6.938616719632286
+    },
+    {
+     "id": "onlyoffice.com",
+     "name": "ONLYOFFICE",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.320042375479645,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 57.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 57,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 20,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 57,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 4,
+        "Content Citability": 20,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 4.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -11.663554159211586
+    },
+    {
+     "id": "planisware.com",
+     "name": "Planisware",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.639890712926795,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 67.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 11,
+        "Content Citability": 24,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 67,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 11,
+        "Content Citability": 24,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 11.0,
+      "Content Citability": 24.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 15.404504421372401
+    },
+    {
+     "id": "shortcut.com",
+     "name": "Shortcut",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 4.8914426718972015,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 80.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 80,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 19,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 80,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 19,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 19.0,
+      "Content Citability": 19.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 18.725699178093492
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "note-taking-apps",
+   "sites": [
+    {
+     "id": "dayoneapp.com",
+     "name": "Day One",
+     "stratum": "low",
+     "ordinary_word": true,
+     "log10_rank": 5.11965172203987,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 17,
+        "Content Citability": 29,
+        "Brand Credibility": 5,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 17,
+        "Content Citability": 29,
+        "Brand Credibility": 5,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 10.0,
+      "Understandable": 17.0,
+      "Content Citability": 29.0,
+      "Brand Credibility": 5.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -12.717944640947138
+    },
+    {
+     "id": "notational.net",
+     "name": "Notational Velocity",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 38.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 38,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 0,
+        "Content Citability": 16,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 5
+      },
+      {
+       "run": 2,
+       "normalised": 38,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 0,
+        "Content Citability": 16,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 5
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 0.0,
+      "Content Citability": 16.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -16.326093847687055
+    },
+    {
+     "id": "tagspaces.org",
+     "name": "TagSpaces",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.958991755829594,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 80.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 80,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      },
+      {
+       "run": 2,
+       "normalised": 80,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 19,
+        "Content Citability": 20,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 7
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 19.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 25.748817460552985
+    },
+    {
+     "id": "zoho.com",
+     "name": "Zoho",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 2.92272545799326,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 52.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 10,
+        "Content Citability": 20,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 9,
+        "Understandable": 10,
+        "Content Citability": 20,
+        "Brand Credibility": 2,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 9.0,
+      "Understandable": 10.0,
+      "Content Citability": 20.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 3.295221028081208
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "3d-printers",
+   "sites": [
+    {
+     "id": "3dsystems.com",
+     "name": "3D Systems",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.629959764611881,
+     "answered": 80,
+     "cited": 2,
+     "R": 0.025,
+     "mentioned": 3,
+     "N": 0.0375,
+     "R_given_any_citation": 0.025,
+     "A_answers": 2,
+     "A": null,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 10,
+        "Content Citability": 25,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 10.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 2,
+       "R": 0.025,
+       "mentioned": 3,
+       "N": 0.0375,
+       "R_given_any_citation": 0.025,
+       "A_answers": 2,
+       "A": null
+      }
+     },
+     "X_resid": 1.6766778989600368
+    },
+    {
+     "id": "bambulab.com",
+     "name": "Bambu Lab",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 3.853637381958594,
+     "answered": 80,
+     "cited": 51,
+     "R": 0.6375,
+     "mentioned": 53,
+     "N": 0.6625,
+     "R_given_any_citation": 0.6375,
+     "A_answers": 51,
+     "A": 0.12162941176470589,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 7,
+        "Content Citability": 11,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 10,
+        "Understandable": 7,
+        "Content Citability": 11,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 10.0,
+      "Understandable": 7.0,
+      "Content Citability": 11.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 51,
+       "R": 0.6375,
+       "mentioned": 53,
+       "N": 0.6625,
+       "R_given_any_citation": 0.6375,
+       "A_answers": 51,
+       "A": 0.12162941176470589
+      }
+     },
+     "X_resid": 5.061780971814166
+    },
+    {
+     "id": "creality.com",
+     "name": "Creality",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.428150998744445,
+     "answered": 80,
+     "cited": 18,
+     "R": 0.225,
+     "mentioned": 24,
+     "N": 0.3,
+     "R_given_any_citation": 0.225,
+     "A_answers": 18,
+     "A": 0.06712222222222222,
+     "X": 52.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 12,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 52,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 11,
+        "Content Citability": 12,
+        "Brand Credibility": 9,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 11.0,
+      "Content Citability": 12.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 18,
+       "R": 0.225,
+       "mentioned": 24,
+       "N": 0.3,
+       "R_given_any_citation": 0.225,
+       "A_answers": 18,
+       "A": 0.06712222222222222
+      }
+     },
+     "X_resid": -3.9444769870108374
+    },
+    {
+     "id": "prusa3d.com",
+     "name": "Prusa",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 4.148479258163154,
+     "answered": 80,
+     "cited": 39,
+     "R": 0.4875,
+     "mentioned": 43,
+     "N": 0.5375,
+     "R_given_any_citation": 0.4875,
+     "A_answers": 39,
+     "A": 0.07502051282051282,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 16,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 8,
+        "Content Citability": 16,
+        "Brand Credibility": 2,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 8.0,
+      "Content Citability": 16.0,
+      "Brand Credibility": 2.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 39,
+       "R": 0.4875,
+       "mentioned": 43,
+       "N": 0.5375,
+       "R_given_any_citation": 0.4875,
+       "A_answers": 39,
+       "A": 0.07502051282051282
+      }
+     },
+     "X_resid": -5.71868502178048
+    },
+    {
+     "id": "stratasys.com",
+     "name": "Stratasys",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 4.759924569011391,
+     "answered": 80,
+     "cited": 4,
+     "R": 0.05,
+     "mentioned": 4,
+     "N": 0.05,
+     "R_given_any_citation": 0.05,
+     "A_answers": 4,
+     "A": null,
+     "X": 71.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 12,
+        "Content Citability": 25,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 71,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 12,
+        "Content Citability": 25,
+        "Brand Credibility": 9,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 12.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 9.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 4,
+       "R": 0.05,
+       "mentioned": 4,
+       "N": 0.05,
+       "R_given_any_citation": 0.05,
+       "A_answers": 4,
+       "A": null
+      }
+     },
+     "X_resid": 2.9247031380172217
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "accounting-software",
+   "sites": [
+    {
+     "id": "24sevenoffice.com",
+     "name": "24SevenOffice",
+     "stratum": "high",
+     "ordinary_word": false,
+     "log10_rank": 5.42572817509251,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 69.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 8,
+        "Content Citability": 28,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 69,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 8,
+        "Content Citability": 28,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 8.0,
+      "Content Citability": 28.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 6.437417579249441
+    },
+    {
+     "id": "acumatica.com",
+     "name": "Acumatica",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 4.727565654909628,
+     "answered": 80,
+     "cited": 3,
+     "R": 0.0375,
+     "mentioned": 3,
+     "N": 0.0375,
+     "R_given_any_citation": 0.0375,
+     "A_answers": 3,
+     "A": null,
+     "X": 63.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 9,
+        "Content Citability": 18,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 63,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 9,
+        "Content Citability": 18,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 9.0,
+      "Content Citability": 18.0,
+      "Brand Credibility": 10.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 3,
+       "R": 0.0375,
+       "mentioned": 3,
+       "N": 0.0375,
+       "R_given_any_citation": 0.0375,
+       "A_answers": 3,
+       "A": null
+      }
+     },
+     "X_resid": 6.955527931508783
+    },
+    {
+     "id": "gnucash.org",
+     "name": "GnuCash",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 4.8083595397120975,
+     "answered": 80,
+     "cited": 15,
+     "R": 0.1875,
+     "mentioned": 16,
+     "N": 0.2,
+     "R_given_any_citation": 0.1875,
+     "A_answers": 15,
+     "A": 0.06767333333333332,
+     "X": 31.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 31,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 0,
+        "Content Citability": 13,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 31,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 0,
+        "Content Citability": 13,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 0.0,
+      "Content Citability": 13.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 15,
+       "R": 0.1875,
+       "mentioned": 16,
+       "N": 0.2,
+       "R_given_any_citation": 0.1875,
+       "A_answers": 15,
+       "A": 0.06767333333333332
+      }
+     },
+     "X_resid": -25.798771306428364
+    },
+    {
+     "id": "pass-port.com",
+     "name": "Passport Software",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 6.0000004342942646,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 14,
+        "Content Citability": 25,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 11,
+        "Understandable": 14,
+        "Content Citability": 25,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 11.0,
+      "Understandable": 14.0,
+      "Content Citability": 25.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -2.9240417507899394
+    },
+    {
+     "id": "tallysolutions.com",
+     "name": "Tally",
+     "stratum": "high",
+     "ordinary_word": true,
+     "log10_rank": 4.508623974211346,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 74.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 74,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 18,
+        "Content Citability": 19,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 74,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 13,
+        "Understandable": 18,
+        "Content Citability": 19,
+        "Brand Credibility": 10,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 13.0,
+      "Understandable": 18.0,
+      "Content Citability": 19.0,
+      "Brand Credibility": 10.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 19.999587866331275
+    },
+    {
+     "id": "xero.com",
+     "name": "Xero",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 3.509202522331103,
+     "answered": 80,
+     "cited": 29,
+     "R": 0.3625,
+     "mentioned": 43,
+     "N": 0.5375,
+     "R_given_any_citation": 0.3625,
+     "A_answers": 29,
+     "A": 0.06372758620689656,
+     "X": 40.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 9,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 40,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 8,
+        "Understandable": 9,
+        "Content Citability": 23,
+        "Brand Credibility": 6,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 8.0,
+      "Understandable": 9.0,
+      "Content Citability": 23.0,
+      "Brand Credibility": 6.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 29,
+       "R": 0.3625,
+       "mentioned": 43,
+       "N": 0.5375,
+       "R_given_any_citation": 0.3625,
+       "A_answers": 29,
+       "A": 0.06372758620689656
+      }
+     },
+     "X_resid": -4.669720319871182
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  },
+  {
+   "id": "online-marketplaces",
+   "sites": [
+    {
+     "id": "amazon.com",
+     "name": "Amazon",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 1.4313637641589874,
+     "answered": 80,
+     "cited": 23,
+     "R": 0.2875,
+     "mentioned": 51,
+     "N": 0.6375,
+     "R_given_any_citation": 0.2875,
+     "A_answers": 23,
+     "A": 0.060373913043478264,
+     "X": 25.5,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 23,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 5,
+        "Understandable": 0,
+        "Content Citability": 9,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 28,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 5,
+        "Understandable": 0,
+        "Content Citability": 13,
+        "Brand Credibility": 4,
+        "Answer Fit": 2
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 5,
+     "pillars": {
+      "Reachable": 5.0,
+      "Understandable": 0.0,
+      "Content Citability": 11.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 2.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 23,
+       "R": 0.2875,
+       "mentioned": 51,
+       "N": 0.6375,
+       "R_given_any_citation": 0.2875,
+       "A_answers": 23,
+       "A": 0.060373913043478264
+      }
+     },
+     "X_resid": 8.579911513773862
+    },
+    {
+     "id": "asseenontv.com",
+     "name": "As Seen On TV",
+     "stratum": "mid",
+     "ordinary_word": true,
+     "log10_rank": 5.983495031887948,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": null,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 65.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 12,
+        "Content Citability": 21,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 65,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 12,
+        "Content Citability": 21,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 12.0,
+      "Content Citability": 21.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": null,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": 5.053954981320821
+    },
+    {
+     "id": "farmigo.com",
+     "name": "Farmigo",
+     "stratum": "mid",
+     "ordinary_word": false,
+     "log10_rank": 5.9643991855861564,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 0,
+     "N": 0.0,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 58.0,
+     "gate_zero": false,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 11,
+        "Content Citability": 14,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 6
+      },
+      {
+       "run": 2,
+       "normalised": 58,
+       "gate_capped": false,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 15,
+        "Understandable": 11,
+        "Content Citability": 14,
+        "Brand Credibility": 4,
+        "Answer Fit": 4
+       },
+       "pages": 6
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 15.0,
+      "Understandable": 11.0,
+      "Content Citability": 14.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 4.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 0,
+       "N": 0.0,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -1.7655543859164737
+    },
+    {
+     "id": "shein.com",
+     "name": "Shein",
+     "stratum": "low",
+     "ordinary_word": false,
+     "log10_rank": 2.6954816764901977,
+     "answered": 80,
+     "cited": 0,
+     "R": 0.0,
+     "mentioned": 8,
+     "N": 0.1,
+     "R_given_any_citation": 0.0,
+     "A_answers": 0,
+     "A": null,
+     "X": 17.0,
+     "gate_zero": true,
+     "readiness_runs": [
+      {
+       "run": 1,
+       "normalised": 17,
+       "gate_capped": true,
+       "audited_at": "2026-10-12",
+       "pillars": {
+        "Reachable": 6,
+        "Understandable": 5,
+        "Content Citability": 0,
+        "Brand Credibility": 4,
+        "Answer Fit": 0
+       },
+       "pages": 8
+      },
+      {
+       "run": 2,
+       "normalised": 17,
+       "gate_capped": true,
+       "audited_at": "2026-10-13",
+       "pillars": {
+        "Reachable": 6,
+        "Understandable": 5,
+        "Content Citability": 0,
+        "Brand Credibility": 4,
+        "Answer Fit": 0
+       },
+       "pages": 8
+      }
+     ],
+     "readiness_difference": 0,
+     "pillars": {
+      "Reachable": 6.0,
+      "Understandable": 5.0,
+      "Content Citability": 0.0,
+      "Brand Credibility": 4.0,
+      "Answer Fit": 0.0
+     },
+     "by_engine": {
+      "openai": {
+       "answered": 80,
+       "cited": 0,
+       "R": 0.0,
+       "mentioned": 8,
+       "N": 0.1,
+       "R_given_any_citation": 0.0,
+       "A_answers": 0,
+       "A": null
+      }
+     },
+     "X_resid": -11.868312109178213
+    }
+   ],
+   "answers": {
+    "openai": 80
+   },
+   "missing": false
+  }
+ ],
+ "power_T": 0.289,
+ "wording": [
+  "No association was detected; the design could detect a T at least as large as the recorded power figure (T = 0.29)."
+ ]
+}
