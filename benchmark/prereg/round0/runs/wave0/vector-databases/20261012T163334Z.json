@@ -700,259 +700,6 @@
    "engine": "gemini",
    "run": 1,
    "status": "ok",
-   "cited": false,
-   "rank": null,
-   "quoted_url": null,
-   "mentioned": false,
-   "mention_order": null,
-   "mention_share": null,
-   "competitors": {
-    "CrateDB": {
-     "cited": false,
-     "rank": null,
-     "mentioned": false,
-     "mention_order": null,
-     "mention_share": null
-    },
-    "LlamaIndex": {
-     "cited": false,
-     "rank": null,
-     "mentioned": false,
-     "mention_order": null,
-     "mention_share": null
-    },
-    "OpenSearch": {
-     "cited": false,
-     "rank": null,
-     "mentioned": false,
-     "mention_order": null,
-     "mention_share": null
-    },
-    "Oracle": {
-     "cited": false,
-     "rank": null,
-     "mentioned": false,
-     "mention_order": null,
-     "mention_share": null
-    }
-   },
-   "citations": [
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-     "domain": "medium.com",
-     "title": "medium.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-     "domain": "redis.io",
-     "title": "redis.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q==",
-     "domain": "mastra.ai",
-     "title": "mastra.ai"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg=",
-     "domain": "youtube.com",
-     "title": "youtube.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk=",
-     "domain": "liveblocks.io",
-     "title": "liveblocks.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOgWIbN88o5h1CJwm7oFafazUBXITtqk6X-ZjuU4ftbaTmxr74HxH2t3lQJ-13nD3iOn7nav47jPmLs-QK909MfrvJ69fWvLpnVhCKkOr0TyLk6XytJGPIE3PTA12t_2TKltOIPd92vhLDXW_3vsSy",
-     "domain": "pecollective.com",
-     "title": "pecollective.com"
-    }
-   ],
-   "search_queries": [
-    "popular open-source vector databases",
-    "best open-source vector databases"
-   ],
-   "answer": "The landscape of open-source vector databases is rapidly evolving, with several strong contenders emerging as popular choices for AI applications like Retrieval-Augmented Generation (RAG), semantic search, and recommendation systems. Among the most frequently cited and highly regarded are Milvus, Weaviate, Qdrant, Chroma, FAISS, Redis, and pgvector.\n\nHere's a closer look at some of the most popular options:\n\n*   **Milvus** is a highly scalable, open-source vector database designed for efficient similarity search across massive datasets, from small local collections to large distributed deployments. It offers various indexing strategies and is well-suited for enterprise-scale use cases. Milvus is available in different forms, including Milvus Lite, Milvus Standalone, and Milvus Distributed.\n*   **Weaviate** is an open-source vector database specifically built for semantic search and AI retrieval applications. It supports vector similarity search, keyword search, filtering, and multimodal search, with a notable strength in its hybrid retrieval capabilities that combine vector and BM25F keyword searches.\n*   **Qdrant** is recognized for its high performance and is a strong choice for applications requiring efficient vector similarity search. It's often highlighted for its speed and suitability for various AI workloads.\n*   **Chroma** is a lightweight and developer-friendly vector database, making it an excellent option for quick starts and prototyping. It simplifies the process of getting started with vector embeddings.\n*   **FAISS (Facebook AI Similarity Search)** is a C++ library developed by Meta AI Research that focuses on efficient similarity search and clustering of dense vectors. While a library rather than a full-fledged database, it's a fundamental tool in many vector search implementations.\n*   **Redis** can function as a vector database through its modules like Redis Stack, offering capabilities for high-speed vector search alongside its traditional data structures.\n*   **pgvector** is an open-source extension for PostgreSQL that adds vector similarity search capabilities directly to your PostgreSQL database. This allows users to leverage their existing PostgreSQL infrastructure for vector operations.\n\nOther notable open-source options that appear in discussions include **Elasticsearch** (with its vector search capabilities) and **Vespa**. The best choice often depends on specific project requirements concerning scalability, performance, ease of use, and integration with existing systems.",
-   "answer_truncated": false,
-   "target_cited": null,
-   "other_own_cited": null,
-   "sources_listed": [
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-     "domain": "medium.com",
-     "title": "medium.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-     "domain": "redis.io",
-     "title": "redis.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q==",
-     "domain": "mastra.ai",
-     "title": "mastra.ai"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg=",
-     "domain": "youtube.com",
-     "title": "youtube.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk=",
-     "domain": "liveblocks.io",
-     "title": "liveblocks.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOgWIbN88o5h1CJwm7oFafazUBXITtqk6X-ZjuU4ftbaTmxr74HxH2t3lQJ-13nD3iOn7nav47jPmLs-QK909MfrvJ69fWvLpnVhCKkOr0TyLk6XytJGPIE3PTA12t_2TKltOIPd92vhLDXW_3vsSy",
-     "domain": "pecollective.com",
-     "title": "pecollective.com"
-    }
-   ],
-   "sources_used": [
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-     "domain": "medium.com",
-     "title": "medium.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-     "domain": "redis.io",
-     "title": "redis.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q==",
-     "domain": "mastra.ai",
-     "title": "mastra.ai"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg=",
-     "domain": "youtube.com",
-     "title": "youtube.com"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk=",
-     "domain": "liveblocks.io",
-     "title": "liveblocks.io"
-    },
-    {
-     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOgWIbN88o5h1CJwm7oFafazUBXITtqk6X-ZjuU4ftbaTmxr74HxH2t3lQJ-13nD3iOn7nav47jPmLs-QK909MfrvJ69fWvLpnVhCKkOr0TyLk6XytJGPIE3PTA12t_2TKltOIPd92vhLDXW_3vsSy",
-     "domain": "pecollective.com",
-     "title": "pecollective.com"
-    }
-   ],
-   "spans": [
-    {
-     "start": 234,
-     "end": 351,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q==",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 412,
-     "end": 604,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q==",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 606,
-     "end": 693,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 695,
-     "end": 799,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q=="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 801,
-     "end": 920,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q=="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 922,
-     "end": 1117,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHjE1kUcMhrFm7_zWvENuMBRJxp7xONf0Ba2pSMzNb09R1ZJLD8wZiKOWHJwYfZb8Xajr9dvwma9L6hROtztqglg_sN-75sHXTSIVGZDWXuMehx9dstJfXgVskYBMDkOjYIvXcioFp3bjFL2g7j2HPntut0Q=="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 1119,
-     "end": 1257,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOgWIbN88o5h1CJwm7oFafazUBXITtqk6X-ZjuU4ftbaTmxr74HxH2t3lQJ-13nD3iOn7nav47jPmLs-QK909MfrvJ69fWvLpnVhCKkOr0TyLk6XytJGPIE3PTA12t_2TKltOIPd92vhLDXW_3vsSy"
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 1338,
-     "end": 1472,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHOgWIbN88o5h1CJwm7oFafazUBXITtqk6X-ZjuU4ftbaTmxr74HxH2t3lQJ-13nD3iOn7nav47jPmLs-QK909MfrvJ69fWvLpnVhCKkOr0TyLk6XytJGPIE3PTA12t_2TKltOIPd92vhLDXW_3vsSy"
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 1543,
-     "end": 1711,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH7ZbUzAaTujKonM6wXU4fMCLIgERKWc5rFuKd0CAr9ucrjAs4hfKXM1Cwp8dZmLQXDwak9R22zTckHJFF0xKgNIzrWj3uwIfDyvEDeLiXaQP-W1eCDqyOagNlbbAMaABFE8itL4y-FBgmozSqconuBRDlvjdhcxgq-NSukQ3KvqzLvN820eHDxohZvtaTiLb3ox8tceAOaOno=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 1829,
-     "end": 2007,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 2009,
-     "end": 2153,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBTwCdH8nexO22a_6Nvu1k0uALn3J-ohl8QxJ1iBq5q9_t67ObGlwjGuJe3ZKYpaPmPC1PaxRM7Ok4D-lbvsTeXg4ofECE3PXbFXGAnIiNuJhbYCtG1c5JypnQ9sOEQBkP0HWn60_vfrsaQnUq9IqyWa8XsD4syqKVpoiiCM0=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVmzsCy9u2Ma5nlpsoBvRQpOjKqCp_muZr9sua-YuH-m_4RjU7_WfuwC5I8sJ56WNqT69yCKiih8hmhlYDcxfeM5hpT7CvIITAt0S-PFgAo2iF-jPWk8bJ5mqiuKPGeen8ZjSseDVv6eEB0j9FvtBDTjOSImrPZFfSiewl3QVuEipjzXgPi6b-0YYkEBk=",
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg="
-     ],
-     "kind": "segment"
-    },
-    {
-     "start": 2250,
-     "end": 2388,
-     "urls": [
-      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHwpMyhzhp_I4WjYSVyRSqNr9dQgnAA_3_SMBTtgm682tyyoXp9Q1t8loFGKPRY_RH28LB53wHbyjCMR0P-tvQ3WXTg7Ny9WMPQXePpBfhcH58W6VR_thJkv6w-AHgffrtJSY1qgdg="
-     ],
-     "kind": "segment"
-    }
-   ],
-   "supported_share": {
-    "chars": 0.0,
-    "sentences": 0.0,
-    "weighted": 0.0
-   },
    "usage": {
     "input_tokens": 12,
     "output_tokens": 668,
@@ -960,7 +707,8 @@
     "api_calls": 1
    },
    "cost_usd": null,
-   "seconds": 4.9
+   "seconds": 4.9,
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -1525,7 +1273,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -1648,7 +1396,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -1797,7 +1545,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -1988,7 +1736,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -2145,7 +1893,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -2307,7 +2055,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -2417,7 +2165,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -2527,7 +2275,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -2650,7 +2398,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -2773,7 +2521,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -2946,7 +2694,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -3069,7 +2817,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -3231,7 +2979,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -3375,7 +3123,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -3563,7 +3311,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -3751,7 +3499,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -3848,7 +3596,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -3992,7 +3740,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -4180,7 +3928,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -4316,7 +4064,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -4468,7 +4216,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -4591,7 +4339,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -4727,7 +4475,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -4910,7 +4658,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -5059,7 +4807,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -5229,7 +4977,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -5391,7 +5139,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -5522,7 +5270,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -5726,7 +5474,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -5844,7 +5592,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -5975,7 +5723,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -6098,7 +5846,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -6247,7 +5995,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -6433,7 +6181,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -6616,7 +6364,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -6812,7 +6560,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -6982,7 +6730,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -7113,7 +6861,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -7275,7 +7023,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -7398,7 +7146,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -7547,7 +7295,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -7670,7 +7418,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -7819,7 +7567,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -7963,7 +7711,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -8165,7 +7913,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -8314,7 +8062,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -8489,7 +8237,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -8607,7 +8355,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -8738,7 +8486,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -8861,7 +8609,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -8984,7 +8732,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -9107,7 +8855,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -9269,7 +9017,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -9413,7 +9161,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -9562,7 +9310,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -9750,7 +9498,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -9912,7 +9660,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -10035,7 +9783,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -10197,7 +9945,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -10307,7 +10055,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -10451,7 +10199,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -10587,7 +10335,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -10736,7 +10484,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -10872,7 +10620,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -11034,7 +10782,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -11196,7 +10944,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -11345,7 +11093,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -11450,7 +11198,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -11620,7 +11368,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -11751,7 +11499,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -11861,7 +11609,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -11984,7 +11732,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -12120,7 +11868,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -12295,7 +12043,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   }
  ],
  "notes": [
@@ -12303,872 +12051,10 @@
   "The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
   "A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.",
   "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
-  "This measures citations. It does not predict traffic, rankings or revenue."
+  "This measures citations. It does not predict traffic, rankings or revenue.",
+  "Gemini grounded results removed: the Gemini API terms (Grounding with Google Search) do not allow storing or republishing them. Counts per status are kept."
  ],
  "summary": {
-  "overall": {
-   "answered": 81,
-   "cited": 0,
-   "cited_rate": 0.0,
-   "cited_ci": [
-    0.0,
-    0.0453
-   ],
-   "cited_ci_clustered": [
-    0.0,
-    0.0453
-   ],
-   "n_questions": 10,
-   "mentioned": 0,
-   "mentioned_rate": 0.0,
-   "planned": 160,
-   "errors": 5,
-   "skipped": 74
-  },
-  "headline": {
-   "answered": 81,
-   "cited": 0,
-   "cited_rate": 0.0,
-   "cited_ci": [
-    0.0,
-    0.0453
-   ],
-   "cited_ci_clustered": [
-    0.0,
-    0.0453
-   ],
-   "n_questions": 10,
-   "mentioned": 0,
-   "mentioned_rate": 0.0
-  },
-  "branded": {
-   "answered": 0,
-   "cited": 0,
-   "cited_rate": null,
-   "cited_ci": null,
-   "cited_ci_clustered": null,
-   "n_questions": 0,
-   "mentioned": 0,
-   "mentioned_rate": null,
-   "question_ids": []
-  },
-  "brand_flags": "run",
-  "engines": [
-   {
-    "answered": 80,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.0458
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.0458
-    ],
-    "n_questions": 10,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "id": "openai",
-    "model": "gpt-5.6-luna",
-    "status": "measured",
-    "errors": 0,
-    "skipped": 0,
-    "avg_rank": null,
-    "with_citations": 80,
-    "with_searches": 0,
-    "searched_without_queries": 80,
-    "supported_share": {
-     "answers": 80,
-     "chars": 0.0,
-     "sentences": 0.0,
-     "weighted": 0.0,
-     "above_zero": 0
-    },
-    "sources": {
-     "answers": 0,
-     "listed": 0,
-     "used": 0,
-     "used_rate": null,
-     "you_listed": 0,
-     "you_used": 0
-    },
-    "consistency": {
-     "questions": 10,
-     "answers": 80,
-     "pairs": 280,
-     "median": 0.5558,
-     "lowest": [
-      {
-       "query_id": "q07",
-       "answers": 8,
-       "jaccard": 0.4017
-      },
-      {
-       "query_id": "q04",
-       "answers": 8,
-       "jaccard": 0.4464
-      },
-      {
-       "query_id": "q10",
-       "answers": 8,
-       "jaccard": 0.4671
-      }
-     ]
-    },
-    "named_first": 0,
-    "any_named": 39,
-    "mention_share": null
-   },
-   {
-    "answered": 1,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.7935
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.7935
-    ],
-    "n_questions": 1,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "id": "gemini",
-    "model": "gemini-2.5-flash",
-    "status": "measured",
-    "errors": 5,
-    "skipped": 74,
-    "avg_rank": null,
-    "with_citations": 1,
-    "with_searches": 1,
-    "searched_without_queries": 0,
-    "supported_share": {
-     "answers": 1,
-     "chars": 0.0,
-     "sentences": 0.0,
-     "weighted": 0.0,
-     "above_zero": 0
-    },
-    "sources": {
-     "answers": 1,
-     "listed": 6,
-     "used": 6,
-     "used_rate": 1.0,
-     "you_listed": 0,
-     "you_used": 0
-    },
-    "consistency": {
-     "questions": 0,
-     "answers": 0,
-     "pairs": 0,
-     "median": null,
-     "lowest": []
-    },
-    "named_first": 0,
-    "any_named": 0,
-    "mention_share": null
-   }
-  ],
-  "share_of_voice": [
-   {
-    "answered": 81,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.0453
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.0453
-    ],
-    "n_questions": 10,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "name": "ClickHouse",
-    "you": true,
-    "named_first": 0,
-    "any_named": 39,
-    "mention_share": null
-   },
-   {
-    "answered": 81,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.0453
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.0453
-    ],
-    "n_questions": 10,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "name": "CrateDB",
-    "you": false,
-    "named_first": 0,
-    "any_named": 39,
-    "mention_share": null
-   },
-   {
-    "answered": 81,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.0453
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.0453
-    ],
-    "n_questions": 10,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "name": "LlamaIndex",
-    "you": false,
-    "named_first": 0,
-    "any_named": 39,
-    "mention_share": null
-   },
-   {
-    "answered": 81,
-    "cited": 11,
-    "cited_rate": 0.1358,
-    "cited_ci": [
-     0.0776,
-     0.227
-    ],
-    "cited_ci_clustered": [
-     0.0482,
-     0.2375
-    ],
-    "n_questions": 10,
-    "mentioned": 34,
-    "mentioned_rate": 0.4198,
-    "name": "OpenSearch",
-    "you": false,
-    "named_first": 32,
-    "any_named": 39,
-    "mention_share": 0.0711
-   },
-   {
-    "answered": 81,
-    "cited": 6,
-    "cited_rate": 0.0741,
-    "cited_ci": [
-     0.0344,
-     0.1523
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.225
-    ],
-    "n_questions": 10,
-    "mentioned": 8,
-    "mentioned_rate": 0.0988,
-    "name": "Oracle",
-    "you": false,
-    "named_first": 7,
-    "any_named": 39,
-    "mention_share": 0.0374
-   }
-  ],
-  "top_sources": [
-   {
-    "domain": "qdrant.tech",
-    "answers": 54,
-    "share": 0.6667,
-    "owner": null
-   },
-   {
-    "domain": "github.com",
-    "answers": 44,
-    "share": 0.5432,
-    "owner": null
-   },
-   {
-    "domain": "pinecone.io",
-    "answers": 36,
-    "share": 0.4444,
-    "owner": null
-   },
-   {
-    "domain": "milvus.io",
-    "answers": 27,
-    "share": 0.3333,
-    "owner": null
-   },
-   {
-    "domain": "mongodb.com",
-    "answers": 22,
-    "share": 0.2716,
-    "owner": null
-   },
-   {
-    "domain": "elastic.co",
-    "answers": 20,
-    "share": 0.2469,
-    "owner": null
-   },
-   {
-    "domain": "docs.zilliz.com",
-    "answers": 19,
-    "share": 0.2346,
-    "owner": null
-   },
-   {
-    "domain": "weaviate.io",
-    "answers": 19,
-    "share": 0.2346,
-    "owner": null
-   },
-   {
-    "domain": "docs.weaviate.io",
-    "answers": 18,
-    "share": 0.2222,
-    "owner": null
-   },
-   {
-    "domain": "learn.microsoft.com",
-    "answers": 14,
-    "share": 0.1728,
-    "owner": null
-   },
-   {
-    "domain": "docs.pinecone.io",
-    "answers": 12,
-    "share": 0.1481,
-    "owner": null
-   },
-   {
-    "domain": "docs.opensearch.org",
-    "answers": 10,
-    "share": 0.1235,
-    "owner": "OpenSearch"
-   },
-   {
-    "domain": "redis.io",
-    "answers": 10,
-    "share": 0.1235,
-    "owner": null
-   },
-   {
-    "domain": "pgvector.app",
-    "answers": 8,
-    "share": 0.0988,
-    "owner": null
-   },
-   {
-    "domain": "docs.aws.amazon.com",
-    "answers": 8,
-    "share": 0.0988,
-    "owner": null
-   }
-  ],
-  "questions": {
-   "asked": 10,
-   "cited_somewhere": 0
-  },
-  "gaps": [
-   {
-    "query_id": "q01",
-    "query": "What are the best vector databases for retrieval-augmented generation?",
-    "competitors": [
-     "OpenSearch"
-    ],
-    "answered": 8
-   },
-   {
-    "query_id": "q02",
-    "query": "Which databases support fast similarity search over embeddings?",
-    "competitors": [
-     "OpenSearch"
-    ],
-    "answered": 8
-   },
-   {
-    "query_id": "q04",
-    "query": "Our semantic search over two million product descriptions has become slow. What database should we move the embeddings to?",
-    "competitors": [
-     "OpenSearch"
-    ],
-    "answered": 8
-   },
-   {
-    "query_id": "q05",
-    "query": "I want to add vector search without running a separate database next to our main one. What options exist?",
-    "competitors": [
-     "Oracle",
-     "OpenSearch"
-    ],
-    "answered": 8
-   },
-   {
-    "query_id": "q10",
-    "query": "Which vector databases scale best to billions of embeddings?",
-    "competitors": [
-     "OpenSearch"
-    ],
-    "answered": 8
-   }
-  ],
-  "by_question": [
-   {
-    "query_id": "q01",
-    "query": "What are the best vector databases for retrieval-augmented generation?",
-    "intent_tier": "list",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 2,
-      "mentioned": 4
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 4,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": "OpenSearch"
-   },
-   {
-    "query_id": "q02",
-    "query": "Which databases support fast similarity search over embeddings?",
-    "intent_tier": "list",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 2,
-      "mentioned": 6
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 1
-     }
-    },
-    "none_named": 2,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": "OpenSearch"
-   },
-   {
-    "query_id": "q03",
-    "query": "What are the most popular open-source vector databases?",
-    "intent_tier": "list",
-    "branded": false,
-    "answered": 9,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 0,
-      "mentioned": 5
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 4,
-    "searched": {
-     "yes": 9,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": null
-   },
-   {
-    "query_id": "q04",
-    "query": "Our semantic search over two million product descriptions has become slow. What database should we move the embeddings to?",
-    "intent_tier": "problem",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 2,
-      "mentioned": 2
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 6,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": "OpenSearch"
-   },
-   {
-    "query_id": "q05",
-    "query": "I want to add vector search without running a separate database next to our main one. What options exist?",
-    "intent_tier": "problem",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 1,
-      "mentioned": 3
-     },
-     "Oracle": {
-      "cited": 6,
-      "mentioned": 7
-     }
-    },
-    "none_named": 0,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": "Oracle"
-   },
-   {
-    "query_id": "q06",
-    "query": "Which vector database is best for a small startup building an AI chatbot over its documentation?",
-    "intent_tier": "persona",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 0,
-      "mentioned": 1
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 7,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": null
-   },
-   {
-    "query_id": "q07",
-    "query": "What vector database should an enterprise with strict compliance requirements choose?",
-    "intent_tier": "persona",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 0,
-      "mentioned": 8
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 0,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": null
-   },
-   {
-    "query_id": "q08",
-    "query": "How much does a managed vector database cost for about 10 million vectors?",
-    "intent_tier": "pricing",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 8,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": null
-   },
-   {
-    "query_id": "q09",
-    "query": "Which vector databases have a free tier for small projects?",
-    "intent_tier": "pricing",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 8,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": null
-   },
-   {
-    "query_id": "q10",
-    "query": "Which vector databases scale best to billions of embeddings?",
-    "intent_tier": "list",
-    "branded": false,
-    "answered": 8,
-    "you": {
-     "cited": 0,
-     "mentioned": 0
-    },
-    "competitors": {
-     "CrateDB": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "LlamaIndex": {
-      "cited": 0,
-      "mentioned": 0
-     },
-     "OpenSearch": {
-      "cited": 4,
-      "mentioned": 5
-     },
-     "Oracle": {
-      "cited": 0,
-      "mentioned": 0
-     }
-    },
-    "none_named": 3,
-    "searched": {
-     "yes": 8,
-     "no": 0,
-     "unknown": 0
-    },
-    "leader": "OpenSearch"
-   }
-  ],
-  "tracked_pages": [],
-  "by_tier": [
-   {
-    "answered": 33,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.1043
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.1043
-    ],
-    "n_questions": 4,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "tier": "list"
-   },
-   {
-    "answered": 16,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.1936
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.1936
-    ],
-    "n_questions": 2,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "tier": "persona"
-   },
-   {
-    "answered": 16,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.1936
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.1936
-    ],
-    "n_questions": 2,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "tier": "pricing"
-   },
-   {
-    "answered": 16,
-    "cited": 0,
-    "cited_rate": 0.0,
-    "cited_ci": [
-     0.0,
-     0.1936
-    ],
-    "cited_ci_clustered": [
-     0.0,
-     0.1936
-    ],
-    "n_questions": 2,
-    "mentioned": 0,
-    "mentioned_rate": 0.0,
-    "tier": "problem"
-   }
-  ],
-  "searches": {
-   "answers_exposing": 1,
-   "top": [
-    {
-     "query": "popular open-source vector databases",
-     "count": 1
-    },
-    {
-     "query": "best open-source vector databases",
-     "count": 1
-    }
-   ],
-   "answers_searched_without_queries": 80,
-   "modifiers": {
-    "total": 2,
-    "with_year": 0,
-    "with_ranking_word": 1
-   }
-  },
-  "notes": []
+  "redacted": "Gemini grounded results removed: the Gemini API terms (Grounding with Google Search) do not allow storing or republishing them. Counts per status are kept."
  }
 }

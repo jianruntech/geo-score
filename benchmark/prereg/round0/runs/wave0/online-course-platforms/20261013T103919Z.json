@@ -857,7 +857,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -1008,7 +1008,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -1138,7 +1138,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -1281,7 +1281,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -1411,7 +1411,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -1541,7 +1541,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -1705,7 +1705,7 @@
    "engine": "gemini",
    "run": 1,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -1861,7 +1861,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -2030,7 +2030,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -2199,7 +2199,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -2381,7 +2381,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -2537,7 +2537,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -2654,7 +2654,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -2758,7 +2758,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -2914,7 +2914,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -3057,7 +3057,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -3226,7 +3226,7 @@
    "engine": "gemini",
    "run": 2,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -3382,7 +3382,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -3525,7 +3525,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -3689,7 +3689,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -3845,7 +3845,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -3988,7 +3988,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -4118,7 +4118,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -4256,7 +4256,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -4399,7 +4399,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -4529,7 +4529,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -4672,7 +4672,7 @@
    "engine": "gemini",
    "run": 3,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -4828,7 +4828,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -4958,7 +4958,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -5127,7 +5127,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -5291,7 +5291,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -5434,7 +5434,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -5551,7 +5551,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -5694,7 +5694,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -5832,7 +5832,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -5975,7 +5975,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -6118,7 +6118,7 @@
    "engine": "gemini",
    "run": 4,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -6282,7 +6282,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -6412,7 +6412,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -6568,7 +6568,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -6719,7 +6719,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -6888,7 +6888,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -7005,7 +7005,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -7117,7 +7117,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -7208,7 +7208,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -7364,7 +7364,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -7533,7 +7533,7 @@
    "engine": "gemini",
    "run": 5,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -7697,7 +7697,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -7827,7 +7827,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -8009,7 +8009,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -8199,7 +8199,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -8376,7 +8376,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -8506,7 +8506,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -8644,7 +8644,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -8795,7 +8795,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -8938,7 +8938,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -9094,7 +9094,7 @@
    "engine": "gemini",
    "run": 6,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -9289,7 +9289,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -9419,7 +9419,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -9601,7 +9601,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -9744,7 +9744,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -9900,7 +9900,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -10030,7 +10030,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -10147,7 +10147,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -10290,7 +10290,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -10420,7 +10420,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -10589,7 +10589,7 @@
    "engine": "gemini",
    "run": 7,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q01",
@@ -10784,7 +10784,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q02",
@@ -10966,7 +10966,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q03",
@@ -11122,7 +11122,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q04",
@@ -11286,7 +11286,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q05",
@@ -11468,7 +11468,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q06",
@@ -11611,7 +11611,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q07",
@@ -11736,7 +11736,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q08",
@@ -11892,7 +11892,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q09",
@@ -12048,7 +12048,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   },
   {
    "query_id": "q10",
@@ -12204,7 +12204,7 @@
    "engine": "gemini",
    "run": 8,
    "status": "skipped",
-   "skip_reason": "engine_failed"
+   "redacted": true
   }
  ],
  "notes": [
@@ -12212,7 +12212,8 @@
   "The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
   "A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.",
   "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
-  "This measures citations. It does not predict traffic, rankings or revenue."
+  "This measures citations. It does not predict traffic, rankings or revenue.",
+  "Gemini grounded results removed: the Gemini API terms (Grounding with Google Search) do not allow storing or republishing them. Counts per status are kept."
  ],
  "summary": {
   "overall": {

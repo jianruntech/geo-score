@@ -137,6 +137,11 @@ print(A.power(A.design_of('benchmark/prereg/round0'), [0, .05, .1, .15, .2, .25,
    2,560 answers planned. The plan's minimum for the primary test is two engines, so that minimum was not met. The
    reason is the free tier's quota; the engine was not chosen by its results, and the stopped-engine rule was fixed
    before collection and is applied unchanged.
+   Gemini's 70 answers are no longer in the published run files: the Gemini API terms for Grounding with Google
+   Search do not allow storing, republishing or analysing grounded results, so
+   [redact_gemini.py](redact_gemini.py) removed the answer text, links, search queries and everything computed from
+   them on 2026-10-14, keeping each request's question, status, usage and timing. The analysis output is unchanged by
+   this, since none of those answers was used.
 2. **`failed_engines` is empty in results-wave0.json** although Gemini contributed nothing. The script counts an
    engine as failed only when it answered at least 5 questions without citing anything (amendment item 5); Gemini was
    stopped, not citationless, so it has no used run in any category (`run_files.<category>.used` lists only `openai`).
