@@ -239,3 +239,9 @@ What round 0 does differently from the plan's text is in the plan's dated amendm
 the OpenAI answers through an OpenAI-compatible third-party endpoint, Gemini without a location, at most 18
 categories, and per-engine retries and reruns; with how round 0 reads sections 5 and 6, what was read before the
 questions, and the analysis code's commits. The power figure follows in a further amendment once the sample is drawn.
+
+## Wave 0: results
+
+Wave 0 ran on 2026-10-12 to 2026-10-14. Its data are in `runs/`, `readiness/` and `collection/`, the analysis output in
+[results-wave0.json](results-wave0.json), and the results, with every deviation from the plan and its reason, in
+[RESULTS-wave0.md](RESULTS-wave0.md) ([中文](RESULTS-wave0.zh-CN.md)).
