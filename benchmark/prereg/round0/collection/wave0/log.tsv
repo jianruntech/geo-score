@@ -1,0 +1,50 @@
+category	run_id	engine	model	status	stopped	answered	planned	errors	started	finished
+large-language-models	20261012T153929Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T15:39:29Z	2026-10-12T16:32:31Z
+large-language-models	20261012T153929Z	gemini	gemini-2.5-flash	measured	engine_failed	16	80	3	2026-10-12T15:39:29Z	2026-10-12T16:32:31Z
+large-language-models	20261012T163231Z	gemini	gemini-2.5-flash	measured	engine_failed	2	80	6	2026-10-12T16:32:31Z	2026-10-12T16:33:34Z
+vector-databases	20261012T163334Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T16:33:34Z	2026-10-12T17:25:24Z
+vector-databases	20261012T163334Z	gemini	gemini-2.5-flash	measured	engine_failed	1	80	5	2026-10-12T16:33:34Z	2026-10-12T17:25:24Z
+vector-databases	20261012T172524Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T17:25:24Z	2026-10-12T17:25:44Z
+cloud-infrastructure	20261012T172544Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T17:25:44Z	2026-10-12T18:09:50Z
+cloud-infrastructure	20261012T172544Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T17:25:44Z	2026-10-12T18:09:50Z
+cloud-infrastructure	20261012T180951Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T18:09:51Z	2026-10-12T18:10:10Z
+javascript-web-frameworks	20261012T181010Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T18:10:10Z	2026-10-12T18:42:59Z
+javascript-web-frameworks	20261012T181010Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T18:10:10Z	2026-10-12T18:42:59Z
+javascript-web-frameworks	20261012T184259Z	gemini	gemini-2.5-flash	measured	engine_failed	1	80	4	2026-10-12T18:42:59Z	2026-10-12T18:43:31Z
+ecommerce-platforms	20261012T184331Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T18:43:31Z	2026-10-12T19:22:39Z
+ecommerce-platforms	20261012T184331Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T18:43:31Z	2026-10-12T19:22:39Z
+ecommerce-platforms	20261012T192239Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T19:22:39Z	2026-10-12T19:22:59Z
+crm-software	20261012T192300Z	openai	gpt-5.6-luna	measured	engine_failed	59	80	3	2026-10-12T19:23:00Z	2026-10-12T20:06:04Z
+crm-software	20261012T192300Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T19:23:00Z	2026-10-12T20:06:04Z
+crm-software	20261012T200605Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-12T20:06:05Z	2026-10-12T20:06:24Z
+crm-software	20261012T200624Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-12T20:06:24Z	2026-10-12T20:43:27Z
+online-payment-providers	20261013T091344Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T09:13:44Z	2026-10-13T09:57:11Z
+online-payment-providers	20261013T091344Z	gemini	gemini-2.5-flash	measured	engine_failed	25	80	5	2026-10-13T09:13:44Z	2026-10-13T09:57:11Z
+online-payment-providers	20261013T095712Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T09:57:12Z	2026-10-13T09:57:31Z
+buy-now-pay-later	20261013T095731Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T09:57:31Z	2026-10-13T10:38:59Z
+buy-now-pay-later	20261013T095731Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T09:57:31Z	2026-10-13T10:38:59Z
+buy-now-pay-later	20261013T103859Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T10:38:59Z	2026-10-13T10:39:18Z
+online-course-platforms	20261013T103919Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T10:39:19Z	2026-10-13T11:17:03Z
+online-course-platforms	20261013T103919Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T10:39:19Z	2026-10-13T11:17:03Z
+online-course-platforms	20261013T111704Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T11:17:04Z	2026-10-13T11:17:23Z
+language-learning	20261013T111723Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T11:17:23Z	2026-10-13T11:50:42Z
+language-learning	20261013T111723Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T11:17:23Z	2026-10-13T11:50:42Z
+language-learning	20261013T115043Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T11:50:43Z	2026-10-13T11:51:02Z
+management-consulting	20261013T115102Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T11:51:02Z	2026-10-13T12:34:45Z
+management-consulting	20261013T115102Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T11:51:02Z	2026-10-13T12:34:45Z
+management-consulting	20261013T123446Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T12:34:46Z	2026-10-13T12:35:05Z
+project-management-software	20261013T123505Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-13T12:35:05Z	2026-10-13T13:14:17Z
+project-management-software	20261013T123505Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T12:35:05Z	2026-10-13T13:14:17Z
+project-management-software	20261013T131417Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-13T13:14:17Z	2026-10-13T13:14:36Z
+note-taking-apps	20261014T100141Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-14T10:01:41Z	2026-10-14T10:36:12Z
+note-taking-apps	20261014T100141Z	gemini	gemini-2.5-flash	measured	engine_failed	23	80	3	2026-10-14T10:01:41Z	2026-10-14T10:36:12Z
+note-taking-apps	20261014T103613Z	gemini	gemini-2.5-flash	measured	engine_failed	1	80	3	2026-10-14T10:36:13Z	2026-10-14T10:36:44Z
+3d-printers	20261014T103644Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-14T10:36:44Z	2026-10-14T11:21:12Z
+3d-printers	20261014T103644Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-14T10:36:44Z	2026-10-14T11:21:12Z
+3d-printers	20261014T112112Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-14T11:21:12Z	2026-10-14T11:21:31Z
+accounting-software	20261014T112132Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-14T11:21:32Z	2026-10-14T11:55:59Z
+accounting-software	20261014T112132Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-14T11:21:32Z	2026-10-14T11:55:59Z
+accounting-software	20261014T115600Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-14T11:56:00Z	2026-10-14T11:56:19Z
+online-marketplaces	20261014T115619Z	openai	gpt-5.6-luna	measured		80	80	0	2026-10-14T11:56:19Z	2026-10-14T12:30:45Z
+online-marketplaces	20261014T115619Z	gemini	gemini-2.5-flash	measured	engine_failed	0	80	3	2026-10-14T11:56:19Z	2026-10-14T12:30:45Z
+online-marketplaces	20261014T123046Z	gemini	gemini-2.5-flash	measured	engine_failed	1	80	5	2026-10-14T12:30:46Z	2026-10-14T12:31:28Z

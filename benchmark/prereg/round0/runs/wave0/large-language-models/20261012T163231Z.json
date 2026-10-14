@@ -1,0 +1,2534 @@
+{
+ "format": "geo-score/watch.v1",
+ "tool": "geo-score-watch/1.8.1",
+ "channel": "api",
+ "run_id": "20261012T163231Z",
+ "started_at": "2026-10-12T16:32:31Z",
+ "finished_at": "2026-10-12T16:33:34Z",
+ "interrupted": false,
+ "brand": {
+  "name": "01.AI",
+  "domains": [
+   "01.ai"
+  ],
+  "url_prefixes": [],
+  "aliases": []
+ },
+ "competitors": [
+  {
+   "name": "Mistral AI",
+   "domains": [
+    "mistral.ai"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Mistral"
+   ]
+  },
+  {
+   "name": "Naver",
+   "domains": [
+    "navercorp.com"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "HyperCLOVA X",
+    "HyperCLOVA"
+   ]
+  },
+  {
+   "name": "Sarvam AI",
+   "domains": [
+    "sarvam.ai"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Sarvam"
+   ]
+  },
+  {
+   "name": "Technology Innovation Institute",
+   "domains": [
+    "tii.ae"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "TII",
+    "Falcon LLM"
+   ]
+  },
+  {
+   "name": "xAI",
+   "domains": [
+    "x.ai"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Grok"
+   ]
+  }
+ ],
+ "country": "US",
+ "runs": 8,
+ "engines": [
+  {
+   "id": "gemini",
+   "provider": "gemini",
+   "model": "gemini-2.5-flash",
+   "status": "measured",
+   "stopped": "engine_failed",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h26m25."
+  }
+ ],
+ "queries": [
+  {
+   "query_id": "q01",
+   "query": "What are the best large language models for building a customer support chatbot?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q02",
+   "query": "Which AI model APIs are most reliable for production applications right now?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q03",
+   "query": "Which open-weight language models can a company run on its own servers?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q04",
+   "query": "Our support team spends hours answering the same customer emails and I want software that can draft the replies automatically. What should I look at?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q05",
+   "query": "I need to summarize hundreds of long contracts every week without sending them to a provider that trains on our data. What are my options?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q06",
+   "query": "What is the best AI model for a small law firm that wants help drafting documents?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q07",
+   "query": "Which AI model API should a two-person startup use to add a writing assistant to its app?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q08",
+   "query": "How much does it cost to use a large language model API for about a million requests a month?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q09",
+   "query": "Which AI chat assistants have a good free tier for everyday work?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q10",
+   "query": "What are the leading AI labs building frontier language models today?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  }
+ ],
+ "questions_hash": "280b1d3aed2293b42865118f6a54a6dc4be2b39586b93f69be1bd83b66cc9bf2",
+ "recorded": [
+  "spans",
+  "sources"
+ ],
+ "caps": {
+  "max_calls": 160,
+  "budget_usd": null
+ },
+ "ledger": {
+  "questions_asked": 8,
+  "api_requests": 2,
+  "http_attempts": 10,
+  "errors": 6,
+  "input_tokens": 44,
+  "output_tokens": 3187,
+  "search_calls": 7,
+  "cost_usd": 0.0,
+  "unpriced_answers": 2,
+  "cost_complete": false
+ },
+ "samples": [
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h27m21."
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h27m15."
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "mention_order": null,
+   "mention_share": null,
+   "competitors": {
+    "Mistral AI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true,
+     "mention_order": 1,
+     "mention_share": 0.0476
+    },
+    "Naver": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "Sarvam AI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "Technology Innovation Institute": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "xAI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    }
+   },
+   "citations": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+     "domain": "exoscale.com",
+     "title": "exoscale.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+     "domain": "inwizards.com",
+     "title": "inwizards.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA==",
+     "domain": "n-ix.com",
+     "title": "n-ix.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+     "domain": "originshq.com",
+     "title": "originshq.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+     "domain": "huggingface.co",
+     "title": "huggingface.co"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqSP_Vkyb-zx7CbYbs7wmyYtBJmUJcRlWjL3kE9vJHp4cHyisBvNt5Ke5CVhx3D9X2WDzvLs1gNrpdafIrz3OrRj5209KQM4C5dXeWfofd_5SI4zrk0gowuLwm8wfbZvCW3xuaFhXps0eOVcJfApS6X8j3uXDwnakGPCcOMTX3rvLsapxYKqHH",
+     "domain": "openai.com",
+     "title": "openai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWMtV6KBukb0AGATDPEkEMyjt88yYPxpCtBDZMEKIiG571XVSIVpQh0pUFHKLQg45yE5DgYpxgke2R0w8cx2rDCEbDv8HofmgEBtZKcgdGHJkdpW7fLV2u6AVVBQZm-7iPzHcNBF9VibnAQBSfRtaNdu_GBz5zsRXdDrlSM8WUJ2uF09Mx3j-vbwK4",
+     "domain": "aleph-alpha.com",
+     "title": "aleph-alpha.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+     "domain": "zammad.com",
+     "title": "zammad.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9",
+     "domain": "vdf.ai",
+     "title": "vdf.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXrkKEQ-vBHRgNJqGJ4bqYFtOyoaIutF0ghZeYD03ivzmNcR02y7sjzh80rf0XEALGHWIEJaH9-Sl_y3cVLChd19Q8UZnN3Idt-TjQEnAonAXjQv131ISlj_0cSugDaqmaOEhvL5zI4Rc=",
+     "domain": "alpacked.io",
+     "title": "alpacked.io"
+    }
+   ],
+   "search_queries": [
+    "open-weight language models for on-premise deployment",
+    "self-hostable LLMs for companies"
+   ],
+   "answer": "Companies looking to run open-weight language models on their own servers have several options available, allowing for greater control over data, privacy, and customization. These models are distinct from closed-source APIs as their trained parameters (weights) are published for download, enabling deployment on an organization's own infrastructure, such as on-premises data centers or private cloud environments.\n\nKey open-weight language models suitable for self-hosting include:\n*   **Qwen**\n*   **DeepSeek**\n*   **GLM**\n*   **Mistral** (including Mistral Small 3.1)\n*   **Gemma** (including Gemma 3 27B)\n*   **gpt-oss** (specifically gpt-oss-20b and gpt-oss-120b)\n*   **Llama** (such as Llama 4 Maverick)\n*   **Phi-4-mini**\n*   **Devstral**\n*   **Kolibri** (an English-German Mixture-of-Experts model)\n\nWhen considering these models, companies should carefully review their licenses. While many are \"open-weight\" and allow commercial use, they might not be \"open source\" in the traditional sense, and specific terms regarding usage, modification, and redistribution may apply. Apache 2.0 and MIT licenses are generally considered the most permissive. Models like Llama often use custom community licenses that may have restrictions, such as requiring a separate agreement for products exceeding a certain number of monthly active users.\n\nSelf-hosting these models offers advantages such as data control, compliance with regulatory requirements, and the ability to manage availability and updates according to internal operational needs. It also eliminates per-token API costs, which can lead to significant savings for high-volume usage. However, it requires upfront investment in hardware (typically GPUs) and internal staff for maintenance and management. Some models, like gpt-oss-120b, can run on a single 80 GB GPU, while others, such as DeepSeek V4, may require multi-GPU servers.",
+   "answer_truncated": false,
+   "target_cited": null,
+   "other_own_cited": null,
+   "sources_listed": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+     "domain": "exoscale.com",
+     "title": "exoscale.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+     "domain": "inwizards.com",
+     "title": "inwizards.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA==",
+     "domain": "n-ix.com",
+     "title": "n-ix.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+     "domain": "originshq.com",
+     "title": "originshq.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+     "domain": "huggingface.co",
+     "title": "huggingface.co"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqSP_Vkyb-zx7CbYbs7wmyYtBJmUJcRlWjL3kE9vJHp4cHyisBvNt5Ke5CVhx3D9X2WDzvLs1gNrpdafIrz3OrRj5209KQM4C5dXeWfofd_5SI4zrk0gowuLwm8wfbZvCW3xuaFhXps0eOVcJfApS6X8j3uXDwnakGPCcOMTX3rvLsapxYKqHH",
+     "domain": "openai.com",
+     "title": "openai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWMtV6KBukb0AGATDPEkEMyjt88yYPxpCtBDZMEKIiG571XVSIVpQh0pUFHKLQg45yE5DgYpxgke2R0w8cx2rDCEbDv8HofmgEBtZKcgdGHJkdpW7fLV2u6AVVBQZm-7iPzHcNBF9VibnAQBSfRtaNdu_GBz5zsRXdDrlSM8WUJ2uF09Mx3j-vbwK4",
+     "domain": "aleph-alpha.com",
+     "title": "aleph-alpha.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+     "domain": "zammad.com",
+     "title": "zammad.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9",
+     "domain": "vdf.ai",
+     "title": "vdf.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXrkKEQ-vBHRgNJqGJ4bqYFtOyoaIutF0ghZeYD03ivzmNcR02y7sjzh80rf0XEALGHWIEJaH9-Sl_y3cVLChd19Q8UZnN3Idt-TjQEnAonAXjQv131ISlj_0cSugDaqmaOEhvL5zI4Rc=",
+     "domain": "alpacked.io",
+     "title": "alpacked.io"
+    }
+   ],
+   "sources_used": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+     "domain": "exoscale.com",
+     "title": "exoscale.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+     "domain": "inwizards.com",
+     "title": "inwizards.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA==",
+     "domain": "n-ix.com",
+     "title": "n-ix.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+     "domain": "originshq.com",
+     "title": "originshq.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+     "domain": "huggingface.co",
+     "title": "huggingface.co"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqSP_Vkyb-zx7CbYbs7wmyYtBJmUJcRlWjL3kE9vJHp4cHyisBvNt5Ke5CVhx3D9X2WDzvLs1gNrpdafIrz3OrRj5209KQM4C5dXeWfofd_5SI4zrk0gowuLwm8wfbZvCW3xuaFhXps0eOVcJfApS6X8j3uXDwnakGPCcOMTX3rvLsapxYKqHH",
+     "domain": "openai.com",
+     "title": "openai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWMtV6KBukb0AGATDPEkEMyjt88yYPxpCtBDZMEKIiG571XVSIVpQh0pUFHKLQg45yE5DgYpxgke2R0w8cx2rDCEbDv8HofmgEBtZKcgdGHJkdpW7fLV2u6AVVBQZm-7iPzHcNBF9VibnAQBSfRtaNdu_GBz5zsRXdDrlSM8WUJ2uF09Mx3j-vbwK4",
+     "domain": "aleph-alpha.com",
+     "title": "aleph-alpha.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+     "domain": "zammad.com",
+     "title": "zammad.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9",
+     "domain": "vdf.ai",
+     "title": "vdf.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXrkKEQ-vBHRgNJqGJ4bqYFtOyoaIutF0ghZeYD03ivzmNcR02y7sjzh80rf0XEALGHWIEJaH9-Sl_y3cVLChd19Q8UZnN3Idt-TjQEnAonAXjQv131ISlj_0cSugDaqmaOEhvL5zI4Rc=",
+     "domain": "alpacked.io",
+     "title": "alpacked.io"
+    }
+   ],
+   "spans": [
+    {
+     "start": 0,
+     "end": 172,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 174,
+     "end": 413,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 416,
+     "end": 495,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 496,
+     "end": 512,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 513,
+     "end": 524,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 525,
+     "end": 570,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 571,
+     "end": 608,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 609,
+     "end": 668,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqSP_Vkyb-zx7CbYbs7wmyYtBJmUJcRlWjL3kE9vJHp4cHyisBvNt5Ke5CVhx3D9X2WDzvLs1gNrpdafIrz3OrRj5209KQM4C5dXeWfofd_5SI4zrk0gowuLwm8wfbZvCW3xuaFhXps0eOVcJfApS6X8j3uXDwnakGPCcOMTX3rvLsapxYKqHH"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 669,
+     "end": 709,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 710,
+     "end": 728,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 729,
+     "end": 745,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 746,
+     "end": 806,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHWMtV6KBukb0AGATDPEkEMyjt88yYPxpCtBDZMEKIiG571XVSIVpQh0pUFHKLQg45yE5DgYpxgke2R0w8cx2rDCEbDv8HofmgEBtZKcgdGHJkdpW7fLV2u6AVVBQZm-7iPzHcNBF9VibnAQBSfRtaNdu_GBz5zsRXdDrlSM8WUJ2uF09Mx3j-vbwK4"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 889,
+     "end": 1080,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1082,
+     "end": 1154,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGqSP_Vkyb-zx7CbYbs7wmyYtBJmUJcRlWjL3kE9vJHp4cHyisBvNt5Ke5CVhx3D9X2WDzvLs1gNrpdafIrz3OrRj5209KQM4C5dXeWfofd_5SI4zrk0gowuLwm8wfbZvCW3xuaFhXps0eOVcJfApS6X8j3uXDwnakGPCcOMTX3rvLsapxYKqHH",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1156,
+     "end": 1340,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkxUz_lQJ9wpsFyEWW4hLG3WmpbtMbs1h4T3LafGVPf3UToM2KFpxYFxTiPob3b10EYT1mAePex0n7BudG3ktHpy8QhknHAtZR9MHg3GBzgN5QmFDOEhhA17vXNOaH7t2Aw9ppcwrt8oeWF0bUZU8rokXYUk8StK5_mJaxS0z9"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1343,
+     "end": 1540,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGd2gErla1iiwrkbXUiBweuxrhQk3NlMahIVLLURcdbUplYPvLZL7OcK6ACHlf4w5rja75N-sHNm4x1mGHWTG_FVPVWgX8GY64EaUYSd8dpTe5s75tN0wTK8ENjVInrrjiUk7GO7K1lWg==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1542,
+     "end": 1641,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXrkKEQ-vBHRgNJqGJ4bqYFtOyoaIutF0ghZeYD03ivzmNcR02y7sjzh80rf0XEALGHWIEJaH9-Sl_y3cVLChd19Q8UZnN3Idt-TjQEnAonAXjQv131ISlj_0cSugDaqmaOEhvL5zI4Rc=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGxWFb_MyhXykt0c07mFWgs4kHjdpwOoobj8j5my9FmA9HDspUkf1Bpk01lWjCcQLkRvZvmfTiZCL0i5HDAXzxoqjTdZB50iZpreShGUYakY7GxJ_xw7RfJR5-Ck6qg4twhd5jNwA=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1643,
+     "end": 1761,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH8fuOs_tngKgrkF4b7SaWV1C_uyQRgkwenlPrMXJhTBRYqam95-DcnwzUR4wTGPDiTgyZiQIxjuwfohDsqniuIp-_9RiS530V-XnP2VuAvI17ry3QMO30smEGEzvHcJQAbXgj5AohnmlYdQrACzSh58Gt8pQ==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHsg_HcnucP48I2jcKflD98vbj6zi5hA-yrsOn5sA17BPSuqKoZuj8heCxS6WXR2aOpO26ivPwBv9R0pp32RkufCfjxaU2BSQ8Ilob2UV8W79F30m6LOFcGACVjFCaMV1k4SmOghU0=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXrkKEQ-vBHRgNJqGJ4bqYFtOyoaIutF0ghZeYD03ivzmNcR02y7sjzh80rf0XEALGHWIEJaH9-Sl_y3cVLChd19Q8UZnN3Idt-TjQEnAonAXjQv131ISlj_0cSugDaqmaOEhvL5zI4Rc="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1763,
+     "end": 1890,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGETWiQPCQet7VsEwQ1UX-JpupPgeXZjrOFIhF82Z4_Ym0wzcwO0JHXrmL_aDfXxDHe6gJ35z3k0utucAVHrj8-WqCwVcGX1tx_sSME9AxcBo4rkPGADojU0foS6R-nQyrh-52C_-4dw1eWP112-tCpsToWKyOMoWcx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFjuWzYL82XszC1jrm_5H7_8H1-fXo4QHo1x3EKUmridy0fAe8sucvT08W7m76RxBk82T6w0f91ywKQkHapOwKm8_x5ql9aOyO7B4nWWmjbLMSNTUW0JhznKnxbtJm72FSfrukK0O_i1kVrf3hrHffzyJbP8Zb_bl8v78Zj46XU5D-ka2Szjtq3"
+     ],
+     "kind": "segment"
+    }
+   ],
+   "supported_share": {
+    "chars": 0.0,
+    "sentences": 0.0,
+    "weighted": 0.0
+   },
+   "usage": {
+    "input_tokens": 16,
+    "output_tokens": 580,
+    "search_calls": 2,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 7.1
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h27m1.9"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 1,
+   "status": "ok",
+   "cited": false,
+   "rank": null,
+   "quoted_url": null,
+   "mentioned": false,
+   "mention_order": null,
+   "mention_share": null,
+   "competitors": {
+    "Mistral AI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": true,
+     "mention_order": 1,
+     "mention_share": 0.0256
+    },
+    "Naver": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "Sarvam AI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "Technology Innovation Institute": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    },
+    "xAI": {
+     "cited": false,
+     "rank": null,
+     "mentioned": false,
+     "mention_order": null,
+     "mention_share": null
+    }
+   },
+   "citations": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQnd2gMvFjPZopjaIZ9HW45rZfmtj6OqFP4k2MC3JUIHNUj-PyPi0ttaQliLUXGiBa-Mv4FYYnzXeb0n2oYcBU9cSzayplxduWPxMQC2J9VBjsefmATrIKf5c=",
+     "domain": "flowgenietech.com",
+     "title": "flowgenietech.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHLwZZIDvk8PHn6FDLVv8s8oJx_HNcHzrryOlq7cjHXThAVFG8gzxq6iB6zrGexa5XssN6c7g9nUwGBQVGdwWh1HDaE4pKZkDsqC384lfwxTW977M_AquuzqrlmCGeEpfcGUrOcR3DC__p6Tw==",
+     "domain": "consilio.com",
+     "title": "consilio.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEb7czKXAu-380kfdyKCXUtJPLyVF_rkxLec74IEviqSqn2Jb_BofJvNbHJSqi4fJjGhIl49t9Gu3o-1ENdiD45U0rRfhr7jIFENdxvOS8Q-S3NA9AdUlEHwYLqsDoB8x4Q9idzC1V8BaPGbJAo-dZDyB0fczWo",
+     "domain": "eldoc.online",
+     "title": "eldoc.online"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnnQs65wwdLJTmYJK_77FOcAxZFAGeO2fDWPgUHLsxmdLmXEc-ADAPkiIllULzo8iu2D_htCvN-oewVYkvFe0YFSWW9UyDKHpLnLkurpjFoT7zdfknHWpcGw7ozim6GYCKWxya8QxcKc6MhNMP2Ok5pZnUvjYEiFN1Xtk=",
+     "domain": "sourceforge.net",
+     "title": "sourceforge.net"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4=",
+     "domain": "premai.io",
+     "title": "premai.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxb58ZmZgh70sHu6m4oGs2M0pfAUbAELl2nTLbQakkjv8aiB1gcoNsTtn9u1PDe_pOqEM3R9OynwH0TJhNzUwNOEafhJdB9GtiZLkBFkCZf9VazEP21VsUmFLTNycenDjOVvb1YMZOkyhmE6Ck3AZdW1Ks",
+     "domain": "projectpro.io",
+     "title": "projectpro.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGf3O7hf2wa56OvBD5w3eWcw2Gi-yhVAaoW-oVcUoVIbedGQAXuHFWjBKPZB7_54ANW66Kd4-7LWmqSldwCzxJyJuRcu-1bEaNYk7_dXTzMA3lZVNPx7fQ6g8PNMxg0p4TsZZT4dqxWS_PL2ro7LtU_TiyvkFkDnhdtAOM3lpJZ9ZMeTgl_hLvk-d7kdOsRu0dqVBaIw20cPQ==",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_I7tWilmh6x_xLjJtDbHVFywWFZMN7oLwExHZJktO7XIMa-UCnD6gr_e1C4tudK9CXt3gokAR87R6zi8ymRfgdNqcProjYascMvKxooKBXm7INYzWS1WL0MZV34KF-UrCWTpoYTXH",
+     "domain": "github.com",
+     "title": "github.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp",
+     "domain": "parseur.com",
+     "title": "parseur.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2I8PYhEpfEq40l8yci69U0Mo8iueUcbaHE9w_i4OqXOGgGVK0HyuJRUS5V_fmUQCkS7MMpj6Nqf9VNoNtFh7sQ1zwyl0PgtSmZj2rPckXKEpOjcgpX37JWkkMm3C40y7N0lVOzuGf9ih5g5oUg6eSFrFPW0-fn0yS9XHZGvR_KcpvRH5GeesaH5kOji0G7D0I6UtYWdo=",
+     "domain": "questa-ai.com",
+     "title": "questa-ai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ",
+     "domain": "ebrevia.com",
+     "title": "ebrevia.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhdq7lw9PxHZjScDcVCws004JvEm6xQBgk0kKmTm-DhK_LLpSxeS4Fvy8flDXBXE17ebk099u2Vl2qDygic-Zay6pMm3m10D2-PUYO9FIll48J_WqPJ214bgxeIQeDWf0l3MHePrlwXZgrO12IJ8k=",
+     "domain": "justee.ai",
+     "title": "justee.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM=",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+     "domain": "kanerika.com",
+     "title": "kanerika.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1zZr5y0-Mh-e_IDbT0PvaOemvMerD03VTilVyKYGXQSy8UEh0dn23w6AMqBULRlSbFEfXBVjXPD_RlkhwvpO_JS2bbLHKvEkBJa2TvJwMH0Iv80rgC7bYxHCkbZhhjRg_3LY8aoJBErKHHRh2M_7V",
+     "domain": "casemark.com",
+     "title": "casemark.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHd-EOAIBlwoYu6BhqKgw8StnM5EFONs-Gr87oYA27YiwL2wx217GrKmfJ1nMEFKgdtG4i1OA2iGCz2ut9jFvMA61Wg3IuzZHaiYad1XRrJi7Ghri5x3uZua5LIC2VntVnVMhvQwzXy82ULekUaaRI28YezS0iWROjYptwZp-K3kZiSd4zYYobMGmJR_rptB-8Bp3k=",
+     "domain": "google.com",
+     "title": "google.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXnyBWFGR1ekhWF0V6Ris3ffI2UISjbSRj8C2YMaXYHBGaZm_w-PbVf4rOazD-gJDNPXm2vKvpb0rKfbiz40LqZi8mfpWkSweD-q0gzbBt9MbI--VfM2c2id9JdSJWo3H6xlvbipBq_ijnvbhE36GZnA==",
+     "domain": "atlasworkspace.ai",
+     "title": "atlasworkspace.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQksjqVYuNau60pA4duouw7y0mxgPl003JV1SDGLQEwDKG7944jgwMJKsrY8fLNh-2WFafQgTLbSBSd_cB1l7ekGXkftmTPW9j_2lW8lBPlZ1mWaBiPT21JwcTrG3CfYiO7RBktjKIKEFXgch32JYYAzHbdR_qlwH_",
+     "domain": "contractzy.io",
+     "title": "contractzy.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI_K6f8rPeAlymPKtCH8Bxf_NvVbEXIhVSfH_w4JGyisAhSOD0qRaMk9ASUfuMWi-6Y85eF-NhZNn8vhv86CLuvOlrxymAv0k-gJAyiW4jA14vjhVnH2o5mwazdvbqKiNqvwHZBkWHlc6Ut8dFf5sovX335uc9pruzUgDX",
+     "domain": "apps365.com",
+     "title": "apps365.com"
+    }
+   ],
+   "search_queries": [
+    "on-premise contract summarization software",
+    "private cloud legal document summarization",
+    "enterprise AI summarization data privacy no training",
+    "open-source legal text summarization models deploy on-premise",
+    "contract summarization tools without data training"
+   ],
+   "answer": "Summarizing hundreds of long contracts weekly without compromising data privacy, particularly by preventing providers from training on your data, requires careful selection of tools and deployment strategies. Here are your primary options:\n\n### 1. On-Premise or Private Cloud Deployment\n\nThe most secure approach to ensure your data is not used for training is to keep it entirely within your control. This can be achieved through on-premise deployments or private cloud environments specifically configured for your organization.\n\n*   **Dedicated Private Cloud Solutions:** Some providers, like **FlowGenie** and **Consilio Aurora AI Summarize**, offer private legal AI solutions that operate within your firm's own cloud infrastructure (e.g., AWS account for FlowGenie). This ensures that documents and sensitive information never leave your controlled environment. **elDoc** also provides a complete Private AI environment for legal teams, where documents and AI models are controlled within the firm's infrastructure.\n*   **On-Premise Software and LLMs:** You can deploy contract summarization software or open-source Large Language Models (LLMs) directly on your own servers.\n    *   **Lexzur** is a legal practice management solution available on-server (on-premises), which may include contract management features.\n    *   **Prem AI** offers on-premise deployment and Virtual Private Cloud (VPC) installations with a \"zero-retention architecture,\" meaning your prompts exist only in encrypted memory during inference and are not logged, stored, or used for training.\n    *   **Open-source LLMs** such as **LLaMA 2** and **Falcon** are recognized for their suitability for on-premises deployment, allowing organizations to create summaries for sensitive data without relying on external servers.\n    *   **OnPrem.LLM** is an open-source, privacy-focused toolkit designed for applying generative AI to document workflows, with local models as the default.\n    *   Tools like **\"legal-summarizer\"** on GitHub provide an open-source abstractive text summarizer leveraging models like T5-Small, which can be deployed using Flask and Docker within your infrastructure.\n\n### 2. Enterprise Solutions with Strict No-Training Policies\n\nIf an on-premise solution isn't feasible, seek out cloud-based providers that explicitly guarantee they will not use your data for training their models and have robust security measures. However, it's crucial to scrutinize these claims beyond marketing statements.\n\n*   **Vendor Due Diligence:** When evaluating vendors, go beyond simply asking \"Do you train on our data?\" and inquire about:\n    *   **Subprocessors:** Identify all third-party AI subprocessors involved.\n    *   **Data Retention:** Understand exact data retention periods (e.g., quoted in days).\n    *   **Anonymized Data:** Clarify any \"anonymized data\" carve-outs and what they truly entail, as legal definitions of anonymization vary.\n    *   **Certifications:** Look for SOC 2 Type II certification, HIPAA compliance (if applicable), and GDPR adherence.\n    *   **Encryption:** Ensure data is encrypted both in transit and at rest.\n*   **Specific Providers (with caution):**\n    *   **Claude (Anthropic)** offers \"no training by default\" and enterprise transparency, with enterprise plans including SOC 2 Type II certification, SSO, and admin controls.\n    *   **Mistral Chat** enterprise versions exclude training.\n    *   **DeepSeek** requires explicit opt-in for training.\n    *   **Parseur** explicitly states it never reuses customer data to train its AI models and never sells it, is EU-hosted, GDPR-native, and allows you to set document retention windows.\n    *   **eBrevia Contract Analyzer** is built for legal teams and emphasizes enterprise-grade security, encryption, and SOC 2 Type II certification, specifically designed for sensitive legal and financial data.\n    *   Other Contract Lifecycle Management (CLM) platforms like **Inhubber**, **Avokaado**, and **Volody CLM** offer AI-powered summarization and contract management features, but you would need to confirm their specific data training policies.\n\n### Key Considerations for Implementation:\n\n*   **Human Oversight:** Regardless of the AI tool, legal professionals must review AI-generated summaries, verify their accuracy, and apply professional judgment, as AI is a tool to support, not replace, legal expertise.\n*   **Customization:** Many AI summarizers allow you to tailor the output to your specific needs, such as extracting particular clauses or focusing on certain aspects like obligations, deadlines, and financial terms.\n*   **Document Compatibility:** Ensure the chosen solution can handle various document formats, including PDFs (scanned and digital), Word files, and other relevant legal document types.\n*   **Integration:** Consider how the summarization tool integrates with your existing workflows and legal tech stack, such as contract lifecycle management systems or document repositories.\n*   **Data Anonymization Techniques:** To further enhance privacy, you might explore AI data anonymization techniques. Tools like **Questa AI** function as a privacy layer between your enterprise data and AI models, helping to process sensitive information without sending it unfiltered to third-party models.",
+   "answer_truncated": false,
+   "target_cited": null,
+   "other_own_cited": null,
+   "sources_listed": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQnd2gMvFjPZopjaIZ9HW45rZfmtj6OqFP4k2MC3JUIHNUj-PyPi0ttaQliLUXGiBa-Mv4FYYnzXeb0n2oYcBU9cSzayplxduWPxMQC2J9VBjsefmATrIKf5c=",
+     "domain": "flowgenietech.com",
+     "title": "flowgenietech.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHLwZZIDvk8PHn6FDLVv8s8oJx_HNcHzrryOlq7cjHXThAVFG8gzxq6iB6zrGexa5XssN6c7g9nUwGBQVGdwWh1HDaE4pKZkDsqC384lfwxTW977M_AquuzqrlmCGeEpfcGUrOcR3DC__p6Tw==",
+     "domain": "consilio.com",
+     "title": "consilio.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEb7czKXAu-380kfdyKCXUtJPLyVF_rkxLec74IEviqSqn2Jb_BofJvNbHJSqi4fJjGhIl49t9Gu3o-1ENdiD45U0rRfhr7jIFENdxvOS8Q-S3NA9AdUlEHwYLqsDoB8x4Q9idzC1V8BaPGbJAo-dZDyB0fczWo",
+     "domain": "eldoc.online",
+     "title": "eldoc.online"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnnQs65wwdLJTmYJK_77FOcAxZFAGeO2fDWPgUHLsxmdLmXEc-ADAPkiIllULzo8iu2D_htCvN-oewVYkvFe0YFSWW9UyDKHpLnLkurpjFoT7zdfknHWpcGw7ozim6GYCKWxya8QxcKc6MhNMP2Ok5pZnUvjYEiFN1Xtk=",
+     "domain": "sourceforge.net",
+     "title": "sourceforge.net"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4=",
+     "domain": "premai.io",
+     "title": "premai.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxb58ZmZgh70sHu6m4oGs2M0pfAUbAELl2nTLbQakkjv8aiB1gcoNsTtn9u1PDe_pOqEM3R9OynwH0TJhNzUwNOEafhJdB9GtiZLkBFkCZf9VazEP21VsUmFLTNycenDjOVvb1YMZOkyhmE6Ck3AZdW1Ks",
+     "domain": "projectpro.io",
+     "title": "projectpro.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGf3O7hf2wa56OvBD5w3eWcw2Gi-yhVAaoW-oVcUoVIbedGQAXuHFWjBKPZB7_54ANW66Kd4-7LWmqSldwCzxJyJuRcu-1bEaNYk7_dXTzMA3lZVNPx7fQ6g8PNMxg0p4TsZZT4dqxWS_PL2ro7LtU_TiyvkFkDnhdtAOM3lpJZ9ZMeTgl_hLvk-d7kdOsRu0dqVBaIw20cPQ==",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_I7tWilmh6x_xLjJtDbHVFywWFZMN7oLwExHZJktO7XIMa-UCnD6gr_e1C4tudK9CXt3gokAR87R6zi8ymRfgdNqcProjYascMvKxooKBXm7INYzWS1WL0MZV34KF-UrCWTpoYTXH",
+     "domain": "github.com",
+     "title": "github.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp",
+     "domain": "parseur.com",
+     "title": "parseur.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2I8PYhEpfEq40l8yci69U0Mo8iueUcbaHE9w_i4OqXOGgGVK0HyuJRUS5V_fmUQCkS7MMpj6Nqf9VNoNtFh7sQ1zwyl0PgtSmZj2rPckXKEpOjcgpX37JWkkMm3C40y7N0lVOzuGf9ih5g5oUg6eSFrFPW0-fn0yS9XHZGvR_KcpvRH5GeesaH5kOji0G7D0I6UtYWdo=",
+     "domain": "questa-ai.com",
+     "title": "questa-ai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ",
+     "domain": "ebrevia.com",
+     "title": "ebrevia.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhdq7lw9PxHZjScDcVCws004JvEm6xQBgk0kKmTm-DhK_LLpSxeS4Fvy8flDXBXE17ebk099u2Vl2qDygic-Zay6pMm3m10D2-PUYO9FIll48J_WqPJ214bgxeIQeDWf0l3MHePrlwXZgrO12IJ8k=",
+     "domain": "justee.ai",
+     "title": "justee.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM=",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+     "domain": "kanerika.com",
+     "title": "kanerika.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1zZr5y0-Mh-e_IDbT0PvaOemvMerD03VTilVyKYGXQSy8UEh0dn23w6AMqBULRlSbFEfXBVjXPD_RlkhwvpO_JS2bbLHKvEkBJa2TvJwMH0Iv80rgC7bYxHCkbZhhjRg_3LY8aoJBErKHHRh2M_7V",
+     "domain": "casemark.com",
+     "title": "casemark.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHd-EOAIBlwoYu6BhqKgw8StnM5EFONs-Gr87oYA27YiwL2wx217GrKmfJ1nMEFKgdtG4i1OA2iGCz2ut9jFvMA61Wg3IuzZHaiYad1XRrJi7Ghri5x3uZua5LIC2VntVnVMhvQwzXy82ULekUaaRI28YezS0iWROjYptwZp-K3kZiSd4zYYobMGmJR_rptB-8Bp3k=",
+     "domain": "google.com",
+     "title": "google.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXnyBWFGR1ekhWF0V6Ris3ffI2UISjbSRj8C2YMaXYHBGaZm_w-PbVf4rOazD-gJDNPXm2vKvpb0rKfbiz40LqZi8mfpWkSweD-q0gzbBt9MbI--VfM2c2id9JdSJWo3H6xlvbipBq_ijnvbhE36GZnA==",
+     "domain": "atlasworkspace.ai",
+     "title": "atlasworkspace.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQksjqVYuNau60pA4duouw7y0mxgPl003JV1SDGLQEwDKG7944jgwMJKsrY8fLNh-2WFafQgTLbSBSd_cB1l7ekGXkftmTPW9j_2lW8lBPlZ1mWaBiPT21JwcTrG3CfYiO7RBktjKIKEFXgch32JYYAzHbdR_qlwH_",
+     "domain": "contractzy.io",
+     "title": "contractzy.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI_K6f8rPeAlymPKtCH8Bxf_NvVbEXIhVSfH_w4JGyisAhSOD0qRaMk9ASUfuMWi-6Y85eF-NhZNn8vhv86CLuvOlrxymAv0k-gJAyiW4jA14vjhVnH2o5mwazdvbqKiNqvwHZBkWHlc6Ut8dFf5sovX335uc9pruzUgDX",
+     "domain": "apps365.com",
+     "title": "apps365.com"
+    }
+   ],
+   "sources_used": [
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQnd2gMvFjPZopjaIZ9HW45rZfmtj6OqFP4k2MC3JUIHNUj-PyPi0ttaQliLUXGiBa-Mv4FYYnzXeb0n2oYcBU9cSzayplxduWPxMQC2J9VBjsefmATrIKf5c=",
+     "domain": "flowgenietech.com",
+     "title": "flowgenietech.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHLwZZIDvk8PHn6FDLVv8s8oJx_HNcHzrryOlq7cjHXThAVFG8gzxq6iB6zrGexa5XssN6c7g9nUwGBQVGdwWh1HDaE4pKZkDsqC384lfwxTW977M_AquuzqrlmCGeEpfcGUrOcR3DC__p6Tw==",
+     "domain": "consilio.com",
+     "title": "consilio.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEb7czKXAu-380kfdyKCXUtJPLyVF_rkxLec74IEviqSqn2Jb_BofJvNbHJSqi4fJjGhIl49t9Gu3o-1ENdiD45U0rRfhr7jIFENdxvOS8Q-S3NA9AdUlEHwYLqsDoB8x4Q9idzC1V8BaPGbJAo-dZDyB0fczWo",
+     "domain": "eldoc.online",
+     "title": "eldoc.online"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnnQs65wwdLJTmYJK_77FOcAxZFAGeO2fDWPgUHLsxmdLmXEc-ADAPkiIllULzo8iu2D_htCvN-oewVYkvFe0YFSWW9UyDKHpLnLkurpjFoT7zdfknHWpcGw7ozim6GYCKWxya8QxcKc6MhNMP2Ok5pZnUvjYEiFN1Xtk=",
+     "domain": "sourceforge.net",
+     "title": "sourceforge.net"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4=",
+     "domain": "premai.io",
+     "title": "premai.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxb58ZmZgh70sHu6m4oGs2M0pfAUbAELl2nTLbQakkjv8aiB1gcoNsTtn9u1PDe_pOqEM3R9OynwH0TJhNzUwNOEafhJdB9GtiZLkBFkCZf9VazEP21VsUmFLTNycenDjOVvb1YMZOkyhmE6Ck3AZdW1Ks",
+     "domain": "projectpro.io",
+     "title": "projectpro.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGf3O7hf2wa56OvBD5w3eWcw2Gi-yhVAaoW-oVcUoVIbedGQAXuHFWjBKPZB7_54ANW66Kd4-7LWmqSldwCzxJyJuRcu-1bEaNYk7_dXTzMA3lZVNPx7fQ6g8PNMxg0p4TsZZT4dqxWS_PL2ro7LtU_TiyvkFkDnhdtAOM3lpJZ9ZMeTgl_hLvk-d7kdOsRu0dqVBaIw20cPQ==",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_I7tWilmh6x_xLjJtDbHVFywWFZMN7oLwExHZJktO7XIMa-UCnD6gr_e1C4tudK9CXt3gokAR87R6zi8ymRfgdNqcProjYascMvKxooKBXm7INYzWS1WL0MZV34KF-UrCWTpoYTXH",
+     "domain": "github.com",
+     "title": "github.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp",
+     "domain": "parseur.com",
+     "title": "parseur.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2I8PYhEpfEq40l8yci69U0Mo8iueUcbaHE9w_i4OqXOGgGVK0HyuJRUS5V_fmUQCkS7MMpj6Nqf9VNoNtFh7sQ1zwyl0PgtSmZj2rPckXKEpOjcgpX37JWkkMm3C40y7N0lVOzuGf9ih5g5oUg6eSFrFPW0-fn0yS9XHZGvR_KcpvRH5GeesaH5kOji0G7D0I6UtYWdo=",
+     "domain": "questa-ai.com",
+     "title": "questa-ai.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ",
+     "domain": "ebrevia.com",
+     "title": "ebrevia.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhdq7lw9PxHZjScDcVCws004JvEm6xQBgk0kKmTm-DhK_LLpSxeS4Fvy8flDXBXE17ebk099u2Vl2qDygic-Zay6pMm3m10D2-PUYO9FIll48J_WqPJ214bgxeIQeDWf0l3MHePrlwXZgrO12IJ8k=",
+     "domain": "justee.ai",
+     "title": "justee.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM=",
+     "domain": "medium.com",
+     "title": "medium.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+     "domain": "kanerika.com",
+     "title": "kanerika.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1zZr5y0-Mh-e_IDbT0PvaOemvMerD03VTilVyKYGXQSy8UEh0dn23w6AMqBULRlSbFEfXBVjXPD_RlkhwvpO_JS2bbLHKvEkBJa2TvJwMH0Iv80rgC7bYxHCkbZhhjRg_3LY8aoJBErKHHRh2M_7V",
+     "domain": "casemark.com",
+     "title": "casemark.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHd-EOAIBlwoYu6BhqKgw8StnM5EFONs-Gr87oYA27YiwL2wx217GrKmfJ1nMEFKgdtG4i1OA2iGCz2ut9jFvMA61Wg3IuzZHaiYad1XRrJi7Ghri5x3uZua5LIC2VntVnVMhvQwzXy82ULekUaaRI28YezS0iWROjYptwZp-K3kZiSd4zYYobMGmJR_rptB-8Bp3k=",
+     "domain": "google.com",
+     "title": "google.com"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXnyBWFGR1ekhWF0V6Ris3ffI2UISjbSRj8C2YMaXYHBGaZm_w-PbVf4rOazD-gJDNPXm2vKvpb0rKfbiz40LqZi8mfpWkSweD-q0gzbBt9MbI--VfM2c2id9JdSJWo3H6xlvbipBq_ijnvbhE36GZnA==",
+     "domain": "atlasworkspace.ai",
+     "title": "atlasworkspace.ai"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQksjqVYuNau60pA4duouw7y0mxgPl003JV1SDGLQEwDKG7944jgwMJKsrY8fLNh-2WFafQgTLbSBSd_cB1l7ekGXkftmTPW9j_2lW8lBPlZ1mWaBiPT21JwcTrG3CfYiO7RBktjKIKEFXgch32JYYAzHbdR_qlwH_",
+     "domain": "contractzy.io",
+     "title": "contractzy.io"
+    },
+    {
+     "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI_K6f8rPeAlymPKtCH8Bxf_NvVbEXIhVSfH_w4JGyisAhSOD0qRaMk9ASUfuMWi-6Y85eF-NhZNn8vhv86CLuvOlrxymAv0k-gJAyiW4jA14vjhVnH2o5mwazdvbqKiNqvwHZBkWHlc6Ut8dFf5sovX335uc9pruzUgDX",
+     "domain": "apps365.com",
+     "title": "apps365.com"
+    }
+   ],
+   "spans": [
+    {
+     "start": 773,
+     "end": 867,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQnd2gMvFjPZopjaIZ9HW45rZfmtj6OqFP4k2MC3JUIHNUj-PyPi0ttaQliLUXGiBa-Mv4FYYnzXeb0n2oYcBU9cSzayplxduWPxMQC2J9VBjsefmATrIKf5c=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHLwZZIDvk8PHn6FDLVv8s8oJx_HNcHzrryOlq7cjHXThAVFG8gzxq6iB6zrGexa5XssN6c7g9nUwGBQVGdwWh1HDaE4pKZkDsqC384lfwxTW977M_AquuzqrlmCGeEpfcGUrOcR3DC__p6Tw=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 868,
+     "end": 1021,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEb7czKXAu-380kfdyKCXUtJPLyVF_rkxLec74IEviqSqn2Jb_BofJvNbHJSqi4fJjGhIl49t9Gu3o-1ENdiD45U0rRfhr7jIFENdxvOS8Q-S3NA9AdUlEHwYLqsDoB8x4Q9idzC1V8BaPGbJAo-dZDyB0fczWo"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1185,
+     "end": 1322,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnnQs65wwdLJTmYJK_77FOcAxZFAGeO2fDWPgUHLsxmdLmXEc-ADAPkiIllULzo8iu2D_htCvN-oewVYkvFe0YFSWW9UyDKHpLnLkurpjFoT7zdfknHWpcGw7ozim6GYCKWxya8QxcKc6MhNMP2Ok5pZnUvjYEiFN1Xtk="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1327,
+     "end": 1574,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1579,
+     "end": 1802,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHxb58ZmZgh70sHu6m4oGs2M0pfAUbAELl2nTLbQakkjv8aiB1gcoNsTtn9u1PDe_pOqEM3R9OynwH0TJhNzUwNOEafhJdB9GtiZLkBFkCZf9VazEP21VsUmFLTNycenDjOVvb1YMZOkyhmE6Ck3AZdW1Ks"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1820,
+     "end": 1961,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGf3O7hf2wa56OvBD5w3eWcw2Gi-yhVAaoW-oVcUoVIbedGQAXuHFWjBKPZB7_54ANW66Kd4-7LWmqSldwCzxJyJuRcu-1bEaNYk7_dXTzMA3lZVNPx7fQ6g8PNMxg0p4TsZZT4dqxWS_PL2ro7LtU_TiyvkFkDnhdtAOM3lpJZ9ZMeTgl_hLvk-d7kdOsRu0dqVBaIw20cPQ=="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 1966,
+     "end": 2170,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE_I7tWilmh6x_xLjJtDbHVFywWFZMN7oLwExHZJktO7XIMa-UCnD6gr_e1C4tudK9CXt3gokAR87R6zi8ymRfgdNqcProjYascMvKxooKBXm7INYzWS1WL0MZV34KF-UrCWTpoYTXH"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 2422,
+     "end": 2499,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 2501,
+     "end": 2705,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 2710,
+     "end": 2797,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 2802,
+     "end": 2939,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2I8PYhEpfEq40l8yci69U0Mo8iueUcbaHE9w_i4OqXOGgGVK0HyuJRUS5V_fmUQCkS7MMpj6Nqf9VNoNtFh7sQ1zwyl0PgtSmZj2rPckXKEpOjcgpX37JWkkMm3C40y7N0lVOzuGf9ih5g5oUg6eSFrFPW0-fn0yS9XHZGvR_KcpvRH5GeesaH5kOji0G7D0I6UtYWdo=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 2944,
+     "end": 3059,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3064,
+     "end": 3137,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHhdq7lw9PxHZjScDcVCws004JvEm6xQBgk0kKmTm-DhK_LLpSxeS4Fvy8flDXBXE17ebk099u2Vl2qDygic-Zay6pMm3m10D2-PUYO9FIll48J_WqPJ214bgxeIQeDWf0l3MHePrlwXZgrO12IJ8k=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3138,
+     "end": 3358,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpgYVTqlRnc7Fs4oI7GWEzP3E5nNqKVTTtjIqSze-YM-GAyvqQMQSk196xNrILXDRdd6_qciHhlsSBfAnW3nxLei9AGuUynQJKNWoCdQ5-R23husethxIAo7i-b5IGqc-wv_FMG0vGTtOx2xUdvjLuYR0UbnnJbsSORmvl-RGIVwJ-kFpphB6pusKnshQoDQoOqf4="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3363,
+     "end": 3421,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3426,
+     "end": 3481,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF4wvY6dTVOfR3uJw377KXRZvZCNjxrx48bEee5HZNSkJpL0G6Hb4Lkkcbo15X7JmwVAfm6okhp0ez7jGdbRh9rNgZE59b3Tjzb28hANj4F24JTbIA1hRl4syEmvfJrCLoXSMOMIQcu_Bh8rM8muG9EjFQ8qHKP6mQYn3mfo31THAb8nihbSdP7Ne8rCQM="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3486,
+     "end": 3669,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFf0Xt2aHiYGENDcej7MiLCkTVtVKuxxOp2i0Yq5Cms_tDppsbYO0GaVOclyOSK4YRCOf1WyTuYFEtGAlZ6K9z3fQW4Qivb_ATut_oNnujs2JPrEOn8DtknyUHkIea8rfguxgQp"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3674,
+     "end": 3881,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 3886,
+     "end": 4127,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEnnQs65wwdLJTmYJK_77FOcAxZFAGeO2fDWPgUHLsxmdLmXEc-ADAPkiIllULzo8iu2D_htCvN-oewVYkvFe0YFSWW9UyDKHpLnLkurpjFoT7zdfknHWpcGw7ozim6GYCKWxya8QxcKc6MhNMP2Ok5pZnUvjYEiFN1Xtk="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 4173,
+     "end": 4394,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHLwZZIDvk8PHn6FDLVv8s8oJx_HNcHzrryOlq7cjHXThAVFG8gzxq6iB6zrGexa5XssN6c7g9nUwGBQVGdwWh1HDaE4pKZkDsqC384lfwxTW977M_AquuzqrlmCGeEpfcGUrOcR3DC__p6Tw==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1zZr5y0-Mh-e_IDbT0PvaOemvMerD03VTilVyKYGXQSy8UEh0dn23w6AMqBULRlSbFEfXBVjXPD_RlkhwvpO_JS2bbLHKvEkBJa2TvJwMH0Iv80rgC7bYxHCkbZhhjRg_3LY8aoJBErKHHRh2M_7V"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 4395,
+     "end": 4611,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHd-EOAIBlwoYu6BhqKgw8StnM5EFONs-Gr87oYA27YiwL2wx217GrKmfJ1nMEFKgdtG4i1OA2iGCz2ut9jFvMA61Wg3IuzZHaiYad1XRrJi7Ghri5x3uZua5LIC2VntVnVMhvQwzXy82ULekUaaRI28YezS0iWROjYptwZp-K3kZiSd4zYYobMGmJR_rptB-8Bp3k="
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 4612,
+     "end": 4798,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQnd2gMvFjPZopjaIZ9HW45rZfmtj6OqFP4k2MC3JUIHNUj-PyPi0ttaQliLUXGiBa-Mv4FYYnzXeb0n2oYcBU9cSzayplxduWPxMQC2J9VBjsefmATrIKf5c=",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXnyBWFGR1ekhWF0V6Ris3ffI2UISjbSRj8C2YMaXYHBGaZm_w-PbVf4rOazD-gJDNPXm2vKvpb0rKfbiz40LqZi8mfpWkSweD-q0gzbBt9MbI--VfM2c2id9JdSJWo3H6xlvbipBq_ijnvbhE36GZnA==",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFPrFQ2aEbZytAk6t_Xl46NB2FWTm-65czc-5p_Iqus9LIwkL-rr7xagj7i8ckI4PLwwuo8HxYWga_6XomFGJ5QMZDaM0mxVcYYWeKfzy3-bUIxilT9crhcdLu_K8rI95WfW95WiM_KGs8xA9P7DK3hqaCx",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQksjqVYuNau60pA4duouw7y0mxgPl003JV1SDGLQEwDKG7944jgwMJKsrY8fLNh-2WFafQgTLbSBSd_cB1l7ekGXkftmTPW9j_2lW8lBPlZ1mWaBiPT21JwcTrG3CfYiO7RBktjKIKEFXgch32JYYAzHbdR_qlwH_",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI_K6f8rPeAlymPKtCH8Bxf_NvVbEXIhVSfH_w4JGyisAhSOD0qRaMk9ASUfuMWi-6Y85eF-NhZNn8vhv86CLuvOlrxymAv0k-gJAyiW4jA14vjhVnH2o5mwazdvbqKiNqvwHZBkWHlc6Ut8dFf5sovX335uc9pruzUgDX",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1zZr5y0-Mh-e_IDbT0PvaOemvMerD03VTilVyKYGXQSy8UEh0dn23w6AMqBULRlSbFEfXBVjXPD_RlkhwvpO_JS2bbLHKvEkBJa2TvJwMH0Iv80rgC7bYxHCkbZhhjRg_3LY8aoJBErKHHRh2M_7V"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 4799,
+     "end": 4989,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGI_K6f8rPeAlymPKtCH8Bxf_NvVbEXIhVSfH_w4JGyisAhSOD0qRaMk9ASUfuMWi-6Y85eF-NhZNn8vhv86CLuvOlrxymAv0k-gJAyiW4jA14vjhVnH2o5mwazdvbqKiNqvwHZBkWHlc6Ut8dFf5sovX335uc9pruzUgDX",
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfyUDoGb6Q7SClocLlrvMQotbf1roadZTqnzI3UsoVoICLgj23FpBnPHJCbnrHyvzHKej7dpi_JN6V-N2VmPK7w1e7NxIOi_J_YU1FGDRvGLk67YMPKELUe8rmt7l8vy1Y_dkZ"
+     ],
+     "kind": "segment"
+    },
+    {
+     "start": 5109,
+     "end": 5299,
+     "urls": [
+      "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE2I8PYhEpfEq40l8yci69U0Mo8iueUcbaHE9w_i4OqXOGgGVK0HyuJRUS5V_fmUQCkS7MMpj6Nqf9VNoNtFh7sQ1zwyl0PgtSmZj2rPckXKEpOjcgpX37JWkkMm3C40y7N0lVOzuGf9ih5g5oUg6eSFrFPW0-fn0yS9XHZGvR_KcpvRH5GeesaH5kOji0G7D0I6UtYWdo="
+     ],
+     "kind": "segment"
+    }
+   ],
+   "supported_share": {
+    "chars": 0.0,
+    "sentences": 0.0,
+    "weighted": 0.0
+   },
+   "usage": {
+    "input_tokens": 28,
+    "output_tokens": 2607,
+    "search_calls": 5,
+    "api_calls": 1
+   },
+   "cost_usd": null,
+   "seconds": 17.2
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h26m38."
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h26m32."
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 7h26m25."
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  }
+ ],
+ "notes": [
+  "API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.",
+  "The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
+  "A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.",
+  "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
+  "This measures citations. It does not predict traffic, rankings or revenue."
+ ],
+ "summary": {
+  "overall": {
+   "answered": 2,
+   "cited": 0,
+   "cited_rate": 0.0,
+   "cited_ci": [
+    0.0,
+    0.6576
+   ],
+   "cited_ci_clustered": [
+    0.0,
+    0.6576
+   ],
+   "n_questions": 2,
+   "mentioned": 0,
+   "mentioned_rate": 0.0,
+   "planned": 80,
+   "errors": 6,
+   "skipped": 72
+  },
+  "headline": {
+   "answered": 2,
+   "cited": 0,
+   "cited_rate": 0.0,
+   "cited_ci": [
+    0.0,
+    0.6576
+   ],
+   "cited_ci_clustered": [
+    0.0,
+    0.6576
+   ],
+   "n_questions": 2,
+   "mentioned": 0,
+   "mentioned_rate": 0.0
+  },
+  "branded": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null,
+   "question_ids": []
+  },
+  "brand_flags": "run",
+  "engines": [
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "id": "gemini",
+    "model": "gemini-2.5-flash",
+    "status": "measured",
+    "errors": 6,
+    "skipped": 72,
+    "avg_rank": null,
+    "with_citations": 2,
+    "with_searches": 2,
+    "searched_without_queries": 0,
+    "supported_share": {
+     "answers": 2,
+     "chars": 0.0,
+     "sentences": 0.0,
+     "weighted": 0.0,
+     "above_zero": 0
+    },
+    "sources": {
+     "answers": 2,
+     "listed": 29,
+     "used": 29,
+     "used_rate": 1.0,
+     "you_listed": 0,
+     "you_used": 0
+    },
+    "consistency": {
+     "questions": 0,
+     "answers": 0,
+     "pairs": 0,
+     "median": null,
+     "lowest": []
+    },
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   }
+  ],
+  "share_of_voice": [
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "name": "01.AI",
+    "you": true,
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   },
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 2,
+    "mentioned_rate": 1.0,
+    "name": "Mistral AI",
+    "you": false,
+    "named_first": 2,
+    "any_named": 2,
+    "mention_share": 0.0366
+   },
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "name": "Naver",
+    "you": false,
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   },
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "name": "Sarvam AI",
+    "you": false,
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   },
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "name": "Technology Innovation Institute",
+    "you": false,
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   },
+   {
+    "answered": 2,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.6576
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.6576
+    ],
+    "n_questions": 2,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "name": "xAI",
+    "you": false,
+    "named_first": 0,
+    "any_named": 2,
+    "mention_share": null
+   }
+  ],
+  "top_sources": [
+   {
+    "domain": "zammad.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "n-ix.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "openai.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "aleph-alpha.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "vdf.ai",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "exoscale.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "originshq.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "inwizards.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "huggingface.co",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "alpacked.io",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "flowgenietech.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "eldoc.online",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "projectpro.io",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "ebrevia.com",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   },
+   {
+    "domain": "contractzy.io",
+    "answers": 1,
+    "share": 0.5,
+    "owner": null
+   }
+  ],
+  "questions": {
+   "asked": 2,
+   "cited_somewhere": 0
+  },
+  "gaps": [],
+  "by_question": [
+   {
+    "query_id": "q01",
+    "query": "What are the best large language models for building a customer support chatbot?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q02",
+    "query": "Which AI model APIs are most reliable for production applications right now?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q03",
+    "query": "Which open-weight language models can a company run on its own servers?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 1,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 1
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 1,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q04",
+    "query": "Our support team spends hours answering the same customer emails and I want software that can draft the replies automatically. What should I look at?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q05",
+    "query": "I need to summarize hundreds of long contracts every week without sending them to a provider that trains on our data. What are my options?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 1,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 1
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 1,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q06",
+    "query": "What is the best AI model for a small law firm that wants help drafting documents?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q07",
+    "query": "Which AI model API should a two-person startup use to add a writing assistant to its app?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q08",
+    "query": "How much does it cost to use a large language model API for about a million requests a month?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q09",
+    "query": "Which AI chat assistants have a good free tier for everyday work?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q10",
+    "query": "What are the leading AI labs building frontier language models today?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Mistral AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Naver": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Sarvam AI": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Technology Innovation Institute": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "xAI": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   }
+  ],
+  "tracked_pages": [],
+  "by_tier": [
+   {
+    "answered": 1,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.7935
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.7935
+    ],
+    "n_questions": 1,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "tier": "list"
+   },
+   {
+    "answered": 1,
+    "cited": 0,
+    "cited_rate": 0.0,
+    "cited_ci": [
+     0.0,
+     0.7935
+    ],
+    "cited_ci_clustered": [
+     0.0,
+     0.7935
+    ],
+    "n_questions": 1,
+    "mentioned": 0,
+    "mentioned_rate": 0.0,
+    "tier": "problem"
+   }
+  ],
+  "searches": {
+   "answers_exposing": 2,
+   "top": [
+    {
+     "query": "open-weight language models for on-premise deployment",
+     "count": 1
+    },
+    {
+     "query": "self-hostable llms for companies",
+     "count": 1
+    },
+    {
+     "query": "on-premise contract summarization software",
+     "count": 1
+    },
+    {
+     "query": "private cloud legal document summarization",
+     "count": 1
+    },
+    {
+     "query": "enterprise ai summarization data privacy no training",
+     "count": 1
+    },
+    {
+     "query": "open-source legal text summarization models deploy on-premise",
+     "count": 1
+    },
+    {
+     "query": "contract summarization tools without data training",
+     "count": 1
+    }
+   ],
+   "answers_searched_without_queries": 0,
+   "modifiers": {
+    "total": 7,
+    "with_year": 0,
+    "with_ranking_word": 0
+   }
+  },
+  "notes": []
+ }
+}

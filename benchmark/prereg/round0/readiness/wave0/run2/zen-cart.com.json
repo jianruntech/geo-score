@@ -1,0 +1,434 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-13",
+  "elapsed_s": 13.8,
+  "target": "https://zen-cart.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://zen-cart.com/",
+    "https://zen-cart.com/services",
+    "https://zen-cart.com/password/forgot",
+    "https://zen-cart.com/about",
+    "https://zen-cart.com/forums",
+    "https://zen-cart.com/donate",
+    "https://zen-cart.com/plugins",
+    "https://zen-cart.com/privacy"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 46,
+  "observable_max": 86,
+  "normalised": 40,
+  "band": "Early",
+  "gate_capped": true,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "robots.txt (2083 bytes): a Disallow: / applies to 6 of the 10 retrieval crawlers — OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Amazonbot, in their own group. It also disallows GPTBot, ClaudeBot, Meta-ExternalAgent (training crawlers / opt-out tokens, not scored).",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: no explicit Disallow, but no explicit Allow either",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "6 of 10 retrieval user-agents returned 200 on 3 sampled pages; 6 of those served content matching what a browser receives. Not reached — HTTP 403: PerplexityBot, Bingbot, Applebot, Amazonbot. (Unverified probes: vendor user-agent strings sent from this machine's address.)",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.zen-cart.com/sitemap.xml»): HTTP 200, 2342 <loc>, 2323 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 4,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 1363 bytes, 0 '##' sections, 0 of them containing links, site definition present.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+1) needs: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "Neither Organization nor WebSite JSON-LD found on any sampled page.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: one of the two present",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 1 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "evidence": "4 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: When you sign up for these services using the links provided, those services pay a commiss…»",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a date a reader or a crawler can see; 5 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "112 figures on 5 pages; 5 attributed in the same block or the next, 1 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Brand read as «site text: Zen Cart™» (also tried «site text: Zen Cart Support», «site text: Zen-cart»). No entity whose label matches exactly, in Wikidata or Wikipedia (en); 6 of 6 lookups answered.",
+      "tier_reason": "tier 1 of 2 — tier 2 (+4) needs: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "8 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 8,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 8,
+      "one_rule": false,
+      "pages": [
+        {
+          "url": "https://zen-cart.com/",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/services",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/password/forgot",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/about",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/forums",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/donate",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/plugins",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        },
+        {
+          "url": "https://zen-cart.com/privacy",
+          "rules": [
+            {
+              "rule": "Disallow: /",
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User",
+                "PerplexityBot",
+                "Amazonbot"
+              ]
+            }
+          ]
+        }
+      ],
+      "read_differently": 1,
+      "differences": [
+        {
+          "url": "https://zen-cart.com/",
+          "readings": [
+            {
+              "crawlers": [
+                "OAI-SearchBot",
+                "ChatGPT-User",
+                "Claude-SearchBot",
+                "Claude-User"
+              ],
+              "rfc9309": {
+                "allowed": true,
+                "rule": "Allow: /$"
+              },
+              "first_match": {
+                "allowed": false,
+                "rule": "Disallow: /"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "server_links": {
+      "pages_searched": 8,
+      "home_links": 13,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 0,
+      "sitemap_urls_linked": 0,
+      "unlinked_sitemap_urls": []
+    },
+    "hreflang": {
+      "pages_searched": 8,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

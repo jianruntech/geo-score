@@ -1,0 +1,1358 @@
+{
+ "format": "geo-score/watch.v1",
+ "tool": "geo-score-watch/1.8.1",
+ "channel": "api",
+ "run_id": "20261012T180951Z",
+ "started_at": "2026-10-12T18:09:51Z",
+ "finished_at": "2026-10-12T18:10:10Z",
+ "interrupted": false,
+ "brand": {
+  "name": "DigitalOcean",
+  "domains": [
+   "digitalocean.com"
+  ],
+  "url_prefixes": [],
+  "aliases": []
+ },
+ "competitors": [
+  {
+   "name": "Google",
+   "domains": [
+    "google.com"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Google Cloud",
+    "Google Cloud Platform",
+    "GCP"
+   ]
+  },
+  {
+   "name": "Hetzner",
+   "domains": [
+    "hetzner.com"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  },
+  {
+   "name": "Microsoft",
+   "domains": [
+    "microsoft.com"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Microsoft Azure"
+   ]
+  },
+  {
+   "name": "Oracle",
+   "domains": [
+    "oracle.com"
+   ],
+   "url_prefixes": [],
+   "aliases": [
+    "Oracle Cloud",
+    "OCI"
+   ]
+  },
+  {
+   "name": "Scaleway",
+   "domains": [
+    "scaleway.com"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  }
+ ],
+ "country": "US",
+ "runs": 8,
+ "engines": [
+  {
+   "id": "gemini",
+   "provider": "gemini",
+   "model": "gemini-2.5-flash",
+   "status": "measured",
+   "stopped": "engine_failed",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 5h49m50."
+  }
+ ],
+ "queries": [
+  {
+   "query_id": "q01",
+   "query": "What are the best cloud providers for hosting virtual machines?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q02",
+   "query": "Which cloud infrastructure providers are the most reliable for a production web application?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q03",
+   "query": "What are good alternatives to the three biggest cloud providers for a small company?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q04",
+   "query": "Our cloud bill keeps growing and most of it is a few always-on virtual servers. Where can we run them for less?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q05",
+   "query": "We need servers in both the US and Europe with predictable monthly pricing. Which providers should we compare?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q06",
+   "query": "Which cloud provider is best for a solo developer who wants a simple virtual server?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q07",
+   "query": "What cloud platform should a mid-size healthcare company choose for HIPAA-compliant infrastructure?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q08",
+   "query": "How much does a cloud virtual machine with 4 CPUs and 16 GB of RAM cost per month?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q09",
+   "query": "Which cloud providers offer a free tier or free credits for new accounts?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q10",
+   "query": "Which cloud providers offer GPU servers for training machine learning models?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  }
+ ],
+ "questions_hash": "c30c60b8d0bd7899eecdf1fb976126ea479270781268834dcc3a6d49440acaf7",
+ "recorded": [
+  "spans",
+  "sources"
+ ],
+ "caps": {
+  "max_calls": 160,
+  "budget_usd": null
+ },
+ "ledger": {
+  "questions_asked": 3,
+  "api_requests": 0,
+  "http_attempts": 3,
+  "errors": 3,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "search_calls": 0,
+  "cost_usd": 0.0,
+  "unpriced_answers": 0,
+  "cost_complete": true
+ },
+ "samples": [
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 5h50m2.7"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 5h49m56."
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 5h49m50."
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  }
+ ],
+ "notes": [
+  "API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.",
+  "The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
+  "A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.",
+  "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
+  "This measures citations. It does not predict traffic, rankings or revenue."
+ ],
+ "summary": {
+  "overall": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null,
+   "planned": 80,
+   "errors": 3,
+   "skipped": 77
+  },
+  "headline": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null
+  },
+  "branded": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null,
+   "question_ids": []
+  },
+  "brand_flags": "run",
+  "engines": [
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "id": "gemini",
+    "model": "gemini-2.5-flash",
+    "status": "measured",
+    "errors": 3,
+    "skipped": 77,
+    "avg_rank": null,
+    "with_citations": 0,
+    "with_searches": 0,
+    "searched_without_queries": 0,
+    "supported_share": {
+     "answers": 0,
+     "chars": null,
+     "sentences": null,
+     "weighted": null,
+     "above_zero": 0
+    },
+    "sources": {
+     "answers": 0,
+     "listed": 0,
+     "used": 0,
+     "used_rate": null,
+     "you_listed": 0,
+     "you_used": 0
+    },
+    "consistency": {
+     "questions": 0,
+     "answers": 0,
+     "pairs": 0,
+     "median": null,
+     "lowest": []
+    },
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   }
+  ],
+  "share_of_voice": [
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "DigitalOcean",
+    "you": true,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Google",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Hetzner",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Microsoft",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Oracle",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Scaleway",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   }
+  ],
+  "top_sources": [],
+  "questions": {
+   "asked": 0,
+   "cited_somewhere": 0
+  },
+  "gaps": [],
+  "by_question": [
+   {
+    "query_id": "q01",
+    "query": "What are the best cloud providers for hosting virtual machines?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q02",
+    "query": "Which cloud infrastructure providers are the most reliable for a production web application?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q03",
+    "query": "What are good alternatives to the three biggest cloud providers for a small company?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q04",
+    "query": "Our cloud bill keeps growing and most of it is a few always-on virtual servers. Where can we run them for less?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q05",
+    "query": "We need servers in both the US and Europe with predictable monthly pricing. Which providers should we compare?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q06",
+    "query": "Which cloud provider is best for a solo developer who wants a simple virtual server?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q07",
+    "query": "What cloud platform should a mid-size healthcare company choose for HIPAA-compliant infrastructure?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q08",
+    "query": "How much does a cloud virtual machine with 4 CPUs and 16 GB of RAM cost per month?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q09",
+    "query": "Which cloud providers offer a free tier or free credits for new accounts?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q10",
+    "query": "Which cloud providers offer GPU servers for training machine learning models?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Google": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Hetzner": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Microsoft": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Oracle": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Scaleway": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   }
+  ],
+  "tracked_pages": [],
+  "by_tier": [],
+  "searches": {
+   "answers_exposing": 0,
+   "top": [],
+   "answers_searched_without_queries": 0,
+   "modifiers": {
+    "total": 0,
+    "with_year": 0,
+    "with_ranking_word": 0
+   }
+  },
+  "notes": []
+ }
+}

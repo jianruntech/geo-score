@@ -1,0 +1,338 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 4.9,
+  "target": "https://spreecommerce.org",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://spreecommerce.org/",
+    "https://spreecommerce.org/docs/developer/agentic/mcp",
+    "https://spreecommerce.org/docs/developer/cli/admin-api",
+    "https://spreecommerce.org/docs/user/products/creating-products",
+    "https://spreecommerce.org/docs/use-case/overview",
+    "https://spreecommerce.org/docs/developer/deployment/docker",
+    "https://spreecommerce.org/docs/user/settings/sales-channels",
+    "https://spreecommerce.org/docs/developer/agentic/agent-skills"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 61,
+  "observable_max": 86,
+  "normalised": 71,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (1180 bytes): no Disallow applies to retrieval crawlers; 8 named with an explicit permission (OAI-SearchBot, ChatGPT-User, Claude-User, PerplexityBot, Googlebot, Bingbot, Applebot, Amazonbot).",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "7 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://spreecommerce.org/post-sitemap1.xml»): HTTP 200, 433 <loc>, 432 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "Organization + WebSite on 7 of 8 pages; logo resolves (HTTP 200); 3 sameAs declared.",
+      "tier_reason": "tier 4 of 4 — top tier: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 6 of 7 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 7 of 8 sampled pages; 7 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 4,
+      "max": 9,
+      "evidence": "1 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: From Omnichannel and cross-border DTC, to complex B2B commerce workflows, to marketplaces…»",
+      "tier_reason": "tier 2 of 4 — tier 3 (+3) needs: on half the pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "5 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "6 of 8 pages carry a date a reader or a crawler can see; 6 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "22 figures on 4 pages; 1 attributed in the same block or the next, 1 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Spree Commerce» (also tried «site text: Spree», «site text: Spree Commerce documentation»). Entity found — Wikidata Q7580311 «site text: Open-source headless e-commerce platform»; en.wikipedia: «site text: Spree Commerce»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "3 sameAs declared; of the first 3, 3 resolve, 0 are gone (404/410).",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 2 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "7 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 54,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 18,
+      "unlinked_sitemap_urls": [
+        "https://spreecommerce.org/hipaa-ecommerce-compliance/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-medical-devices-and-equipment/",
+        "https://spreecommerce.org/wholesale-ecommerce-platform/",
+        "https://spreecommerce.org/cross-border-pricing-by-country/",
+        "https://spreecommerce.org/tiered-pricing/",
+        "https://spreecommerce.org/multilingual-ecommerce/",
+        "https://spreecommerce.org/multi-currency-ecommerce/",
+        "https://spreecommerce.org/building-a-multi-vendor-marketplace-with-spree-commerce-the-open-source-advantage/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-plumbing-fixtures-and-parts/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-electrical-components/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-home-maintenance-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-home-security-systems/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-hair-care-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-skincare-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-professional-cosmetics/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-wellness-supplements/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-personal-care-devices/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-pet-care-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-kids-educational-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-home-organization-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-automotive-products/",
+        "https://spreecommerce.org/launch-your-own-white-label-ecommerce-platform-for-professional-sports-equipment/",
+        "https://spreecommerce.org/multi-tenant-ecommerce-architecture-choosing-between-row-level-and-complete-isolation/",
+        "https://spreecommerce.org/how-to-build-a-multi-tenant-ecommerce-platform-architecture-features-and-costs/",
+        "https://spreecommerce.org/boost-ecommerce-seo-with-product-taxonomies-categories-collections-and-brands/",
+        "https://spreecommerce.org/shopify-plus-alternative-open-source-ecommerce/",
+        "https://spreecommerce.org/magento-alternative-open-source-ecommerce/",
+        "https://spreecommerce.org/announcing-spree-5-the-biggest-open-source-release-ever/",
+        "https://spreecommerce.org/a-multi-tenant-platform-for-local-resellers-enabling-the-reseller-ecosystem-growth/",
+        "https://spreecommerce.org/15-amazing-ecommerce-websites-built-with-next-js/",
+        "https://spreecommerce.org/b2b-ecommerce-invoicing-tax-compliance/",
+        "https://spreecommerce.org/b2b-ecommerce-fulfillment-inventory-models/",
+        "https://spreecommerce.org/b2b-ecommerce-customer-segmentation-pricing/",
+        "https://spreecommerce.org/b2b-ecommerce-prices-or-products-hidden-for-guests/",
+        "https://spreecommerce.org/b2b-ecommerce-bulk-or-recurring-ordering/",
+        "https://spreecommerce.org/microsoft-sso-integration-for-spree-commerce-active-directory-azure-entra-external-id-b2c/",
+        "https://spreecommerce.org/dora-ecommerce-compliance/",
+        "https://spreecommerce.org/nis2-ecommerce-compliance/",
+        "https://spreecommerce.org/announcing-spree-5-2/",
+        "https://spreecommerce.org/how-to-lift-and-shift-your-next-js-storefront-to-a-spree-5-backend/",
+        "https://spreecommerce.org/the-ultimate-guide-to-multi-tenant-white-label-ecommerce/",
+        "https://spreecommerce.org/why-vc-funded-startups-need-source-available-self-hosted-ecommerce/",
+        "https://spreecommerce.org/us-regulated-commerce-2026/",
+        "https://spreecommerce.org/uk-regulated-commerce-2026/",
+        "https://spreecommerce.org/nextjs-home-electronics-automotive-ecommerce-storefronts/",
+        "https://spreecommerce.org/marketplacer-alternative-pricing/",
+        "https://spreecommerce.org/why-the-fastest-growing-ecommerce-brands-are-choosing-next-js-storefronts-on-spree/",
+        "https://spreecommerce.org/from-tenant-to-owner-stop-building-your-ecommerce-on-rented-land/",
+        "https://spreecommerce.org/announcing-spree-commerce-5-3-with-price-lists-customer-groups-new-admin-tools/",
+        "https://spreecommerce.org/spree-commerce-5-3-new-pricing-engine-and-price-lists/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

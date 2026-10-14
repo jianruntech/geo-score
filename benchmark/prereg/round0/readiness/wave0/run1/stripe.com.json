@@ -1,0 +1,430 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 6.2,
+  "target": "https://stripe.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://stripe.com/",
+    "https://stripe.com/newsroom/news/bfcm2025",
+    "https://stripe.com/newsroom/news/stripe-and-uber",
+    "https://stripe.com/newsroom/news/google-and-stripe",
+    "https://stripe.com/billing/learn/subscription-management",
+    "https://stripe.com/legal/issuing/spend-card/platform-company",
+    "https://stripe.com/issuing/spend-card/platform-company/legal",
+    "https://stripe.com/legal/eea/blackbaud/stel"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 62,
+  "observable_max": 86,
+  "normalised": 72,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (643 bytes, 3 user-agents named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://stripe.com/sitemap/partition-0.xml»): HTTP 200, 1990 <loc>, 0 <lastmod>.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "/llms.txt: HTTP 200, 69923 bytes, 31 '##' sections, 31 of them containing links, site definition present.",
+      "tier_reason": "tier 4 of 4 — top tier: and has 2+ topic sections that contain links",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "Organization + WebSite on 1 of 8 pages; logo resolves (HTTP 200); 12 sameAs declared.",
+      "tier_reason": "tier 4 of 4 — top tier: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 4 of 8 sampled pages; 4 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: SAN FRANCISCO AND DUBLIN—From Black Friday through Cyber Monday (BFCM), businesses on Stri…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "2 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: about half do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "7 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "263 figures on 7 pages; 62 attributed in the same block or the next, 18 of them with a link. Of the 6 pages carrying three or more, 2 attribute most of theirs, 1 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Stripe» (also tried «site text: Stripe, LLC», «site text: Financial Infrastructure to Grow Your Revenue»). Entity found — Wikidata Q7624104 «site text: Irish-American payment technology compan…»; en.wikipedia: «site text: Stripe»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "12 sameAs declared; of the first 8, 6 resolve, 0 are gone (404/410), 2 could not be checked from this network and are left out.",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 2 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 2,
+      "max": 4,
+      "evidence": "3 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 10,
+      "home_links": 115,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 3,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 17,
+      "unlinked_sitemap_urls": [
+        "https://stripe.com/ssa",
+        "https://stripe.com/climate/legal",
+        "https://stripe.com/connect/legal",
+        "https://stripe.com/connect-account/legal",
+        "https://stripe.com/legal/connect",
+        "https://stripe.com/legal/connect-account",
+        "https://stripe.com/legal/vault-and-forward",
+        "https://stripe.com/legal/data-pipeline",
+        "https://stripe.com/atlas/legal",
+        "https://stripe.com/legal/publishing",
+        "https://stripe.com/legal/treasury-for-platforms-au-platform",
+        "https://stripe.com/legal/treasury-for-platforms-au-accountholder",
+        "https://stripe.com/legal/connect-account/recipient",
+        "https://stripe.com/legal/business-savings-fa/fscs-information-sheet",
+        "https://stripe.com/legal/business-savings-fa",
+        "https://stripe.com/legal/business-savings-fa/fact-sheet",
+        "https://stripe.com/legal/france-legal-notice",
+        "https://stripe.com/legal/legal-process-guide",
+        "https://stripe.com/legal/community-builder-agreement",
+        "https://stripe.com/legal/issuing/sutton/payout-card-user-agreement",
+        "https://stripe.com/legal/issuing/sutton/payout-card-terms",
+        "https://stripe.com/legal/consumer/debit-card",
+        "https://stripe.com/legal/issuing/rewards-uk",
+        "https://stripe.com/legal/consumer/cardholder-agreements",
+        "https://stripe.com/legal/signage-program-agreement",
+        "https://stripe.com/legal/treasury-au-addendum",
+        "https://stripe.com/legal/treasury-ca-addendum",
+        "https://stripe.com/legal/treasury-for-platforms-ca-platform",
+        "https://stripe.com/legal/treasury-for-platforms-ca-accountholder",
+        "https://stripe.com/legal/issuing/charge-card-accountholder-terms-ca",
+        "https://stripe.com/legal/issuing/prepaid-accountholder-terms-ca",
+        "https://stripe.com/legal/consumer/prepaid-debit-card",
+        "https://stripe.com/legal/issuing/efs-platform",
+        "https://stripe.com/legal/spain-cbcr",
+        "https://stripe.com/legal/consumer/consumer-fa-terms-fdic",
+        "https://stripe.com/legal/terminal-reseller",
+        "https://stripe.com/legal/terminal-device-eula",
+        "https://stripe.com/legal/terminal-purchase",
+        "https://stripe.com/legal/non-custodial-wallet-stablecoin-treasury",
+        "https://stripe.com/legal/issuing-signals-api",
+        "https://stripe.com/legal/consumer/consumer-fa-terms",
+        "https://stripe.com/legal/consumer",
+        "https://stripe.com/legal/crypto-onramp",
+        "https://stripe.com/legal/consumer/acceptable-use",
+        "https://stripe.com/legal/consumer/governing-law",
+        "https://stripe.com/legal/consumer/credit-card",
+        "https://stripe.com/legal/consumer/contracting-entity",
+        "https://stripe.com/legal/onelink",
+        "https://stripe.com/legal/link",
+        "https://stripe.com/legal/consumer/onelink-e-sign-disclosure"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 10,
+      "pages_with_hreflang": 9,
+      "annotations": 724,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://stripe.com/",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/newsroom/news/bfcm2025",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/newsroom/news/stripe-and-uber",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/newsroom/news/google-and-stripe",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/billing/subscriptions",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/legal/issuing/spend-card/platform-company",
+          "annotations": 89
+        },
+        {
+          "url": "https://stripe.com/legal/eea/blackbaud/stel",
+          "annotations": 89
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "annotations": 12
+        },
+        {
+          "url": "https://stripe.com/resources/more",
+          "annotations": 89
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 1,
+      "invalid": [
+        {
+          "url": "https://docs.stripe.com/",
+          "hreflang": "es-419",
+          "problem": "region"
+        }
+      ],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 12,
+      "other_host_hrefs": [
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=id-ID"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=de-DE"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=en-GB"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=es-419"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=es-ES"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=fr-CA"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=fr-FR"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=it-IT"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=pt-BR"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=ja-JP"
+        },
+        {
+          "url": "https://docs.stripe.com/",
+          "href": "https://docs.stripe.com/?locale=zh-CN"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 619,
+      "not_read": 0
+    }
+  }
+}

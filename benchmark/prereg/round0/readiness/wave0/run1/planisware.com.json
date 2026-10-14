@@ -1,0 +1,497 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 8.2,
+  "target": "https://planisware.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://planisware.com/",
+    "https://planisware.com/resources/resource-centre/product-capabilities",
+    "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+    "https://planisware.com/resources/events/upcoming",
+    "https://planisware.com/resources/companies/partner",
+    "https://planisware.com/resources/ai-ppm/ai-reality-check-ppm",
+    "https://planisware.com/resources/events/ppm-summit-boston-2026",
+    "https://planisware.com/resources/agility/what-business-agility"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 58,
+  "observable_max": 86,
+  "normalised": 67,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (2102 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://fr.planisware.com/sitemap.xml»): HTTP 200, 2000 <loc>, 2000 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "Only WebSite found (1 of 8 pages).",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: both present with name, url and logo",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 4 of 8 sampled pages; 4 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: Optimize your portfolio of projects, execute them smarter, and let embedded AI agents hand…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "8 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "5 of 8 pages carry a date a reader or a crawler can see; 3 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 5,
+      "max": 7,
+      "evidence": "12 figures on 5 pages; 8 attributed in the same block or the next, 7 of them with a link. Of the 2 pages carrying three or more, 1 attribute most of theirs, 1 with a link.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: most are attributed and the source is clickable and checkable",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Planisware». Entity found — Wikidata Q676735 «site text: company»; en.wikipedia: «site text: Planisware»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 9 channel links and 1 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "7 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 205,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 8,
+      "home_links": 75,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 5,
+      "sitemap_urls": 199,
+      "sitemap_urls_linked": 1,
+      "unlinked_sitemap_urls": [
+        "https://planisware.com/resources/cost-budget-management/capital-project-management-episode-4-transition-operations",
+        "https://planisware.com/resources/product-roadmapping/your-complete-guide-safe-framework",
+        "https://planisware.com/resources/product-roadmapping/driving-efficiency-and-productivity-drug-development-and-it-arvinas",
+        "https://planisware.com/resources/corporate-news/exchange22-spring-edition-recap-video",
+        "https://planisware.com/resources/agility/two-years-safe-lessons-large-it-department-fredrik-carleson",
+        "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+        "https://planisware.com/resources/strategic-planning-alignment/optimize-your-portfolio-and-get-most-your-projects",
+        "https://planisware.com/resources/selecting-tool/planisware-named-leader-gartner%C2%AE-adaptive-project-management-quadrant%E2%84%A2",
+        "https://planisware.com/resources/work-management-collaboration/planisware-orchestra-demo-adaptive-project-management-and",
+        "https://planisware.com/resources/product-roadmapping/planisware-enterprise-demo-drug-development",
+        "https://planisware.com/resources/strategic-planning-alignment/white-paper-strategic-portfolio-management",
+        "https://planisware.com/resources/strategic-planning-alignment/strategic-portfolio-management-it-and-digital-solutions",
+        "https://planisware.com/resources/product-roadmapping/npd-mini-series-episode-1-stage-gate",
+        "https://planisware.com/resources/work-management-collaboration/benefits-recording-your-time-ppm-tool",
+        "https://planisware.com/resources/product-roadmapping/npd-mini-series-episode-2-hybrid-agile",
+        "https://planisware.com/resources/strategic-planning-alignment/planisware-enterprise-demo-construction-projects",
+        "https://planisware.com/resources/product-capabilities/npd-mini-series-episode-3-idea-demand-management",
+        "https://planisware.com/resources/work-management-collaboration/brochure-planisware-automotive",
+        "https://planisware.com/resources/product-roadmapping/npd-mini-series-episode-4-program-management",
+        "https://planisware.com/resources/product-roadmapping/cross-functional-planning-what-it-framework-used-leading-companies",
+        "https://planisware.com/resources/product-roadmapping/planisware-enterprise-demo-combining-agile-and-stage-gate-new-product",
+        "https://planisware.com/resources/selecting-tool/enterprise-medtech-brochure",
+        "https://planisware.com/resources/product-roadmapping/npd-mini-series-episode-5-product-management",
+        "https://planisware.com/resources/selecting-tool/brochure-planisware-life-sciences",
+        "https://planisware.com/resources/agility/agile-stage-gate-hybrids-combining-best-both-systems-accelerated-new-product",
+        "https://planisware.com/resources/product-roadmapping/npd-mini-series-episode-6-strategic-planning",
+        "https://planisware.com/resources/work-management-collaboration/how-successfully-manage-phase-and-gate-process-planisware",
+        "https://planisware.com/resources/agility/capital-project-management-episode-2-agility-design-build-projects",
+        "https://planisware.com/resources/work-management-collaboration/how-improve-team-efficiency-planisware-orchestra-boards",
+        "https://planisware.com/resources/strategic-planning-alignment/taking-next-steps-project-portfolio-management-maturity",
+        "https://planisware.com/resources/product-capabilities/planisware-enterprise-demo-capacity-planning",
+        "https://planisware.com/resources/change-management/capital-project-management-episode-3-change-management-claims-capital",
+        "https://planisware.com/resources/product-demo/how-bridge-gap-between-strategy-and-execution-planisware-orchestra-jira%C2%AE",
+        "https://planisware.com/resources/ai-ppm/webinar-natural-intelligence-about-ai-tom-austin",
+        "https://planisware.com/resources/work-management-collaboration/planisware-orchestra-demo-project-execution",
+        "https://planisware.com/resources/product-roadmapping/leading-german-car-manufacturer-case-study",
+        "https://planisware.com/resources/product-capabilities/planisware-enterprise-demo-tools-streamline-portfolio-governance",
+        "https://planisware.com/resources/agility/interview-scaling-agile-johanna-rothman",
+        "https://planisware.com/resources/product-roadmapping/lean-product-development-resource-management-vs-flow-efficiency",
+        "https://planisware.com/resources/resource-management-capacity-planning/planisware-enterprise-demo-operational-resource",
+        "https://planisware.com/resources/product-roadmapping/dr-robert-cooper-innovation-and-future-stage-gate",
+        "https://planisware.com/resources/product-roadmapping/10-years-successful-crop-science-product-development-planisware",
+        "https://planisware.com/resources/selecting-tool/planisware-enterprise-demo-few-capabilities-planisware-chatbot",
+        "https://planisware.com/resources/strategic-planning-alignment/planisware-enterprise-demo-case-using-roadmaps",
+        "https://planisware.com/resources/product-roadmapping/webinar-measuring-product-development-productivity-and-performance",
+        "https://planisware.com/resources/strategic-planning-alignment/webinar-how-state-local-government-can-perform-digital-world",
+        "https://planisware.com/resources/strategic-planning-alignment/planisware-enterprise-demo-project-selection-portfolio",
+        "https://planisware.com/resources/portfolio-reporting-analysis/slightly-opinionated-introduction-okrs-xchange-21",
+        "https://planisware.com/resources/product-roadmapping/webinar-going-agile-accelerate-new-product-development",
+        "https://planisware.com/resources/product-roadmapping/more-insights-dr-robert-cooper-innovation-and-future-stage-gate"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 8,
+      "pages_with_hreflang": 8,
+      "annotations": 39,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://planisware.com/",
+          "annotations": 9
+        },
+        {
+          "url": "https://planisware.com/resources/resource-centre/product-capabilities",
+          "annotations": 5
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "annotations": 7
+        },
+        {
+          "url": "https://planisware.com/resources/events/upcoming",
+          "annotations": 5
+        },
+        {
+          "url": "https://planisware.com/resources/companies/partner",
+          "annotations": 5
+        },
+        {
+          "url": "https://planisware.com/resources/ai-ppm/ai-reality-check-ppm",
+          "annotations": 4
+        },
+        {
+          "url": "https://planisware.com/resources/events/ppm-summit-boston-2026",
+          "annotations": 2
+        },
+        {
+          "url": "https://planisware.com/resources/agility/what-business-agility",
+          "annotations": 2
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 8,
+      "not_absolute_hrefs": [
+        {
+          "url": "https://planisware.com/",
+          "href": "/"
+        },
+        {
+          "url": "https://planisware.com/resources/resource-centre/product-capabilities",
+          "href": "/resources/resource-centre/product-capabilities"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "/resources/product-brochure/brochure-planisware-enterprise"
+        },
+        {
+          "url": "https://planisware.com/resources/events/upcoming",
+          "href": "/resources/events/upcoming"
+        },
+        {
+          "url": "https://planisware.com/resources/companies/partner",
+          "href": "/resources/companies/partner"
+        },
+        {
+          "url": "https://planisware.com/resources/ai-ppm/ai-reality-check-ppm",
+          "href": "/resources/ai-ppm/ai-reality-check-ppm"
+        },
+        {
+          "url": "https://planisware.com/resources/events/ppm-summit-boston-2026",
+          "href": "/resources/events/ppm-summit-boston-2026"
+        },
+        {
+          "url": "https://planisware.com/resources/agility/what-business-agility",
+          "href": "/resources/agility/what-business-agility"
+        }
+      ],
+      "other_host": 23,
+      "other_host_hrefs": [
+        {
+          "url": "https://planisware.com/",
+          "href": "https://fr.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://de.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://jp.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://ko.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://es.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://pl.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/",
+          "href": "https://tr.planisware.com/"
+        },
+        {
+          "url": "https://planisware.com/resources/resource-centre/product-capabilities",
+          "href": "https://fr.planisware.com/resources/resource-centre/product-capabilities"
+        },
+        {
+          "url": "https://planisware.com/resources/resource-centre/product-capabilities",
+          "href": "https://de.planisware.com/resources/resource-centre/product-capabilities"
+        },
+        {
+          "url": "https://planisware.com/resources/resource-centre/product-capabilities",
+          "href": "https://jp.planisware.com/resources/resource-centre/product-capabilities"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "https://fr.planisware.com/resources/product-brochure/brochure-produit-planisware-enterprise"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "https://de.planisware.com/resources/product-brochure/planisware-enterprise-e7"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "https://jp.planisware.com/resources/product-brochure/planisware-enterprise-%E8%A3%BD%E5%93%81%E3%83%96%E3%83%AD%E3%82%B7%E3%83%A5%E3%82%A2%E3%83%BC"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "https://ko.planisware.com/resources/product-brochure/brochure-planisware-enterprise"
+        },
+        {
+          "url": "https://planisware.com/resources/product-brochure/brochure-planisware-enterprise",
+          "href": "https://es.planisware.com/resources/product-brochure/brochure-planisware-enterprise"
+        },
+        {
+          "url": "https://planisware.com/resources/events/upcoming",
+          "href": "https://fr.planisware.com/resources/events/upcoming"
+        },
+        {
+          "url": "https://planisware.com/resources/events/upcoming",
+          "href": "https://de.planisware.com/resources/events/upcoming"
+        },
+        {
+          "url": "https://planisware.com/resources/events/upcoming",
+          "href": "https://jp.planisware.com/resources/events/upcoming"
+        },
+        {
+          "url": "https://planisware.com/resources/companies/partner",
+          "href": "https://fr.planisware.com/resources/companies/partner"
+        },
+        {
+          "url": "https://planisware.com/resources/companies/partner",
+          "href": "https://de.planisware.com/resources/companies/partner"
+        },
+        {
+          "url": "https://planisware.com/resources/companies/partner",
+          "href": "https://jp.planisware.com/resources/companies/partner"
+        },
+        {
+          "url": "https://planisware.com/resources/ai-ppm/ai-reality-check-ppm",
+          "href": "https://fr.planisware.com/ressources/ia-et-ppm/ia-dans-le-ppm-ou-en-sommes-nous"
+        },
+        {
+          "url": "https://planisware.com/resources/ai-ppm/ai-reality-check-ppm",
+          "href": "https://de.planisware.com/ressourcen/k%C3%BCnstliche-intelligenz-ki/ki-im-ppm-wo-stehen-wir-heute"
+        }
+      ],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 23,
+      "not_read": 0
+    }
+  }
+}

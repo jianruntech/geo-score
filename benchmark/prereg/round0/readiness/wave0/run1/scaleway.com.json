@@ -1,0 +1,375 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 18.8,
+  "target": "https://scaleway.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://scaleway.com/",
+    "https://scaleway.com/en/pricing",
+    "https://scaleway.com/en/product-updates",
+    "https://scaleway.com/en/dedibox/pro",
+    "https://scaleway.com/en/dedibox/gpu",
+    "https://scaleway.com/en/dedibox/core",
+    "https://scaleway.com/en/dedibox/start",
+    "https://scaleway.com/en/dedibox/store"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 59,
+  "observable_max": 86,
+  "normalised": 69,
+  "band": "Solid",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 3,
+      "max": 5,
+      "evidence": "robots.txt (517 bytes, 1 user-agent named): no Disallow applies to retrieval crawlers, and none is explicitly allowed in the groups that apply to them — permitted by default, not by declaration.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+2) needs: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://www.scaleway.com/sitemaps/sitemap-pages-en.xml»): HTTP 200, 546 <loc>, 546 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 5,
+      "max": 6,
+      "evidence": "Organization + WebSite on 1 of 8 pages; logo does not resolve.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+1) needs: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "BreadcrumbList on 0 of 7 nested pages.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 4 of 8 sampled pages; 4 of them with real field values.",
+      "tier_reason": "tier 3 of 3 — top tier: present across applicable page types with real field values",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 7,
+      "max": 9,
+      "evidence": "5 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: We've benchmarked a bit of Nabu 2023, Scaleway AI Supercomputer and achieved very appropri…»",
+      "tier_reason": "tier 3 of 4 — tier 4 (+2) needs: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 7,
+      "max": 7,
+      "evidence": "6 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 4 of 4 — top tier: most do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "1 of 8 pages carry a date a reader or a crawler can see; 0 declare dateModified.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "269 figures on 6 pages; 2 attributed in the same block or the next, 2 of them with a link. Of the 6 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: most are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 0,
+      "max": 6,
+      "evidence": "0 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+3) needs: bylined to a real person",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: Scaleway» (also tried «site text: European Cloud & AI.»). Entity found — Wikidata Q3352745 «site text: French cloud computing company, subsidia…»; en.wikipedia: «site text: Scaleway»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "5 sameAs declared; of the first 5, 5 resolve, 0 are gone (404/410).",
+      "tier_reason": "tier 3 of 3 — top tier: all resolve and belong to the brand",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 2,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 8 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+1) needs: sustained output, with VideoObject on site",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "8 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 208,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 11,
+      "home_links": 145,
+      "few_home_links": false,
+      "other_sampled": 8,
+      "home_links_to_sampled": 7,
+      "sitemap_urls": 200,
+      "sitemap_urls_linked": 34,
+      "unlinked_sitemap_urls": [
+        "https://www.scaleway.com/en/elastic-metal/flexible-ip/",
+        "https://www.scaleway.com/en/dedibox/ddos-protection/",
+        "https://www.scaleway.com/en/terms/",
+        "https://www.scaleway.com/en/terms/agreement/",
+        "https://www.scaleway.com/en/the-advantages-of-a-multi-cloud-strategy/",
+        "https://www.scaleway.com/en/what-is-multicloud/",
+        "https://www.scaleway.com/en/white-papers-multi-cloud/",
+        "https://www.scaleway.com/en/why-multi-cloud-is-important/",
+        "https://www.scaleway.com/en/multi-cloud-vs-hybrid-cloud/",
+        "https://www.scaleway.com/en/dedibox/private-network-rpn/",
+        "https://www.scaleway.com/en/machine-learning-images/",
+        "https://www.scaleway.com/en/news/scaleway-raises-the-bar-for-infrastructure-resilience-by-launching-multi-az-object-storage/",
+        "https://www.scaleway.com/en/news/elastic-metal-unlocks-the-first-accessible-hybrid-cloud/",
+        "https://www.scaleway.com/en/kubernetes-application-library/",
+        "https://www.scaleway.com/en/news/scaleways-public-cloud-is-now-available-in-its-new-eastern-european-region-in-warsaw/",
+        "https://www.scaleway.com/en/news/scaleway-introduces-apple-silicon-m1-as-a-service-first-of-its-kind-in-europe/",
+        "https://www.scaleway.com/en/thankyou/",
+        "https://www.scaleway.com/en/best-cloud-provider/",
+        "https://www.scaleway.com/en/cto-summer-camp/",
+        "https://www.scaleway.com/en/hive-white-paper/",
+        "https://www.scaleway.com/en/news/scaleway-introduces-play2-instances-the-perfect-sandbox-environment/",
+        "https://www.scaleway.com/en/assistance/",
+        "https://www.scaleway.com/en/white-paper-scalable-infrastructure/",
+        "https://www.scaleway.com/en/european-cloud-benchmark-2022/",
+        "https://www.scaleway.com/en/news/changes-to-scaleways-pricing/",
+        "https://www.scaleway.com/en/kubernetes-dedicated-control-plane/",
+        "https://www.scaleway.com/en/news/how-to-play-at-work/",
+        "https://www.scaleway.com/en/news/why-purpose-and-values-come-before-salary-and-perks-when-it-comes-to-hiring-and-retaining-top-talent/",
+        "https://www.scaleway.com/en/news/why-tech-also-needs-non-tech-people/",
+        "https://www.scaleway.com/en/news/new-line-of-pro2-instances/",
+        "https://www.scaleway.com/en/news/why-its-also-time-to-take-out-the-digital-trash/",
+        "https://www.scaleway.com/en/scaleway-is-on-its-way-to-becoming-the-most-environmentally-efficient-and-transparent-cloud-worldwide/",
+        "https://www.scaleway.com/en/news/why-more-women-in-startups-can-only-make-the-tech-world-a-better-place/",
+        "https://www.scaleway.com/en/news/independence-is-a-two-way-street-or-why-the-usa-needs-a-strong-technological-europe/",
+        "https://www.scaleway.com/en/news/gaia-x-evolutions-scaleway-highlights-key-expectations/",
+        "https://www.scaleway.com/en/news/building-a-resilient-cloud-for-you-with-you/",
+        "https://www.scaleway.com/en/news/scaleways-vision-of-the-future-is-not-clouded-we-need-environmental-policies-which-take-into-account-the-human-cost-of-our-digital-future/",
+        "https://www.scaleway.com/en/news/scaleway-takes-dedibox-its-btob-dedicated-server-range-to-new-heights/",
+        "https://www.scaleway.com/en/news/an-in-depth-look-back-at-the-exceptional-heatwave-episode-on-the-24th-and-25th-of-july/",
+        "https://www.scaleway.com/en/white-papers/",
+        "https://www.scaleway.com/en/scaleway-vs-ovhcloud/",
+        "https://www.scaleway.com/en/web-platform-powered-by-clever-cloud/",
+        "https://www.scaleway.com/en/news/selective-power-cuts-scaleways-strategy-in-case-of-power-outages/",
+        "https://www.scaleway.com/en/news/scaleway-and-clever-cloud-join-forces-to-unveil-a-sovereign-european-paas-offering/",
+        "https://www.scaleway.com/en/what-is-iam-and-why-you-should-care/",
+        "https://www.scaleway.com/en/virtual-instances-definition/",
+        "https://www.scaleway.com/en/news/the-nvidia-h100-pcie-tensor-core-gpu-will-join-the-scaleway-ecosystem-in-2023/",
+        "https://www.scaleway.com/en/the-jam/",
+        "https://www.scaleway.com/en/scaleway-vs-digitalocean/",
+        "https://www.scaleway.com/en/kubernetes-architecture-e-commerce/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 11,
+      "pages_with_hreflang": 9,
+      "annotations": 25,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [
+        {
+          "url": "https://www.scaleway.com/en/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/pricing/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/product-updates/",
+          "annotations": 2
+        },
+        {
+          "url": "https://www.scaleway.com/en/dedibox/pro/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/dedibox/gpu/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/dedibox/core/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/dedibox/start/",
+          "annotations": 3
+        },
+        {
+          "url": "https://www.scaleway.com/en/dedibox/store/",
+          "annotations": 2
+        },
+        {
+          "url": "https://www.scaleway.com/en/news/",
+          "annotations": 3
+        }
+      ],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 16,
+      "not_read": 0
+    }
+  }
+}

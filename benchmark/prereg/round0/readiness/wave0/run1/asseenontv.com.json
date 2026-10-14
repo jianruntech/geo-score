@@ -1,0 +1,329 @@
+{
+  "rubric_version": "v1.1",
+  "tool": "geo-score-cli/1.8.1",
+  "audited_at": "2026-10-12",
+  "elapsed_s": 3.9,
+  "target": "https://asseenontv.com",
+  "audience_language": "en",
+  "sampled_urls": [
+    "https://asseenontv.com/",
+    "https://asseenontv.com/articles/toddler-days",
+    "https://asseenontv.com/articles/q3-recovery-tactics",
+    "https://asseenontv.com/articles/style-spring-cleaning",
+    "https://asseenontv.com/articles/productivity-in-bloom",
+    "https://asseenontv.com/products",
+    "https://asseenontv.com/review/brushbone",
+    "https://asseenontv.com/review/pedegg-power"
+  ],
+  "sample_source": "sitemap",
+  "readiness": 56,
+  "observable_max": 86,
+  "normalised": 65,
+  "band": "Growing",
+  "gate_capped": false,
+  "bonus_awarded": 0,
+  "checks": [
+    {
+      "id": "g.robots",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "robots.txt (172 bytes): no Disallow applies to retrieval crawlers; 10 fall under the * group, which carries an explicit allow-all.",
+      "tier_reason": "tier 3 of 3 — top tier: mainstream retrieval user-agents explicitly allowed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#retrieval-crawlers-allowed-in-robotstxt--5-pts--grobots"
+    },
+    {
+      "id": "g.reachable",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "10 of 10 retrieval user-agents returned 200 on 3 sampled pages; 10 of those served content matching what a browser receives.",
+      "tier_reason": "tier 3 of 3 — top tier: all 10 retrieval user-agents return 200 with matching content",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#reachable-to-retrieval-user-agents--5-pts--greachable"
+    },
+    {
+      "id": "g.ssr",
+      "state": "scored",
+      "points": 5,
+      "max": 5,
+      "evidence": "8 of 8 sampled pages carry substantive body text in the HTML response with no JavaScript executed.",
+      "tier_reason": "tier 3 of 3 — top tier: present in the HTML response on every sampled page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#main-content-server-rendered--5-pts--gssr"
+    },
+    {
+      "id": "p1.sitemap",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Sitemap declared in robots.txt («site text: https://asseenontv.com/page-sitemap.xml»): HTTP 200, 44 <loc>, 44 <lastmod>.",
+      "tier_reason": "tier 3 of 3 — top tier: and lastmod covers most URLs",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sitemap-discoverable-and-fresh--4-pts--p1sitemap"
+    },
+    {
+      "id": "p1.llms-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 5,
+      "evidence": "/llms.txt returned HTTP 404.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+2) needs: present and returns 200",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llmstxt-present-and-structured--5-pts--p1llms-txt"
+    },
+    {
+      "id": "p1.organization",
+      "state": "scored",
+      "points": 5,
+      "max": 6,
+      "evidence": "Organization + WebSite on 8 of 8 pages; no sameAs declared.",
+      "tier_reason": "tier 3 of 4 — tier 4 (+1) needs: and the logo resolves, with sameAs declared",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#organization--website-sitewide--6-pts--p1organization"
+    },
+    {
+      "id": "p1.breadcrumb",
+      "state": "scored",
+      "points": 3,
+      "max": 3,
+      "evidence": "BreadcrumbList on 6 of 6 nested pages.",
+      "tier_reason": "tier 3 of 3 — top tier: present across nested pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#breadcrumblist-on-nested-pages--3-pts--p1breadcrumb"
+    },
+    {
+      "id": "p1.page-type",
+      "state": "scored",
+      "points": 0,
+      "max": 4,
+      "evidence": "Page-type schema (Product/Offer, FAQPage, HowTo, Article…) on 0 of 8 sampled pages; 0 of them with real field values.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: present on some page types",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#page-type-schema-where-applicable--4-pts--p1page-type"
+    },
+    {
+      "id": "p2.answer-passages",
+      "state": "scored",
+      "points": 9,
+      "max": 9,
+      "evidence": "6 of 8 pages open with a self-contained passage of 25–120 words. e.g. «site text: From the innocent days of toddlerhood to the exciting challenges of taking on the world, e…»",
+      "tier_reason": "tier 4 of 4 — top tier: on most pages",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#self-contained-answer-passages--9-pts--p2answer-passages"
+    },
+    {
+      "id": "p2.question-intent",
+      "state": "scored",
+      "points": 3,
+      "max": 7,
+      "evidence": "3 of 8 pages carry at least one heading phrased as a question, a task or an explanation.",
+      "tier_reason": "tier 2 of 4 — tier 3 (+2) needs: about half do",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#headings-match-how-people-ask--7-pts--p2question-intent"
+    },
+    {
+      "id": "p2.freshness",
+      "state": "scored",
+      "points": 6,
+      "max": 6,
+      "evidence": "8 of 8 pages carry a date a reader or a crawler can see; 8 declare dateModified.",
+      "tier_reason": "tier 3 of 3 — top tier: most pages do, and dateModified agrees with the visible date",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#freshness-signal-present--6-pts--p2freshness"
+    },
+    {
+      "id": "p2.sourced-stats",
+      "state": "scored",
+      "points": 0,
+      "max": 7,
+      "evidence": "104 figures on 3 pages; 0 attributed in the same block or the next, 0 of them with a link. Of the 3 pages carrying three or more, 0 attribute most of theirs, 0 with a link.",
+      "tier_reason": "tier 1 of 4 — tier 2 (+3) needs: some are attributed",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#statistics-carry-a-source--7-pts--p2sourced-stats"
+    },
+    {
+      "id": "p2.named-author",
+      "state": "scored",
+      "points": 3,
+      "max": 6,
+      "evidence": "2 of 8 pages carry a personal byline; 0 link that name to a verifiable identity page.",
+      "tier_reason": "tier 2 of 3 — tier 3 (+3) needs: and the name links to a verifiable identity page",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#named-verifiable-authorship--6-pts--p2named-author"
+    },
+    {
+      "id": "p3.listings",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#third-party-listings--4-pts--p3listings"
+    },
+    {
+      "id": "p3.mentions",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#independent-mentions--4-pts--p3mentions"
+    },
+    {
+      "id": "p3.knowledge-graph",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "Brand read as «site text: As Seen on TV» (also tried «site text: Home», «site text: Asseenontv»). Entity found — Wikidata Q5707691 «site text: episode of SpongeBob SquarePants (S3 E7a…»; en.wikipedia: «site text: As seen on TV»",
+      "tier_reason": "tier 2 of 2 — top tier: an entry exists in Wikidata, Wikipedia, Baidu Baike or similar",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#knowledge-graph-entity--4-pts--p3knowledge-graph"
+    },
+    {
+      "id": "p3.sameas",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "No sameAs declared on the Organization entity.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: declared but some are dead",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#sameas-complete-and-resolving--3-pts--p3sameas"
+    },
+    {
+      "id": "p3.video",
+      "state": "scored",
+      "points": 0,
+      "max": 3,
+      "evidence": "0 pages declare VideoObject; 0 channel links and 0 embedded players in the sample.",
+      "tier_reason": "tier 1 of 3 — tier 2 (+2) needs: a channel exists but content is sparse",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#video-and-multimodal-presence--3-pts--p3video"
+    },
+    {
+      "id": "p4.answer-shape",
+      "state": "scored",
+      "points": 4,
+      "max": 4,
+      "evidence": "7 of 8 pages carry subheadings plus lists or tables, with paragraphs of workable length.",
+      "tier_reason": "tier 3 of 3 — top tier: subheadings, lists and tables with paragraphs of workable length",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#content-shaped-for-extraction--4-pts--p4answer-shape"
+    },
+    {
+      "id": "p4.question-coverage",
+      "state": "unobservable",
+      "reason": "Not observable without off-site search — run the Claude Code skill or score it by hand.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#coverage-of-the-questions-people-ask--4-pts--p4question-coverage"
+    },
+    {
+      "id": "p4.cn-engines",
+      "state": "unobservable",
+      "reason": "Site does not address the Chinese market — the check leaves the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#chinese-engine-readiness--2-pts--p4cn-engines"
+    },
+    {
+      "id": "b.llms-full",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#llms-fulltxt--2-pts--bllms-full"
+    },
+    {
+      "id": "b.ai-txt",
+      "state": "scored",
+      "points": 0,
+      "max": 2,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#aitxt--2-pts--bai-txt"
+    },
+    {
+      "id": "b.geo-link",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#geo-link-tags--1-pts--bgeo-link"
+    },
+    {
+      "id": "b.speakable",
+      "state": "scored",
+      "points": 0,
+      "max": 1,
+      "evidence": "Bonus check, outside the denominator.",
+      "doc_url": "https://github.com/jianruntech/geo-score/blob/v1.8.1/rubric/v1.1.md#speakable-markup--1-pts--bspeakable"
+    }
+  ],
+  "notes": [
+    "Scored by the geo-score CLI, which measures what a static fetch can observe. Checks needing off-site search or human judgement left the denominator."
+  ],
+  "access": {
+    "robots_paths": {
+      "robots_txt": "read",
+      "checked": 46,
+      "not_checked": 0,
+      "crawlers": 10,
+      "blocked": 0,
+      "one_rule": false,
+      "pages": [],
+      "read_differently": 0,
+      "differences": []
+    },
+    "server_links": {
+      "pages_searched": 9,
+      "home_links": 22,
+      "few_home_links": false,
+      "other_sampled": 7,
+      "home_links_to_sampled": 3,
+      "sitemap_urls": 43,
+      "sitemap_urls_linked": 2,
+      "unlinked_sitemap_urls": [
+        "https://asseenontv.com/articles/",
+        "https://asseenontv.com/contact/",
+        "https://asseenontv.com/privacy-policy/",
+        "https://asseenontv.com/terms-conditions/",
+        "https://asseenontv.com/10-luxurious-gifts-that-recent-college-grads-will-love/",
+        "https://asseenontv.com/post-travel-reset-13-products-to-help-you-get-your-body-and-finances-back-in-shape-after-an-epic-trip-abroad/",
+        "https://asseenontv.com/11-thoughtful-and-practical-birthday-gifts-that-virgo-moms-will-adore/",
+        "https://asseenontv.com/articles/treat-yourself-mama-12-luxurious-products-all-new-mothers-deserve-to-enjoy/",
+        "https://asseenontv.com/articles/7-products-that-can-make-running-your-own-small-business-so-much-easier/",
+        "https://asseenontv.com/birthday-gifts-for-libra-men/",
+        "https://asseenontv.com/articles/recommit-to-your-wellness-goals/",
+        "https://asseenontv.com/articles/toddler-days",
+        "https://asseenontv.com/articles/soothing-products-to-indulge-in-before-the-busy-back-to-school-season/",
+        "https://asseenontv.com/articles/9-uniquely-enchanting-birthday-gifts-to-delight-your-favorite-scorpio/",
+        "https://asseenontv.com/articles/crisp-air-vibrant-you-7-nourishing-products-to-inspire-your-health-wellness-routine-this-autumn/",
+        "https://asseenontv.com/articles/9-out-of-the-box-gift-ideas-for-the-wild-cards-in-your-life/",
+        "https://asseenontv.com/articles/8-products-that-will-make-your-return-to-work-after-the-holidays-a-breeze/",
+        "https://asseenontv.com/articles/13-products-that-can-help-you-prioritize-your-mental-and-physical-health-as-the-year-comes-to-a-close/",
+        "https://asseenontv.com/articles/post-spring-break-reset/",
+        "https://asseenontv.com/articles/spring-showers-survival-kit/",
+        "https://asseenontv.com/articles/style-spring-cleaning",
+        "https://asseenontv.com/articles/productivity-in-bloom",
+        "https://asseenontv.com/articles/sensible-splurges-7-practical-products-for-an-extra-dose-of-joy/",
+        "https://asseenontv.com/articles/how-to-host-the-ultimate-golden-bachelorette-viewing-party/",
+        "https://asseenontv.com/articles/16-unexpected-gifts-for-your-most-spontaneous-sagittarius/",
+        "https://asseenontv.com/articles/re-commit-to-work-life-balance/",
+        "https://asseenontv.com/articles/10-romantic-wellness-essentials/",
+        "https://asseenontv.com/articles/favorite-college-grad-gifts/",
+        "https://asseenontv.com/articles/thoughtful-gemini-gift-ideas/",
+        "https://asseenontv.com/articles/q3-recovery-tactics",
+        "https://asseenontv.com/articles/aunt-and-uncle-day-gifts/",
+        "https://asseenontv.com/articles/15-birthday-gifts-for-mom/",
+        "https://asseenontv.com/articles/new-girlfriends-guide-surviving-family-wedding/",
+        "https://asseenontv.com/articles/15-virgo-birthday-gifts/",
+        "https://asseenontv.com/articles/7-30th-birthday-gift-ideas/",
+        "https://asseenontv.com/articles/sagittariuss-birthday-gifts/",
+        "https://asseenontv.com/articles/scorpio-birthday-gift-ideas/",
+        "https://asseenontv.com/articles/7-it-girl-must-haves-for-2026/",
+        "https://asseenontv.com/articles/10-motivational-tools-will-help-you-crush-just-do-it-day-2026/",
+        "https://asseenontv.com/articles/10-wellness-habits-to-embrace-before-the-clocks-spring-forward/",
+        "https://asseenontv.com/articles/8-ways-modern-technology-can-improve-your-life-in-2026/"
+      ]
+    },
+    "hreflang": {
+      "pages_searched": 9,
+      "pages_with_hreflang": 0,
+      "annotations": 0,
+      "pages_with_link_header": 0,
+      "annotations_in_link_header": 0,
+      "pages": [],
+      "outside_head": 0,
+      "outside_head_pages": [],
+      "no_self_reference": 0,
+      "no_self_reference_pages": [],
+      "invalid_codes": 0,
+      "invalid": [],
+      "duplicate_codes": 0,
+      "duplicates": [],
+      "not_absolute": 0,
+      "not_absolute_hrefs": [],
+      "other_host": 0,
+      "other_host_hrefs": [],
+      "pairs_checked": 0,
+      "one_way": 0,
+      "one_way_pairs": [],
+      "targets_not_fetched": 0,
+      "not_read": 0
+    }
+  }
+}

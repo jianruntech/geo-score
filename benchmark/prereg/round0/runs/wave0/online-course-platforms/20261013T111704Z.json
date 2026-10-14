@@ -1,0 +1,1349 @@
+{
+ "format": "geo-score/watch.v1",
+ "tool": "geo-score-watch/1.8.1",
+ "channel": "api",
+ "run_id": "20261013T111704Z",
+ "started_at": "2026-10-13T11:17:04Z",
+ "finished_at": "2026-10-13T11:17:23Z",
+ "interrupted": false,
+ "brand": {
+  "name": "Alison",
+  "domains": [
+   "alison.com"
+  ],
+  "url_prefixes": [],
+  "aliases": []
+ },
+ "competitors": [
+  {
+   "name": "Codecademy",
+   "domains": [
+    "codecademy.com"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  },
+  {
+   "name": "edX",
+   "domains": [
+    "edx.org"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  },
+  {
+   "name": "iversity",
+   "domains": [
+    "iversity.org"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  },
+  {
+   "name": "Pluralsight",
+   "domains": [
+    "pluralsight.com"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  },
+  {
+   "name": "Shaw Academy",
+   "domains": [
+    "shawacademy.com"
+   ],
+   "url_prefixes": [],
+   "aliases": []
+  }
+ ],
+ "country": "US",
+ "runs": 8,
+ "engines": [
+  {
+   "id": "gemini",
+   "provider": "gemini",
+   "model": "gemini-2.5-flash",
+   "status": "measured",
+   "stopped": "engine_failed",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 12h42m36"
+  }
+ ],
+ "queries": [
+  {
+   "query_id": "q01",
+   "query": "What are the best websites for taking online courses?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q02",
+   "query": "Which online learning platforms offer certificates that employers recognize?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q03",
+   "query": "What are the best free online course websites?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q04",
+   "query": "I want to switch careers into data analysis but can't go back to college full time. Where can I learn online?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q05",
+   "query": "Our company needs to train employees in new software skills without sending them to classes. Which online course platforms work for teams?",
+   "intent_tier": "problem",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q06",
+   "query": "Which online course platform is best for a high school student preparing for college?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q07",
+   "query": "What online learning site is best for a working adult who wants university-level courses?",
+   "intent_tier": "persona",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q08",
+   "query": "How much do online course subscriptions cost per month?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q09",
+   "query": "Which online course platforms let you take courses for free and pay only for a certificate?",
+   "intent_tier": "pricing",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  },
+  {
+   "query_id": "q10",
+   "query": "Which websites offer the best online courses for learning to code?",
+   "intent_tier": "list",
+   "target_url": "",
+   "branded": "auto",
+   "brand_in_query": false,
+   "competitor_in_query": false
+  }
+ ],
+ "questions_hash": "92bea30841007feb022e3bd32dc029a126cb7123ebb5dd23591ea81604f8c98d",
+ "recorded": [
+  "spans",
+  "sources"
+ ],
+ "caps": {
+  "max_calls": 160,
+  "budget_usd": null
+ },
+ "ledger": {
+  "questions_asked": 3,
+  "api_requests": 0,
+  "http_attempts": 3,
+  "errors": 3,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "search_calls": 0,
+  "cost_usd": 0.0,
+  "unpriced_answers": 0,
+  "cost_complete": true
+ },
+ "samples": [
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 12h42m49"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 12h42m43"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 1,
+   "status": "error",
+   "error": "HTTP 429: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash\nPlease retry in 12h42m36"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 1,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 2,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 3,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 4,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 5,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 6,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 7,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q01",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q02",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q03",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q04",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q05",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q06",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q07",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q08",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q09",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  },
+  {
+   "query_id": "q10",
+   "engine": "gemini",
+   "run": 8,
+   "status": "skipped",
+   "skip_reason": "engine_failed"
+  }
+ ],
+ "notes": [
+  "API channel. Answers come from each provider's search-enabled API, which is not the consumer app. Compare runs with runs; never pool them with answers sampled by hand in the apps.",
+  "The same question gets different answers from one ask to the next, and answers to one question move together. Rates carry a 95% interval: Wilson when each question was answered once, a bootstrap over questions when a question has several answers. diff pairs the questions both runs answered and calls a change a change only when an exact paired test (McNemar, or a sign-flip test when a question has several answers), Holm-corrected across engines, says so (p < 0.05).",
+  "A question that names the brand invites an answer that cites it. Those questions are kept out of the headline rate and reported on a line of their own.",
+  "Engines without a key, calls that failed and calls skipped by a cap count as not measured, never as zero.",
+  "This measures citations. It does not predict traffic, rankings or revenue."
+ ],
+ "summary": {
+  "overall": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null,
+   "planned": 80,
+   "errors": 3,
+   "skipped": 77
+  },
+  "headline": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null
+  },
+  "branded": {
+   "answered": 0,
+   "cited": 0,
+   "cited_rate": null,
+   "cited_ci": null,
+   "cited_ci_clustered": null,
+   "n_questions": 0,
+   "mentioned": 0,
+   "mentioned_rate": null,
+   "question_ids": []
+  },
+  "brand_flags": "run",
+  "engines": [
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "id": "gemini",
+    "model": "gemini-2.5-flash",
+    "status": "measured",
+    "errors": 3,
+    "skipped": 77,
+    "avg_rank": null,
+    "with_citations": 0,
+    "with_searches": 0,
+    "searched_without_queries": 0,
+    "supported_share": {
+     "answers": 0,
+     "chars": null,
+     "sentences": null,
+     "weighted": null,
+     "above_zero": 0
+    },
+    "sources": {
+     "answers": 0,
+     "listed": 0,
+     "used": 0,
+     "used_rate": null,
+     "you_listed": 0,
+     "you_used": 0
+    },
+    "consistency": {
+     "questions": 0,
+     "answers": 0,
+     "pairs": 0,
+     "median": null,
+     "lowest": []
+    },
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   }
+  ],
+  "share_of_voice": [
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Alison",
+    "you": true,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Codecademy",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "edX",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "iversity",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Pluralsight",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   },
+   {
+    "answered": 0,
+    "cited": 0,
+    "cited_rate": null,
+    "cited_ci": null,
+    "cited_ci_clustered": null,
+    "n_questions": 0,
+    "mentioned": 0,
+    "mentioned_rate": null,
+    "name": "Shaw Academy",
+    "you": false,
+    "named_first": 0,
+    "any_named": 0,
+    "mention_share": null
+   }
+  ],
+  "top_sources": [],
+  "questions": {
+   "asked": 0,
+   "cited_somewhere": 0
+  },
+  "gaps": [],
+  "by_question": [
+   {
+    "query_id": "q01",
+    "query": "What are the best websites for taking online courses?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q02",
+    "query": "Which online learning platforms offer certificates that employers recognize?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q03",
+    "query": "What are the best free online course websites?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q04",
+    "query": "I want to switch careers into data analysis but can't go back to college full time. Where can I learn online?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q05",
+    "query": "Our company needs to train employees in new software skills without sending them to classes. Which online course platforms work for teams?",
+    "intent_tier": "problem",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q06",
+    "query": "Which online course platform is best for a high school student preparing for college?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q07",
+    "query": "What online learning site is best for a working adult who wants university-level courses?",
+    "intent_tier": "persona",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q08",
+    "query": "How much do online course subscriptions cost per month?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q09",
+    "query": "Which online course platforms let you take courses for free and pay only for a certificate?",
+    "intent_tier": "pricing",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   },
+   {
+    "query_id": "q10",
+    "query": "Which websites offer the best online courses for learning to code?",
+    "intent_tier": "list",
+    "branded": false,
+    "answered": 0,
+    "you": {
+     "cited": 0,
+     "mentioned": 0
+    },
+    "competitors": {
+     "Codecademy": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "edX": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "iversity": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Pluralsight": {
+      "cited": 0,
+      "mentioned": 0
+     },
+     "Shaw Academy": {
+      "cited": 0,
+      "mentioned": 0
+     }
+    },
+    "none_named": 0,
+    "searched": {
+     "yes": 0,
+     "no": 0,
+     "unknown": 0
+    },
+    "leader": null
+   }
+  ],
+  "tracked_pages": [],
+  "by_tier": [],
+  "searches": {
+   "answers_exposing": 0,
+   "top": [],
+   "answers_searched_without_queries": 0,
+   "modifiers": {
+    "total": 0,
+    "with_year": 0,
+    "with_ranking_word": 0
+   }
+  },
+  "notes": []
+ }
+}
