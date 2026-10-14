@@ -581,7 +581,7 @@ Five questions people ask, and where this repository answers each one:
 | Can anyone recompute it? | Yes: every check, tier and weight is published, so the same pages give the same score whoever runs it | [rubric/v1.1.md](rubric/v1.1.md) |
 | Does it match a person reading the same rubric? | 80% of 84 check pairs land in the same tier; only 5 sites, all of them calibration sites | [VALIDITY.md](benchmark/VALIDITY.md) |
 | Do the weights decide the ranking? | With equal weights, or 300 random perturbations of them, the rank correlation stays at 0.99 or above | [SENSITIVITY.md](benchmark/SENSITIVITY.md) |
-| Are higher-scoring sites cited more often by AI? | Being tested under a plan registered before any data was collected: 16 categories, 83 sites, two engines with web search. The result will be published whichever way it goes | [PREREGISTRATION.md](benchmark/PREREGISTRATION.md) |
+| Are higher-scoring sites cited more often by AI? | The preregistered test's first wave (2026-10-12 to 14; 16 categories, 83 sites, 1,280 answers from one engine): no association was detected (T = 0.07, p = 0.51); the design could detect a T at least as large as 0.29. Not detected is not the same as none | [RESULTS-wave0.md](benchmark/prereg/round0/RESULTS-wave0.md), [PREREGISTRATION.md](benchmark/PREREGISTRATION.md) |
 
 ## Why a rubric, not just a tool
 

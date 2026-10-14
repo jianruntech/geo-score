@@ -239,6 +239,31 @@ def headline(v, lang):
             "- " + full + "两个数不同，是因为审计者还给 %s 打了分，而 CLI 把这 %d 项退出了分母。" % ("、".join(judge), len(judge))]
 
 
+PREREG_RESULTS = os.path.join(HERE, "prereg", "round0", "results-wave0.json")
+# The plan's wording (section 11) in Chinese, keyed by the start of analysis.py's English sentence.
+PREREG_ZH = {"In this sample": "在这个样本里，就绪度更高的站，在本类别问题的答案里被引用得更多。",
+             "No association": "没有检出关系；这个设计能检出的 T 至少要有记录下来的检验力数字那么大%s。",
+             "Sites with higher": "就绪度更高的站被引用得更少。"}
+
+
+def prereg_result(lang):
+    """The preregistered test's latest result, quoted from its results file so the sentence cannot drift."""
+    if not os.path.exists(PREREG_RESULTS):
+        return ""
+    r = json.load(io.open(PREREG_RESULTS, encoding="utf-8"))
+    p1, n_eng = r["P1"], len([e for e in r["engines"] if e not in r["failed_engines"]])
+    first = r["wording"][0]
+    if lang == "en":
+        return (" Round 0's first wave has been analysed ([results](prereg/round0/RESULTS-wave0.md)): T = %.2f, p = %.2f, "
+                "over %d categories and %s. %s" % (p1["T"], p1["p"], p1["n_categories"],
+                                                  {1: "one engine"}.get(n_eng, "%d engines" % n_eng), first))
+    power = "（T = %.2f）" % r["power_T"] if r.get("power_T") is not None else ""
+    zh = next(v for k, v in PREREG_ZH.items() if first.startswith(k))
+    return ("第 0 轮第 0 波已经分析完（[结果](prereg/round0/RESULTS-wave0.zh-CN.md)）：T = %.2f，p = %.2f，%d 个类别、%s。%s"
+            % (p1["T"], p1["p"], p1["n_categories"], {1: "一家引擎"}.get(n_eng, "%d 家引擎" % n_eng),
+               zh % power if "%s" in zh else zh))
+
+
 def write_md(v):
     """VALIDITY.md and VALIDITY.zh-CN.md are generated from validity.json, so the prose cannot drift."""
     by = v["by_method"]
@@ -271,7 +296,7 @@ def write_md(v):
           "",
           "This compares the CLI with a human reading of the same rubric. Whether the readiness score goes with being "
           "cited is a separate question, set out before any data in the "
-          "[preregistered validation plan](PREREGISTRATION.md).",
+          "[preregistered validation plan](PREREGISTRATION.md)." + prereg_result("en"),
           "",
           "## Result",
           ""] + headline(v, "en") + [
@@ -311,7 +336,7 @@ def write_md(v):
           "（`--urls` 固定为审计的 `sampled_urls`），两边都打了分的检查项逐档比较，共 %d 对。" % (v["n_sites"], v["n_check_pairs"]),
           "",
           "这里比较的是 CLI 与人工按同一量表的读数。就绪度分数和被不被引用有没有关系是另一个问题，"
-          "在收集任何数据之前写定在[预注册的验证方案](PREREGISTRATION.zh-CN.md)里。",
+          "在收集任何数据之前写定在[预注册的验证方案](PREREGISTRATION.zh-CN.md)里。" + prereg_result("zh"),
           "",
           "## 结果",
           ""] + headline(v, "zh") + [

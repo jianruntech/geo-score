@@ -1045,6 +1045,31 @@ if os.path.exists("benchmark/results.json"):
                 check(g.get("d") in (None, day9), f"{f}: dates the leaderboard {g.get('d')}; results.json says {day9}")
                 check(g.get("n") in (None, str(n9)), f"{f}: says {g.get('n')} sites were scored; results.json has {n9}")
 
+
+# ── 40. The preregistered study's results quote its analysis output ──
+# The plan (section 12) wants a results page in both languages; it, the READMEs' accuracy row and VALIDITY carry
+# P1's figures, and each has to be what results-wave0.json, the analysis code's full output, says.
+_r40 = "benchmark/prereg/round0/results-wave0.json"
+if os.path.exists(_r40):
+    r40 = json.load(io.open(_r40, encoding="utf-8"))
+    p40 = r40["P1"]
+    m40 = lambda v, d=2: ("%.*f" % (d, v)).replace("-", "\u2212")
+    page_want = ["T = %.3f" % p40["T"], "p = %.3f" % p40["p"], "%.3f" % r40["power_T"], m40(p40["ci"][0]), m40(p40["ci"][1])]
+    for k in r40["holm_family"]:
+        page_want += ["%.3f" % r40[k]["T"], "%.3f" % r40[k]["p"], "%.3f" % r40[k]["p_holm"]]
+    for f, extra in (("benchmark/prereg/round0/RESULTS-wave0.md", r40["wording"][:1]),
+                     ("benchmark/prereg/round0/RESULTS-wave0.zh-CN.md", [])):
+        check(os.path.exists(f), f"{f}: missing; the plan (section 12) publishes the results in English and Chinese")
+        if os.path.exists(f):
+            t40 = io.open(f, encoding="utf-8").read()
+            miss = [w for w in page_want + extra if w not in t40]
+            check(not miss, f"{f}: figures not found that results-wave0.json gives: {miss}")
+    short = ["T = %.2f" % p40["T"], "p = %.2f" % p40["p"], "%.2f" % r40["power_T"]]
+    for f in ("README.md", "README.zh-CN.md", "benchmark/VALIDITY.md", "benchmark/VALIDITY.zh-CN.md"):
+        t40 = io.open(f, encoding="utf-8").read()
+        miss = [w for w in short + ["RESULTS-wave0"] if w not in t40]
+        check(not miss, f"{f}: the preregistered result must quote results-wave0.json and link its page; missing {miss}")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

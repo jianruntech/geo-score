@@ -532,7 +532,7 @@ Read this before quoting the numbers
 | 别人能不能复算？ | 能：每一项检查、每一档、每个权重都公开，同样的页面谁跑都是同一个分 | [量表 v1.1](rubric/v1.1.zh-CN.md) |
 | 和人按同一套规则打分对得上吗？ | 84 对检查项里 80% 档位一致；只有 5 个站，而且都是校准用的站 | [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md) |
 | 排名是不是权重说了算？ | 换成等权，或把权重随机扰动 300 次，排名的秩相关都在 0.99 以上 | [SENSITIVITY.zh-CN.md](benchmark/SENSITIVITY.zh-CN.md) |
-| 分数高的站是不是更常被 AI 引用？ | 正按收集数据之前就登记的方案检验：16 个类别、83 个站、两家开联网搜索的 AI。结果不论好坏都公开 | [PREREGISTRATION.zh-CN.md](benchmark/PREREGISTRATION.zh-CN.md) |
+| 分数高的站是不是更常被 AI 引用？ | 预注册检验的第一波（2026-10-12 至 14 日；16 个类别、83 个站、一家 AI 的 1,280 个回答）：没有检出关系（T = 0.07，p = 0.51）；这个设计能检出的 T 至少要有 0.29。没检出不等于没有 | [RESULTS-wave0.zh-CN.md](benchmark/prereg/round0/RESULTS-wave0.zh-CN.md)、[PREREGISTRATION.zh-CN.md](benchmark/PREREGISTRATION.zh-CN.md) |
 
 ## 为什么发布口径，而不只发工具
 

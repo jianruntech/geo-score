@@ -7,7 +7,7 @@ English: [VALIDITY.md](VALIDITY.md)
 
 [examples/audits/v1.1](../examples/audits/v1.1/) 里公开的 5 份人工审计，逐一用 CLI 在相同页面上重评（`--urls` 固定为审计的 `sampled_urls`），两边都打了分的检查项逐档比较，共 84 对。
 
-这里比较的是 CLI 与人工按同一量表的读数。就绪度分数和被不被引用有没有关系是另一个问题，在收集任何数据之前写定在[预注册的验证方案](PREREGISTRATION.zh-CN.md)里。
+这里比较的是 CLI 与人工按同一量表的读数。就绪度分数和被不被引用有没有关系是另一个问题，在收集任何数据之前写定在[预注册的验证方案](PREREGISTRATION.zh-CN.md)里。第 0 轮第 0 波已经分析完（[结果](prereg/round0/RESULTS-wave0.zh-CN.md)）：T = 0.07，p = 0.51，14 个类别、一家引擎。没有检出关系；这个设计能检出的 T 至少要有记录下来的检验力数字那么大（T = 0.29）。
 
 ## 结果
 
