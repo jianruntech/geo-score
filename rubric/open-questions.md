@@ -218,3 +218,143 @@ nothing to attribute, so nothing is missing, but nothing is shown either.
 (`not_applicable`), as `p1.breadcrumb` does when no nested page is sampled? For: 3 of 7 for a sample
 without figures is a reading of nothing. Against: a site that states no figures makes no claim a reader
 has to check, and the rubric does not score the absence of a claim as a gap. Nothing changes in v1.1.
+
+---
+
+## Candidate diagnostics: reported, never scored (proposed 2026-10-15)
+
+Five observations we are considering for the report's [Outside the score](../cli/README.md#outside-the-score)
+block, where the page-by-page robots.txt reading, the links in the server HTML and hreflang already sit. They are
+recorded here before any code exists, so the design can be argued in the open.
+
+Every one of them follows the rules that block already keeps:
+
+- **No tier, point or band reads it.** Rubric v1.1 does not change, and no score moves. Making any of them a check
+  would be a rubric change, argued like the open questions above and released as a new rubric version.
+- **It ships in a normal release, with offline tests:** a fixture site for each reading below, and a test that the
+  score is identical with and without the observation, as the hreflang and robots.txt observations have.
+- **A request it needs is added on purpose.** Candidates 12 (its first two readings), 15 and 16 read pages the run
+  already fetched. Candidates 12 (its third reading), 13 and 14 need a few requests of their own, which raises the
+  request budget that `test_no_request_is_sent_twice` holds the good fixture to ([AGENTS.md](../AGENTS.md)).
+- **A threshold is ours, and adjustable.** Where a candidate warns above a number that no vendor publishes, the
+  report says so, and the number is a flag a user can change.
+
+| # | Candidate | New requests | Basis |
+|:-:|---|:-:|---|
+| 12 | canonical: missing, all pointing at the homepage, or not stripping a tracking parameter | 0, then 1 | Vendor documentation |
+| 13 | Soft 404: a random path answers 200 | 2 | Vendor documentation |
+| 14 | The homepage redirects by language | 2 | Vendor documentation |
+| 15 | The same plan shows different prices on two pages | 0 | Field observation |
+| 16 | Homepage HTML weight (lower priority) | 0, more for resources | Vendor documentation and field observation |
+
+### 12 · canonical
+
+**What it would report.** Three readings of the canonical URL, from the `<link rel="canonical">` element in the
+server HTML and from a `Link` header:
+
+1. Sampled pages that declare no canonical at all.
+2. A sample in which every page declares the homepage as its canonical, though the pages are different URLs with
+   different content.
+3. The homepage, requested again with `?utm_source=chatgpt.com` appended, declaring a canonical that still carries
+   the parameter, rather than the clean URL. A redirect to the clean URL is a pass.
+
+**Basis.** Google lists a `rel="canonical"` annotation as a strong signal for which of several duplicate URLs
+becomes canonical ([consolidating duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls)).
+OpenAI's publisher FAQ says ChatGPT search adds `utm_source=chatgpt.com` to the links it sends
+([Publishers and developers FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq)), so a
+page cited there is also reached under a second URL. A canonical that points every page at the homepage tells a
+crawler that the inner pages are copies of it.
+
+**False-positive risk: moderate.** A canonical inserted by JavaScript is not in the server HTML: the report would say
+"not in the server HTML", never "missing". A site that is genuinely one page, pages of a series that point to a view
+of the whole series, and a canonical to another host during a migration or for syndicated copies are deliberate.
+A cache keyed on the query string can answer the parameter request differently from the clean one for reasons
+unrelated to the page.
+
+**How to test it.** Fixture sites: canonicals per page (clean); every page pointing at `/`; a page that echoes the
+query string into its canonical; a parameter URL that redirects to the clean one; a canonical sent only in the
+`Link` header. By hand: request the homepage with `?utm_source=chatgpt.com` and read the `rel="canonical"` line
+of the HTML it returns.
+
+### 13 · Soft 404
+
+**What it would report.** Two random paths that nothing links to, requested once each: whether they answer 404 or
+410, redirect to the homepage, or answer 200 with an HTML page. Both answering 200 is the reading.
+
+**Basis.** Google defines a soft 404 as a URL that returns a page telling the user the page does not exist, with a
+200 status, and says such pages are excluded from Search
+([soft 404 errors](https://developers.google.com/search/docs/crawling-indexing/troubleshoot-crawling-errors#soft-404-errors)).
+A site that answers every path with 200 also makes a mistyped link in a sitemap or an answer look like a real page.
+The CLI already meets this at one path: `p1.llms-txt` reads a 200 HTML answer at `/llms.txt` as a catch-all route,
+not a file.
+
+**False-positive risk: moderate.** A bot challenge served on an unknown path is not a page, and the existing
+challenge detection would have to run first. A single-page app that renders its "not found" view in the browser
+answers 200 by design: that is the reading, but the report should say it is an app shell. A rate limit can answer
+a probe with an error page. Two paths, and a reading only when both agree, keep one odd answer from deciding it.
+
+**How to test it.** Fixture sites: a real 404; a catch-all that answers 200; a redirect of unknown paths to the
+homepage; a challenge page on unknown paths. By hand: request a path such as `/this-page-should-not-exist-7f3a` and
+read the status code alone.
+
+### 14 · The homepage redirects by language
+
+**What it would report.** The homepage requested with two other `Accept-Language` values besides the one every run
+already sends (`en,zh;q=0.8`): whether the final URLs differ. A redirect that is the same for every language (the
+root always going to `/en/`) is not this reading.
+
+**Basis.** Google says Googlebot's requests usually come from US addresses and do not set `Accept-Language`, so it
+may not find every language version, and advises against redirecting visitors automatically by their perceived
+language ([multi-regional and multilingual sites](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites),
+[locale-adaptive pages](https://developers.google.com/search/docs/specialty/international/locale-adaptive-pages)).
+A retrieval crawler that lands on one language version may never see the others. The CLI already records where a
+request landed when a site hands back a different origin, which is the same effect seen from one header.
+
+**False-positive risk: moderate, and a blind spot.** A redirect by IP address cannot be seen from one vantage: the
+report can say what the auditor's address got, never what a crawler elsewhere gets. Content negotiated at the same
+URL, without a redirect, is a different reading (`Vary: Accept-Language`), and a consent or region wall can redirect
+for reasons that have nothing to do with language.
+
+**How to test it.** Fixture sites: a redirect chosen by `Accept-Language`; a redirect to `/en/` for every request;
+one URL whose content varies by the header with no redirect. By hand: request the homepage twice, with
+`Accept-Language: de` and with `Accept-Language: en`, and compare the `Location` headers.
+
+### 15 · The same plan shows different prices on two pages
+
+**What it would report.** A plan or product name that appears with different amounts, in the same currency and the
+same billing period, on two sampled pages (the pricing page and a documentation or FAQ page, say), quoting both
+amounts and both pages.
+
+**Basis: field observation.** An answer engine summarises the page it retrieved. When two pages of one site disagree,
+two answers to the same question disagree, and the engine has no way to tell which is current. No vendor documents
+this as a factor in citation. The CLI already recognises a price as a price (`p2.sourced-stats` excludes prices from
+the figures it counts, [question 11](#11--a-sample-with-few-figures-3-of-7-or-not-applicable-open-for-v12)).
+
+**False-positive risk: high,** which is why it would quote the two passages and never conclude. Monthly and yearly
+billing, regional prices and currencies, a struck-through old price beside a new one, tax included or not, per seat
+or flat, volume tiers, a dated price in a changelog or a blog post, and a price in a worked example all look like a
+disagreement and are not. An eight-page sample also rarely holds two pages that price the same plan, so a clean
+reading says little.
+
+**How to test it.** Fixture sites: consistent prices; one real disagreement; a monthly and yearly pair; a
+struck-through old price. By hand: list each plan's price on every page that states one.
+
+### 16 · Homepage HTML weight (lower priority)
+
+**What it would report.** The size of the homepage's HTML as served and after decompression, and, at a later stage,
+the sizes of the stylesheets and scripts its `<head>` references, with a warning above a threshold.
+
+**Basis.** Google documents that, when crawling for Google Search, Googlebot reads the first 2 MB of a supported
+file type and fetches each referenced resource separately, under the same limit
+([Googlebot](https://developers.google.com/search/docs/crawling-indexing/googlebot), read 2026-10-15). Content past the
+limit is not read. Practitioners also report sites dropping out of a search index after their pages grew to many
+megabytes; that is anecdote, no vendor publishes a number for it, and any warning below the documented limit would be
+a practitioners' rule of thumb: adjustable, and not a vendor figure.
+
+**False-positive risk: low for the measurement, high for the warning.** The size depends on the user agent and on
+compression; inline SVG, fonts and data URIs inflate HTML for legitimate reasons; a large serialised state object
+is a real cost, but not an error. Measuring resources needs one request each, so it would be capped.
+
+**How to test it.** Fixture sites: a small page; a page with a large inline data block above the threshold; the
+same page served gzip-encoded, where the decoded size is the one that counts. By hand: download the homepage with
+decompression on and count its bytes.
