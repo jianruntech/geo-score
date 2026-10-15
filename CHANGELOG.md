@@ -20,6 +20,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   404, a homepage that redirects by language, the same plan priced differently on two pages, and the homepage's HTML
   weight. Each states its basis, its false-positive risk, its fixtures and how to check it by hand. Rubric v1.1 and every
   score are unchanged; implementing one is a normal release, outside the score.
+- **Two public examples: a robots.txt that lets the ten retrieval crawlers in, and an Organization and WebSite
+  JSON-LD object** (`guide/public-examples.md` + zh). They are public knowledge (vendor crawler names, schema.org
+  vocabulary), the one exception to "remediation is private"; no other fix template is published.
+  `scripts/test_public_examples.py` reads both with the CLI's own code (g.robots' top tier; the fields
+  p1.organization reads), and validate.py rule 2 allows one JSON code block on those two pages and nowhere else.
 
 ### Changed
 - **The READMEs open with what geo-score is and who makes it:** an open-source AI visibility (GEO) scorer for

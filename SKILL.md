@@ -17,7 +17,9 @@ and you report a 0–100 score against a published rubric.
 describe *what* is failing and *why it matters for retrieval* — but do not write
 fix templates, JSON-LD blocks, `llms.txt` boilerplate or rewritten copy. That is
 out of scope for this skill. Say so plainly and point to
-`README.md#scope--what-this-does-not-do`.
+`README.md#scope--what-this-does-not-do`. The one exception is public knowledge the
+repository already publishes: for a robots.txt that lets retrieval crawlers in, or an
+Organization JSON-LD object, point to `guide/public-examples.md` and write nothing beyond it.
 
 ## Commands
 

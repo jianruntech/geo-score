@@ -15,6 +15,10 @@
 - **五项只报告、不计分的候选诊断先写成文字，再写代码**（rubric/open-questions.md 含中文，第 12 至 16 条）：canonical
   （没有、全部指向首页、或保留 `utm_source=chatgpt.com`）、软 404、首页按语言跳转、同一个套餐在两页上价格不同、首页 HTML 体积。
   每一项写明依据、误报风险、样例站和手工怎么查。量表 v1.1 和所有分数不变；实现其中任何一项走正常发版，放在分数之外。
+- **两个公开样例：放行 10 个检索爬虫的 robots.txt，和 Organization 加 WebSite 的 JSON-LD**（`guide/public-examples.md` 含中文）。
+  它们是公开常识（厂商公布的爬虫名、schema.org 词汇），是「修复不开源」的唯一例外；不发布别的修复模板。
+  `scripts/test_public_examples.py` 用 CLI 自己的代码读这两个样例（g.robots 最高档；p1.organization 读的字段），
+  validate.py 第 2 条只在这两页放行一个 JSON 代码块。
 
 ### 变更
 - **两份 README 开头先说 geo-score 是什么、谁出品：** 开源的网站 AI 可见度（GEO）打分工具，见润科技出品，由 geo-watch 并入

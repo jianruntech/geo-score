@@ -43,7 +43,7 @@ merges unless it passes.
 | `benchmark/test_benchmark.py` | Offline tests for the benchmark scripts |
 | `benchmark/PREREGISTRATION.md`, `benchmark/prereg/` | The preregistered validation plan; its analysis code (`analysis.py`, tested on synthetic rounds by `test_analysis.py`) and each round's frozen categories, questions, configs and VM scripts |
 | `rubric/bands-analysis.md` | Where the v1.1 band cuts fall in the benchmark: a dated record of one run, with candidates for v1.2 |
-| `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics and the MCP guide, in English and Chinese |
+| `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics, the MCP guide, and the two public examples (`public-examples.md`), in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
 | `guide/stability.md` | What is a public contract and what semver means here |
 | `.github/RELEASING.md`, `scripts/release.py` | How a release is cut, pinned, checksummed and published to PyPI |
@@ -52,7 +52,7 @@ merges unless it passes.
 
 | Rule | Enforced by |
 |---|---|
-| **Measurement is public, remediation is private.** No fix templates, no markup to paste, no implementation fields in the rubric | `validate.py` rules 2 and 10 |
+| **Measurement is public, remediation is private.** No fix templates, no markup to paste, no implementation fields in the rubric. The one exception is `guide/public-examples.md` (+ zh): a robots.txt and an Organization JSON-LD object, public knowledge, read by the CLI's own code | `validate.py` rules 2 and 10; `scripts/test_public_examples.py` |
 | **Not measured is never zero.** A check the tool cannot observe leaves the denominator; an engine without a key is "not measured" | `test_geo_score.py` (excluded checks), fixture `expected.json` nulls, `test_geo_watch.py` |
 | **The CLI implements the published rubric.** Check ids, points, every tier's points and wording, bands and caps equal `rubric/v1.1.json` | `test_geo_score.py` rubric parity; `validate.py` rules 1 and 9 |
 | **Check ids are permanent and schemas grow only.** Add optional fields; never rename, remove or retype one | `validate.py` rule 11; `guide/stability.md`; the e2e schema test |

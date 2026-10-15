@@ -607,7 +607,7 @@ This is the part most tools leave out, so it's stated plainly.
 
 | Not included | Why |
 |---|---|
-| Fix templates — `robots.txt`, JSON-LD blocks, `llms.txt` boilerplate | Remediation is where the actual work and judgement live. It is a separate, non-open project |
+| Fix templates — `robots.txt`, JSON-LD blocks, `llms.txt` boilerplate, beyond [two public-knowledge examples](guide/public-examples.md) (a `robots.txt` that lets retrieval crawlers in, an Organization JSON-LD object) | Remediation is where the actual work and judgement live. It is a separate, non-open project |
 | Content rewriting — how to shape a passage so it gets quoted | Same |
 | Per-engine tactics — what to do differently for Perplexity vs Gemini | Same |
 | A remediation roadmap | Same |
@@ -716,7 +716,7 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 | [`rubric/`](rubric/) | The rubric ([v1.1](rubric/v1.1.md) and its JSON), the evidence behind each weight, calibration, band analysis and open questions |
 | [`benchmark/`](benchmark/) | The 324-site leaderboard: results, one raw report per site, the preregistration, reproducibility and validity records |
 | [`docs/`](docs/) | The GitHub Pages copy of the leaderboard, `llms.txt` and the badge at the top of this page |
-| [`guide/`](guide/) | MCP setup, troubleshooting, the glossary, watch methodology and the [stability policy](guide/stability.md) |
+| [`guide/`](guide/) | MCP setup, troubleshooting, the glossary, watch methodology, the [stability policy](guide/stability.md) and [two public examples](guide/public-examples.md) |
 | [`reference/`](reference/) | Background the checks rely on: known AI crawlers, and which sources each platform draws from |
 | [`schema/`](schema/) | JSON Schemas for reports, diffs, errors and watch files |
 | [`examples/`](examples/) | A sample report, the published hand audits and CI workflows |

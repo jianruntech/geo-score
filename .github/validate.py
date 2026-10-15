@@ -22,6 +22,9 @@ for r in sorted(LEGACY & set(rub)):
 
 # 2 · scope rule — no fix templates anywhere in the public repo
 # build output (dist/, build/) is gitignored and not part of the repository's documents
+# One exception, decided 2026-10-15: two public-knowledge examples (a robots.txt and an Organization JSON-LD
+# object) in guide/public-examples.md (+ zh). Nothing else there is a template, and nothing else is exempt.
+PUBLIC_EXAMPLES = ("./guide/public-examples.md", "./guide/public-examples.zh-CN.md")
 SKIP_DIRS = (".git", "node_modules", "dist", "build", "__pycache__", ".venv")
 for root, dirs, files in os.walk("."):
     dirs[:] = [d for d in dirs if d not in SKIP_DIRS + (".github",)]
@@ -34,7 +37,11 @@ for root, dirs, files in os.walk("."):
         # config and data legitimately live.
         langs = ("typescript", "javascript", "jsonld", "html", "python")
         JSON_OK = ("./rubric", "./schema", "./benchmark", "./cli", "./examples/ci")
-        if not (root.startswith(JSON_OK) or p in ("./.github/CONTRIBUTING.md",)):
+        if p in PUBLIC_EXAMPLES:
+            # the one exception: a single ```json block, the Organization example, which
+            # scripts/test_public_examples.py holds to an Organization and a WebSite
+            check(s.count("```json") == 1, f"{p}: carries exactly one ```json block, the Organization example")
+        elif not (root.startswith(JSON_OK) or p in ("./.github/CONTRIBUTING.md",)):
             langs = langs + ("json",)
         for lang in langs:
             check(f"```{lang}" not in s,
@@ -349,7 +356,7 @@ EN_PRIMARY = ["README.md", "SKILL.md", "CHANGELOG.md", ".github/CONTRIBUTING.md"
 for r in MODERN:
     EN_PRIMARY += [f"rubric/{r}", f"rubric/{r[:-3].replace('v', 'calibration-v')}.md",
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
-EN_PRIMARY += ["AGENTS.md", "guide/stability.md", "guide/troubleshooting.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
+EN_PRIMARY += ["AGENTS.md", "guide/stability.md", "guide/troubleshooting.md", "guide/public-examples.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
                "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md", "benchmark/PREREGISTRATION.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译

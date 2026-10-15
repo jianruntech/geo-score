@@ -75,7 +75,8 @@ generated file: the next generator run overwrites it.
 
 - **Fix templates, content rewriting rules, remediation playbooks.** This repository is
   scoped to measurement — see [Scope](../README.md#scope--what-this-does-not-do). This is a
-  scope decision, not a judgement on the contribution.
+  scope decision, not a judgement on the contribution. The two public-knowledge examples in
+  [guide/public-examples.md](../guide/public-examples.md) are the one exception, and it will not grow.
 - **Checks that cannot be observed from outside the site.** If verifying it requires
   access to an engine's internals or to private analytics, it can't be part of a rubric
   anyone can run.

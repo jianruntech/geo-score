@@ -557,7 +557,7 @@ Read this before quoting the numbers
 
 | 不包含 | 为什么 |
 |---|---|
-| 修复模板 —— `robots.txt`、JSON-LD 代码块、`llms.txt` 样板 | 修复才是真正需要工作量和判断的地方，那是另一个不开源的项目 |
+| 修复模板 —— `robots.txt`、JSON-LD 代码块、`llms.txt` 样板；只有[两个公开常识样例](guide/public-examples.zh-CN.md)例外（放行检索爬虫的 `robots.txt`、Organization JSON-LD） | 修复才是真正需要工作量和判断的地方，那是另一个不开源的项目 |
 | 内容改写 —— 怎么把一段话写成会被引用的样子 | 同上 |
 | 分平台打法 —— 对 Perplexity 和对 Gemini 该分别怎么做 | 同上 |
 | 改造路线图 | 同上 |
@@ -655,7 +655,7 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 | [`rubric/`](rubric/) | 评分口径本身（[v1.1](rubric/v1.1.zh-CN.md) 及其 JSON）、每项权重的依据、校准记录、分数段分析和待定问题 |
 | [`benchmark/`](benchmark/) | 324 站公开榜单：结果、每个站一份原始报告、预注册、可重复性与效度记录 |
 | [`docs/`](docs/) | 榜单的 GitHub Pages 副本、`llms.txt`，以及本页顶部的徽章 |
-| [`guide/`](guide/) | MCP 配置、排查指南、术语表、watch 方法说明和[稳定性约定](guide/stability.md) |
+| [`guide/`](guide/) | MCP 配置、排查指南、术语表、watch 方法说明、[稳定性约定](guide/stability.md)和[两个公开样例](guide/public-examples.zh-CN.md) |
 | [`reference/`](reference/) | 检查项依赖的背景资料：已知的 AI 爬虫，各平台从哪些来源取材 |
 | [`schema/`](schema/) | 报告、对比、错误和 watch 文件的 JSON Schema |
 | [`examples/`](examples/) | 示例报告、公开的人工审计和 CI 工作流 |
