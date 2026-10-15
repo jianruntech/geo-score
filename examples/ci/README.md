@@ -31,7 +31,7 @@ Level 1 is a single file with no dependencies and a machine-readable mode, so an
 works. Download the CLI and the checksums from a pinned release, check the file, then score once:
 
 ```bash
-rel=https://github.com/jianruntech/geo-score/releases/download/v1.8.2
+rel=https://github.com/jianruntech/geo-score/releases/download/v1.8.3
 curl -sSfLO "$rel/geo_score.py"
 curl -sSfLO "$rel/SHA256SUMS"
 grep ' geo_score\.py$' SHA256SUMS > geo_score.py.sha256 && sha256sum -c geo_score.py.sha256 &&

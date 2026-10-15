@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [1.8.3] — 2026-10-15
+
+计分不变：两个 CLI 文件和 1.8.2 相比只改了 `__version__`，量表 v1.1、每一项检查、档位和权重，以及榜单（用 1.5.0 测）都和原来一样。
+这一版加的是第 0 轮的结果和文档。
+
 ### 新增
 - **预注册研究第 0 轮：第 0 波的结果。** 2026-10-12 至 14 日收集，用收集之前定下的代码分析：没有检出就绪度和被引用之间的关系
   （P1：T = 0.07，95% 区间 −0.19 到 0.34，p = 0.51，14 个类别）；这个设计能检出的 T 至少要有 0.29。S1、S2、S4 经 Holm 校正
@@ -30,6 +35,12 @@
 - **两份 README 开头先说 geo-score 是什么、谁出品：** 开源的网站 AI 可见度（GEO）打分工具，见润科技出品，由 geo-watch 并入
   （geo-watch 在 1.2.0 并入）。CITATION.cff 加了同样的摘要和旧名。pyproject.toml 的 description（PyPI 上的包摘要）也这样写；
   PyPI 显示的是它所发布那个版本的摘要，所以要随下一版发布才在 PyPI 上生效。
+
+### 移除
+- **第 0 轮公开的运行文件里不再有 Gemini 的接地回答。** Gemini API 关于「Google 搜索接地」的条款不允许存储、转载或分析
+  接地结果，所以 `benchmark/prereg/round0/redact_gemini.py` 从 Gemini 的 70 个回答里删掉了回答原文、链接、搜索词和由它们
+  算出的一切，只保留每次请求的题号、状态、用量和用时。这些回答本来就没进分析（Gemini 的每次运行都因免费档额度停止），
+  所以结果不变；两份结果页都写明删了什么、为什么删。
 
 ## [1.8.2] — 2026-10-12
 
@@ -942,7 +953,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.2...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.3...HEAD
+[1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0

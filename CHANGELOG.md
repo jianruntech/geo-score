@@ -5,6 +5,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.8.3] — 2026-10-15
+
+Scoring is unchanged: the two CLI files differ from 1.8.2 only in `__version__`, so rubric v1.1, every check, tier
+and weight, and the leaderboard (measured with 1.5.0) are as they were. This release adds round 0's results and
+documentation.
+
 ### Added
 - **Round 0 of the preregistered study: wave 0's results.** Collected 2026-10-12 to 14 and analysed with the code
   fixed before collection: no association was detected between readiness and being cited (P1: T = 0.07, 95% interval
@@ -39,6 +45,14 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   websites, by Jianrun Tech, formerly geo-watch (geo-watch merged into it in 1.2.0). CITATION.cff carries the same
   abstract and the old name. pyproject.toml's description, the package's summary on PyPI, says so too; PyPI shows the
   summary of the version it serves, so it changes there with the next release.
+
+### Removed
+- **Gemini's grounded answers are out of round 0's published run files.** The Gemini API terms for Grounding with
+  Google Search do not allow storing, republishing or analysing grounded results, so
+  `benchmark/prereg/round0/redact_gemini.py` removed the answer text, links, search queries and everything computed
+  from them from Gemini's 70 answers, keeping each request's question, status, usage and timing. None of those answers
+  entered the analysis (every Gemini run stopped on the free tier's quota), so the results are unchanged; both results
+  pages say what was removed and why.
 
 ## [1.8.2] — 2026-10-12
 
@@ -1447,7 +1461,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.2...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.3...HEAD
+[1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/jianruntech/geo-score/compare/v1.7.1...v1.8.0

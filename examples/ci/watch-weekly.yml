@@ -24,7 +24,7 @@ jobs:
       - name: Fetch geo-score (pinned to a release, checksums verified)
         id: fetch
         run: |
-          rel=https://github.com/jianruntech/geo-score/releases/download/v1.8.2
+          rel=https://github.com/jianruntech/geo-score/releases/download/v1.8.3
           curl -sSfL -o geo_score.py "$rel/geo_score.py"
           curl -sSfL -o geo_watch.py "$rel/geo_watch.py"
           curl -sSfL -o SHA256SUMS "$rel/SHA256SUMS"

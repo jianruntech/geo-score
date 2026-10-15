@@ -7,13 +7,13 @@
 `geo_watch.py` 放在它旁边。
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.2/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.3/cli/geo_score.py \
   | python3 - yoursite.com
 ```
 
-三级都在 PyPI 上的同一个包里：`uvx geo-score@1.8.2 yoursite.com` 不安装直接运行，`pipx install geo-score==1.8.2`
+三级都在 PyPI 上的同一个包里：`uvx geo-score@1.8.3 yoursite.com` 不安装直接运行，`pipx install geo-score==1.8.3`
 装好 `geo-score` 和 `geo-score-mcp` 两个命令。访问不了 PyPI 时，发布的 wheel 包用法一样：
-`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.2/geo_score-1.8.2-py3-none-any.whl`。
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.3/geo_score-1.8.3-py3-none-any.whl`。
 
 ## <a id="options"></a>参数
 
@@ -412,7 +412,7 @@ Perplexity 未标注来源现在留在这里；`citations` 和 `cited` 的读法
 算 Jaccard 重合度，按问题取平均，再取各问题的中位数），并列出最不一致的问题。不带引用的回答不计入；每题只问一次时写「未测量」。
 只是描述，`watch diff` 不读它。JSON：`summary.engines` 每行的 `consistency`。细节见[guide/watch-methodology.zh-CN.md 第 8 节](../guide/watch-methodology.zh-CN.md#8-一次提问一天一个月)。
 
-**通过 MCP 使用。** `uvx geo-score@1.8.2 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
+**通过 MCP 使用。** `uvx geo-score@1.8.3 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见
 [guide/mcp.zh-CN.md](../guide/mcp.zh-CN.md)。
