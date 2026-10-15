@@ -19,6 +19,10 @@
   它们是公开常识（厂商公布的爬虫名、schema.org 词汇），是「修复不开源」的唯一例外；不发布别的修复模板。
   `scripts/test_public_examples.py` 用 CLI 自己的代码读这两个样例（g.robots 最高档；p1.organization 读的字段），
   validate.py 第 2 条只在这两页放行一个 JSON 代码块。
+- **两篇给读者的指南**（中英文，README 有链接）：`guide/chatgpt-access.md`，怎么检查 ChatGPT 能不能读到一个网站，
+  先手工查（robots.txt、以 `OAI-SearchBot`、`ChatGPT-User` 和浏览器的身份请求页面、正文在不在服务器 HTML 里、网站前面那一层），
+  再用 geo-score 查；`guide/vs-ai-seo-skills.md`，带程序的公开量表和通用 AI SEO 技能有什么不同，不点名任何别的项目。
+  `scripts/test_public_examples.py` 确认指南里的 user-agent 字符串和 CLI 发的一致。
 
 ### 变更
 - **两份 README 开头先说 geo-score 是什么、谁出品：** 开源的网站 AI 可见度（GEO）打分工具，见润科技出品，由 geo-watch 并入

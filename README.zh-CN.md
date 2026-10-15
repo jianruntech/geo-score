@@ -205,6 +205,9 @@ Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp
 一个 JSON-LD 块、模板里的一个日期、把一段话改写成能独立成立的样子。
 难的是知道自己缺了哪几项，以及每一项值多少分。
 
+从这里开始的两篇指南：[ChatGPT 能不能读到你的网站？](guide/chatgpt-access.zh-CN.md)，先手工查、再用 geo-score 查；
+以及 [geo-score 和通用 AI SEO 技能有什么不同](guide/vs-ai-seo-skills.zh-CN.md)。
+
 ## 查什么
 
 21 项阶梯式检查合计 100 分，另有 4 项加分检查、不进分母、最多 +6。
@@ -655,7 +658,7 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 | [`rubric/`](rubric/) | 评分口径本身（[v1.1](rubric/v1.1.zh-CN.md) 及其 JSON）、每项权重的依据、校准记录、分数段分析和待定问题 |
 | [`benchmark/`](benchmark/) | 324 站公开榜单：结果、每个站一份原始报告、预注册、可重复性与效度记录 |
 | [`docs/`](docs/) | 榜单的 GitHub Pages 副本、`llms.txt`，以及本页顶部的徽章 |
-| [`guide/`](guide/) | MCP 配置、排查指南、术语表、watch 方法说明、[稳定性约定](guide/stability.md)和[两个公开样例](guide/public-examples.zh-CN.md) |
+| [`guide/`](guide/) | MCP 配置、排查指南、术语表、watch 方法说明、[稳定性约定](guide/stability.md)、[两个公开样例](guide/public-examples.zh-CN.md)，以及怎么查 [ChatGPT 能不能读到一个网站](guide/chatgpt-access.zh-CN.md) |
 | [`reference/`](reference/) | 检查项依赖的背景资料：已知的 AI 爬虫，各平台从哪些来源取材 |
 | [`schema/`](schema/) | 报告、对比、错误和 watch 文件的 JSON Schema |
 | [`examples/`](examples/) | 示例报告、公开的人工审计和 CI 工作流 |

@@ -11,6 +11,8 @@ they are public knowledge. They are held to that here:
   group of its own, and repeats the * group's Disallow lines there (RFC 9309: a named group replaces *);
 - the JSON is an Organization and a WebSite and nothing else, and jsonld() finds an Organization with name, url,
   logo and sameAs beside a WebSite: the fields p1.organization's top tier reads.
+guide/chatgpt-access.md (+ zh) tells readers to request a page as OpenAI's two retrieval crawlers and as a browser;
+the user-agent strings it gives must be the ones the CLI sends, so the two halves of that page agree.
 """
 import importlib.util, io, json, os, re, sys
 
@@ -97,8 +99,19 @@ def check_jsonld(gs, raw):
        "every URL in it is on a reserved example domain (%s)" % sorted(hosts))
 
 
+def check_guide_user_agents(gs):
+    print("\nguide/chatgpt-access.md: the user-agent strings are the CLI's")
+    want = {"SEARCH": dict(gs.RETRIEVAL_UAS)["OAI-SearchBot"], "USER": dict(gs.RETRIEVAL_UAS)["ChatGPT-User"],
+            "BROWSER": gs.UA_BROWSER}
+    for p in ("guide/chatgpt-access.md", "guide/chatgpt-access.zh-CN.md"):
+        got = dict(re.findall(r"^(SEARCH|USER|BROWSER)='([^']*)'$", rd(p), re.M))
+        ok(got == want, "%s sets SEARCH, USER and BROWSER to the CLI's strings%s"
+           % (p, "" if got == want else " (differ: %s)" % sorted(k for k in want if got.get(k) != want[k])))
+
+
 def main():
     gs = load_cli()
+    check_guide_user_agents(gs)
     b = check_pages()
     if "text" in b and "json" in b:
         check_robots(gs, b["text"][0])
@@ -106,7 +119,7 @@ def main():
     if fails:
         print("\nFAIL: %d public-example check(s)" % len(fails))
         sys.exit(1)
-    print("\nOK: the two public examples read as guide/public-examples.md says")
+    print("\nOK: the two public examples read as guide/public-examples.md says, and the guide's user-agents are the CLI's")
 
 
 if __name__ == "__main__":

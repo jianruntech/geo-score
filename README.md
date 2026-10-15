@@ -218,6 +218,9 @@ Most of what the rubric checks is **mechanical and cheap to fix** — a `robots.
 JSON-LD block, a date in a template, a paragraph rewritten so it stands on its own. The
 hard part is knowing which of them you are missing, and what each one is worth.
 
+Two guides start here: [can ChatGPT read your website?](guide/chatgpt-access.md), a check you can do by hand and then
+with geo-score, and [how geo-score differs from a general AI SEO skill](guide/vs-ai-seo-skills.md).
+
 ## What it checks
 
 21 tiered checks totalling 100 points, plus 4 bonus checks worth up to +6 outside the
@@ -716,7 +719,7 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 | [`rubric/`](rubric/) | The rubric ([v1.1](rubric/v1.1.md) and its JSON), the evidence behind each weight, calibration, band analysis and open questions |
 | [`benchmark/`](benchmark/) | The 324-site leaderboard: results, one raw report per site, the preregistration, reproducibility and validity records |
 | [`docs/`](docs/) | The GitHub Pages copy of the leaderboard, `llms.txt` and the badge at the top of this page |
-| [`guide/`](guide/) | MCP setup, troubleshooting, the glossary, watch methodology, the [stability policy](guide/stability.md) and [two public examples](guide/public-examples.md) |
+| [`guide/`](guide/) | MCP setup, troubleshooting, the glossary, watch methodology, the [stability policy](guide/stability.md), [two public examples](guide/public-examples.md), and how to check [whether ChatGPT can read a site](guide/chatgpt-access.md) |
 | [`reference/`](reference/) | Background the checks rely on: known AI crawlers, and which sources each platform draws from |
 | [`schema/`](schema/) | JSON Schemas for reports, diffs, errors and watch files |
 | [`examples/`](examples/) | A sample report, the published hand audits and CI workflows |

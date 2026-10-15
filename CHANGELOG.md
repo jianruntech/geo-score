@@ -25,6 +25,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   vocabulary), the one exception to "remediation is private"; no other fix template is published.
   `scripts/test_public_examples.py` reads both with the CLI's own code (g.robots' top tier; the fields
   p1.organization reads), and validate.py rule 2 allows one JSON code block on those two pages and nowhere else.
+- **Two guides for readers** (English and Chinese, linked from the READMEs): `guide/chatgpt-access.md`, how to check
+  whether ChatGPT can read a site, by hand first (robots.txt, requests as `OAI-SearchBot`, `ChatGPT-User` and a
+  browser, text in the server HTML, the layer in front of the site) and then with geo-score; and
+  `guide/vs-ai-seo-skills.md`, how a published rubric with code differs from a general AI SEO skill, naming no other
+  project. `scripts/test_public_examples.py` holds the guide's user-agent strings to the ones the CLI sends.
 
 ### Changed
 - **The READMEs open with what geo-score is and who makes it:** an open-source AI visibility (GEO) scorer for

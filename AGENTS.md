@@ -43,7 +43,7 @@ merges unless it passes.
 | `benchmark/test_benchmark.py` | Offline tests for the benchmark scripts |
 | `benchmark/PREREGISTRATION.md`, `benchmark/prereg/` | The preregistered validation plan; its analysis code (`analysis.py`, tested on synthetic rounds by `test_analysis.py`) and each round's frozen categories, questions, configs and VM scripts |
 | `rubric/bands-analysis.md` | Where the v1.1 band cuts fall in the benchmark: a dated record of one run, with candidates for v1.2 |
-| `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics, the MCP guide, and the two public examples (`public-examples.md`), in English and Chinese |
+| `guide/` | Troubleshooting (a section for each error kind, which the CLI's messages link to), the watch statistics, the MCP guide, the two public examples (`public-examples.md`), and two reader guides (`chatgpt-access.md`, `vs-ai-seo-skills.md`), in English and Chinese |
 | `.github/validate.py` | Structural rules for everything that is not code (rule numbers below) |
 | `guide/stability.md` | What is a public contract and what semver means here |
 | `.github/RELEASING.md`, `scripts/release.py` | How a release is cut, pinned, checksummed and published to PyPI |
