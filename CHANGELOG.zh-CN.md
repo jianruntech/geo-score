@@ -23,6 +23,8 @@
   先手工查（robots.txt、以 `OAI-SearchBot`、`ChatGPT-User` 和浏览器的身份请求页面、正文在不在服务器 HTML 里、网站前面那一层），
   再用 geo-score 查；`guide/vs-ai-seo-skills.md`，带程序的公开量表和通用 AI SEO 技能有什么不同，不点名任何别的项目。
   `scripts/test_public_examples.py` 确认指南里的 user-agent 字符串和 CLI 发的一致。
+- **两份 README 教你给自己的 README 加一枚可选的「Scored with geo-score」徽章**（`--badge`，链到本仓库或榜单），
+  并写明徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
 
 ### 变更
 - **两份 README 开头先说 geo-score 是什么、谁出品：** 开源的网站 AI 可见度（GEO）打分工具，见润科技出品，由 geo-watch 并入

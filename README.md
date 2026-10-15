@@ -331,6 +331,20 @@ python3 cli/geo_score.py diff before.json after.json             # what changed 
 python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
 ```
 
+**"Scored with geo-score": an optional badge for your own README.** `--badge aiv-badge.svg` writes an SVG with your
+score and band. Commit it next to your README and link it to what the number means, this repository or
+[the public leaderboard](https://www.jianruntech.com/leaderboard):
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+It is optional, and it changes nothing: a badge or a link back never moves a score, and never decides whether or
+where a site appears on the leaderboard. A site joins the leaderboard through the
+[Add a site](.github/CONTRIBUTING.md#the-easiest-useful-contribution) route, never in exchange for a link. A committed
+SVG shows the run that wrote it; `--badge-json` writes the same badge as shields.io endpoint JSON, so it can stay
+current without a new image ([details](cli/README.md#a-badge-for-your-own-readme)).
+
 **GitHub Action** (level 1) — score on every push, fail the build when it regresses. For level 3 on a
 schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
 

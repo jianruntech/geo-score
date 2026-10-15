@@ -305,6 +305,18 @@ python3 cli/geo_score.py diff before.json after.json             # 逐项对比�
 python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
 ```
 
+**「Scored with geo-score」：给你自己的 README 加一枚可选徽章。** `--badge aiv-badge.svg` 生成一个带分数和档位的 SVG。
+把它提交到 README 旁边，链到能说明这个数字含义的地方，本仓库或[公开榜单](https://www.jianruntech.com/leaderboard/zh)：
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+放不放完全自愿，放了也不改变任何东西：徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
+上榜走[添加站点](.github/CONTRIBUTING.md#the-easiest-useful-contribution)的流程，绝不拿链接交换。提交进仓库的 SVG
+显示的是生成它的那一次运行；`--badge-json` 把同一个徽章写成 shields.io endpoint JSON，不用重新提交图片也能保持最新
+（[详见](cli/README.zh-CN.md#给自己的-readme-加一枚徽章)）。
+
 **GitHub Action**（第一级）—— 每次 push 都打分，退步就让构建失败。第三级按周定时跑见 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml)。
 
 ```yaml

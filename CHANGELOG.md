@@ -30,6 +30,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   browser, text in the server HTML, the layer in front of the site) and then with geo-score; and
   `guide/vs-ai-seo-skills.md`, how a published rubric with code differs from a general AI SEO skill, naming no other
   project. `scripts/test_public_examples.py` holds the guide's user-agent strings to the ones the CLI sends.
+- **The READMEs show how to add an optional "Scored with geo-score" badge** to your own README with `--badge`, linked
+  to this repository or the leaderboard, and say plainly that a badge or a link back never moves a score and never
+  decides whether or where a site appears on the leaderboard.
 
 ### Changed
 - **The READMEs open with what geo-score is and who makes it:** an open-source AI visibility (GEO) scorer for
