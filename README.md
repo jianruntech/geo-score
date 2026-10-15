@@ -6,6 +6,9 @@
 
 # geo-score
 
+geo-score is an open-source AI visibility (GEO) scorer for websites, by [Jianrun Tech](https://www.jianruntech.com) (见润科技).
+Formerly geo-watch: geo-watch merged into geo-score in 1.2.0 and lives on as its levels 2 and 3.
+
 **Can AI engines cite your site? A free 0–100 score from one command. Do they? Check through their APIs with your own keys.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)

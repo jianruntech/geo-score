@@ -21,6 +21,12 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   weight. Each states its basis, its false-positive risk, its fixtures and how to check it by hand. Rubric v1.1 and every
   score are unchanged; implementing one is a normal release, outside the score.
 
+### Changed
+- **The READMEs open with what geo-score is and who makes it:** an open-source AI visibility (GEO) scorer for
+  websites, by Jianrun Tech, formerly geo-watch (geo-watch merged into it in 1.2.0). CITATION.cff carries the same
+  abstract and the old name. pyproject.toml's description, the package's summary on PyPI, says so too; PyPI shows the
+  summary of the version it serves, so it changes there with the next release.
+
 ## [1.8.2] — 2026-10-12
 
 ### Added

@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "geo-score"
 dynamic = ["version"]
-description = "Can AI engines cite your site, and do they? A free 0-100 readiness score against an open GEO rubric, plus citation checks through the AI engines' APIs with your own keys."
+# PyPI shows the summary of the version it serves, so this one (2026-10-15) takes effect with the next release.
+description = "Open-source AI visibility (GEO) scorer for websites, by Jianrun Tech; formerly geo-watch. Can AI engines cite your site, and do they? A free 0-100 readiness score against an open rubric, plus citation checks through the AI engines' APIs with your own keys."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Jianrun Tech", email = "hello@jianruntech.com" }]

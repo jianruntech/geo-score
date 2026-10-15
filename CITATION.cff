@@ -2,6 +2,11 @@ cff-version: 1.2.0
 title: "The AIV rubric: an open standard for AI answer-engine visibility"
 message: "If you use this rubric, please cite it and state the rubric version."
 type: dataset
+abstract: >-
+  The AIV rubric and geo-score, its reference implementation: an open-source AI
+  visibility (GEO) scorer for websites, by Jianrun Tech. Formerly geo-watch:
+  geo-watch 0.1.0 merged into geo-score in 1.2.0, where it continues
+  as levels 2 and 3 (citation checks through the AI engines' APIs).
 authors:
   - name: "Jianrun Tech"
     website: "https://www.jianruntech.com"
@@ -16,3 +21,5 @@ keywords:
   - AI search
   - LLM citation
   - llms.txt
+  - geo-score
+  - geo-watch
