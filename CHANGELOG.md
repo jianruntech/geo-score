@@ -5,6 +5,16 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Added
+- **Rubric governance** (`rubric/governance.md` + zh, linked from the READMEs, rubric/README.md and CONTRIBUTING):
+  who can propose a change and what evidence it needs; the five steps from proposal to release, with at least 30 days
+  of public comment for a minor version and 60 for a major one, and an independent reviewer; the four ways a
+  published score can change; what keeps one version giving the same score whoever runs it; our conflict of interest
+  (Jianrun Tech sells GEO services; the rubric, tool and leaderboard are free, with no certification or paid
+  placement); and how the rubric relates to standards bodies (an open specification, no paid seat, drafting only on a
+  formal invitation and after legal review). Documentation only: rubric v1.1, every check and every score are
+  unchanged. `validate.py` rule 14 now holds the English page to English.
+
 ## [1.8.3] — 2026-10-15
 
 Scoring is unchanged: the two CLI files differ from 1.8.2 only in `__version__`, so rubric v1.1, every check, tier

@@ -358,7 +358,8 @@ for r in MODERN:
                    "rubric/open-questions.md", f"rubric/evidence-{r[:-3]}.md"]
 EN_PRIMARY += ["AGENTS.md", "guide/stability.md", "guide/troubleshooting.md", "guide/public-examples.md", "guide/chatgpt-access.md",
                "guide/vs-ai-seo-skills.md", "benchmark/VALIDITY.md", "benchmark/REPRODUCIBILITY.md",
-               "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md", "benchmark/PREREGISTRATION.md"]
+               "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md", "benchmark/PREREGISTRATION.md",
+               "rubric/governance.md"]
 import glob as _g2
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):

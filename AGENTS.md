@@ -21,6 +21,7 @@ merges unless it passes.
 |---|---|
 | `rubric/v1.1.md`, `rubric/v1.1.json` | The published rubric: what a score means. The JSON is canonical for machines |
 | `rubric/evidence-v1.1.md` | What each check's weight rests on, with sources |
+| `rubric/governance.md` (+ zh) | How the rubric changes: who can propose, comment period, independent review, when a score changes, conflicts of interest, standards bodies |
 | `cli/geo_score.py` | Level 1: the scorer, standard library only, one file so `curl … \| python3 -` works |
 | `cli/geo_watch.py` | Levels 2 and 3 (`--ask`, `watch`) and the MCP server |
 | `cli/fixtures/mcp/` | The MCP `tools/list` snapshot and the 1.3.0 contract baseline (names and required arguments) |

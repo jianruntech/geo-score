@@ -563,6 +563,7 @@ Read this before quoting the numbers
 - **机器可读。** [`rubric/v1.1.json`](rubric/v1.1.json) 带永久 check id，[`schema/report.v2.json`](schema/report.v2.json) 让不同实现跑出来的结果可以互相比较。
 
 用你自己的技术栈实现它、对某个权重有异议，[开一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)。这是我们最希望收到的贡献。
+提案怎么变成新版本、谁来定、为什么我们不卖认证也不花钱买标准的席位：见[量表治理](rubric/governance.zh-CN.md)。
 
 ## 边界 · 这个仓库不做什么
 

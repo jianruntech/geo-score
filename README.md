@@ -615,6 +615,7 @@ product, and the tools are implementations of it:
 - **Machine-readable.** [`rubric/v1.1.json`](rubric/v1.1.json) with stable check ids, and [`schema/report.v2.json`](schema/report.v2.json) so results from different implementations are comparable.
 
 Implement it in your own stack, disagree with a weight, [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml). That is the main thing we want contributions on.
+How a proposal becomes a new version, who decides, and why we sell no certification and pay for no seat on a standard: [rubric governance](rubric/governance.md).
 
 ## Scope — what this does *not* do
 

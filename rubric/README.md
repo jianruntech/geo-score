@@ -44,6 +44,10 @@ So two rules, and they are not negotiable:
 A released rubric file is **never edited in place**. New version, new file, and the old
 one is marked superseded so anyone holding an old score can still see what it meant.
 
+Who can propose a change, how long it stays open for comment, independent review, our conflict of
+interest and how the rubric relates to standards bodies: [governance.md](governance.md) ·
+[简体中文](governance.zh-CN.md).
+
 ## How to score without the skill
 
 The rubric is a plain specification. To score a site by hand:
