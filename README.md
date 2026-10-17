@@ -25,7 +25,7 @@ One command, a 0–100 score, the three gates, the gaps worth fixing first, and 
 
 https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
 
-*English · 60 seconds · [中文版](README.zh-CN.md#60-秒了解-geo-score)*
+*English · 60 seconds · [Chinese version](README.zh-CN.md)*
 
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
