@@ -6,6 +6,7 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Added
+- **A 60-second intro video** at the top of both READMEs (English in README.md, Chinese in README.zh-CN.md): one command, the 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked. The demo run is jianruntech.com scored with 1.8.3; the soundtrack is synthesized for the video, no third-party music. Documentation only.
 - **Rubric governance** (`rubric/governance.md` + zh, linked from the READMEs, rubric/README.md and CONTRIBUTING):
   who can propose a change and what evidence it needs; the five steps from proposal to release, with at least 30 days
   of public comment for a minor version and 60 for a major one, and an independent reviewer; the four ways a

@@ -19,6 +19,14 @@ Formerly geo-watch: geo-watch merged into geo-score in 1.2.0 and lives on as its
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
 [![AIV readiness of the leaderboard page, measured 2026-10-05 with geo-score 1.8.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 
+## geo-score in 60 seconds
+
+One command, a 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked.
+
+https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
+
+*English · 60 seconds · [中文版](README.zh-CN.md#60-秒了解-geo-score)*
+
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
 > [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
 

@@ -17,6 +17,14 @@ geo-score 是开源的网站 AI 可见度（GEO）打分工具，[见润科技](
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
 [![榜单页的 AIV 就绪度，2026-10-05 用 geo-score 1.8.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
 
+## 60 秒了解 geo-score
+
+一条命令出 0–100 分，看三道门槛、最该先改的几项，以及为什么每一分都能复核。
+
+https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
+
+*中文介绍 · 60 秒 · [English](README.md#geo-score-in-60-seconds)*
+
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
 > [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
 
