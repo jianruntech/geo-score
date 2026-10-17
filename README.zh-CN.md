@@ -7,16 +7,6 @@
 geo-score 是开源的网站 AI 可见度（GEO）打分工具，[见润科技](https://www.jianruntech.com)出品。
 由 geo-watch 并入（formerly geo-watch）：geo-watch 在 1.2.0 并入 geo-score，成为它的第二、三级。
 
-**AI 能不能引用你的网站？免费打分，一条命令出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
-[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
-[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
-[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
-[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
-[![榜单页的 AIV 就绪度，2026-10-05 用 geo-score 1.8.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
-
 ## 60 秒了解 geo-score
 
 一条命令出 0–100 分，看三道门槛、最该先改的几项，以及为什么每一分都能复核。
@@ -25,19 +15,225 @@ https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
 
 *中文介绍 · 60 秒 · [English](README.md#geo-score-in-60-seconds)*
 
+---
+
+> **AI 能不能引用你的网站？免费打分，一条命令出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
+
+geo-score 按一套**公开、带版本号、谁都能复算的评分口径**，给网站打 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用它。再用你自己的 API Key，把买家会问的问题拿去问各家引擎，记下每条回答引用了谁。打分免费、什么都不用装；引用结果和分数并列报告，从不加进分数。
+
+[快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) ·
+[更新日志](CHANGELOG.zh-CN.md) · [公开榜单](https://www.jianruntech.com/leaderboard/zh)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
+[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
+[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
+[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-服务)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
+[![榜单页的 AIV 就绪度，2026-10-05 用 geo-score 1.8.0 测得](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard/zh)
+[![PyPI](https://img.shields.io/pypi/v/geo-score?color=1E5C46)](https://pypi.org/project/geo-score/)
+[![Latest release](https://img.shields.io/github/v/release/jianruntech/geo-score?display_name=tag&color=A9854C)](https://github.com/jianruntech/geo-score/releases/latest)
+
+> **版本说明：** 当前发布版是 [PyPI](https://pypi.org/project/geo-score/) 上的 `geo-score==1.8.3`，对应的标签、wheel 包和校验文件在 [GitHub Releases](https://github.com/jianruntech/geo-score/releases)，改了什么见[更新日志](CHANGELOG.zh-CN.md)。本页所有安装行都钉在这个发布版上（`scripts/release.py --bump` 会一起改），你跑的工具就是这些文档描述的那一个。量表单独编版本号，当前是 v1.1。main 可能比发布版超前：CI 和客户项目请用钉住的发布版。
+
+---
+
+## 解决什么问题
+
+> **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
+> Gemini、Copilot 引用你。与地理、地图无关。
+
+AI 回答引擎引用的，是它抓得到、读得懂、信得过的来源里的段落。一个站被漏掉，原因往往很小，在浏览器里也看不出来：`robots.txt` 里一行把检索爬虫挡在门外、正文要等 JavaScript 跑完才出现、数据没有出处。geo-score 找出一个站有哪几处问题、每一处值多少分，再看各家引擎到底引不引用它，分三级：
+
 > **打分**（免费，不要 Key）→ **实测**一个问题（你的 API Key）→ 每周**追踪**一组问题（你的 API Key）。
-> [一个工具，三级用法](#一个工具三级用法) · 引用结果从不加进分数。
+
+### 一个工具，三级用法
+
+| 级 | 回答什么 | 需要什么 | 命令 |
+|---|---|---|---|
+| **1 · 打分** | AI 引擎能不能抓到、读懂、信任并引用这个站？按公开量表打 0–100 分（就绪度） | 什么都不要：不要 Key，不用安装 | `geo_score.py stripe.com` |
+| **2 · 实测** | 就你关心的那个问题，AI 现在引不引用它？ | OpenAI、Perplexity、Gemini、Anthropic、OpenRouter 任意一家的 API Key | `geo_score.py stripe.com --ask "payments API for marketplaces"` |
+| **3 · 追踪** | 你被引用的频率、输给了哪些竞品和来源、每周怎么变？ | 你的 API Key 和一组固定问题 | `geo_score.py watch run` |
+
+```mermaid
+flowchart LR
+    S[你的网站] --> L1["第一级 · 打分<br/>免费，不要 Key"]
+    L1 --> R["0–100 就绪度<br/>五个支柱 · 三道门槛 · 最大缺口"]
+    Q[买家会问 AI 的问题] --> L2["第二级 · 实测<br/>一个问题，你的 API Key"]
+    Q --> L3["第三级 · 追踪<br/>一组固定问题，每周一次"]
+    L2 --> C["回答引用了谁<br/>你 · 竞品 · 第三方页面"]
+    L3 --> C
+    R -. 并列报告，从不相加 .- C
+```
+
+第一级就是这 100 分。第二、三级测的是量表有意不计分的那部分结果（[两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)）：
+单独报告，从不加进 100 分。就绪度 90 分的站，照样可能每条回答都输给第三方报道更多的竞品；反过来也会发生，所以两样都要看。
+
+### 这和 SEO 问的不是同一个问题
+
+传统 SEO 问「我排第几」。回答引擎不排名——它检索段落、判断这个来源值不值得引用、
+然后引用它。问题不同，失效方式也不同：一个站可以在 Google 排第 3 却从不被引用。
+因为引擎检索的是段落，这套量表给「内容可被引用」的权重最高。这是设计上的取舍，
+不是测出来的效应：段落形态到底有多大作用，证据还很薄，
+[证据表](rubric/evidence-v1.1.zh-CN.md#证据最薄的几项)写明了薄在哪里。
+
+这套量表查的东西，**大部分是机械的、改起来很便宜**——一行 `robots.txt`、
+一个 JSON-LD 块、模板里的一个日期、把一段话改写成能独立成立的样子。
+难的是知道自己缺了哪几项，以及每一项值多少分。
+
+从这里开始的两篇指南：[ChatGPT 能不能读到你的网站？](guide/chatgpt-access.zh-CN.md)，先手工查、再用 geo-score 查；
+以及 [geo-score 和通用 AI SEO 技能有什么不同](guide/vs-ai-seo-skills.zh-CN.md)。
+
+---
+
+## 界面预览
+
+每张图都是真实输出，为这一页截取。
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><a href="assets/screens/cli-report.png"><img src="assets/screens/cli-report.png" alt="geo-score 1.8.3 在终端给 jianruntech.com 打分：96/100，档位 Leading，每一项检查的档位和三个最大缺口"></a><br><sub><b>终端里的第一级。</b><code>geo_score.py jianruntech.com</code>（维护者自己的网站），2026-10-17 用 geo-score 1.8.3 实跑，输出按终端原样配色渲染成图。截到「分数之外」的观察之前。</sub></td>
+    <td width="50%" valign="top"><a href="assets/screens/action-summary.png"><img src="assets/screens/action-summary.png" alt="geo-score GitHub Action 写出的任务摘要：分数、档位，以及 21 项检查逐项的证据"></a><br><sub><b>GitHub Action 的任务摘要</b>，对应同一份报告：<code>action/summary.py</code> 写出的 Markdown，经 GitHub 的 Markdown 接口渲染。截到检查项表格为止。</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><a href="https://www.jianruntech.com/leaderboard/zh"><img src="assets/screens/leaderboard.zh-CN.png" alt="公开榜单页：324 个站点，中位数 55，上四分位 70，区间 11–96，73 个站 AI 读不到"></a><br><sub><b>公开榜单</b>，2026-10-17 截取。页上的数字来自 2026-10-02 用 geo-score 1.5.0 跑的那一轮。</sub></td>
+    <td width="50%" valign="top"><a href="https://www.jianruntech.com/leaderboard/zh"><img src="assets/screens/leaderboard-table.zh-CN.png" alt="榜单的全部站点表：分数、档位、行业，以及按检查项 id 列出的三个最大缺口"></a><br><sub><b>榜单上的每一个站</b>，可排序，带档位、行业和按检查项 id 列出的三个最大缺口。同一页，同一次截取。</sub></td>
+  </tr>
+</table>
+
+---
+
+## 核心能力
+
+| 能力 | 做什么 | 详见 |
+|---|---|---|
+| **打分**（第一级） | 五个支柱共 21 项阶梯式检查、三道门槛，最大缺口排在前面，并写明下一档要什么。单文件、只用标准库、不要 Key | [查什么](#查什么) |
+| **实测**（第二级） | 用你的 Key，通过 ChatGPT、Perplexity、Gemini、Claude 带联网搜索的 API 问一个问题，报告每条回答引用了谁 | [第二、三级](#第二三级--ai-到底有没有引用你) |
+| **追踪**（第三级） | 一组固定问题，按周对比：带 95% 区间的被引用率、声量份额、引擎倚重的来源，以及只有配对检验认定才算「有变化」的 `diff` | [watch 方法说明](guide/watch-methodology.zh-CN.md) |
+| **报告与对比** | 文本、符合公开 schema 的 JSON、SARIF、JUnit；`diff` 逐项比较两份报告，`--baseline` 重评同一批页面 | [CLI 说明](cli/README.zh-CN.md) |
+| **MCP 服务** | 三级都做成 Agent 能调用的工具（stdio）；加 `--read-only` 就花不了钱 | [MCP 服务](#mcp-服务) · [guide/mcp.zh-CN.md](guide/mcp.zh-CN.md) |
+| **GitHub Action** | 每次 push 都打分，退步或门槛项得 0 分时让构建失败，并写一份任务摘要 | [GitHub Action](#github-action) · [action.yml](action.yml) |
+| **徽章** | 可选的 SVG 或 shields.io endpoint JSON，带分数和档位；从不影响分数，也不影响榜单位置 | [徽章](cli/README.zh-CN.md#给自己的-readme-加一枚徽章) |
+| **Claude Code 技能** | CLI 之外，再做需要站外检索或人工判断的那三项 | [Claude Code 技能](#claude-code-技能) · [SKILL.md](SKILL.md) |
+
+---
+
+## 查什么
+
+21 项阶梯式检查合计 100 分，另有 4 项加分检查、不进分母、最多 +6。
+完整规范：**[rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md)** · [English](rubric/v1.1.md)
+
+| 支柱 | 分值 | 在问什么 |
+|---|:-:|---|
+| **可被抓取** —— *门槛* | 15 | 检索爬虫拿不拿得到这一页？`robots.txt`、10 个 AI UA 的实测可达性、正文是否服务端渲染 |
+| **可被理解** | 22 | 它能不能看懂这是什么页、你是哪家公司？`Organization` + `WebSite`、`llms.txt`、sitemap、面包屑、页型 schema |
+| **内容可被引用** | **35** | 这里有没有值得引用的东西？自足答案段、标题是否匹配人的提问措辞、数据带出处、真实署名、时间信号 |
+| **品牌可信** | 18 | 引擎凭什么信你？知识图谱实体、第三方收录、可解析的 `sameAs`、视频存在 |
+| **问答适配** | 10 | 内容的形态便不便于被摘进一个答案？ |
+
+内容可被引用权重最高是设计上的取舍：回答引擎检索的是**段落**，不是域名。
+段落形态是否比域名权威更起作用，并没有定论：分值最高的单项 `p2.answer-passages` 支撑偏弱
+（见[证据最薄的几项](rubric/evidence-v1.1.zh-CN.md#证据最薄的几项)）。
+
+**每个计分项都是阶梯给分**——2 到 4 档，每一档写的是 8 个抽样页里的具体页数，
+所以两个人给同一个站打分，在算术上不会有分歧。**其中三项是门槛**：
+爬虫可达性、实测可达、服务端渲染，任一项得 0 分则总分封顶 40——
+因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
+
+### 分数段
+
+| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
+|:-:|:-:|:-:|:-:|:-:|
+| 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
+
+档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
+所以四十几分是常态，不是警报。本仓库自己的基准榜单里，324 个站中 85% 达到起步期，6% 达到领先
+（[档位线落在哪里](benchmark/README.md#where-the-band-cuts-fall)）。
+
+---
+
+## 324 个站点，公开打分
+
+**其中四分之一，AI 爬虫读不到。** 73 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
+20 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
+amazon.com 只有 17 分正是这个原因。**另有 41 个站的正文只在 JavaScript 跑完之后才存在**，
+内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
+还有 12 个站，服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）。
+
+中位数 **55**（95% 置信区间 51–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 96。
+其中 66 个站实际评分的页面不足 4 个，去掉它们后中位数是 59。
+
+| 站点 | 分数 | 档 |
+|---|:-:|---|
+| resend.com | **96** | 领先 |
+| pulumi.com | **94** | 领先 |
+| supabase.com | **93** | 领先 |
+| elevenlabs.io | **91** | 领先 |
+| lumalabs.ai | **90** | 领先 |
+| … | | |
+| qcloud.com | 12 | 未起步 |
+| mercadolibre.com | 12 | 未起步 |
+| keepa.com | 11 | 未起步 |
+
+**[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [CSV](benchmark/results.csv) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
+
+另外两个值得点进去看的发现。五个中国行业的站比其余站**低 22 分**（95% 置信区间 16–30；中位 36 对 58；此前用 1.1.0
+的几次取样测得的差距在 16 到 23 分之间）。改按站点面向的语言分组，54 个中文站比其余 270 个站低 26 分（95% 置信区间 22–32）；
+相近行业一一对比，差距在 -8 到 27 分之间。按逐项原始分算，差距的 69% 落在 CLI 靠启发式判断的检查项上，所以最多只有这么大一部分可能是工具误读了中文页面（[拆解见此](benchmark/README.md#what-the-spread-shows)）。
+逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
+而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
+从 1.5.0 起，CLI 按每个页面自己的语言来读，中文的任务、说明和对比类标题也计入提问意图；上面的榜单是用 1.5.0 测的，数字里已经包含了这一改动。
+另外，「统计数据注明出处」和「具名、可核实的作者署名」在超过一半的站上都排进了最大的三个缺口。
+
+**中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
+
+每个数字都能用[快速开始](#快速开始)里那条命令复现（榜单是 2026-10-02 用 1.5.0 跑的）——而且我们把「能复现到什么程度」也测了：
+2026-10-12 用 1.8.0 在同一处、同一天把整个榜单跑了三遍（第三遍重读第一遍抽到的页面），三遍都打出分的 317 个站里，
+**前两遍 99% 的站落在 ±5 以内，81% 完全一致**（ICC 0.99，SEM 1.9；[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)，
+由 [benchmark/retest.py](benchmark/retest.py) 算出）。2026-09-09 用旧的 1.1.x 版本测，是 96% 在 ±5 以内、45% 完全一致。
+单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
+现在还会动的，主要是知识图谱查询（那一处测量时多数站查询没有回应），以及 bot 防护对爬虫时放时挡的站的门槛检查。
+精度区间、对照实验和逐站配对都在
+[benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)。
+
+对其中五个参照站，我们另外发布了**人工逐项审计**，
+覆盖全部 21 项检查、每一项都附证据：[examples/audits/v1.1/](examples/audits/v1.1/)。
+
+---
+
+## 准不准
+
+大家常问的五个问题，以及这个仓库里各自在哪儿回答：
+
+| 问题 | 回答 | 记录 |
+|---|---|---|
+| 同一个站测两次，差多少？ | 2026-10-12 用 1.8.0 同日复测：317 个站里 99% 在 ±5 以内，81% 完全一样（ICC 0.99） | [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md) |
+| 别人能不能复算？ | 能：每一项检查、每一档、每个权重都公开，同样的页面谁跑都是同一个分 | [量表 v1.1](rubric/v1.1.zh-CN.md) |
+| 和人按同一套规则打分对得上吗？ | 84 对检查项里 80% 档位一致；只有 5 个站，而且都是校准用的站 | [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md) |
+| 排名是不是权重说了算？ | 换成等权，或把权重随机扰动 300 次，排名的秩相关都在 0.99 以上 | [SENSITIVITY.zh-CN.md](benchmark/SENSITIVITY.zh-CN.md) |
+| 分数高的站是不是更常被 AI 引用？ | 预注册检验的第一波（2026-10-12 至 14 日；16 个类别、83 个站、一家 AI 的 1,280 个回答）：没有检出关系（T = 0.07，p = 0.51）；这个设计能检出的 T 至少要有 0.29。没检出不等于没有 | [RESULTS-wave0.zh-CN.md](benchmark/prereg/round0/RESULTS-wave0.zh-CN.md)、[PREREGISTRATION.zh-CN.md](benchmark/PREREGISTRATION.zh-CN.md) |
+
+**和人工审计比。** 需要站外检索或人工判断的那三项，CLI 会**退出分母**而不是猜（第四项 `p4.cn-engines` 在站点不面向中文时也退出）。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
+（按规则读取的项 92%，靠启发式近似判断的项 69%）。只看两边都打了分的检查项，CLI 平均低 2.4 分
+（逐站从低 12 分到高 10 分，平均绝对差 8.8 分）；按完整的归一化分算平均低 5.2 分，范围从低 16 分到高 7 分，
+因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
+样本只有 5 个站，而且都是当初用来校准的站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
+
+---
+
+<a id="几种跑法"></a>
+
+## 快速开始
+
+### 一行命令
+
+Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
+按一套**公开、带版本号的评分口径**给分——不是黑箱。
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.3/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
-
-<p align="center"><img src="assets/demo.svg" alt="geo-score 在命令行给 stripe.com 打分 —— 71/100，档位 Solid" width="100%"></p>
-<p align="center"><sub>2026-09-09 用 geo-score 1.1.0 录制；2026-09-27 用 1.2.0 重跑为 72 分。</sub></p>
-
-<sub>一行命令。每一项的分数，以及上一档要什么；报告会写明这次运行用了多久。</sub>
-
 
 <details>
 <summary>完整输出（每一项的分数与下一档要求；加 <code>--explain</code> 会显示证据）</summary>
@@ -90,28 +286,79 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.3/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。上面的演示图是更早的一次运行，用的是 1.1.0。从 1.7.0 起，报告在各项检查之后还会列出三项**分数之外**的观察（robots.txt 按页面的规则、服务器 HTML 里的链接、hreflang），它们从不改变分数；这段录制早于它们。见 [cli/README.zh-CN.md](cli/README.zh-CN.md#分数之外)。</sub>
+<sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。1.8.3 的一次运行见[界面预览](#界面预览)。从 1.7.0 起，报告在各项检查之后还会列出三项**分数之外**的观察（robots.txt 按页面的规则、服务器 HTML 里的链接、hreflang），它们从不改变分数；这段录制早于它们。见 [cli/README.zh-CN.md](cli/README.zh-CN.md#分数之外)。</sub>
 
 </details>
 
-Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
-按一套**公开、带版本号的评分口径**给分——不是黑箱。
+### 从 PyPI：uvx 或 pipx
 
-**[看 324 个知名站点的公开榜单 →](https://www.jianruntech.com/leaderboard/zh)**  ·  其中四分之一，AI 爬虫读不到。
+三级都能用。第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起，PyPI 上的包两个文件都有；克隆仓库，或者两个文件都下载，也可以。下面两种方式都不需要 git，也没有构建步骤。
 
-> **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、
-> Gemini、Copilot 引用你。与地理、地图无关。
+```bash
+uvx geo-score@1.8.3 example.com            # 不安装直接运行（需要 uv）
+pipx install geo-score==1.8.3              # 或者装好 geo-score 命令
+geo-score example.com --explain            # 每一项检查，带背后的证据
+```
 
-**目录：** [MCP 服务](#mcp-服务) · [三级用法](#一个工具三级用法) · [查什么](#查什么) ·
-[公开榜单](#324-个站点公开打分) · [几种跑法](#几种跑法) · [AI 有没有引用你](#第二三级--ai-到底有没有引用你) ·
-[边界](#边界--这个仓库不做什么) · [准不准](#准不准) · [安装与稳定性](#稳定性隐私与安装) · [仓库结构](#仓库结构) · [参与贡献](#参与贡献)
+访问不了 PyPI 时，从发布页安装同一个 wheel 包：
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.3/geo_score-1.8.3-py3-none-any.whl`。
+从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.3`。每种方式都只用 Python 标准库。
+发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](.github/SECURITY.md#verifying-a-download)）。
 
----
+<details>
+<summary>CLI 的全部用法，以及给你自己的 README 加一枚可选徽章</summary>
 
-## MCP 服务
+**CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
+用 PyPI 上的包时，把下面的 `python3 cli/geo_score.py` 换成 `uvx geo-score@1.8.3`（或者 `pipx install geo-score==1.8.3`
+之后的 `geo-score`），三级都能用。
+
+```bash
+python3 cli/geo_score.py example.com            # 人读
+python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
+python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
+python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # 同一个徽章，写成 shields.io endpoint JSON
+python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
+python3 cli/geo_score.py diff before.json after.json             # 逐项对比两份报告，看哪里变了
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
+```
+
+**「Scored with geo-score」：给你自己的 README 加一枚可选徽章。** `--badge aiv-badge.svg` 生成一个带分数和档位的 SVG。
+把它提交到 README 旁边，链到能说明这个数字含义的地方，本仓库或[公开榜单](https://www.jianruntech.com/leaderboard/zh)：
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+放不放完全自愿，放了也不改变任何东西：徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
+上榜走[添加站点](.github/CONTRIBUTING.md#the-easiest-useful-contribution)的流程，绝不拿链接交换。提交进仓库的 SVG
+显示的是生成它的那一次运行；`--badge-json` 把同一个徽章写成 shields.io endpoint JSON，不用重新提交图片也能保持最新
+（[详见](cli/README.zh-CN.md#给自己的-readme-加一枚徽章)）。
+
+</details>
+
+### Claude Code 技能
+
+CLI 只能测静态抓取看得见的东西。
+有三项需要站外检索或人的判断，技能把这些也做了。
+
+```bash
+npx skills add jianruntech/geo-score     # 加 -g 是全局安装
+# 然后：/geo-score audit https://example.com
+```
+
+`npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
+把整个仓库（约 9 MB）按默认分支 main 当前的样子复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js，或者想装发布版而不是 main，
+就把发布标签克隆到你自己的技能目录：
+`git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
+
+不用技能时 CLI 能做到多准：见[准不准](#准不准)。
+
+### MCP 服务
 
 `geo-score-mcp` 是一个本地 MCP 服务（stdio，只用 Python 标准库）。Agent 通过它能用到和命令行一样的三级：
-免费给网站打分、拿一个问题去问各家 AI、每周追踪一组问题。
+免费给网站打分、拿一个问题去问各家 AI、每周追踪一组问题。从 PyPI 运行 `uvx geo-score@1.8.3 mcp`（用 pipx 安装后是 `geo-score-mcp`），或者在克隆的仓库里运行 `python3 cli/geo_score.py mcp`。
 
 <!-- BEGIN MCP:install -->
 <!-- 由 scripts/mcp_docs.py 按版本 1.8.3 生成；要改请改脚本，不要改这一段。 -->
@@ -149,6 +396,9 @@ Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输�
 从源码安装（需要 git）：`uvx --from git+https://github.com/jianruntech/geo-score@v1.8.3 geo-score-mcp`
 <!-- END MCP:install -->
 
+<details>
+<summary>有哪些工具、各自花不花钱，以及它们读取的 Key 和配置</summary>
+
 <!-- BEGIN MCP:tools -->
 <!-- 由 scripts/mcp_docs.py 根据 MCPServer.tools() 生成；要改请改服务或脚本，不要改这张表。 -->
 
@@ -183,149 +433,14 @@ Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输�
 请用 `-c /绝对路径/geo-score-watch.json` 传给服务，因为图形界面客户端不会在你的项目目录里启动它。
 从 1.4.0 起，加上 `--read-only`，服务就花不了任何钱。
 
+</details>
+
 各客户端的配置（Claude Code、Claude Desktop、Codex、Cursor、VS Code、Gemini CLI、Devin Desktop、Zed）、
 Claude Code 插件、超时、安全与排查：**[guide/mcp.zh-CN.md](guide/mcp.zh-CN.md)**。
 
-## 一个工具，三级用法
+### GitHub Action
 
-| 级 | 回答什么 | 需要什么 | 命令 |
-|---|---|---|---|
-| **1 · 打分** | AI 引擎能不能抓到、读懂、信任并引用这个站？按公开量表打 0–100 分（就绪度） | 什么都不要：不要 Key，不用安装 | `geo_score.py stripe.com` |
-| **2 · 实测** | 就你关心的那个问题，AI 现在引不引用它？ | OpenAI、Perplexity、Gemini、Anthropic、OpenRouter 任意一家的 API Key | `geo_score.py stripe.com --ask "best payments API for marketplaces"` |
-| **3 · 追踪** | 你被引用的频率、输给了哪些竞品和来源、每周怎么变？ | 你的 API Key 和一组固定问题 | `geo_score.py watch run` |
-
-第一级就是这 100 分。第二、三级测的是量表有意不计分的那部分结果（[两个分数，不要混在一起](rubric/v1.1.zh-CN.md#两个分数不要混在一起)）：
-单独报告，从不加进 100 分。就绪度 90 分的站，照样可能每条回答都输给第三方报道更多的竞品；反过来也会发生，所以两样都要看。
-
-第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起。PyPI 上的包两个文件都有：`uvx geo-score@1.8.3 example.com`
-不安装直接运行，`pipx install geo-score==1.8.3` 装好一个 `geo-score` 命令。克隆仓库，或者两个文件都下载，也可以。
-上面那行 `curl | python3` 只跑第一级。
-
-## 这和 SEO 问的不是同一个问题
-
-传统 SEO 问「我排第几」。回答引擎不排名——它检索段落、判断这个来源值不值得引用、
-然后引用它。问题不同，失效方式也不同：一个站可以在 Google 排第 3 却从不被引用。
-因为引擎检索的是段落，这套量表给「内容可被引用」的权重最高。这是设计上的取舍，
-不是测出来的效应：段落形态到底有多大作用，证据还很薄，
-[证据表](rubric/evidence-v1.1.zh-CN.md#证据最薄的几项)写明了薄在哪里。
-
-这套量表查的东西，**大部分是机械的、改起来很便宜**——一行 `robots.txt`、
-一个 JSON-LD 块、模板里的一个日期、把一段话改写成能独立成立的样子。
-难的是知道自己缺了哪几项，以及每一项值多少分。
-
-从这里开始的两篇指南：[ChatGPT 能不能读到你的网站？](guide/chatgpt-access.zh-CN.md)，先手工查、再用 geo-score 查；
-以及 [geo-score 和通用 AI SEO 技能有什么不同](guide/vs-ai-seo-skills.zh-CN.md)。
-
-## 查什么
-
-21 项阶梯式检查合计 100 分，另有 4 项加分检查、不进分母、最多 +6。
-完整规范：**[rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md)** · [English](rubric/v1.1.md)
-
-| 支柱 | 分值 | 在问什么 |
-|---|:-:|---|
-| **可被抓取** —— *门槛* | 15 | 检索爬虫拿不拿得到这一页？`robots.txt`、10 个 AI UA 的实测可达性、正文是否服务端渲染 |
-| **可被理解** | 22 | 它能不能看懂这是什么页、你是哪家公司？`Organization` + `WebSite`、`llms.txt`、sitemap、面包屑、页型 schema |
-| **内容可被引用** | **35** | 这里有没有值得引用的东西？自足答案段、标题是否匹配人的提问措辞、数据带出处、真实署名、时间信号 |
-| **品牌可信** | 18 | 引擎凭什么信你？知识图谱实体、第三方收录、可解析的 `sameAs`、视频存在 |
-| **问答适配** | 10 | 内容的形态便不便于被摘进一个答案？ |
-
-内容可被引用权重最高是设计上的取舍：回答引擎检索的是**段落**，不是域名。
-段落形态是否比域名权威更起作用，并没有定论：分值最高的单项 `p2.answer-passages` 支撑偏弱
-（见[证据最薄的几项](rubric/evidence-v1.1.zh-CN.md#证据最薄的几项)）。
-
-**每个计分项都是阶梯给分**——2 到 4 档，每一档写的是 8 个抽样页里的具体页数，
-所以两个人给同一个站打分，在算术上不会有分歧。**其中三项是门槛**：
-爬虫可达性、实测可达、服务端渲染，任一项得 0 分则总分封顶 40——
-因为在爬虫拿不到内容之前，其余各项的改动都不会产生效果。
-
-### 分数段
-
-| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
-|:-:|:-:|:-:|:-:|:-:|
-| 未起步 | 起步期 | 成长期 | 基础扎实 | 领先 |
-
-档名描述的是**所处阶段，不是判决**。外部基准显示多数商业网站落在 30–55 之间，
-所以四十几分是常态，不是警报。本仓库自己的基准榜单里，324 个站中 85% 达到起步期，6% 达到领先
-（[档位线落在哪里](benchmark/README.md#where-the-band-cuts-fall)）。
-
-## 324 个站点，公开打分
-
-**其中四分之一，AI 爬虫读不到。** 73 个站有门槛项得 0 分——AI 检索爬虫拿不到内容，也就没有东西可引用。
-20 个在 `robots.txt` 里点名屏蔽 AI 爬虫，那是编辑决策，如实记录即可——
-amazon.com 只有 17 分正是这个原因。**另有 41 个站的正文只在 JavaScript 跑完之后才存在**，
-内容是有的、浏览器看得见，爬虫拿到的是一个空壳；这一组几乎肯定不是有意的。
-还有 12 个站，服务器拒绝爬虫 user-agent（探测来自审计方自己的地址，未经爬虫身份验证）。
-
-中位数 **55**（95% 置信区间 51–58，见 [stats.py](benchmark/stats.py)），最低 11、最高 96。
-其中 66 个站实际评分的页面不足 4 个，去掉它们后中位数是 59。
-
-| 站点 | 分数 | 档 |
-|---|:-:|---|
-| resend.com | **96** | 领先 |
-| pulumi.com | **94** | 领先 |
-| supabase.com | **93** | 领先 |
-| elevenlabs.io | **91** | 领先 |
-| lumalabs.ai | **90** | 领先 |
-| … | | |
-| qcloud.com | 12 | 未起步 |
-| mercadolibre.com | 12 | 未起步 |
-| keepa.com | 11 | 未起步 |
-
-**[完整榜单与分行业中位数 →](https://www.jianruntech.com/leaderboard/zh)** · [markdown](benchmark/README.md) · [原始数据](benchmark/results.json) · [CSV](benchmark/results.csv) · [每个站的完整报告](benchmark/raw/) · [自己重跑](benchmark/run.py)
-
-另外两个值得点进去看的发现。五个中国行业的站比其余站**低 22 分**（95% 置信区间 16–30；中位 36 对 58；此前用 1.1.0
-的几次取样测得的差距在 16 到 23 分之间）。改按站点面向的语言分组，54 个中文站比其余 270 个站低 26 分（95% 置信区间 22–32）；
-相近行业一一对比，差距在 -8 到 27 分之间。按逐项原始分算，差距的 69% 落在 CLI 靠启发式判断的检查项上，所以最多只有这么大一部分可能是工具误读了中文页面（[拆解见此](benchmark/README.md#what-the-spread-shows)）。
-逐项看，差得最多的是两项启发式判断：标题是否匹配提问意图、开头有没有能独立成立的答案段；
-而在[人工审计对照](benchmark/VALIDITY.zh-CN.md)里唯一的中文站上，CLI 这两项也比人工判得低，所以这个差距里可能有一部分是工具对中文页面判得偏严。
-从 1.5.0 起，CLI 按每个页面自己的语言来读，中文的任务、说明和对比类标题也计入提问意图；上面的榜单是用 1.5.0 测的，数字里已经包含了这一改动。
-另外，「统计数据注明出处」和「具名、可核实的作者署名」在超过一半的站上都排进了最大的三个缺口。
-
-**中文说明页**：[这套量表测什么、三项门槛为什么会封顶、测出问题之后怎么办](https://www.jianruntech.com/geo-score)——由维护者见润科技提供，量表本身与它无关，MIT 开源、可自行复算。
-
-每个数字都能用页首那条命令复现（榜单是 2026-10-02 用 1.5.0 跑的）——而且我们把「能复现到什么程度」也测了：
-2026-10-12 用 1.8.0 在同一处、同一天把整个榜单跑了三遍（第三遍重读第一遍抽到的页面），三遍都打出分的 317 个站里，
-**前两遍 99% 的站落在 ±5 以内，81% 完全一致**（ICC 0.99，SEM 1.9；[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)，
-由 [benchmark/retest.py](benchmark/retest.py) 算出）。2026-09-09 用旧的 1.1.x 版本测，是 96% 在 ±5 以内、45% 完全一致。
-单个站的分数请按 ±5 读，不要当成精确值；中位数是稳的。
-现在还会动的，主要是知识图谱查询（那一处测量时多数站查询没有回应），以及 bot 防护对爬虫时放时挡的站的门槛检查。
-精度区间、对照实验和逐站配对都在
-[benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)。
-
-对其中五个参照站，我们另外发布了**人工逐项审计**，
-覆盖全部 21 项检查、每一项都附证据：[examples/audits/v1.1/](examples/audits/v1.1/)。
-
-## 几种跑法
-
-**CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
-用 PyPI 上的包时，把下面的 `python3 cli/geo_score.py` 换成 `uvx geo-score@1.8.3`（或者 `pipx install geo-score==1.8.3`
-之后的 `geo-score`），三级都能用。
-
-```bash
-python3 cli/geo_score.py example.com            # 人读
-python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
-python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
-python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
-python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
-python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # 同一个徽章，写成 shields.io endpoint JSON
-python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
-python3 cli/geo_score.py diff before.json after.json             # 逐项对比两份报告，看哪里变了
-python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
-```
-
-**「Scored with geo-score」：给你自己的 README 加一枚可选徽章。** `--badge aiv-badge.svg` 生成一个带分数和档位的 SVG。
-把它提交到 README 旁边，链到能说明这个数字含义的地方，本仓库或[公开榜单](https://www.jianruntech.com/leaderboard/zh)：
-
-```markdown
-[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
-```
-
-放不放完全自愿，放了也不改变任何东西：徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
-上榜走[添加站点](.github/CONTRIBUTING.md#the-easiest-useful-contribution)的流程，绝不拿链接交换。提交进仓库的 SVG
-显示的是生成它的那一次运行；`--badge-json` 把同一个徽章写成 shields.io endpoint JSON，不用重新提交图片也能保持最新
-（[详见](cli/README.zh-CN.md#给自己的-readme-加一枚徽章)）。
-
-**GitHub Action**（第一级）—— 每次 push 都打分，退步就让构建失败。第三级按周定时跑见 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml)。
+第一级，每次 push 都跑：打分，退步就让构建失败。第三级按周定时跑见 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml)。
 
 ```yaml
 - uses: jianruntech/geo-score@v1
@@ -337,27 +452,9 @@ python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # C
 
 门槛项得 0 分时分数封顶 40：本来能得 40 分及以上的站正好停在 40，能通过 `fail-under: 40`；`fail-on-gate: true` 会让任何被封顶的站失败。
 
-**Claude Code 技能** —— CLI 只能测静态抓取看得见的东西。
-有三项需要站外检索或人的判断，技能把这些也做了。
+它写出的任务摘要见[界面预览](#界面预览)。
 
-```bash
-npx skills add jianruntech/geo-score     # 加 -g 是全局安装
-# 然后：/geo-score audit https://example.com
-```
-
-`npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
-把整个仓库（约 9 MB）按默认分支 main 当前的样子复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js，或者想装发布版而不是 main，
-就把发布标签克隆到你自己的技能目录：
-`git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
-
-CLI 会把那三项**退出分母**而不是猜（第四项 `p4.cn-engines` 在站点不面向中文时也退出）。拿公开的 5 份人工审计在相同页面上重评，84 对检查项里有 80% 与审计者档位一致
-（按规则读取的项 92%，靠启发式近似判断的项 69%）。只看两边都打了分的检查项，CLI 平均低 2.4 分
-（逐站从低 12 分到高 10 分，平均绝对差 8.8 分）；按完整的归一化分算平均低 5.2 分，范围从低 16 分到高 7 分，
-因为人工审计还给 `p3.listings`、`p3.mentions`、`p4.question-coverage` 打了分，CLI 不打这三项。
-样本只有 5 个站，而且都是当初用来校准的站，每一处分歧见 [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md)。
-
-**MCP 服务**（三级都有）—— 从 PyPI 运行 `uvx geo-score@1.8.3 mcp`（用 pipx 安装后是 `geo-score-mcp`），或者在克隆的仓库里
-`python3 cli/geo_score.py mcp`，给 Claude Code、Cursor 等 Agent 用，见 [MCP 服务](#mcp-服务)。
+---
 
 ## 第二、三级 · AI 到底有没有引用你
 
@@ -368,7 +465,7 @@ Key 只从环境变量读，geo-score 不会把它写到任何地方。
 ```bash
 git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
 export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # 有几个 Key 就测几个引擎
-python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # 第二级
+python3 geo_score.py acme.com --ask "invoicing app for freelancers"        # 第二级
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
 # 把买家会问 AI 的问题写进 queries.csv，然后：
 python3 geo_score.py watch run --dry-run            # 只看计划、上限、能测出多大的变化和单个问题引用率的精度，不调用、不花钱
@@ -376,6 +473,9 @@ python3 geo_score.py watch run                      # 第三级：每个问题�
 python3 geo_score.py watch diff                     # 和上一次比，带显著性检验
 python3 geo_score.py watch report --since 30        # 合并最近 30 天的运行，按问题算一个区间
 ```
+
+**第二级**每个问题在每个引擎上问一次，结果印在就绪度报告下面（加 `--json` 时写进报告的 `citation` 字段）。
+一次问答只是个例：用来看 AI 今天怎么说，不是用来算比率的。
 
 <details>
 <summary>watch 跑一次的输出（示意：虚构的品牌和预设的回答，不是真实测量；1.2.0 保存的运行，用 1.8.0 打印）</summary>
@@ -480,8 +580,8 @@ Read this before quoting the numbers
 ```
 </details>
 
-**第二级**每个问题在每个引擎上问一次，结果印在就绪度报告下面（加 `--json` 时写进报告的 `citation` 字段）。
-一次问答只是个例：用来看 AI 今天怎么说，不是用来算比率的。
+<details>
+<summary>第三级报告里有什么、它不告诉你什么、支持哪些引擎、上限与费用</summary>
 
 **第三级**固定一组问题，每条回答都存进 `.geo-score/watch/runs/`（[schema](schema/watch.v1.json)），报告里有：
 
@@ -537,6 +637,8 @@ Read this before quoting the numbers
 **每周跑一次。** 引用率变得慢、噪声也大：固定星期几、固定问题、固定模型，看 `diff`，别盯单次结果。
 [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml) 按时自动跑，Key 放在仓库 Secrets，每次运行都提交回仓库，历史都在 git 里。运行文件里有你的问题和 AI 的完整回答，问题集要保密就用私有仓库。
 
+</details>
+
 **自己跑免费；想省事，可以交给我们。** 这里的一切都是 MIT，工具本身没有付费版。API 费用你直接付给
 各家服务商，每次花了多少账本里都有。需要人来做的部分，[见润科技](https://www.jianruntech.com/)作为服务来做：
 
@@ -548,32 +650,32 @@ Read this before quoting the numbers
 | 引用掉了怎么办 | 不在工具范围内 | 我们来改 |
 | 价格 | 你的 API 账单 | GEO 落地系统，¥38,888 起 / 季度（年付 ¥152,888），含 AIV 看板。[看价格](https://www.jianruntech.com/#pricing) |
 
-## 准不准
+---
 
-大家常问的五个问题，以及这个仓库里各自在哪儿回答：
+## 适用场景
 
-| 问题 | 回答 | 记录 |
+| 谁 | 用它做什么 | 从哪儿开始 |
 |---|---|---|
-| 同一个站测两次，差多少？ | 2026-10-12 用 1.8.0 同日复测：317 个站里 99% 在 ±5 以内，81% 完全一样（ICC 0.99） | [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md) |
-| 别人能不能复算？ | 能：每一项检查、每一档、每个权重都公开，同样的页面谁跑都是同一个分 | [量表 v1.1](rubric/v1.1.zh-CN.md) |
-| 和人按同一套规则打分对得上吗？ | 84 对检查项里 80% 档位一致；只有 5 个站，而且都是校准用的站 | [VALIDITY.zh-CN.md](benchmark/VALIDITY.zh-CN.md) |
-| 排名是不是权重说了算？ | 换成等权，或把权重随机扰动 300 次，排名的秩相关都在 0.99 以上 | [SENSITIVITY.zh-CN.md](benchmark/SENSITIVITY.zh-CN.md) |
-| 分数高的站是不是更常被 AI 引用？ | 预注册检验的第一波（2026-10-12 至 14 日；16 个类别、83 个站、一家 AI 的 1,280 个回答）：没有检出关系（T = 0.07，p = 0.51）；这个设计能检出的 T 至少要有 0.29。没检出不等于没有 | [RESULTS-wave0.zh-CN.md](benchmark/prereg/round0/RESULTS-wave0.zh-CN.md)、[PREREGISTRATION.zh-CN.md](benchmark/PREREGISTRATION.zh-CN.md) |
+| **站长与市场团队** | AI 引擎能不能抓到、引用你的网站，哪几处缺口最值分 | 先 `--brief`，再 `--explain`；关心的问题用第二级去问 |
+| **代理商与咨询公司** | 给客户一份能按公开、带版本号的量表自己复核的诊断；每次改动后重评同一批页面 | `--json`、`--baseline last.json`、`diff`；报告里写明量表版本 |
+| **开发者与 CI** | 部署挡住了爬虫、丢了服务端渲染或掉了分，就让构建失败 | [GitHub Action](#github-action)、`--fail-on-gate`、`--assert`、SARIF 和 JUnit |
+| **研究者** | 复算每一个公开数字、质疑权重、检验就绪度和被引用之间的关系 | [rubric/v1.1.json](rubric/v1.1.json)、[benchmark/](benchmark/)、[预注册方案](benchmark/PREREGISTRATION.zh-CN.md) |
 
-## 为什么发布口径，而不只发工具
+geo-score 测的是引擎**能不能**引用一个站、**有没有**引用它。它不负责修复，也从不预测流量、排名或收入。
 
-一个你没法复核的分数，就是别人编出来的数字。所以规范本身才是产品，工具只是它的实现：
+---
 
-- **带版本号。** 每个分数都要报口径版本。`71（v1.1）`是一个主张，`71` 不是。
-- **阶梯给分，写明页数。** 每一档写的是 8 页里的具体页数，不是「多数」。
-- **必须有证据。** 每一项都要留一个别人能复现的观察。
-- **对着公开基准标定过**，并[公开了标定记录](rubric/calibration-v1.1.zh-CN.md)——包括档位线所对照的四份外部数据，以及真实审计暴露、v1.1 逐条定掉的[八处口径歧义](rubric/open-questions.zh-CN.md)。
-- **机器可读。** [`rubric/v1.1.json`](rubric/v1.1.json) 带永久 check id，[`schema/report.v2.json`](schema/report.v2.json) 让不同实现跑出来的结果可以互相比较。
+## 边界与治理
 
-用你自己的技术栈实现它、对某个权重有异议，[开一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)。这是我们最希望收到的贡献。
-提案怎么变成新版本、谁来定、为什么我们不卖认证也不花钱买标准的席位：见[量表治理](rubric/governance.zh-CN.md)。
+| 方面 | 怎么定 |
+|---|---|
+| 只测量，不修复 | 不发布修复模板、改写方法和分平台打法，只有两个公开常识样例例外：见[边界](#边界--这个仓库不做什么) |
+| 量表怎么改 | 公开提案、公开征求意见、独立复核；不卖认证：见[量表治理](rubric/governance.zh-CN.md) |
+| 权重依据 | 每一项都注明权重建立在什么依据上，附来源和最后核实日期：见[证据表](rubric/evidence-v1.1.zh-CN.md) |
+| 隐私 | 不收集遥测数据。第一级只访问网站、它的标记和 robots.txt 指向的地址，以及 Wikidata 和维基百科的搜索；第二、三级只调用你配了 Key 的服务商 |
+| 稳定性 | 报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、MCP 工具都是公开契约：见[稳定性约定](guide/stability.md) |
 
-## 边界 · 这个仓库不做什么
+### 边界 · 这个仓库不做什么
 
 这是大多数工具会略过的部分，所以直说。
 
@@ -606,7 +708,20 @@ Read this before quoting the numbers
   所以低分通常是对的，但值得人工复核一遍。
 - **引擎行为会变。** 口径带版本号正是为此。旧版本口径算出来的分与当前版本不可比。
 
-## 权重的研究依据
+### 为什么发布口径，而不只发工具
+
+一个你没法复核的分数，就是别人编出来的数字。所以规范本身才是产品，工具只是它的实现：
+
+- **带版本号。** 每个分数都要报口径版本。`71（v1.1）`是一个主张，`71` 不是。
+- **阶梯给分，写明页数。** 每一档写的是 8 页里的具体页数，不是「多数」。
+- **必须有证据。** 每一项都要留一个别人能复现的观察。
+- **对着公开基准标定过**，并[公开了标定记录](rubric/calibration-v1.1.zh-CN.md)——包括档位线所对照的四份外部数据，以及真实审计暴露、v1.1 逐条定掉的[八处口径歧义](rubric/open-questions.zh-CN.md)。
+- **机器可读。** [`rubric/v1.1.json`](rubric/v1.1.json) 带永久 check id，[`schema/report.v2.json`](schema/report.v2.json) 让不同实现跑出来的结果可以互相比较。
+
+用你自己的技术栈实现它、对某个权重有异议，[开一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)。这是我们最希望收到的贡献。
+提案怎么变成新版本、谁来定、为什么我们不卖认证也不花钱买标准的席位：见[量表治理](rubric/governance.zh-CN.md)。
+
+### 权重的研究依据
 
 权重是有主张的，但不是拍脑袋。影响最大的两项：
 
@@ -625,7 +740,7 @@ Read this before quoting the numbers
 如果你有证据表明某个权重不对，
 [提一个口径提案](.github/ISSUE_TEMPLATE/rubric_proposal.yml)——这是我们最希望收到的贡献。
 
-## 相关项目
+### 相关项目
 
 刻意说清这个仓库**不是**什么，方便你选对工具：
 
@@ -637,17 +752,12 @@ Read this before quoting the numbers
 
 如果你要的是修复而不只是一个分数，上面这些项目覆盖了本仓库刻意排除的那部分。
 
-## 稳定性、隐私与安装
+<a id="稳定性隐私与安装"></a>
 
-- **安装：** 第一级什么都不用装（上面那行 `curl`，锁定到某个发布版本）；想要一个包含三级的 `geo-score` 命令，从 PyPI 安装：
-  `pipx install geo-score==1.8.3`。不安装直接运行：`uvx geo-score@1.8.3 example.com`（`uvx geo-score@1.8.3 mcp` 就是 MCP 服务）。
-  这两种方式都不需要 git，也没有构建步骤。
-  访问不了 PyPI 时，从发布页安装同一个 wheel 包：
-  `pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.3/geo_score-1.8.3-py3-none-any.whl`。
-  从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.3`。
-  Claude Code 技能：`npx skills add jianruntech/geo-score`（加 `-g` 是全局安装），或者克隆到 `~/.claude/skills/geo-score`
-  （见[几种跑法](#几种跑法)）。每种方式都只用 Python 标准库。
-  发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](.github/SECURITY.md#verifying-a-download)）。
+### 稳定性、隐私与安全
+
+安装方式见[快速开始](#快速开始)。
+
 - **稳定性：** 量表和工具分开编版本号；报告 schema、检查项 id、命令行参数、退出码、Action 输入输出、
   MCP 工具都是公开契约，哪个版本允许改什么，见[稳定性约定](guide/stability.md)。
 - **不收集任何遥测数据。** geo-score 不向我们或任何人发送数据。第一级只访问你指定的网站（包括它的跳转）、它的标记和 robots.txt 指向的地址
@@ -659,19 +769,11 @@ Read this before quoting the numbers
 （[REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md)）。要做改动前后的对比，用 `--baseline last.json` 重评同一批页面，它还会逐项列出哪里变了（`--urls-from last.json` 只重评、不对比）。
 **为什么某项显示 `—`？** 它没有被测到，所以移出了分母，而不是记 0 分。更多问题见[排查指南](guide/troubleshooting.zh-CN.md)。README、报告和各篇指南里的术语集中解释在[术语表](guide/glossary.zh-CN.md)；全部参数、退出码和 watch 命令见 [CLI 说明](cli/README.zh-CN.md)。
 
-### 能不能拿来商用
+---
 
-| 用法 | 可以吗 | 要做什么 |
-|---|---|---|
-| 个人学习、测自己的站 | 可以 | 无 |
-| 公司内部用 | 可以 | 无 |
-| 代运营 / 咨询公司给客户做诊断并收费 | 可以 | 保留 LICENSE 里的版权声明；报告里写明量表版本（如 v1.1），客户才能复核 |
-| 集成进自己的 SaaS 或产品 | 可以 | 保留版权声明；分数请注明「按 AIV 量表 v1.1 计算」，不要改了权重还叫 AIV 分 |
-| 改代码后再发布 | 可以 | MIT 协议，保留版权声明即可 |
+## 开发者入口
 
-MIT 协议不需要找我们授权，也没有单独的商业许可证。
-
-## 仓库结构
+### 仓库结构
 
 | 路径 | 里面是什么 |
 |---|---|
@@ -689,7 +791,47 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 | [`.github/`](.github/) | [贡献指南](.github/CONTRIBUTING.md)、[求助渠道](.github/SUPPORT.md)、[安全策略](.github/SECURITY.md)、[行为准则](.github/CODE_OF_CONDUCT.md)、[发版流程](.github/RELEASING.md)、issue 表单和 CI 工作流 |
 | [`AGENTS.md`](AGENTS.md) | 写给编程智能体的仓库地图（`CLAUDE.md` 指向它） |
 
-## 谁在维护
+### 测试与自检
+
+```bash
+bash scripts/check.sh           # 自检（离线）：结构、lint、全部测试、Action、打包
+bash scripts/check.sh --live    # 发版前：再加 example.com 实测和 MCP Inspector
+```
+
+`scripts/check.sh` 就是本仓库的 CI：不通过就不合并。它执行哪些规则、每条由哪项检查负责，见 [AGENTS.md](AGENTS.md)。本页的一些数字也在其中：哪个数字和它引用的数据对不上，自检就会失败。
+
+### 参与贡献
+
+最有价值的贡献是**关于权重的证据**。见[贡献指南](.github/CONTRIBUTING.md)。
+分数不对、对榜单某一行有异议、工具用不了，各自用哪张 issue 表单，见[求助渠道](.github/SUPPORT.md)。
+
+---
+
+## 开源协议、引用与维护者
+
+### 开源协议
+
+[MIT](LICENSE)
+
+<a id="能不能拿来商用"></a>
+
+**能不能拿来商用**
+
+| 用法 | 可以吗 | 要做什么 |
+|---|---|---|
+| 个人学习、测自己的站 | 可以 | 无 |
+| 公司内部用 | 可以 | 无 |
+| 代运营 / 咨询公司给客户做诊断并收费 | 可以 | 保留 LICENSE 里的版权声明；报告里写明量表版本（如 v1.1），客户才能复核 |
+| 集成进自己的 SaaS 或产品 | 可以 | 保留版权声明；分数请注明「按 AIV 量表 v1.1 计算」，不要改了权重还叫 AIV 分 |
+| 改代码后再发布 | 可以 | MIT 协议，保留版权声明即可 |
+
+MIT 协议不需要找我们授权，也没有单独的商业许可证。
+
+### 引用
+
+在研究或报告中引用本口径，见 [CITATION.cff](CITATION.cff)。
+
+### 谁在维护
 
 由 **[见润科技](https://www.jianruntech.com)**（深圳）建立并维护。我们为国内外企业做 GEO 与 AI 落地：
 外贸 B2B、软件公司、专业服务、本地生活、教育机构，以及企业出海（含跨境电商）。这套口径来自客户项目和优化我们自己产品的过程；
@@ -698,15 +840,19 @@ MIT 协议不需要找我们授权，也没有单独的商业许可证。
 本仓库的商业使用不受限制（MIT），包括用在付费咨询项目里。
 不需要获得我们许可，也没有另外的商业授权。
 
-## 参与贡献
+---
 
-最有价值的贡献是**关于权重的证据**。见[贡献指南](.github/CONTRIBUTING.md)。
-分数不对、对榜单某一行有异议、工具用不了，各自用哪张 issue 表单，见[求助渠道](.github/SUPPORT.md)。
+## 文档
 
-## 引用
-
-在研究或报告中引用本口径，见 [CITATION.cff](CITATION.cff)。
-
-## 开源协议
-
-[MIT](LICENSE)
+| 文档 | 中文 | English |
+|---|---|---|
+| 本 README | [README.zh-CN.md](README.zh-CN.md) | [English](README.md) |
+| 量表 v1.1 | [rubric/v1.1.zh-CN.md](rubric/v1.1.zh-CN.md) | [English](rubric/v1.1.md) |
+| 每项权重的依据 | [rubric/evidence-v1.1.zh-CN.md](rubric/evidence-v1.1.zh-CN.md) | [English](rubric/evidence-v1.1.md) |
+| 量表治理 | [rubric/governance.zh-CN.md](rubric/governance.zh-CN.md) | [English](rubric/governance.md) |
+| CLI 说明 | [cli/README.zh-CN.md](cli/README.zh-CN.md) | [English](cli/README.md) |
+| 各客户端的 MCP 配置 | [guide/mcp.zh-CN.md](guide/mcp.zh-CN.md) | [English](guide/mcp.md) |
+| 排查指南 | [guide/troubleshooting.zh-CN.md](guide/troubleshooting.zh-CN.md) | [English](guide/troubleshooting.md) |
+| 术语表 | [guide/glossary.zh-CN.md](guide/glossary.zh-CN.md) | [English](guide/glossary.md) |
+| watch 方法说明 | [guide/watch-methodology.zh-CN.md](guide/watch-methodology.zh-CN.md) | [English](guide/watch-methodology.md) |
+| 更新日志 | [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md) | [English](CHANGELOG.md) |

@@ -16,6 +16,18 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   formal invitation and after legal review). Documentation only: rubric v1.1, every check and every score are
   unchanged. `validate.py` rule 14 now holds the English page to English.
 
+### Changed
+- **Both READMEs restructured, with screenshots.** README.md and README.zh-CN.md now follow one outline, section for
+  section: what problem it solves (with a diagram of the three levels), screenshots, core capabilities, what it checks,
+  the leaderboard, how accurate it is, quick start, levels 2 and 3, who it is for, boundaries and governance, a
+  developer section, and a documentation index in both languages. The six PNGs in `assets/screens/` (four per README)
+  are real outputs captured on 2026-10-17: a 1.8.3 run on jianruntech.com in a terminal, the GitHub Action's job
+  summary for that report, and the public leaderboard's English and Chinese pages. Long reference material (the MCP
+  tool table, what level 3 reports, the engines, caps and cost) is folded into collapsible blocks; the generated MCP
+  blocks are untouched, and the old anchors that moved (`#ways-to-run-it`, `#stability-privacy-and-install-options`
+  and their Chinese twins) still resolve. Documentation only: every figure, the rubric, every check and every score
+  are unchanged.
+
 ## [1.8.3] — 2026-10-15
 
 Scoring is unchanged: the two CLI files differ from 1.8.2 only in `__version__`, so rubric v1.1, every check, tier

@@ -9,16 +9,6 @@
 geo-score is an open-source AI visibility (GEO) scorer for websites, by [Jianrun Tech](https://www.jianruntech.com) (见润科技).
 Formerly geo-watch: geo-watch merged into geo-score in 1.2.0 and lives on as its levels 2 and 3.
 
-**Can AI engines cite your site? A free 0–100 score from one command. Do they? Check through their APIs with your own keys.**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
-[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
-[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
-[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
-[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
-[![AIV readiness of the leaderboard page, measured 2026-10-05 with geo-score 1.8.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
-
 ## geo-score in 60 seconds
 
 One command, a 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked.
@@ -27,19 +17,257 @@ https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
 
 *English · 60 seconds · [Chinese version](README.zh-CN.md)*
 
+---
+
+> **Can AI engines cite your site? A free 0–100 score from one command. Do they? Check through their APIs with your own keys.**
+
+geo-score scores a website from 0 to 100 on whether AI answer engines can reach it, parse it, trust it and cite it,
+against a **published, versioned rubric** that anyone can recompute. Then, with your own API keys, it asks the engines
+the questions your buyers ask and records whom the answers cite. The score is free and needs nothing installed; the
+citation results are reported beside it and never added to it.
+
+[Quick start](#quick-start) · [Screenshots](#screenshots) · [What it checks](#what-it-checks) ·
+[How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Changelog](CHANGELOG.md) ·
+[Public leaderboard](https://www.jianruntech.com/leaderboard)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
+[![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
+[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
+[![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
+[![AIV readiness of the leaderboard page, measured 2026-10-05 with geo-score 1.8.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
+[![PyPI](https://img.shields.io/pypi/v/geo-score?color=1E5C46)](https://pypi.org/project/geo-score/)
+[![Latest release](https://img.shields.io/github/v/release/jianruntech/geo-score?display_name=tag&color=A9854C)](https://github.com/jianruntech/geo-score/releases/latest)
+
+> **Version:** the current release is `geo-score==1.8.3` on [PyPI](https://pypi.org/project/geo-score/), with its tag,
+> wheel and checksums on [GitHub Releases](https://github.com/jianruntech/geo-score/releases); what changed is in the
+> [changelog](CHANGELOG.md). Every install line on this page is pinned to that release (`scripts/release.py --bump`
+> moves them together), so the tool you run is the one these pages describe. The rubric is versioned separately, and
+> v1.1 is current. main can run ahead of the release: for CI and client work, use the pinned release.
+
+---
+
+## What problem it solves
+
+> **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
+> Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
+
+An answer engine quotes passages from sources it can reach, parse and trust. The reasons a site is left out are often
+small and invisible from a browser: a `robots.txt` line that turns a retrieval crawler away, a page whose text only
+exists after JavaScript runs, figures with no source. geo-score finds which of these a site has and what each one is
+worth, then checks whether the engines cite it, in three levels:
+
 > **Score** (free, no key) → **Ask** one question (your API keys) → **Watch** a question set every week (your API keys).
-> [Three levels, one tool](#three-levels-one-tool) · the citation half is never added to the score.
+
+### Three levels, one tool
+
+| Level | What it answers | Needs | Command |
+|---|---|---|---|
+| **1 · Score** | Can AI engines reach, parse, trust and cite the site? 0–100 against the open rubric | Nothing: no key, no install | `geo_score.py stripe.com` |
+| **2 · Ask** | Right now, for a question you care about, do they cite it? | An API key for any of OpenAI, Perplexity, Gemini, Anthropic, OpenRouter | `geo_score.py stripe.com --ask "payments API for marketplaces"` |
+| **3 · Watch** | How often are you cited, against which competitors and sources, week over week? | Your API keys and a fixed question list | `geo_score.py watch run` |
+
+```mermaid
+flowchart LR
+    S[Your site] --> L1["Level 1 · Score<br/>free, no key"]
+    L1 --> R["0–100 readiness<br/>5 pillars · 3 gates · biggest gaps"]
+    Q[Questions your buyers ask] --> L2["Level 2 · Ask<br/>one question, your API keys"]
+    Q --> L3["Level 3 · Watch<br/>a fixed question set, every week"]
+    L2 --> C["Who the answers cite<br/>you · competitors · third-party pages"]
+    L3 --> C
+    R -. reported side by side, never summed .- C
+```
+
+Level 1 is the score. Levels 2 and 3 measure the outcome the rubric keeps out of the score on
+purpose ([two scores, never one](rubric/v1.1.md#two-scores-never-one)): they are reported next to
+the 100 and never summed into it. A site can score 90 and still lose every answer to a competitor
+with more third-party coverage, and the reverse also happens, which is why you want both.
+
+### Why this is a different question from SEO
+
+Classic SEO asks *where do I rank*. Answer engines don't rank — they retrieve passages,
+decide whether a source is worth quoting, and cite it. Different question, different
+failure modes: a site can sit at position 3 on Google and never be quoted. Because
+engines retrieve passages, this rubric gives Content Citability the most weight. That is
+a design choice, not a measured effect: the evidence for how much passage shape matters
+is thin, and the [evidence table](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)
+says where.
+
+Most of what the rubric checks is **mechanical and cheap to fix** — a `robots.txt` line, a
+JSON-LD block, a date in a template, a paragraph rewritten so it stands on its own. The
+hard part is knowing which of them you are missing, and what each one is worth.
+
+Two guides start here: [can ChatGPT read your website?](guide/chatgpt-access.md), a check you can do by hand and then
+with geo-score, and [how geo-score differs from a general AI SEO skill](guide/vs-ai-seo-skills.md).
+
+---
+
+## Screenshots
+
+Every image shows real output, captured for this page.
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><a href="assets/screens/cli-report.png"><img src="assets/screens/cli-report.png" alt="geo-score 1.8.3 scoring jianruntech.com in a terminal: 96 out of 100, band Leading, every check with its tier, and the three biggest gaps"></a><br><sub><b>Level 1 in a terminal.</b> <code>geo_score.py jianruntech.com</code> (the maintainer's own site), run with geo-score 1.8.3 on 2026-10-17; the output with its colours, rendered to an image. Cut before the observations outside the score.</sub></td>
+    <td width="50%" valign="top"><a href="assets/screens/action-summary.png"><img src="assets/screens/action-summary.png" alt="The job summary the geo-score GitHub Action writes: the score, the band and a table of all 21 checks with the evidence for each"></a><br><sub><b>The GitHub Action's job summary</b> for the same report: the Markdown <code>action/summary.py</code> writes, rendered by GitHub's Markdown API. Cut after the check table.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><a href="https://www.jianruntech.com/leaderboard"><img src="assets/screens/leaderboard.png" alt="The public leaderboard page: 324 sites, median 55, upper quartile 70, range 11 to 96, 73 unreadable to AI"></a><br><sub><b>The public leaderboard</b>, captured 2026-10-17. Its figures come from the 2026-10-02 run with geo-score 1.5.0.</sub></td>
+    <td width="50%" valign="top"><a href="https://www.jianruntech.com/leaderboard"><img src="assets/screens/leaderboard-table.png" alt="The leaderboard's table of every site: score, band, sector and the three biggest gaps by check id"></a><br><sub><b>Every site on the leaderboard</b>, sortable, with its band, sector and three biggest gaps by check id. Same page, same capture.</sub></td>
+  </tr>
+</table>
+
+---
+
+## Core capabilities
+
+| Capability | What it does | More |
+|---|---|---|
+| **Score** (level 1) | 21 tiered checks in five pillars, three gates, the biggest gaps first, and what each next tier needs. One file, standard library only, no key | [What it checks](#what-it-checks) |
+| **Ask** (level 2) | Puts one question to ChatGPT, Perplexity, Gemini and Claude through their search-enabled APIs, with your keys, and reports whom each answer cites | [Levels 2 and 3](#levels-2-and-3--does-ai-actually-cite-you) |
+| **Watch** (level 3) | A fixed question set, week over week: cited rate with a 95% interval, share of voice, the sources the engines lean on, and a `diff` that calls a change a change only when a paired test says so | [Watch methodology](guide/watch-methodology.md) |
+| **Reports and diffs** | Text, JSON against a published schema, SARIF and JUnit; `diff` compares two reports check by check, and `--baseline` re-scores the same pages | [CLI reference](cli/README.md) |
+| **MCP server** | All three levels as tools for agents over stdio; `--read-only` gives a server that cannot spend | [MCP server](#mcp-server) · [guide/mcp.md](guide/mcp.md) |
+| **GitHub Action** | Scores on every push, fails the build on a regression or a gate at zero, and writes a job summary | [GitHub Action](#github-action) · [action.yml](action.yml) |
+| **Badge** | An optional SVG, or shields.io endpoint JSON, with your score and band. It never moves a score or a leaderboard place | [Badge](cli/README.md#a-badge-for-your-own-readme) |
+| **Claude Code skill** | The CLI, plus the three checks that need off-site search or human judgement | [Claude Code skill](#claude-code-skill) · [SKILL.md](SKILL.md) |
+
+---
+
+## What it checks
+
+21 tiered checks totalling 100 points, plus 4 bonus checks worth up to +6 outside the
+denominator. Full specification: **[rubric/v1.1.md](rubric/v1.1.md)** · [简体中文](rubric/v1.1.zh-CN.md)
+
+| Pillar | Pts | Asks |
+|---|:-:|---|
+| **Reachable** — *gates* | 15 | Can a retrieval crawler get the page at all? `robots.txt`, live reachability across 10 AI user-agents, server-rendered content |
+| **Understandable** | 22 | Can it tell what the page and the company are? `Organization` + `WebSite`, `llms.txt`, sitemap, breadcrumbs, page-type schema |
+| **Content Citability** | **35** | Is there anything here worth quoting? Self-contained answer passages, headings that match how people ask, sourced figures, real bylines, freshness |
+| **Brand Credibility** | 18 | Why should an engine trust it? Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
+| **Answer Fit** | 10 | Is the content shaped to be lifted into an answer? |
+
+Content Citability carries the most weight by design: answer engines retrieve
+**passages**, not domains. Whether passage shape outweighs domain authority is not
+established: the heaviest single check, `p2.answer-passages`, rests on thin support
+([where the evidence is thinnest](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)).
+
+**Every scored check is tiered** — 2 to 4 tiers, each naming a count out of the 8 sampled
+pages, so two people scoring the same site agree on the arithmetic. **Three checks are
+gates**: score zero on crawler access, live reachability or server-rendered content and
+the result caps at 40, because until a crawler can reach the content nothing else you
+change has any effect.
+
+### Bands
+
+| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
+|:-:|:-:|:-:|:-:|:-:|
+| Not started | Early | Growing | Solid | Leading |
+
+Band names describe a **stage, not a verdict**. External benchmarks put most business
+sites in the 30–55 range, so a score in the forties is ordinary, not alarming. In this repository's
+own benchmark, 85% of 324 sites reach Early and 6% reach Leading
+([where the cuts fall](benchmark/README.md#where-the-band-cuts-fall)).
+
+---
+
+## 324 sites, scored in public
+
+**A quarter of them are unreadable to AI crawlers.** 73 sites have a gate check at zero — an
+AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 20 block AI crawlers by name in
+`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 17
+for exactly this reason. **41 serve a page whose body only exists after JavaScript runs.**
+Their content is there, a browser sees it, and a crawler gets an empty shell. That group
+almost certainly did not choose it. At a further 12 the server refuses crawler user-agents (unverified
+probes from the auditor's address).
+
+Median **55** (95% CI 51–58, [stats.py](benchmark/stats.py)). Range 11 to 96. 66 sites were scored on
+fewer than four pages; without them the median is 59.
+
+| Site | Score | Band |
+|---|:-:|---|
+| resend.com | **96** | Leading |
+| pulumi.com | **94** | Leading |
+| supabase.com | **93** | Leading |
+| elevenlabs.io | **91** | Leading |
+| lumalabs.ai | **90** | Leading |
+| … | | |
+| qcloud.com | 12 | Not started |
+| mercadolibre.com | 12 | Not started |
+| keepa.com | 11 | Not started |
+
+**[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [CSV](benchmark/results.csv) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
+
+Two more findings worth the click. Sites in the five China sectors score **22 points
+lower** than everyone else (95% CI 16–30; median 36 against 58; earlier samples measured with 1.1.0
+put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 54
+Chinese-language sites score 26 points lower than the 270 others (95% CI 22–32), and within matched
+sector families the gap runs from -8 to 27 points. Counted check by check in raw points, 69% of the gap
+sits in checks the CLI reads with a heuristic, so at most that share could be the tool misreading
+Chinese pages ([the breakdown](benchmark/README.md#what-the-spread-shows)). The two largest per-check
+differences, question-shaped headings and self-contained answer passages, are heuristics the CLI also
+read lower than a human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md),
+so part of the gap may be the tool reading Chinese pages conservatively. From 1.5.0 the CLI reads each
+page in its own language and counts Chinese task, explanation and comparison headings; the leaderboard
+above was measured with 1.5.0, so its figures include that change. And statistics that carry a source
+and a named, verifiable byline are among the three largest gaps on more than half the sites.
+
+Every number here is reproducible with the command in [Quick start](#quick-start) (the benchmark
+was run with 1.5.0 on 2026-10-02) — and we measured how reproducible. On 2026-10-12, 1.8.0 scored
+the whole list three times from one place the same day (the third run re-reading the first run's pages):
+of the 317 sites scored every time, **99% landed within ±5 between the first two runs and 81% scored
+identically** (ICC 0.99, SEM 1.9; [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md), derived by
+[benchmark/retest.py](benchmark/retest.py)). An older 1.1.x build, measured on 2026-09-09, put 96% within ±5
+and 45% identical. Read one site's score as ±5 rather than as exact; medians are stable. Most of what still
+moves is the knowledge-graph lookup, which went unanswered on most sites from that vantage, and the gate
+checks of sites whose bot protection answers a crawler differently from one run to the next.
+The band, the control experiment and the per-site pairs are in
+[benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md).
+
+For five reference sites we also publish **hand-scored audits** covering all 21 checks,
+with the evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
+
+---
+
+## How accurate is it?
+
+Five questions people ask, and where this repository answers each one:
+
+| Question | Answer | Record |
+|---|---|---|
+| Score the same site twice: how far apart? | A same-day retest with 1.8.0 on 2026-10-12: 99% of 317 sites within ±5 and 81% identical (ICC 0.99) | [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md) |
+| Can anyone recompute it? | Yes: every check, tier and weight is published, so the same pages give the same score whoever runs it | [rubric/v1.1.md](rubric/v1.1.md) |
+| Does it match a person reading the same rubric? | 80% of 84 check pairs land in the same tier; only 5 sites, all of them calibration sites | [VALIDITY.md](benchmark/VALIDITY.md) |
+| Do the weights decide the ranking? | With equal weights, or 300 random perturbations of them, the rank correlation stays at 0.99 or above | [SENSITIVITY.md](benchmark/SENSITIVITY.md) |
+| Are higher-scoring sites cited more often by AI? | The preregistered test's first wave (2026-10-12 to 14; 16 categories, 83 sites, 1,280 answers from one engine): no association was detected (T = 0.07, p = 0.51); the design could detect a T at least as large as 0.29. Not detected is not the same as none | [RESULTS-wave0.md](benchmark/prereg/round0/RESULTS-wave0.md), [PREREGISTRATION.md](benchmark/PREREGISTRATION.md) |
+
+**Against hand audits.** The CLI leaves the three checks that need off-site search or human judgement
+out of the denominator rather than guessing (and a fourth,
+`p4.cn-engines`, unless the site serves Chinese). Re-scoring
+the five published hand audits on the same pages, it matched the auditor's tier on 80% of
+84 check pairs (92% where it reads a rule, 69% where it approximates a judgement). On the checks
+both scored it read 2.4 points lower on average (per site from 12 lower to 10 higher; mean absolute
+difference 8.8). Its full normalised score read 5.2 points lower on average, from 16 lower to 7
+higher, because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`,
+which the CLI leaves out. n=5, all of them calibration sites:
+[VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
+
+---
+
+<a id="ways-to-run-it"></a>
+
+## Quick start
+
+### One command
+
+Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
+a score against a **published, versioned rubric** — not a black box.
 
 ```bash
 curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.3/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
-
-<p align="center"><img src="assets/demo.svg" alt="geo-score scoring stripe.com from the command line — 71 out of 100, band Solid" width="100%"></p>
-<p align="center"><sub>Recorded with geo-score 1.1.0 on 2026-09-09. A run with 1.2.0 on 2026-09-27 read 72.</sub></p>
-
-<sub>One command. Every check, and what the next tier needs. The report says how long its run took.</sub>
-
 
 <details>
 <summary>Full output — every check, and what the next tier asks for (<code>--explain</code> adds the evidence)</summary>
@@ -92,32 +320,87 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.3/cli/geo_
   Score moved, or a check shows —? https://github.com/jianruntech/geo-score/blob/v1.5.0/guide/troubleshooting.md
 ```
 
-<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). The image above is an earlier run, with 1.1.0. From 1.7.0 the report also prints three observations under **Outside the score** after the checks (robots.txt rules page by page, links in the server HTML, hreflang), which never move the score; this recording predates them. See [cli/README.md](cli/README.md#outside-the-score).</sub>
+<sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). For a run with 1.8.3, see [Screenshots](#screenshots). From 1.7.0 the report also prints three observations under **Outside the score** after the checks (robots.txt rules page by page, links in the server HTML, hreflang), which never move the score; this recording predates them. See [cli/README.md](cli/README.md#outside-the-score).</sub>
 
 </details>
 
-Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
-a score against a **published, versioned rubric** — not a black box.
+### From PyPI: uvx or pipx
 
-**[See how 324 well-known sites score →](https://www.jianruntech.com/leaderboard)**  ·  a quarter of them are unreadable to AI crawlers.
+All three levels. Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.py`, and the package on PyPI has
+both; a clone, or both files downloaded, works too. Neither line below needs git or a build step.
 
-> **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
-> Google AI Overviews, Gemini and Copilot. Nothing to do with geography or maps.
+```bash
+uvx geo-score@1.8.3 example.com            # run it without installing (needs uv)
+pipx install geo-score==1.8.3              # or install the geo-score command
+geo-score example.com --explain            # every check, with the evidence behind it
+```
 
-**Contents:** [MCP server](#mcp-server) · [Three levels](#three-levels-one-tool) · [What it checks](#what-it-checks) ·
-[Leaderboard](#324-sites-scored-in-public) · [Ways to run it](#ways-to-run-it) ·
-[Does AI cite you?](#levels-2-and-3--does-ai-actually-cite-you) · [Scope](#scope--what-this-does-not-do) ·
-[How accurate is it?](#how-accurate-is-it) · [Install and stability](#stability-privacy-and-install-options) ·
-[Repository layout](#repository-layout) ·
-[Contributing](#contributing)
+Without access to PyPI, install the same wheel from the release:
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.3/geo_score-1.8.3-py3-none-any.whl`.
+From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.8.3`.
+Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
+sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
 
----
+<details>
+<summary>Every way to call the CLI, and an optional badge for your own README</summary>
 
-## MCP server
+**CLI** — level 1 is one file with no dependencies, and every report records how long its run took
+(`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release. With the package from PyPI,
+`uvx geo-score@1.8.3` (or `geo-score`, after `pipx install geo-score==1.8.3`) takes the place of
+`python3 cli/geo_score.py` below, all three levels included.
+
+```bash
+python3 cli/geo_score.py example.com            # human-readable
+python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
+python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # side by side
+python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # the same badge as shields.io endpoint JSON
+python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
+python3 cli/geo_score.py diff before.json after.json             # what changed between two reports, check by check
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
+```
+
+**"Scored with geo-score": an optional badge for your own README.** `--badge aiv-badge.svg` writes an SVG with your
+score and band. Commit it next to your README and link it to what the number means, this repository or
+[the public leaderboard](https://www.jianruntech.com/leaderboard):
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+It is optional, and it changes nothing: a badge or a link back never moves a score, and never decides whether or
+where a site appears on the leaderboard. A site joins the leaderboard through the
+[Add a site](.github/CONTRIBUTING.md#the-easiest-useful-contribution) route, never in exchange for a link. A committed
+SVG shows the run that wrote it; `--badge-json` writes the same badge as shields.io endpoint JSON, so it can stay
+current without a new image ([details](cli/README.md#a-badge-for-your-own-readme)).
+
+</details>
+
+### Claude Code skill
+
+The CLI measures what a static fetch can see. Three checks need
+off-site search or human judgement, and the skill does those too.
+
+```bash
+npx skills add jianruntech/geo-score     # add -g for a global install
+# then: /geo-score audit https://example.com
+```
+
+`npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
+repository, `geo-score`, and copies the whole repository (about 9 MB) as it is on the default branch, main,
+into `.claude/skills/geo-score` for Claude Code. Without Node.js, or for the release rather than main, clone the
+release tag into your own skills folder instead:
+`git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
+
+How close the CLI comes without the skill: [How accurate is it?](#how-accurate-is-it)
+
+### MCP server
 
 `geo-score-mcp` is a local MCP server (stdio, Python standard library only). It gives an agent the
 same three levels as the CLI: score a site for free, ask the AI engines one question, and track a
-question set week over week.
+question set week over week. `uvx geo-score@1.8.3 mcp` runs it from PyPI (`geo-score-mcp` after a pipx install), and
+`python3 cli/geo_score.py mcp` runs it from a clone.
 
 <!-- BEGIN MCP:install -->
 <!-- Generated by scripts/mcp_docs.py for version 1.8.3; edit the script, not this block. -->
@@ -155,6 +438,9 @@ Without access to PyPI, the release wheel: `uvx --from https://github.com/jianru
 From source (needs git): `uvx --from git+https://github.com/jianruntech/geo-score@v1.8.3 geo-score-mcp`
 <!-- END MCP:install -->
 
+<details>
+<summary>The tools, what each one costs, and the keys and config they read</summary>
+
 <!-- BEGIN MCP:tools -->
 <!-- Generated by scripts/mcp_docs.py from MCPServer.tools(); edit the server or the script, not this table. -->
 
@@ -190,170 +476,15 @@ exported in a shell. The level 3 tools also need a `geo-score-watch.json`. Pass 
 `-c /absolute/path/geo-score-watch.json`, because a GUI client does not start the server in your
 project. From 1.4.0, `--read-only` gives a server that cannot spend anything.
 
+</details>
+
 Setup for each client (Claude Code, Claude Desktop, Codex, Cursor, VS Code, Gemini CLI, Devin
 Desktop, Zed), the Claude Code plugin, timeouts, security and troubleshooting:
 **[guide/mcp.md](guide/mcp.md)**.
 
-## Three levels, one tool
+### GitHub Action
 
-| Level | What it answers | Needs | Command |
-|---|---|---|---|
-| **1 · Score** | Can AI engines reach, parse, trust and cite the site? 0–100 against the open rubric | Nothing: no key, no install | `geo_score.py stripe.com` |
-| **2 · Ask** | Right now, for a question you care about, do they cite it? | An API key for any of OpenAI, Perplexity, Gemini, Anthropic, OpenRouter | `geo_score.py stripe.com --ask "best payments API for marketplaces"` |
-| **3 · Watch** | How often are you cited, against which competitors and sources, week over week? | Your API keys and a fixed question list | `geo_score.py watch run` |
-
-Level 1 is the score. Levels 2 and 3 measure the outcome the rubric keeps out of the score on
-purpose ([two scores, never one](rubric/v1.1.md#two-scores-never-one)): they are reported next to
-the 100 and never summed into it. A site can score 90 and still lose every answer to a competitor
-with more third-party coverage, and the reverse also happens, which is why you want both.
-
-Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.py`. The package on PyPI has both:
-`uvx geo-score@1.8.3 example.com` runs it without installing, and `pipx install geo-score==1.8.3` gives you
-a `geo-score` command. A clone, or both files downloaded, works too. The one-line `curl | python3` above
-runs level 1.
-
-## Why this is a different question from SEO
-
-Classic SEO asks *where do I rank*. Answer engines don't rank — they retrieve passages,
-decide whether a source is worth quoting, and cite it. Different question, different
-failure modes: a site can sit at position 3 on Google and never be quoted. Because
-engines retrieve passages, this rubric gives Content Citability the most weight. That is
-a design choice, not a measured effect: the evidence for how much passage shape matters
-is thin, and the [evidence table](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)
-says where.
-
-Most of what the rubric checks is **mechanical and cheap to fix** — a `robots.txt` line, a
-JSON-LD block, a date in a template, a paragraph rewritten so it stands on its own. The
-hard part is knowing which of them you are missing, and what each one is worth.
-
-Two guides start here: [can ChatGPT read your website?](guide/chatgpt-access.md), a check you can do by hand and then
-with geo-score, and [how geo-score differs from a general AI SEO skill](guide/vs-ai-seo-skills.md).
-
-## What it checks
-
-21 tiered checks totalling 100 points, plus 4 bonus checks worth up to +6 outside the
-denominator. Full specification: **[rubric/v1.1.md](rubric/v1.1.md)** · [简体中文](rubric/v1.1.zh-CN.md)
-
-| Pillar | Pts | Asks |
-|---|:-:|---|
-| **Reachable** — *gates* | 15 | Can a retrieval crawler get the page at all? `robots.txt`, live reachability across 10 AI user-agents, server-rendered content |
-| **Understandable** | 22 | Can it tell what the page and the company are? `Organization` + `WebSite`, `llms.txt`, sitemap, breadcrumbs, page-type schema |
-| **Content Citability** | **35** | Is there anything here worth quoting? Self-contained answer passages, headings that match how people ask, sourced figures, real bylines, freshness |
-| **Brand Credibility** | 18 | Why should an engine trust it? Knowledge-graph entity, third-party listings, `sameAs` that resolves, video presence |
-| **Answer Fit** | 10 | Is the content shaped to be lifted into an answer? |
-
-Content Citability carries the most weight by design: answer engines retrieve
-**passages**, not domains. Whether passage shape outweighs domain authority is not
-established: the heaviest single check, `p2.answer-passages`, rests on thin support
-([where the evidence is thinnest](rubric/evidence-v1.1.md#where-the-evidence-is-thinnest)).
-
-**Every scored check is tiered** — 2 to 4 tiers, each naming a count out of the 8 sampled
-pages, so two people scoring the same site agree on the arithmetic. **Three checks are
-gates**: score zero on crawler access, live reachability or server-rendered content and
-the result caps at 40, because until a crawler can reach the content nothing else you
-change has any effect.
-
-### Bands
-
-| 0–30 | 31–50 | 51–65 | 66–82 | 83–100 |
-|:-:|:-:|:-:|:-:|:-:|
-| Not started | Early | Growing | Solid | Leading |
-
-Band names describe a **stage, not a verdict**. External benchmarks put most business
-sites in the 30–55 range, so a score in the forties is ordinary, not alarming. In this repository's
-own benchmark, 85% of 324 sites reach Early and 6% reach Leading
-([where the cuts fall](benchmark/README.md#where-the-band-cuts-fall)).
-
-## 324 sites, scored in public
-
-**A quarter of them are unreadable to AI crawlers.** 73 sites have a gate check at zero — an
-AI retrieval crawler cannot get the content, so it has nothing of theirs to quote. 20 block AI crawlers by name in
-`robots.txt`, which is an editorial choice and reported as such — amazon.com lands at 17
-for exactly this reason. **41 serve a page whose body only exists after JavaScript runs.**
-Their content is there, a browser sees it, and a crawler gets an empty shell. That group
-almost certainly did not choose it. At a further 12 the server refuses crawler user-agents (unverified
-probes from the auditor's address).
-
-Median **55** (95% CI 51–58, [stats.py](benchmark/stats.py)). Range 11 to 96. 66 sites were scored on
-fewer than four pages; without them the median is 59.
-
-| Site | Score | Band |
-|---|:-:|---|
-| resend.com | **96** | Leading |
-| pulumi.com | **94** | Leading |
-| supabase.com | **93** | Leading |
-| elevenlabs.io | **91** | Leading |
-| lumalabs.ai | **90** | Leading |
-| … | | |
-| qcloud.com | 12 | Not started |
-| mercadolibre.com | 12 | Not started |
-| keepa.com | 11 | Not started |
-
-**[The full table, by sector →](https://www.jianruntech.com/leaderboard)** · [markdown](benchmark/README.md) · [raw data](benchmark/results.json) · [CSV](benchmark/results.csv) · [every site's full report](benchmark/raw/) · [re-run it](benchmark/run.py)
-
-Two more findings worth the click. Sites in the five China sectors score **22 points
-lower** than everyone else (95% CI 16–30; median 36 against 58; earlier samples measured with 1.1.0
-put the gap between 16 and 23 points). Grouped by the language a site serves instead, the 54
-Chinese-language sites score 26 points lower than the 270 others (95% CI 22–32), and within matched
-sector families the gap runs from -8 to 27 points. Counted check by check in raw points, 69% of the gap
-sits in checks the CLI reads with a heuristic, so at most that share could be the tool misreading
-Chinese pages ([the breakdown](benchmark/README.md#what-the-spread-shows)). The two largest per-check
-differences, question-shaped headings and self-contained answer passages, are heuristics the CLI also
-read lower than a human on the one Chinese site in the [hand-audit comparison](benchmark/VALIDITY.md),
-so part of the gap may be the tool reading Chinese pages conservatively. From 1.5.0 the CLI reads each
-page in its own language and counts Chinese task, explanation and comparison headings; the leaderboard
-above was measured with 1.5.0, so its figures include that change. And statistics that carry a source
-and a named, verifiable byline are among the three largest gaps on more than half the sites.
-
-Every number here is reproducible with the command at the top of this page (the benchmark
-was run with 1.5.0 on 2026-10-02) — and we measured how reproducible. On 2026-10-12, 1.8.0 scored
-the whole list three times from one place the same day (the third run re-reading the first run's pages):
-of the 317 sites scored every time, **99% landed within ±5 between the first two runs and 81% scored
-identically** (ICC 0.99, SEM 1.9; [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md), derived by
-[benchmark/retest.py](benchmark/retest.py)). An older 1.1.x build, measured on 2026-09-09, put 96% within ±5
-and 45% identical. Read one site's score as ±5 rather than as exact; medians are stable. Most of what still
-moves is the knowledge-graph lookup, which went unanswered on most sites from that vantage, and the gate
-checks of sites whose bot protection answers a crawler differently from one run to the next.
-The band, the control experiment and the per-site pairs are in
-[benchmark/REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md).
-
-For five reference sites we also publish **hand-scored audits** covering all 21 checks,
-with the evidence behind each one: [examples/audits/v1.1/](examples/audits/v1.1/).
-
-## Ways to run it
-
-**CLI** — level 1 is one file with no dependencies, and every report records how long its run took
-(`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release. With the package from PyPI,
-`uvx geo-score@1.8.3` (or `geo-score`, after `pipx install geo-score==1.8.3`) takes the place of
-`python3 cli/geo_score.py` below, all three levels included.
-
-```bash
-python3 cli/geo_score.py example.com            # human-readable
-python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
-python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
-python3 cli/geo_score.py example.com --compare competitor.com   # side by side
-python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
-python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # the same badge as shields.io endpoint JSON
-python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
-python3 cli/geo_score.py diff before.json after.json             # what changed between two reports, check by check
-python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
-```
-
-**"Scored with geo-score": an optional badge for your own README.** `--badge aiv-badge.svg` writes an SVG with your
-score and band. Commit it next to your README and link it to what the number means, this repository or
-[the public leaderboard](https://www.jianruntech.com/leaderboard):
-
-```markdown
-[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
-```
-
-It is optional, and it changes nothing: a badge or a link back never moves a score, and never decides whether or
-where a site appears on the leaderboard. A site joins the leaderboard through the
-[Add a site](.github/CONTRIBUTING.md#the-easiest-useful-contribution) route, never in exchange for a link. A committed
-SVG shows the run that wrote it; `--badge-json` writes the same badge as shields.io endpoint JSON, so it can stay
-current without a new image ([details](cli/README.md#a-badge-for-your-own-readme)).
-
-**GitHub Action** (level 1) — score on every push, fail the build when it regresses. For level 3 on a
+Level 1 on every push: score the site, and fail the build when it regresses. For level 3 on a
 schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
 
 ```yaml
@@ -366,33 +497,9 @@ schedule, see [examples/ci/watch-weekly.yml](examples/ci/watch-weekly.yml).
 
 A gate at zero caps the score at 40: a site that would otherwise score 40 or more reads exactly 40 and passes `fail-under: 40`. `fail-on-gate: true` fails any capped site.
 
-**Claude Code skill** — the CLI measures what a static fetch can see. Three checks need
-off-site search or human judgement, and the skill does those too.
+The job summary it writes is in [Screenshots](#screenshots).
 
-```bash
-npx skills add jianruntech/geo-score     # add -g for a global install
-# then: /geo-score audit https://example.com
-```
-
-`npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
-repository, `geo-score`, and copies the whole repository (about 9 MB) as it is on the default branch, main,
-into `.claude/skills/geo-score` for Claude Code. Without Node.js, or for the release rather than main, clone the
-release tag into your own skills folder instead:
-`git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
-
-The CLI leaves those three checks out of the denominator rather than guessing (and a fourth,
-`p4.cn-engines`, unless the site serves Chinese). Re-scoring
-the five published hand audits on the same pages, it matched the auditor's tier on 80% of
-84 check pairs (92% where it reads a rule, 69% where it approximates a judgement). On the checks
-both scored it read 2.4 points lower on average (per site from 12 lower to 10 higher; mean absolute
-difference 8.8). Its full normalised score read 5.2 points lower on average, from 16 lower to 7
-higher, because the hand audits also score `p3.listings`, `p3.mentions` and `p4.question-coverage`,
-which the CLI leaves out. n=5, all of them calibration sites:
-[VALIDITY.md](benchmark/VALIDITY.md) lists every disagreement.
-
-**MCP server** (all three levels) — `uvx geo-score@1.8.3 mcp` from PyPI (`geo-score-mcp` after a pipx
-install), or `python3 cli/geo_score.py mcp` from a clone, for Claude Code, Cursor and other agents: see
-[MCP server](#mcp-server).
+---
 
 ## Levels 2 and 3 · does AI actually cite you?
 
@@ -404,7 +511,7 @@ instead. Keys are read from the environment; geo-score never writes them anywher
 ```bash
 git clone --branch v1.8.3 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
 export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # any subset of engines works
-python3 geo_score.py acme.com --ask "best invoicing app for freelancers"   # level 2
+python3 geo_score.py acme.com --ask "invoicing app for freelancers"        # level 2
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"
 # put the questions your buyers ask an AI assistant into queries.csv, then:
 python3 geo_score.py watch run --dry-run            # the plan, the caps, what a diff could detect and how precise one question's rate is; no calls, no cost
@@ -412,6 +519,10 @@ python3 geo_score.py watch run                      # level 3: every question on
 python3 geo_score.py watch diff                     # this run against the last, with a significance test
 python3 geo_score.py watch report --since 30        # the last 30 days pooled, one interval over questions
 ```
+
+**Level 2** asks each engine each question once and prints the result under the readiness
+report (and into the report's `citation` object with `--json`). One ask is an anecdote: use it to
+see what the engines say today, not to measure a rate.
 
 <details>
 <summary>What a watch run prints (illustrative: made-up brands and canned answers, not a real measurement; a run saved by 1.2.0, printed by 1.8.0)</summary>
@@ -516,9 +627,8 @@ Read this before quoting the numbers
 ```
 </details>
 
-**Level 2** asks each engine each question once and prints the result under the readiness
-report (and into the report's `citation` object with `--json`). One ask is an anecdote: use it to
-see what the engines say today, not to measure a rate.
+<details>
+<summary>What level 3 reports, what it will not tell you, the engines, and caps and cost</summary>
 
 **Level 3** keeps a fixed question list, saves every answer under `.geo-score/watch/runs/`
 ([schema](schema/watch.v1.json)), and reports:
@@ -587,6 +697,8 @@ questions and models, and read `diff`, not single runs.
 repository secrets and commits each run, so the history lives in git. Run files contain your
 questions and the full answers: use a private repository if they are confidential.
 
+</details>
+
 **Run it yourself, or have it run for you.** Everything here is MIT; the tool has no paid edition.
 You pay your model providers directly and the ledger shows what each run used. What needs people
 rather than an API, [Jianrun](https://www.jianruntech.com/en/) does as a service:
@@ -599,33 +711,33 @@ rather than an API, [Jianrun](https://www.jianruntech.com/en/) does as a service
 | When citations drop | Out of scope | We do the fixing |
 | Price | Your API bill | AEO delivery system, from US$7,790 per quarter (US$30,590 paid yearly), AIV dashboard included. [See pricing](https://www.jianruntech.com/en/#pricing) |
 
-## How accurate is it?
+---
 
-Five questions people ask, and where this repository answers each one:
+## Who it is for
 
-| Question | Answer | Record |
+| Who | What they use it for | Where to start |
 |---|---|---|
-| Score the same site twice: how far apart? | A same-day retest with 1.8.0 on 2026-10-12: 99% of 317 sites within ±5 and 81% identical (ICC 0.99) | [REPRODUCIBILITY.md](benchmark/REPRODUCIBILITY.md) |
-| Can anyone recompute it? | Yes: every check, tier and weight is published, so the same pages give the same score whoever runs it | [rubric/v1.1.md](rubric/v1.1.md) |
-| Does it match a person reading the same rubric? | 80% of 84 check pairs land in the same tier; only 5 sites, all of them calibration sites | [VALIDITY.md](benchmark/VALIDITY.md) |
-| Do the weights decide the ranking? | With equal weights, or 300 random perturbations of them, the rank correlation stays at 0.99 or above | [SENSITIVITY.md](benchmark/SENSITIVITY.md) |
-| Are higher-scoring sites cited more often by AI? | The preregistered test's first wave (2026-10-12 to 14; 16 categories, 83 sites, 1,280 answers from one engine): no association was detected (T = 0.07, p = 0.51); the design could detect a T at least as large as 0.29. Not detected is not the same as none | [RESULTS-wave0.md](benchmark/prereg/round0/RESULTS-wave0.md), [PREREGISTRATION.md](benchmark/PREREGISTRATION.md) |
+| **Site owners and marketing teams** | Whether AI engines can reach and quote the site, and which gaps are worth the most points | `--brief`, then `--explain`; level 2 for the questions that matter to you |
+| **Agencies and consultants** | A diagnosis the client can re-check against a published, versioned rubric; the same pages re-scored after each change | `--json`, `--baseline last.json`, `diff`; name the rubric version in the report |
+| **Developers and CI** | A failed build when a deploy blocks crawlers, drops server rendering or loses points | The [GitHub Action](#github-action), `--fail-on-gate`, `--assert`, SARIF and JUnit |
+| **Researchers** | Every published number recomputed, the weights challenged, readiness tested against citations | [rubric/v1.1.json](rubric/v1.1.json), [benchmark/](benchmark/), the [preregistration](benchmark/PREREGISTRATION.md) |
 
-## Why a rubric, not just a tool
+geo-score measures whether engines **can** cite a site and whether they **do**. It does not fix anything, and it never
+predicts traffic, rankings or revenue.
 
-A score you cannot audit is a number someone made up. So the specification is the
-product, and the tools are implementations of it:
+---
 
-- **Versioned.** Every score reports the rubric version. `71 (v1.1)` is a claim; `71` is not.
-- **Tiered, with counts.** Each tier names a page count out of 8, not "most".
-- **Evidence-bound.** Every check requires an observation someone else can reproduce.
-- **Calibrated against public benchmarks**, with [the record published](rubric/calibration-v1.1.md) — including the four external sources the thresholds were checked against, and the [eight specification ambiguities](rubric/open-questions.md) that real audits surfaced and v1.1 settled.
-- **Machine-readable.** [`rubric/v1.1.json`](rubric/v1.1.json) with stable check ids, and [`schema/report.v2.json`](schema/report.v2.json) so results from different implementations are comparable.
+## Boundaries and governance
 
-Implement it in your own stack, disagree with a weight, [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml). That is the main thing we want contributions on.
-How a proposal becomes a new version, who decides, and why we sell no certification and pay for no seat on a standard: [rubric governance](rubric/governance.md).
+| Area | Where it stands |
+|---|---|
+| Measurement, not remediation | No fix templates, rewriting or per-engine tactics, beyond two public-knowledge examples: [Scope](#scope--what-this-does-not-do) |
+| Rubric changes | Public proposals, a comment period and an independent review; no certification sold: [rubric governance](rubric/governance.md) |
+| Weights | Each check declares what its weight rests on, with sources and the date they were checked: [evidence table](rubric/evidence-v1.1.md) |
+| Privacy | No telemetry. Level 1 fetches the site, what its markup and robots.txt point to, and Wikidata and Wikipedia search; levels 2 and 3 call only the providers whose keys you set |
+| Stability | The report schema, check ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts: [stability policy](guide/stability.md) |
 
-## Scope — what this does *not* do
+### Scope — what this does *not* do
 
 This is the part most tools leave out, so it's stated plainly.
 
@@ -664,7 +776,21 @@ This is the part most tools leave out, so it's stated plainly.
 - **Engine behaviour moves.** The rubric is versioned for exactly this reason. A score
   from an older rubric version is not comparable to a current one.
 
-## Research behind the weights
+### Why a rubric, not just a tool
+
+A score you cannot audit is a number someone made up. So the specification is the
+product, and the tools are implementations of it:
+
+- **Versioned.** Every score reports the rubric version. `71 (v1.1)` is a claim; `71` is not.
+- **Tiered, with counts.** Each tier names a page count out of 8, not "most".
+- **Evidence-bound.** Every check requires an observation someone else can reproduce.
+- **Calibrated against public benchmarks**, with [the record published](rubric/calibration-v1.1.md) — including the four external sources the thresholds were checked against, and the [eight specification ambiguities](rubric/open-questions.md) that real audits surfaced and v1.1 settled.
+- **Machine-readable.** [`rubric/v1.1.json`](rubric/v1.1.json) with stable check ids, and [`schema/report.v2.json`](schema/report.v2.json) so results from different implementations are comparable.
+
+Implement it in your own stack, disagree with a weight, [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml). That is the main thing we want contributions on.
+How a proposal becomes a new version, who decides, and why we sell no certification and pay for no seat on a standard: [rubric governance](rubric/governance.md).
+
+### Research behind the weights
 
 The weights are opinionated but not invented. The two findings that most shaped them:
 
@@ -688,7 +814,7 @@ says so. If you have evidence that a weight is wrong,
 [open a rubric proposal](.github/ISSUE_TEMPLATE/rubric_proposal.yml) — that is the
 main thing we want contributions on.
 
-## Related tools
+### Related tools
 
 Deliberately naming what this is *not*, so you can pick correctly:
 
@@ -701,19 +827,12 @@ Deliberately naming what this is *not*, so you can pick correctly:
 If you need remediation and not just a score, those projects overlap with the part
 this repo deliberately excludes.
 
-## Stability, privacy and install options
+<a id="stability-privacy-and-install-options"></a>
 
-- **Install:** nothing to install for level 1 (the `curl` line above, pinned to a release). For
-  a `geo-score` command with all three levels, install the package from PyPI:
-  `pipx install geo-score==1.8.3`. To run it without installing: `uvx geo-score@1.8.3 example.com`
-  (`uvx geo-score@1.8.3 mcp` is the MCP server). Neither needs git or a build step.
-  Without access to PyPI, install the same wheel from the release:
-  `pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.3/geo_score-1.8.3-py3-none-any.whl`.
-  From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.8.3`.
-  The Claude Code skill: `npx skills add jianruntech/geo-score` (`-g` for a global install), or a clone into
-  `~/.claude/skills/geo-score` ([Ways to run it](#ways-to-run-it)).
-  Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
-  sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
+### Stability, privacy and security
+
+Install options are in [Quick start](#quick-start).
+
 - **Stability:** the rubric and the tool are versioned separately, and the report schema, check
   ids, CLI flags, exit codes, Action inputs and MCP tools are public contracts. What may change in
   which release: the [stability policy](guide/stability.md).
@@ -734,7 +853,11 @@ More answers: [troubleshooting](guide/troubleshooting.md). Every term the README
 use is defined in the [glossary](guide/glossary.md); every flag, exit code and watch command is in the
 [CLI reference](cli/README.md) ([简体中文](cli/README.zh-CN.md)).
 
-## Repository layout
+---
+
+## For developers
+
+### Repository layout
 
 | Path | What is there |
 |---|---|
@@ -752,7 +875,36 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 | [`.github/`](.github/) | [Contributing](.github/CONTRIBUTING.md), [support](.github/SUPPORT.md), [security](.github/SECURITY.md), [code of conduct](.github/CODE_OF_CONDUCT.md), the [release process](.github/RELEASING.md), issue forms and the CI workflow |
 | [`AGENTS.md`](AGENTS.md) | A map of the repository for coding agents (`CLAUDE.md` points to it) |
 
-## Who maintains this
+### Tests and the gate
+
+```bash
+bash scripts/check.sh           # the gate, offline: structure, lint, every test suite, the Action, packaging
+bash scripts/check.sh --live    # before a release: also example.com and the MCP Inspector
+```
+
+`scripts/check.sh` is the CI: nothing merges unless it passes. The rules it enforces, and the check behind each one,
+are in [AGENTS.md](AGENTS.md). Several figures on this page are among them: when one no longer matches the data it
+quotes, the gate fails.
+
+### Contributing
+
+The most valuable contribution is evidence about the weights.
+See the [contributing guide](.github/CONTRIBUTING.md). Which issue form takes a wrong score, a disputed leaderboard
+row or a tool that does not work: [getting help](.github/SUPPORT.md).
+
+---
+
+## License, citation and maintainers
+
+### License
+
+[MIT](LICENSE)
+
+### Citation
+
+If you reference the rubric in research or a report, see [CITATION.cff](CITATION.cff).
+
+### Who maintains this
 
 Built and maintained by **[Jianrun Tech](https://www.jianruntech.com)** (见润科技), Shenzhen. We run GEO and
 AI-adoption programs for companies in China and abroad: B2B exporters, software companies, professional
@@ -764,16 +916,19 @@ AI visibility to be measured consistently, including by people who never become 
 Commercial use of this repository is unrestricted under MIT — including inside paid
 consulting work. You do not need our permission, and there is no separate commercial licence.
 
-## Contributing
+---
 
-The most valuable contribution is evidence about the weights.
-See the [contributing guide](.github/CONTRIBUTING.md). Which issue form takes a wrong score, a disputed leaderboard
-row or a tool that does not work: [getting help](.github/SUPPORT.md).
+## Documentation
 
-## Citation
-
-If you reference the rubric in research or a report, see [CITATION.cff](CITATION.cff).
-
-## License
-
-[MIT](LICENSE)
+| Document | English | Chinese |
+|---|---|---|
+| This README | [README.md](README.md) | [简体中文](README.zh-CN.md) |
+| The rubric, v1.1 | [rubric/v1.1.md](rubric/v1.1.md) | [简体中文](rubric/v1.1.zh-CN.md) |
+| Evidence behind each weight | [rubric/evidence-v1.1.md](rubric/evidence-v1.1.md) | [简体中文](rubric/evidence-v1.1.zh-CN.md) |
+| Rubric governance | [rubric/governance.md](rubric/governance.md) | [简体中文](rubric/governance.zh-CN.md) |
+| CLI reference | [cli/README.md](cli/README.md) | [简体中文](cli/README.zh-CN.md) |
+| MCP setup for every client | [guide/mcp.md](guide/mcp.md) | [简体中文](guide/mcp.zh-CN.md) |
+| Troubleshooting | [guide/troubleshooting.md](guide/troubleshooting.md) | [简体中文](guide/troubleshooting.zh-CN.md) |
+| Glossary | [guide/glossary.md](guide/glossary.md) | [简体中文](guide/glossary.zh-CN.md) |
+| Watch methodology | [guide/watch-methodology.md](guide/watch-methodology.md) | [简体中文](guide/watch-methodology.zh-CN.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) | [简体中文](CHANGELOG.zh-CN.md) |
