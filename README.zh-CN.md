@@ -38,6 +38,24 @@ geo-score 按一套**公开、带版本号、谁都能复算的评分口径**，
 
 ---
 
+## ❤️ 赞助
+
+> [想出现在这里？](mailto:hello@jianruntech.com) · 赞助不影响量表、任何分数、公开榜单，也不影响文档里的技术建议。
+
+<details open>
+<summary>点击收起</summary>
+
+<table>
+<tr>
+<td width="180"><a href="https://www.ccsub.net/go/4V5TJGCN"><img src="assets/sponsors/ccsub.svg" alt="CCSub" width="150"></a></td>
+<td>感谢 CCSub 赞助本项目！CCSub 是一个 AI API 中转平台：一个 API Key 即可使用 Claude、GPT、Gemini、DeepSeek 等模型，兼容 Claude Code、Codex、Cursor 等编程工具。通过<a href="https://www.ccsub.net/go/4V5TJGCN">此链接</a>注册。</td>
+</tr>
+</table>
+
+赞助方没有做过 geo-score 引用测量（第二、三级）的兼容测试：引用测量需要各家引擎自己的联网 API，中转平台不一定原样传递联网搜索和引用。
+
+</details>
+
 ## 解决什么问题
 
 > **GEO 指的是生成式引擎优化**——让 ChatGPT、Perplexity、Google AI Overviews、

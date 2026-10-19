@@ -48,6 +48,26 @@ citation results are reported beside it and never added to it.
 
 ---
 
+## ❤️ Sponsors
+
+> [Want to appear here?](mailto:hello@jianruntech.com) · Sponsorship never affects the rubric, any score, the public
+> leaderboard or the technical recommendations in these docs.
+
+<details open>
+<summary>Click to collapse</summary>
+
+<table>
+<tr>
+<td width="180"><a href="https://www.ccsub.net/go/4V5TJGCN"><img src="assets/sponsors/ccsub.svg" alt="CCSub" width="150"></a></td>
+<td>Thanks to CCSub for sponsoring this project! CCSub is an AI API relay platform: one API key for Claude, GPT, Gemini and DeepSeek models, compatible with Claude Code, Codex, Cursor and other coding tools. Register via <a href="https://www.ccsub.net/go/4V5TJGCN">this link</a>.</td>
+</tr>
+</table>
+
+Sponsors have not been tested for geo-score's citation measurements (levels 2 and 3). Those need each engine's own
+search-enabled API, and a relay may not pass web search and citations through unchanged.
+
+</details>
+
 ## What problem it solves
 
 > **GEO means Generative Engine Optimization** — getting cited by ChatGPT, Perplexity,
