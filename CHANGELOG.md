@@ -6,6 +6,7 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Added
+- **Website: [geo-score.dev](https://geo-score.dev)**, with docs and a free online check that runs the published base score (no `--ask`, no API keys). Both READMEs link to it; the package Homepage URL points to it from the next release, and the source link moves to `Source`. Documentation only.
 - **Sponsors section** in both READMEs (CCSub), with the rule that sponsorship never affects the rubric, scores, leaderboard or technical recommendations, and a note that sponsors are not tested for the citation levels. Documentation only.
 - **A 60-second intro video** at the top of both READMEs (English in README.md, Chinese in README.zh-CN.md): one command, the 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked. The demo run is jianruntech.com scored with 1.8.3; the soundtrack is synthesized for the video, no third-party music. Documentation only.
 - **Rubric governance** (`rubric/governance.md` + zh, linked from the READMEs, rubric/README.md and CONTRIBUTING):

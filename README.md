@@ -8,6 +8,7 @@
 
 geo-score is an open-source AI visibility (GEO) scorer for websites, by [Jianrun Tech](https://www.jianruntech.com) (见润科技).
 Formerly geo-watch: geo-watch merged into geo-score in 1.2.0 and lives on as its levels 2 and 3.
+Website, docs and a free online check: [geo-score.dev](https://geo-score.dev).
 
 ## geo-score in 60 seconds
 
@@ -27,7 +28,7 @@ the questions your buyers ask and records whom the answers cite. The score is fr
 citation results are reported beside it and never added to it.
 
 [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it checks](#what-it-checks) ·
-[How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Changelog](CHANGELOG.md) ·
+[How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Website](https://geo-score.dev) · [Changelog](CHANGELOG.md) ·
 [Public leaderboard](https://www.jianruntech.com/leaderboard)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)

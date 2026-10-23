@@ -6,6 +6,7 @@
 
 geo-score 是开源的网站 AI 可见度（GEO）打分工具，[见润科技](https://www.jianruntech.com)出品。
 由 geo-watch 并入（formerly geo-watch）：geo-watch 在 1.2.0 并入 geo-score，成为它的第二、三级。
+官网、文档和免费在线打分：[geo-score.dev](https://geo-score.dev/zh/)。
 
 ## 60 秒了解 geo-score
 
@@ -21,7 +22,7 @@ https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
 
 geo-score 按一套**公开、带版本号、谁都能复算的评分口径**，给网站打 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用它。再用你自己的 API Key，把买家会问的问题拿去问各家引擎，记下每条回答引用了谁。打分免费、什么都不用装；引用结果和分数并列报告，从不加进分数。
 
-[快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) ·
+[快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) · [官网](https://geo-score.dev/zh/) ·
 [更新日志](CHANGELOG.zh-CN.md) · [公开榜单](https://www.jianruntech.com/leaderboard/zh)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)

@@ -31,7 +31,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jianruntech/geo-score"
+Homepage = "https://geo-score.dev"
+Source = "https://github.com/jianruntech/geo-score"
 Changelog = "https://github.com/jianruntech/geo-score/blob/main/CHANGELOG.md"
 Rubric = "https://github.com/jianruntech/geo-score/blob/main/rubric/v1.1.md"
 Issues = "https://github.com/jianruntech/geo-score/issues"
