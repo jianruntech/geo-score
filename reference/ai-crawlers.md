@@ -4,8 +4,9 @@ The list the `g.robots` check checks `robots.txt` against. Consolidated from ven
 this is a reference, not original research. Vendors change these —
 [open an issue](https://github.com/jianruntech/geo-score/issues) if one is stale.
 
-**Last verified:** 2026-10-04 for the training crawlers, the opt-out tokens and Google's controls
-(each source and its date are under [Sources](#sources)); 2026-09-28 for the retrieval table.
+**Last verified:** 2026-11-07 for Anthropic's article ([A1]); 2026-10-04 for the other training crawlers, the
+opt-out tokens and Google's controls (each source and its date are under [Sources](#sources)); 2026-09-28 for the
+retrieval table.
 
 ## The distinction that matters most
 
@@ -80,7 +81,7 @@ user-agents", not as proof that the vendor's crawler is blocked.
 | User-agent | Operator | What the vendor documents |
 |---|---|---|
 | `GPTBot` | OpenAI | Crawls content that may be used to train OpenAI's foundation models; disallowing it says the content should not be used for that. Each setting is independent: a site can allow `OAI-SearchBot` to appear in ChatGPT search while disallowing `GPTBot` ([O1]) |
-| `ClaudeBot` | Anthropic | Collects content that could contribute to training; restricting it says the site's future materials should be left out of training datasets. Search and user fetches are `Claude-SearchBot` and `Claude-User` ([A1]) |
+| `ClaudeBot` | Anthropic | Collects content that could contribute to training; restricting it says the site's future materials should be left out of training datasets. Search and user fetches are `Claude-SearchBot` and `Claude-User` ([A1]). Since 2026-10-30 Anthropic also recognises a machine-readable "no AI training" preference signal, following a draft from the IETF's aipref working group and rolling out across its services over time; a robots.txt rule that names `ClaudeBot` is followed over that general signal, and the signal applies where robots.txt does not name it. The article links the draft but shows no syntax, and says the way it reads these settings may change as the standards do ([A1]). The geo-score CLI does not read this signal |
 | `CCBot` | Common Crawl | Builds Common Crawl's open repository of web crawl data, which anyone may use ([CC]). Common Crawl is not an answer engine; what blocking it costs downstream: no data |
 | `cohere-ai` | Cohere | Not checked against vendor documentation: no data |
 | `Bytespider` | ByteDance | Not checked against vendor documentation: no data |
@@ -124,7 +125,9 @@ defined in [`rubric/v1.1.md`](../rubric/v1.1.md) — read the tiers there, not h
 
 - **`g.robots`** — whether `robots.txt` allows the retrieval crawlers above. Three tiers.
   Each crawler is read against the group that names it, and against the `*` group only when
-  no group names it (RFC 9309, section 2.2.1).
+  no group names it (RFC 9309, section 2.2.1). A whole-site `Disallow: /` counts only when it
+  decides the root path: an `Allow` as long or longer that matches `/` wins (section 2.2.2),
+  as it does for every page the tool checks.
 - **`g.reachable`** — whether all 10 actually return 200 with the same main content a
   browser gets. Three tiers, counted out of 10.
 
@@ -140,7 +143,8 @@ separate choice, best made knowing that.
 
 ## Sources
 
-Each page was re-read on 2026-10-04. The date in parentheses is the page's own, where it gives one.
+Each page was re-read on 2026-10-04, and [A1] again on 2026-11-07. The date in parentheses is the page's own, where it
+gives one.
 
 - **[GX]** Google, [Google's common crawlers](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers), Google-Extended section (last updated 2026-07-14).
 - **[GC]** Google Search Console Help, [Search generative AI control](https://support.google.com/webmasters/answer/16908024) (no update date; it says the control reached all websites worldwide on 2026-08-31).
@@ -148,7 +152,9 @@ Each page was re-read on 2026-10-04. The date in parentheses is the page's own, 
 - **[GA]** Google, [Optimizing your website for generative AI features on Google Search](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) (last updated 2026-07-10).
 - **[AP]** Apple, [About Applebot](https://support.apple.com/en-us/119829) (published 2026-09-04).
 - **[O1]** OpenAI, [Overview of OpenAI Crawlers](https://developers.openai.com/api/docs/bots) (undated).
-- **[A1]** Anthropic, [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (2026-04-07).
+- **[A1]** Anthropic, [Does Anthropic crawl data from the web, and how can site owners block the crawler?](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) (on 2026-11-07 the page said it was updated the day before; it gives no date). It covers
+  crawlers only: browsers Anthropic hosts to complete tasks for users identify as `Claude-Agent` and are described in
+  a separate article it links, not read for this list.
 - **[CC]** Common Crawl, [CCBot](https://commoncrawl.org/ccbot) (undated).
 - **[MT]** Meta, [Meta Web Crawlers](https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers) (undated; the old address, `https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/`, redirects there).
 
