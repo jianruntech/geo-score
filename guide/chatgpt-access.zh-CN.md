@@ -20,7 +20,8 @@ ChatGPT 通过两个爬虫访问网站（[reference/ai-crawlers.md](../reference
 
 **1. 读 robots.txt。** 在浏览器里打开 `https://你的域名/robots.txt`。找点名 `OAI-SearchBot` 或 `ChatGPT-User` 的那一组
 （`User-agent:` 行）。有的话，只有那一组对它生效；没有的话，`User-agent: *` 那一组生效。生效的那一组里如果有 `Disallow: /`，
-这个爬虫就被挡在整个站外。针对某个路径的 `Disallow` 只关掉那个路径，所以要看你在意的那些路径。
+这个爬虫就被挡在整个站外，除非还有一条一样长或更长的 `Allow` 也匹配：按 RFC 9309，匹配最长的规则说了算，一样长时取
+`Allow`，所以旁边写了 `Allow: /` 就等于全部放开，写了 `Allow: /$` 就放开首页。针对某个路径的 `Disallow` 只关掉那个路径，所以要看你在意的那些路径。
 
 **2. 分别以两个爬虫和浏览器的身份请求一个页面。** 下面的 user-agent 字符串是厂商公布的，也是 geo-score 发的。
 

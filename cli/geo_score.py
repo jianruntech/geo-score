@@ -1922,8 +1922,13 @@ def robots_rules(groups, token):
     return [], None
 
 def blocks_site(rules):
-    """The Disallow that shuts a crawler out of the whole site ("/" or "/*"), or None."""
-    return next((v for k, v in rules if k == "disallow" and v in ("/", "/*")), None)
+    """The Disallow that shuts a crawler out of the whole site ("/" or "/*"), or None. It counts only when it decides
+    the root path under RFC 9309 section 2.2.2, as robots_allows reads every page: an Allow as long or longer that
+    matches "/" (Allow: /, Allow: /*, Allow: /$) wins, so a whitelist that ends in Disallow: /, or a site that adds its
+    own Allow: / to a group a CDN-managed block also names (the groups merge, 2.2.1), does not close the site. Before
+    1.8.4 any Disallow: / closed it, whatever Allow stood beside it."""
+    site = next((v for k, v in rules if k == "disallow" and v in ("/", "/*")), None)
+    return None if site is None or robots_allows(rules, "/")[0] else site
 
 def robots_tier(txt, size):
     """g.robots for a robots.txt that answered 2xx: (tier, evidence). Only the retrieval crawlers are
@@ -1940,6 +1945,14 @@ def robots_tier(txt, size):
     not_scored = [t for t in NOT_SCORED_TOKENS if blocks_site(groups.get(t.lower(), []))]
     also = (" It also disallows %s (training crawlers / opt-out tokens, not scored)." % ", ".join(not_scored)
             if not_scored else "")
+    # a whole-site Disallow that an Allow outweighs at the root does not close the site (blocks_site); say so, since a
+    # reader who finds Disallow: / in the file would otherwise expect a 0
+    outweighed = [name for name, rules, _whose in sel if not blocks_site(rules)
+                  and any(k == "disallow" and v in ("/", "/*") for k, v in rules)]
+    tie = ((" For %s, a Disallow: / is outweighed at the root by an Allow as long or longer (RFC 9309, section 2.2.2), "
+            "so it does not close the site; the checked pages it still closes are reported outside the score."
+            % ", ".join(outweighed)) if outweighed else "")
+    none = "no Disallow closes the site to" if outweighed else "no Disallow applies to"
     n = len(RETRIEVAL_UAS)
     if blocked:
         own = [name for name, whose, _ in blocked if whose != "*"]
@@ -1949,17 +1962,17 @@ def robots_tier(txt, size):
             + (["%s, through the * group, having no group of %s own" % (names(star), "its" if len(star) == 1 else "their")]
                if star else [])
         dirs = " or ".join(sorted({d for _, _, d in blocked}))
-        return 0, ("robots.txt (%d bytes): a Disallow: %s applies to %d of the %d retrieval crawlers — %s.%s"
-                   % (size, dirs, len(blocked), n, "; ".join(how), also))
+        return 0, ("robots.txt (%d bytes): a Disallow: %s applies to %d of the %d retrieval crawlers — %s.%s%s"
+                   % (size, dirs, len(blocked), n, "; ".join(how), tie, also))
     if named_allow or star_allow:
         why = (["%d named with an explicit permission (%s)" % (len(named_allow), ", ".join(named_allow))]
                if named_allow else []) \
             + (["%d fall under the * group, which carries an explicit allow-all" % len(fallback)] if star_allow else [])
-        return 5, ("robots.txt (%d bytes): no Disallow applies to retrieval crawlers; %s.%s"
-                   % (size, "; ".join(why), also))
-    return 3, ("robots.txt (%d bytes, %d user-agent%s named): no Disallow applies to retrieval crawlers, and none is "
-               "explicitly allowed in the groups that apply to them — permitted by default, not by declaration.%s"
-               % (size, len(groups), "" if len(groups) == 1 else "s", also))
+        return 5, ("robots.txt (%d bytes): %s retrieval crawlers; %s.%s%s"
+                   % (size, none, "; ".join(why), tie, also))
+    return 3, ("robots.txt (%d bytes, %d user-agent%s named): %s retrieval crawlers, and none is "
+               "explicitly allowed in the groups that apply to them — permitted by default, not by declaration.%s%s"
+               % (size, len(groups), "" if len(groups) == 1 else "s", none, tie, also))
 
 # ── robots.txt, page by page ──
 # g.robots reads only the Disallow that shuts a crawler out of the whole site. A rule on a path can close one page

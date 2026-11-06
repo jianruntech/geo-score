@@ -20,8 +20,10 @@ and still appear in ChatGPT search. This page is about the two above.
 
 **1. Read robots.txt.** Open `https://your-site/robots.txt` in a browser. Look for a group that names `OAI-SearchBot`
 or `ChatGPT-User` (`User-agent:` lines). If one does, only that group applies to it; if none does, the `User-agent: *`
-group applies. A `Disallow: /` in the group that applies shuts the crawler out of the whole site. A `Disallow` on a
-path closes only that path, so check the paths you care about.
+group applies. A `Disallow: /` in the group that applies shuts the crawler out of the whole site, unless an `Allow`
+as long or longer also matches: under RFC 9309 the longest matching rule decides and an `Allow` wins a tie, so
+`Allow: /` beside it opens everything again and `Allow: /$` opens the homepage. A `Disallow` on a path closes only that
+path, so check the paths you care about.
 
 **2. Request a page as each crawler, and as a browser.** The user-agent strings below are the ones the vendor
 documents, and the ones geo-score sends.

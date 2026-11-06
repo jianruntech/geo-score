@@ -29,6 +29,23 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   blocks are untouched, and the old anchors that moved (`#ways-to-run-it`, `#stability-privacy-and-install-options`
   and their Chinese twins) still resolve. Documentation only: every figure, the rubric, every check and every score
   are unchanged.
+- **`reference/ai-crawlers.md`: Anthropic's training-preference signal.** Since 2026-10-30 Anthropic recognises a
+  machine-readable "no AI training" signal (a draft from the IETF's aipref working group), and a robots.txt rule
+  naming `ClaudeBot` is followed over it; the `ClaudeBot` row says so, with the article's own caveats (no syntax shown,
+  rolling out over time, reading may change). The page also notes that Anthropic-hosted browsers (`Claude-Agent`) are
+  outside the article it cites, and that `g.robots` reads a whole-site Disallow under section 2.2.2 (see Fixed).
+  Documentation only: the CLI does not read the signal.
+
+### Fixed
+- **`g.robots` reads a whole-site Disallow the way RFC 9309 does.** A `Disallow: /` (or `/*`) used to close the site
+  to a crawler whatever stood beside it, while the page-by-page reading in the same tool (outside the score) already
+  let the longest matching rule decide, with an Allow winning a tie (RFC 9309, section 2.2.2). The two now agree: the
+  Disallow counts only when it decides the root path. So `Allow: /` in the same group, a site's own `Allow: /` merged
+  with a CDN-managed block that names the same crawler (section 2.2.1), or a whitelist that opens the homepage with
+  `Allow: /$` before ending in `Disallow: /`, no longer scores 0 and no longer caps the score at 40. The evidence says
+  when a Disallow: / is outweighed this way, and a training crawler is no longer reported as disallowed when its own
+  Allow outweighs the Disallow. Direction: up, for those files only. `guide/chatgpt-access.md` says the same. Reported from a reading of third-party robots.txt guidance and
+  reproduced with three minimal files, now in the tests together with the whitelist case.
 
 ## [1.8.3] — 2026-10-15
 

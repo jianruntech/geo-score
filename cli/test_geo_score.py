@@ -727,6 +727,19 @@ _CASES = [
     ("a product token with a version", "User-agent: Googlebot/2.1\nDisallow: /\n", 0, ["Googlebot"], False),
     ("a longer token is another agent", "User-agent: Googlebot-News\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], True),
     ("an opt-out token is not its crawler", "User-agent: Applebot-Extended\nDisallow: /\n", 3, [], True),
+    # RFC 9309 2.2.2: an Allow as long as the Disallow wins the tie, a longer one wins outright (1.8.4). robotparser
+    # reads the first rule in file order instead, so these are not cross-checked.
+    ("Allow: / beside Disallow: / in one group", "User-agent: PerplexityBot\nDisallow: /\nAllow: /\n", 5, [], False),
+    ("Allow: /* beside Disallow: /*", "User-agent: Claude-User\nAllow: /*\nDisallow: /*\n", 5, [], False),
+    ("a managed block, then the site's own Allow: / (the groups merge)", "User-agent: Amazonbot\nDisallow: /\n\n"
+     "User-agent: *\nAllow: /\n\nUser-agent: Amazonbot\nAllow: /\n", 5, [], False),
+    ("a whitelist: Allow: /$ and some paths, then Disallow: /", "User-agent: OAI-SearchBot\nUser-agent: ChatGPT-User\n"
+     "User-agent: Claude-SearchBot\nUser-agent: Claude-User\nUser-agent: PerplexityBot\nAllow: /$\nAllow: /blog/\n"
+     "Allow: /pricing\nDisallow: /\n\nUser-agent: *\nAllow: /\n", 5, [], False),
+    ("a whitelist that leaves the root out", "User-agent: PerplexityBot\nAllow: /blog/\nDisallow: /\n\n"
+     "User-agent: *\nAllow: /\n", 0, ["PerplexityBot"], True),
+    ("Allow: /$ beside Disallow: /*", "User-agent: Bingbot\nAllow: /$\nDisallow: /*\n\nUser-agent: *\nAllow: /\n", 5, [],
+     False),
 ]
 eq(len(_CASES) >= 15, True, "the robots.txt table has at least 15 cases")
 for _case, _txt, _tier, _blocked, _cross in _CASES:
@@ -747,6 +760,15 @@ _ev = gs.robots_tier("User-agent: PerplexityBot\nDisallow: /\n\nUser-agent: *\nA
 ok("PerplexityBot" in _ev and "own group" in _ev, "evidence at zero names the blocked crawler and its group: %r" % _ev)
 _ev = gs.robots_tier("User-agent: *\nDisallow: /\n", 26)[1]
 ok("* group" in _ev and "all 10" in _ev, "a * block says so: %r" % _ev)
+# 1.8.4: a Disallow: / that an Allow outweighs at the root neither scores 0 nor goes unmentioned, and a training
+# crawler whose own Allow: / outweighs its Disallow: / is not reported as disallowed
+_ev = gs.robots_tier("User-agent: Amazonbot\nDisallow: /\n\nUser-agent: *\nAllow: /\n\nUser-agent: Amazonbot\nAllow: /\n",
+                     80)[1]
+ok("Amazonbot" in _ev and "outweighed" in _ev and "no Disallow closes the site" in _ev,
+   "evidence names the crawler whose Disallow: / an Allow outweighs: %r" % _ev)
+_ev = gs.robots_tier("User-agent: GPTBot\nDisallow: /\nAllow: /\n\nUser-agent: *\nAllow: /\n", 50)[1]
+ok("GPTBot" not in _ev and "no Disallow applies" in _ev,
+   "a training crawler whose Allow: / ties its Disallow: / is not reported as disallowed: %r" % _ev)
 
 # ── robots.txt page by page (RFC 9309 2.2.2), reported outside the score ──
 # g.robots reads only a Disallow that closes the whole site, so a path rule that closed a site's conversion page left
