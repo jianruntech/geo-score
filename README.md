@@ -203,6 +203,13 @@ Their content is there, a browser sees it, and a crawler gets an empty shell. Th
 almost certainly did not choose it. At a further 12 the server refuses crawler user-agents (unverified
 probes from the auditor's address).
 
+**Correction (2026-11-07).** 72 sites have a gate check at zero, not 73, and 19 of them through `robots.txt`, not 20.
+The run's tool (1.5.0) misread figma.com's `robots.txt`: its group for five retrieval crawlers opens the homepage with
+`Allow: /$` and ends in `Disallow: /`, and 1.5.0 closed a site on any `Disallow: /`, whatever `Allow` stood beside it.
+Read as RFC 9309 section 2.2.2 does (fixed in 1.8.4), figma.com scores 51 (Growing) on the same stored report, not 40.
+The rows stay as measured, and the median, mean and quartiles do not change
+([the correction](benchmark/README.md#a-quarter-of-the-field-is-unreadable-to-ai-crawlers)).
+
 Median **55** (95% CI 51–58, [stats.py](benchmark/stats.py)). Range 11 to 96. 66 sites were scored on
 fewer than four pages; without them the median is 59.
 

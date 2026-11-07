@@ -76,6 +76,64 @@ def _fetch_block():
           "reported as the server refusing crawler user-agents, not as proof that it blocks the crawlers themselves.\n"]
     return "\n".join(L)
 
+def corrections(p, reports):
+    """What the confirmed tool errors in build_page.ERRATA change in this run, or None when the run was measured
+    with a tool that has every fix or lists none of the sites. Each listed row is re-scored from its stored report
+    with the corrected check's points (sensitivity.scorer, the rubric's arithmetic); the counts and the summary
+    figures are then recounted with the corrected scores. A row whose stored report does not reproduce its
+    published score stops the run, since the correction would then rest on figures nobody can check."""
+    from build_page import ERRATA, old_crawler_reading
+    import sensitivity
+    ok = [x for x in p["results"] if "error" not in x]
+    by = {x["site"]: x for x in ok}
+    todo = [e for e in ERRATA if e["site"] in by and old_crawler_reading(p.get("tool"), e["fixed"])]
+    if not todo:
+        return None
+    rub = _rubric()
+    weights = {c["id"]: c["points"] for c in rub["checks"] if c["kind"] != "bonus"}
+    gates = [c["id"] for c in rub["checks"] if c["kind"] == "gate"]
+    fixed = []
+    for e in todo:
+        row, rep = by[e["site"]], reports.get(e["site"])
+        if rep is None:
+            raise SystemExit("ERRATA lists %s, which has no stored report" % e["site"])
+        pts = {c["id"]: (c.get("points") if c.get("state") == "scored" else None) for c in rep["checks"]}
+        if sensitivity.scorer(rub, [{"points": pts}])(weights) != [row["normalised"]]:
+            raise SystemExit("%s: the stored report does not reproduce its published score" % e["site"])
+        pts[e["check"]] = e["points"]
+        n = sensitivity.scorer(rub, [{"points": pts}])(weights)[0]
+        fixed.append(dict(e, was=row["normalised"], now=n, band=sensitivity.band_of(n, rub),
+                          capped=any(pts.get(g) == 0 for g in gates),
+                          robots=pts.get("g.robots") == 0, was_robots=row.get("gate_reason") == "blocks crawlers"))
+    now = {f["site"]: f["now"] for f in fixed}
+    scores = [now.get(x["site"], x["normalised"]) for x in ok]
+    s = p["stats"]
+    figures = dict(median=statistics.median(scores), mean=round(statistics.mean(scores), 1),
+                   p25=_q(scores, .25), p75=_q(scores, .75))
+    capped = sum(1 for x in ok if x.get("gate_capped"))
+    robots = sum(1 for x in ok if x.get("gate_reason") == "blocks crawlers")
+    return {"fixed": fixed, "tool": old_crawler_reading(p.get("tool"), max(e["fixed"] for e in todo)),
+            "capped": (capped, capped - sum(1 for f in fixed if not f["capped"])),
+            "robots": (robots, robots - sum(1 for f in fixed if f["was_robots"] and not f["robots"])),
+            "unchanged": all(figures[k] == s[k] for k in figures), "figures": figures}
+
+def _corrections_note(c):
+    """The correction under the gate table, from corrections(): one sentence per site, then the recount."""
+    from build_page import _v
+    L = []
+    for f in c["fixed"]:
+        L.append("%s is listed at %d with `%s` at zero, and that was the tool misreading its `robots.txt`: %s. Read "
+                 "as RFC 9309 section 2.2.2 does (fixed in %s), `%s` scores %d and the same stored report scores %d "
+                 "(%s)." % (f["site"], f["was"], f["check"], f["why"] % c["tool"], _v(f["fixed"]), f["check"],
+                            f["points"], f["now"], f["band"]))
+    date = max(f["noted"] for f in c["fixed"])
+    tail = ("the median, mean and quartiles do not change" if c["unchanged"] else
+            "the median is %s, the mean %s and the quartiles %s and %s" % tuple(
+                c["figures"][k] for k in ("median", "mean", "p25", "p75")))
+    return ("**Correction (%s).** %s The rows and their files in [raw/](raw/) are left as measured. With the "
+            "correction, %d sites (not %d) have a gate check at zero and %d (not %d) of them through `robots.txt`; "
+            "%s.\n" % (date, " ".join(L), c["capped"][1], c["capped"][0], c["robots"][1], c["robots"][0], tail))
+
 def _corrections_block():
     return "\n".join([
         "## Corrections\n",
@@ -575,6 +633,9 @@ def write_readme(p):
     for k in ("blocks crawlers", "serves crawlers an error", "content needs JavaScript", "other"):
         if k in _r:
             A("| %s | %d | %s |" % (LBL[k], len(_r[k]), ", ".join(sorted(_r[k]))))
+    fixes = corrections(p, reports)
+    if fixes:
+        A("\n" + _corrections_note(fixes).rstrip("\n"))
     A("\nThe first group made a choice. Several news and health publishers block AI crawlers by")
     A("name, and this rubric reports that as it is — a site that does not want to be quoted is")
     A("not misconfigured. The last group almost certainly did not choose it: their content is")

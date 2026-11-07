@@ -741,6 +741,51 @@ class Sensitivity(unittest.TestCase):
         self.assertEqual(out[0], out[1])
 
 
+class Errata(unittest.TestCase):
+    """build_page.ERRATA: confirmed tool errors in the published run, printed as a correction under the gate table
+    while the rows stay as measured. Every figure in the correction is re-derived here from results.json, raw/ and
+    the rubric, so none of it is written by hand."""
+
+    def setUp(self):
+        self.p = json.loads(retest._read(os.path.join(HERE, "results.json")))
+        self.reports = {e["site"]: json.loads(retest._read(stats.raw_path(e["site"]))) for e in build_page.ERRATA}
+
+    def test_every_entry_is_a_published_row_the_fix_would_move(self):
+        rows = {r["site"]: r for r in self.p["results"] if "error" not in r}
+        for e in build_page.ERRATA:
+            self.assertIn(e["site"], rows)
+            self.assertEqual(rows[e["site"]]["gates"].get(e["check"]), 0, e["site"])
+            self.assertTrue(build_page.old_crawler_reading(self.p["tool"], e["fixed"]), e["site"])
+
+    def test_the_cli_reads_the_whitelist_as_the_correction_says(self):
+        # figma.com's shape: the homepage opened with Allow: /$, then Disallow: / for everything not listed
+        gs = run.gs
+        self.assertIsNone(gs.blocks_site([("allow", "/$"), ("allow", "/pricing"), ("disallow", "/")]))
+        self.assertEqual(gs.blocks_site([("allow", "/pricing"), ("disallow", "/")]), "/")
+
+    def test_the_recount(self):
+        c = run.corrections(self.p, self.reports)
+        self.assertEqual([(f["site"], f["was"], f["now"], f["band"], f["capped"]) for f in c["fixed"]],
+                         [("figma.com", 40, 51, "Growing", False)])
+        self.assertEqual((c["capped"], c["robots"], c["unchanged"], c["tool"]), ((73, 72), (20, 19), True, "1.5.0"))
+
+    def test_the_readme_prints_it(self):
+        readme = " ".join(retest._read(os.path.join(HERE, "README.md")).split())
+        note = " ".join(run._corrections_note(run.corrections(self.p, self.reports)).split())
+        self.assertIn(note, readme)
+        self.assertIn("72 sites (not 73)", note)
+
+    def test_no_correction_for_data_measured_with_the_fix(self):
+        self.assertIsNone(run.corrections(dict(self.p, tool="geo-score-cli/%s" % build_page._v(build_page.ROBOTS_TIE_FIX)),
+                                          self.reports))
+
+    def test_a_report_that_does_not_reproduce_its_row_stops_the_run(self):
+        p = json.loads(json.dumps(self.p))
+        next(r for r in p["results"] if r["site"] == build_page.ERRATA[0]["site"])["normalised"] += 1
+        with self.assertRaises(SystemExit):
+            run.corrections(p, self.reports)
+
+
 class SameOnEveryPython(unittest.TestCase):
     def test_the_study_files_on_the_oldest_and_newest_python(self):
         """check.sh runs this file on python3 alone. The generated study files have to come out byte for byte on

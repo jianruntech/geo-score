@@ -79,6 +79,16 @@ CRAWLER_FIX = (1, 5, 0)
 # JavaScript", so that group carries its own qualifier on the same terms. The qualifiers name these versions,
 # and test_benchmark.py fails once cli/geo_score.py reaches CHALLENGE_FIX without telling a challenge apart.
 CHALLENGE_FIX = (1, 5, 0)
+# 1.8.4 reads a whole-site Disallow as RFC 9309 section 2.2.2 does: an Allow as long or longer that matches "/"
+# outweighs it. Unlike the two fixes above, this one moved only the sites listed in ERRATA, each checked by hand
+# against its stored report and its robots.txt, so the correction names them. Their rows stay as measured, as the
+# correction form promises, until they are measured again; run.py writes the correction under the gate table, and
+# test_benchmark.py re-scores every entry from raw/ to hold the figures it prints.
+ROBOTS_TIE_FIX = (1, 8, 4)
+ERRATA = ({"site": "figma.com", "check": "g.robots", "points": 5, "fixed": ROBOTS_TIE_FIX, "noted": "2026-11-07",
+           "why": "its group for five retrieval crawlers opens the homepage with `Allow: /$`, allows a long list of "
+                  "paths and ends in `Disallow: /`, and the %s reading closed a site on any `Disallow: /`, whatever "
+                  "`Allow` stood beside it"},)
 
 def _v(fix):
     return ".".join(str(x) for x in fix)

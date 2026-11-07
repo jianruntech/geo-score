@@ -46,6 +46,11 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   when a Disallow: / is outweighed this way, and a training crawler is no longer reported as disallowed when its own
   Allow outweighs the Disallow. Direction: up, for those files only. `guide/chatgpt-access.md` says the same. Reported from a reading of third-party robots.txt guidance and
   reproduced with three minimal files, now in the tests together with the whitelist case.
+  On the 2026-10-02 leaderboard it moves one site: figma.com, whose robots.txt is such a whitelist, scores 51
+  (Growing) instead of 40 on its stored report, so 72 sites have a gate check at zero, not 73, and 19 of them through
+  robots.txt, not 20. The rows stay as measured; `benchmark/README.md` and both READMEs carry the correction, which
+  `benchmark/run.py` writes from a list of confirmed tool errors (`build_page.ERRATA`) that the tests re-score from
+  `raw/`.
 
 ## [1.8.3] — 2026-10-15
 
