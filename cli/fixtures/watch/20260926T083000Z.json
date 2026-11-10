@@ -52,19 +52,19 @@
  "queries": [
   {
    "query_id": "q01",
-   "query": "best free ai video generator",
+   "query": "best portable power stations",
    "intent_tier": "list",
    "target_url": ""
   },
   {
    "query_id": "q02",
-   "query": "ai video tool with no watermark",
+   "query": "power station with solar panels",
    "intent_tier": "list",
    "target_url": ""
   },
   {
    "query_id": "q03",
-   "query": "cheapest text to video app",
+   "query": "cheapest power station kit",
    "intent_tier": "pricing",
    "target_url": ""
   },
@@ -82,7 +82,7 @@
   },
   {
    "query_id": "q06",
-   "query": "鹿末视频免费吗",
+   "query": "鹿末电源多少钱",
    "intent_tier": "pricing",
    "target_url": ""
   }
@@ -133,7 +133,7 @@
     }
    ],
    "search_queries": [
-    "best free ai video generator"
+    "best portable power stations"
    ],
    "answer": "Lumo and Pixa both have free tiers.",
    "answer_truncated": false,
@@ -164,7 +164,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q01",
+     "url": "https://www.reddit.com/r/camping/q01",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -210,7 +210,7 @@
     }
    ],
    "search_queries": [
-    "ai video tool with no watermark"
+    "power station with solar panels"
    ],
    "answer": "Lumo and Pixa both have free tiers.",
    "answer_truncated": false,
@@ -241,7 +241,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q02",
+     "url": "https://www.reddit.com/r/camping/q02",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -282,7 +282,7 @@
     }
    ],
    "search_queries": [
-    "cheapest text to video app"
+    "cheapest power station kit"
    ],
    "answer": "Pixa is a common pick.",
    "answer_truncated": false,
@@ -313,7 +313,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q03",
+     "url": "https://www.reddit.com/r/camping/q03",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -390,7 +390,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q04",
+     "url": "https://www.reddit.com/r/camping/q04",
      "domain": "reddit.com",
      "title": "thread"
     },
@@ -472,7 +472,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q05",
+     "url": "https://www.reddit.com/r/camping/q05",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -518,7 +518,7 @@
     }
    ],
    "search_queries": [
-    "鹿末视频免费吗"
+    "鹿末电源多少钱"
    ],
    "answer": "Lumo and Pixa both have free tiers.",
    "answer_truncated": false,
@@ -549,7 +549,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q06",
+     "url": "https://www.reddit.com/r/camping/q06",
      "domain": "reddit.com",
      "title": "thread"
     },
@@ -600,7 +600,7 @@
     }
    ],
    "search_queries": [
-    "best free ai video generator"
+    "best portable power stations"
    ],
    "answer": "Lumo and Pixa both have free tiers.",
    "answer_truncated": false,
@@ -631,7 +631,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q01",
+     "url": "https://www.reddit.com/r/camping/q01",
      "domain": "reddit.com",
      "title": "thread"
     },
@@ -677,7 +677,7 @@
     }
    ],
    "search_queries": [
-    "ai video tool with no watermark"
+    "power station with solar panels"
    ],
    "answer": "Pixa is a common pick.",
    "answer_truncated": false,
@@ -708,7 +708,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q02",
+     "url": "https://www.reddit.com/r/camping/q02",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -749,7 +749,7 @@
     }
    ],
    "search_queries": [
-    "cheapest text to video app"
+    "cheapest power station kit"
    ],
    "answer": "Pixa is a common pick.",
    "answer_truncated": false,
@@ -780,7 +780,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q03",
+     "url": "https://www.reddit.com/r/camping/q03",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -857,7 +857,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q04",
+     "url": "https://www.reddit.com/r/camping/q04",
      "domain": "reddit.com",
      "title": "thread"
     },
@@ -939,7 +939,7 @@
    },
    "citations": [
     {
-     "url": "https://www.reddit.com/r/aivideo/q05",
+     "url": "https://www.reddit.com/r/camping/q05",
      "domain": "reddit.com",
      "title": "thread"
     }
@@ -985,7 +985,7 @@
     }
    ],
    "search_queries": [
-    "鹿末视频免费吗"
+    "鹿末电源多少钱"
    ],
    "answer": "Lumo and Pixa both have free tiers.",
    "answer_truncated": false,
@@ -1126,7 +1126,7 @@
   "gaps": [
    {
     "query_id": "q03",
-    "query": "cheapest text to video app",
+    "query": "cheapest power station kit",
     "competitors": [
      "Pixa"
     ],
@@ -1187,15 +1187,15 @@
    "answers_exposing": 12,
    "top": [
     {
-     "query": "best free ai video generator",
+     "query": "best portable power stations",
      "count": 2
     },
     {
-     "query": "ai video tool with no watermark",
+     "query": "power station with solar panels",
      "count": 2
     },
     {
-     "query": "cheapest text to video app",
+     "query": "cheapest power station kit",
      "count": 2
     },
     {
@@ -1207,7 +1207,7 @@
      "count": 2
     },
     {
-     "query": "鹿末视频免费吗",
+     "query": "鹿末电源多少钱",
      "count": 2
     }
    ]

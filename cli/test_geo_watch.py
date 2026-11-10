@@ -81,7 +81,7 @@ def brand():
 
 
 def rivals():
-    return [gw.Entity({"name": "Pixa", "domains": ["pixa.example"]}), gw.Entity({"name": "Reelcraft", "domains": ["reelcraft.example"]})]
+    return [gw.Entity({"name": "Pixa", "domains": ["pixa.example"]}), gw.Entity({"name": "Trailcell", "domains": ["trailcell.example"]})]
 
 
 def queries(n=3, prefix="q"):
@@ -125,14 +125,14 @@ class Base(unittest.TestCase):
     def standard_routes(self):
         return {
             "api.openai.com": lambda u, h, b: openai_resp(
-                "Lumo gives 15 free credits; Pixa is another option.",
+                "Lumo gives a 3-yr warranty; Pixa is another option.",
                 [("https://www.lumo.example/free?utm_source=openai", "Lumo free plan"),
                  ("https://pixa.example/pricing?utm_source=openai", "Pixa pricing")],
-                ["best free ai video generator"]),
+                ["best portable power stations"]),
             "api.perplexity.ai": lambda u, h, b: pplx_resp(
-                "Pixa [1] and Reelcraft [2] lead; reddit threads disagree [3].",
-                [("https://pixa.example/", "Pixa"), ("https://reelcraft.example/", "Reelcraft"),
-                 ("https://www.reddit.com/r/aivideo/x", "thread")]),
+                "Pixa [1] and Trailcell [2] lead; reddit threads disagree [3].",
+                [("https://pixa.example/", "Pixa"), ("https://trailcell.example/", "Trailcell"),
+                 ("https://www.reddit.com/r/camping/x", "thread")]),
         }
 
 
@@ -149,9 +149,9 @@ class ProviderParsing(Base):
         self.assertEqual((s["mention_order"], s["mention_share"]), (1, 1.0))     # one sentence, Lumo named first
         self.assertEqual(s["competitors"]["Pixa"], {"cited": True, "rank": 2, "mentioned": True,
                                                     "mention_order": 2, "mention_share": 1.0})
-        self.assertEqual(s["competitors"]["Reelcraft"], {"cited": False, "rank": None, "mentioned": False,
+        self.assertEqual(s["competitors"]["Trailcell"], {"cited": False, "rank": None, "mentioned": False,
                                                          "mention_order": None, "mention_share": None})
-        self.assertEqual(s["search_queries"], ["best free ai video generator"])
+        self.assertEqual(s["search_queries"], ["best portable power stations"])
         self.assertEqual(res["usage"], {"input_tokens": 1000, "output_tokens": 200, "search_calls": 1, "api_calls": 1})
 
     def test_openai_request_shape(self):
@@ -215,7 +215,7 @@ class ProviderParsing(Base):
             [("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AAA", "lumo.example"),
              ("https://vertexaisearch.cloud.google.com/grounding-api-redirect/BBB", "reddit.com"),
              ("https://vertexaisearch.cloud.google.com/grounding-api-redirect/CCC", "An article with no domain")],
-            ["free ai video generator", "lumo pricing"])})
+            ["portable power stations", "lumo pricing"])})
         eng = dict(engines("gemini-api")[0], api="generate_content", model="gemini-2.5-flash")
         res = gw.call_gemini(eng, KEYS["GEMINI_API_KEY"], "q", None)
         s = gw.evaluate(res, brand(), rivals())
@@ -242,9 +242,9 @@ class ProviderParsing(Base):
         api = self.fake({"generativelanguage.googleapis.com": lambda u, h, b: {
             "id": "int_1", "status": "completed",
             "steps": [{"type": "thought", "summary": [{"type": "text", "text": "I should search."}]},
-                      {"type": "google_search_call", "arguments": {"queries": ["lumo pricing", "free ai video"]}},
+                      {"type": "google_search_call", "arguments": {"queries": ["lumo pricing", "power station"]}},
                       {"type": "google_search_result", "call_id": "s1", "result": [{"search_suggestions": "<div>"}]},
-                      {"type": "model_output", "content": [{"type": "text", "text": "Pixa and Lumo both have free plans.",
+                      {"type": "model_output", "content": [{"type": "text", "text": "Pixa and Lumo both have solar kits.",
                        "annotations": [{"type": "url_citation", "url": "https://pixa.example/pricing", "title": "pixa.example",
                                         "start_index": 0, "end_index": 4},
                                        {"type": "url_citation", "url": "https://lumo.example/pricing",
@@ -255,8 +255,8 @@ class ProviderParsing(Base):
         self.assertEqual(url, "https://generativelanguage.googleapis.com/v1beta/interactions")
         self.assertEqual(body, {"model": "gemini-3.8-flash", "input": "q", "tools": [{"type": "google_search"}],
                                 "store": False})
-        self.assertEqual(res["answer"], "Pixa and Lumo both have free plans.")      # the thought is not the answer
-        self.assertEqual(res["search_queries"], ["lumo pricing", "free ai video"])
+        self.assertEqual(res["answer"], "Pixa and Lumo both have solar kits.")      # the thought is not the answer
+        self.assertEqual(res["search_queries"], ["lumo pricing", "power station"])
         self.assertEqual(res["usage"], {"input_tokens": 10, "output_tokens": 30, "search_calls": 2, "api_calls": 1})
         s = gw.evaluate(res, brand(), rivals())
         self.assertEqual((s["cited"], s["rank"], s["competitors"]["Pixa"]["rank"]), (True, 2, 1))
@@ -288,13 +288,13 @@ class ProviderParsing(Base):
 
     def test_openrouter_annotations_and_cost(self):
         api = self.fake({"openrouter.ai": lambda u, h, b: openrouter_resp(
-            "Reelcraft wins.", [("https://reelcraft.example/pricing", "Reelcraft")])})
+            "Trailcell wins.", [("https://trailcell.example/pricing", "Trailcell")])})
         eng = {"id": "or-api", "provider": "openrouter", "model": "deepseek/deepseek-chat"}
         res = gw.call_openrouter(eng, KEYS["OPENROUTER_API_KEY"], "q", "US")
         self.assertEqual(res["reported_cost"], 0.0021)
         self.assertEqual(api.calls[0][2]["plugins"][0]["id"], "web")
         s = gw.evaluate(res, brand(), rivals())
-        self.assertEqual((s["cited"], s["competitors"]["Reelcraft"]["rank"]), (False, 1))
+        self.assertEqual((s["cited"], s["competitors"]["Trailcell"]["rank"]), (False, 1))
 
 
 # ── matching ──────────────────────────────────────────────────────────────
@@ -303,7 +303,7 @@ class Matching(Base):
         b = brand()
         self.assertFalse(b.named_in("Lumos is a spell"))
         self.assertTrue(b.named_in("Try Lumo's editor"))
-        self.assertTrue(b.named_in("鹿末视频的免费额度"))
+        self.assertTrue(b.named_in("鹿末电源的电池容量"))
         self.assertTrue(b.named_in("see lumo.example for details"))
         self.assertFalse(b.named_in("illumination"))
 
@@ -508,7 +508,7 @@ class Reading(Base):
         top = dict((s["domain"], (s["answers"], s["owner"])) for s in sm["top_sources"])
         self.assertEqual(top, {"reddit.com": (2, None), "pixa.example": (2, "Pixa"), "g2.com": (1, None)})
         share = dict((s["name"], s["cited"]) for s in sm["share_of_voice"])
-        self.assertEqual(share, {"Lumo": 2, "Pixa": 2, "Reelcraft": 0})
+        self.assertEqual(share, {"Lumo": 2, "Pixa": 2, "Trailcell": 0})
         self.assertEqual([(t["tier"], t["answered"]) for t in sm["by_tier"]], [("list", 2), ("pricing", 2)])
         self.assertEqual(sm["questions"], {"asked": 4, "cited_somewhere": 2})
         text = gw.render(run)
@@ -762,11 +762,11 @@ class RunFile(Base):
         self.assertTrue(any("'AI' is shorter" in w for w in cfg.warnings))
 
     def test_query_files(self):
-        cfg = self.config(queries_csv="﻿query_id,query,intent_tier,target_url\nq01,哪个AI视频工具免费,list,\n,,,\n")
-        self.assertEqual(cfg.load_queries()[0]["query"], "哪个AI视频工具免费")
+        cfg = self.config(queries_csv="﻿query_id,query,intent_tier,target_url\nq01,哪个户外电源最轻,list,\n,,,\n")
+        self.assertEqual(cfg.load_queries()[0]["query"], "哪个户外电源最轻")
         with io.open(os.path.join(self.tmp, "queries.csv"), "wb") as f:
-            f.write("query_id,query\nq01,哪个AI视频工具免费\n".encode("gb18030"))
-        self.assertEqual(cfg.load_queries()[0]["query"], "哪个AI视频工具免费")
+            f.write("query_id,query\nq01,哪个户外电源最轻\n".encode("gb18030"))
+        self.assertEqual(cfg.load_queries()[0]["query"], "哪个户外电源最轻")
         for body, needle in (("query_id,query\nq01,<a question>\n", "placeholder"),
                              ("query_id,query\nq01,a\nq01,b\n", "used twice"),
                              ("query_id,query\nq 1,a\n", "letters, digits"),
@@ -815,7 +815,7 @@ FULL_CONFIG = {
 class ConfigKeys(Base):
     """A mistyped key used to vanish without a word: "budget" for "budget_usd" silently meant no budget."""
 
-    def write(self, cfg, questions="query_id,query\nq01,best free ai video generator\n"):
+    def write(self, cfg, questions="query_id,query\nq01,best portable power stations\n"):
         p = os.path.join(self.tmp, gw.CONFIG_NAME)
         with io.open(p, "w", encoding="utf-8") as f:
             json.dump(cfg, f, ensure_ascii=False)
@@ -1091,7 +1091,7 @@ class CLI(Base):
         self.assertEqual(code, 1)
         self.assertIn("placeholder", err)
         with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
-            f.write("query_id,query,intent_tier,target_url\nq01,best free ai video generator,list,\n"
+            f.write("query_id,query,intent_tier,target_url\nq01,best portable power stations,list,\n"
                     "q02,lumo vs pixa,vs,\n")
         code, out, _ = self.main("check", "-c", cfgp)
         self.assertEqual(code, 0)
@@ -1120,7 +1120,7 @@ class CLI(Base):
         code, out, _ = self.main("diff", "-c", cfgp)
         self.assertEqual(code, 0)
         self.assertIn("too few questions to tell", out)          # two questions cannot show a change
-        code, out, _ = self.main("ask", "-c", cfgp, "which AI video tool is free?", "--engines", "chatgpt-api")
+        code, out, _ = self.main("ask", "-c", cfgp, "which power station is best?", "--engines", "chatgpt-api")
         self.assertEqual(code, 0)
         self.assertIn("cited #1 (https://www.lumo.example/free)", out)
         self.assertEqual(self.main("report", "-c", cfgp, "../x")[0], 1)
@@ -1146,13 +1146,13 @@ class CLI(Base):
         for k in ("PERPLEXITY_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"):
             del os.environ[k]
         self.fake({"api.openai.com": lambda u, h, b: openai_resp(
-            "Lumo " + half + " gives 15 free credits.", [("https://www.lumo.example/free", "Lumo")],
-            ["best " + half + " video tool"])})
+            "Lumo " + half + " gives a 3-yr warranty.", [("https://www.lumo.example/free", "Lumo")],
+            ["best " + half + " power kit"])})
         cfgp = os.path.join(self.tmp, gw.CONFIG_NAME)
         with io.open(cfgp, "w", encoding="utf-8") as f:
             json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}, "engines": engines("chatgpt-api")}, f)
         with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
-            f.write("query_id,query\nq01,best free ai video generator\n")
+            f.write("query_id,query\nq01,best portable power stations\n")
 
         def main(*argv):
             # stdout as a terminal or a pipe has it: strict UTF-8, where a StringIO would take anything
@@ -1169,7 +1169,7 @@ class CLI(Base):
         self.assertEqual(len(gw.list_run_ids(gw.Config(cfgp))), 2)
         code, out, err = main("report", "-c", cfgp)
         self.assertEqual(code, 0, err)
-        self.assertIn("best \\ud83d video tool", out)                 # shown as an escape, never dropped
+        self.assertIn("best \\ud83d power kit", out)                 # shown as an escape, never dropped
         for fmt in ("md", "csv", "json"):
             code, out, err = main("report", "-c", cfgp, "--format", fmt)
             self.assertEqual(code, 0, (fmt, err))
@@ -1178,7 +1178,7 @@ class CLI(Base):
         for fmt in ("text", "md", "json"):
             self.assertEqual(main("diff", "-c", cfgp, "--format", fmt)[0], 0, fmt)
         for fmt in ("text", "md", "json"):
-            code, out, err = main("ask", "-c", cfgp, "which AI video tool is free?", "--format", fmt)
+            code, out, err = main("ask", "-c", cfgp, "which power station is best?", "--format", fmt)
             self.assertEqual(code, 0, (fmt, err))
             self.assertIn("\\ud83d", out)
 
@@ -1236,7 +1236,7 @@ class MCP(Base):
                 json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]},
                            "engines": engines("chatgpt-api", "perplexity-api"), "max_calls": 10}, f)
             with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
-                f.write("query_id,query\nq01,best free ai video generator\nq02,lumo pricing\n")
+                f.write("query_id,query\nq01,best portable power stations\nq02,lumo pricing\n")
         self.out = io.StringIO()
         return gw.MCPServer(cfgp, out=self.out)
 
@@ -1267,7 +1267,7 @@ class MCP(Base):
     def test_tools(self):
         srv = self.server()
         self.fake(self.standard_routes())
-        r = self.call(srv, "ask", {"question": "best free ai video generator"}, meta={"progressToken": "p1"})
+        r = self.call(srv, "ask", {"question": "best portable power stations"}, meta={"progressToken": "p1"})
         self.assertFalse(r["isError"], r)
         self.assertIn("cited #1 (https://www.lumo.example/free)", r["content"][0]["text"])
         notes = [json.loads(l) for l in self.out.getvalue().splitlines()]
@@ -1321,7 +1321,7 @@ class MCP(Base):
         self.assertEqual(len(self.call(srv, "list_runs")["structuredContent"]["runs"]), 2)
         # ask and run: the answers and the plan as data, a dry run included
         del os.environ["PERPLEXITY_API_KEY"]
-        for name, args in (("ask", {"question": "best free ai video generator"}), ("run", {"dry_run": True}),
+        for name, args in (("ask", {"question": "best portable power stations"}), ("run", {"dry_run": True}),
                            ("run", {"limit": 1})):
             r = self.call(srv, name, args)
             self.assertFalse(r["isError"], r)
@@ -1331,7 +1331,7 @@ class MCP(Base):
         chat, pplx = a["engines"]
         self.assertEqual((chat["engine"], chat["status"], chat["cited"], chat["rank"]), ("chatgpt-api", "ok", True, 1))
         self.assertIn("https://pixa.example/pricing", chat["cited_urls"])
-        self.assertEqual(chat["searches"], ["best free ai video generator"])
+        self.assertEqual(chat["searches"], ["best portable power stations"])
         self.assertEqual((pplx["status"], pplx["cited"]), ("no_key", None))       # not measured, never a zero
         dry = self.call(srv, "run", {"dry_run": True, "max_calls": 999})["structuredContent"]
         self.assertEqual((dry["dry_run"], dry["run_id"], dry["summary"]), (True, None, None))
@@ -1827,7 +1827,7 @@ class MCPRobustness(Base):
         with io.open(os.path.join(self.tmp, "geo-score-watch.json"), "w", encoding="utf-8") as f:
             json.dump(cfg, f)
         with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
-            f.write("query_id,query\nq01,best free ai video generator\nq02,lumo pricing\n")
+            f.write("query_id,query\nq01,best portable power stations\nq02,lumo pricing\n")
         self.out = io.StringIO()
         return gw.MCPServer(os.path.join(self.tmp, "geo-score-watch.json"), out=self.out)
 
@@ -2144,10 +2144,10 @@ class MCPPrompts(Base):
         self.assertIn('call score_site with {"url": "example.com"}', text)
         self.assertIn("«site text", text)
         self.assertIn("not whether they do", text)
-        t = self.get(srv, "check_citations", {"question": "best free ai video generator", "brand": "Lumo"})["result"]
+        t = self.get(srv, "check_citations", {"question": "best portable power stations", "brand": "Lumo"})["result"]
         t = t["messages"][0]["content"]["text"]
         self.assertIn("paid", t)
-        self.assertIn('call ask with {"question": "best free ai video generator", "brand": "Lumo"}', t)
+        self.assertIn('call ask with {"question": "best portable power stations", "brand": "Lumo"}', t)
         self.assertIn("domains", t)
         self.assertNotIn("domains", self.get(srv, "check_citations", {"question": "q"})["result"]["messages"][0]
                          ["content"]["text"])
@@ -2237,7 +2237,7 @@ class Level2(Base):
     def test_without_keys_nothing_is_measured(self):
         for k in ALL_KEY_ENVS:
             os.environ.pop(k, None)
-        run, cit = gw.citation_check("https://www.lumo.example/", ["best free ai video generator"])
+        run, cit = gw.citation_check("https://www.lumo.example/", ["best portable power stations"])
         self.assertIsNone(run)
         self.assertFalse(cit["measured"])
         self.assertEqual(cit["engines"], [])
@@ -2395,7 +2395,7 @@ class ReviewFindings(Base):
         e = gw.Entity({"name": "Nestlé", "aliases": ["鹿末"]})
         self.assertTrue(e.named_in("Try Nestlé cereal"))
         self.assertFalse(e.named_in("Nestléxyz is different"))
-        self.assertTrue(e.named_in("关于鹿末视频"))
+        self.assertTrue(e.named_in("关于鹿末电源"))
 
     def test_terminal_escapes_are_stripped(self):
         self.assertEqual(gw._cut("safe\x1b[31mRED\x1b[0m text\u202e", 80), "safe[31mRED[0m text")
@@ -2499,14 +2499,14 @@ class MergeSeam(Base):
         del os.environ["ANTHROPIC_API_KEY"]
         self.fake(self.standard_routes())
         plain = json.loads(self.score_main(["lumo.example", "--json"]))
-        asked = json.loads(self.score_main(["lumo.example", "--json", "--ask", "best free ai video generator"]))
+        asked = json.loads(self.score_main(["lumo.example", "--json", "--ask", "best portable power stations"]))
         cit = asked.pop("citation")
         self.assertEqual(plain, asked)
         self.assertTrue(cit["measured"])
         with io.open(os.path.join(HERE, "..", "schema", "report.v2.json"), encoding="utf-8") as f:
             sc = json.load(f)
         self.assertEqual(validate(json.loads(json.dumps(dict(asked, citation=cit))), sc), [])
-        text = self.score_main(["lumo.example", "--brief", "--ask", "best free ai video generator"])
+        text = self.score_main(["lumo.example", "--brief", "--ask", "best portable power stations"])
         self.assertIn("AI CITATION CHECK", text)
         self.assertIn("q1 cited #1", text)
 
@@ -2792,17 +2792,17 @@ class EditedQuestions(Base):
 
 
 # ── who is named for each question ────────────────────────────────────────
-def answer(q, e, ask, you=(False, False), pixa=(False, False), reel=(False, False), searches=0, queries_=(),
+def answer(q, e, ask, you=(False, False), pixa=(False, False), trail=(False, False), searches=0, queries_=(),
            cites=None, status="ok"):
-    """One saved sample: (cited, named) for Lumo, Pixa and Reelcraft, and what the provider reported of its search."""
+    """One saved sample: (cited, named) for Lumo, Pixa and Trailcell, and what the provider reported of its search."""
     if status != "ok":
         return {"query_id": q, "engine": e, "run": ask, "status": status, "error": "HTTP 500"}
-    owned = [("lumo.example", you[0]), ("pixa.example", pixa[0]), ("reelcraft.example", reel[0])]
+    owned = [("lumo.example", you[0]), ("pixa.example", pixa[0]), ("trailcell.example", trail[0])]
     cites = [{"url": "https://%s/%s" % (d, q), "domain": d, "title": ""} for d, c in owned if c] if cites is None else cites
     return {"query_id": q, "engine": e, "run": ask, "status": "ok", "cited": you[0], "rank": 1 if you[0] else None,
             "quoted_url": "https://lumo.example/" + q if you[0] else None, "mentioned": you[1],
             "competitors": {"Pixa": {"cited": pixa[0], "rank": None, "mentioned": pixa[1]},
-                            "Reelcraft": {"cited": reel[0], "rank": None, "mentioned": reel[1]}},
+                            "Trailcell": {"cited": trail[0], "rank": None, "mentioned": trail[1]}},
             "citations": cites, "search_queries": list(queries_), "answer": "", "answer_truncated": False,
             "usage": {"input_tokens": 0, "output_tokens": 0, "search_calls": searches, "api_calls": 1},
             "cost_usd": None, "seconds": 0.0}
@@ -2819,18 +2819,18 @@ def counted_run(samples, qs, engs=("chatgpt-api", "perplexity-api"), runs=2):
 
 
 class ByQuestion(Base):
-    QS = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
+    QS = [{"query_id": "q01", "query": "best power station", "intent_tier": "list", "target_url": ""},
           {"query_id": "q02", "query": "lumo vs pixa", "intent_tier": "vs", "target_url": ""},
-          {"query_id": "q03", "query": "cheap video app", "intent_tier": "", "target_url": ""},
-          {"query_id": "q04", "query": "text to video for teams", "intent_tier": "persona", "target_url": ""},
-          {"query_id": "q05", "query": "video app with no watermark", "intent_tier": "", "target_url": ""}]
+          {"query_id": "q03", "query": "cheap power kit", "intent_tier": "", "target_url": ""},
+          {"query_id": "q04", "query": "power station for vans", "intent_tier": "persona", "target_url": ""},
+          {"query_id": "q05", "query": "power bank with a quiet fan", "intent_tier": "", "target_url": ""}]
 
     def run_of(self):
         """Two competitors, runs=2, two engines: 4 asks per question, some of them failed."""
         o, p = "chatgpt-api", "perplexity-api"
         return counted_run([
-            # q01: Pixa is cited by 3 of 4 answers, Lumo by 1, Reelcraft by none; one answer names no tracked brand
-            answer("q01", o, 1, you=(True, True), pixa=(True, True), reel=(False, True), searches=1, queries_=["x"]),
+            # q01: Pixa is cited by 3 of 4 answers, Lumo by 1, Trailcell by none; one answer names no tracked brand
+            answer("q01", o, 1, you=(True, True), pixa=(True, True), trail=(False, True), searches=1, queries_=["x"]),
             answer("q01", o, 2, pixa=(True, True)),                        # a citation, no search reported
             answer("q01", p, 1, pixa=(True, True), searches=1),
             answer("q01", p, 2, searches=1),
@@ -2847,7 +2847,7 @@ class ByQuestion(Base):
             answer("q04", p, 1, you=(True, False), searches=1), answer("q04", p, 2, pixa=(True, False), searches=1),
             # q05: four answers that cite no tracked brand
             answer("q05", o, 1, searches=1), answer("q05", o, 2), answer("q05", p, 1, searches=1),
-            answer("q05", p, 2, reel=(False, True), searches=1),
+            answer("q05", p, 2, trail=(False, True), searches=1),
         ], self.QS)
 
     def test_counts_per_question_with_two_competitors_and_two_asks(self):
@@ -2855,10 +2855,10 @@ class ByQuestion(Base):
         bq = run["summary"]["by_question"]
         self.assertEqual([q["query_id"] for q in bq], ["q01", "q02", "q03", "q04", "q05"])    # question order
         q1 = bq[0]
-        self.assertEqual(q1, {"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "branded": False,
+        self.assertEqual(q1, {"query_id": "q01", "query": "best power station", "intent_tier": "list", "branded": False,
                               "answered": 4, "you": {"cited": 1, "mentioned": 1},
                               "competitors": {"Pixa": {"cited": 3, "mentioned": 3},
-                                              "Reelcraft": {"cited": 0, "mentioned": 1}},
+                                              "Trailcell": {"cited": 0, "mentioned": 1}},
                               "none_named": 1, "searched": {"yes": 2, "no": 0, "unknown": 2}, "leader": "Pixa"})
         q2 = bq[1]
         self.assertEqual((q2["answered"], q2["branded"], q2["you"], q2["competitors"]["Pixa"]),
@@ -2929,11 +2929,11 @@ class ByQuestion(Base):
             for n in gw.BY_QUESTION_NOTES:
                 self.assertIn("- " + n, text)
         md = gw.render(run, "md")
-        self.assertIn("| id | question | answers | Lumo (you) | Pixa | Reelcraft | no tracked brand named | "
+        self.assertIn("| id | question | answers | Lumo (you) | Pixa | Trailcell | no tracked brand named | "
                       "searched yes/no/unknown | most cited |", md)
-        self.assertIn("| q01 | best ai video tool | 4 | cited 1/4 · named 1/4 | cited 3 · named 3 | cited 0 · named 1 | "
+        self.assertIn("| q01 | best power station | 4 | cited 1/4 · named 1/4 | cited 3 · named 3 | cited 0 · named 1 | "
                       "1/4 | 2/0/2 | Pixa |", md)
-        self.assertIn("| q03 | cheap video app | 0 | cited 0/0 · named 0/0 | cited 0 · named 0 | cited 0 · named 0 | "
+        self.assertIn("| q03 | cheap power kit | 0 | cited 0/0 · named 0/0 | cited 0 · named 0 | cited 0 · named 0 | "
                       "0/0 | 0/0/0 | — |", md)
         self.assertIn("|\n\n- An answer given without", md)            # a blank line ends the markdown table
         for word in ("optimi", "worth", "should", "recommend"):         # counts, never advice
@@ -3036,37 +3036,37 @@ class Searches(Base):
                 ("seo consultant lille", 0, 0),
                 ("topic modelling tools", 0, 0),           # "topic" is not "top"
                 ("laptop desktop stopwatch", 0, 0),        # nor is a word that holds it
-                ("top ai video tools", 0, 1),
+                ("top power stations", 0, 1),
                 ("Lumo VS Pixa", 0, 1), ("lumo vs. pixa", 0, 1), ("lumo versus pixa", 0, 1),
                 ("pixa review", 0, 1), ("Pixa Reviews 2025", 1, 1), ("reviewer jobs", 0, 0),
-                ("compare video apps", 0, 1), ("video app comparison", 0, 1), ("comparable apps", 0, 0),
+                ("compare solar kits", 0, 1), ("solar kit comparison", 0, 1), ("comparable apps", 0, 0),
                 ("alternatives to pixa", 0, 1), ("pixa alternative", 0, 1),
                 ("best of 2026, best in 2026 and 2026 again", 1, 1),   # counted once per search
                 ("h2020 grant", 0, 0), ("2000mAh battery", 0, 0), ("12026 items", 0, 0), ("iphone_2026", 0, 0),
                 ("1899 or 2100", 0, 0), ("since 1900", 1, 0), ("by 2099", 1, 0), ("2026-10 report", 1, 0),
-                ("2026年AI视频工具推荐", 1, 1),               # a CJK character beside a year is a break
-                ("AI视频工具哪个好", 0, 1), ("视频工具排行榜", 0, 1), ("剪辑软件排名", 0, 1), ("哪家好", 0, 1),
-                ("最好的剪辑软件", 0, 1), ("最佳剪辑软件", 0, 1), ("剪映和Pixa对比", 0, 1), ("剪辑软件评测", 0, 1),
-                ("AI视频工具Top", 0, 1),                     # a CJK character beside a Latin word is a break
-                ("鹿末视频免费吗", 0, 0), ("", 0, 0)]:
+                ("2026年户外电源推荐", 1, 1),               # a CJK character beside a year is a break
+                ("户外电源哪个好", 0, 1), ("户外电源排行榜", 0, 1), ("露营装备排名", 0, 1), ("哪家好", 0, 1),
+                ("最好的露营装备", 0, 1), ("最佳露营装备", 0, 1), ("鹿末和Pixa对比", 0, 1), ("露营装备评测", 0, 1),
+                ("户外电源Top", 0, 1),                     # a CJK character beside a Latin word is a break
+                ("鹿末电源多少钱", 0, 0), ("", 0, 0)]:
             self.assertEqual(m(q), {"total": 1, "with_year": year, "with_ranking_word": word}, q)
         self.assertEqual(m("best 2026", "pixa", "2025 tools", None), {"total": 3, "with_year": 2, "with_ranking_word": 1})
         self.assertEqual(m(), {"total": 0, "with_year": 0, "with_ranking_word": 0})
 
     def test_the_summary_counts_every_exposed_search_and_the_report_says_so_once(self):
-        qs = [{"query_id": "q01", "query": "video tool", "intent_tier": "", "target_url": ""},
+        qs = [{"query_id": "q01", "query": "power kit", "intent_tier": "", "target_url": ""},
               {"query_id": "q02", "query": "lumo or pixa", "intent_tier": "", "target_url": ""}]
         o = "chatgpt-api"
         run = counted_run([
-            answer("q01", o, 1, searches=2, queries_=["best video tool 2026", "video tool pricing"]),
-            answer("q01", o, 2, searches=1, queries_=["best video tool 2026"]),     # the same search, another answer
+            answer("q01", o, 1, searches=2, queries_=["best power kit 2026", "power kit pricing"]),
+            answer("q01", o, 2, searches=1, queries_=["best power kit 2026"]),     # the same search, another answer
             answer("q02", o, 1, searches=1, queries_=["lumo pricing 2025"]),
             answer("q02", o, 2, searches=2),                                         # searched, no query text
         ], qs, engs=(o,))
         sr = run["summary"]["searches"]
         self.assertEqual(sr["modifiers"], {"total": 4, "with_year": 3, "with_ranking_word": 2})
         self.assertEqual((sr["answers_exposing"], sr["answers_searched_without_queries"]), (3, 1))
-        self.assertEqual(sr["top"][0], {"query": "best video tool 2026", "count": 2})
+        self.assertEqual(sr["top"][0], {"query": "best power kit 2026", "count": 2})
         text = gw.render(run)
         self.assertIn("- Of 4 searches: 3 contain a year, 2 contain a ranking or comparison word.", text)
         self.assertIn("- 1 answer searched the web but the endpoint returned no search queries (chatgpt-api: 1);", text)
@@ -3082,8 +3082,8 @@ class Searches(Base):
 
     def test_a_summary_saved_without_the_counts_is_recomputed(self):
         o = "chatgpt-api"
-        qs = [{"query_id": "q01", "query": "video tool", "intent_tier": "", "target_url": ""}]
-        run = counted_run([answer("q01", o, 1, searches=1, queries_=["best video tool 2026"]),
+        qs = [{"query_id": "q01", "query": "power kit", "intent_tier": "", "target_url": ""}]
+        run = counted_run([answer("q01", o, 1, searches=1, queries_=["best power kit 2026"]),
                            answer("q01", o, 2, searches=3)], qs, engs=(o,))
         old = json.loads(json.dumps(run))
         for k in ("answers_searched_without_queries", "modifiers"):           # saved by 1.6.0
@@ -3153,12 +3153,12 @@ def openai_resp_renamed(text, cites=(), queries=()):
 
 
 class CitationFormat(Base):
-    TEXT = "Lumo gives 15 free credits; Pixa is another option."
+    TEXT = "Lumo gives a 3-yr warranty; Pixa is another option."
     CITES = [("https://www.lumo.example/free", "Lumo free plan"), ("https://pixa.example/pricing", "Pixa pricing")]
 
     def route(self, renamed):
         build = openai_resp_renamed if renamed else openai_resp
-        return {"api.openai.com": lambda u, h, b: build(self.TEXT, self.CITES, ["best free ai video generator"])}
+        return {"api.openai.com": lambda u, h, b: build(self.TEXT, self.CITES, ["best portable power stations"])}
 
     def ask(self, n, renamed, runs=1):
         self.fake(self.route(renamed))
@@ -3276,9 +3276,9 @@ class CitationFormat(Base):
 class Branded(Base):
     def test_questions_naming_the_brand_are_flagged(self):
         f = lambda text: gw.flag_query({"query_id": "q", "query": text}, brand(), rivals())
-        self.assertTrue(f("鹿末视频免费吗")["brand_in_query"])            # CJK alias, no word boundaries
+        self.assertTrue(f("鹿末电源多少钱")["brand_in_query"])            # CJK alias, no word boundaries
         self.assertTrue(f("哪个比较好：鹿末还是Pixa")["competitor_in_query"])  # a Latin name beside CJK text
-        self.assertTrue(f("用Lumo做视频要多少钱")["brand_in_query"])
+        self.assertTrue(f("用Lumo充电要多少钱")["brand_in_query"])
         self.assertFalse(f("is Lumos a good app")["brand_in_query"])    # whole words for Latin names
         self.assertTrue(f("is lumo.example legit")["brand_in_query"])   # a brand domain counts
         q = f("Lumo vs Pixa")
@@ -3294,7 +3294,7 @@ class Branded(Base):
         with io.open(qp, "w", encoding="utf-8") as f:
             f.write("query_id,query,intent_tier,target_url,branded\n"
                     "q1,lumo vs pixa,vs,,\nq2,is lumo worth it,,,No\nq3,the app with the fox logo,,,yes\n"
-                    "q4,best ai video tool,,,auto\n")
+                    "q4,best power station,,,auto\n")
         cfg = gw.Config(cfgp)
         qs = [gw.flag_query(q, cfg.brand, cfg.competitors) for q in cfg.load_queries()]
         self.assertEqual([q["branded"] for q in qs], ["auto", "no", "yes", "auto"])
@@ -3315,8 +3315,8 @@ class Branded(Base):
             return openai_resp("Lumo is fine." if cite else "Pixa.",
                                [("https://lumo.example/", "")] if cite else [("https://pixa.example/", "")])
         self.fake({"api.openai.com": handler})
-        qs = [{"query_id": "q1", "query": "best ai video tool", "intent_tier": "", "target_url": ""},
-              {"query_id": "q2", "query": "cheap text to video", "intent_tier": "", "target_url": ""},
+        qs = [{"query_id": "q1", "query": "best power station", "intent_tier": "", "target_url": ""},
+              {"query_id": "q2", "query": "cheap power station", "intent_tier": "", "target_url": ""},
               {"query_id": "q3", "query": "lumo vs pixa", "intent_tier": "", "target_url": ""},
               {"query_id": "q4", "query": "鹿末怎么样", "intent_tier": "", "target_url": ""},
               {"query_id": "q5", "query": "is lumo free", "intent_tier": "", "target_url": "", "branded": "no"}]
@@ -3355,7 +3355,7 @@ class Branded(Base):
             with contextlib.redirect_stdout(out):
                 code = gw.main(["check", "-c", cfgp])
             return code, out.getvalue()
-        code, out = check("q1,lumo vs pixa\nq2,鹿末好用吗\nq3,best ai video tool\n")
+        code, out = check("q1,lumo vs pixa\nq2,鹿末好用吗\nq3,best power station\n")
         self.assertEqual(code, 0)
         self.assertIn("! 2 of 3 questions (67%) name Lumo (q1, q2)", out)
         code, out = check("q1,lumo vs pixa\nq2,a\nq3,b\nq4,c\nq5,d\n")
@@ -3367,7 +3367,7 @@ class Branded(Base):
         del os.environ["GEMINI_API_KEY"]
         del os.environ["ANTHROPIC_API_KEY"]
         self.fake(self.standard_routes())
-        run, cit = gw.citation_check("https://www.lumo.example/", ["best free ai video generator", "lumo vs pixa"])
+        run, cit = gw.citation_check("https://www.lumo.example/", ["best portable power stations", "lumo vs pixa"])
         self.assertIn("q2 names the brand", cit["note"])
 
 
@@ -3404,8 +3404,8 @@ class IntentTiers(Base):
 
     def test_check_counts_the_questions_of_each_type(self):
         head = "query_id,query,intent_tier,target_url\n"
-        code, out = self.check(head + "q1,best ai video tool,list,\nq2,lumo vs pixa,vs,\nq3,cheap video app,list,\n"
-                                      "q4,my clips keep getting a watermark,,\nq5,is text to video worth it,verdict,\n")
+        code, out = self.check(head + "q1,best power station,list,\nq2,lumo vs pixa,vs,\nq3,cheap power kit,list,\n"
+                                      "q4,my power bank keeps shutting off,,\nq5,is a power station worth it,verdict,\n")
         self.assertEqual(code, 0)
         self.assertIn("· question types (intent_tier): list 2, verdict 1, vs 1, no type 1\n", out)
         self.assertNotIn("suggested types", out)                   # several types: counts, and nothing else
@@ -3413,18 +3413,18 @@ class IntentTiers(Base):
     def test_one_type_or_none_is_a_note_never_a_failure(self):
         vocab = "suggested types: list, vs, alternative, pricing, problem, persona, verdict, channel; any other " \
                 "label works too"
-        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n"
-                               "q2,cheap video app,list,\n")
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best power station,list,\n"
+                               "q2,cheap power kit,list,\n")
         self.assertEqual(code, 0)
         self.assertIn("· question types (intent_tier): list 2\n", out)
         self.assertIn("· every question has the type list: the rates describe that one kind of question (%s)\n"
                       % vocab, out)
-        code, out = self.check("query_id,query\nq1,best ai video tool\nq2,cheap video app\n")
+        code, out = self.check("query_id,query\nq1,best power station\nq2,cheap power kit\n")
         self.assertEqual(code, 0)
         self.assertIn("· question types (intent_tier): no type 2\n", out)
         self.assertIn("· no question has an intent_tier, so the report has no table by question type (%s)\n"
                       % vocab, out)
-        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best ai video tool,list,\n")
+        code, out = self.check("query_id,query,intent_tier,target_url\nq1,best power station,list,\n")
         self.assertEqual(code, 0)
         self.assertNotIn("every question has the type", out)        # one question is not a set of one type
         for line in out.splitlines():
@@ -3459,8 +3459,8 @@ class TrackedPages(Base):
     def test_absolute_and_path_targets_resolve_and_anything_else_is_ignored_with_a_warning(self):
         code, out, cfg = self.check(
             "query_id,query,intent_tier,target_url\n"
-            "q1,free ai video,list,https://www.lumo.example/free?utm_source=x&plan=1#top\n"
-            "q2,ai video pricing,pricing,/pricing/\n"
+            "q1,power station,list,https://www.lumo.example/free?utm_source=x&plan=1#top\n"
+            "q2,solar kit prices,pricing,/pricing/\n"
             "q3,lumo review,verdict,lumo.example/review\n"
             "q4,cdn,list,//cdn.example/x\n"
             "q5,pixa plans,pricing,https://pixa.example/plans\n"
@@ -3494,8 +3494,8 @@ class TrackedPages(Base):
 
     def test_mcp_run_and_status_show_the_target_url_warnings(self):
         # over MCP there is no watch check to read, so a mistyped target_url must not be dropped without a word
-        self.check("query_id,query,intent_tier,target_url\nq1,free ai video,list,lumo.example/free\n"
-                   "q2,pixa plans,pricing,https://pixa.example/plans\nq3,ai video pricing,pricing,/pricing\n")
+        self.check("query_id,query,intent_tier,target_url\nq1,power station,list,lumo.example/free\n"
+                   "q2,pixa plans,pricing,https://pixa.example/plans\nq3,solar kit prices,pricing,/pricing\n")
         srv = gw.MCPServer(os.path.join(self.tmp, gw.CONFIG_NAME), out=io.StringIO())
         r = srv.call({"name": "run", "arguments": {"dry_run": True}})
         self.assertFalse(r["isError"], r)
@@ -3560,10 +3560,10 @@ class TrackedPages(Base):
         self.assertEqual((rows[0][-1], rows[1][-1]), ("target_cited", ""))
         self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
 
-    QS = [{"query_id": "q01", "query": "free ai video", "intent_tier": "list", "target_url": "/free"},
-          {"query_id": "q02", "query": "ai video with no watermark", "intent_tier": "", "target_url": "https://lumo.example/free"},
-          {"query_id": "q03", "query": "ai video pricing", "intent_tier": "pricing", "target_url": "/pricing"},
-          {"query_id": "q04", "query": "best ai video", "intent_tier": "list", "target_url": ""}]
+    QS = [{"query_id": "q01", "query": "power station", "intent_tier": "list", "target_url": "/free"},
+          {"query_id": "q02", "query": "power station for a fridge", "intent_tier": "", "target_url": "https://lumo.example/free"},
+          {"query_id": "q03", "query": "solar kit prices", "intent_tier": "pricing", "target_url": "/pricing"},
+          {"query_id": "q04", "query": "best solar kit", "intent_tier": "list", "target_url": ""}]
 
     def run_of(self):
         o, p = "chatgpt-api", "perplexity-api"
@@ -3641,23 +3641,23 @@ class MentionOrder(Base):
 
     def test_an_english_answer_whole_words_only(self):
         text = ("Pixa is the most popular pick. Lumos users and Pixabay fans may also like Lumo, which costs less.\n"
-                "See lumo.example for the 3.5 release! Reelcraft suits teams.")
+                "See lumo.example for the 3.5 release! Trailcell suits teams.")
         # three sentences end at ". " and "!" and one at the line break; the domain and 3.5 end none
         self.assertEqual(len(gw.sentence_spans(text)), 4)
-        lumo, pixa, reel = self.positions(text)
+        lumo, pixa, trail = self.positions(text)
         self.assertEqual(pixa, (1, 0.25))          # "Pixabay" is not Pixa
         self.assertEqual(lumo, (2, 0.5))           # "Lumos" is not Lumo; the domain names it
-        self.assertEqual(reel, (3, 0.25))
+        self.assertEqual(trail, (3, 0.25))
         self.assertEqual(self.positions("Nothing tracked here. Try other tools."), [(None, None)] * 3)
         self.assertEqual(self.positions(""), [(None, None)] * 3)
 
     def test_a_chinese_answer_names_match_anywhere(self):
-        text = "推荐用鹿末做视频。鹿末免费额度多！也可以用Pixa？"
+        text = "推荐用鹿末去露营。鹿末电池容量大！也可以用Pixa？"
         self.assertEqual(len(gw.sentence_spans(text)), 3)
-        lumo, pixa, reel = self.positions(text)
+        lumo, pixa, trail = self.positions(text)
         self.assertEqual(lumo, (1, 0.6667))        # the alias inside a run of Chinese
         self.assertEqual(pixa, (2, 0.3333))        # a Latin name beside Chinese characters
-        self.assertEqual(reel, (None, None))
+        self.assertEqual(trail, (None, None))
 
     def test_a_tie_or_an_absent_name_gives_null(self):
         studio = gw.Entity({"name": "Lumo Studio"})
@@ -3690,17 +3690,17 @@ class MentionOrder(Base):
 
     def run_of(self):
         o, p = "chatgpt-api", "perplexity-api"
-        qs = [{"query_id": "q01", "query": "best ai video tool", "intent_tier": "list", "target_url": ""},
-              {"query_id": "q02", "query": "ai video for teams", "intent_tier": "persona", "target_url": ""}]
+        qs = [{"query_id": "q01", "query": "best power station", "intent_tier": "list", "target_url": ""},
+              {"query_id": "q02", "query": "power for campers", "intent_tier": "persona", "target_url": ""}]
         return counted_run([
             said(answer("q01", o, 1, you=(True, True), pixa=(False, True)),
                  "Lumo is the cheapest. Pixa has more styles."),
-            said(answer("q01", o, 2, you=(False, True), pixa=(True, True), reel=(False, True)),
-                 "Pixa leads. Lumo follows. Reelcraft is for teams. That is all."),
+            said(answer("q01", o, 2, you=(False, True), pixa=(True, True), trail=(False, True)),
+                 "Pixa leads. Lumo follows. Trailcell is for teams. That is all."),
             said(answer("q01", p, 1, you=(True, True), pixa=(False, True)), "推荐鹿末。鹿末免费！Pixa 也可以？"),
             said(answer("q02", o, 1), "Nothing tracked here, try other tools."),
-            said(answer("q02", p, 1, pixa=(False, True), reel=(True, True)),
-                 "Reelcraft and Pixa both work.\nReelcraft is older."),
+            said(answer("q02", p, 1, pixa=(False, True), trail=(True, True)),
+                 "Trailcell and Pixa both work.\nTrailcell is older."),
             answer("q02", p, 2, status="error"),
         ], qs)
 
@@ -3710,7 +3710,7 @@ class MentionOrder(Base):
         eng = dict((e["id"], (e["named_first"], e["any_named"], e["mention_share"])) for e in sm["engines"])
         self.assertEqual(eng, {"chatgpt-api": (1, 2, 0.375), "perplexity-api": (1, 2, 0.6667)})
         sov = dict((s["name"], (s["named_first"], s["any_named"], s["mention_share"])) for s in sm["share_of_voice"])
-        self.assertEqual(sov, {"Lumo": (2, 4, 0.4722), "Pixa": (1, 4, 0.3958), "Reelcraft": (1, 4, 0.625)})
+        self.assertEqual(sov, {"Lumo": (2, 4, 0.4722), "Pixa": (1, 4, 0.3958), "Trailcell": (1, 4, 0.625)})
         self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
         # samples that carry the fields are read as saved, and give the same counts
         fresh = json.loads(json.dumps(run))
@@ -3732,7 +3732,7 @@ class MentionOrder(Base):
         self.assertIn("| 50% | 1/2 | 1.0 | 1 failed |", md)                    # perplexity: mentioned, named first
         self.assertIn("|  | cited | 95% CI | mentioned | named first (tracked) | sentence share |", md)
         self.assertRegex(md, r"\| Lumo \(you\) \| [^\n]* \| 2/4 \| 47% \|")
-        self.assertRegex(md, r"\| Reelcraft \| [^\n]* \| 1/4 \| 62% \|")
+        self.assertRegex(md, r"\| Trailcell \| [^\n]* \| 1/4 \| 62% \|")
         for n in gw.MENTION_NOTES:
             self.assertIn("|\n\n- " + n if n == gw.MENTION_NOTES[0] else "- " + n, md)
         notes = " ".join(gw.MENTION_NOTES).lower()
@@ -3765,9 +3765,9 @@ class MentionOrder(Base):
         by = dict((s["engine"], s) for s in run["samples"])
         o, p = by["chatgpt-api"], by["perplexity-api"]
         self.assertEqual((o["mention_order"], o["competitors"]["Pixa"]["mention_order"]), (1, 2))
-        # "Pixa [1] and Reelcraft [2] lead; reddit threads disagree [3]." names no Lumo
+        # "Pixa [1] and Trailcell [2] lead; reddit threads disagree [3]." names no Lumo
         self.assertEqual((p["mention_order"], p["mention_share"]), (None, None))
-        self.assertEqual([p["competitors"][n]["mention_order"] for n in ("Pixa", "Reelcraft")], [1, 2])
+        self.assertEqual([p["competitors"][n]["mention_order"] for n in ("Pixa", "Trailcell")], [1, 2])
         self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
 
 
@@ -4053,9 +4053,9 @@ class Pooling(Base):
 # One recorded answer per provider shape, as each vendor's current documentation describes it (the URLs are cited in
 # geo_watch.py, beside the code that reads each field). Every offset below is the one the provider would send for
 # this text; the tests check each against the text it points at.
-OPENAI_TEXT = ("Lumo gives new accounts 15 free credits a month. ([lumo.example](https://lumo.example/pricing?utm_source=openai)) "
-               "Pixa's free plan adds a watermark. ([pixa.example](https://pixa.example/plans?utm_source=openai))\n\n"
-               "For short clips, either works.")
+OPENAI_TEXT = ("Lumo gives buyers a 5-year warranty on the pack. ([lumo.example](https://lumo.example/pricing?utm_source=openai)) "
+               "Pixa's base unit adds a kickstand. ([pixa.example](https://pixa.example/plans?utm_source=openai))\n\n"
+               "For short trips, either works.")
 
 
 def openai_recorded(annotations=True):
@@ -4066,14 +4066,14 @@ def openai_recorded(annotations=True):
             "url": "https://pixa.example/plans?utm_source=openai", "title": "Pixa plans"}]
     return {"id": "resp_rec", "output": [
         {"type": "web_search_call", "id": "ws_1", "status": "completed",
-         "action": {"type": "search", "query": "free ai video generator credits"}},
+         "action": {"type": "search", "query": "portable power station warranty"}},
         {"type": "message", "role": "assistant", "content": [
             {"type": "output_text", "text": OPENAI_TEXT, "annotations": ans if annotations else []}]}],
         "usage": {"input_tokens": 900, "output_tokens": 120}}
 
 
-OPENROUTER_TEXT = ("Lumo is the cheapest at $0 to start [lumo.example](https://lumo.example/pricing). Reelcraft starts at "
-                   "$12 [reelcraft.example](https://reelcraft.example/pricing).")
+OPENROUTER_TEXT = ("Lumo is the cheapest at $0 to start [lumo.example](https://lumo.example/pricing). Trailcell starts at "
+                   "$12 [trailcell.example](https://trailcell.example/pricing).")
 
 
 def openrouter_recorded():
@@ -4081,7 +4081,7 @@ def openrouter_recorded():
     return {"choices": [{"message": {"role": "assistant", "content": OPENROUTER_TEXT, "annotations": [
         {"type": "url_citation", "url_citation": {"url": "https://lumo.example/pricing", "title": "Lumo pricing",
                                                   "content": "", "start_index": 36, "end_index": 80}},
-        {"type": "url_citation", "url_citation": {"url": "https://reelcraft.example/pricing", "title": "Reelcraft",
+        {"type": "url_citation", "url_citation": {"url": "https://trailcell.example/pricing", "title": "Trailcell",
                                                   "content": "", "start_index": 106, "end_index": 160}}]}}],
             "usage": {"prompt_tokens": 900, "completion_tokens": 150, "cost": 0.002}}
 
@@ -4091,15 +4091,15 @@ def anthropic_recorded():
     cite = lambda u, t: [{"type": "web_search_result_location", "url": u, "title": t, "encrypted_index": "Eo8B",
                           "cited_text": "..."}]
     return {"content": [
-        {"type": "server_tool_use", "id": "srv_1", "name": "web_search", "input": {"query": "lumo free credits"}},
+        {"type": "server_tool_use", "id": "srv_1", "name": "web_search", "input": {"query": "lumo battery pack"}},
         {"type": "web_search_tool_result", "tool_use_id": "srv_1", "content": [
             {"type": "web_search_result", "url": "https://lumo.example/pricing", "title": "Lumo pricing",
              "encrypted_content": "Eqgf", "page_age": "September 1, 2026"}]},
         {"type": "text", "text": "Based on the search results, "},
-        {"type": "text", "text": "Lumo gives new accounts 15 free credits a month.",
+        {"type": "text", "text": "Lumo gives buyers a 5-year warranty on the pack.",
          "citations": cite("https://lumo.example/pricing", "Lumo pricing")},
         {"type": "text", "text": "\n\n"},
-        {"type": "text", "text": "Pixa adds a watermark on its free plan.",
+        {"type": "text", "text": "Pixa adds a kickstand on its base unit.",
          "citations": cite("https://pixa.example/plans", "Pixa plans")},
         {"type": "text", "text": " Overall, Lumo is the cheaper start."}],
         "stop_reason": "end_turn",
@@ -4117,17 +4117,17 @@ def interactions_recorded(first=None):
         {"type": "url_citation", "url": "https://pixa.example/plans", "title": "pixa.example",
          "start_index": 35, "end_index": 63}]
     return {"id": "int_rec", "status": "completed", "steps": [
-        {"type": "google_search_call", "arguments": {"queries": ["免费 AI 视频 工具"]}},
+        {"type": "google_search_call", "arguments": {"queries": ["户外 电源 推荐"]}},
         {"type": "google_search_result", "call_id": "s1", "result": [{"search_suggestions": "<div>"}]},
         {"type": "model_output", "content": [
             {"type": "text", "text": GEMINI_PARTS[0], "annotations": first},
             {"type": "text", "text": GEMINI_PARTS[1], "annotations": [
-                {"type": "url_citation", "url": "https://www.reddit.com/r/aivideo/x", "title": "reddit.com",
+                {"type": "url_citation", "url": "https://www.reddit.com/r/camping/x", "title": "reddit.com",
                  "start_index": 0, "end_index": 36}]}]}],
         "usage": {"prompt_tokens": 10, "completion_tokens": 30}}
 
 
-GC_TEXT = ("Lumo gives new accounts 15 free credits a month — no card needed. Pixa adds a watermark on its free plan. "
+GC_TEXT = ("Lumo gives buyers a 5-year warranty on the pack — no tool needed. Pixa adds a kickstand on its base unit. "
            "Reddit threads lean towards Lumo.")
 REDIRECT = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/"
 
@@ -4137,17 +4137,17 @@ def generate_content_recorded(supports=None):
     segment starts at 0, which protobuf's JSON leaves out."""
     if supports is None:
         supports = [{"segment": {"partIndex": 1, "endIndex": 67,
-                                 "text": "Lumo gives new accounts 15 free credits a month — no card needed."},
+                                 "text": "Lumo gives buyers a 5-year warranty on the pack — no tool needed."},
                      "groundingChunkIndices": [0], "confidenceScores": [0.9]},
                     {"segment": {"partIndex": 1, "startIndex": 68, "endIndex": 107,
-                                 "text": "Pixa adds a watermark on its free plan."},
+                                 "text": "Pixa adds a kickstand on its base unit."},
                      "groundingChunkIndices": [1], "confidenceScores": [0.8]},
                     {"segment": {"partIndex": 1, "startIndex": 108, "endIndex": 141,
                                  "text": "Reddit threads lean towards Lumo."},
                      "groundingChunkIndices": [2], "confidenceScores": [0.7]}]
     return {"candidates": [{"content": {"parts": [{"text": "Looking at plans.", "thought": True}, {"text": GC_TEXT}]},
                             "groundingMetadata": {
-                                "webSearchQueries": ["lumo free credits"],
+                                "webSearchQueries": ["lumo battery pack"],
                                 "groundingChunks": [{"web": {"uri": REDIRECT + "A", "title": "lumo.example"}},
                                                     {"web": {"uri": REDIRECT + "B", "title": "pixa.example"}},
                                                     {"web": {"uri": REDIRECT + "C", "title": "reddit.com"}},
@@ -4156,10 +4156,10 @@ def generate_content_recorded(supports=None):
             "usageMetadata": {"promptTokenCount": 50, "candidatesTokenCount": 200}}
 
 
-PPLX_TEXT = ("Lumo gives new accounts 15 free credits a month[1]. Pixa adds a watermark on its free plan[2][3].\n\n"
+PPLX_TEXT = ("Lumo gives buyers a 5-year warranty on the pack[1]. Pixa adds a kickstand on its base unit[2][3].\n\n"
              "Most reviewers start with Lumo[1].")
 PPLX_RESULTS = [("https://lumo.example/pricing", "Lumo pricing"), ("https://pixa.example/plans", "Pixa plans"),
-                ("https://www.reddit.com/r/aivideo/x", "thread"), ("https://www.youtube.com/watch?v=x", "video")]
+                ("https://www.reddit.com/r/camping/x", "thread"), ("https://www.youtube.com/watch?v=x", "video")]
 
 
 def pplx_recorded(ids=None, text=PPLX_TEXT, results=PPLX_RESULTS):
@@ -4212,8 +4212,8 @@ class AnswerShare(Base):
         # three sentences once the marks are blanked; the Lumo mark closes the first
         blanked = OPENAI_TEXT[:49] + " " * 64 + OPENAI_TEXT[113:149] + " " * 62 + OPENAI_TEXT[211:]
         sents = sentences_of(blanked)
-        self.assertEqual([x.strip() for x in sents], ["Lumo gives new accounts 15 free credits a month.",
-                                                      "Pixa's free plan adds a watermark.", "For short clips, either works."])
+        self.assertEqual([x.strip() for x in sents], ["Lumo gives buyers a 5-year warranty on the pack.",
+                                                      "Pixa's base unit adds a kickstand.", "For short trips, either works."])
         sizes = [size(x) for x in sents]
         self.assertEqual(sizes, [40, 29, 26])
         self.assertEqual(s["supported_share"], {"chars": round(40 / 95.0, 4), "sentences": round(1 / 3.0, 4),
@@ -4225,7 +4225,7 @@ class AnswerShare(Base):
         self.assertEqual((s["cited"], s["rank"]), (True, 1))
 
     def test_a_later_sentence_weighs_less_and_text_parts_add_up(self):
-        p1 = "Pixa adds a watermark. ([pixa.example](https://pixa.example/))"
+        p1 = "Pixa adds a kickstand. ([pixa.example](https://pixa.example/))"
         p2 = " Lumo does not. ([lumo.example](https://lumo.example/))"
         js = {"output": [{"type": "message", "content": [
             {"type": "output_text", "text": p1, "annotations": [
@@ -4235,7 +4235,7 @@ class AnswerShare(Base):
         res, s = self.run_one("openai", js)
         self.assertEqual(s["spans"][1], {"start": 62 + 16, "end": 62 + 55, "urls": ["https://lumo.example/"],
                                          "kind": "marker"})
-        # "Pixa adds a watermark." (19) then "Lumo does not." (12), the second at position 1 of 2
+        # "Pixa adds a kickstand." (19) then "Lumo does not." (12), the second at position 1 of 2
         self.assertEqual(s["supported_share"], {"chars": round(12 / 31.0, 4), "sentences": 0.5,
                                                 "weighted": round(12 * math.exp(-1 / 2.0) / 31, 4)})
 
@@ -4256,7 +4256,7 @@ class AnswerShare(Base):
 
     def test_openrouter_marks_are_read_from_the_message(self):
         self.assertEqual(OPENROUTER_TEXT[36:80], "[lumo.example](https://lumo.example/pricing)")
-        self.assertEqual(OPENROUTER_TEXT[106:160], "[reelcraft.example](https://reelcraft.example/pricing)")
+        self.assertEqual(OPENROUTER_TEXT[106:160], "[trailcell.example](https://trailcell.example/pricing)")
         res, s = self.run_one("openrouter", openrouter_recorded())
         self.assertEqual([(x["start"], x["end"], x["kind"]) for x in s["spans"]], [(36, 80, "marker"), (106, 160, "marker")])
         self.assertEqual(s["supported_share"], {"chars": round(29 / 50.0, 4), "sentences": 0.5,
@@ -4268,7 +4268,7 @@ class AnswerShare(Base):
     def test_claude_supports_the_text_of_its_cited_blocks(self):
         res, s = self.run_one("anthropic", anthropic_recorded())
         lead = len("Based on the search results, ")
-        self.assertEqual(s["answer"][lead:lead + 48], "Lumo gives new accounts 15 free credits a month.")
+        self.assertEqual(s["answer"][lead:lead + 48], "Lumo gives buyers a 5-year warranty on the pack.")
         self.assertEqual(s["spans"][0], {"start": lead, "end": lead + 48, "urls": ["https://lumo.example/pricing"],
                                          "kind": "segment"})
         self.assertEqual(s["spans"][1]["kind"], "segment")
@@ -4297,7 +4297,7 @@ class AnswerShare(Base):
         self.assertEqual(self.run_one("gemini", interactions_recorded([an]))[1]["spans"][0]["end"], 13)
 
     def test_generate_content_supports_are_bytes_of_their_part(self):
-        self.assertEqual(GC_TEXT.encode("utf-8")[68:107].decode("utf-8"), "Pixa adds a watermark on its free plan.")
+        self.assertEqual(GC_TEXT.encode("utf-8")[68:107].decode("utf-8"), "Pixa adds a kickstand on its base unit.")
         eng = dict(engines("gemini-api")[0], api="generate_content")
         res, s = self.run_one("gemini", generate_content_recorded(), eng)
         # the dash is three bytes: the second segment starts at byte 68, character 66
@@ -4306,7 +4306,7 @@ class AnswerShare(Base):
         self.assertEqual(s["supported_share"], {"chars": round(53 / 114.0, 4), "sentences": round(1 / 3.0, 4),
                                                 "weighted": round(53 / 114.0, 4)})
         bad = generate_content_recorded()["candidates"][0]["groundingMetadata"]["groundingSupports"]
-        bad[1]["segment"]["text"] = "Pixa adds a watermark."              # the bytes do not hold the text it gives
+        bad[1]["segment"]["text"] = "Pixa adds a kickstand."              # the bytes do not hold the text it gives
         self.assertNotIn("spans", self.run_one("gemini", generate_content_recorded(bad), eng)[1])
         bad = generate_content_recorded()["candidates"][0]["groundingMetadata"]["groundingSupports"]
         bad[0]["segment"]["partIndex"] = 0                                  # the thought is not the answer
@@ -4387,7 +4387,7 @@ class SourcesListedUsed(Base):
         self.assertEqual([c["url"] for c in s["sources_listed"]], [u for u, _ in PPLX_RESULTS])
         self.assertEqual(s["sources_used"], s["citations"])
         # no [n] marks: what was used is unknown, so neither list is recorded
-        res, s = self.run_one(pplx_recorded(text="Lumo and Pixa both have free plans."))
+        res, s = self.run_one(pplx_recorded(text="Lumo and Pixa both have solar kits."))
         self.assertNotIn("sources_listed", s)
         self.assertEqual(len(s["citations"]), 4)
         # ids that disagree with the order cited has always read: neither positions nor lists

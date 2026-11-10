@@ -12,7 +12,7 @@ competitors, or the third-party pages the engines lean on. Run it through geo_sc
     python3 geo_score.py watch run               # questions x engines, saved under .geo-score/watch/runs/
     python3 geo_score.py watch report --format md
     python3 geo_score.py watch diff              # latest two runs, with a significance test
-    python3 geo_score.py watch ask "best free AI video generator"
+    python3 geo_score.py watch ask "best portable power stations"
     python3 geo_score.py mcp                     # score and watch over MCP (stdio)
 
 No dependencies. Python 3.8+. API keys are read from the environment and never written
@@ -950,7 +950,7 @@ _WORD_NOT_CJK = "[^\\W%s]" % _CJK_CHARS
 def _mention_re(term):
     """Chinese, Japanese and Korean names match anywhere (no spaces between words); everything else, accented
     Latin included, matches whole words only, so "Lumo" does not match "Lumos". A CJK character beside a Latin
-    name is a word break: "Lumo" matches in "用Lumo做视频"."""
+    name is a word break: "Lumo" matches in "用Lumo充电"."""
     if _CJK.search(term):
         return re.compile(re.escape(term), re.I)
     return re.compile("(?<!%s)%s(?!%s)" % (_WORD_NOT_CJK, re.escape(term), _WORD_NOT_CJK), re.I)

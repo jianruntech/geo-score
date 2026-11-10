@@ -584,8 +584,8 @@ Repeat consistency of cited domains (per engine; descriptive, not read by diff)
 
 Least consistent questions (up to 3 per engine):
   id   question                         engine          answers that cite  Jaccard
-  q02  ai video tool with no watermark  chatgpt-api     2                  0.50
-  q01  best free ai video generator     perplexity-api  2                  0.50
+  q02  power station with solar panels  chatgpt-api     2                  0.50
+  q01  best portable power stations     perplexity-api  2                  0.50
 
 - Repeat consistency: for each question an engine answered more than once in this run, the overlap of the domains two of its answers cite, shared domains over all domains of the two (Jaccard), for every two answers, averaged per question; the median over questions per engine. 1: every ask cited the same domains; 0: no domain in common. Domains are read as everywhere in this report, www dropped; the order of citations is not compared.
 - Answers that cite nothing are left out: two empty lists are not agreement, and one empty list is not a 0. On an engine, a question with fewer than two answers that cite is not measured. Lowest: up to 3 questions per engine whose answers did not all cite the same domains, lowest first.
@@ -607,16 +607,16 @@ Sources the engines cite most (not yours)
 
 Questions where a competitor is cited and you are not (1)
   id   question                    cited instead
-  q03  cheapest text to video app  Pixa
+  q03  cheapest power station kit  Pixa
 
 Who is named for each question
   id   question                         answers  Lumo (you)             Pixa               no tracked brand named  searched yes/no/unknown  most cited
-  q01  best free ai video generator     4        cited 3/4 · named 3/4  cited 2 · named 4  0/4                     2/0/2                    Lumo (you)
-  q02  ai video tool with no watermark  4        cited 1/4 · named 1/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
-  q03  cheapest text to video app       4        cited 0/4 · named 0/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
+  q01  best portable power stations     4        cited 3/4 · named 3/4  cited 2 · named 4  0/4                     2/0/2                    Lumo (you)
+  q02  power station with solar panels  4        cited 1/4 · named 1/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
+  q03  cheapest power station kit       4        cited 0/4 · named 0/4  cited 2 · named 4  0/4                     2/0/2                    Pixa
   q04  lumo vs pixa                     4        cited 4/4 · named 4/4  cited 2 · named 4  0/4                     2/0/2                    Lumo (you)
   q05  pixa alternatives                4        cited 2/4 · named 2/4  cited 2 · named 4  0/4                     2/0/2                    —
-  q06  鹿末视频免费吗                   3        cited 3/3 · named 3/3  cited 2 · named 3  0/3                     2/0/1                    —
+  q06  鹿末电源多少钱                   3        cited 3/3 · named 3/3  cited 2 · named 3  0/3                     2/0/1                    —
 
 - An answer given without a web search cannot cite anything.
 - "No tracked brand named" counts answers that name none of the brands in your config; they may name others.
@@ -631,12 +631,12 @@ By question type
 
 What the engines searched for (from 12 answers that show it)
   times  search
-  2      best free ai video generator
-  2      ai video tool with no watermark
-  2      cheapest text to video app
+  2      best portable power stations
+  2      power station with solar panels
+  2      cheapest power station kit
   2      lumo vs pixa
   2      pixa alternatives
-  2      鹿末视频免费吗
+  2      鹿末电源多少钱
 
 - Of 12 searches: 0 contain a year, 6 contain a ranking or comparison word.
 

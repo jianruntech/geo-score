@@ -35,6 +35,10 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   rolling out over time, reading may change). The page also notes that Anthropic-hosted browsers (`Claude-Agent`) are
   outside the article it cites, and that `g.robots` reads a whole-site Disallow under section 2.2.2 (see Fixed).
   Documentation only: the CLI does not read the signal.
+- **The watch example asks about portable power stations.** The illustrative run in both READMEs, the two saved
+  runs in `cli/fixtures/watch/`, the `watch ask` example in `geo_watch.py` and the texts in the watch tests now use
+  made-up questions about portable power stations, with the same made-up brands (Lumo and Pixa; the third is now
+  Trailcell). Every count, rate and interval in the example is unchanged. Documentation and tests only.
 
 ### Fixed
 - **`g.robots` reads a whole-site Disallow the way RFC 9309 does.** A `Disallow: /` (or `/*`) used to close the site
@@ -1279,7 +1283,7 @@ now quote site text inside `«site text: …»`. The CSV report has an eleventh 
   benchmark's highest is 98 and the hand audits' 87. The offline fixtures found it.
 - `--json-out`, `--sarif` and `--junit` report a path that cannot be written as a clear error (exit
   2) instead of a traceback.
-- A Latin brand name written directly next to Chinese, Japanese or Korean text ("用Lumo做视频") now
+- A Latin brand name written directly next to Chinese, Japanese or Korean text ("用Lumo充电") now
   counts as a mention; it never matched before. New runs can therefore show a higher `mentioned` rate
   on such answers than earlier runs.
 - Run files saved by 1.2.0 still load; reports recompute their summary and the branded flag from the
