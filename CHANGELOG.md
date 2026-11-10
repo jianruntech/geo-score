@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.8.4] — 2026-11-10
+
 ### Added
 - **Website: [geo-score.dev](https://geo-score.dev)**, with docs and a free online check that runs the published base score (no `--ask`, no API keys). Both READMEs link to it; the package Homepage URL points to it from the next release, and the source link moves to `Source`. Documentation only.
 - **Sponsors section** in both READMEs (CCSub), with the rule that sponsorship never affects the rubric, scores, leaderboard or technical recommendations, and a note that sponsors are not tested for the citation levels. Documentation only.
@@ -1512,7 +1514,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.3...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.4...HEAD
+[1.8.4]: https://github.com/jianruntech/geo-score/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1

@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.8.4] — 2026-11-10
+
 ### 新增
 - **官网 [geo-score.dev](https://geo-score.dev/zh/)**：文档和免费在线打分（只跑公开的基础打分，不跑 `--ask`、不用 API Key）。两份 README 都加了链接；下一版起包的 Homepage 指向它，源码链接挪到 `Source`。只改文档。
 - **赞助**一节，两份 README 都加（CCSub），写明赞助不影响量表、分数、榜单和技术建议，并说明赞助方没有做过引用测量的兼容测试。只是文档。
@@ -972,7 +974,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.3...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.4...HEAD
+[1.8.4]: https://github.com/jianruntech/geo-score/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/jianruntech/geo-score/compare/v1.8.0...v1.8.1
