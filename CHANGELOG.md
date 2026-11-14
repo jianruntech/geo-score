@@ -5,6 +5,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+### Changed
+- **Both READMEs lead with `uvx geo-score@X.Y.Z example.com`**: one line under the intro, and Quick start now opens with the PyPI section (uvx or pipx) before the one-file `curl | python3` line, which stays for machines without uv. AI assistants that recommend the tool were quoting the older `python geo_score.py` form. Documentation only.
+
 ## [1.8.4] — 2026-11-10
 
 ### Added

@@ -22,6 +22,12 @@ https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
 
 geo-score 按一套**公开、带版本号、谁都能复算的评分口径**，给网站打 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用它。再用你自己的 API Key，把买家会问的问题拿去问各家引擎，记下每条回答引用了谁。打分免费、什么都不用装；引用结果和分数并列报告，从不加进分数。
 
+```bash
+uvx geo-score@1.8.4 example.com      # 一条命令给网站打分（需要 uv）
+```
+
+没有 uv：`pipx install geo-score==1.8.4`，或者用[快速开始](#快速开始)里那行 `curl | python3`，什么都不用装。
+
 [快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) · [官网](https://geo-score.dev/zh/) ·
 [更新日志](CHANGELOG.zh-CN.md) · [公开榜单](https://www.jianruntech.com/leaderboard/zh)
 
@@ -250,6 +256,54 @@ amazon.com 只有 17 分正是这个原因。**另有 41 个站的正文只在 J
 
 ## 快速开始
 
+### 从 PyPI：uvx 或 pipx
+
+三级都能用。第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起，PyPI 上的包两个文件都有；克隆仓库，或者两个文件都下载，也可以。下面两种方式都不需要 git，也没有构建步骤。
+
+```bash
+uvx geo-score@1.8.4 example.com            # 不安装直接运行（需要 uv）
+pipx install geo-score==1.8.4              # 或者装好 geo-score 命令
+geo-score example.com --explain            # 每一项检查，带背后的证据
+```
+
+访问不了 PyPI 时，从发布页安装同一个 wheel 包：
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.4/geo_score-1.8.4-py3-none-any.whl`。
+从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.4`。每种方式都只用 Python 标准库。
+发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](.github/SECURITY.md#verifying-a-download)）。
+
+<details>
+<summary>CLI 的全部用法，以及给你自己的 README 加一枚可选徽章</summary>
+
+**CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
+用 PyPI 上的包时，把下面的 `python3 cli/geo_score.py` 换成 `uvx geo-score@1.8.4`（或者 `pipx install geo-score==1.8.4`
+之后的 `geo-score`），三级都能用。
+
+```bash
+python3 cli/geo_score.py example.com            # 人读
+python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
+python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
+python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # 同一个徽章，写成 shields.io endpoint JSON
+python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
+python3 cli/geo_score.py diff before.json after.json             # 逐项对比两份报告，看哪里变了
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
+```
+
+**「Scored with geo-score」：给你自己的 README 加一枚可选徽章。** `--badge aiv-badge.svg` 生成一个带分数和档位的 SVG。
+把它提交到 README 旁边，链到能说明这个数字含义的地方，本仓库或[公开榜单](https://www.jianruntech.com/leaderboard/zh)：
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+放不放完全自愿，放了也不改变任何东西：徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
+上榜走[添加站点](.github/CONTRIBUTING.md#the-easiest-useful-contribution)的流程，绝不拿链接交换。提交进仓库的 SVG
+显示的是生成它的那一次运行；`--badge-json` 把同一个徽章写成 shields.io endpoint JSON，不用重新提交图片也能保持最新
+（[详见](cli/README.zh-CN.md#给自己的-readme-加一枚徽章)）。
+
+</details>
+
 ### 一行命令
 
 Python 3.8+，只用标准库，不用装任何东西。它读取公开 URL，
@@ -312,54 +366,6 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 ```
 
 <sub>`geo_score.py stripe.com`，2026-10-03 用 geo-score 1.5.0 经 HTTPS 代理录制（页脚的用时包含代理）。1.8.3 的一次运行见[界面预览](#界面预览)。从 1.7.0 起，报告在各项检查之后还会列出三项**分数之外**的观察（robots.txt 按页面的规则、服务器 HTML 里的链接、hreflang），它们从不改变分数；这段录制早于它们。见 [cli/README.zh-CN.md](cli/README.zh-CN.md#分数之外)。</sub>
-
-</details>
-
-### 从 PyPI：uvx 或 pipx
-
-三级都能用。第二、三级需要 `cli/geo_watch.py` 和 `cli/geo_score.py` 放在一起，PyPI 上的包两个文件都有；克隆仓库，或者两个文件都下载，也可以。下面两种方式都不需要 git，也没有构建步骤。
-
-```bash
-uvx geo-score@1.8.4 example.com            # 不安装直接运行（需要 uv）
-pipx install geo-score==1.8.4              # 或者装好 geo-score 命令
-geo-score example.com --explain            # 每一项检查，带背后的证据
-```
-
-访问不了 PyPI 时，从发布页安装同一个 wheel 包：
-`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.4/geo_score-1.8.4-py3-none-any.whl`。
-从源码安装（需要 git）：`pipx install git+https://github.com/jianruntech/geo-score@v1.8.4`。每种方式都只用 Python 标准库。
-发布的下载文件附带 `SHA256SUMS`，PyPI 上的 wheel 和 sdist 与它逐字节一致（[如何校验](.github/SECURITY.md#verifying-a-download)）。
-
-<details>
-<summary>CLI 的全部用法，以及给你自己的 README 加一枚可选徽章</summary>
-
-**CLI** —— 第一级只要一个文件、无依赖，每份报告都记下这次运行用了多久（`elapsed_s`）；第二、三级再加上同一版本的 `cli/geo_watch.py`。
-用 PyPI 上的包时，把下面的 `python3 cli/geo_score.py` 换成 `uvx geo-score@1.8.4`（或者 `pipx install geo-score==1.8.4`
-之后的 `geo-score`），三级都能用。
-
-```bash
-python3 cli/geo_score.py example.com            # 人读
-python3 cli/geo_score.py example.com --explain  # 带每一项背后的证据
-python3 cli/geo_score.py example.com --json     # 符合 schema/report.v2.json
-python3 cli/geo_score.py example.com --compare competitor.com   # 和竞品并排比
-python3 cli/geo_score.py example.com --badge aiv-badge.svg      # 生成可嵌入的 SVG 徽章
-python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # 同一个徽章，写成 shields.io endpoint JSON
-python3 cli/geo_score.py example.com --share                    # 一行可以贴出去的结论
-python3 cli/geo_score.py diff before.json after.json             # 逐项对比两份报告，看哪里变了
-python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI：重评同一批页面，只在退步时失败
-```
-
-**「Scored with geo-score」：给你自己的 README 加一枚可选徽章。** `--badge aiv-badge.svg` 生成一个带分数和档位的 SVG。
-把它提交到 README 旁边，链到能说明这个数字含义的地方，本仓库或[公开榜单](https://www.jianruntech.com/leaderboard/zh)：
-
-```markdown
-[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
-```
-
-放不放完全自愿，放了也不改变任何东西：徽章或回链从不影响分数，也从不决定一个站上不上榜单、排在哪里。
-上榜走[添加站点](.github/CONTRIBUTING.md#the-easiest-useful-contribution)的流程，绝不拿链接交换。提交进仓库的 SVG
-显示的是生成它的那一次运行；`--badge-json` 把同一个徽章写成 shields.io endpoint JSON，不用重新提交图片也能保持最新
-（[详见](cli/README.zh-CN.md#给自己的-readme-加一枚徽章)）。
 
 </details>
 

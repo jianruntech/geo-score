@@ -27,6 +27,13 @@ against a **published, versioned rubric** that anyone can recompute. Then, with 
 the questions your buyers ask and records whom the answers cite. The score is free and needs nothing installed; the
 citation results are reported beside it and never added to it.
 
+```bash
+uvx geo-score@1.8.4 example.com      # score a site with one command (needs uv)
+```
+
+No uv? `pipx install geo-score==1.8.4`, or the one-file `curl | python3` line in [Quick start](#quick-start),
+which needs nothing installed.
+
 [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it checks](#what-it-checks) ·
 [How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Website](https://geo-score.dev) · [Changelog](CHANGELOG.md) ·
 [Public leaderboard](https://www.jianruntech.com/leaderboard)
@@ -287,6 +294,59 @@ which the CLI leaves out. n=5, all of them calibration sites:
 
 ## Quick start
 
+### From PyPI: uvx or pipx
+
+All three levels. Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.py`, and the package on PyPI has
+both; a clone, or both files downloaded, works too. Neither line below needs git or a build step.
+
+```bash
+uvx geo-score@1.8.4 example.com            # run it without installing (needs uv)
+pipx install geo-score==1.8.4              # or install the geo-score command
+geo-score example.com --explain            # every check, with the evidence behind it
+```
+
+Without access to PyPI, install the same wheel from the release:
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.4/geo_score-1.8.4-py3-none-any.whl`.
+From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.8.4`.
+Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
+sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
+
+<details>
+<summary>Every way to call the CLI, and an optional badge for your own README</summary>
+
+**CLI** — level 1 is one file with no dependencies, and every report records how long its run took
+(`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release. With the package from PyPI,
+`uvx geo-score@1.8.4` (or `geo-score`, after `pipx install geo-score==1.8.4`) takes the place of
+`python3 cli/geo_score.py` below, all three levels included.
+
+```bash
+python3 cli/geo_score.py example.com            # human-readable
+python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
+python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
+python3 cli/geo_score.py example.com --compare competitor.com   # side by side
+python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
+python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # the same badge as shields.io endpoint JSON
+python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
+python3 cli/geo_score.py diff before.json after.json             # what changed between two reports, check by check
+python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
+```
+
+**"Scored with geo-score": an optional badge for your own README.** `--badge aiv-badge.svg` writes an SVG with your
+score and band. Commit it next to your README and link it to what the number means, this repository or
+[the public leaderboard](https://www.jianruntech.com/leaderboard):
+
+```markdown
+[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
+```
+
+It is optional, and it changes nothing: a badge or a link back never moves a score, and never decides whether or
+where a site appears on the leaderboard. A site joins the leaderboard through the
+[Add a site](.github/CONTRIBUTING.md#the-easiest-useful-contribution) route, never in exchange for a link. A committed
+SVG shows the run that wrote it; `--badge-json` writes the same badge as shields.io endpoint JSON, so it can stay
+current without a new image ([details](cli/README.md#a-badge-for-your-own-readme)).
+
+</details>
+
 ### One command
 
 Python 3.8+, standard library only, nothing to install. It reads public URLs and prints
@@ -349,59 +409,6 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 ```
 
 <sub>`geo_score.py stripe.com`, recorded with geo-score 1.5.0 on 2026-10-03 through an HTTPS proxy (the footer's time includes it). For a run with 1.8.3, see [Screenshots](#screenshots). From 1.7.0 the report also prints three observations under **Outside the score** after the checks (robots.txt rules page by page, links in the server HTML, hreflang), which never move the score; this recording predates them. See [cli/README.md](cli/README.md#outside-the-score).</sub>
-
-</details>
-
-### From PyPI: uvx or pipx
-
-All three levels. Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.py`, and the package on PyPI has
-both; a clone, or both files downloaded, works too. Neither line below needs git or a build step.
-
-```bash
-uvx geo-score@1.8.4 example.com            # run it without installing (needs uv)
-pipx install geo-score==1.8.4              # or install the geo-score command
-geo-score example.com --explain            # every check, with the evidence behind it
-```
-
-Without access to PyPI, install the same wheel from the release:
-`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.8.4/geo_score-1.8.4-py3-none-any.whl`.
-From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.8.4`.
-Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
-sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
-
-<details>
-<summary>Every way to call the CLI, and an optional badge for your own README</summary>
-
-**CLI** — level 1 is one file with no dependencies, and every report records how long its run took
-(`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release. With the package from PyPI,
-`uvx geo-score@1.8.4` (or `geo-score`, after `pipx install geo-score==1.8.4`) takes the place of
-`python3 cli/geo_score.py` below, all three levels included.
-
-```bash
-python3 cli/geo_score.py example.com            # human-readable
-python3 cli/geo_score.py example.com --explain  # with the evidence behind every check
-python3 cli/geo_score.py example.com --json     # conforms to schema/report.v2.json
-python3 cli/geo_score.py example.com --compare competitor.com   # side by side
-python3 cli/geo_score.py example.com --badge aiv-badge.svg      # embeddable SVG
-python3 cli/geo_score.py example.com --badge-json aiv-badge.json  # the same badge as shields.io endpoint JSON
-python3 cli/geo_score.py example.com --share                    # one line to paste somewhere
-python3 cli/geo_score.py diff before.json after.json             # what changed between two reports, check by check
-python3 cli/geo_score.py example.com --baseline before.json --fail-on-drop   # CI: re-score the same pages, fail only on a drop
-```
-
-**"Scored with geo-score": an optional badge for your own README.** `--badge aiv-badge.svg` writes an SVG with your
-score and band. Commit it next to your README and link it to what the number means, this repository or
-[the public leaderboard](https://www.jianruntech.com/leaderboard):
-
-```markdown
-[![AIV readiness, scored with geo-score](aiv-badge.svg)](https://github.com/jianruntech/geo-score)
-```
-
-It is optional, and it changes nothing: a badge or a link back never moves a score, and never decides whether or
-where a site appears on the leaderboard. A site joins the leaderboard through the
-[Add a site](.github/CONTRIBUTING.md#the-easiest-useful-contribution) route, never in exchange for a link. A committed
-SVG shows the run that wrote it; `--badge-json` writes the same badge as shields.io endpoint JSON, so it can stay
-current without a new image ([details](cli/README.md#a-badge-for-your-own-readme)).
 
 </details>
 

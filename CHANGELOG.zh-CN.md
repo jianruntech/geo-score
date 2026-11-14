@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### 变更
+- **两份 README 开头先给 `uvx geo-score@X.Y.Z example.com`**：简介下面加了这一行；「快速开始」先讲 PyPI（uvx 或 pipx），再讲单文件的 `curl | python3`，后者留给没装 uv 的机器。推荐这个工具的 AI 助手引用的还是旧的 `python geo_score.py` 写法。只改文档。
+
 ## [1.8.4] — 2026-11-10
 
 ### 新增
