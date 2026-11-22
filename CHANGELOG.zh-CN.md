@@ -4,7 +4,26 @@
 
 ## [Unreleased]
 
+### 新增
+- **`skills/` 下八个任务技能**，[Agent Skills](https://agentskills.io/specification) 格式，每个回答一个问题，并在用户仓库里留下一个文件：
+  `geo-readiness-audit`（0–100 分和最大的缺口，`geo/audit-<host>-<date>.md` 和 `.json`）、`ai-crawler-access`（三道门槛和逐页的
+  robots.txt）、`ai-citation-check`（第二级，走 `watch ask`，每个问题一个 JSON）、`ai-search-fanout`（OpenAI、Gemini、Anthropic 的 API
+  随回答返回的搜索词）、`geo-baseline`（约 20 道固定的题；引用、提及、回答里怎么说，分开记）、`geo-watch`（每周运行和 `watch diff`）、
+  `citation-gaps`（竞品被引用、用户没被引用的题）和 `geo-ci-gate`（用钉住版本的 Action 写一个 GitHub Actions 工作流）。每个都跑
+  `uvx geo-score@X.Y.Z` 或 MCP 服务，写明花不花钱（第二、三级的技能先给计划，等用户点头），只测量。根目录的 `SKILL.md` 不变。
+- **技能怎么被找到。** `.claude-plugin/marketplace.json` 列出这八个，`plugin.json` 的 `skills` 写了插件根目录，所以 Claude Code 插件
+  九个都会加载（只加一个 `skills/` 文件夹的话，根目录的 `SKILL.md` 就不再加载）。skills CLI 遇到根目录的 `SKILL.md` 就停下，所以它那行写成
+  `npx skills add jianruntech/geo-score --full-depth`；`--skill <名字>` 只装一个。
+- **技能的检查。** `scripts/test_packaging.py`（`check_skills`）逐个检查：Agent Skills 格式（name 等于文件夹名，小写、单个连字符、最长
+  64 个字符；description 不超过 1,024 个字符；license 是 MIT；正文不超过 500 行），元数据里的版本等于 `__version__`、量表版本等于 CLI 的，
+  钉的是当前发布版，有链接到边界说明的 Boundaries 一节，两份 README 都介绍了它。`release.py` 把它们列进 `SKILLS`，`--bump` 会改写它们的
+  版本钉和元数据版本，发版前检查两者都对。`validate.py` 要求它们用英文（第 14 条），门槛封顶的说法要写明得 0 分时才触发（第 20 条）。
+
 ### 变更
+- **两份 README 开头先讲跑完能拿到什么**，再讲引擎回答前实际搜了什么（配一段标明「示例」的 `watch ask` 输出：品牌和回答都是编的），然后是
+  四种一行安装（Claude Code 插件、skills CLI、`uvx`、MCP）、技能表（每个技能留下什么文件、示例提示词）和三条技能串联流程。视频、徽章和基准
+  数据都没动；版本说明补了一句：插件和 skills CLI 复制的是 main。`guide/mcp.zh-CN.md`（+ 英文版）的 Claude Code 插件一节写明会加载九个技能。
+  只改文档。
 - **两份 README 开头先给 `uvx geo-score@X.Y.Z example.com`**：简介下面加了这一行；「快速开始」先讲 PyPI（uvx 或 pipx），再讲单文件的 `curl | python3`，后者留给没装 uv 的机器。推荐这个工具的 AI 助手引用的还是旧的 `python geo_score.py` 写法。只改文档。
 
 ## [1.8.4] — 2026-11-10
