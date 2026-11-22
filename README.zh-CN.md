@@ -6,7 +6,7 @@
 
 **在你的网站上跑一遍 geo-score，就能拿到一个 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用这个网站，并按能补回的分数从多到少列出缺口；再配上你自己的 API Key，还能看到买家提问时 ChatGPT、Claude、Gemini 和 Perplexity 引用了谁。**
 
-它还能看到 ChatGPT、Claude 和 Gemini 回答之前实际搜了哪些词：通过它们的 API，读的是每个 API 随回答一起返回的搜索词，原样记录，不是猜的（[示例](#ai-实际搜了什么)）。
+它还能看到 ChatGPT 和 Claude 回答之前实际搜了哪些词：通过它们的 API，读的是每个 API 随回答一起返回的搜索词，原样记录，不是猜的（[示例](#ai-实际搜了什么)）。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
@@ -49,9 +49,10 @@ https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
 
 ## AI 实际搜了什么
 
-引擎开着联网搜索作答之前，会先自己搜几轮，搜的词常常和问题本身不一样。OpenAI、Gemini 和 Anthropic 的 API 会把这些搜索词随回答一起返回；
+引擎开着联网搜索作答之前，会先自己搜几轮，搜的词常常和问题本身不一样。OpenAI 和 Anthropic 的 API 会把这些搜索词随回答一起返回；
 geo-score 把它们和引用记在一起，每条回答都打出来，并在一组问题上做统计（也就是 query fan-out）。Perplexity 和 OpenRouter
-不返回搜索词，报告会写明，不拿猜的去补。
+不返回搜索词，报告会写明，不拿猜的去补。Gemini 的回答受 Gemini API 关于「Google 搜索接地」的条款约束，条款不允许存储、转载或分析接地结果，
+所以本仓库一条也不公开（[原因](benchmark/prereg/round0/RESULTS-wave0.zh-CN.md)）；要保存 Gemini 的结果，先读这份条款。
 
 ```
 $ uvx geo-score@1.8.4 watch ask -c geo/geo-score-watch.json "best portable power station for camping"

@@ -10,7 +10,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   answering one question and leaving a file in the user's repository: `geo-readiness-audit` (the 0–100 score and the
   biggest gaps, `geo/audit-<host>-<date>.md` and `.json`), `ai-crawler-access` (the three gates and robots.txt page by
   page), `ai-citation-check` (level 2 through `watch ask`, one JSON per question), `ai-search-fanout` (the searches
-  the OpenAI, Gemini and Anthropic APIs return with each answer), `geo-baseline` (a fixed set of about 20 questions;
+  the OpenAI and Anthropic APIs return with each answer; Gemini's are left out, as the Gemini API terms for Grounding
+  with Google Search do not allow storing, republishing or analysing grounded results), `geo-baseline` (a fixed set of about 20 questions;
   cited, mentioned and what the answers say, recorded apart), `geo-watch` (weekly runs and `watch diff`),
   `citation-gaps` (the questions a competitor is cited on and the user is not) and `geo-ci-gate` (a GitHub Actions
   workflow on the pinned Action). Each runs `uvx geo-score@X.Y.Z` or the MCP server, says what it costs (the level 2
@@ -27,8 +28,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   and to the gate-cap wording (rule 20).
 
 ### Changed
-- **Both READMEs open with what a run gives you**, then the searches the engines ran before answering (with a
-  `watch ask` output labelled illustrative: made-up brands and answers), four one-line installs (the Claude Code
+- **Both READMEs open with what a run gives you**, then the searches the engines ran before answering, as the OpenAI
+  and Anthropic APIs return them (with a `watch ask` output labelled illustrative: made-up brands and answers; Gemini's
+  are not published, under its grounding terms), four one-line installs (the Claude Code
   plugin, the skills CLI, `uvx`, MCP), a table of the skills with what each leaves in the repository and an example
   prompt, and three ways the skills chain. The video, the badges and the benchmark figures are unchanged, and the
   version note now says that the plugin and the skills CLI copy main. The Claude Code plugin section of

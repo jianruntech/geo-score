@@ -66,7 +66,7 @@ One answer per engine is an anecdote. For a rate, a trend or a before-and-after,
    tool does the same and returns the same fields.
 5. **Write `geo/citations/<date>.md`**: for each question and engine, from `engines[]` and `samples[]` of the JSON:
    the model; cited or not, with `rank` and `quoted_url`; mentioned or not; the competitors cited; the domains of
-   `citations`; the `search_queries` (see `ai-search-fanout`); and `status` with the error for any engine that did not
+   `citations`; the `search_queries` (see `ai-search-fanout`, which leaves Gemini's out); and `status` with the error for any engine that did not
    answer. Name every engine that was not measured (no key, failed, skipped). Close with: API channel, one ask per
    engine, an anecdote and not a rate; citations are not traffic.
 

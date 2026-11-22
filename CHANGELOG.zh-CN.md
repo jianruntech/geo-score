@@ -7,8 +7,8 @@
 ### 新增
 - **`skills/` 下八个任务技能**，[Agent Skills](https://agentskills.io/specification) 格式，每个回答一个问题，并在用户仓库里留下一个文件：
   `geo-readiness-audit`（0–100 分和最大的缺口，`geo/audit-<host>-<date>.md` 和 `.json`）、`ai-crawler-access`（三道门槛和逐页的
-  robots.txt）、`ai-citation-check`（第二级，走 `watch ask`，每个问题一个 JSON）、`ai-search-fanout`（OpenAI、Gemini、Anthropic 的 API
-  随回答返回的搜索词）、`geo-baseline`（约 20 道固定的题；引用、提及、回答里怎么说，分开记）、`geo-watch`（每周运行和 `watch diff`）、
+  robots.txt）、`ai-citation-check`（第二级，走 `watch ask`，每个问题一个 JSON）、`ai-search-fanout`（OpenAI 和 Anthropic 的 API
+  随回答返回的搜索词；Gemini 的不写进去，因为 Gemini API 关于「Google 搜索接地」的条款不允许存储、转载或分析接地结果）、`geo-baseline`（约 20 道固定的题；引用、提及、回答里怎么说，分开记）、`geo-watch`（每周运行和 `watch diff`）、
   `citation-gaps`（竞品被引用、用户没被引用的题）和 `geo-ci-gate`（用钉住版本的 Action 写一个 GitHub Actions 工作流）。每个都跑
   `uvx geo-score@X.Y.Z` 或 MCP 服务，写明花不花钱（第二、三级的技能先给计划，等用户点头），只测量。根目录的 `SKILL.md` 不变。
 - **技能怎么被找到。** `.claude-plugin/marketplace.json` 列出这八个，`plugin.json` 的 `skills` 写了插件根目录，所以 Claude Code 插件
@@ -20,7 +20,8 @@
   版本钉和元数据版本，发版前检查两者都对。`validate.py` 要求它们用英文（第 14 条），门槛封顶的说法要写明得 0 分时才触发（第 20 条）。
 
 ### 变更
-- **两份 README 开头先讲跑完能拿到什么**，再讲引擎回答前实际搜了什么（配一段标明「示例」的 `watch ask` 输出：品牌和回答都是编的），然后是
+- **两份 README 开头先讲跑完能拿到什么**，再讲引擎回答前实际搜了什么，即 OpenAI 和 Anthropic 的 API 返回的搜索词（配一段标明「示例」的 `watch ask` 输出：品牌和回答都是编的；
+Gemini 的按其接地条款不公开），然后是
   四种一行安装（Claude Code 插件、skills CLI、`uvx`、MCP）、技能表（每个技能留下什么文件、示例提示词）和三条技能串联流程。视频、徽章和基准
   数据都没动；版本说明补了一句：插件和 skills CLI 复制的是 main。`guide/mcp.zh-CN.md`（+ 英文版）的 Claude Code 插件一节写明会加载九个技能。
   只改文档。

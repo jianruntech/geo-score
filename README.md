@@ -10,8 +10,8 @@
 it, with the gaps worth the most points first; add your own API keys and you also see whom ChatGPT, Claude, Gemini and
 Perplexity cite when your buyers ask.**
 
-It also shows what ChatGPT, Claude and Gemini searched for before they answered, through their APIs: the searches each
-API returns with its answer, recorded as returned, not guessed ([example](#what-the-engines-searched-for)).
+It also shows what ChatGPT and Claude searched for before they answered, through their APIs: the searches each API
+returns with its answer, recorded as returned, not guessed ([example](#what-the-engines-searched-for)).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
@@ -59,9 +59,12 @@ https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
 ## What the engines searched for
 
 Before an engine answers with web search on, it runs searches of its own, and they are often not the words of the
-question. The OpenAI, Gemini and Anthropic APIs return those searches with the answer; geo-score keeps them beside the
+question. The OpenAI and Anthropic APIs return those searches with the answer; geo-score keeps them beside the
 citations, prints them for each answer, and counts them across a question set (the query fan-out). Perplexity and
-OpenRouter return no search text, and the report says so rather than filling the gap.
+OpenRouter return no search text, and the report says so rather than filling the gap. Gemini's answers come under the
+Gemini API terms for Grounding with Google Search, which do not allow storing, republishing or analysing grounded
+results, so this repository publishes none of them
+([why](benchmark/prereg/round0/RESULTS-wave0.md#deviations-from-the-plan)); read those terms before you keep Gemini's.
 
 ```
 $ uvx geo-score@1.8.4 watch ask -c geo/geo-score-watch.json "best portable power station for camping"
