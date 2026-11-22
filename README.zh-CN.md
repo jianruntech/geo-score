@@ -4,32 +4,7 @@
 
 # geo-score
 
-geo-score 是开源的网站 AI 可见度（GEO）打分工具，[见润科技](https://www.jianruntech.com)出品。
-由 geo-watch 并入（formerly geo-watch）：geo-watch 在 1.2.0 并入 geo-score，成为它的第二、三级。
-官网、文档和免费在线打分：[geo-score.dev](https://geo-score.dev/zh/)。
-
-## 60 秒了解 geo-score
-
-一条命令出 0–100 分，看三道门槛、最该先改的几项，以及为什么每一分都能复核。
-
-https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
-
-*中文介绍 · 60 秒 · [English](README.md#geo-score-in-60-seconds)*
-
----
-
-> **AI 能不能引用你的网站？免费打分，一条命令出结果。有没有引用？用你自己的 API Key 通过各家 API 实测。**
-
-geo-score 按一套**公开、带版本号、谁都能复算的评分口径**，给网站打 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用它。再用你自己的 API Key，把买家会问的问题拿去问各家引擎，记下每条回答引用了谁。打分免费、什么都不用装；引用结果和分数并列报告，从不加进分数。
-
-```bash
-uvx geo-score@1.8.4 example.com      # 一条命令给网站打分（需要 uv）
-```
-
-没有 uv：`pipx install geo-score==1.8.4`，或者用[快速开始](#快速开始)里那行 `curl | python3`，什么都不用装。
-
-[快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) · [官网](https://geo-score.dev/zh/) ·
-[更新日志](CHANGELOG.zh-CN.md) · [公开榜单](https://www.jianruntech.com/leaderboard/zh)
+**在你的网站上跑一遍 geo-score，就能拿到一个 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用这个网站，并按能补回的分数从多到少列出缺口；再配上你自己的 API Key，还能看到买家提问时 ChatGPT、Claude、Gemini 和 Perplexity 引用了谁。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
@@ -41,7 +16,63 @@ uvx geo-score@1.8.4 example.com      # 一条命令给网站打分（需要 uv�
 [![PyPI](https://img.shields.io/pypi/v/geo-score?color=1E5C46)](https://pypi.org/project/geo-score/)
 [![Latest release](https://img.shields.io/github/v/release/jianruntech/geo-score?display_name=tag&color=A9854C)](https://github.com/jianruntech/geo-score/releases/latest)
 
-> **版本说明：** 当前发布版是 [PyPI](https://pypi.org/project/geo-score/) 上的 `geo-score==1.8.4`，对应的标签、wheel 包和校验文件在 [GitHub Releases](https://github.com/jianruntech/geo-score/releases)，改了什么见[更新日志](CHANGELOG.zh-CN.md)。本页所有安装行都钉在这个发布版上（`scripts/release.py --bump` 会一起改），你跑的工具就是这些文档描述的那一个。量表单独编版本号，当前是 v1.1。main 可能比发布版超前：CI 和客户项目请用钉住的发布版。
+## 安装
+
+| 装在哪里 | 一行命令 |
+|---|---|
+| Claude Code 插件：技能和 MCP 服务一起装 | `/plugin marketplace add jianruntech/geo-score`，再 `/plugin install geo-score@jianruntech` |
+| 任意 Agent 的技能，用 [skills CLI](https://github.com/vercel-labs/skills) | `npx skills add jianruntech/geo-score --full-depth` |
+| 命令行，别的都不用装（需要 [uv](https://docs.astral.sh/uv/)） | `uvx geo-score@1.8.4 example.com` |
+| Claude Code 里的 MCP 服务（[其他客户端](guide/mcp.zh-CN.md)） | `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp` |
+
+这个仓库用 skills CLI 时要加 `--full-depth`：不加的话，根目录的 `SKILL.md` 会把 `skills/` 文件夹遮住，只列出 `geo-score` 一个。
+只装一个技能：`npx skills add jianruntech/geo-score --skill ai-search-fanout`。没有 uv：`pipx install geo-score==1.8.4`，
+或者用[快速开始](#快速开始)里那行 `curl | python3`，什么都不用装。
+
+打分免费、不用 Key，按一套**公开、带版本号、谁都能复算的评分口径**计算。引用结果要用你自己的 API Key，和分数并列报告，从不加进分数。
+
+[技能](#技能) · [快速开始](#快速开始) · [界面预览](#界面预览) · [查什么](#查什么) · [准不准](#准不准) · [文档](#文档) · [官网](https://geo-score.dev/zh/) ·
+[更新日志](CHANGELOG.zh-CN.md) · [公开榜单](https://www.jianruntech.com/leaderboard/zh)
+
+geo-score 是开源的（MIT），[见润科技](https://www.jianruntech.com)出品。由 geo-watch 并入（formerly geo-watch）：geo-watch 在 1.2.0
+并入 geo-score，成为它的第二、三级。官网、文档和免费在线打分：[geo-score.dev](https://geo-score.dev/zh/)。
+
+## 60 秒了解 geo-score
+
+一条命令出 0–100 分，看三道门槛、最该先改的几项，以及为什么每一分都能复核。
+
+https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
+
+*中文介绍 · 60 秒 · [English](README.md#geo-score-in-60-seconds)*
+
+## 技能
+
+八个技能，每个回答一个问题，并在你的仓库里留下一个文件。它们遵循 [Agent Skills](https://agentskills.io/specification) 格式，
+跑的是钉住版本的命令行（`uvx geo-score@1.8.4`）或 MCP 服务，只测量：不写修复、不给要贴的标记代码、不改文案（[边界](#边界--这个仓库不做什么)）。
+技能正文用英文写，给 Agent 读；下面是中文说明。
+
+| 技能 | 在你的仓库里留下什么 | 示例提示词 |
+|---|---|---|
+| [`geo-readiness-audit`](skills/geo-readiness-audit/SKILL.md) | `geo/audit-<host>-<date>.md` 和 `.json`：0–100 分、分数段、三道门槛、每一项检查，以及能补回分数最多的缺口 | *「给 https://example.com 跑 geo-readiness-audit，报告存到 geo/」* |
+| [`ai-crawler-access`](skills/ai-crawler-access/SKILL.md) | `geo/crawler-access-<host>-<date>.md`：10 个检索爬虫进不进得来、robots.txt 逐页怎么读、不跑 JavaScript 能不能看到正文 | *「GPTBot、ClaudeBot、PerplexityBot 能不能抓 example.com？」* |
+| [`ai-citation-check`](skills/ai-citation-check/SKILL.md) | `geo/citations/<date>.md`，每个问题一个 JSON：今天每家引擎对一个买家问题引用了谁、提到了谁 | *「问 best invoicing app for freelancers 时，ChatGPT 引用 acme.com 吗？先给我看计划。」* |
+| [`ai-search-fanout`](skills/ai-search-fanout/SKILL.md) | `geo/fanout-<date>.md`：每个问题、每家引擎回答前搜了什么，以及一组问题里反复出现的搜索词 | *「昨天那几个问题，各家引擎回答前都搜了什么？」* |
+| [`geo-baseline`](skills/geo-baseline/SKILL.md) | `geo/queries.csv`（约 20 道固定的题）、配置、第一次运行和 `geo/baseline-<date>.md`：引用、提及、回答里怎么说你，分开记 | *「给 acme.com 定 20 道买家问题，对比 Rival，测一个基线」* |
+| [`geo-watch`](skills/geo-watch/SKILL.md) | 一次新运行和 `geo/watch-<date>.md`：每家引擎是「有变化」「在噪声内」还是「题太少，判断不了」，以及丢掉和新增的引用 | *「跑本周的问题，告诉我有没有超出噪声的变化」* |
+| [`citation-gaps`](skills/citation-gaps/SKILL.md) | `geo/citation-gaps-<date>.md`：竞品被引用、你没被引用的那些题，以及引擎改引了哪些页面 | *「哪些题 Rival 被引用了，我们没有？」* |
+| [`geo-ci-gate`](skills/geo-ci-gate/SKILL.md) | `.github/workflows/geo-score.yml`：门槛项掉到 0 分，或总分低于你定的下限时，构建失败 | *「AI 爬虫被挡在 example.com 外面时，让部署失败」* |
+
+免费：`geo-readiness-audit`、`ai-crawler-access`、`citation-gaps`、`geo-ci-gate`，以及只读已保存回答的用法。用你自己的 API Key、会花钱，
+先给计划、你点头之前不发请求：`ai-citation-check`、`geo-baseline`、`geo-watch`。仓库原有的技能 [`geo-score`](SKILL.md) 不变：
+完整审计，包括 CLI 留给站外检索或人工判断的那三项。
+
+### 技能怎么串起来
+
+1. **AI 读不读得了这个网站？** `ai-crawler-access`（三道门槛）→ `geo-readiness-audit`（分数和最大的几个缺口）→ `geo-ci-gate`（哪次部署把它弄坏了，构建就失败）。
+2. **今天各家引擎怎么回答？** `ai-citation-check`（一个买家问题引用了谁）→ `ai-search-fanout`（回答前先搜了什么）→ `geo-baseline`（把这些问题定成约 20 道固定的题）。
+3. **有没有在变？** `geo-baseline`（测一次）→ `geo-watch`（每周一次，带显著性检验）→ `citation-gaps`（竞品赢下的题）。
+
+> **版本说明：** 当前发布版是 [PyPI](https://pypi.org/project/geo-score/) 上的 `geo-score==1.8.4`，对应的标签、wheel 包和校验文件在 [GitHub Releases](https://github.com/jianruntech/geo-score/releases)，改了什么见[更新日志](CHANGELOG.zh-CN.md)。本页所有 `uvx`、`pipx` 和下载用的安装行，以及每个技能，都钉在这个发布版上（`scripts/release.py --bump` 会一起改），你跑的工具就是这些文档描述的那一个。Claude Code 插件和 skills CLI 复制的是默认分支 main，main 可能比发布版超前：CI 和客户项目请用钉住的发布版。量表单独编版本号，当前是 v1.1。
 
 ---
 
@@ -139,7 +170,7 @@ flowchart LR
 | **MCP 服务** | 三级都做成 Agent 能调用的工具（stdio）；加 `--read-only` 就花不了钱 | [MCP 服务](#mcp-服务) · [guide/mcp.zh-CN.md](guide/mcp.zh-CN.md) |
 | **GitHub Action** | 每次 push 都打分，退步或门槛项得 0 分时让构建失败，并写一份任务摘要 | [GitHub Action](#github-action) · [action.yml](action.yml) |
 | **徽章** | 可选的 SVG 或 shields.io endpoint JSON，带分数和档位；从不影响分数，也不影响榜单位置 | [徽章](cli/README.zh-CN.md#给自己的-readme-加一枚徽章) |
-| **Claude Code 技能** | CLI 之外，再做需要站外检索或人工判断的那三项 | [Claude Code 技能](#claude-code-技能) · [SKILL.md](SKILL.md) |
+| **技能** | 八个任务技能，每个在你的仓库里留下一个文件；外加 `geo-score`：CLI 之外，再做需要站外检索或人工判断的那三项 | [技能](#技能) · [Claude Code 技能](#claude-code-技能) · [SKILL.md](SKILL.md) |
 
 ---
 
@@ -371,18 +402,22 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 
 ### Claude Code 技能
 
-CLI 只能测静态抓取看得见的东西。
-有三项需要站外检索或人的判断，技能把这些也做了。
+共九个技能：仓库原有的 [`geo-score`](SKILL.md) 做完整审计（CLI 只能测静态抓取看得见的东西，有三项需要站外检索或人的判断，这个技能把它们也做了），
+再加上[技能](#技能)一节列的八个任务技能。
 
 ```bash
-npx skills add jianruntech/geo-score     # 加 -g 是全局安装
-# 然后：/geo-score audit https://example.com
+npx skills add jianruntech/geo-score --full-depth          # 从全部九个里挑；加 -g 是全局安装
+npx skills add jianruntech/geo-score --skill geo-watch     # 按名字只装一个
+# 然后：/geo-score audit https://example.com，或者直接用自己的话问，比如「这周我们在 AI 回答里的引用有变化吗？」
 ```
 
-`npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)。它在本仓库里找到一个技能 `geo-score`，
-把整个仓库（约 9 MB）按默认分支 main 当前的样子复制到 Claude Code 的 `.claude/skills/geo-score`。没有 Node.js，或者想装发布版而不是 main，
-就把发布标签克隆到你自己的技能目录：
-`git clone --branch v1.8.4 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`。
+`npx skills add` 用的是开源的 [skills CLI](https://github.com/vercel-labs/skills)，读的是默认分支 main 当前的样子。加 `--full-depth`
+会列出全部九个；不加的话，它在根目录的 `SKILL.md` 就停下，只列 `geo-score` 一个，因为根目录的技能会把 `skills/` 文件夹遮住。
+`geo-score` 会复制整个仓库，因为它要读旁边的量表文件；每个任务技能只有一个文件，用 `uvx` 跑钉住的发布版。Claude Code 插件
+（`/plugin marketplace add jianruntech/geo-score`，再 `/plugin install geo-score@jianruntech`）会把九个技能和 MCP 服务一起装上
+（[详见](guide/mcp.zh-CN.md#claude-code-插件)）。没有 Node.js，或者想装发布版而不是 main，就把发布标签克隆到你自己的技能目录：
+`git clone --branch v1.8.4 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`，
+再从它的 `skills/` 文件夹里把想要的任务技能复制到 `~/.claude/skills/`。
 
 不用技能时 CLI 能做到多准：见[准不准](#准不准)。
 
@@ -818,6 +853,7 @@ geo-score 测的是引擎**能不能**引用一个站、**有没有**引用它�
 | [`examples/`](examples/) | 示例报告、公开的人工审计和 CI 工作流 |
 | [`action.yml`](action.yml)、[`action/`](action/) | GitHub Action |
 | [`SKILL.md`](SKILL.md)、[`.claude-plugin/`](.claude-plugin/)、[`gemini-extension.json`](gemini-extension.json)、[`mcpb/`](mcpb/)、[`server.json`](server.json)、[`Dockerfile`](Dockerfile) | Claude Code、Gemini CLI、MCP 客户端、MCP 注册表和 Docker 的打包文件。安装工具会到仓库根目录找它们，所以留在根目录 |
+| [`skills/`](skills/) | 八个任务技能，每个一个文件夹，[Agent Skills](https://agentskills.io/specification) 格式；`scripts/test_packaging.py` 检查格式和钉住的版本 |
 | [`scripts/`](scripts/) | 仓库自检（`scripts/check.sh` 一次跑全部）和发版脚本 |
 | [`.github/`](.github/) | [贡献指南](.github/CONTRIBUTING.md)、[求助渠道](.github/SUPPORT.md)、[安全策略](.github/SECURITY.md)、[行为准则](.github/CODE_OF_CONDUCT.md)、[发版流程](.github/RELEASING.md)、issue 表单和 CI 工作流 |
 | [`AGENTS.md`](AGENTS.md) | 写给编程智能体的仓库地图（`CLAUDE.md` 指向它） |

@@ -6,37 +6,9 @@
 
 # geo-score
 
-geo-score is an open-source AI visibility (GEO) scorer for websites, by [Jianrun Tech](https://www.jianruntech.com) (见润科技).
-Formerly geo-watch: geo-watch merged into geo-score in 1.2.0 and lives on as its levels 2 and 3.
-Website, docs and a free online check: [geo-score.dev](https://geo-score.dev).
-
-## geo-score in 60 seconds
-
-One command, a 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked.
-
-https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
-
-*English · 60 seconds · [Chinese version](README.zh-CN.md)*
-
----
-
-> **Can AI engines cite your site? A free 0–100 score from one command. Do they? Check through their APIs with your own keys.**
-
-geo-score scores a website from 0 to 100 on whether AI answer engines can reach it, parse it, trust it and cite it,
-against a **published, versioned rubric** that anyone can recompute. Then, with your own API keys, it asks the engines
-the questions your buyers ask and records whom the answers cite. The score is free and needs nothing installed; the
-citation results are reported beside it and never added to it.
-
-```bash
-uvx geo-score@1.8.4 example.com      # score a site with one command (needs uv)
-```
-
-No uv? `pipx install geo-score==1.8.4`, or the one-file `curl | python3` line in [Quick start](#quick-start),
-which needs nothing installed.
-
-[Quick start](#quick-start) · [Screenshots](#screenshots) · [What it checks](#what-it-checks) ·
-[How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Website](https://geo-score.dev) · [Changelog](CHANGELOG.md) ·
-[Public leaderboard](https://www.jianruntech.com/leaderboard)
+**Run geo-score on your site and you get a 0–100 score for whether AI answer engines can reach, read, trust and cite
+it, with the gaps worth the most points first; add your own API keys and you also see whom ChatGPT, Claude, Gemini and
+Perplexity cite when your buyers ask.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
@@ -48,11 +20,76 @@ which needs nothing installed.
 [![PyPI](https://img.shields.io/pypi/v/geo-score?color=1E5C46)](https://pypi.org/project/geo-score/)
 [![Latest release](https://img.shields.io/github/v/release/jianruntech/geo-score?display_name=tag&color=A9854C)](https://github.com/jianruntech/geo-score/releases/latest)
 
+## Install
+
+| Where | One line |
+|---|---|
+| Claude Code plugin: the skills and the MCP server | `/plugin marketplace add jianruntech/geo-score`, then `/plugin install geo-score@jianruntech` |
+| Skills for any agent, with the [skills CLI](https://github.com/vercel-labs/skills) | `npx skills add jianruntech/geo-score --full-depth` |
+| The CLI, nothing else installed (needs [uv](https://docs.astral.sh/uv/)) | `uvx geo-score@1.8.4 example.com` |
+| MCP server in Claude Code ([every other client](guide/mcp.md)) | `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp` |
+
+The skills CLI needs `--full-depth` for this repository: without it, the root `SKILL.md` hides the `skills/` folder
+and only `geo-score` is offered. One skill: `npx skills add jianruntech/geo-score --skill ai-search-fanout`. No uv?
+`pipx install geo-score==1.8.4`, or the one-file `curl | python3` line in [Quick start](#quick-start), which needs
+nothing installed.
+
+The score is free, needs no key, and is computed against a **published, versioned rubric** that anyone can recompute.
+Citation results need your own API keys, are reported beside the score, and are never added to it.
+
+[Skills](#skills) · [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it checks](#what-it-checks) ·
+[How accurate is it?](#how-accurate-is-it) · [Docs](#documentation) · [Website](https://geo-score.dev) · [Changelog](CHANGELOG.md) ·
+[Public leaderboard](https://www.jianruntech.com/leaderboard)
+
+geo-score is open source (MIT), by [Jianrun Tech](https://www.jianruntech.com) (见润科技). Formerly geo-watch: geo-watch
+merged into geo-score in 1.2.0 and lives on as its levels 2 and 3. Website, docs and a free online check:
+[geo-score.dev](https://geo-score.dev).
+
+## geo-score in 60 seconds
+
+One command, a 0–100 score, the three gates, the gaps worth fixing first, and why every point can be re-checked.
+
+https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
+
+*English · 60 seconds · [Chinese version](README.zh-CN.md)*
+
+## Skills
+
+Eight skills, each answering one question and leaving a file in your repository. They follow the
+[Agent Skills](https://agentskills.io/specification) format, run the pinned CLI (`uvx geo-score@1.8.4`) or the MCP
+server, and measure only: none writes fixes, markup or copy ([scope](#scope--what-this-does-not-do)).
+
+| Skill | What it leaves in your repository | Example prompt |
+|---|---|---|
+| [`geo-readiness-audit`](skills/geo-readiness-audit/SKILL.md) | `geo/audit-<host>-<date>.md` and `.json`: the 0–100 score, the band, the gates, every check and the gaps worth the most points | *"Run geo-readiness-audit on https://example.com and save the report under geo/"* |
+| [`ai-crawler-access`](skills/ai-crawler-access/SKILL.md) | `geo/crawler-access-<host>-<date>.md`: whether the 10 retrieval crawlers get in, robots.txt page by page, and whether the text is there without JavaScript | *"Can GPTBot, ClaudeBot and PerplexityBot crawl example.com?"* |
+| [`ai-citation-check`](skills/ai-citation-check/SKILL.md) | `geo/citations/<date>.md` and one JSON per question: whom each engine cites and names for a buyer question, today | *"Does ChatGPT cite acme.com for 'best invoicing app for freelancers'? Show me the plan first."* |
+| [`ai-search-fanout`](skills/ai-search-fanout/SKILL.md) | `geo/fanout-<date>.md`: what each engine searched for before answering, per question, and the searches that recur across a set | *"What did each engine search for before answering yesterday's questions?"* |
+| [`geo-baseline`](skills/geo-baseline/SKILL.md) | `geo/queries.csv` (about 20 fixed questions), the config, the first run and `geo/baseline-<date>.md`: cited, mentioned and what the answers say, kept apart | *"Set up 20 buyer questions for acme.com against Rival and measure a baseline"* |
+| [`geo-watch`](skills/geo-watch/SKILL.md) | A new run and `geo/watch-<date>.md`: per engine, change, within noise or too few questions to tell, with the citations lost and gained | *"Run this week's questions and tell me whether anything changed beyond noise"* |
+| [`citation-gaps`](skills/citation-gaps/SKILL.md) | `geo/citation-gaps-<date>.md`: the questions where a competitor is cited and you are not, and the pages cited instead | *"Where is Rival cited and we are not?"* |
+| [`geo-ci-gate`](skills/geo-ci-gate/SKILL.md) | `.github/workflows/geo-score.yml`: a job that fails when a gate drops to zero or the score falls below your floor | *"Fail our deploys if AI crawlers get locked out of example.com"* |
+
+Free: `geo-readiness-audit`, `ai-crawler-access`, `citation-gaps`, `geo-ci-gate`, and any skill reading answers
+already saved. Paid on your own API keys, with the plan shown first and nothing asked without a yes:
+`ai-citation-check`, `geo-baseline`, `geo-watch`. The repository's own skill, [`geo-score`](SKILL.md), stays as it
+was: the full audit, including the three checks the CLI leaves to off-site search or human judgement.
+
+### How the skills chain
+
+1. **Can AI read the site?** `ai-crawler-access` (the gates) → `geo-readiness-audit` (the score and the biggest gaps)
+   → `geo-ci-gate` (a build that fails when a deploy undoes it).
+2. **What do the engines say today?** `ai-citation-check` (whom they cite for a buyer question) →
+   `ai-search-fanout` (what they searched for first) → `geo-baseline` (the same questions as a fixed set of about 20).
+3. **Is anything moving?** `geo-baseline` (once) → `geo-watch` (every week, with a significance test) →
+   `citation-gaps` (the questions competitors win).
+
 > **Version:** the current release is `geo-score==1.8.4` on [PyPI](https://pypi.org/project/geo-score/), with its tag,
 > wheel and checksums on [GitHub Releases](https://github.com/jianruntech/geo-score/releases); what changed is in the
-> [changelog](CHANGELOG.md). Every install line on this page is pinned to that release (`scripts/release.py --bump`
-> moves them together), so the tool you run is the one these pages describe. The rubric is versioned separately, and
-> v1.1 is current. main can run ahead of the release: for CI and client work, use the pinned release.
+> [changelog](CHANGELOG.md). Every `uvx`, `pipx` and download line on this page, and every skill, is pinned to that
+> release (`scripts/release.py --bump` moves them together), so the tool you run is the one these pages describe. The
+> Claude Code plugin and the skills CLI copy the default branch, main, which can run ahead of the release: for CI and
+> client work, use the pinned release. The rubric is versioned separately, and v1.1 is current.
 
 ---
 
@@ -159,7 +196,7 @@ Every image shows real output, captured for this page.
 | **MCP server** | All three levels as tools for agents over stdio; `--read-only` gives a server that cannot spend | [MCP server](#mcp-server) · [guide/mcp.md](guide/mcp.md) |
 | **GitHub Action** | Scores on every push, fails the build on a regression or a gate at zero, and writes a job summary | [GitHub Action](#github-action) · [action.yml](action.yml) |
 | **Badge** | An optional SVG, or shields.io endpoint JSON, with your score and band. It never moves a score or a leaderboard place | [Badge](cli/README.md#a-badge-for-your-own-readme) |
-| **Claude Code skill** | The CLI, plus the three checks that need off-site search or human judgement | [Claude Code skill](#claude-code-skill) · [SKILL.md](SKILL.md) |
+| **Skills** | Eight task skills, each leaving a file in your repository, and `geo-score`: the CLI plus the three checks that need off-site search or human judgement | [Skills](#skills) · [Claude Code skills](#claude-code-skills) · [SKILL.md](SKILL.md) |
 
 ---
 
@@ -412,21 +449,27 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 
 </details>
 
-### Claude Code skill
+### Claude Code skills
 
-The CLI measures what a static fetch can see. Three checks need
-off-site search or human judgement, and the skill does those too.
+Nine skills: the repository's own [`geo-score`](SKILL.md), the full audit (the CLI measures what a static fetch can
+see; three checks need off-site search or human judgement, and this skill does those too), and the eight task skills
+listed under [Skills](#skills).
 
 ```bash
-npx skills add jianruntech/geo-score     # add -g for a global install
-# then: /geo-score audit https://example.com
+npx skills add jianruntech/geo-score --full-depth          # choose from all nine; add -g for a global install
+npx skills add jianruntech/geo-score --skill geo-watch     # one skill by name
+# then: /geo-score audit https://example.com, or ask in your own words, e.g. "did our AI citations change this week?"
 ```
 
-`npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills). It finds one skill in this
-repository, `geo-score`, and copies the whole repository (about 9 MB) as it is on the default branch, main,
-into `.claude/skills/geo-score` for Claude Code. Without Node.js, or for the release rather than main, clone the
-release tag into your own skills folder instead:
-`git clone --branch v1.8.4 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`.
+`npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills) on the repository as it is on the
+default branch, main. With `--full-depth` it offers all nine; without it, it stops at the root `SKILL.md` and offers
+`geo-score` alone, because a skill at the root hides the `skills/` folder from it. `geo-score` copies the whole
+repository, since it reads the rubric files beside it; each task skill is one file that runs the pinned release with
+`uvx`. The Claude Code plugin (`/plugin marketplace add jianruntech/geo-score`, then
+`/plugin install geo-score@jianruntech`) loads all nine with the MCP server ([details](guide/mcp.md#claude-code-plugin)).
+Without Node.js, or for the release rather than main, clone the release tag into your own skills folder instead:
+`git clone --branch v1.8.4 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`, and copy
+the task skills you want from its `skills/` folder into `~/.claude/skills/`.
 
 How close the CLI comes without the skill: [How accurate is it?](#how-accurate-is-it)
 
@@ -906,6 +949,7 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 | [`examples/`](examples/) | A sample report, the published hand audits and CI workflows |
 | [`action.yml`](action.yml), [`action/`](action/) | The GitHub Action |
 | [`SKILL.md`](SKILL.md), [`.claude-plugin/`](.claude-plugin/), [`gemini-extension.json`](gemini-extension.json), [`mcpb/`](mcpb/), [`server.json`](server.json), [`Dockerfile`](Dockerfile) | Packaging for Claude Code, Gemini CLI, MCP clients, the MCP registry and Docker. They stay at the top level because the installers look for them there |
+| [`skills/`](skills/) | The eight task skills, one folder each in the [Agent Skills](https://agentskills.io/specification) format; `scripts/test_packaging.py` checks their format and the release they pin |
 | [`scripts/`](scripts/) | The repository's checks (`scripts/check.sh` runs all of them) and the release script |
 | [`.github/`](.github/) | [Contributing](.github/CONTRIBUTING.md), [support](.github/SUPPORT.md), [security](.github/SECURITY.md), [code of conduct](.github/CODE_OF_CONDUCT.md), the [release process](.github/RELEASING.md), issue forms and the CI workflow |
 | [`AGENTS.md`](AGENTS.md) | A map of the repository for coding agents (`CLAUDE.md` points to it) |

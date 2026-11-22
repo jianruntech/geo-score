@@ -265,8 +265,9 @@ claude plugin install geo-score@jianruntech
 
 在会话里用 `/plugin marketplace add jianruntech/geo-score` 和 `/plugin install geo-score@jianruntech` 效果一样。
 插件用 `python3` 运行仓库里的 `cli/geo_score.py mcp`，所以 `PATH` 上要有 Python 3.8 及以上，但不需要 uv。
-插件不设置任何 Key：要用 `ask` 和 `run`，在启动 `claude` 的 shell 里 export。它还会把仓库的 `SKILL.md` 装成
-`geo-score` 技能，告诉 Claude 怎么读报告。插件市场跟随仓库，而不是某个发布 tag；
+插件不设置任何 Key：要用 `ask` 和 `run`，在启动 `claude` 的 shell 里 export。它还会装上九个技能：仓库的 `SKILL.md`
+装成 `geo-score` 技能，告诉 Claude 怎么读报告；另有 `skills/` 里的八个任务技能（[清单](../README.zh-CN.md#技能)）。
+`plugin.json` 的 `skills` 写了插件根目录，所以有了 `skills/` 文件夹之后，根目录的技能照样加载。插件市场跟随仓库，而不是某个发布 tag；
 要固定版本，用[安装](#安装)里那行 `uvx`。
 
 ### Gemini CLI 扩展

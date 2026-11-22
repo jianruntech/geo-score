@@ -145,9 +145,9 @@ def skill_frontmatter(text):
 
 
 def check_skills(version):
-    """The task skills under skills/: the Agent Skills format, the release they pin, where the plugin manifests name
-    them, and that --bump moves every release they name."""
-    print("\n  the task skills: skills/<name>/SKILL.md, release.py's SKILLS and the plugin manifests")
+    """The task skills under skills/: the Agent Skills format, the release they pin, where the plugin manifests and the
+    READMEs name them, and that --bump moves every release they name."""
+    print("\n  the task skills: skills/<name>/SKILL.md, release.py's SKILLS, the plugin manifests and the READMEs")
     found = sorted("skills/%s/SKILL.md" % d for d in os.listdir(os.path.join(ROOT, "skills"))
                    if os.path.isdir(os.path.join(ROOT, "skills", d)))
     ok(found == sorted(release.SKILLS) and found, "release.py's SKILLS lists every folder under skills/ (%d)" % len(found))
@@ -157,6 +157,7 @@ def check_skills(version):
     ok(release.skill_version(rd("SKILL.md")) == version, "SKILL.md's metadata version is %s" % version)
     rubric = re.search(r'^RUBRIC = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
     ci = dict(re.findall(r"uses:\s*([\w./-]+)@([0-9a-f]{40})\b", rd("examples/ci/github-actions.yml")))
+    readmes = {p: rd(p) for p in ("README.md", "README.zh-CN.md")}
     names = []
     for p in sorted(release.SKILLS):
         if not os.path.exists(os.path.join(ROOT, p)):
@@ -194,6 +195,8 @@ def check_skills(version):
         drift = sorted(a for a, sha in re.findall(r"uses:\s*([\w./-]+)@([0-9a-f]{40})\b", text) if ci.get(a) != sha)
         ok(not drift, "%s: its pinned actions are the commits examples/ci/github-actions.yml pins%s"
            % (p, " (not: %s)" % drift if drift else ""))
+        missing = [r for r, t in readmes.items() if "`%s`" % name not in t]
+        ok(not missing, "%s: README.md and README.zh-CN.md introduce it%s" % (p, " (missing in %s)" % missing if missing else ""))
     ok(len(names) == len(set(names)) and "geo-score" not in names, "skill names are unique and none is the root skill's")
     want = ["./" + os.path.dirname(p) for p in sorted(release.SKILLS)]
     entry = json.loads(rd(".claude-plugin/marketplace.json"))["plugins"][0]
