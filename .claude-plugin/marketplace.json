@@ -20,6 +20,16 @@
         "ai-visibility",
         "seo",
         "mcp"
+      ],
+      "skills": [
+        "./skills/ai-citation-check",
+        "./skills/ai-crawler-access",
+        "./skills/ai-search-fanout",
+        "./skills/citation-gaps",
+        "./skills/geo-baseline",
+        "./skills/geo-ci-gate",
+        "./skills/geo-readiness-audit",
+        "./skills/geo-watch"
       ]
     }
   ]

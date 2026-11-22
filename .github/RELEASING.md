@@ -9,11 +9,12 @@ cut by hand with `scripts/release.py`, which does the same steps in the same ord
    passes: `bash scripts/check.sh`.
 2. **Choose the version** by [STABILITY.md](../guide/stability.md): a new flag, output or optional field is a
    minor release; a fix is a patch; removing or renaming a contract is a major release.
-3. **Bump:** `python3 scripts/release.py X.Y.Z --bump`. It rewrites `__version__` in both CLI files,
-   `SKILL.md`, every install line and download pinned to a tag, including the tag and the version in each
-   release-wheel URL, and every pin of the PyPI package (`geo-score@X.Y.Z` for uvx, `geo-score==X.Y.Z` for
-   pip and pipx; the Action's `jianruntech/geo-score@v1` is not one) (README, cli/README, SECURITY,
-   STABILITY, the troubleshooting and MCP guides, examples, the issue form, the leaderboard template),
+3. **Bump:** `python3 scripts/release.py X.Y.Z --bump`. It rewrites `__version__` in both CLI files, the metadata
+   version of `SKILL.md` and of each task skill (`skills/*/SKILL.md`, listed in `SKILLS`), every install line
+   and download pinned to a tag, including the tag and the version in each release-wheel URL, and every pin of
+   the PyPI package (`geo-score@X.Y.Z` for uvx, `geo-score==X.Y.Z` for pip and pipx; the Action's
+   `jianruntech/geo-score@v1` is not one) (README, cli/README, SECURITY, STABILITY, the troubleshooting and MCP
+   guides, examples, the issue form, the leaderboard template, the task skills),
    and the version in the packaging manifests (`server.json` with its `.mcpb` URL and PyPI version, `mcpb/manifest.json`,
    `.claude-plugin/plugin.json`, `gemini-extension.json`). Then it runs `scripts/mcp_docs.py`, which
    regenerates the MCP tool table and install buttons in the READMEs and the MCP guides (a button carries
@@ -117,7 +118,8 @@ tool names, the key variables and the entry point.
 | `mcpb/manifest.json` | Claude Desktop, inside the `.mcpb` bundle; keys go to its keychain fields |
 | `server.json` | The MCP Registry: the `.mcpb` on the release and the `geo-score` package on PyPI (run as `uvx geo-score@X.Y.Z mcp`); the release attaches it with the bundle's real checksum filled in |
 | `pyproject.toml` | The wheel and sdist, which the release attaches and PyPI serves byte for byte; README.md is the package's description on PyPI, and its `mcp-name` line is how the MCP Registry knows the package is this server's |
-| `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | Claude Code (`/plugin marketplace add jianruntech/geo-score`); keys come from the user's exported environment |
+| `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | Claude Code (`/plugin marketplace add jianruntech/geo-score`); keys come from the user's exported environment. `plugin.json`'s `skills` names the plugin root, so `SKILL.md` loads beside `skills/`, and the marketplace entry lists each task skill, which the skills CLI also reads |
+| `skills/*/SKILL.md` | The skills CLI (`npx skills add jianruntech/geo-score --full-depth`) and the Claude Code plugin; each runs `uvx geo-score@X.Y.Z` and carries the release as its metadata version |
 | `gemini-extension.json` | Gemini CLI (`gemini extensions install`); one sensitive setting per key, since Gemini CLI does not pass `*KEY*` variables to servers |
 | `Dockerfile` | `docker build`; nothing publishes an image yet |
 

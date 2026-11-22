@@ -112,6 +112,101 @@ def check_pins(version):
         ok(release.wheel_problem(version, tmp) is not None, "--execute stops when the build names the wheel differently")
 
 
+SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")     # Agent Skills: lowercase letters, digits, single hyphens
+SKILL_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+SKILL_MAX_BODY = 500                                         # lines, as the Agent Skills specification recommends
+SCOPE_LINK = "https://github.com/jianruntech/geo-score#scope--what-this-does-not-do"
+
+
+def skill_frontmatter(text):
+    """(frontmatter, body) of a SKILL.md, the frontmatter as {key: value} with metadata's keys in a dict under
+    "metadata", or None. It reads only the shape these files use (key: value, one level of nesting, a value bare or in
+    double quotes), so a richer YAML construct fails the check instead of being misread."""
+    if not text.startswith("---\n"):
+        return None
+    end = text.find("\n---\n", 3)
+    if end < 0:
+        return None
+    out, block = {}, None
+    for line in text[4:end].split("\n"):
+        m = re.match(r"^( *)([A-Za-z][\w-]*):(?: (.*))?$", line)
+        if not m or (m.group(1) and block is None):
+            return None
+        indent, key, val = m.group(1), m.group(2), (m.group(3) or "").strip()
+        if len(val) >= 2 and val[0] == val[-1] == '"':
+            val = val[1:-1]
+        if indent:
+            out[block][key] = val
+        elif val:
+            out[key], block = val, None
+        else:
+            out[key], block = {}, key
+    return out, text[end + 5:]
+
+
+def check_skills(version):
+    """The task skills under skills/: the Agent Skills format, the release they pin, where the plugin manifests name
+    them, and that --bump moves every release they name."""
+    print("\n  the task skills: skills/<name>/SKILL.md, release.py's SKILLS and the plugin manifests")
+    found = sorted("skills/%s/SKILL.md" % d for d in os.listdir(os.path.join(ROOT, "skills"))
+                   if os.path.isdir(os.path.join(ROOT, "skills", d)))
+    ok(found == sorted(release.SKILLS) and found, "release.py's SKILLS lists every folder under skills/ (%d)" % len(found))
+    ok(set(release.SKILLS) <= set(release.PINNED), "--bump repins every task skill (SKILLS is in PINNED)")
+    ok(release.SKILL_FILES == ["SKILL.md"] + release.SKILLS, "--bump and preflight set the metadata version of SKILL.md "
+       "and of every task skill")
+    ok(release.skill_version(rd("SKILL.md")) == version, "SKILL.md's metadata version is %s" % version)
+    rubric = re.search(r'^RUBRIC = "([^"]+)"', rd("cli/geo_score.py"), re.M).group(1)
+    ci = dict(re.findall(r"uses:\s*([\w./-]+)@([0-9a-f]{40})\b", rd("examples/ci/github-actions.yml")))
+    names = []
+    for p in sorted(release.SKILLS):
+        if not os.path.exists(os.path.join(ROOT, p)):
+            ok(False, "%s exists" % p)
+            continue
+        text, folder = rd(p), p.split("/")[1]
+        parsed = skill_frontmatter(text)
+        ok(parsed is not None, "%s opens with a frontmatter this check can read" % p)
+        if parsed is None:
+            continue
+        fm, body = parsed
+        meta = fm.get("metadata") if isinstance(fm.get("metadata"), dict) else {}
+        name, desc = fm.get("name", ""), fm.get("description", "")
+        names.append(name)
+        ok(set(fm) <= SKILL_KEYS and {"name", "description"} <= set(fm),
+           "%s: frontmatter keys are the specification's (%s)" % (p, ", ".join(sorted(fm))))
+        ok(name == folder and bool(SKILL_NAME.match(name)) and len(name) <= 64,
+           "%s: name %r is its folder's, lowercase with single hyphens, at most 64 characters" % (p, name))
+        ok(0 < len(desc) <= 1024 and '"' not in desc, "%s: description is 1-1024 characters (%d)" % (p, len(desc)))
+        ok(fm.get("license") == "MIT", "%s: license is MIT, as LICENSE says" % p)
+        ok(meta.get("version") == version == release.skill_version(text), "%s: metadata version is %s" % (p, version))
+        ok(meta.get("rubric") == rubric and os.path.exists(os.path.join(ROOT, "rubric", rubric + ".md")),
+           "%s: metadata rubric is %s, the one the CLI implements" % (p, rubric))
+        ok(len(body.splitlines()) <= SKILL_MAX_BODY, "%s: body is %d lines, at most %d" % (p, len(body.splitlines()),
+                                                                                          SKILL_MAX_BODY))
+        ok("uvx geo-score@%s" % version in body and not release.stale_pins(text, version),
+           "%s: runs uvx geo-score@%s and names no other release (%s)" % (p, version, release.stale_pins(text, version)))
+        ok("## Boundaries" in body and SCOPE_LINK in body, "%s: states its boundaries and links the scope section" % p)
+        bumped = release.repin(release.set_skill_version(text, "9.9.9"), "9.9.9")
+        ok(release.skill_version(bumped) == "9.9.9" and version not in bumped,
+           "%s: --bump to 9.9.9 leaves %s nowhere in it" % (p, version))
+        own = "jianruntech/geo-score@v" + version
+        loose = [u for u in loose_uses(text) if u != own]
+        ok(not loose, "%s: every action it writes is pinned by commit, or is %s%s" % (p, own, " (not: %s)" % loose if loose else ""))
+        drift = sorted(a for a, sha in re.findall(r"uses:\s*([\w./-]+)@([0-9a-f]{40})\b", text) if ci.get(a) != sha)
+        ok(not drift, "%s: its pinned actions are the commits examples/ci/github-actions.yml pins%s"
+           % (p, " (not: %s)" % drift if drift else ""))
+    ok(len(names) == len(set(names)) and "geo-score" not in names, "skill names are unique and none is the root skill's")
+    want = ["./" + os.path.dirname(p) for p in sorted(release.SKILLS)]
+    entry = json.loads(rd(".claude-plugin/marketplace.json"))["plugins"][0]
+    ok(entry.get("skills") == want, "marketplace.json lists every task skill, so its plugin loads them (%s)" % entry.get("skills"))
+    # a plugin with skills/ stops loading the root SKILL.md unless its manifest names the plugin root
+    ok(json.loads(rd(".claude-plugin/plugin.json")).get("skills") == ["./"],
+       "plugin.json names the plugin root, so SKILL.md still loads as the geo-score skill beside skills/")
+    text = rd(release.SKILLS[0])
+    ok(release.set_skill_version(text.replace("---\n", "---\nx: 1\n", 1), "9.9.9").count("9.9.9") == 1
+       and release.set_skill_version("no frontmatter\n  version: 1.2.3\n", "9.9.9") == "no frontmatter\n  version: 1.2.3\n",
+       "set_skill_version rewrites only the frontmatter's metadata version")
+
+
 def check_pypi_publish(version):
     """--publish-pypi uploads exactly the wheel and sdist in dist/SHA256SUMS, and only when they are what the GitHub
     release attached; afterwards PyPI must serve each with that SHA-256. PyPI, GitHub and twine are faked here."""
@@ -538,6 +633,7 @@ def main():
     watch = load_watch()
     ok(watch.__version__ == version, "cli/geo_score.py and cli/geo_watch.py are both %s" % version)
     check_pins(version)
+    check_skills(version)
     check_pypi_publish(version)
     check_fetch_retries()
 

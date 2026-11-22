@@ -18,6 +18,9 @@
     "seo",
     "mcp"
   ],
+  "skills": [
+    "./"
+  ],
   "mcpServers": {
     "geo-score": {
       "command": "python3",

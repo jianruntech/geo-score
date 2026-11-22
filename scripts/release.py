@@ -19,12 +19,19 @@ REPO = "https://github.com/jianruntech/geo-score"
 RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
 # packaging manifests whose "version" is the release: bump() rewrites them, preflight() checks them
 MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", "gemini-extension.json"]
+# the task skills, skills/<name>/SKILL.md: each runs `uvx geo-score@X.Y.Z` and names the release in its metadata
+# version, so --bump rewrites both (scripts/test_packaging.py holds this list to the folders under skills/)
+SKILLS = ["skills/ai-citation-check/SKILL.md", "skills/ai-crawler-access/SKILL.md", "skills/ai-search-fanout/SKILL.md",
+          "skills/citation-gaps/SKILL.md", "skills/geo-baseline/SKILL.md", "skills/geo-ci-gate/SKILL.md",
+          "skills/geo-readiness-audit/SKILL.md", "skills/geo-watch/SKILL.md"]
+# every SKILL.md whose frontmatter metadata `version:` is the release: the repository's own skill and the task skills
+SKILL_FILES = ["SKILL.md"] + SKILLS
 # files whose one-line install or download is pinned to a release tag
 # (scripts/test_packaging.py fails when a tracked file names a release and is not listed here)
 PINNED = ["README.md", "README.zh-CN.md", "cli/README.md", "cli/README.zh-CN.md", "examples/ci/README.md", "examples/ci/watch-weekly.yml",
           "examples/ci/gitlab-ci.yml", ".github/ISSUE_TEMPLATE/add_site.yml", "benchmark/_page_tpl.py", ".github/SECURITY.md",
           "guide/stability.md", "guide/troubleshooting.md", "guide/troubleshooting.zh-CN.md", "guide/mcp.md",
-          "guide/mcp.zh-CN.md"] + MANIFESTS
+          "guide/mcp.zh-CN.md"] + MANIFESTS + SKILLS
 # every way a document pins a release, as (pattern, prefix): group 1 is kept, and the version after it is rewritten
 # to prefix + version. A tag carries a "v"; the wheel's file name, which follows the tag in a download URL, does not
 PINS = [(re.compile(r"(raw\.githubusercontent\.com/jianruntech/geo-score/)(?:v\d+\.\d+\.\d+|main)(?=/cli[/\s\"'])"), "v"),
@@ -106,6 +113,30 @@ def repin(text, v):
     for rx, pre in PINS:
         text = rx.sub(lambda m, pre=pre: m.group(1) + pre + v, text)
     return text
+
+
+# the indented `version:` under a SKILL.md frontmatter's metadata
+SKILL_VERSION = re.compile(r"^(\s+version: )(\S+)", re.M)
+
+
+def _frontmatter_end(text):
+    """Where a SKILL.md's frontmatter closes (the index of its second ---), or -1 when it has none."""
+    return text.find("\n---", 3) if text.startswith("---\n") else -1
+
+
+def skill_version(text):
+    """The metadata version a SKILL.md's frontmatter names, or None. The body is not read."""
+    end = _frontmatter_end(text)
+    m = SKILL_VERSION.search(text[:end]) if end > 0 else None
+    return m.group(2) if m else None
+
+
+def set_skill_version(text, v):
+    """text with its frontmatter's metadata version set to v; the body is left alone."""
+    end = _frontmatter_end(text)
+    if end <= 0:
+        return text
+    return SKILL_VERSION.sub(lambda m: m.group(1) + v, text[:end], count=1) + text[end:]
 
 
 def named_wheels():
@@ -230,9 +261,10 @@ def preflight(v):
         m = re.search(r'^__version__ = "([^"]+)"', rd(p), re.M)
         if not m or m.group(1) != v:
             problems.append("%s: __version__ is %s" % (p, m.group(1) if m else "missing"))
-    m = re.search(r"^\s+version: (\S+)", rd("SKILL.md"), re.M)
-    if not m or m.group(1) != v:
-        problems.append("SKILL.md: metadata version is %s" % (m.group(1) if m else "missing"))
+    for p in SKILL_FILES:
+        sv = skill_version(rd(p)) if os.path.exists(os.path.join(ROOT, p)) else None
+        if sv != v:
+            problems.append("%s: metadata version is %s" % (p, sv or "missing"))
     for p in PINNED:
         if not os.path.exists(os.path.join(ROOT, p)):
             continue
@@ -288,7 +320,8 @@ def bump(v):
     today = datetime.date.today().isoformat()
     for p in ("cli/geo_score.py", "cli/geo_watch.py"):
         wr(p, re.sub(r'^__version__ = "[^"]+"', '__version__ = "%s"' % v, rd(p), count=1, flags=re.M))
-    wr("SKILL.md", re.sub(r"^(\s+version: )\S+", r"\g<1>" + v, rd("SKILL.md"), count=1, flags=re.M))
+    for p in SKILL_FILES:
+        wr(p, set_skill_version(rd(p), v))
     for p in PINNED:
         if os.path.exists(os.path.join(ROOT, p)):
             wr(p, repin(rd(p), v))

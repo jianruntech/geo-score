@@ -361,6 +361,8 @@ EN_PRIMARY += ["AGENTS.md", "guide/stability.md", "guide/troubleshooting.md", "g
                "benchmark/SENSITIVITY.md", "rubric/bands-analysis.md", "benchmark/PREREGISTRATION.md",
                "rubric/governance.md"]
 import glob as _g2
+# the task skills are written in English; README.zh-CN.md introduces them in Chinese
+EN_PRIMARY += sorted(_g2.glob("skills/*/SKILL.md"))
 # 审计的对象若是中文站，报告里必然引用中文原文——那是证据，不是未翻译
 for _a in sorted(_g2.glob("examples/audits/v1.1/*.json")):
     if _json.load(io.open(_a, encoding="utf-8")).get("audience_language", "en").startswith("zh"):
@@ -532,7 +534,8 @@ _cap_files = (["README.md", "README.zh-CN.md", "SKILL.md", "cli/README.md", ".gi
               + [os.path.join("examples", f) for f in sorted(os.listdir("examples")) if f.endswith(".md")]
               # the schemas' descriptions are documentation too: the retired rule survived there once
               + [os.path.join("schema", f) for f in sorted(os.listdir("schema")) if f.endswith(".json")]
-              + [os.path.join("guide", f) for f in sorted(os.listdir("guide")) if f.endswith(".md")])
+              + [os.path.join("guide", f) for f in sorted(os.listdir("guide")) if f.endswith(".md")]
+              + sorted(_g2.glob("skills/*/SKILL.md")))
 for f in _cap_files:
     if not os.path.exists(f): continue
     for x in cap_sentences(io.open(f, encoding="utf-8").read()):
