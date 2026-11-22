@@ -2034,6 +2034,11 @@ def summarize(run):
         notes.append("This run was saved before questions were flagged at run time. Questions that name the brand "
                       "were found when this report was made, from the saved question text and the run's brand "
                       "name, aliases and domains.")
+    gone = Counter(s["engine"] for s in samples if s.get("skip_reason") == NO_ANSWER)
+    if gone:
+        notes.append("Answers removed from the run file after the run: %s recorded as answered (%s). Not measured: "
+                     "left out of every rate, never read as not cited." % (
+                         _n(sum(gone.values()), "sample"), ", ".join("%s: %d" % kv for kv in sorted(gone.items()))))
 
     exposed = [s for s in ok if s["search_queries"]]
     searched = Counter(re.sub(r"\s+", " ", q.lower()).strip() for s in exposed for q in s["search_queries"])
@@ -3055,6 +3060,25 @@ def load_run(cfg, rid="latest"):
         raise ConfigError("%s is not valid JSON" % path) from None
     if not isinstance(run, dict) or run.get("format") != RUN_FORMAT:
         raise ConfigError("%s is not a %s file" % (path, RUN_FORMAT))
+    return without_missing_answers(run)
+
+
+# What every answered sample has carried since the first run format. A sample marked ok without them holds no
+# answer: a published run file can drop answers after the run (round 0 removed Gemini's grounded results, keeping only
+# each request's status, usage and timing), and an answer that is not there was not measured, so it is never read as
+# "not cited" or "not mentioned".
+ANSWER_KEYS = ("cited", "rank", "quoted_url", "mentioned", "competitors", "citations", "search_queries", "answer")
+NO_ANSWER = "no answer in the run file"
+
+
+def without_missing_answers(run):
+    """The run with each sample marked ok that holds no answer turned into a skipped one (skip_reason NO_ANSWER), so
+    it leaves every rate's denominator, as a capped call does. Other samples are left as saved."""
+    samples = run.get("samples")
+    if isinstance(samples, list):
+        run["samples"] = [dict(s, status="skipped", skip_reason=NO_ANSWER)
+                          if isinstance(s, dict) and s.get("status") == "ok" and not all(k in s for k in ANSWER_KEYS)
+                          else s for s in samples]
     return run
 
 

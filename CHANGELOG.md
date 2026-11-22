@@ -37,6 +37,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `guide/mcp.md` (+ zh) says it loads nine skills. Documentation only.
 - **Both READMEs lead with `uvx geo-score@X.Y.Z example.com`**: one line under the intro, and Quick start now opens with the PyPI section (uvx or pipx) before the one-file `curl | python3` line, which stays for machines without uv. AI assistants that recommend the tool were quoting the older `python geo_score.py` form. Documentation only.
 
+### Fixed
+- **`watch report`, `watch diff`, `watch runs` and the MCP `report` and `diff` tools read a run file that lacks some
+  answers.** The published round 0 run files keep only the status, usage and timing of Gemini's answers (the Gemini
+  API terms for Grounding with Google Search do not allow storing, republishing or analysing grounded results), and `watch report` stopped on them with an
+  internal error (KeyError `rank`). A sample marked answered that holds no answer now loads as skipped, with the reason
+  "no answer in the run file": not measured, left out of every rate, never read as not cited, and the report says how
+  many per engine. Complete run files load exactly as saved. Regression test: `MissingAnswers` in
+  `cli/test_geo_watch.py`.
+
 ## [1.8.4] — 2026-11-10
 
 ### Added

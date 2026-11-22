@@ -3099,6 +3099,62 @@ class Searches(Base):
                                          "text")[0].strip(), "What the engines searched for (from 1 answer that shows it)")
 
 
+class MissingAnswers(Base):
+    """A published run file can drop answers after the run: round 0 removed Gemini's grounded results and kept only
+    each request's status, usage and timing (benchmark/prereg/round0/redact_gemini.py). `watch report` once stopped on
+    such a file with an internal error (KeyError 'rank'). An answer that is not in the file was not measured: it
+    leaves every rate's denominator and is never read as not cited."""
+
+    def save(self, run):
+        with io.open(os.path.join(self.tmp, "geo-score-watch.json"), "w", encoding="utf-8") as f:
+            json.dump({"brand": {"name": "Lumo", "domains": ["lumo.example"]}}, f)
+        with io.open(os.path.join(self.tmp, "queries.csv"), "w", encoding="utf-8") as f:
+            f.write("query_id,query,intent_tier,target_url\nq01,which is best,list,\n")
+        cfg = gw.Config(os.path.join(self.tmp, "geo-score-watch.json"))
+        gw.save_run(cfg, run)
+        return cfg
+
+    def redacted(self):
+        """Six questions on two engines; Perplexity's answers then removed the way redact_gemini.py removes them."""
+        full = synth("20261012T163334Z", dict(
+            [(("q%02d" % i, "chatgpt-api"), [i % 2 == 0]) for i in range(1, 7)]
+            + [(("q%02d" % i, "perplexity-api"), [True]) for i in range(1, 7)]))
+        cut = json.loads(json.dumps(full))
+        keep = ("query_id", "engine", "run", "status", "error", "usage", "cost_usd", "seconds")
+        cut["samples"] = [dict(dict((k, s[k]) for k in keep if k in s), redacted=True)
+                          if s["engine"] == "perplexity-api" else s for s in cut["samples"]]
+        cut["summary"] = {"redacted": "Perplexity's answers removed from this file."}
+        return full, cut
+
+    def test_a_run_file_without_some_answers_reports_them_as_not_measured(self):
+        full, cut = self.redacted()
+        cfg = self.save(cut)
+        run = gw.load_run(cfg)
+        sm = gw.summary_of(run)
+        for fmt in ("text", "md"):
+            self.assertIn("Lumo", gw.render(run, fmt))           # once a KeyError
+        self.assertEqual(len(gw.render_csv(run).strip().splitlines()), 1 + 12)
+        rows = dict((e["id"], e) for e in sm["engines"])
+        whole = dict((e["id"], e) for e in gw.summarize(full)["engines"])
+        # the removed answers are not measured: skipped, out of the denominator, no rate at all, not 0 of 6
+        self.assertEqual((rows["perplexity-api"]["answered"], rows["perplexity-api"]["skipped"]), (0, 6))
+        self.assertIsNone(rows["perplexity-api"]["cited_rate"])
+        self.assertEqual(rows["chatgpt-api"]["cited"], whole["chatgpt-api"]["cited"])
+        self.assertEqual((sm["overall"]["answered"], sm["overall"]["cited"], sm["overall"]["skipped"]),
+                         (6, whole["chatgpt-api"]["cited"], 6))
+        self.assertEqual(sum(1 for s in run["samples"] if s.get("skip_reason") == gw.NO_ANSWER), 6)
+        self.assertTrue(any("removed from the run file" in n and "perplexity-api: 6" in n for n in sm["notes"]))
+        # a diff against the full run compares the answers both files hold
+        d = gw.diff_runs(full, run)
+        self.assertEqual(dict((r["engine"], r["verdict"]) for r in d["engines"])["perplexity-api"], "not measured")
+
+    def test_a_complete_run_file_loads_as_saved(self):
+        full, _ = self.redacted()
+        cfg = self.save(full)
+        self.assertEqual(gw.load_run(cfg), json.loads(json.dumps(full)))
+        self.assertFalse(any("removed from the run file" in n for n in gw.summary_of(gw.load_run(cfg))["notes"]))
+
+
 class LedgerCost(Base):
     def ledger(self, asked, errors, unpriced, cost):
         return {"questions_asked": asked, "api_requests": asked, "http_attempts": asked, "errors": errors,

@@ -27,6 +27,12 @@ Gemini 的按其接地条款不公开），然后是
   只改文档。
 - **两份 README 开头先给 `uvx geo-score@X.Y.Z example.com`**：简介下面加了这一行；「快速开始」先讲 PyPI（uvx 或 pipx），再讲单文件的 `curl | python3`，后者留给没装 uv 的机器。推荐这个工具的 AI 助手引用的还是旧的 `python geo_score.py` 写法。只改文档。
 
+### 修复
+- **`watch report`、`watch diff`、`watch runs` 以及 MCP 的 `report`、`diff` 工具能读缺了部分回答的运行文件了。** 公开的第 0 轮运行文件里，
+  Gemini 的回答只保留了状态、用量和用时（Gemini API 关于「Google 搜索接地」的条款不允许存储、转载或分析接地结果），`watch report` 读到它们会报内部错误
+  （KeyError `rank`）。现在标成「已回答」却没有回答内容的样本，读入时按「跳过」处理，原因写「运行文件里没有这个回答」：算没测到，不进任何比率的
+  分母，绝不当成「没被引用」，报告里写明每家引擎有几条。完整的运行文件照原样读入。回归测试：`cli/test_geo_watch.py` 里的 `MissingAnswers`。
+
 ## [1.8.4] — 2026-11-10
 
 ### 新增
