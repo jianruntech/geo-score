@@ -6,6 +6,8 @@
 
 **在你的网站上跑一遍 geo-score，就能拿到一个 0–100 分：AI 回答引擎能不能抓到、读懂、信任并引用这个网站，并按能补回的分数从多到少列出缺口；再配上你自己的 API Key，还能看到买家提问时 ChatGPT、Claude、Gemini 和 Perplexity 引用了谁。**
 
+它还能看到 ChatGPT、Claude 和 Gemini 回答之前实际搜了哪些词：通过它们的 API，读的是每个 API 随回答一起返回的搜索词，原样记录，不是猜的（[示例](#ai-实际搜了什么)）。
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.zh-CN.md)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
@@ -44,6 +46,38 @@ geo-score 是开源的（MIT），[见润科技](https://www.jianruntech.com)出
 https://github.com/user-attachments/assets/95beecee-07c2-4676-9291-ef91c4506a89
 
 *中文介绍 · 60 秒 · [English](README.md#geo-score-in-60-seconds)*
+
+## AI 实际搜了什么
+
+引擎开着联网搜索作答之前，会先自己搜几轮，搜的词常常和问题本身不一样。OpenAI、Gemini 和 Anthropic 的 API 会把这些搜索词随回答一起返回；
+geo-score 把它们和引用记在一起，每条回答都打出来，并在一组问题上做统计（也就是 query fan-out）。Perplexity 和 OpenRouter
+不返回搜索词，报告会写明，不拿猜的去补。
+
+```
+$ uvx geo-score@1.8.4 watch ask -c geo/geo-score-watch.json "best portable power station for camping"
+Q: best portable power station for camping
+
+chatgpt-api (gpt-6-luna) — not cited · mentioned · competitors cited: Pixa
+  sources: pixa.example, outdoorgear.example, reddit.com
+  searched: best portable power station camping 2026 | portable power station reviews camping | lumo vs pixa power station
+  answer: For camping, the Pixa 1000 is the lighter pick; Lumo's 800 costs less per watt-hour.
+
+claude-api (claude-sonnet-5) — cited #3 (https://lumo.example/camping) · mentioned · competitors cited: Pixa
+  sources: outdoorgear.example, pixa.example, lumo.example
+  searched: portable power station camping comparison | pixa 1000 battery capacity
+  answer: Outdoor Gear's test ranks the Pixa 1000 first; Lumo's camping kit is a lighter option.
+
+perplexity-api (sonar) — cited #2 (https://lumo.example/camping) · mentioned · competitors cited: Pixa
+  sources: pixa.example, lumo.example, outdoorgear.example
+  answer: Pixa and Lumo both sell solar-ready kits; Pixa's has the larger battery.
+
+gemini-api — not measured (set GEMINI_API_KEY or GOOGLE_API_KEY)
+(api channel — not the consumer apps; one ask per engine, so treat it as an anecdote, not a rate)
+```
+
+<sub>**示例**，不是实测：品牌（Lumo、Pixa）、域名和回答都是编的，由 `watch ask` 用的输出格式打印。每问一次，每个有 Key 的引擎就是一次付费
+API 调用。在每周固定的一组问题上，`watch report` 会列出反复出现的搜索词，以及其中几条带年份、几条带排名或比较类的词；
+[`ai-search-fanout`](skills/ai-search-fanout/SKILL.md) 技能把它们整理成文件。</sub>
 
 ## 技能
 

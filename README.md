@@ -10,6 +10,9 @@
 it, with the gaps worth the most points first; add your own API keys and you also see whom ChatGPT, Claude, Gemini and
 Perplexity cite when your buyers ask.**
 
+It also shows what ChatGPT, Claude and Gemini searched for before they answered, through their APIs: the searches each
+API returns with its answer, recorded as returned, not guessed ([example](#what-the-engines-searched-for)).
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E5C46.svg)](LICENSE)
 [![Rubric v1.1](https://img.shields.io/badge/rubric-v1.1-A9854C.svg)](rubric/v1.1.md)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-1E5C46.svg)](cli/geo_score.py)
@@ -52,6 +55,40 @@ One command, a 0–100 score, the three gates, the gaps worth fixing first, and 
 https://github.com/user-attachments/assets/2270314f-446a-4c2d-b27f-11e1f6d66ff8
 
 *English · 60 seconds · [Chinese version](README.zh-CN.md)*
+
+## What the engines searched for
+
+Before an engine answers with web search on, it runs searches of its own, and they are often not the words of the
+question. The OpenAI, Gemini and Anthropic APIs return those searches with the answer; geo-score keeps them beside the
+citations, prints them for each answer, and counts them across a question set (the query fan-out). Perplexity and
+OpenRouter return no search text, and the report says so rather than filling the gap.
+
+```
+$ uvx geo-score@1.8.4 watch ask -c geo/geo-score-watch.json "best portable power station for camping"
+Q: best portable power station for camping
+
+chatgpt-api (gpt-6-luna) — not cited · mentioned · competitors cited: Pixa
+  sources: pixa.example, outdoorgear.example, reddit.com
+  searched: best portable power station camping 2026 | portable power station reviews camping | lumo vs pixa power station
+  answer: For camping, the Pixa 1000 is the lighter pick; Lumo's 800 costs less per watt-hour.
+
+claude-api (claude-sonnet-5) — cited #3 (https://lumo.example/camping) · mentioned · competitors cited: Pixa
+  sources: outdoorgear.example, pixa.example, lumo.example
+  searched: portable power station camping comparison | pixa 1000 battery capacity
+  answer: Outdoor Gear's test ranks the Pixa 1000 first; Lumo's camping kit is a lighter option.
+
+perplexity-api (sonar) — cited #2 (https://lumo.example/camping) · mentioned · competitors cited: Pixa
+  sources: pixa.example, lumo.example, outdoorgear.example
+  answer: Pixa and Lumo both sell solar-ready kits; Pixa's has the larger battery.
+
+gemini-api — not measured (set GEMINI_API_KEY or GOOGLE_API_KEY)
+(api channel — not the consumer apps; one ask per engine, so treat it as an anecdote, not a rate)
+```
+
+<sub>**Illustrative**, not a measurement: made-up brands (Lumo, Pixa), domains and answers, printed by the formatter
+`watch ask` uses. Each ask is one paid API call per engine with a key. Across a weekly question set, `watch report`
+lists the searches that recur and how many carry a year or a ranking word; the
+[`ai-search-fanout`](skills/ai-search-fanout/SKILL.md) skill writes them up.</sub>
 
 ## Skills
 
