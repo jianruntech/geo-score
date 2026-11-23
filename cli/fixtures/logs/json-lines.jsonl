@@ -1,0 +1,2 @@
+{"time_iso8601": "2026-11-21T11:00:00+00:00", "remote_addr": "192.0.2.90", "request": "GET /about HTTP/1.1", "status": "200", "http_user_agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)"}
+{"ts": 1795262400.5, "request": {"remote_ip": "192.0.2.91", "method": "GET", "host": "example.com", "uri": "/docs/start", "headers": {"User-Agent": ["cohere-ai"]}}, "status": 200}

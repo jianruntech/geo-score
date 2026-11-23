@@ -1,0 +1,2 @@
+# Made up for tests: an RFC 5737 documentation range, not OpenAI's
+198.51.100.0/28

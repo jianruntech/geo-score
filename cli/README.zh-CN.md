@@ -44,7 +44,8 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 | `--brand NAME` | 配合 `--ask`：在回答里找哪个品牌名。默认取网站的域名，例如 `docs.stripe.com` 取 `stripe` |
 | `--domain DOMAIN` | 配合 `--ask`：另一个也算你的域名。可重复。被评的网站、它的注册域名，以及跳转后落地的域名，始终算你的 |
 
-子命令：`diff BEFORE AFTER` 对比两份保存下来的报告（见[对比两份报告](#对比两份报告)）；`watch …` 和 `mcp` 属于第二、三级
+子命令：`diff BEFORE AFTER` 对比两份保存下来的报告（见[对比两份报告](#对比两份报告)）；`crawlers LOG…` 离线读访问日志里的 AI 爬虫
+（见[访问日志里的 AI 爬虫](#ai-crawlers)）；`watch …` 和 `mcp` 属于第二、三级
 （见[第二、三级](#watch)）。`geo_score.py --help` 会列出全部子命令，并附上示例和退出码。
 
 `NO_COLOR=1` 会关掉颜色，输出重定向到文件时也一样。CLI 遵循 `HTTPS_PROXY` 和 `NO_PROXY`。
@@ -101,6 +102,46 @@ python3 geo_score.py diff before.json after.json [--format text|md|json] [--fail
 两份报告评的不是同一个目标时，同样对比并给出警告，这时的差异并不是变化。`--fail-on-drop` 在有检查项丢分、门槛项降到 0
 或分数段下降时以退出码 4 退出，和 `watch diff --fail-on-drop` 对引用的处理一样；不加它，无论什么变了，`diff` 都以 0 退出。
 `diff` 只需要 `geo_score.py`。
+
+## <a id="ai-crawlers"></a>访问日志里的 AI 爬虫
+
+```bash
+python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # 来了哪些 AI 爬虫、拿到了什么
+python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
+python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
+```
+
+`crawlers` 读网站自己的访问日志，统计 UA 写着 [reference/ai-crawlers.md](../reference/ai-crawlers.md) 里那些爬虫的请求：
+`g.reachable` 探测的 10 个检索爬虫，加上参考文件里的训练爬虫，两类分开；因为用户提问才去打开页面的检索爬虫（`ChatGPT-User`、`Claude-User`、
+`Perplexity-User`）单独一节。它离线、只读：不发任何请求，不打分，只写 `-o` 和 `--json-out` 指定的文件。
+
+| 日志 | 读哪些字段 |
+|---|---|
+| nginx 和 Apache 的 `combined`（以及 Apache 的 `vhost_combined`） | 客户端地址、时间、路径、状态码、UA |
+| Vercel 日志流（log drain）的 JSON 行 | `proxy.clientIp`、`proxy.timestamp`、`proxy.path`、`proxy.statusCode`、`proxy.userAgent`、`proxy.wafAction` |
+| Cloudflare Logpush 的 HTTP 请求 JSON 行 | `ClientIP`、`EdgeStartTimestamp`（Unix 秒到纳秒，或 RFC 3339）、`ClientRequestURI`、`EdgeResponseStatus`、`ClientRequestUserAgent`、`SecurityAction` 或 `WAFAction` |
+| 其他 JSON 行（nginx 的 JSON `log_format`、Caddy） | UA、路径或请求行、状态码、时间、客户端地址的常见字段名 |
+
+文件可以是 gzip（看开头的字节，不看文件名），`-` 读标准输入。日志一行一行读，超过 64 KiB 的行跳过不读；不属于上面任何格式的行记为「未读」，
+只记行号，不把日志内容抄进报告。
+
+每个爬虫给出：请求数、请求过的不同页面数、首次和最近一次的时间、状态码分布（2xx 到 5xx，外加 `blocked`：返回 401、403、429，或被
+Cloudflare、Vercel 的防火墙字段记为拦截或质询）、请求最多的页面。实时访问另有一条时间线：按天计数，加上最近的几次。页面按路径计，
+去掉查询串和末尾的斜杠。文本视图把路径包在 `«site text: …»` 里，Markdown 视图用代码格式，并按 robots.txt 规则比较时的方式做百分号编码。
+
+**UA 可以伪造。** 不加 `--verify-ips` 时，每个计数都只是 UA 自称的，报告里标「未核实」（unverified）。`--verify-ips NAME=FILE`
+（可重复）拿 FILE 里的 IP 段核对 NAME 的请求；FILE 由你自己下载：有几家厂商把爬虫的 IP 段公布成 JSON，里面是 `prefixes` 列表，
+每项是 `ipv4Prefix` 或 `ipv6Prefix`；CIDR 的 JSON 列表、每行一个 CIDR 的纯文本也行。核对后每个请求是 `verified`（在范围内）、
+`not_in_ranges`（不在范围内，多半不是厂商本身）或 `unverified`（没有可读的地址）。这个命令从不下载 IP 段文件。
+
+加 `--sitemap FILE`（本地的 `sitemap.xml` 或 `.xml.gz`）或 `--urls FILE`（每行一个网址或路径），报告会列出清单里没有任何检索爬虫、
+没有任何训练爬虫请求过的页面，以及请求过但从没拿到 2xx 的页面。
+
+`--format json`（或 `--json`）遵循 [`schema/crawlers.v1.json`](../schema/crawlers.v1.json)。退出码：`0` 日志读完；`2` 有文件读不了、
+所有文件里没有一行是上述格式的访问日志、IP 段文件或页面清单不可用，或者参数错误；加了 `--json` 时，退出码 2 会输出
+[`schema/error.v1.json`](../schema/error.v1.json)，kind 是 `usage`。日志只反映写日志的那台服务器收到了什么：前面的 CDN 或缓存可能已经
+直接回答了一些请求，它们不会出现在这份日志里。请求不等于引用，这里的一切都不进分数。
 
 ## 给自己的 README 加一枚徽章
 

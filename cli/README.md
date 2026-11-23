@@ -47,6 +47,7 @@ Without access to PyPI, the release wheel does the same:
 | `--domain DOMAIN` | With `--ask`: another domain that counts as yours. Repeatable. The scored site, its registrable domain and a redirect's landing domain always count |
 
 Subcommands: `diff BEFORE AFTER` compares two saved reports ([Comparing two reports](#comparing-two-reports)),
+`crawlers LOG…` reads your access logs for AI crawlers, offline ([AI crawlers in your access logs](#ai-crawlers-in-your-access-logs)),
 and `watch …` and `mcp` are levels 2 and 3 ([Watch](#watch)). `geo_score.py --help` lists them all, with
 examples and the exit codes.
 
@@ -109,6 +110,54 @@ compared with a warning, because a release can move a score on its own (the chan
 checks), and so are reports of two different targets, whose difference is not a change. `--fail-on-drop` exits 4 when any check lost points, a gate reached 0 or the band fell, as
 `watch diff --fail-on-drop` does for citations; without it, `diff` exits 0 whatever moved. `diff`
 needs only `geo_score.py`.
+
+## AI crawlers in your access logs
+
+```bash
+python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # which AI crawlers came, and what they got
+python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
+python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
+```
+
+`crawlers` reads the site's own access logs and counts the requests whose user-agent names a crawler of
+[reference/ai-crawlers.md](../reference/ai-crawlers.md): the ten retrieval crawlers `g.reachable` probes and the
+reference's training crawlers, kept apart, with the retrieval crawlers that fetch a page because a user asked a question
+(`ChatGPT-User`, `Claude-User`, `Perplexity-User`) in a section of their own. It is offline and read-only: it sends no
+request, scores nothing, and writes only the files `-o` and `--json-out` name.
+
+| Logs | What is read |
+|---|---|
+| nginx and Apache `combined` (and Apache's `vhost_combined`) | client address, time, path, status, user-agent |
+| Vercel log drain JSON lines | `proxy.clientIp`, `proxy.timestamp`, `proxy.path`, `proxy.statusCode`, `proxy.userAgent`, `proxy.wafAction` |
+| Cloudflare Logpush HTTP request JSON lines | `ClientIP`, `EdgeStartTimestamp` (Unix seconds to nanoseconds, or RFC 3339), `ClientRequestURI`, `EdgeResponseStatus`, `ClientRequestUserAgent`, `SecurityAction` or `WAFAction` |
+| Other JSON lines (nginx's JSON `log_format`, Caddy) | the usual names for the user agent, path or request line, status, time and client address |
+
+Files may be gzip (told by their first bytes, not their name), and `-` reads standard input. Lines are read one at a
+time, a line longer than 64 KiB is skipped unread, and a line in no format above is counted as not read, by line
+number only: no log content is copied into the report.
+
+For each crawler, the report gives its requests, the distinct pages it asked for, the first and last time, the status
+codes (2xx to 5xx, and `blocked`: answered 401, 403 or 429, or recorded by Cloudflare's or Vercel's firewall field as
+blocked or challenged), and the pages it requested most. Live fetches also get a timeline: a count per day, and the
+most recent ones. Pages are counted by path, with the query string and a trailing slash dropped. The text view quotes
+each path as `«site text: …»` and the Markdown view as code, percent-encoded as robots.txt rules compare it.
+
+**A user-agent can be forged.** Without `--verify-ips`, every count is what the user-agent claims, and the report says
+so: unverified. `--verify-ips NAME=FILE` (repeatable) checks NAME's requests against the address ranges in FILE, a file
+you download yourself: several vendors publish their crawlers' ranges as JSON with a `prefixes` list of `ipv4Prefix`
+and `ipv6Prefix` entries; a JSON list of CIDRs and plain text with one CIDR a line work too. Each request is then
+`verified`, `not_in_ranges` (most likely not the vendor) or `unverified` (no readable address). The command never
+downloads a range file.
+
+`--sitemap FILE` (a local `sitemap.xml` or `.xml.gz`) or `--urls FILE` (one URL or path a line) adds the listed pages
+no retrieval crawler, and no training crawler, requested, and those requested but never answered with a 2xx.
+
+`--format json` (or `--json`) follows [`schema/crawlers.v1.json`](../schema/crawlers.v1.json). Exit codes: `0` the
+logs were read, `2` a file could not be read, no line in any file is an access log in a format above, a range or page
+file is unusable, or a usage error; under `--json` an exit 2 prints [`schema/error.v1.json`](../schema/error.v1.json),
+kind `usage`. The logs show what reached the server that wrote them: a CDN or cache in front of it may have answered
+requests that never reached this log. Requests are not citations, and nothing here is part of the score.
 
 ## A badge for your own README
 

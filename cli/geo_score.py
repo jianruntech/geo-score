@@ -4430,6 +4430,622 @@ def render_report_diff(d, fmt="text"):
         L += ["Note: " + n] if md else textwrap.wrap("Note: " + n, 100, initial_indent="  ", subsequent_indent="        ")
     return "\n".join(L) + "\n"
 
+# ── AI crawlers in the site's own access logs: `geo-score crawlers LOG…` ──
+# Reads access logs the user already has, locally, and counts the requests whose user-agent names a crawler of
+# reference/ai-crawlers.md: which pages each one requested, how often, when, and what the server answered. Offline and
+# read-only: it sends no request and writes only the files it is told to. A user-agent is a claim anyone can forge, so
+# every count is what the user-agent claims, unless --verify-ips found the client address in a range file the user
+# supplied. Measurement only: nothing here says what to change on the site.
+
+# the training table of reference/ai-crawlers.md, with each operator (test_geo_score.py holds the two equal)
+TRAINING_UAS = [("GPTBot", "OpenAI"), ("ClaudeBot", "Anthropic"), ("CCBot", "Common Crawl"), ("cohere-ai", "Cohere"),
+                ("Bytespider", "ByteDance"), ("Meta-ExternalAgent", "Meta")]
+# the operator of each retrieval crawler, as the reference's retrieval table names it
+RETRIEVAL_OPERATORS = {"OAI-SearchBot": "OpenAI", "ChatGPT-User": "OpenAI", "Claude-SearchBot": "Anthropic",
+                       "Claude-User": "Anthropic", "PerplexityBot": "Perplexity", "Perplexity-User": "Perplexity",
+                       "Googlebot": "Google", "Bingbot": "Microsoft", "Applebot": "Apple", "Amazonbot": "Amazon"}
+# the retrieval crawlers that fetch a page live because a user's question asked for it, not to build an index
+LIVE_FETCHERS = ("ChatGPT-User", "Claude-User", "Perplexity-User")
+LOG_CRAWLERS = ([{"name": n, "operator": RETRIEVAL_OPERATORS[n], "kind": "retrieval", "live": n in LIVE_FETCHERS}
+                 for n, _ in RETRIEVAL_UAS] +
+                [{"name": n, "operator": o, "kind": "training", "live": False} for n, o in TRAINING_UAS])
+# a product token in a user-agent, whole: "Googlebot/2.1" names Googlebot, "Googlebot-Image/1.0" does not
+_LOG_UA = re.compile(r"(?<![A-Za-z0-9_-])(%s)(?![A-Za-z0-9_-])" % "|".join(
+    re.escape(x["name"]) for x in sorted(LOG_CRAWLERS, key=lambda x: -len(x["name"]))), re.I)
+_LOG_NAME = dict((x["name"].lower(), x["name"]) for x in LOG_CRAWLERS)
+LOG_LINE_MAX = 64 * 1024        # a longer line is skipped to its end, never held whole
+LOG_PAGES_MAX = 200000          # distinct pages kept per crawler; past it new pages are counted but not listed
+LOG_LIVE_MAX = 500              # live fetches kept in the timeline, the most recent ones
+LOG_LIST_MAX = 50000            # entries read from a --sitemap or --urls file
+LOG_SHOWN = 10                  # pages per crawler in the text and Markdown views (the JSON keeps up to LOG_JSON_PAGES)
+LOG_JSON_PAGES = 1000
+# a firewall's own record that it refused or challenged the request, where the log carries one
+_LOG_BLOCK_ACTIONS = frozenset(["block", "drop", "deny", "challenge", "jschallenge", "managedchallenge",
+                                "managed_challenge", "connectionclose", "rate_limit", "ratelimit"])
+_LOG_REFUSED = (401, 403, 429)
+_COMBINED = re.compile(
+    r'^(?:(?P<vhost>\S+) )?(?P<ip>\S+) \S+ \S+ \[(?P<time>[^\]]{1,64})\] "(?P<req>(?:[^"\\]|\\.){0,8192})" '
+    r'(?P<status>\d{3}|-) \S+(?: "(?:[^"\\]|\\.){0,8192}" "(?P<ua>(?:[^"\\]|\\.){0,8192})")?')
+_ISO_TIME = re.compile(r"^(\d{4})-(\d\d)-(\d\d)[T ](\d\d):(\d\d):(\d\d)(?:[.,]\d+)?\s*(Z|[+-]\d\d:?\d\d)?$", re.I)
+_CLF_TIME = re.compile(r"^(\d\d)/([A-Za-z]{3})/(\d{4}):(\d\d):(\d\d):(\d\d) ([+-]\d{4})$")
+_MONTHS = dict((m, i) for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+                                              "nov", "dec"], 1))
+_UTC = datetime.timezone.utc
+
+
+def _log_time(v):
+    """A log timestamp as an aware UTC datetime, or None: epoch seconds, milliseconds, microseconds or nanoseconds
+    (told apart by size), ISO 8601 / RFC 3339 (no offset is read as UTC), or Apache's 10/Oct/2026:13:55:36 -0700."""
+    try:
+        if isinstance(v, bool):
+            return None
+        if isinstance(v, str) and re.match(r"^\d{9,19}(\.\d+)?$", v.strip()):
+            v = float(v)
+        if isinstance(v, (int, float)):
+            x = float(v)
+            for scale in (1, 1e3, 1e6, 1e9):
+                if x / scale < 1e11:
+                    x /= scale
+                    break
+            t = datetime.datetime.fromtimestamp(x, _UTC)
+        elif isinstance(v, str):
+            s = v.strip()
+            m = _ISO_TIME.match(s)
+            if m:
+                y, mo, d, h, mi, se, tz = m.groups()
+                off = 0
+                if tz and tz.upper() != "Z":
+                    tz = tz.replace(":", "")
+                    off = (int(tz[1:3]) * 60 + int(tz[3:5])) * (1 if tz[0] == "+" else -1)
+                t = (datetime.datetime(int(y), int(mo), int(d), int(h), int(mi), int(se), tzinfo=_UTC)
+                     - datetime.timedelta(minutes=off))
+            else:
+                m = _CLF_TIME.match(s)
+                if not m or m.group(2).lower() not in _MONTHS:
+                    return None
+                d, mon, y, h, mi, se, tz = m.groups()
+                off = (int(tz[1:3]) * 60 + int(tz[3:5])) * (1 if tz[0] == "+" else -1)
+                t = (datetime.datetime(int(y), _MONTHS[mon.lower()], int(d), int(h), int(mi), int(se), tzinfo=_UTC)
+                     - datetime.timedelta(minutes=off))
+        else:
+            return None
+    except (ValueError, OverflowError, OSError):
+        return None
+    return t if 1990 <= t.year <= 2100 else None
+
+
+def _log_status(v):
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    return n if 100 <= n <= 599 else None
+
+
+def _log_path(v):
+    """The path a request asked for, without its query or fragment, in the form robots.txt rules compare
+    (robots_path), with no trailing slash but on "/"; None when there is none."""
+    if not isinstance(v, str) or not v.strip():
+        return None
+    s = v.strip()
+    if "://" in s[:12]:
+        s = urllib.parse.urlsplit(s).path or "/"
+    s = s.split("#", 1)[0].split("?", 1)[0]
+    if not s.startswith("/"):
+        return None
+    s = robots_path(s)
+    return s.rstrip("/") or "/"
+
+
+def _first(d, keys):
+    """The first of keys that d holds a value for, each key a dotted path into nested objects."""
+    for k in keys:
+        v = d
+        for part in k.split("."):
+            v = v.get(part) if isinstance(v, dict) else None
+        if isinstance(v, list):
+            v = next((x for x in v if isinstance(x, str) and x), None)
+        if v not in (None, ""):
+            return v
+    return None
+
+
+def _log_json(obj):
+    """(format, fields) for one JSON log line: a Vercel log drain line, a Cloudflare Logpush HTTP request, or
+    any JSON line with the usual field names (nginx's JSON log_format, Caddy); None when it holds no request."""
+    if not isinstance(obj, dict):
+        return None
+    if isinstance(obj.get("proxy"), dict):
+        p = obj["proxy"]
+        return "vercel", {"time": p.get("timestamp") or obj.get("timestamp"), "ip": p.get("clientIp"),
+                          "path": p.get("path") or obj.get("path"), "status": p.get("statusCode") or obj.get("statusCode"),
+                          "ua": _first(p, ["userAgent"]), "action": p.get("wafAction")}
+    if "ClientRequestUserAgent" in obj or "EdgeResponseStatus" in obj:
+        return "cloudflare", {"time": obj.get("EdgeStartTimestamp"), "ip": obj.get("ClientIP"),
+                              "path": obj.get("ClientRequestURI") or obj.get("ClientRequestPath"),
+                              "status": obj.get("EdgeResponseStatus"), "ua": obj.get("ClientRequestUserAgent"),
+                              "action": obj.get("SecurityAction") or obj.get("WAFAction")}
+    ua = _first(obj, ["user_agent", "userAgent", "http_user_agent", "ua", "useragent", "user-agent", "User-Agent",
+                      "request.headers.User-Agent", "request.headers.user-agent", "headers.User-Agent",
+                      "headers.user-agent", "http.user_agent", "http.request.headers.user-agent"])
+    path = _first(obj, ["request_uri", "uri", "path", "url", "request.uri", "request.path", "request.url",
+                        "http.url", "http.path"])
+    if path is None and isinstance(obj.get("request"), str):
+        parts = obj["request"].split(" ")
+        path = parts[1] if len(parts) > 1 else None
+    if ua is None and path is None:
+        return None
+    return "json", {"time": _first(obj, ["time", "timestamp", "ts", "@timestamp", "time_iso8601", "time_local",
+                                         "date", "datetime"]),
+                    "ip": _first(obj, ["remote_addr", "client_ip", "clientIp", "remote_ip", "ip", "request.remote_ip",
+                                       "request.client_ip", "http.client_ip", "x_forwarded_for"]),
+                    "path": path, "status": _first(obj, ["status", "status_code", "statusCode", "response_status",
+                                                         "http.status_code", "response.status"]),
+                    "ua": ua, "action": None}
+
+
+def parse_log_line(line):
+    """(format, fields) for one access-log line, or None when it is in no format this reads. fields: time (aware
+    datetime or None), ip, path (as _log_path gives it), status, ua, blocked_by_firewall."""
+    s = line.strip()
+    if not s:
+        return None
+    if s[0] == "{":
+        try:
+            got = _log_json(json.loads(s))
+        except ValueError:
+            return None
+        if got is None:
+            return None
+        fmt, f = got
+        raw_time = f["time"]
+    else:
+        m = _COMBINED.match(s)
+        if not m:
+            return None
+        parts = m.group("req").split(" ")
+        fmt = "combined"
+        f = {"ip": m.group("ip"), "path": parts[1] if len(parts) > 1 else None, "status": m.group("status"),
+             "ua": (m.group("ua") or "").replace('\\"', '"').replace("\\x22", '"') or None, "action": None}
+        raw_time = m.group("time")
+    ua = f["ua"] if isinstance(f["ua"], str) else None
+    action = f["action"].lower().replace(" ", "") if isinstance(f["action"], str) else ""
+    return fmt, {"time": _log_time(raw_time), "ip": f["ip"] if isinstance(f["ip"], str) else None,
+                 "path": _log_path(f["path"]), "status": _log_status(f["status"]), "ua": ua,
+                 "firewall": action in _LOG_BLOCK_ACTIONS}
+
+
+def log_crawler(ua):
+    """The crawler of reference/ai-crawlers.md a user-agent names (the first one in it), or None."""
+    m = _LOG_UA.search(ua) if ua else None
+    return _LOG_NAME[m.group(1).lower()] if m else None
+
+
+def _log_lines(path):
+    """(line number, text) for each line of a log file, plain or gzip (told by its first bytes), or "-" for stdin.
+    It reads one line at a time, at most LOG_LINE_MAX bytes of it: a longer line yields None as its text and is
+    skipped to its end, so no file and no line is ever held whole."""
+    base = sys.stdin.buffer if path == "-" else open(path, "rb")
+    f = base
+    try:
+        head = f.peek(2)[:2] if hasattr(f, "peek") else b""
+        if head == b"\x1f\x8b":
+            import gzip
+            f = gzip.GzipFile(fileobj=f)
+        n = 0
+        while True:
+            raw = f.readline(LOG_LINE_MAX + 1)
+            if not raw:
+                return
+            n += 1
+            if len(raw) > LOG_LINE_MAX:
+                while raw and not raw.endswith(b"\n"):
+                    raw = f.readline(LOG_LINE_MAX)
+                yield n, None
+                continue
+            text = raw.decode("utf-8", "replace")
+            yield n, (text[1:] if n == 1 and text.startswith("﻿") else text)
+    finally:
+        if base is not sys.stdin.buffer:
+            base.close()
+
+
+def load_ip_ranges(spec):
+    """(crawler, [networks]) from NAME=FILE: a vendor's published range file (JSON whose "prefixes" hold
+    "ipv4Prefix" and "ipv6Prefix" entries), a JSON list of CIDRs, or plain text with one CIDR a line."""
+    name, sep, path = spec.partition("=")
+    crawler = _LOG_NAME.get(name.strip().lower())
+    if not sep or not path:
+        raise ScoreError("--verify-ips takes NAME=FILE, e.g. GPTBot=gptbot.json; got %r" % spec[:80], kind="usage")
+    if crawler is None:
+        raise ScoreError("--verify-ips: %r is not a crawler of reference/ai-crawlers.md (%s)" % (
+            name[:40], ", ".join(x["name"] for x in LOG_CRAWLERS)), kind="usage")
+    try:
+        with io.open(path, encoding="utf-8-sig") as fh:
+            text = fh.read(20 * 1024 * 1024)
+    except OSError as e:
+        raise ScoreError("cannot read %s: %s" % (path, e.strerror or e), kind="usage") from None
+    try:
+        data = json.loads(text)
+    except ValueError:
+        data = [x.split("#", 1)[0].strip() for x in text.splitlines()]
+    if isinstance(data, dict):
+        data = [p.get("ipv4Prefix") or p.get("ipv6Prefix") or p.get("ip_prefix") or p.get("ipv6_prefix")
+                for p in data.get("prefixes") or [] if isinstance(p, dict)]
+    nets = []
+    for x in data if isinstance(data, list) else []:
+        if isinstance(x, str) and x:
+            try:
+                nets.append(ipaddress.ip_network(x, strict=False))
+            except ValueError:
+                pass
+    if not nets:
+        raise ScoreError("%s holds no address range for %s (JSON with prefixes, a JSON list of CIDRs, or one CIDR "
+                         "a line)" % (path, crawler), kind="usage")
+    return crawler, nets
+
+
+def _log_ip(s):
+    """The client address of a log line: the first of a forwarded list, without a port or brackets."""
+    if not s:
+        return None
+    s = s.split(",", 1)[0].strip()
+    if s.startswith("[") and "]" in s:
+        s = s[1:s.index("]")]
+    elif s.count(":") == 1:
+        s = s.split(":", 1)[0]
+    try:
+        return ipaddress.ip_address(s)
+    except ValueError:
+        return None
+
+
+def load_page_list(path, kind):
+    """The pages of a local sitemap (its <loc> entries) or of a URL list (one URL or path a line), as _log_path
+    gives them, in order and once each."""
+    try:
+        with open(path, "rb") as fh:
+            raw = fh.read(64 * 1024 * 1024)
+    except OSError as e:
+        raise ScoreError("cannot read %s: %s" % (path, e.strerror or e), kind="usage") from None
+    if raw[:2] == b"\x1f\x8b":
+        try:
+            raw = zlib.decompress(raw, 16 + zlib.MAX_WBITS)
+        except zlib.error:
+            raise ScoreError("%s is not a readable gzip file" % path, kind="usage") from None
+    text = raw.decode("utf-8", "replace")
+    items = ([html.unescape(x.strip()) for x in re.findall(r"<loc>\s*([^<]+)", text)] if kind == "sitemap"
+             else [x.strip() for x in text.splitlines() if x.strip() and not x.strip().startswith("#")])
+    out = []
+    for x in items:
+        p = _log_path(x)
+        if p and p not in out:
+            out.append(p)
+        if len(out) >= LOG_LIST_MAX:
+            break
+    if not out:
+        raise ScoreError("%s lists no page (%s)" % (path, "no <loc> entry" if kind == "sitemap" else
+                                                     "one URL or path a line"), kind="usage")
+    return out
+
+
+def _iso(t):
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ") if t else None
+
+
+def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
+    """The crawlers report (schema/crawlers.v1.json) for the access logs at paths. ranges: {crawler: [networks]} from
+    --verify-ips; pages: the pages of a --sitemap or --urls file, to find the ones no crawler requested."""
+    ranges = ranges or {}
+    crawl = dict((x["name"], {"requests": 0, "first": None, "last": None, "codes": {}, "blocked": 0, "firewall": 0,
+                              "verified": 0, "not_in_ranges": 0, "unverified": 0, "pages": {},
+                              "pages_not_kept": 0}) for x in LOG_CRAWLERS)
+    kind = dict((x["name"], x) for x in LOG_CRAWLERS)
+    live, live_days, files = [], {}, []
+    window = [None, None]
+    seen_ip = {}
+    for path in paths:
+        st = {"path": path, "lines": 0, "read": 0, "not_read": 0, "too_long": 0, "formats": {}, "first_not_read": [],
+              "ai_requests": 0}
+        try:
+            for n, text in _log_lines(path):
+                st["lines"] = n
+                got = parse_log_line(text) if text is not None else None
+                if got is None:
+                    if text is None:
+                        st["too_long"] += 1
+                    elif not text.strip():
+                        continue
+                    st["not_read"] += 1
+                    if len(st["first_not_read"]) < 5:
+                        st["first_not_read"].append(n)
+                    continue
+                fmt, f = got
+                st["read"] += 1
+                st["formats"][fmt] = st["formats"].get(fmt, 0) + 1
+                t = f["time"]
+                if t:
+                    window[0] = t if window[0] is None or t < window[0] else window[0]
+                    window[1] = t if window[1] is None or t > window[1] else window[1]
+                name = log_crawler(f["ua"])
+                if name is None:
+                    continue
+                st["ai_requests"] += 1
+                c = crawl[name]
+                c["requests"] += 1
+                if t:
+                    c["first"] = t if c["first"] is None or t < c["first"] else c["first"]
+                    c["last"] = t if c["last"] is None or t > c["last"] else c["last"]
+                code = f["status"]
+                key = str(code) if code else "unknown"
+                c["codes"][key] = c["codes"].get(key, 0) + 1
+                c["firewall"] += f["firewall"]
+                c["blocked"] += bool(f["firewall"] or code in _LOG_REFUSED)
+                vs, ip = "unverified", _log_ip(f["ip"]) if name in ranges else None
+                if ip is not None:
+                    k = (name, ip)
+                    if k not in seen_ip:
+                        if len(seen_ip) > 100000:
+                            seen_ip.clear()
+                        seen_ip[k] = any(ip in net for net in ranges[name] if net.version == ip.version)
+                    vs = "verified" if seen_ip[k] else "not_in_ranges"
+                c[vs] += 1
+                p = f["path"]
+                if p:
+                    pg = c["pages"].get(p)
+                    if pg is None:
+                        if len(c["pages"]) >= LOG_PAGES_MAX:
+                            c["pages_not_kept"] += 1
+                        else:
+                            c["pages"][p] = pg = [0, t, t, 0]
+                    if pg is not None:
+                        pg[0] += 1
+                        pg[3] += bool(code and 200 <= code < 300)
+                        if t:
+                            pg[1] = t if pg[1] is None or t < pg[1] else pg[1]
+                            pg[2] = t if pg[2] is None or t > pg[2] else pg[2]
+                if kind[name]["live"]:
+                    live.append({"time": _iso(t), "crawler": name, "path": p, "status": code, "verification": vs})
+                    if len(live) > 2 * LOG_LIVE_MAX:
+                        live.sort(key=lambda e: e["time"] or "")
+                        del live[:-LOG_LIVE_MAX]
+                    day = t.strftime("%Y-%m-%d") if t else "unknown"
+                    live_days.setdefault(day, {})[name] = live_days.get(day, {}).get(name, 0) + 1
+        except OSError as e:
+            raise ScoreError("cannot read %s: %s" % (path, e.strerror or e), kind="usage") from None
+        except EOFError:
+            raise ScoreError("%s ends in the middle of its gzip stream" % path, kind="usage") from None
+        files.append(st)
+    if not sum(s["read"] for s in files):
+        raise ScoreError("none of the %s in %s is an access log this reads: the combined format of nginx and "
+                         "Apache, Vercel or Cloudflare JSON lines, or JSON lines with a user agent and a path" % (
+                             _plural(sum(s["lines"] for s in files), "line"), ", ".join(s["path"] for s in files)),
+                         kind="usage")
+    live.sort(key=lambda e: e["time"] or "")
+    rows = []
+    for x in LOG_CRAWLERS:
+        c = crawl[x["name"]]
+        ranked = sorted(c["pages"].items(), key=lambda kv: (-kv[1][0], kv[0]))
+        codes = c["codes"]
+        band = lambda lo, codes=codes: sum(v for k, v in codes.items() if k.isdigit() and lo <= int(k) < lo + 100)
+        rows.append({"name": x["name"], "operator": x["operator"], "kind": x["kind"], "live": x["live"],
+                     "requests": c["requests"], "first": _iso(c["first"]), "last": _iso(c["last"]),
+                     "pages": len(c["pages"]) + c["pages_not_kept"],
+                     "status": {"2xx": band(200), "3xx": band(300), "4xx": band(400), "5xx": band(500),
+                                "unknown": codes.get("unknown", 0), "codes": dict(sorted(codes.items())),
+                                "blocked": c["blocked"], "firewall": c["firewall"]},
+                     "verification": {"checked": x["name"] in ranges, "verified": c["verified"],
+                                      "not_in_ranges": c["not_in_ranges"], "unverified": c["unverified"]},
+                     "top_pages": [{"path": k, "requests": v[0], "ok": v[3], "first": _iso(v[1]), "last": _iso(v[2])}
+                                   for k, v in ranked[:LOG_JSON_PAGES]],
+                     "pages_listed": min(len(ranked), LOG_JSON_PAGES)})
+    missing = None
+    if pages is not None:
+        missing = {"source": page_source, "pages": len(pages)}
+        for k in ("retrieval", "training"):
+            asked = set(p for x in LOG_CRAWLERS if x["kind"] == k for p in crawl[x["name"]]["pages"])
+            served = set(p for x in LOG_CRAWLERS if x["kind"] == k for p, v in crawl[x["name"]]["pages"].items() if v[3])
+            never = [p for p in pages if p not in asked]
+            unserved = [p for p in pages if p in asked and p not in served]
+            missing[k] = {"not_requested": len(never), "not_requested_paths": never[:LOG_JSON_PAGES],
+                          "requested_never_2xx": len(unserved), "requested_never_2xx_paths": unserved[:LOG_JSON_PAGES]}
+    notes = ["A user-agent is a claim: anyone can send GPTBot's. %s" % (
+                 "Requests from a crawler with a range file were checked against it; the rest are unverified."
+                 if ranges else "No request here was checked against an address range (--verify-ips), so every "
+                                "count is what the user-agent claims: unverified."),
+             "These logs show what reached the server that wrote them. A CDN or cache in front of it may have answered "
+             "requests that never reached this log, and a CDN's own log may show refusals this one cannot.",
+             "Pages are counted by path: query strings and fragments are dropped, and a trailing slash is ignored.",
+             "Only the crawlers of reference/ai-crawlers.md are counted. Requests from other agents, and from the same "
+             "vendors under other names, are not.",
+             "This counts requests. It says nothing about whether a page was cited, and nothing here is part of any "
+             "score."]
+    if any(s["too_long"] for s in files):
+        notes.append("Lines longer than %d bytes were skipped unread." % LOG_LINE_MAX)
+    if any(c["pages_not_kept"] for c in crawl.values()):
+        notes.append("A crawler requested more than %d distinct pages; the pages past that are counted in its total "
+                     "but not listed, and are not compared with --sitemap or --urls." % LOG_PAGES_MAX)
+    return {"format": "geo-score/crawlers.v1", "tool": "geo-score-cli/%s" % __version__,
+            "generated_at": _iso(datetime.datetime.now(_UTC)),
+            "window": {"from": _iso(window[0]), "to": _iso(window[1])},
+            "files": [dict(s, formats=dict(sorted(s["formats"].items()))) for s in files],
+            "lines": {"total": sum(s["lines"] for s in files), "read": sum(s["read"] for s in files),
+                      "not_read": sum(s["not_read"] for s in files),
+                      "ai_requests": sum(s["ai_requests"] for s in files)},
+            "verification": {"mode": "ip_ranges" if ranges else "user_agent_only",
+                             "ranges": [{"crawler": k, "networks": len(v)} for k, v in sorted(ranges.items())]},
+            "crawlers": rows,
+            "live_fetches": {"total": sum(sum(d.values()) for d in live_days.values()),
+                             "by_day": [dict(day=d, **dict(sorted(v.items()))) for d, v in sorted(live_days.items())],
+                             "recent": live[-LOG_LIVE_MAX:]},
+            "pages_not_requested": missing, "notes": notes}
+
+
+def _when(iso):
+    return iso[:16].replace("T", " ") if iso else "—"
+
+
+def _log_table(headers, rows, md):
+    rows = [[str(x) for x in r] for r in rows]
+    if md:
+        out = ["| " + " | ".join(headers) + " |", "|" + "|".join("---" for _ in headers) + "|"]
+        return out + ["| " + " | ".join(x.replace("|", "\\|") for x in r) + " |" for r in rows] + [""]
+    w = [max([len(h)] + [len(r[i]) for r in rows]) for i, h in enumerate(headers)]
+    return (["  " + "  ".join(h.ljust(w[i]) for i, h in enumerate(headers)).rstrip()] +
+            ["  " + "  ".join(x.ljust(w[i]) for i, x in enumerate(r)).rstrip() for r in rows])
+
+
+def render_crawlers(r, fmt="text"):
+    """The crawlers report (read_crawler_logs) as plain text or Markdown. A path is the site's text, read from the
+    log: a code span in Markdown and a «site text: …» fence in plain text, as every other view quotes it."""
+    md = fmt == "md"
+    quote = (lambda s: "`%s`" % clip(s, 120)) if md else (lambda s: site_text(s, 120))
+    L = []
+
+    def head(s):
+        return ([] if L and not L[-1] else [""]) + (["## " + s, ""] if md else [s])
+    L += ["# AI crawlers in access logs" if md else "%sAI CRAWLERS IN ACCESS LOGS%s" % (c.b, c.r), ""]
+    ln, win = r["lines"], r["window"]
+    L.append("Read %s of %s lines from %s · %s to %s UTC · %s requests from AI crawlers." % (
+        "{:,}".format(ln["read"]), "{:,}".format(ln["total"]), _plural(len(r["files"]), "file"), _when(win["from"]),
+        _when(win["to"]), "{:,}".format(ln["ai_requests"])))
+    for s in r["files"]:
+        fm = ", ".join("%s %s" % (k, "{:,}".format(v)) for k, v in s["formats"].items()) or "none"
+        bad = ""
+        if s["not_read"] or s["too_long"]:
+            bad = "; not read: %s%s" % ("{:,}".format(s["not_read"] + s["too_long"]),
+                                        " (first at line %s)" % ", ".join(str(x) for x in s["first_not_read"])
+                                        if s["first_not_read"] else "")
+        L.append(("- " if md else "  ") + "%s: %s%s" % (quote(s["path"]) if md else s["path"], fm, bad))
+    v = r["verification"]
+    L.append("")
+    L.append(("**%s**" if md else "%s") % (
+        "Unverified: a user-agent can be forged, and no request was checked against an address range (--verify-ips)."
+        if v["mode"] == "user_agent_only" else
+        "Address ranges checked for %s; every other crawler's requests are unverified (a user-agent can be forged)."
+        % ", ".join(x["crawler"] for x in v["ranges"])))
+
+    def checked(x):
+        q = x["verification"]
+        return ("%d verified, %d not in ranges" % (q["verified"], q["not_in_ranges"]) +
+                (", %d no address" % q["unverified"] if q["unverified"] else "")) if q["checked"] else "unverified"
+    seen = [x for x in r["crawlers"] if x["requests"]]
+    groups = [("Retrieval crawlers: fetch pages to build the index AI answers draw on",
+               [x for x in seen if x["kind"] == "retrieval" and not x["live"]]),
+              ("Live fetches: an engine opened the page because a user's question asked for it",
+               [x for x in seen if x["live"]]),
+              ("Training crawlers: collect pages for model training, not to answer a question",
+               [x for x in seen if x["kind"] == "training"])]
+    for title, rows in groups:
+        L += head(title)
+        if not rows:
+            L.append("None in these logs.")
+            continue
+        L += _log_table(["crawler", "operator", "requests", "pages", "first", "last", "2xx", "3xx", "4xx", "5xx",
+                         "blocked", "user-agent check"],
+                        [[x["name"], x["operator"], x["requests"], x["pages"], _when(x["first"]), _when(x["last"]),
+                          x["status"]["2xx"], x["status"]["3xx"], x["status"]["4xx"], x["status"]["5xx"],
+                          x["status"]["blocked"], checked(x)] for x in rows], md)
+    absent = [x["name"] for x in r["crawlers"] if not x["requests"]]
+    if absent:
+        L += ["", "Not in these logs: %s." % ", ".join(absent)]
+    lf = r["live_fetches"]
+    if lf["total"]:
+        names = [x for x in LIVE_FETCHERS if any(x in d for d in lf["by_day"])]
+        L += head("Live fetches by day (UTC)")
+        L += _log_table(["day"] + names, [[d["day"]] + [d.get(n, 0) for n in names] for d in lf["by_day"]], md)
+        L += head("The most recent live fetches")
+        L += _log_table(["time", "crawler", "status", "page"],
+                        [[_when(e["time"]), e["crawler"], e["status"] or "—", quote(e["path"]) if e["path"] else "—"]
+                         for e in reversed(lf["recent"][-20:])], md)
+    if seen:
+        L += head("Pages each crawler requested most")
+        for x in seen:
+            L.append(("**%s**, %s" if md else "  %s, %s") % (x["name"], _plural(x["pages"], "page")))
+            if md:
+                L.append("")
+            L += _log_table(["requests", "2xx", "first", "last", "page"],
+                            [[p["requests"], p["ok"], _when(p["first"]), _when(p["last"]), quote(p["path"])]
+                             for p in x["top_pages"][:LOG_SHOWN]], md)
+        odd = [x for x in seen if any(not k.startswith(("2", "3")) for k in x["status"]["codes"])]
+        if odd:
+            L += head("Answers other than 2xx and 3xx, by crawler")
+            for x in odd:
+                cs = ", ".join("%s × %s" % (k, "{:,}".format(n)) for k, n in x["status"]["codes"].items()
+                               if not k.startswith(("2", "3")))
+                fw = " (%s recorded by a firewall as blocked or challenged)" % x["status"]["firewall"] \
+                    if x["status"]["firewall"] else ""
+                L.append(("- " if md else "  ") + "%s: %s%s" % (x["name"], cs, fw))
+    m = r["pages_not_requested"]
+    if m:
+        for k, label in (("retrieval", "retrieval crawler"), ("training", "training crawler")):
+            g = m[k]
+            L += head("Pages in %s that no %s requested: %d of %d" % (m["source"], label, g["not_requested"], m["pages"]))
+            L += [("- " if md else "  ") + quote(p) for p in g["not_requested_paths"][:20]]
+            if g["not_requested"] > 20:
+                L.append(("- " if md else "  ") + "… and %d more (all of them are in the JSON report)"
+                         % (g["not_requested"] - 20))
+            if g["requested_never_2xx"]:
+                L.append("")
+                L.append("Requested, but never answered with a 2xx: %d" % g["requested_never_2xx"])
+                L += [("- " if md else "  ") + quote(p) for p in g["requested_never_2xx_paths"][:20]]
+    L += head("Read this before quoting the numbers")
+    L += ["- " + n for n in r["notes"]]
+    return "\n".join(L) + "\n"
+
+
+def _plural(n, word):
+    return "%s %s%s" % ("{:,}".format(n), word, "" if n == 1 else "s")
+
+
+def crawlers_main(argv, prog="geo-score crawlers"):
+    """`geo-score crawlers LOG…`: which crawlers of reference/ai-crawlers.md requested what, read from the site's own
+    access logs. Offline and read-only. Exits 0, or 2 when no file can be read or no line is an access log."""
+    fmt = "json" if "--json" in argv else (
+        next((x.split("=", 1)[1] for x in argv if x.startswith("--format=")), None) or
+        (argv[argv.index("--format") + 1] if "--format" in argv[:-1] else "text"))
+    _CLI.update(json=fmt == "json")
+    ap = _Parser(prog=prog, description="Read your access logs, offline, and count the requests whose user-agent "
+                                        "names an AI crawler of reference/ai-crawlers.md: the pages each one "
+                                        "requested, when, and what the server answered. A user-agent can be forged: "
+                                        "counts are unverified unless --verify-ips checks the client address.")
+    ap.add_argument("logs", nargs="+", metavar="LOG",
+                    help="access logs: nginx or Apache combined, Vercel or Cloudflare JSON lines, or other JSON lines "
+                         "with a user agent and a path; plain or gzip; - reads standard input")
+    ap.add_argument("--format", choices=["text", "md", "json"], default="text",
+                    help="text (default), md, or json (schema/crawlers.v1.json)")
+    ap.add_argument("--json", action="store_true", help="the same as --format json")
+    ap.add_argument("-o", "--output", metavar="FILE", help="write the report to FILE instead of standard output")
+    ap.add_argument("--json-out", metavar="FILE", help="also write the JSON report to FILE (one read, two outputs)")
+    ap.add_argument("--verify-ips", metavar="NAME=FILE", action="append", default=[],
+                    help="check NAME's requests against the address ranges in FILE, a range file you downloaded from "
+                         "the vendor (JSON with prefixes, a JSON list of CIDRs, or one CIDR a line). Repeatable. "
+                         "Without it every count is unverified")
+    pages = ap.add_mutually_exclusive_group()
+    pages.add_argument("--sitemap", metavar="FILE", help="a local sitemap.xml (or .xml.gz): list its pages no "
+                                                         "crawler requested")
+    pages.add_argument("--urls", metavar="FILE", help="a local list of URLs or paths, one a line: the same")
+    a = ap.parse_args(argv)
+    fmt = "json" if a.json else a.format
+    ranges = {}
+    for spec in a.verify_ips:
+        name, nets = load_ip_ranges(spec)
+        ranges.setdefault(name, []).extend(nets)
+    page_list = src = None
+    if a.sitemap or a.urls:
+        src = a.sitemap or a.urls
+        page_list = load_page_list(src, "sitemap" if a.sitemap else "urls")
+    rep = read_crawler_logs(a.logs, ranges, page_list, os.path.basename(src) if src else None)
+    js = json.dumps(rep, ensure_ascii=False, indent=2) + "\n"
+    out = js if fmt == "json" else render_crawlers(rep, fmt)
+    if a.json_out:
+        _write(a.json_out, js)
+    if a.output:
+        _write(a.output, out)
+    else:
+        sys.stdout.write(out)
+    return 0
+
 def diff_main(argv, prog="geo-score diff"):
     """`geo_score.py diff BEFORE AFTER`: two level-1 reports compared check by check. Exits 0, or 4 when
     --fail-on-drop finds a drop; a file that is not a report, or two rubric versions, exit 2."""
@@ -4601,6 +5217,7 @@ def error_json(kind, message, target):
 
 HELP_USAGE = ("%(prog)s [options] URL\n"
               "       %(prog)s diff BEFORE.json AFTER.json [options]\n"
+              "       %(prog)s crawlers ACCESS.log [...] [options]\n"
               "       %(prog)s watch {init,check,run,ask,report,diff,runs} [options]\n"
               "       %(prog)s mcp [options]")
 
@@ -4621,6 +5238,7 @@ def help_epilog(me):
         "",
         "Commands:",
         "  diff BEFORE AFTER  compare two JSON reports check by check",
+        "  crawlers LOG …     which AI crawlers your access logs show, offline",
         "  watch …            level 3, your API keys: citations week over week",
         "  mcp                serve all three levels over MCP (stdio)",
         "  URL --ask Q        level 2, your API keys: a live citation check",
@@ -4646,6 +5264,9 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "diff":
         # level 1 only: comparing two reports needs nothing from geo_watch.py
         sys.exit(diff_main(sys.argv[2:], prog=me + " diff"))
+    if len(sys.argv) > 1 and sys.argv[1] == "crawlers":
+        # the site's own access logs, read offline: nothing from geo_watch.py and no request
+        sys.exit(crawlers_main(sys.argv[2:], prog=me + " crawlers"))
     if len(sys.argv) > 1 and sys.argv[1] in ("watch", "mcp"):
         w = _watch_module(what=sys.argv[1])
         if sys.argv[1] == "watch":

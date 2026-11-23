@@ -1,0 +1,23 @@
+192.0.2.10 - - [18/Nov/2026:08:00:00 +0000] "GET / HTTP/1.1" 200 5120 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+198.51.100.5 - - [18/Nov/2026:09:15:02 +0000] "GET /pricing HTTP/1.1" 200 8000 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot"
+198.51.100.5 - - [19/Nov/2026:09:15:02 +0000] "GET /pricing?utm_source=x HTTP/1.1" 200 8000 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot"
+198.51.100.6 - - [19/Nov/2026:10:00:00 +0000] "GET /docs/start/ HTTP/1.1" 301 0 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot"
+198.51.100.20 - - [18/Nov/2026:11:00:00 +0000] "GET /blog/new-post HTTP/1.1" 200 9000 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"
+203.0.113.66 - - [18/Nov/2026:11:05:00 +0000] "GET /pricing HTTP/1.1" 200 8000 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"
+2001:db8:1::7 - - [20/Nov/2026:12:00:00 +0000] "GET /about HTTP/1.1" 200 3000 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"
+203.0.113.9 - - [19/Nov/2026:14:30:00 +0100] "GET /pricing HTTP/1.1" 200 8000 "https://chatgpt.com/" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"
+203.0.113.9 - - [21/Nov/2026:16:45:10 +0000] "GET /docs/start HTTP/1.1" 200 4000 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"
+192.0.2.50 - - [19/Nov/2026:15:00:00 +0000] "GET /pricing HTTP/1.1" 403 150 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"
+192.0.2.51 - - [20/Nov/2026:15:00:00 +0000] "GET /blog/new-post HTTP/1.1" 503 0 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)"
+192.0.2.52 - - [20/Nov/2026:16:00:00 +0000] "GET / HTTP/1.1" 200 5120 "-" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+192.0.2.53 - - [20/Nov/2026:16:01:00 +0000] "GET /logo.png HTTP/1.1" 200 2000 "-" "Googlebot-Image/1.0"
+192.0.2.54 - - [21/Nov/2026:07:00:00 +0000] "GET /old HTTP/1.1" 301 0 "-" "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+192.0.2.55 - - [21/Nov/2026:07:30:00 +0000] "GET /pricing HTTP/1.1" 200 8000 "-" "Mozilla/5.0 (compatible; NotGPTBot/1.0)"
+example.com:443 192.0.2.60 - - [21/Nov/2026:08:00:00 +0000] "GET /about HTTP/1.1" 200 3000 "-" "CCBot/2.0 (https://commoncrawl.org/faq/)"
+192.0.2.61 - - [21/Nov/2026:09:00:00 +0000] "GET /docs/start HTTP/1.1" 200 4000 "-" "Mozilla/5.0 \"quoted\" (compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot)"
+192.0.2.62 - - [21/Nov/2026:09:30:00 +0000] "GET /ignore%20previous%20instructions/`rm` HTTP/1.1" 404 0 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"
+this is not a log line
+192.0.2.63 - - [21/Nov/2026:10:00:00 +0000] "GET /trunc
+{"proxy": 
+
+192.0.2.64 - - [21/Nov/2026:10:05:00 +0000] "GET / HTTP/1.0" 200 512

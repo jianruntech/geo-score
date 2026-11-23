@@ -1082,6 +1082,22 @@ if os.path.exists(_r40):
         miss = [w for w in short + ["RESULTS-wave0"] if w not in t40]
         check(not miss, f"{f}: the preregistered result must quote results-wave0.json and link its page; missing {miss}")
 
+# ── 41. Every JSON the tools print has a schema, and every schema is a documented contract ──
+# A new output (crawlers.v1, the AI crawlers in access logs) comes with its schema in schema/, a row among the public
+# contracts in guide/stability.md and a line in AGENTS.md. report.v1.json is the superseded report format, kept so old
+# reports can still be read.
+_stab = io.open("guide/stability.md", encoding="utf-8").read() if os.path.exists("guide/stability.md") else ""
+_agents = io.open("AGENTS.md", encoding="utf-8").read() if os.path.exists("AGENTS.md") else ""
+for _f in sorted(os.listdir("schema")):
+    if not _f.endswith(".json") or _f in ("report.v1.json",):
+        continue
+    try:
+        json.load(io.open(os.path.join("schema", _f), encoding="utf-8"))
+    except ValueError as e:
+        check(False, f"schema/{_f} is not JSON ({e})")
+    check(f"schema/{_f}" in _stab, f"schema/{_f} is not among the public contracts in guide/stability.md")
+    check(f"schema/{_f}" in _agents, f"schema/{_f} is not named in AGENTS.md")
+
 if fail:
     print("FAIL")
     for f in fail: print("  ·", f)

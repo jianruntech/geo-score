@@ -2065,8 +2065,9 @@ for _me in ("geo_score.py", "geo-score"):
     _help = _out.getvalue()
     _lines = _help.splitlines()
     eq((_code, _lines[0]), (0, "usage: %s [options] URL" % _me), "the usage line names the command typed")
-    ok(all(any(ln.strip().startswith("%s %s " % (_me, _sub)) for ln in _lines[1:4]) for _sub in ("diff", "watch", "mcp")),
-       "the usage lists diff, watch and mcp:\n" + "\n".join(_lines[:4]))
+    ok(all(any(ln.strip().startswith("%s %s " % (_me, _sub)) for ln in _lines[1:5])
+           for _sub in ("diff", "crawlers", "watch", "mcp")),
+       "the usage lists diff, crawlers, watch and mcp:\n" + "\n".join(_lines[:5]))
     _ex = [ln for ln in _lines if " example.com --" in ln]
     ok(len(_ex) == 5 and all(ln.startswith("  %s example.com --" % _me) for ln in _ex),
        "five examples, each run as %s: %r" % (_me, _ex))

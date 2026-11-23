@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/error.v1.json",
   "title": "geo-score CLI error",
-  "description": "What `geo-score URL --json` prints on stdout instead of a report when it exits 2: the site gave nothing to score, the arguments were refused, or the tool failed. `geo-score diff BEFORE AFTER --format json` prints it too when it exits 2 (since 1.5.0). The same message goes to stderr. A pipeline that parses stdout reads this, never an empty file.",
+  "description": "What `geo-score URL --json` prints on stdout instead of a report when it exits 2: the site gave nothing to score, the arguments were refused, or the tool failed. `geo-score diff BEFORE AFTER --format json` prints it too when it exits 2 (since 1.5.0), and so does `geo-score crawlers LOG… --format json` (or `--json`), with kind usage when a file cannot be read or holds no access-log line. The same message goes to stderr. A pipeline that parses stdout reads this, never an empty file.",
   "type": "object",
   "additionalProperties": false,
   "required": ["error", "tool"],

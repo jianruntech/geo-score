@@ -1,0 +1,5 @@
+# pages to compare with the logs
+/pricing
+https://example.com/careers
+
+/about/

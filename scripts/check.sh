@@ -107,6 +107,7 @@ for py in "${PYS[@]}"; do
   "$py" cli/test_geo_score.py
   "$py" cli/test_geo_watch.py
   "$py" cli/test_geo_score_e2e.py
+  "$py" cli/test_crawler_logs.py
   "$py" scripts/check_mcp.py "$py"
 done
 
@@ -127,6 +128,7 @@ elif [ -n "$have" ]; then
 fi
 if [ -n "$SCHEMA_PY" ]; then
   step "reports against the published schema ($SCHEMA_WITH)"; $SCHEMA_PY cli/test_geo_score_e2e.py
+  $SCHEMA_PY cli/test_crawler_logs.py
 else
   echo "jsonschema unavailable: the full schema check was skipped (pip install $JS)"
 fi

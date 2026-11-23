@@ -1,0 +1,12 @@
+{
+  "note": "Made up for tests: RFC 5737 and RFC 3849 documentation addresses, not OpenAI's ranges.",
+  "creationTime": "2026-11-01T00:00:00.000000",
+  "prefixes": [
+    {
+      "ipv4Prefix": "198.51.100.16/28"
+    },
+    {
+      "ipv6Prefix": "2001:db8:1::/48"
+    }
+  ]
+}
