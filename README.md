@@ -95,7 +95,7 @@ lists the searches that recur and how many carry a year or a ranking word; the
 
 ## Skills
 
-Eight skills, each answering one question and leaving a file in your repository. They follow the
+Nine skills, each answering one question and leaving a file in your repository. They follow the
 [Agent Skills](https://agentskills.io/specification) format, run the pinned CLI (`uvx geo-score@1.8.4`) or the MCP
 server, and measure only: none writes fixes, markup or copy ([scope](#scope--what-this-does-not-do)).
 
@@ -103,6 +103,7 @@ server, and measure only: none writes fixes, markup or copy ([scope](#scope--wha
 |---|---|---|
 | [`geo-readiness-audit`](skills/geo-readiness-audit/SKILL.md) | `geo/audit-<host>-<date>.md` and `.json`: the 0–100 score, the band, the gates, every check and the gaps worth the most points | *"Run geo-readiness-audit on https://example.com and save the report under geo/"* |
 | [`ai-crawler-access`](skills/ai-crawler-access/SKILL.md) | `geo/crawler-access-<host>-<date>.md`: whether the 10 retrieval crawlers get in, robots.txt page by page, and whether the text is there without JavaScript | *"Can GPTBot, ClaudeBot and PerplexityBot crawl example.com?"* |
+| [`ai-crawler-logs`](skills/ai-crawler-logs/SKILL.md) | `geo/crawler-logs-<date>.md` and `.json`, from your own access logs: which AI crawlers came, the pages each requested and when, status codes and refusals, a timeline of live fetches, sitemap pages none requested | *"Which AI crawlers are in /var/log/nginx/access.log, and which pages did they fetch?"* |
 | [`ai-citation-check`](skills/ai-citation-check/SKILL.md) | `geo/citations/<date>.md` and one JSON per question: whom each engine cites and names for a buyer question, today | *"Does ChatGPT cite acme.com for 'best invoicing app for freelancers'? Show me the plan first."* |
 | [`ai-search-fanout`](skills/ai-search-fanout/SKILL.md) | `geo/fanout-<date>.md`: what each engine searched for before answering, per question, and the searches that recur across a set | *"What did each engine search for before answering yesterday's questions?"* |
 | [`geo-baseline`](skills/geo-baseline/SKILL.md) | `geo/queries.csv` (about 20 fixed questions), the config, the first run and `geo/baseline-<date>.md`: cited, mentioned and what the answers say, kept apart | *"Set up 20 buyer questions for acme.com against Rival and measure a baseline"* |
@@ -110,15 +111,16 @@ server, and measure only: none writes fixes, markup or copy ([scope](#scope--wha
 | [`citation-gaps`](skills/citation-gaps/SKILL.md) | `geo/citation-gaps-<date>.md`: the questions where a competitor is cited and you are not, and the pages cited instead | *"Where is Rival cited and we are not?"* |
 | [`geo-ci-gate`](skills/geo-ci-gate/SKILL.md) | `.github/workflows/geo-score.yml`: a job that fails when a gate drops to zero or the score falls below your floor | *"Fail our deploys if AI crawlers get locked out of example.com"* |
 
-Free: `geo-readiness-audit`, `ai-crawler-access`, `citation-gaps`, `geo-ci-gate`, and any skill reading answers
-already saved. Paid on your own API keys, with the plan shown first and nothing asked without a yes:
+Free: `geo-readiness-audit`, `ai-crawler-access`, `ai-crawler-logs`, `citation-gaps`, `geo-ci-gate`, and any skill
+reading answers already saved. Paid on your own API keys, with the plan shown first and nothing asked without a yes:
 `ai-citation-check`, `geo-baseline`, `geo-watch`. The repository's own skill, [`geo-score`](SKILL.md), stays as it
 was: the full audit, including the three checks the CLI leaves to off-site search or human judgement.
 
 ### How the skills chain
 
-1. **Can AI read the site?** `ai-crawler-access` (the gates) → `geo-readiness-audit` (the score and the biggest gaps)
-   → `geo-ci-gate` (a build that fails when a deploy undoes it).
+1. **Can AI read the site?** `ai-crawler-access` (can the crawlers get in) → `ai-crawler-logs` (do they come, and
+   what do they get) → `geo-readiness-audit` (the score and the biggest gaps) → `geo-ci-gate` (a build that fails when
+   a deploy undoes it).
 2. **What do the engines say today?** `ai-citation-check` (whom they cite for a buyer question) →
    `ai-search-fanout` (what they searched for first) → `geo-baseline` (the same questions as a fixed set of about 20).
 3. **Is anything moving?** `geo-baseline` (once) → `geo-watch` (every week, with a significance test) →
@@ -232,11 +234,12 @@ Every image shows real output, captured for this page.
 | **Score** (level 1) | 21 tiered checks in five pillars, three gates, the biggest gaps first, and what each next tier needs. One file, standard library only, no key | [What it checks](#what-it-checks) |
 | **Ask** (level 2) | Puts one question to ChatGPT, Perplexity, Gemini and Claude through their search-enabled APIs, with your keys, and reports whom each answer cites | [Levels 2 and 3](#levels-2-and-3--does-ai-actually-cite-you) |
 | **Watch** (level 3) | A fixed question set, week over week: cited rate with a 95% interval, share of voice, the sources the engines lean on, and a `diff` that calls a change a change only when a paired test says so | [Watch methodology](guide/watch-methodology.md) |
+| **Crawler logs** | `crawlers LOG…` reads your own access logs offline (nginx, Apache, Vercel, Cloudflare, JSON lines): which AI crawlers came, training kept apart from retrieval, the pages each requested and when, status codes, live fetches. User-agents can be forged, so counts are unverified unless `--verify-ips` checks them against range files you supply | [CLI reference](cli/README.md#ai-crawlers-in-your-access-logs) |
 | **Reports and diffs** | Text, JSON against a published schema, SARIF and JUnit; `diff` compares two reports check by check, and `--baseline` re-scores the same pages | [CLI reference](cli/README.md) |
 | **MCP server** | All three levels as tools for agents over stdio; `--read-only` gives a server that cannot spend | [MCP server](#mcp-server) · [guide/mcp.md](guide/mcp.md) |
 | **GitHub Action** | Scores on every push, fails the build on a regression or a gate at zero, and writes a job summary | [GitHub Action](#github-action) · [action.yml](action.yml) |
 | **Badge** | An optional SVG, or shields.io endpoint JSON, with your score and band. It never moves a score or a leaderboard place | [Badge](cli/README.md#a-badge-for-your-own-readme) |
-| **Skills** | Eight task skills, each leaving a file in your repository, and `geo-score`: the CLI plus the three checks that need off-site search or human judgement | [Skills](#skills) · [Claude Code skills](#claude-code-skills) · [SKILL.md](SKILL.md) |
+| **Skills** | Task skills, each leaving a file in your repository, and `geo-score`: the CLI plus the three checks that need off-site search or human judgement | [Skills](#skills) · [Claude Code skills](#claude-code-skills) · [SKILL.md](SKILL.md) |
 
 ---
 
@@ -491,22 +494,22 @@ curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.8.4/cli/geo_
 
 ### Claude Code skills
 
-Nine skills: the repository's own [`geo-score`](SKILL.md), the full audit (the CLI measures what a static fetch can
-see; three checks need off-site search or human judgement, and this skill does those too), and the eight task skills
-listed under [Skills](#skills).
+The repository's own [`geo-score`](SKILL.md), the full audit (the CLI measures what a static fetch can see; three
+checks need off-site search or human judgement, and this skill does those too), and the task skills listed under
+[Skills](#skills).
 
 ```bash
-npx skills add jianruntech/geo-score --full-depth          # choose from all nine; add -g for a global install
+npx skills add jianruntech/geo-score --full-depth          # choose from all of them; add -g for a global install
 npx skills add jianruntech/geo-score --skill geo-watch     # one skill by name
 # then: /geo-score audit https://example.com, or ask in your own words, e.g. "did our AI citations change this week?"
 ```
 
 `npx skills add` runs the open [skills CLI](https://github.com/vercel-labs/skills) on the repository as it is on the
-default branch, main. With `--full-depth` it offers all nine; without it, it stops at the root `SKILL.md` and offers
+default branch, main. With `--full-depth` it offers all of them; without it, it stops at the root `SKILL.md` and offers
 `geo-score` alone, because a skill at the root hides the `skills/` folder from it. `geo-score` copies the whole
 repository, since it reads the rubric files beside it; each task skill is one file that runs the pinned release with
 `uvx`. The Claude Code plugin (`/plugin marketplace add jianruntech/geo-score`, then
-`/plugin install geo-score@jianruntech`) loads all nine with the MCP server ([details](guide/mcp.md#claude-code-plugin)).
+`/plugin install geo-score@jianruntech`) loads all of them with the MCP server ([details](guide/mcp.md#claude-code-plugin)).
 Without Node.js, or for the release rather than main, clone the release tag into your own skills folder instead:
 `git clone --branch v1.8.4 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`, and copy
 the task skills you want from its `skills/` folder into `~/.claude/skills/`.
@@ -989,7 +992,7 @@ use is defined in the [glossary](guide/glossary.md); every flag, exit code and w
 | [`examples/`](examples/) | A sample report, the published hand audits and CI workflows |
 | [`action.yml`](action.yml), [`action/`](action/) | The GitHub Action |
 | [`SKILL.md`](SKILL.md), [`.claude-plugin/`](.claude-plugin/), [`gemini-extension.json`](gemini-extension.json), [`mcpb/`](mcpb/), [`server.json`](server.json), [`Dockerfile`](Dockerfile) | Packaging for Claude Code, Gemini CLI, MCP clients, the MCP registry and Docker. They stay at the top level because the installers look for them there |
-| [`skills/`](skills/) | The eight task skills, one folder each in the [Agent Skills](https://agentskills.io/specification) format; `scripts/test_packaging.py` checks their format and the release they pin |
+| [`skills/`](skills/) | The task skills, one folder each in the [Agent Skills](https://agentskills.io/specification) format; `scripts/test_packaging.py` checks their format and the release they pin |
 | [`scripts/`](scripts/) | The repository's checks (`scripts/check.sh` runs all of them) and the release script |
 | [`.github/`](.github/) | [Contributing](.github/CONTRIBUTING.md), [support](.github/SUPPORT.md), [security](.github/SECURITY.md), [code of conduct](.github/CODE_OF_CONDUCT.md), the [release process](.github/RELEASING.md), issue forms and the CI workflow |
 | [`AGENTS.md`](AGENTS.md) | A map of the repository for coding agents (`CLAUDE.md` points to it) |

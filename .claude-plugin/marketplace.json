@@ -24,6 +24,7 @@
       "skills": [
         "./skills/ai-citation-check",
         "./skills/ai-crawler-access",
+        "./skills/ai-crawler-logs",
         "./skills/ai-search-fanout",
         "./skills/citation-gaps",
         "./skills/geo-baseline",

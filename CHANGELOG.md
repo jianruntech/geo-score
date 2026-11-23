@@ -6,18 +6,35 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Added
-- **Eight task skills in `skills/`**, in the [Agent Skills](https://agentskills.io/specification) format, each
+- **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
+  no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
+  Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip
+  or from standard input, one line at a time: a line over 64 KiB is skipped unread, and a line in no known format is
+  counted by line number, never copied. It counts the requests whose user-agent names a crawler of
+  `reference/ai-crawlers.md`, retrieval and training crawlers apart, with the live fetches a user's question triggers
+  (`ChatGPT-User`, `Claude-User`, `Perplexity-User`) in a timeline of their own: per crawler the pages requested, how
+  often, the first and last time, and the status codes, with 401, 403, 429 and a firewall's block or challenge counted
+  as blocked. `--sitemap` or `--urls` (local files) adds the listed pages no retrieval or training crawler requested.
+  A user-agent can be forged, so every count is unverified unless `--verify-ips NAME=FILE` finds the client address in
+  a range file the user downloaded; the command never downloads one. Text, `--format md` or `--format json`
+  (`schema/crawlers.v1.json`, new), `-o FILE` and `--json-out FILE`; exit 2 with `schema/error.v1.json` (kind `usage`)
+  when nothing can be read. Measurement only, never part of the score. Tests: `cli/test_crawler_logs.py`, with made-up
+  log fixtures in `cli/fixtures/logs/` (a forged GPTBot, every format, bad lines) and a 200,000-line file read under
+  8 MB; the crawler lists are held to the reference's tables, operators and roles included.
+- **`validate.py` rule 41:** every `schema/*.json` but the superseded `report.v1.json` is a public contract named in
+  `guide/stability.md` and `AGENTS.md`.
+- **Nine task skills in `skills/`**, in the [Agent Skills](https://agentskills.io/specification) format, each
   answering one question and leaving a file in the user's repository: `geo-readiness-audit` (the 0–100 score and the
   biggest gaps, `geo/audit-<host>-<date>.md` and `.json`), `ai-crawler-access` (the three gates and robots.txt page by
-  page), `ai-citation-check` (level 2 through `watch ask`, one JSON per question), `ai-search-fanout` (the searches
+  page), `ai-crawler-logs` (`crawlers LOG…` on the user's own access logs, `geo/crawler-logs-<date>.md` and `.json`), `ai-citation-check` (level 2 through `watch ask`, one JSON per question), `ai-search-fanout` (the searches
   the OpenAI and Anthropic APIs return with each answer; Gemini's are left out, as the Gemini API terms for Grounding
   with Google Search do not allow storing, republishing or analysing grounded results), `geo-baseline` (a fixed set of about 20 questions;
   cited, mentioned and what the answers say, recorded apart), `geo-watch` (weekly runs and `watch diff`),
   `citation-gaps` (the questions a competitor is cited on and the user is not) and `geo-ci-gate` (a GitHub Actions
   workflow on the pinned Action). Each runs `uvx geo-score@X.Y.Z` or the MCP server, says what it costs (the level 2
   and 3 skills show the plan and wait for a yes), and measures only. The root `SKILL.md` is unchanged.
-- **Where the skills are found.** `.claude-plugin/marketplace.json` lists the eight, and `plugin.json` names the
-  plugin root under `skills`, so the Claude Code plugin loads all nine (a `skills/` folder alone would stop the root
+- **Where the skills are found.** `.claude-plugin/marketplace.json` lists each, and `plugin.json` names the
+  plugin root under `skills`, so the Claude Code plugin loads them all, the root skill included (a `skills/` folder alone would stop the root
   `SKILL.md` from loading). The skills CLI stops at a root `SKILL.md`, so its line is
   `npx skills add jianruntech/geo-score --full-depth`; `--skill <name>` installs one.
 - **Checks for the skills.** `scripts/test_packaging.py` (`check_skills`) holds each to the Agent Skills format (the
@@ -34,7 +51,7 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   plugin, the skills CLI, `uvx`, MCP), a table of the skills with what each leaves in the repository and an example
   prompt, and three ways the skills chain. The video, the badges and the benchmark figures are unchanged, and the
   version note now says that the plugin and the skills CLI copy main. The Claude Code plugin section of
-  `guide/mcp.md` (+ zh) says it loads nine skills. Documentation only.
+  `guide/mcp.md` (+ zh) says it loads every skill. Documentation only.
 - **Both READMEs lead with `uvx geo-score@X.Y.Z example.com`**: one line under the intro, and Quick start now opens with the PyPI section (uvx or pipx) before the one-file `curl | python3` line, which stays for machines without uv. AI assistants that recommend the tool were quoting the older `python geo_score.py` form. Documentation only.
 
 ### Fixed

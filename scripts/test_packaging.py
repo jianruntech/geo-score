@@ -198,6 +198,16 @@ def check_skills(version):
         missing = [r for r, t in readmes.items() if "`%s`" % name not in t]
         ok(not missing, "%s: README.md and README.zh-CN.md introduce it%s" % (p, " (missing in %s)" % missing if missing else ""))
     ok(len(names) == len(set(names)) and "geo-score" not in names, "skill names are unique and none is the root skill's")
+    # the one place each README counts them, the line that opens its skills table
+    n = len(release.SKILLS)
+    en_words = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
+                "seventeen eighteen nineteen").split()
+    zh_num = "零一二三四五六七八九十"[n] if n <= 10 else "十" + "零一二三四五六七八九"[n - 10]
+    en = re.search(r"\b([A-Z][a-z]+) skills, each answering one question", readmes["README.md"])
+    zh = re.search(r"([零一二三四五六七八九十]+)个技能，每个回答一个问题", readmes["README.zh-CN.md"])
+    ok(bool(en) and n < len(en_words) and en.group(1).lower() == en_words[n],
+       "README.md counts the task skills as %s (%s)" % (en_words[n] if n < len(en_words) else n, en.group(1) if en else "no count"))
+    ok(bool(zh) and zh.group(1) == zh_num, "README.zh-CN.md counts them as %s个 (%s)" % (zh_num, zh.group(1) if zh else "no count"))
     want = ["./" + os.path.dirname(p) for p in sorted(release.SKILLS)]
     entry = json.loads(rd(".claude-plugin/marketplace.json"))["plugins"][0]
     ok(entry.get("skills") == want, "marketplace.json lists every task skill, so its plugin loads them (%s)" % entry.get("skills"))

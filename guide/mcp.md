@@ -281,9 +281,9 @@ claude plugin install geo-score@jianruntech
 Inside a session, `/plugin marketplace add jianruntech/geo-score` and
 `/plugin install geo-score@jianruntech` do the same. The plugin runs the repository's
 `cli/geo_score.py mcp` with `python3`, so it needs Python 3.8 or later on `PATH` but no uv. It sets
-no keys: for `ask` and `run`, export them in the shell that starts `claude`. It also loads nine skills: the
-repository's `SKILL.md` as the `geo-score` skill, which tells Claude how to read a report, and the eight task skills
-in `skills/` ([the list](../README.md#skills)). `plugin.json` names the plugin root under `skills`, so the root skill
+no keys: for `ask` and `run`, export them in the shell that starts `claude`. It also loads the skills: the
+repository's `SKILL.md` as the `geo-score` skill, which tells Claude how to read a report, and every task skill in
+`skills/` ([the list](../README.md#skills)). `plugin.json` names the plugin root under `skills`, so the root skill
 keeps loading beside the `skills/` folder. The marketplace follows the repository, not a release tag; for a fixed
 version, use the `uvx` line in [Install](#install).
 

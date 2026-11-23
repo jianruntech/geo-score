@@ -21,9 +21,9 @@ RAW = "https://raw.githubusercontent.com/jianruntech/geo-score/"
 MANIFESTS = ["server.json", "mcpb/manifest.json", ".claude-plugin/plugin.json", "gemini-extension.json"]
 # the task skills, skills/<name>/SKILL.md: each runs `uvx geo-score@X.Y.Z` and names the release in its metadata
 # version, so --bump rewrites both (scripts/test_packaging.py holds this list to the folders under skills/)
-SKILLS = ["skills/ai-citation-check/SKILL.md", "skills/ai-crawler-access/SKILL.md", "skills/ai-search-fanout/SKILL.md",
-          "skills/citation-gaps/SKILL.md", "skills/geo-baseline/SKILL.md", "skills/geo-ci-gate/SKILL.md",
-          "skills/geo-readiness-audit/SKILL.md", "skills/geo-watch/SKILL.md"]
+SKILLS = ["skills/ai-citation-check/SKILL.md", "skills/ai-crawler-access/SKILL.md", "skills/ai-crawler-logs/SKILL.md",
+          "skills/ai-search-fanout/SKILL.md", "skills/citation-gaps/SKILL.md", "skills/geo-baseline/SKILL.md",
+          "skills/geo-ci-gate/SKILL.md", "skills/geo-readiness-audit/SKILL.md", "skills/geo-watch/SKILL.md"]
 # every SKILL.md whose frontmatter metadata `version:` is the release: the repository's own skill and the task skills
 SKILL_FILES = ["SKILL.md"] + SKILLS
 # files whose one-line install or download is pinned to a release tag

@@ -5,14 +5,27 @@
 ## [Unreleased]
 
 ### 新增
-- **`skills/` 下八个任务技能**，[Agent Skills](https://agentskills.io/specification) 格式，每个回答一个问题，并在用户仓库里留下一个文件：
+- **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
+  combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
+  log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA
+  写着 `reference/ai-crawlers.md` 里那些爬虫的请求，检索爬虫和训练爬虫分开，因用户提问触发的实时访问（`ChatGPT-User`、`Claude-User`、
+  `Perplexity-User`）单独一条时间线：每个爬虫请求了哪些页、几次、首次和最近一次时间、状态码；401、403、429 和防火墙的拦截或质询记为
+  被拦。加 `--sitemap` 或 `--urls`（本地文件）会列出清单里没有检索爬虫、没有训练爬虫请求过的页面。UA 可以伪造，所以除非
+  `--verify-ips NAME=FILE` 在用户自己下载的 IP 段文件里找到了客户端地址，每个计数都标「未核实」；这个命令从不下载 IP 段文件。输出文本、
+  `--format md` 或 `--format json`（新的 `schema/crawlers.v1.json`），`-o FILE` 和 `--json-out FILE`；什么都读不了时以退出码 2 退出，
+  输出 `schema/error.v1.json`（kind `usage`）。只测量，不进分数。测试：`cli/test_crawler_logs.py`，日志夹具都是编的，放在
+  `cli/fixtures/logs/`（伪造的 GPTBot、每种格式、坏行），另有 20 万行的大文件，读取时内存峰值低于 8 MB；爬虫清单与参考文件的表逐项一致，
+  运营方和角色也一致。
+- **`validate.py` 第 41 条：** `schema/` 下的每个 JSON schema（被取代的 `report.v1.json` 除外）都是公开契约，必须写进
+  `guide/stability.md` 和 `AGENTS.md`。
+- **`skills/` 下九个任务技能**，[Agent Skills](https://agentskills.io/specification) 格式，每个回答一个问题，并在用户仓库里留下一个文件：
   `geo-readiness-audit`（0–100 分和最大的缺口，`geo/audit-<host>-<date>.md` 和 `.json`）、`ai-crawler-access`（三道门槛和逐页的
-  robots.txt）、`ai-citation-check`（第二级，走 `watch ask`，每个问题一个 JSON）、`ai-search-fanout`（OpenAI 和 Anthropic 的 API
+  robots.txt）、`ai-crawler-logs`（对用户自己的访问日志跑 `crawlers LOG…`，`geo/crawler-logs-<date>.md` 和 `.json`）、`ai-citation-check`（第二级，走 `watch ask`，每个问题一个 JSON）、`ai-search-fanout`（OpenAI 和 Anthropic 的 API
   随回答返回的搜索词；Gemini 的不写进去，因为 Gemini API 关于「Google 搜索接地」的条款不允许存储、转载或分析接地结果）、`geo-baseline`（约 20 道固定的题；引用、提及、回答里怎么说，分开记）、`geo-watch`（每周运行和 `watch diff`）、
   `citation-gaps`（竞品被引用、用户没被引用的题）和 `geo-ci-gate`（用钉住版本的 Action 写一个 GitHub Actions 工作流）。每个都跑
   `uvx geo-score@X.Y.Z` 或 MCP 服务，写明花不花钱（第二、三级的技能先给计划，等用户点头），只测量。根目录的 `SKILL.md` 不变。
-- **技能怎么被找到。** `.claude-plugin/marketplace.json` 列出这八个，`plugin.json` 的 `skills` 写了插件根目录，所以 Claude Code 插件
-  九个都会加载（只加一个 `skills/` 文件夹的话，根目录的 `SKILL.md` 就不再加载）。skills CLI 遇到根目录的 `SKILL.md` 就停下，所以它那行写成
+- **技能怎么被找到。** `.claude-plugin/marketplace.json` 列出每一个，`plugin.json` 的 `skills` 写了插件根目录，所以 Claude Code 插件
+  会全部加载，根目录的技能也在内（只加一个 `skills/` 文件夹的话，根目录的 `SKILL.md` 就不再加载）。skills CLI 遇到根目录的 `SKILL.md` 就停下，所以它那行写成
   `npx skills add jianruntech/geo-score --full-depth`；`--skill <名字>` 只装一个。
 - **技能的检查。** `scripts/test_packaging.py`（`check_skills`）逐个检查：Agent Skills 格式（name 等于文件夹名，小写、单个连字符、最长
   64 个字符；description 不超过 1,024 个字符；license 是 MIT；正文不超过 500 行），元数据里的版本等于 `__version__`、量表版本等于 CLI 的，
@@ -23,7 +36,7 @@
 - **两份 README 开头先讲跑完能拿到什么**，再讲引擎回答前实际搜了什么，即 OpenAI 和 Anthropic 的 API 返回的搜索词（配一段标明「示例」的 `watch ask` 输出：品牌和回答都是编的；
 Gemini 的按其接地条款不公开），然后是
   四种一行安装（Claude Code 插件、skills CLI、`uvx`、MCP）、技能表（每个技能留下什么文件、示例提示词）和三条技能串联流程。视频、徽章和基准
-  数据都没动；版本说明补了一句：插件和 skills CLI 复制的是 main。`guide/mcp.zh-CN.md`（+ 英文版）的 Claude Code 插件一节写明会加载九个技能。
+  数据都没动；版本说明补了一句：插件和 skills CLI 复制的是 main。`guide/mcp.zh-CN.md`（+ 英文版）的 Claude Code 插件一节写明会加载全部技能。
   只改文档。
 - **两份 README 开头先给 `uvx geo-score@X.Y.Z example.com`**：简介下面加了这一行；「快速开始」先讲 PyPI（uvx 或 pipx），再讲单文件的 `curl | python3`，后者留给没装 uv 的机器。推荐这个工具的 AI 助手引用的还是旧的 `python geo_score.py` 写法。只改文档。
 
