@@ -109,6 +109,7 @@ python3 geo_score.py diff before.json after.json [--format text|md|json] [--fail
 python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # 来了哪些 AI 爬虫、拿到了什么
 python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
 python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+python3 cli/geo_score.py crawlers access.log --conversions conversions.txt        # 漏斗一直算到成交
 zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
@@ -137,6 +138,27 @@ Cloudflare、Vercel 的防火墙字段记为拦截或质询）、请求最多的
 
 加 `--sitemap FILE`（本地的 `sitemap.xml` 或 `.xml.gz`）或 `--urls FILE`（每行一个网址或路径），报告会列出清单里没有任何检索爬虫、
 没有任何训练爬虫请求过的页面，以及请求过但从没拿到 2xx 的页面。
+
+
+**漏斗：收录、被读、被点、成交。** 四层，每层一个数，各自计数，不逐个访客追踪：
+
+| 层 | 统计什么 |
+|---|---|
+| 收录 | 建索引的检索爬虫的请求（`OAI-SearchBot`、`Claude-SearchBot`、`PerplexityBot`、`Googlebot`、`Bingbot`、`Applebot`、`Amazonbot`） |
+| 被读 | 用户提问触发的实时访问（`ChatGPT-User`、`Claude-User`、`Perplexity-User`） |
+| 被点 | 来自 AI 助手的访客请求（不是爬虫）：`utm_source` 是某个助手的别名或主机（`chatgpt.com`、`perplexity`、`doubao`……），否则看 Referer 的主机是否正好是它的主机（`chatgpt.com`、`www.perplexity.ai`、`kimi.moonshot.cn`、`chat.deepseek.com`……）；`utm_medium` 是 email、newsletter 等时算其他引荐 |
+| 成交 | 加 `--conversions FILE`（每行一个路径，结尾 `*` 表示前缀）时：同一地址和 UA 在一次 AI 访问后 24 小时内请求了转化页；不加则未测量 |
+
+另外给出：同一页面从实时访问到下一次来自同一助手的点击，间隔的中位数（ChatGPT-User 对 ChatGPT、Claude-User 对 Claude、Perplexity-User 对 Perplexity，
+7 天以内）；按助手分开的漏斗（参考列表里没有对应爬虫的助手，收录和被读显示 `—`，即未测量）；AI 访问落地最多的页面。Referer、查询串、地址和 UA
+只用来判断请求属于哪一类，从不抄录；只保留助手名和路径。既不带 Referer 也不带 `utm_source` 的 App（很多手机 App 如此）看不到。JSON：`funnel`。
+
+**和 GEOInflow 对齐。** 引荐主机和 `utm_source` 别名用的是 GEOInflow 公开的覆盖列表（JSON 里的 `referral_rules`），所以两边按同一规则认定 AI 访问；
+每个爬虫行带 `purpose`（`search`、`user` 或 `training`），即 GEOInflow 报告的三种 AI 用途。为 GEOInflow 日志导入准备的记录（JSON 行，字段 `time` 或
+`timestamp`、`ip` 或 `remote_addr`、`path` 或 `url`、`status`、`userAgent` 或 `user_agent`）以及它读的 combined 日志，这里原样可读。不同之处：GEOInflow
+是托管的统计应用，还在浏览器里按会话统计访问，转化按统计目标算；`crawlers` 只离线读一遍日志文件，什么都不保存，只凭地址和 UA 把转化和访问配对。
+GEOInflow 认得的 AI 爬虫比 [reference/ai-crawlers.md](../reference/ai-crawlers.md) 的 16 个多，并且自己下载各家的地址段；`crawlers` 只数参考列表里的爬虫，
+只用你给的地址段文件核验。没有按 GEOInflow 格式的导出：它的导入要原始记录，包括地址和 UA，这个命令从不写出这些；它的 CSV 导出是界面表格，不是用来读回的格式。
 
 `--format json`（或 `--json`）遵循 [`schema/crawlers.v1.json`](../schema/crawlers.v1.json)。退出码：`0` 日志读完；`2` 有文件读不了、
 所有文件里没有一行是上述格式的访问日志、IP 段文件或页面清单不可用，或者参数错误；加了 `--json` 时，退出码 2 会输出

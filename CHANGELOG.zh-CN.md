@@ -36,6 +36,12 @@
   `possible_engine_change` 并在备注里写出；你没变而竞品一起变时也写备注；每一行给出前后两次的每条回答基准（`per_answer`：引用的网页、
   提到和入选的被跟踪品牌、列表项），同一模型下引用网页数变动达到四分之一以上时写备注；并列出日期落在两次运行之间的事件（`events`）。
   `watch report` 增加「Per answer, per engine」（`summary.engines` 上的 `per_answer`）和运行前 30 天内的事件（`summary.events`）。结论、比率和区间都不变。
+- **`geo-score crawlers`：从抓取到成交的漏斗。** JSON 里的 `funnel`，以及文本和 Markdown 视图里的一节：收录（建索引的检索爬虫的请求）、被读（实时访问）、
+  被点（`utm_source` 或 Referer 主机指向 AI 助手的访问，按 GEOInflow 公开覆盖列表里的引荐主机和别名：ChatGPT、Claude、Perplexity、Gemini、Copilot、
+  Kimi、DeepSeek、豆包、千问、元宝等），以及加新参数 `--conversions FILE` 时的成交（同一地址和 UA 在 AI 访问后 24 小时内到达转化页）。每层一个数，
+  按助手分开，再加上同一页面从实时访问到下一次来自同一助手的点击的间隔中位数，以及 AI 访问落地的页面。Referer、查询串、地址和 UA 只读不抄。
+  爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读（GEOInflow 的日志导入就接受这种写法），为那个导入准备的记录原样可读。
+  测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`geoinflow-import.jsonl`。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

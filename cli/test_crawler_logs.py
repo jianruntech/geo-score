@@ -264,6 +264,102 @@ class Robustness(unittest.TestCase):
             self.assertEqual(str(got) if got else None, want, v)
 
 
+class Funnel(unittest.TestCase):
+    """Indexed, read, clicked, converted: four layers counted apart, with the step from read to click timed."""
+
+    def setUp(self):
+        self.r = gs.read_crawler_logs([fx("funnel.log")], conversions=gs.load_conversions(fx("conversions.txt")))
+        self.f = self.r["funnel"]
+
+    def test_each_layer(self):
+        f = self.f
+        self.assertEqual((f["indexed"]["requests"], f["indexed"]["pages"], f["indexed"]["pages_2xx"]), (2, 2, 2))
+        self.assertIn("OAI-SearchBot", f["indexed"]["crawlers"])
+        self.assertNotIn("ChatGPT-User", f["indexed"]["crawlers"])
+        self.assertEqual((f["read"]["crawlers"], f["read"]["requests"], f["read"]["pages"]),
+                         (list(gs.LIVE_FETCHERS), 2, 2))
+        # ChatGPT by Referer, ChatGPT by utm_source even with utm_medium=email, Perplexity, Kimi; not google.com, not
+        # a ChatGPT Referer under utm_medium=newsletter, not a subdomain, not the stylesheet the page loaded
+        self.assertEqual(f["clicked"]["by_assistant"], {"ChatGPT": 2, "Kimi": 1, "Perplexity": 1})
+        self.assertEqual((f["clicked"]["visits"], f["clicked"]["pages"]), (4, 3))
+        self.assertEqual(f["clicked"]["top_pages"][0], {"path": "/docs", "visits": 2})
+        # three requests for a conversion page; one came within 24 hours of an AI visit by the same visitor, one came
+        # 50 hours after, one never followed an AI visit
+        self.assertEqual(f["converted"], {"paths": 2, "requests": 3, "after_ai_visit": 1, "window_hours": 24,
+                                          "by_assistant": {"ChatGPT": 1}})
+        self.assertEqual(f["read_to_click"], {"pairs": 1, "median_seconds": 180, "window_days": 7})
+        self.assertEqual([(x["assistant"], x["indexed"], x["read"], x["clicked"], x["converted"]) for x in f["by_assistant"]],
+                         [("ChatGPT", 2, 1, 2, 1), ("Perplexity", 0, 1, 1, 0), ("Kimi", None, None, 1, 0)])
+        self.assertEqual(f["referral_rules"], "geoinflow-2026-11")
+
+    def test_without_conversions_the_last_layer_is_not_measured(self):
+        f = gs.read_crawler_logs([fx("funnel.log")])["funnel"]
+        self.assertIsNone(f["converted"])
+        self.assertIsNone(f["by_assistant"][0]["converted"])
+        text = gs.render_crawlers(gs.read_crawler_logs([fx("funnel.log")]), "text")
+        self.assertIn("not measured (--conversions FILE)", text)
+
+    def test_the_referral_rules(self):
+        cases = [("/a?utm_source=chatgpt.com", None, "ChatGPT"), ("/a?utm_source=ChatGPT", None, "ChatGPT"),
+                 ("/a", "https://chat.openai.com/c/1", "ChatGPT"), ("/a", "https://www.perplexity.ai/", "Perplexity"),
+                 ("/a", "https://doubao.com/chat", "Doubao"), ("/a?utm_source=yuanbao", None, "Yuanbao"),
+                 ("/a", "https://chat.deepseek.com/", "DeepSeek"), ("/a", "https://deepseek.com/", None),
+                 ("/a", "https://chatgpt.com:443/", "ChatGPT"), ("/a", "https://evil.example/?chatgpt.com", None),
+                 ("/a?utm_medium=email", "https://claude.ai/", None), ("/a?utm_source=newsletter", "https://claude.ai/", "Claude"),
+                 ("/a", "chatgpt.com", None), ("/a", None, None), (None, "https://[bad", None)]
+        for path, ref, want in cases:
+            self.assertEqual(gs.ai_referral(path, ref), want, (path, ref))
+        hosts = [h for a in gs.AI_ASSISTANTS for h in a[1]]
+        self.assertEqual(len(hosts), len(set(hosts)))
+        for name, _, _, idx, live in gs.AI_ASSISTANTS:
+            self.assertTrue(idx is None or idx in gs.RETRIEVAL_OPERATORS, name)
+            self.assertTrue(live is None or live in gs.LIVE_FETCHERS, name)
+
+    def test_conversion_paths(self):
+        conv = gs.load_conversions(fx("conversions.txt"))
+        self.assertEqual(conv, [("/thank-you", False), ("/order/done", True)])
+        for path, want in (("/thank-you", True), ("/thank-you/x", False), ("/order/done", True),
+                           ("/order/done/42", True), ("/order/donex", True), ("/orders", False), (None, False)):
+            self.assertEqual(gs._converts(path, conv), want, path)
+
+    def test_the_views_and_the_schema(self):
+        text, md = gs.render_crawlers(self.r, "text"), gs.render_crawlers(self.r, "md")
+        for v in (text, md):
+            self.assertIn("The funnel: indexed, read, clicked, converted", v)
+            self.assertIn("median 3 min over 1 click", v)
+            self.assertIn("The funnel by assistant", v)
+        self.assertIn("«site text: /docs»", text)
+        # nothing the visitor sent is copied: no Referer, query string, address or user-agent
+        js = json.dumps(self.r)
+        for leak in ("chatgpt.com/", "utm_source=", "192.0.2.50", "Safari", "power-stations"):
+            self.assertNotIn(leak, js)
+        self.assertEqual([c["purpose"] for c in self.r["crawlers"] if c["name"] in ("OAI-SearchBot", "ChatGPT-User", "GPTBot")],
+                         ["search", "user", "training"])
+        if jsonschema is not None:
+            jsonschema.validate(json.loads(js), schema("crawlers.v1.json"))
+
+    def test_records_shaped_for_geoinflow_import_read_as_they_are(self):
+        r = gs.read_crawler_logs([fx("geoinflow-import.jsonl")])
+        self.assertEqual((r["files"][0]["formats"], r["lines"]["ai_requests"]), ({"json": 3}, 3))
+        c = by_name(r)
+        self.assertEqual((c["OAI-SearchBot"]["first"], c["ChatGPT-User"]["first"], c["GPTBot"]["first"]),
+                         ("2026-11-20T01:00:00Z", "2026-11-20T10:00:00Z", "2026-11-20T00:00:00Z"))
+        self.assertEqual(c["GPTBot"]["status"]["codes"], {"304": 1})
+        self.assertEqual(gs._iso(gs._log_time("2026-11-20")), "2026-11-20T00:00:00Z")
+
+    def test_the_command_takes_conversions(self):
+        p = run(fx("funnel.log"), "--conversions", fx("conversions.txt"), "--json")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(json.loads(p.stdout)["funnel"]["converted"]["after_ai_visit"], 1)
+        empty = os.path.join(tempfile.mkdtemp(prefix="geo-score-conv-"), "none.txt")
+        with open(empty, "w") as f:
+            f.write("# nothing\n")
+        p = run(fx("funnel.log"), "--conversions", empty, "--json")
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("lists no conversion path", p.stdout + p.stderr)
+        shutil.rmtree(os.path.dirname(empty), ignore_errors=True)
+
+
 class Command(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="geo-score-logs-cli-")

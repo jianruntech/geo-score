@@ -1,0 +1,3 @@
+{"time": "2026-11-20T09:00:00+08:00", "ip": "198.51.100.5", "path": "/guide", "method": "GET", "status": 200, "bytes": 8000, "userAgent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot", "location": "US"}
+{"timestamp": 1795168800000, "remote_addr": "198.51.100.30", "url": "/guide", "method": "GET", "status": 200, "user_agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"}
+{"time": "2026-11-20", "ip": "198.51.100.20", "path": "/blog/new-post", "method": "HEAD", "status": 304, "userAgent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot"}

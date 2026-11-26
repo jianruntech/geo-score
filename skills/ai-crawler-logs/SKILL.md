@@ -45,7 +45,9 @@ given, and sends nothing anywhere.
 
    For a list of pages that matters, add `--sitemap sitemap.xml` (a local copy) or `--urls pages.txt` (one URL or
    path a line): the report then lists the pages no retrieval crawler, and no training crawler, requested, and those
-   requested but never answered with a 2xx.
+   requested but never answered with a 2xx. For the last layer of the funnel, add `--conversions conversions.txt`
+   (one conversion path a line, such as `/thank-you`; a trailing `*` matches a prefix); ask the user which pages
+   count as a conversion rather than guessing.
 2. **Check the addresses, when the user has the ranges.** A user-agent is a claim anyone can send. Some vendors
    publish their crawlers' address ranges as a JSON file; if the user downloads one, pass it per crawler:
    `--verify-ips GPTBot=gptbot.json --verify-ips OAI-SearchBot=searchbot.json` (a JSON `prefixes` list, a JSON list
@@ -55,8 +57,11 @@ given, and sends nothing anywhere.
    list with `kind` (`retrieval` or `training`), `live` (fetches made because a user asked a question),
    `requests`, `first`, `last`, `pages`, `status` (2xx to 5xx, every code, `blocked`: answered 401, 403 or 429 or
    recorded by a firewall as blocked or challenged) and `verification`; `top_pages` lists the pages each one
-   requested most. `live_fetches` is the timeline by day and the most recent live fetches. `lines` and `files` say
-   how many lines were read and in which format, and `window` the period the logs cover.
+   requested most. `live_fetches` is the timeline by day and the most recent live fetches. `funnel` gives four
+   figures, indexed (index crawlers' requests), read (live fetches), clicked (visits whose `utm_source` or Referer
+   names an AI assistant) and converted (`null` without `--conversions`: not measured), per assistant, with the
+   median time from a live fetch of a page to the next click onto it. `lines` and `files` say how many lines were
+   read and in which format, and `window` the period the logs cover.
 4. **Write a short summary at the top of the Markdown file**, every figure copied from the report: the period, the
    crawlers seen and their kinds, the ones never seen, the refusals and errors, the live fetches, and whether any
    count was verified. Say "requests whose user-agent claims to be GPTBot", not "GPTBot visits", unless they were
@@ -88,6 +93,10 @@ Free. No API key, no account, no network: the command reads local files only.
 - **Requests are not citations.** A crawler that fetched a page says nothing about whether an engine cited it; for
   that, use `ai-citation-check`.
 - **Pages are counted by path.** Query strings and fragments are dropped, and a trailing slash is ignored.
+- **The funnel's layers are counted apart.** A click is a visit that names an assistant in its `utm_source` or
+  Referer; an app that sends neither is not seen, and a conversion is paired with a visit only by address and
+  user-agent. Read the four figures side by side, not as one visitor's path, and never as a conversion rate the
+  site can claim.
 
 ## Boundaries
 

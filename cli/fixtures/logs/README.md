@@ -12,3 +12,5 @@ example.com, so no line describes a real visitor.
 | `json-lines.jsonl` | An nginx JSON `log_format` line and a Caddy-shaped line |
 | `ranges-gptbot.json`, `ranges-oai-searchbot.txt` | Range files in the vendor JSON shape and as plain text. **Not the vendors' ranges** |
 | `sitemap.xml`, `urls.txt` | Page lists for `--sitemap` and `--urls` |
+| `funnel.log`, `conversions.txt` | The funnel: index and live fetches, visits from ChatGPT (Referer and `utm_source`), Perplexity and Kimi, a `utm_medium` that makes a ChatGPT Referer another referral, a subdomain that is not an assistant's host, a stylesheet loaded after a click, and conversions inside and outside 24 hours; `--conversions` with a prefix |
+| `geoinflow-import.jsonl` | JSON records in the shape GEOInflow's log import takes (`time` or `timestamp`, `ip` or `remote_addr`, `path` or `url`, `method`, `status`, `bytes`, `userAgent` or `user_agent`, `location`), a date with no time among them |

@@ -117,6 +117,7 @@ needs only `geo_score.py`.
 python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # which AI crawlers came, and what they got
 python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
 python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+python3 cli/geo_score.py crawlers access.log --conversions conversions.txt        # the funnel down to conversions
 zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
@@ -152,6 +153,35 @@ downloads a range file.
 
 `--sitemap FILE` (a local `sitemap.xml` or `.xml.gz`) or `--urls FILE` (one URL or path a line) adds the listed pages
 no retrieval crawler, and no training crawler, requested, and those requested but never answered with a 2xx.
+
+**The funnel: indexed, read, clicked, converted.** Four layers, each one figure, counted apart rather than followed
+visitor by visitor:
+
+| Layer | What counts |
+|---|---|
+| indexed | requests from the retrieval crawlers that build an index (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`, `Googlebot`, `Bingbot`, `Applebot`, `Amazonbot`) |
+| read | live fetches a user's question triggered (`ChatGPT-User`, `Claude-User`, `Perplexity-User`) |
+| clicked | requests from visitors, not crawlers, that arrived from an AI assistant: `utm_source` is one of its aliases or hosts (`chatgpt.com`, `perplexity`, `doubao`…), or else the Referer host is one of its hosts, exactly (`chatgpt.com`, `www.perplexity.ai`, `kimi.moonshot.cn`, `chat.deepseek.com`…); a `utm_medium` of email, newsletter and the like makes it another referral |
+| converted | with `--conversions FILE` (one path a line, a trailing `*` for a prefix): requests for a conversion page within 24 hours after an AI visit from the same address and user-agent; without it, not measured |
+
+Beside them: the median time from a live fetch of a page to the next click from the same assistant onto that page
+(ChatGPT-User to ChatGPT, Claude-User to Claude, Perplexity-User to Perplexity, within 7 days), the funnel per
+assistant (an assistant with no crawler in the reference shows `—` for indexed and read: not measured), and the
+pages AI visits landed on most. The Referer, the query string, the address and the user-agent are read to classify
+a request and never copied; only the assistant's name and the path are kept. An app that sends neither a Referer nor
+`utm_source`, as many mobile apps do, is not seen. JSON: `funnel`.
+
+**Lining up with GEOInflow.** The referral hosts and `utm_source` aliases are those of GEOInflow's public coverage list
+(`referral_rules` in the JSON), so the two count an AI visit by the same rule, and each crawler row carries `purpose`
+(`search`, `user` or `training`), the three AI purposes GEOInflow reports. Records written for GEOInflow's log import
+(JSON lines with `time` or `timestamp`, `ip` or `remote_addr`, `path` or `url`, `status`, `userAgent` or
+`user_agent`) and its combined logs read here as they are. What differs: GEOInflow is a hosted analytics app that also
+counts visits in the browser, by session, and conversions as analytics goals; `crawlers` reads log files once, offline,
+keeps nothing, and pairs a conversion with a visit only by address and user-agent. GEOInflow recognises more AI
+crawlers than the 16 of [reference/ai-crawlers.md](../reference/ai-crawlers.md) and downloads vendors' address
+ranges itself; `crawlers` counts the reference's crawlers and checks only the range files you give it. There is no
+export in GEOInflow's shape: its import takes raw records, addresses and user-agents included, which this command
+never writes, and its CSV exports are display tables, not a format meant to be read back.
 
 `--format json` (or `--json`) follows [`schema/crawlers.v1.json`](../schema/crawlers.v1.json). Exit codes: `0` the
 logs were read, `2` a file could not be read, no line in any file is an access log in a format above, a range or page

@@ -1,0 +1,3 @@
+# conversion pages: a thank-you page, and every order confirmation
+/thank-you
+/order/done*
