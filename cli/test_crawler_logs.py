@@ -290,7 +290,7 @@ class Funnel(unittest.TestCase):
         self.assertEqual(f["read_to_click"], {"pairs": 1, "median_seconds": 180, "window_days": 7})
         self.assertEqual([(x["assistant"], x["indexed"], x["read"], x["clicked"], x["converted"]) for x in f["by_assistant"]],
                          [("ChatGPT", 2, 1, 2, 1), ("Perplexity", 0, 1, 1, 0), ("Kimi", None, None, 1, 0)])
-        self.assertEqual(f["referral_rules"], "geoinflow-2026-11")
+        self.assertEqual(f["referral_rules"], "ai-referral-hosts-2026-11")
 
     def test_without_conversions_the_last_layer_is_not_measured(self):
         f = gs.read_crawler_logs([fx("funnel.log")])["funnel"]
@@ -338,8 +338,8 @@ class Funnel(unittest.TestCase):
         if jsonschema is not None:
             jsonschema.validate(json.loads(js), schema("crawlers.v1.json"))
 
-    def test_records_shaped_for_geoinflow_import_read_as_they_are(self):
-        r = gs.read_crawler_logs([fx("geoinflow-import.jsonl")])
+    def test_json_records_with_the_usual_field_names_read_as_they_are(self):
+        r = gs.read_crawler_logs([fx("import-records.jsonl")])
         self.assertEqual((r["files"][0]["formats"], r["lines"]["ai_requests"]), ({"json": 3}, 3))
         c = by_name(r)
         self.assertEqual((c["OAI-SearchBot"]["first"], c["ChatGPT-User"]["first"], c["GPTBot"]["first"]),

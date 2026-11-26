@@ -171,17 +171,14 @@ pages AI visits landed on most. The Referer, the query string, the address and t
 a request and never copied; only the assistant's name and the path are kept. An app that sends neither a Referer nor
 `utm_source`, as many mobile apps do, is not seen. JSON: `funnel`.
 
-**Lining up with GEOInflow.** The referral hosts and `utm_source` aliases are those of GEOInflow's public coverage list
-(`referral_rules` in the JSON), so the two count an AI visit by the same rule, and each crawler row carries `purpose`
-(`search`, `user` or `training`), the three AI purposes GEOInflow reports. Records written for GEOInflow's log import
-(JSON lines with `time` or `timestamp`, `ip` or `remote_addr`, `path` or `url`, `status`, `userAgent` or
-`user_agent`) and its combined logs read here as they are. What differs: GEOInflow is a hosted analytics app that also
-counts visits in the browser, by session, and conversions as analytics goals; `crawlers` reads log files once, offline,
-keeps nothing, and pairs a conversion with a visit only by address and user-agent. GEOInflow recognises more AI
-crawlers than the 16 of [reference/ai-crawlers.md](../reference/ai-crawlers.md) and downloads vendors' address
-ranges itself; `crawlers` counts the reference's crawlers and checks only the range files you give it. There is no
-export in GEOInflow's shape: its import takes raw records, addresses and user-agents included, which this command
-never writes, and its CSV exports are display tables, not a format meant to be read back.
+**Counted the way AI-source analytics count.** The referral hosts and `utm_source` aliases follow the conventions
+AI-source analytics commonly count by, matched exactly, so an AI visit here is one there; `referral_rules` in the
+JSON names the list's version (`ai-referral-hosts-2026-11`). Each crawler row carries `purpose` (`search`, `user` or
+`training`), the three AI purposes such tools report, so totals line up. Log records exported as JSON lines with the
+usual field names (`time` or `timestamp`, `ip` or `remote_addr`, `path` or `url`, `status`, `userAgent` or
+`user_agent`) read as they are, and a date with no time reads as midnight UTC. What `crawlers` does not do: count
+visits in the browser, keep anything between runs, download address ranges, or write any request out again: there is
+no export of raw records, since those would carry addresses and user-agents.
 
 `--format json` (or `--json`) follows [`schema/crawlers.v1.json`](../schema/crawlers.v1.json). Exit codes: `0` the
 logs were read, `2` a file could not be read, no line in any file is an access log in a format above, a range or page

@@ -273,7 +273,7 @@
               "user",
               "training"
             ],
-            "description": "Since 1.10.0. What the crawler is for, in the three AI purposes GEOInflow uses: search (a retrieval crawler that builds an index), user (a live fetch a user's question triggers) and training. kind and live say the same; this lines the two tools' totals up."
+            "description": "Since 1.10.0. What the crawler is for, in the three AI purposes AI-traffic analytics commonly report: search (a retrieval crawler that builds an index), user (a live fetch a user's question triggers) and training. kind and live say the same; this lines totals up with tools that count by purpose."
           },
           "requests": {
             "type": "integer",
@@ -646,7 +646,7 @@
             "by_assistant",
             "top_pages"
           ],
-          "description": "Requests whose user-agent names no crawler of reference/ai-crawlers.md and that arrived from an AI assistant: utm_source is one of the assistant's aliases or hosts, or, failing that and unless utm_medium is email, newsletter, sms, social, paid_social, display, affiliate, push or banner, the Referer host is one of its hosts, exactly. The hosts and aliases are those of GEOInflow's public coverage list (referral_rules). Only the assistant's name is kept: no Referer, query string, address or user-agent is copied.",
+          "description": "Requests whose user-agent names no crawler of reference/ai-crawlers.md and that arrived from an AI assistant: utm_source is one of the assistant's aliases or hosts, or, failing that and unless utm_medium is email, newsletter, sms, social, paid_social, display, affiliate, push or banner, the Referer host is one of its hosts, exactly. The hosts and aliases follow the conventions AI-source analytics commonly count by; referral_rules names the list's version. Only the assistant's name is kept: no Referer, query string, address or user-agent is copied.",
           "properties": {
             "visits": {
               "type": "integer",
@@ -807,8 +807,8 @@
           }
         },
         "referral_rules": {
-          "const": "geoinflow-2026-11",
-          "description": "The referral hosts and utm_source aliases: those of GEOInflow's public coverage list (config/liekan/ai-platform-coverage.json), read on 2026-11-27."
+          "const": "ai-referral-hosts-2026-11",
+          "description": "The version of the AI referral hosts and utm_source aliases the clicked layer used, a list kept in line with the conventions AI-source analytics commonly count by. A later list gets a new value."
         }
       }
     },

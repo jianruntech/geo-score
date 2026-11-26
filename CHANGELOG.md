@@ -53,15 +53,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   rate or interval changes.
 - **`geo-score crawlers`: the funnel from crawl to conversion.** `funnel` in the JSON and a section in the text and
   Markdown views: indexed (requests from the retrieval crawlers that build an index), read (live fetches), clicked
-  (visits whose `utm_source` or Referer host names an AI assistant, by the referral hosts and aliases of GEOInflow's
-  public coverage list: ChatGPT, Claude, Perplexity, Gemini, Copilot, Kimi, DeepSeek, Doubao, Qwen, Yuanbao and the
-  others it lists) and, with the new `--conversions FILE`, converted (a conversion page within 24 hours of an AI visit
+  (visits whose `utm_source` or Referer host names an AI assistant, by a host and alias list kept in line with the
+  conventions AI-source analytics commonly count by: ChatGPT, Claude, Perplexity, Gemini, Copilot, Kimi, DeepSeek,
+  Doubao, Qwen, Yuanbao and others; `referral_rules` names its version) and, with the new `--conversions FILE`, converted (a conversion page within 24 hours of an AI visit
   from the same address and user-agent), one figure each, per assistant, with the median time from a live fetch of a
   page to the next click from the same assistant onto it, and the pages AI visits landed on. The Referer, query
   string, address and user-agent are read and never copied. Crawler rows gain `purpose` (`search`, `user`,
-  `training`); a date with no time reads as midnight UTC, as GEOInflow's log import takes it, and records written for
-  that import read as they are. `cli/test_crawler_logs.py` (`Funnel`), with new fixtures `funnel.log`,
-  `conversions.txt` and `geoinflow-import.jsonl`.
+  `training`); a date with no time reads as midnight UTC, and JSON log records with the usual field names read as
+  they are. `cli/test_crawler_logs.py` (`Funnel`), with new fixtures `funnel.log`, `conversions.txt` and
+  `import-records.jsonl`.
 - **`guide/mcp.md` (+ zh): Trae, Kimi Code CLI, OpenClaw and Hermes Agent**, each from its own documentation, read
   on 2026-11-26: where the config lives, its shape, how keys reach the server, and the tool timeout a long `run`
   needs (Trae reads it from `env`, Kimi Code CLI from `toolTimeoutMs`, OpenClaw from `requestTimeoutMs`, Hermes from

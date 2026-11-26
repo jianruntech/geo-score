@@ -153,12 +153,11 @@ Cloudflare、Vercel 的防火墙字段记为拦截或质询）、请求最多的
 7 天以内）；按助手分开的漏斗（参考列表里没有对应爬虫的助手，收录和被读显示 `—`，即未测量）；AI 访问落地最多的页面。Referer、查询串、地址和 UA
 只用来判断请求属于哪一类，从不抄录；只保留助手名和路径。既不带 Referer 也不带 `utm_source` 的 App（很多手机 App 如此）看不到。JSON：`funnel`。
 
-**和 GEOInflow 对齐。** 引荐主机和 `utm_source` 别名用的是 GEOInflow 公开的覆盖列表（JSON 里的 `referral_rules`），所以两边按同一规则认定 AI 访问；
-每个爬虫行带 `purpose`（`search`、`user` 或 `training`），即 GEOInflow 报告的三种 AI 用途。为 GEOInflow 日志导入准备的记录（JSON 行，字段 `time` 或
-`timestamp`、`ip` 或 `remote_addr`、`path` 或 `url`、`status`、`userAgent` 或 `user_agent`）以及它读的 combined 日志，这里原样可读。不同之处：GEOInflow
-是托管的统计应用，还在浏览器里按会话统计访问，转化按统计目标算；`crawlers` 只离线读一遍日志文件，什么都不保存，只凭地址和 UA 把转化和访问配对。
-GEOInflow 认得的 AI 爬虫比 [reference/ai-crawlers.md](../reference/ai-crawlers.md) 的 16 个多，并且自己下载各家的地址段；`crawlers` 只数参考列表里的爬虫，
-只用你给的地址段文件核验。没有按 GEOInflow 格式的导出：它的导入要原始记录，包括地址和 UA，这个命令从不写出这些；它的 CSV 导出是界面表格，不是用来读回的格式。
+**和常见 AI 来源统计口径一致。** 引荐主机和 `utm_source` 别名按常见 AI 来源统计的口径整理，主机完全匹配，所以这里算一次 AI 访问，
+那些工具里也算一次；JSON 里的 `referral_rules` 写明清单版本（`ai-referral-hosts-2026-11`）。每个爬虫行带 `purpose`（`search`、`user` 或 `training`），
+即这类工具常报的三种 AI 用途，总数能对上。用常见字段名导出的 JSON 行日志（`time` 或 `timestamp`、`ip` 或 `remote_addr`、`path` 或 `url`、`status`、
+`userAgent` 或 `user_agent`）原样可读，只有日期没有时间的记录按 UTC 零点读。`crawlers` 不做的事：在浏览器里统计访问、在两次运行之间保存任何东西、
+下载地址段，或把请求原样写出：不导出原始记录，因为那会带上地址和 UA。
 
 `--format json`（或 `--json`）遵循 [`schema/crawlers.v1.json`](../schema/crawlers.v1.json)。退出码：`0` 日志读完；`2` 有文件读不了、
 所有文件里没有一行是上述格式的访问日志、IP 段文件或页面清单不可用，或者参数错误；加了 `--json` 时，退出码 2 会输出

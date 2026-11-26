@@ -38,11 +38,11 @@
   提到和入选的被跟踪品牌、列表项），同一模型下引用网页数变动达到四分之一以上时写备注；并列出日期落在两次运行之间的事件（`events`）。
   `watch report` 增加「Per answer, per engine」（`summary.engines` 上的 `per_answer`）和运行前 30 天内的事件（`summary.events`）。结论、比率和区间都不变。
 - **`geo-score crawlers`：从抓取到成交的漏斗。** JSON 里的 `funnel`，以及文本和 Markdown 视图里的一节：收录（建索引的检索爬虫的请求）、被读（实时访问）、
-  被点（`utm_source` 或 Referer 主机指向 AI 助手的访问，按 GEOInflow 公开覆盖列表里的引荐主机和别名：ChatGPT、Claude、Perplexity、Gemini、Copilot、
+  被点（`utm_source` 或 Referer 主机指向 AI 助手的访问，按和常见 AI 来源统计口径一致的主机与 utm 清单，`referral_rules` 写明版本：ChatGPT、Claude、Perplexity、Gemini、Copilot、
   Kimi、DeepSeek、豆包、千问、元宝等），以及加新参数 `--conversions FILE` 时的成交（同一地址和 UA 在 AI 访问后 24 小时内到达转化页）。每层一个数，
   按助手分开，再加上同一页面从实时访问到下一次来自同一助手的点击的间隔中位数，以及 AI 访问落地的页面。Referer、查询串、地址和 UA 只读不抄。
-  爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读（GEOInflow 的日志导入就接受这种写法），为那个导入准备的记录原样可读。
-  测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`geoinflow-import.jsonl`。
+  爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读，用常见字段名导出的 JSON 行日志原样可读。
+  测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`import-records.jsonl`。
 - **`guide/mcp.md`（及中文版）补上 Trae、Kimi Code CLI、OpenClaw 和 Hermes Agent**，每个都按它自己的官方文档（2026-11-26 读）：配置文件在哪、
   格式、Key 怎么传给服务，以及跑长 `run` 需要的工具超时（Trae 从 `env` 读，Kimi Code CLI 用 `toolTimeoutMs`，OpenClaw 用 `requestTimeoutMs`，
   Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。

@@ -4469,10 +4469,11 @@ _LOG_REFUSED = (401, 403, 429)
 # user's question triggers), clicked (visits that arrive from an AI assistant) and, with --conversions, converted.
 # A visit arrives from an assistant when its utm_source is one of the assistant's aliases or hosts, or, failing that,
 # when its Referer host is one of the assistant's hosts, exactly (lower case, no port); a utm_medium of email,
-# newsletter and the like makes it another kind of referral. These are the referral rules of GEOInflow's public
-# coverage list (config/liekan/ai-platform-coverage.json, MIT, read 2026-11-27), so the two tools count an AI visit
-# the same way. (assistant, its hosts, its utm_source aliases, its index crawler and live fetcher in
+# newsletter and the like makes it another kind of referral. The hosts and aliases follow the conventions AI-source
+# analytics commonly count by (the funnel's referral_rules names this list's version, AI_REFERRAL_RULES), so an AI
+# visit here is one there. (assistant, its hosts, its utm_source aliases, its index crawler and live fetcher in
 # reference/ai-crawlers.md, or None)
+AI_REFERRAL_RULES = "ai-referral-hosts-2026-11"
 AI_ASSISTANTS = [
     ("ChatGPT", ("chatgpt.com", "chat.openai.com"), ("chatgpt", "openai"), "OAI-SearchBot", "ChatGPT-User"),
     ("Claude", ("claude.ai",), ("claude",), "Claude-SearchBot", "Claude-User"),
@@ -4544,7 +4545,7 @@ def _log_time(v):
                 if tz and tz.upper() != "Z":
                     tz = tz.replace(":", "")
                     off = (int(tz[1:3]) * 60 + int(tz[3:5])) * (1 if tz[0] == "+" else -1)
-                # a date alone (as GEOInflow's log import takes one) is midnight UTC
+                # a date alone, as some log exports write it, is midnight UTC
                 t = (datetime.datetime(int(y), int(mo), int(d), int(h or 0), int(mi or 0), int(se or 0), tzinfo=_UTC)
                      - datetime.timedelta(minutes=off))
             else:
@@ -5064,7 +5065,7 @@ def crawl_funnel(crawl, clicks, convs, conversions, live_times, over):
     return {"indexed": layer(index), "read": layer(LIVE_FETCHERS), "clicked": clicked, "converted": converted,
             "read_to_click": {"pairs": len(lags), "median_seconds": None if med is None else round(med),
                               "window_days": READ_TO_CLICK_DAYS},
-            "by_assistant": by, "referral_rules": "geoinflow-2026-11"}
+            "by_assistant": by, "referral_rules": AI_REFERRAL_RULES}
 
 
 def _span(sec):
