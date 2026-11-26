@@ -355,9 +355,74 @@ API 两样都给时，每条回答记下 `sources_listed`（返回的全部来�
 一次运行在 `recorded`（`spans`、`sources`）里记下它测了什么。在这些字段出现之前保存的运行没有这一项，它的报告会写明「没有记录」，
 而不是说引擎没给；出报告时重新计算它的 summary，运行文件本身不会被改写。
 
+## 10. 引用率之外：第一条搜索、模型记忆、条件阶梯，以及品牌被怎样提到
+
+1.10.0 新增四项测量。每一项都放在引用率旁边单独报告，从不并进引用率；标题率、引用率的区间、合并（pooling）和 `watch diff`
+都不读它们。它们都从运行文件保存的内容算出，所以对旧版本保存的运行出报告时会重新计算，文件本身不改写。
+
+### 第一条搜索
+
+引擎在回答前先搜索时，会把问题变成一条或几条搜索词。OpenAI 和 Anthropic 随回答返回这些搜索词，Gemini 返回它的查询；
+`search_queries` 按 API 返回的顺序保存，去掉重复。第一条是引擎的第一步，它可能已经带上某个品牌：搜「Acme 移动电源」，
+只能找到提到 Acme 的页面。
+
+`summary.first_search` 在至少暴露了一条搜索词的回答里，数第一条搜索词含本品牌的有几条、含某个被跟踪竞品的有几条，
+用的是判断 `mentioned` 的同一个匹配器（名称、别名和域名）。再把「第一条搜索词含本品牌」和「回答提到本品牌」交叉成一张二乘二表。
+问题本身提到品牌时，搜索词自然会带上它，所以要看的是不提品牌的问题那张表（`unbranded`）：在那里，第一条搜索词带上品牌是引擎自己的选择。
+同样的计数也按引擎给出。
+
+没有暴露搜索词的回答在这里**未测量**，不算「没有」：Perplexity 和 OpenRouter 不返回搜索词，OpenAI 兼容的 `base_url` 也可能把它们去掉。
+Google 没有说明它的查询列表就是搜索的先后顺序，所以对 Gemini 来说「第一条」只是列表里的第一条。这些是计数，没有区间也没有检验；
+那张表只把两件事并排放着，不说明一件导致了另一件。
+
+### 关掉联网再问一遍：不联网测试
+
+模型可以不搜索，凭训练时学到的东西提到一个品牌。配置里写 `no_search_pass: true`（或 `watch run --no-search-pass`，或 MCP `run` 工具的
+`no_search_pass`），每道题会在每个引擎上关掉联网再问一遍：OpenAI 的 Responses API 和 Claude 的 Messages API 不带搜索工具，
+Gemini 不带 `google_search`，OpenRouter 不带 `web` 插件。**调用次数约翻一倍**，仍受同一个 `max_calls` 和 `budget_usd` 约束；
+`watch run --dry-run` 在花钱之前就会写明，MCP `run` 工具的 dry run 在计划里给出 `no_search_calls`。Perplexity 的 Sonar 模型每次调用都会搜索，
+OpenRouter 带 `:online` 后缀的模型无论请求怎么写都会搜索，所以这两种不测。
+
+这些回答存进 `memory_samples`，和 `samples` 分开，所以任何比率、合并和比较都不会读到它们。不搜索就无从引用，所以 `summary.memory`
+数的是提到本品牌的回答，按引擎和整体给出，带 Wilson 区间和按问题的自助法区间，旁边并列同一引擎联网回答同一批问题时提到品牌的比例。
+关掉联网问、却仍然搜索或引用了的回答（某些端点会自己加上搜索），标记为 `searched_anyway`，单独计数，并且不计入。
+
+模型的训练数据在发布前几个月就截止了，所以这一项随服务商换新模型而变，不随网站改动而变。它回答的是另一个问题：模型到底认不认识这个品牌。
+
+### 条件阶梯题组
+
+一道题很少单独出现。「最好的移动电源」会变成「露营用的移动电源」，再变成「500 美元以内、露营用的」。泛问时被提到的品牌，
+条件一多可能就掉出去了。问题文件里可选的 `ladder` 和 `step` 两列把这样的题编成一组：同一组填同一个阶梯 id，基础题的 step 是 0，
+每加一层条件依次是 1、2……。`watch check` 拒绝同一阶梯里重复的 step，对只有一级的阶梯给出提醒。
+
+`summary.ladders` 按 step 从低到高列出每个阶梯的各级：每级的回答数，以及其中提到、引用本品牌的条数，整体和按引擎各一份。
+`dropped_at` 是在某一级提到过本品牌之后、第一次没有任何回答提到它的那一级；`halved_at` 是基础题之上、提到本品牌的回答占比
+不到基础题一半的第一级。每一级只是一道题、几条回答，所以这些是计数，没有区间也没有检验：把阶梯多问几遍（`runs`）再下结论。
+每一级同时也是一道普通的题，照常计入其他所有表。
+
+### 入选、举例、排除
+
+回答提到一个品牌，可能是在推荐它，可能只是举它当许多例子之一，也可能是在排除它。三种都算「提到」，会把它们混在一起。
+对每条提到被跟踪品牌的回答，`watch` 用规则读提到它的句子（和 `mention_share` 同一套分句）：
+
+- **排除**：一句只提到这一个被跟踪品牌的话，说它不支持什么、不适合、缺少什么、做得不够或不推荐（`does not support`、`not suitable`、
+  `lacks`、`not recommended`、`不支持`、`不适合`、`缺少`、`不推荐` 等）；
+- **入选**：提到品牌的那一行以它开头，前面只有列表符号、序号、标题符号、表格竖线或加粗（这是回答给出的候选名单），
+  或一句只提到这一个被跟踪品牌的话推荐它（`recommend`、`best`、`top pick`、`推荐`、`首选`、`最适合` 等）；
+- **举例**：品牌在同一句里跟在举例提示词后面（`such as`、`for example`、`like`、`including`、`例如`、`比如`、`包括`），
+  或在一串并列里由「等」收尾。
+
+每句话最多一个标签，优先级是排除、入选、举例。整条回答：有句子排除它、没有句子让它入选，算排除；反过来算入选；只有举例提示词时算举例；
+一条规则都没命中，或一句让它入选、另一句排除它，算**未判定**。四类加起来等于提到这个品牌的回答数。报告按被跟踪品牌给出
+（`summary.share_of_voice` 每一行的 `roles`），本品牌另按引擎给出（`summary.engines` 每一行的 `roles`）。
+
+这些是读字面的规则，不读意思。带保留意见的推荐（「不错，但缺少 App」）会读成排除，反讽读不出来；一句话里同时提到两个被跟踪品牌时，
+排除和推荐提示词不采用，因为可能说的是另一个。提示词只有英文和中文；其他语言只有列表和标题那条规则起作用，其余都算未判定。
+这些计数用来找出值得细读的回答，不是结论。
+
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

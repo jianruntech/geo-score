@@ -4686,6 +4686,238 @@ class RepeatConsistency(unittest.TestCase):
         self.assertIn("each question was asked once per engine", " ".join(gw.consistency_lines(run, sm, "text")))
 
 
+# ── 1.10.0: the first search, the no-search pass, condition ladders, selected / example / excluded ──
+def tools_of(body):
+    """The search switch of a request body, whichever provider sent it: its tools or plugins, or None."""
+    return body.get("tools") or body.get("plugins")
+
+
+class FirstSearch(Base):
+    def run_with(self, per_query):
+        """per_query: {question: (answer text, [search queries])}, one OpenAI engine plus Perplexity, which shows none."""
+        def oa(u, h, b):
+            text, qs = per_query[b["input"][0]["content"]]
+            return openai_resp(text, [], qs)
+        self.fake({"api.openai.com": oa, "api.perplexity.ai": lambda u, h, b: pplx_resp("Lumo [1]", [("https://x.test/", "")])})
+        qs = [{"query_id": "q%d" % i, "query": q, "intent_tier": "", "target_url": ""}
+              for i, q in enumerate(sorted(per_query), 1)]
+        return gw.execute(brand(), rivals(), engines("chatgpt-api", "perplexity-api"), qs)
+
+    def test_the_first_query_against_the_answer(self):
+        run = self.run_with({"a best station": ("Lumo is fine.", ["lumo power station", "pixa"]),
+                             "b best station": ("Pixa is fine.", ["best station 2026", "lumo"]),
+                             "c best station": ("Nothing here.", ["Pixa vs Trailcell"]),
+                             "d Lumo review": ("Lumo is fine.", ["lumo review"]),
+                             "e best station": ("No search shown.", [])})
+        fs = run["summary"]["first_search"]
+        # e shows no query and Perplexity never does: not measured, never a no
+        self.assertEqual((fs["answers"], fs["brand"], fs["competitor"]), (4, 2, 1))
+        self.assertEqual((fs["brand_in_search_mentioned"], fs["brand_not_in_search_not_mentioned"],
+                          fs["brand_not_in_search_mentioned"], fs["brand_in_search_not_mentioned"]), (2, 2, 0, 0))
+        u = fs["unbranded"]           # d names the brand, so the table that matters leaves it out
+        self.assertEqual((u["answers"], u["brand"], u["brand_in_search_mentioned"]), (3, 1, 1))
+        per = dict((e["id"], e["answers"]) for e in fs["engines"])
+        self.assertEqual(per, {"chatgpt-api": 4, "perplexity-api": 0})
+        text = gw.render(run)
+        self.assertIn("The first search each answer ran", text)
+        self.assertIn("first search names Lumo", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_no_query_anywhere_prints_nothing(self):
+        run = self.run_with({"a": ("Lumo", [])})
+        self.assertEqual(run["summary"]["first_search"]["answers"], 0)
+        self.assertNotIn("The first search each answer ran", gw.render(run))
+
+
+class NoSearchPass(Base):
+    def routes(self, searched_anyway=False):
+        seen = []
+
+        def answer(text, kind):
+            def h(u, hd, b):
+                seen.append((kind, tools_of(b) is not None))
+                if kind == "openai":
+                    if tools_of(b) or searched_anyway:
+                        return openai_resp(text + " Lumo leads.", [("https://lumo.example/a", "")], ["lumo"])
+                    return openai_resp("From memory, Pixa is known." if "question 2" in b["input"][0]["content"] else
+                                       "From memory, Lumo is known.")
+                if kind == "anthropic":
+                    content = [{"type": "text", "text": "Claude memory: Lumo."}]
+                    return {"content": content, "stop_reason": "end_turn", "usage": {"input_tokens": 5, "output_tokens": 5}}
+                if kind == "gemini":
+                    return {"steps": [{"type": "model_output", "content": [{"type": "text", "text": "Gemini: Pixa."}]}],
+                            "usage": {"input_tokens": 3, "output_tokens": 3}}
+                if kind == "openrouter":
+                    return openrouter_resp("OpenRouter: Lumo.")
+                return pplx_resp("Pixa [1]", [("https://pixa.example/", "")])
+            return h
+        self.fake({"api.openai.com": answer("x", "openai"), "api.anthropic.com": answer("x", "anthropic"),
+                   "generativelanguage.googleapis.com": answer("x", "gemini"),
+                   "openrouter.ai": answer("x", "openrouter"), "api.perplexity.ai": answer("x", "perplexity")})
+        return seen
+
+    def test_the_second_pass_asks_without_search_and_is_kept_apart(self):
+        seen = self.routes()
+        eng = engines("chatgpt-api", "claude-api", "gemini-api", "or-api", "perplexity-api")
+        run = gw.execute(brand(), rivals(), eng, queries(2), no_search_pass=True, max_calls=100)
+        # every engine asked once per question with search; all but Perplexity (whose Sonar searches whatever the
+        # request says, so its body never carries a tool) once more without
+        self.assertEqual(sorted(k for k, with_tools in seen if not with_tools and k != "perplexity"),
+                         sorted(["openai", "anthropic", "gemini", "openrouter"] * 2))
+        self.assertEqual(sum(1 for k, with_tools in seen if with_tools), 8)
+        self.assertEqual(sum(1 for k, _ in seen if k == "perplexity"), 2)
+        self.assertEqual(len(run["samples"]), 10)
+        self.assertEqual(len(run["memory_samples"]), 8)
+        self.assertFalse(any(s.get("cited") for s in run["memory_samples"]))
+        m = run["summary"]["memory"]
+        per = dict((e["id"], e) for e in m["engines"])
+        self.assertEqual(per["perplexity-api"]["status"], "searches_every_call")
+        self.assertEqual(per["perplexity-api"]["answered"], 0)
+        self.assertEqual((per["chatgpt-api"]["mentioned"], per["chatgpt-api"]["answered"]), (1, 2))
+        self.assertEqual(per["chatgpt-api"]["with_search"], {"answered": 2, "mentioned": 2, "mentioned_rate": 1.0})
+        self.assertEqual((per["gemini-api"]["mentioned"], m["answered"], m["mentioned"]), (0, 8, 5))
+        # the memory answers never enter the cited rate or the samples a diff pairs
+        self.assertEqual(run["summary"]["overall"]["planned"], 10)
+        self.assertEqual(run["ledger"]["questions_asked"], 18)
+        text = gw.render(run)
+        self.assertIn("No-search pass (web search off): 8 planned · 8 answered", text)
+        self.assertIn("Named from memory, with web search off", text)
+        self.assertIn("searches on every call", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+
+    def test_an_answer_that_searched_anyway_is_left_out(self):
+        self.routes(searched_anyway=True)
+        run = gw.execute(brand(), [], engines("chatgpt-api"), queries(2), no_search_pass=True)
+        self.assertTrue(all(s.get("searched_anyway") for s in run["memory_samples"]))
+        m = run["summary"]["memory"]
+        self.assertEqual((m["answered"], m["searched_anyway"], m["engines"][0]["searched_anyway"]), (0, 2, 2))
+        self.assertIn("2 searched anyway, left out", gw.render(run))
+
+    def test_off_by_default_and_only_with_a_boolean(self):
+        self.routes()
+        run = gw.execute(brand(), [], engines("chatgpt-api"), queries(1))
+        self.assertNotIn("memory_samples", run)
+        self.assertNotIn("memory", run["summary"])
+        self.assertNotIn("Named from memory", gw.render(run))
+        cfg = RunFile.config(self, {"no_search_pass": "yes"})
+        self.assertIn("no_search_pass must be true or false", cfg.errors)
+        self.assertEqual(RunFile.config(self, {"no_search_pass": None}).errors, [])
+
+    def test_the_plan_says_what_it_costs_before_anything_is_spent(self):
+        cfg = RunFile.config(self, {"no_search_pass": True, "engines": engines("chatgpt-api", "perplexity-api")},
+                             queries_csv="query_id,query\nq01,a\nq02,b\nq03,c\n")
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = gw.main(["run", "-c", cfg.path, "--dry-run"])
+        self.assertEqual(code, 0, err.getvalue())
+        self.assertIn("6 questions to ask, + 3 with web search off (the no-search pass) = 9", out.getvalue())
+        self.assertIn("no-search pass: paid", out.getvalue())
+        self.assertIn("perplexity-api: not in the no-search pass", out.getvalue())
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            self.assertEqual(gw.main(["run", "-c", cfg.path, "--max-calls", "7"]), 1)
+        self.assertIn("the plan needs 9 questions but the cap is 7", err.getvalue())
+        srv = gw.MCPServer(cfg.path, out=io.StringIO())
+        dry = srv.call({"name": "run", "arguments": {"dry_run": True}})
+        self.assertEqual((dry["structuredContent"]["plan"]["planned_calls"],
+                          dry["structuredContent"]["plan"]["no_search_calls"]), (9, 3))
+        off = srv.call({"name": "run", "arguments": {"dry_run": True, "no_search_pass": False}})
+        self.assertEqual(off["structuredContent"]["plan"]["no_search_calls"], 0)
+        self.assertIn("no-search pass: paid", dry["content"][0]["text"])
+
+
+class Ladders(Base):
+    def cfg(self, rows):
+        return RunFile.config(self, queries_csv="query_id,query,intent_tier,target_url,ladder,step\n" + rows)
+
+    def test_the_question_file_groups_steps_and_refuses_a_step_twice(self):
+        good = self.cfg("a0,best station,list,,pps,0\na1,best station for camping,list,,pps,1\nz,other,list,,,\n")
+        qs = good.load_queries()
+        self.assertEqual([(q.get("ladder"), q.get("step")) for q in qs], [("pps", 0), ("pps", 1), (None, None)])
+        self.assertNotIn("ladder", qs[2])
+        self.assertEqual(good.query_warnings, [])
+        one = self.cfg("a0,best station,list,,solo,0\n")
+        one.load_queries()
+        self.assertIn("ladder solo has one step", one.query_warnings[0])
+        for rows, needle in (("a0,x,list,,pps,0\na1,y,list,,pps,0\n", "ladder pps has step 0 more than once"),
+                             ("a0,x,list,,,1\n", "ladder ''"), ("a0,x,list,,pps,\n", "step must be a whole number"),
+                             ("a0,x,list,,pps,1.5\n", "step must be a whole number"),
+                             ("a0,x,list,,p p,0\n", "ladder 'p p'")):
+            with self.assertRaises(gw.ConfigError) as ctx:
+                self.cfg(rows).load_queries()
+            self.assertIn(needle, str(ctx.exception))
+
+    def test_where_the_brand_drops_out(self):
+        texts = {"best station": "Lumo and Pixa.", "best station for camping": "Pixa only.",
+                 "best station for camping under 500": "Pixa again.", "best station for camping with solar": "Lumo."}
+        self.fake({"api.openai.com": lambda u, h, b: openai_resp(texts[b["input"][0]["content"]])})
+        qs = [{"query_id": "s%d" % i, "query": q, "intent_tier": "", "target_url": "", "ladder": "pps", "step": i}
+              for i, q in enumerate(["best station", "best station for camping", "best station for camping under 500",
+                                     "best station for camping with solar"])]
+        run = gw.execute(brand(), rivals(), engines("chatgpt-api"), qs)
+        lad = run["summary"]["ladders"]
+        self.assertEqual(len(lad), 1)
+        self.assertEqual([(s["step"], s["mentioned"], s["answered"]) for s in lad[0]["steps"]],
+                         [(0, 1, 1), (1, 0, 1), (2, 0, 1), (3, 1, 1)])
+        self.assertEqual((lad[0]["dropped_at"], lad[0]["halved_at"]), (1, 1))
+        self.assertEqual(lad[0]["steps"][0]["engines"], {"chatgpt-api": {"answered": 1, "mentioned": 1, "cited": 0}})
+        text = gw.render(run)
+        self.assertIn("pps: no answer names Lumo from step 1", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        # a base the brand is never named in has nothing to halve
+        flat = gw.ladders_block(qs, {"s0": [], "s1": []}, brand(), [])
+        self.assertEqual((flat[0]["dropped_at"], flat[0]["halved_at"]), (None, None))
+
+
+class Roles(unittest.TestCase):
+    ENTS = [gw.Entity({"name": "Lumo", "aliases": ["鹿末"]}, you=True), gw.Entity({"name": "Pixa"})]
+
+    def roles(self, text):
+        return gw.mention_roles(text, self.ENTS)
+
+    def test_the_rules(self):
+        cases = [
+            ("1. **Lumo** – long battery life.\n2. **Pixa** – cheaper.", ["selected", "selected"]),
+            ("| Lumo | 3 years |\n| Pixa | 1 year |", ["selected", "selected"]),
+            ("### Lumo\nA solid pick.", ["selected", None]),
+            ("We recommend Lumo for camping.", ["selected", None]),
+            ("Brands such as Lumo and Pixa make these.", ["example", "example"]),
+            ("Lumo does not support USB-C charging.", ["excluded", None]),
+            ("Lumo doesn’t support fast charging.", ["excluded", None]),         # a typographic apostrophe
+            ("Lumo is a brand. It exists.", ["undetermined", None]),
+            ("Lumo is not recommended, but Pixa is the best.", ["undetermined", "undetermined"]),   # two brands
+            ("- **Lumo**: the best value.\nLumo lacks an app, though.", ["undetermined", None]),     # both fire
+            ("Unlike Pixa, Lumo is fine. Lumo lacks an app.", ["excluded", "undetermined"]),
+            ("推荐鹿末，续航最好。", ["selected", None]),
+            ("鹿末不支持快充。", ["excluded", None]),
+            ("例如鹿末和 Pixa 都可以。", ["example", "example"]),
+            ("鹿末、Pixa 等品牌都可以。", ["example", "example"]),
+            ("鹿末等级很高。", ["undetermined", None]),                            # 等级 is not 等
+            ("Lumo is recommended. Lumo also comes like a brick.", ["selected", None]),
+            ("Nothing about either.", [None, None]),
+        ]
+        for text, want in cases:
+            self.assertEqual(self.roles(text), want, text)
+
+    def test_counts_add_up_to_the_answers_that_name_the_brand(self):
+        c = gw.roles_count(["selected", None, "example", "selected", "undetermined"])
+        self.assertEqual(c, {"selected": 2, "example": 1, "excluded": 0, "undetermined": 1})
+        self.assertEqual(list(c), list(gw.ROLE_STATES))
+
+
+class NewSummaryFields(Base):
+    def test_a_run_saved_before_them_gets_them_when_reported(self):
+        run = synth("20261012T163334Z", {("q1", "chatgpt-api"): [True], ("q2", "chatgpt-api"): [False]})
+        for k in ("first_search", "ladders"):
+            del run["summary"][k]
+        for e in run["summary"]["engines"] + run["summary"]["share_of_voice"]:
+            del e["roles"]
+        sm = gw.summary_of(run)
+        self.assertIn("first_search", sm)
+        self.assertEqual(sm["ladders"], [])
+        self.assertEqual(sm["share_of_voice"][0]["roles"]["undetermined"], 0)
+        self.assertIs(gw.summary_of(dict(run, summary=sm)), sm)
+
+
 class PipedDecoy(unittest.TestCase):
     def test_a_geo_watch_py_in_the_current_directory_is_never_loaded(self):
         d = tempfile.mkdtemp(prefix="geo-score-decoy-")

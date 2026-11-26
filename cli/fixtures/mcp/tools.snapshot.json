@@ -281,6 +281,10 @@
      "max_calls": {
       "minimum": 1,
       "type": "integer"
+     },
+     "no_search_pass": {
+      "description": "Paid: about doubles the calls, within the same caps. Also asks every question with web search off, to see whether the model names the brand from its training alone. Default: the config's no_search_pass (off).",
+      "type": "boolean"
      }
     },
     "type": "object"
@@ -311,6 +315,10 @@
         "type": "array"
        },
        "max_calls": {
+        "type": "integer"
+       },
+       "no_search_calls": {
+        "description": "of planned_calls, those of the no-search pass (web search off)",
         "type": "integer"
        },
        "not_measured": {

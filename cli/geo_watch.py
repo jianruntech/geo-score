@@ -70,6 +70,9 @@ CITATIONS_WERE, CITATIONS_GONE = 0.5, 0.05
 # Providers whose stored answers show whether the engine searched: a search count, the search queries or the
 # citations. The Perplexity and OpenRouter adapters record one search for every answer, so that count is never read.
 SEARCH_REPORTED = ("openai", "gemini", "anthropic")
+# Providers the no-search pass (no_search_pass) can ask with web search off: their adapters send the search tool only
+# when asked to. Perplexity's Sonar models search on every call, so they are not measured there.
+NO_SEARCH_PROVIDERS = ("openai", "gemini", "anthropic", "openrouter")
 RETRY_STATUS = (429, 500, 502, 503, 504, 529)
 FATAL_STATUS = (400, 401, 403, 404)
 ENGINE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
@@ -186,6 +189,50 @@ POOL_NOTES = [
     "one cluster, and the 95% interval resamples questions: more runs pin down each question's rate, but the interval "
     "narrows only as far as the number of questions allows.",
     "A pooled rate describes the period it covers. It is not a test for a change: compare two runs with watch diff.",
+]
+
+# printed under "How the answers name each brand": what the four states are and how they are read
+ROLE_NOTES = [
+    "Selected: a line that names the brand starts with it (after a list marker, a number, a heading mark, a table "
+    "bar or bold), or a sentence that names no other tracked brand recommends it (recommend, best, top pick, 推荐, "
+    "首选, 最适合…). Example: it follows such as, for example, like, including, 例如, 比如, 包括… in its sentence, "
+    "or is followed by 等 in a list. Excluded: a sentence that names no other tracked brand says it does not support, "
+    "is not suitable, lacks, falls short or is not recommended (不支持, 不适合, 缺少, 不推荐…).",
+    "An answer is excluded when a sentence excludes the brand and none selects it, selected in the opposite case, an "
+    "example when that is all it is, and undetermined when no rule fires or one sentence selects it while another "
+    "excludes it. The cue words are English and Chinese; in other languages only the list and heading rule reads.",
+    "Rules read words, not meaning: a caveat (\"but it lacks an app\") reads as excluded and sarcasm is not seen. "
+    "Counts of answers, never part of the cited rate, and watch diff does not read them.",
+]
+# printed under "The first search each answer ran"
+FIRST_SEARCH_NOTES = [
+    "First search: the first search query the API returned with the answer, in the order it returned them (OpenAI's "
+    "web_search_call items, Claude's web_search calls, Gemini's queries, which Google does not document as the order "
+    "searched). Perplexity and OpenRouter return no query, and answers that show none are not measured.",
+    "A question that names the brand puts the brand in the search, so the table under it counts only questions that "
+    "do not name it: there a brand in the first search is the engine's own choice.",
+    "Counts, with no interval and no test. A search that names the brand does not show that it made the answer name "
+    "it; the table puts the two side by side.",
+]
+# printed under "Condition ladders"
+LADDER_NOTES = [
+    "A ladder is a base question (step 0) and the same question with more conditions (steps 1, 2…), as the ladder "
+    "and step columns of the question file group them. Each step is one question: its answers come from every engine "
+    "and ask, and also count in every other table.",
+    "Dropped out: the first step, after a step whose answers named the brand, at which no answer names it. Half: the "
+    "first step above the base whose share of answers naming the brand is at most half the base's. Counts of a few "
+    "answers each, with no interval and no test: run the ladder more than once before reading a step as real.",
+]
+# printed under "Named from memory, with web search off"
+MEMORY_NOTES = [
+    "The no-search pass asks the same questions again with web search off (no_search_pass in the config, or "
+    "--no-search-pass): the answer comes from the model's training alone, so it shows whether the model knows the "
+    "brand, not whether its search finds it. It costs a second set of calls.",
+    "Nothing can be cited without a search, so this counts answers that name the brand. An answer that searched or "
+    "cited anyway (an endpoint that adds search) is left out and counted. Perplexity's Sonar models search on every "
+    "call and are not measured.",
+    "A model's training ends months before its release: this moves when the provider ships a new model, not when your "
+    "site changes. Never pooled with the cited rate, and watch diff does not read it.",
 ]
 
 # Swapped out by the tests; nothing else should touch these.
@@ -625,13 +672,15 @@ def _endpoint(eng):
     return eng.get("base_url") or PROVIDERS[eng["provider"]]["url"]
 
 
-def call_openai(eng, key, question, country):
+def call_openai(eng, key, question, country, search=True):
     tool = {"type": eng.get("tool") or "web_search"}
     if country:
         tool["user_location"] = {"type": "approximate", "country": country}
     # the question as a one-message list: the Responses API takes a string or a list, and some
     # OpenAI-compatible endpoints a base_url points at accept only the list
-    body = {"model": eng["model"], "input": [{"role": "user", "content": question}], "tools": [tool]}
+    body = {"model": eng["model"], "input": [{"role": "user", "content": question}]}
+    if search:              # without the tool the model answers from its training alone (no_search_pass)
+        body["tools"] = [tool]
     js, n = api_post(_endpoint(eng), {"Authorization": "Bearer " + key}, body, key, timeout=eng.get("timeout"))
     text, cites, searches, nsearch, marks = [], [], [], 0, []
     for item in js.get("output") or []:
@@ -668,7 +717,8 @@ def call_openai(eng, key, question, country):
                    nsearch, attempts=n, spans=_positioned(marks))
 
 
-def call_perplexity(eng, key, question, country):
+def call_perplexity(eng, key, question, country, search=True):
+    # Sonar models search on every call, so the no-search pass never calls this (NO_SEARCH_PROVIDERS)
     body = {"model": eng["model"], "messages": [{"role": "user", "content": question}]}
     if country:
         body["web_search_options"] = {"user_location": {"country": country}}
@@ -728,12 +778,14 @@ def _interaction_span(an, base, text):
     return None if at is None else (base + at[0], base + at[1], [(an.get("url"), an.get("title"))], "segment")
 
 
-def call_gemini(eng, key, question, country):
+def call_gemini(eng, key, question, country, search=True):
     """Interactions API by default (Google's recommended API since June 2026); "api": "generate_content" in the
     engine config uses the older, still supported generateContent endpoint instead."""
     if eng.get("api") == "generate_content":
-        return _gemini_generate_content(eng, key, question)
-    body = {"model": eng["model"], "input": question, "tools": [{"type": "google_search"}], "store": False}
+        return _gemini_generate_content(eng, key, question, search)
+    body = {"model": eng["model"], "input": question, "store": False}
+    if search:
+        body["tools"] = [{"type": "google_search"}]
     js, n = api_post(_endpoint(eng), {"x-goog-api-key": key}, body, key, timeout=eng.get("timeout"))
     text, cites, searches, marks = [], [], [], []
     for step in js.get("steps") or []:
@@ -808,9 +860,11 @@ def _gemini_supports(parts, chunks, supports):
     return _positioned(spans), used
 
 
-def _gemini_generate_content(eng, key, question):
+def _gemini_generate_content(eng, key, question, search=True):
     url = (eng.get("base_url") or GEMINI_GENERATE_URL).replace("{model}", urllib.parse.quote(eng["model"], safe=""))
-    body = {"contents": [{"role": "user", "parts": [{"text": question}]}], "tools": [{"google_search": {}}]}
+    body = {"contents": [{"role": "user", "parts": [{"text": question}]}]}
+    if search:
+        body["tools"] = [{"google_search": {}}]
     js, n = api_post(url, {"x-goog-api-key": key}, body, key, timeout=eng.get("timeout"))
     cand = (js.get("candidates") or [{}])[0] or {}
     parts = (cand.get("content") or {}).get("parts") or []
@@ -834,7 +888,7 @@ def _gemini_generate_content(eng, key, question):
                    listed=cites if two else None, used=used if two else None)
 
 
-def call_anthropic(eng, key, question, country):
+def call_anthropic(eng, key, question, country, search=True):
     tool = {"type": eng.get("tool") or "web_search_20250305", "name": "web_search",
             "max_uses": int(eng.get("max_searches") or 5)}
     if country:
@@ -844,8 +898,9 @@ def call_anthropic(eng, key, question, country):
     text, cites, searches, blocks = [], [], [], []
     tin = tout = nsearch = calls = attempts = 0
     for _ in range(3):   # a long search can pause the turn; send it back to continue, at most twice
-        body = {"model": eng["model"], "max_tokens": int(eng.get("max_tokens") or 2048),
-                "messages": msgs, "tools": [tool]}
+        body = {"model": eng["model"], "max_tokens": int(eng.get("max_tokens") or 2048), "messages": msgs}
+        if search:
+            body["tools"] = [tool]
         js, n = api_post(_endpoint(eng), hdr, body, key, timeout=eng.get("timeout"))
         calls += 1
         attempts += n
@@ -880,9 +935,10 @@ def call_anthropic(eng, key, question, country):
                    spans=_positioned(blocks))
 
 
-def call_openrouter(eng, key, question, country):
-    body = {"model": eng["model"], "messages": [{"role": "user", "content": question}],
-            "plugins": [{"id": "web", "max_results": int(eng.get("max_results") or 5)}]}
+def call_openrouter(eng, key, question, country, search=True):
+    body = {"model": eng["model"], "messages": [{"role": "user", "content": question}]}
+    if search:
+        body["plugins"] = [{"id": "web", "max_results": int(eng.get("max_results") or 5)}]
     hdr = {"Authorization": "Bearer " + key, "HTTP-Referer": "https://github.com/jianruntech/geo-score",
            "X-Title": "geo-score"}
     js, n = api_post(_endpoint(eng), hdr, body, key, timeout=eng.get("timeout"))
@@ -902,7 +958,7 @@ def call_openrouter(eng, key, question, country):
                          if isinstance(content, str) else None)
     u = js.get("usage") if isinstance(js.get("usage"), dict) else {}
     return _result(_text(content), cites, [], u.get("prompt_tokens"), u.get("completion_tokens"),
-                   1, cost=u.get("cost"), attempts=n, spans=_positioned(marks))
+                   1 if search else 0, cost=u.get("cost"), attempts=n, spans=_positioned(marks))
 
 
 CALLERS = {"openai": call_openai, "perplexity": call_perplexity, "gemini": call_gemini,
@@ -1277,7 +1333,7 @@ def is_branded(q, brand=None):
 # otherwise drop a spending cap without a word.
 CONFIG_SCHEMA_URL = "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json"
 CONFIG_KEYS = ("$schema", "brand", "competitors", "queries", "engines", "country", "runs", "max_calls", "budget_usd",
-               "prices")
+               "prices", "no_search_pass")
 ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
 # the last four tune the provider adapters: tool (OpenAI, Anthropic), max_tokens and max_searches (Anthropic),
 # max_results (OpenRouter)
@@ -1427,6 +1483,12 @@ class Config(object):
         self.country = raw.get("country") or None
         if self.country is not None and not (isinstance(self.country, str) and COUNTRY_RE.match(self.country)):
             err("country must be a two-letter ISO code such as US, or null")
+        self.no_search_pass = raw.get("no_search_pass")
+        if self.no_search_pass is None:
+            self.no_search_pass = False
+        elif not isinstance(self.no_search_pass, bool):
+            err("no_search_pass must be true or false")
+            self.no_search_pass = False
         self.runs = _whole(raw.get("runs", 1))
         if self.runs is None or not 1 <= self.runs <= MAX_RUNS:
             err("runs must be an integer from 1 to %d" % MAX_RUNS)
@@ -1484,6 +1546,18 @@ class Config(object):
             if b and b not in BRANDED_VALUES:
                 problems.append("line %d: branded must be auto, yes or no, not %r" % (n, b))
             vals["branded"] = b or "auto"
+            # optional columns, kept on the question only when set: the condition ladder it belongs to and its
+            # step (0 is the base question)
+            lad, st = (r.get(k) for k in ("ladder", "step"))
+            lad, st = (x.strip() if isinstance(x, str) else "" for x in (lad, st))
+            if lad or st:
+                if not lad or not QUERY_ID_RE.match(lad):
+                    problems.append("line %d: ladder %r — letters, digits, _ . - only, and set with step" % (n, lad))
+                elif not re.match(r"^[0-9]{1,2}$", st):
+                    problems.append("line %d: step must be a whole number from 0 to 99 (0 is the base question), "
+                                    "not %r" % (n, _cut(st, 20)))
+                else:
+                    vals["ladder"], vals["step"] = lad, int(st)
             if vals["target_url"]:
                 url, why = resolve_target(vals["target_url"], self.brand)
                 if why:
@@ -1494,6 +1568,17 @@ class Config(object):
                 vals["target_url"] = url
             ids.add(qid)
             out.append(vals)
+        steps = {}
+        for q in out:
+            if "ladder" in q:
+                steps.setdefault(q["ladder"], []).append(q)
+        for lad, qs in steps.items():
+            dup = sorted(set(q["step"] for q in qs if [x["step"] for x in qs].count(q["step"]) > 1))
+            if dup:
+                problems.append("ladder %s has step %s more than once" % (lad, ", ".join(str(x) for x in dup)))
+            elif len(qs) < 2:
+                warns.append("ladder %s has one step (%s); a ladder compares a base question with the same question "
+                             "under more conditions" % (lad, qs[0]["query_id"]))
         if problems:
             raise ConfigError("%s:\n  %s" % (self.queries_path, "\n  ".join(problems)))
         if not out:
@@ -1588,6 +1673,12 @@ def select_engines(engines, only):
     return [e for e in engines if e["id"] in want]
 
 
+def no_search_ok(e):
+    """Whether the no-search pass can ask this engine with web search off: not Perplexity, whose Sonar models search
+    on every call, and not an OpenRouter model with the :online suffix, which searches whatever the request says."""
+    return e["provider"] in NO_SEARCH_PROVIDERS and not str(e.get("model") or "").endswith(":online")
+
+
 def plan(engines, prices, budget, allow_unpriced):
     """Which engines will run, and why the others will not."""
     active, status = [], {}
@@ -1604,17 +1695,21 @@ def plan(engines, prices, budget, allow_unpriced):
 
 
 def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, max_calls=DEFAULT_MAX_CALLS,
-            budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True):
+            budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True, no_search_pass=False):
     prices = prices or {}
     started = NOW()
     # target_url is saved as the page it resolves to ("" when unusable), whether or not load_queries saw it first
     queries = [dict(flag_query(q, brand, rivals), target_url=resolve_target(q.get("target_url"), brand)[0])
                for q in queries]
     active, status = plan(engines, prices, budget, allow_unpriced)
-    slots = [(r, q, e) for r in range(1, runs + 1) for q in queries for e, _ in active]
+    # the asks with search on, then, with no_search_pass, the same plan again with search off on the engines that
+    # can answer without searching; the second pass is saved apart, in memory_samples
+    slots = [(r, q, e, False) for r in range(1, runs + 1) for q in queries for e, _ in active]
+    if no_search_pass:
+        slots += [(r, q, e, True) for r in range(1, runs + 1) for q in queries for e, _ in active if no_search_ok(e)]
     samples = [None] * len(slots)
     lanes = dict((e["id"], []) for e, _ in active)
-    for i, (_, _, e) in enumerate(slots):
+    for i, (_, _, e, _) in enumerate(slots):
         lanes[e["id"]].append(i)
     ledger = Ledger(max_calls, budget)
     stop = stop or threading.Event()
@@ -1633,7 +1728,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
     def lane(e, key):
         fails = 0
         for i in lanes[e["id"]]:
-            r, q, _ = slots[i]
+            r, q, _, offline = slots[i]
             base = {"query_id": q["query_id"], "engine": e["id"], "run": r}
             if stop.is_set():
                 finish(i, dict(base, status="skipped", skip_reason="interrupted"))
@@ -1647,7 +1742,7 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
                 continue
             t0 = time.time()
             try:
-                res = CALLERS[e["provider"]](e, key, q["query"], country)
+                res = CALLERS[e["provider"]](e, key, q["query"], country, search=not offline)
             except EngineError as err:
                 ledger.settle(e["id"], est, 1)
                 fails += 1
@@ -1674,6 +1769,9 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
                 finish(i, dict(base, status="error", error=redact("unexpected: %r" % err, key)))
                 continue
             s.update(usage=res["usage"], cost_usd=cost, seconds=round(time.time() - t0, 1))
+            if offline and (s["citations"] or s["search_queries"] or res["usage"]["search_calls"]):
+                # asked with search off and searched anyway (an endpoint that adds search): not a memory answer
+                s["searched_anyway"] = True
             finish(i, s)
 
     interrupted = False
@@ -1693,9 +1791,11 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
     interrupted = interrupted or stop.is_set()
     for i, s in enumerate(samples):   # a lane that died must not leave a hole in the run
         if s is None:
-            r, q, e = slots[i]
+            r, q, e, _ = slots[i]
             samples[i] = {"query_id": q["query_id"], "engine": e["id"], "run": r, "status": "error",
                           "error": "internal: no result recorded"}
+    offline = [s for s, slot in zip(samples, slots) if slot[3]]
+    samples = [s for s, slot in zip(samples, slots) if not slot[3]]
 
     eng_rows = []
     for e in engines:
@@ -1717,6 +1817,8 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
            "engines": eng_rows, "queries": queries, "questions_hash": questions_hash(queries),
            "recorded": list(RECORDED), "caps": {"max_calls": max_calls, "budget_usd": budget},
            "ledger": ledger.as_json(), "samples": samples, "notes": NOTES}
+    if no_search_pass:
+        run["memory_samples"] = offline
     run["summary"] = summarize(run)
     return run
 
@@ -1900,6 +2002,201 @@ def consistency_block(rows, order):
             "lowest": [{"query_id": qid, "answers": n, "jaccard": j} for j, _, qid, n in low]}
 
 
+# ── what the engines searched first ───────────────────────────────────────
+def first_search(sample):
+    """The first search query an answer exposes, as saved (search_queries keeps the order the API returned them in,
+    repeats dropped), or None when it exposes none: not measured."""
+    qs = sample.get("search_queries")
+    return qs[0] if isinstance(qs, list) and qs and isinstance(qs[0], str) else None
+
+
+def first_search_block(rows, brand, rivals):
+    """summary.first_search counts over these answers (status ok): of those that expose a search query, how many
+    first queries name the brand and how many a tracked competitor (the matcher of `mentioned`), and the brand in the
+    first query against the brand named in the answer. Answers that expose no query are not measured, never a no."""
+    out = {"answers": 0, "brand": 0, "competitor": 0, "brand_in_search_mentioned": 0,
+           "brand_in_search_not_mentioned": 0, "brand_not_in_search_mentioned": 0,
+           "brand_not_in_search_not_mentioned": 0}
+    for s in rows:
+        q = first_search(s)
+        if q is None:
+            continue
+        b = brand.named_in(q)
+        out["answers"] += 1
+        out["brand"] += b
+        out["competitor"] += any(r.named_in(q) for r in rivals)
+        out["brand_%sin_search_%smentioned" % ("" if b else "not_", "" if s["mentioned"] else "not_")] += 1
+    return out
+
+
+# ── how an answer names a brand: shortlisted, as an example, or excluded ──
+# Cue words, read in the sentence (sentence_spans) that names the brand. Latin cues match whole words, any letter case,
+# with a typographic apostrophe read as '; Chinese cues match anywhere. An exclusion or selection cue counts only in a
+# sentence that names no other tracked brand, since it may be about the other one; an example cue counts for every
+# brand named after it in its sentence, within ROLE_REACH characters. A line that starts with the brand, after a list
+# marker, a number, a heading mark, a table bar or bold, puts it on the answer's shortlist.
+ROLE_STATES = ("selected", "example", "excluded", "undetermined")
+ROLE_REACH = 120
+EXCLUDE_CUES = ("not support", "not supported", "doesn't support", "does not support", "don't support",
+                "do not support", "unsupported", "not suitable", "isn't suitable", "not ideal", "not recommended",
+                "don't recommend", "do not recommend", "wouldn't recommend", "would not recommend", "cannot recommend",
+                "can't recommend", "not a good fit", "not the best", "lacks", "lacking", "falls short", "avoid",
+                "doesn't offer", "does not offer", "doesn't have", "does not have", "doesn't include",
+                "does not include", "discontinued", "ruled out", "rule out",
+                "不支持", "不适合", "不适用", "不推荐", "不建议", "缺少", "缺乏", "欠缺", "不具备", "不提供", "已停产", "排除")
+SELECT_CUES = ("recommend", "recommended", "recommendation", "best", "top pick", "our pick", "my pick",
+               "first choice", "go with", "winner", "stands out", "ideal",
+               "推荐", "首选", "首推", "最佳", "最好", "最适合", "优先考虑", "值得选择", "值得购买", "建议选择", "建议选")
+EXAMPLE_CUES = ("such as", "for example", "for instance", "e.g.", "like", "including", "include", "includes",
+                "among them", "例如", "比如", "譬如", "诸如", "包括", "像是")
+
+
+def _cue_re(words):
+    return re.compile("|".join(re.escape(w) if _CJK.search(w) else "(?<!%s)%s(?!%s)" % (
+        _WORD_NOT_CJK, re.escape(w), _WORD_NOT_CJK) for w in sorted(words, key=len, reverse=True)), re.I)
+
+
+_EXCLUDE_RE, _SELECT_RE, _EXAMPLE_RE = _cue_re(EXCLUDE_CUES), _cue_re(SELECT_CUES), _cue_re(EXAMPLE_CUES)
+# 「鹿末、Pixa 等品牌」: 等 closing a list the brand is in, within its clause; not 等级 or 等待
+_ETC_RE = re.compile("[^。！？\n]{0,40}?等(?=[品牌产厂公工平软服商型款，。、；,.;\\s]|$)")
+# what may come before the brand on its line for the line to put it on the shortlist: a list marker, a number, a
+# heading mark, a quote or table bar (each maybe followed by bold), or bold alone; a plain sentence does not
+_LINE_HEAD = re.compile(r"^\s*(?:(?:[-*+•·>|]|\d{1,2}[.)、:]|#{1,6})\s*(?:\*\*|__|\*|_|\[)?|\*\*|__)\s*$")
+
+
+def mention_roles(text, entities):
+    """How the answer names each entity, in the order given: "selected", "example", "excluded" or "undetermined",
+    or None for an entity it does not name. Each sentence that names the entity gets at most one label, excluded
+    before selected before example; the answer is excluded when a sentence excludes it and none selects it, selected
+    when one selects it and none excludes it, an example when the only labels are examples, and undetermined when
+    no rule fires or one sentence selects it and another excludes it. Rules, not a model: see ROLE_NOTES."""
+    text = (text or "").replace("’", "'")
+    spans = sentence_spans(text)
+    hits = [sorted(set(m.start() for p in e._pats for m in p.finditer(text))) for e in entities]
+    out = []
+    for i in range(len(entities)):
+        if not hits[i]:
+            out.append(None)
+            continue
+        labels = set()
+        for a, b in spans:
+            mine = [x for x in hits[i] if a <= x < b]
+            if not mine:
+                continue
+            alone = not any(a <= x < b for j, h in enumerate(hits) if j != i for x in h)
+            seg = text[a:b]
+            lead = any(_LINE_HEAD.match(text[text.rfind("\n", 0, x) + 1:x]) for x in mine)
+            if alone and _EXCLUDE_RE.search(seg):
+                labels.add("excluded")
+            elif lead or (alone and _SELECT_RE.search(seg)):
+                labels.add("selected")
+            elif any(0 <= x - m.end() <= ROLE_REACH for x in mine for m in _EXAMPLE_RE.finditer(text, a, b)) \
+                    or any(_ETC_RE.match(text, x, b) for x in mine):
+                labels.add("example")
+        if "excluded" in labels and "selected" in labels:
+            out.append("undetermined")
+        else:
+            out.append(next((k for k in ("excluded", "selected", "example") if k in labels), "undetermined"))
+    return out
+
+
+def roles_count(roles):
+    """{selected, example, excluded, undetermined} over a list of mention_roles values; None (not named) is left out."""
+    c = Counter(r for r in roles if r is not None)
+    return dict((k, c[k]) for k in ROLE_STATES)
+
+
+# ── condition ladders: one base question, the same question under more conditions ──
+def ladders_block(queries, per_q, brand, engine_ids):
+    """summary.ladders: one entry per ladder of the question file, in the order its first step appears, with its steps
+    lowest first: answers, how many name and cite the brand, and the same per engine. dropped_at: the first step,
+    after one whose answers named the brand, at which no answer names it; halved_at: the first step above the base
+    whose share of answers naming the brand is at most half the base's. Both null when that does not happen. Counts,
+    with no interval and no test."""
+    groups = []
+    for q in queries:
+        if q.get("ladder") and isinstance(q.get("step"), int) and not isinstance(q.get("step"), bool):
+            g = next((g for g in groups if g[0] == q["ladder"]), None)
+            if g is None:
+                groups.append((q["ladder"], []))
+                g = groups[-1]
+            g[1].append(q)
+    out = []
+    for name, qs in groups:
+        steps = []
+        for q in sorted(qs, key=lambda q: q["step"]):
+            rows = per_q.get(q["query_id"], [])
+            eng = dict((eid, {"answered": sum(1 for s in rows if s["engine"] == eid),
+                              "mentioned": sum(1 for s in rows if s["engine"] == eid and s["mentioned"]),
+                              "cited": sum(1 for s in rows if s["engine"] == eid and s["cited"])})
+                       for eid in engine_ids)
+            steps.append({"step": q["step"], "query_id": q["query_id"], "query": q.get("query") or "",
+                          "answered": len(rows), "mentioned": sum(1 for s in rows if s["mentioned"]),
+                          "cited": sum(1 for s in rows if s["cited"]), "engines": eng})
+        dropped = halved = None
+        named_before = False
+        base = steps[0] if steps and steps[0]["answered"] else None
+        for st in steps:
+            if not st["answered"]:
+                continue
+            if named_before and not st["mentioned"] and dropped is None:
+                dropped = st["step"]
+            named_before = named_before or st["mentioned"] > 0
+            if base is not None and st is not base and base["mentioned"] and halved is None and \
+                    st["mentioned"] * base["answered"] * 2 <= base["mentioned"] * st["answered"]:
+                halved = st["step"]
+        out.append({"ladder": name, "steps": steps, "dropped_at": dropped, "halved_at": halved})
+    return out
+
+
+# ── the no-search pass: what the model says from its training alone ──────
+def mention_block(rows, seed):
+    """Like rate_block, for the brand named rather than cited: counts, the share, Wilson, and the bootstrap over
+    questions (every answer to one question is one cluster)."""
+    k = sum(1 for s in rows if s["mentioned"])
+    per_q = {}
+    for s in rows:
+        c = per_q.setdefault(s["query_id"], [0, 0])
+        c[0] += 1 if s["mentioned"] else 0
+        c[1] += 1
+    return {"answered": len(rows), "mentioned": k, "mentioned_rate": rate(k, len(rows)),
+            "mentioned_ci": wilson(k, len(rows)),
+            "mentioned_ci_clustered": cluster_ci([tuple(per_q[q]) for q in sorted(per_q)], seed),
+            "n_questions": len(per_q)}
+
+
+def memory_block(run, ok_search):
+    """summary.memory for a run with memory_samples (the no-search pass): per engine and overall, how many answers
+    given with web search off name the brand, beside how many of the same engine's answers with search did, on the
+    questions both passes answered. An answer that searched or cited anyway is not a memory answer: it is counted
+    in searched_anyway and left out. None for a run without the pass."""
+    ms = run.get("memory_samples")
+    if not isinstance(ms, list):
+        return None
+    rid = run.get("run_id") or ""
+    good = [s for s in ms if isinstance(s, dict) and s.get("status") == "ok" and all(k in s for k in ANSWER_KEYS)
+            and not s.get("searched_anyway")]
+    engines = []
+    for e in run["engines"]:
+        es = [s for s in ms if isinstance(s, dict) and s.get("engine") == e["id"]]
+        eo = [s for s in good if s["engine"] == e["id"]]
+        qs = set(s["query_id"] for s in eo)
+        with_search = [s for s in ok_search if s["engine"] == e["id"] and s["query_id"] in qs]
+        status = e["status"] if e["status"] != "measured" else \
+            "measured" if no_search_ok(e) else "searches_every_call"
+        engines.append(dict(mention_block(eo, _seed(rid, "memory", e["id"])), id=e["id"], model=e["model"],
+                            status=status,
+                            errors=sum(1 for s in es if s.get("status") == "error"),
+                            skipped=sum(1 for s in es if s.get("status") == "skipped"),
+                            searched_anyway=sum(1 for s in es if s.get("searched_anyway")),
+                            with_search={"answered": len(with_search),
+                                         "mentioned": sum(1 for s in with_search if s["mentioned"]),
+                                         "mentioned_rate": rate(sum(1 for s in with_search if s["mentioned"]),
+                                                                len(with_search))}))
+    return dict(mention_block(good, _seed(rid, "memory")), engines=engines,
+                searched_anyway=sum(1 for s in ms if isinstance(s, dict) and s.get("searched_anyway")))
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -1922,6 +2219,8 @@ def summarize(run):
                 (c.get("mention_order"), c.get("mention_share")) for c in cs]
         else:
             placed[id(s)] = mention_positions(s.get("answer") or "", ents)
+    # how each answer names each brand (selected, example, excluded, undetermined), read from the saved answer
+    roles = dict((id(s), mention_roles(s.get("answer") or "", ents)) for s in ok)
 
     def firsts(rows, i):
         """Entity i named first among the brands you track (k of the answers naming any of them), and its mean
@@ -1945,16 +2244,18 @@ def summarize(run):
                    with_searches=sum(1 for s in eo if s["search_queries"]),
                    searched_without_queries=sum(1 for s in eo if searched_without_queries(s, e.get("provider"))),
                    supported_share=support_block(eo, brand), sources=sources_block(eo, brand),
-                   consistency=consistency_block(eo, order), **firsts(eo, 0))
+                   consistency=consistency_block(eo, order), roles=roles_count(roles[id(s)][0] for s in eo),
+                   **firsts(eo, 0))
         engines.append(row)
 
     everything = block(ok, "overall")
-    share = [dict(everything, name=brand.name, you=True, **firsts(ok, 0))]
+    share = [dict(everything, name=brand.name, you=True, roles=roles_count(roles[id(s)][0] for s in ok),
+                  **firsts(ok, 0))]
     for i, r in enumerate(rivals, 1):
         share.append(dict(block(ok, "rival:" + r.name,
                                 hit=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("cited")),
                                 named=lambda s, n=r.name: bool(s["competitors"].get(n, {}).get("mentioned"))),
-                          name=r.name, you=False, **firsts(ok, i)))
+                          name=r.name, you=False, roles=roles_count(roles[id(s)][i] for s in ok), **firsts(ok, i)))
 
     counts, owners = Counter(), {}
     for s in ok:
@@ -2043,7 +2344,16 @@ def summarize(run):
     exposed = [s for s in ok if s["search_queries"]]
     searched = Counter(re.sub(r"\s+", " ", q.lower()).strip() for s in exposed for q in s["search_queries"])
     blind = sum(1 for s in ok if searched_without_queries(s, provider.get(s["engine"])))
-    return {"overall": dict(everything, planned=len(samples),
+    unbranded = [s for s in ok if s["query_id"] not in named_ids]
+    first = dict(first_search_block(ok, brand, rivals), unbranded=first_search_block(unbranded, brand, rivals),
+                 engines=[dict(first_search_block([s for s in ok if s["engine"] == e["id"]], brand, rivals),
+                               id=e["id"]) for e in run["engines"]])
+    extra = {"first_search": first,
+             "ladders": ladders_block(run["queries"], per_q, brand, [e["id"] for e in run["engines"]])}
+    memory = memory_block(run, ok)
+    if memory is not None:
+        extra["memory"] = memory
+    return dict({"overall": dict(everything, planned=len(samples),
                             errors=sum(1 for s in samples if s["status"] == "error"),
                             skipped=sum(1 for s in samples if s["status"] == "skipped")),
             "headline": headline, "branded": branded, "brand_flags": "run" if stored else "computed",
@@ -2054,7 +2364,7 @@ def summarize(run):
                          "top": [{"query": q, "count": n} for q, n in searched.most_common(15)],
                          "answers_searched_without_queries": blind,
                          "modifiers": query_modifiers(q for s in exposed for q in s["search_queries"])},
-            "notes": notes}
+            "notes": notes}, **extra)
 
 
 def summary_of(run):
@@ -2068,8 +2378,10 @@ def summary_of(run):
             and "by_question" in sm and "tracked_pages" in sm \
             and "answers_searched_without_queries" in (sm.get("searches") or {}) \
             and all("with_citations" in e and "named_first" in e and "supported_share" in e and "sources" in e
-                    and "consistency" in e for e in sm.get("engines") or []) \
-            and all("named_first" in v for v in sm.get("share_of_voice") or []):
+                    and "consistency" in e and "roles" in e for e in sm.get("engines") or []) \
+            and all("named_first" in v and "roles" in v for v in sm.get("share_of_voice") or []) \
+            and "first_search" in sm and "ladders" in sm \
+            and ("memory" in sm or not isinstance(run.get("memory_samples"), list)):
         return sm
     return summarize(run)
 
@@ -2666,6 +2978,98 @@ def consistency_lines(run, sm, fmt):
     return L
 
 
+def roles_lines(run, sm, fmt):
+    """The report's "How the answers name each brand": per tracked brand, of the answers that name it, how many put
+    it on their shortlist, give it as an example, exclude it, or cannot be read either way."""
+    rows = [[s["name"] + (" (you)" if s["you"] else ""), s["mentioned"]]
+            + ["%d" % (s.get("roles") or {}).get(k, 0) for k in ROLE_STATES]
+            for s in sm.get("share_of_voice") or [] if s.get("mentioned")]
+    if not rows:
+        return []
+    L = [_h("How the answers name each brand (rules, not a model; counts of answers)", fmt),
+         table(["brand", "named in", "selected", "as an example", "excluded", "undetermined"], rows, fmt), ""]
+    L.extend("- " + n for n in ROLE_NOTES)
+    return L
+
+
+def first_search_lines(sm, name, fmt):
+    """The report's "The first search each answer ran": per engine, of the answers that expose their searches, how
+    many first searches name the brand or a competitor; and, over questions that do not name the brand, the brand in
+    the first search against the brand named in the answer."""
+    fs = sm.get("first_search") or {}
+    if not fs.get("answers"):
+        return []
+    rows = [[e["id"], e["answers"], "%d/%d" % (e["brand"], e["answers"]), "%d/%d" % (e["competitor"], e["answers"])]
+            for e in fs.get("engines") or [] if e.get("answers")]
+    rows.append(["all engines", fs["answers"], "%d/%d" % (fs["brand"], fs["answers"]),
+                 "%d/%d" % (fs["competitor"], fs["answers"])])
+    L = [_h("The first search each answer ran", fmt),
+         table(["engine", "answers showing their searches", "first search names %s" % name,
+                "names a tracked competitor"], rows, fmt), ""]
+    u = fs.get("unbranded") or {}
+    if u.get("answers"):
+        L += ["Questions that do not name %s (%s): the first search against the answer" % (name, _n(u["answers"], "answer")),
+              table(["", "answer names %s" % name, "answer does not"],
+                    [["first search names %s" % name, u["brand_in_search_mentioned"], u["brand_in_search_not_mentioned"]],
+                     ["first search does not", u["brand_not_in_search_mentioned"],
+                      u["brand_not_in_search_not_mentioned"]]], fmt), ""]
+    L.extend("- " + n for n in FIRST_SEARCH_NOTES)
+    return L
+
+
+def ladder_lines(sm, name, fmt):
+    """The report's "Condition ladders": per ladder, each step's answers and how many name and cite the brand, and the
+    step where it dropped out."""
+    lads = sm.get("ladders") or []
+    if not lads:
+        return []
+    L = [_h("Condition ladders: the same question with more conditions", fmt)]
+    for g in lads:
+        rows = [[st["step"], st["query_id"], _cut(st["query"], 50), st["answered"],
+                 "%d/%d %s" % (st["mentioned"], st["answered"], pct(rate(st["mentioned"], st["answered"]))),
+                 "%d/%d" % (st["cited"], st["answered"])] for st in g["steps"]]
+        where = []
+        if g["dropped_at"] is not None:
+            where.append("no answer names %s from step %d" % (name, g["dropped_at"]))
+        if g["halved_at"] is not None:
+            where.append("named in half the base's share or less from step %d" % g["halved_at"])
+        L += ["", "%s%s" % (g["ladder"], ": " + "; ".join(where) if where else ": %s did not drop out" % name),
+              table(["step", "id", "question", "answers", "names %s" % name, "cites %s" % name], rows, fmt)]
+    L.append("")
+    L.extend("- " + n for n in LADDER_NOTES)
+    return L
+
+
+def memory_lines(run, sm, name, fmt):
+    """The report's "Named from memory, with web search off" (the no-search pass): per engine, how many answers name
+    the brand, beside the same engine's answers with search on the same questions."""
+    m = sm.get("memory")
+    if not m:
+        return []
+    rows = []
+    for e in m["engines"]:
+        if e["status"] != "measured":
+            why = "searches on every call" if e["status"] == "searches_every_call" else e["status"]
+            rows.append([e["id"], e["model"], "not measured", "", "", why])
+            continue
+        ws = e["with_search"]
+        extra = []
+        if e["searched_anyway"]:
+            extra.append("%d searched anyway, left out" % e["searched_anyway"])
+        if e["errors"]:
+            extra.append("%d failed" % e["errors"])
+        if e["skipped"]:
+            extra.append("%d skipped" % e["skipped"])
+        rows.append([e["id"], e["model"], "%d/%d %s" % (e["mentioned"], e["answered"], pct(e["mentioned_rate"])),
+                     ci_s(e["mentioned_ci_clustered"] if e["answered"] > e["n_questions"] else e["mentioned_ci"]),
+                     "%d/%d %s" % (ws["mentioned"], ws["answered"], pct(ws["mentioned_rate"])), ", ".join(extra)])
+    L = [_h("Named from memory, with web search off (the no-search pass)", fmt),
+         table(["engine", "model", "names %s, search off" % name, "95% CI", "with search, same questions", ""], rows, fmt),
+         ""]
+    L.extend("- " + n for n in MEMORY_NOTES)
+    return L
+
+
 def headline_lines(sm, name, fmt):
     """The headline rate and the line for questions that name the brand, from a summary or a pooled report."""
     o, h, br = sm["overall"], sm["headline"], sm["branded"]
@@ -2697,6 +3101,10 @@ def render(run, fmt="text"):
     L.append("%d questions × %d engines × %d = %d planned · %d answered · %d failed · %d skipped%s" % (
         len(run["queries"]), engines_n, run["runs"], o["planned"], o["answered"], o["errors"], o["skipped"],
         " · interrupted" if run.get("interrupted") else ""))
+    if isinstance(run.get("memory_samples"), list):
+        ms = run["memory_samples"]
+        L.append("No-search pass (web search off): %d planned · %d answered" % (
+            len(ms), sum(1 for x in ms if isinstance(x, dict) and x.get("status") == "ok")))
     name = run["brand"]["name"] or "the brand"
     br = sm["branded"]
     if o["answered"]:
@@ -2748,6 +3156,8 @@ def render(run, fmt="text"):
                          pct(s["mention_share"])] for s in sm["share_of_voice"]], fmt))
         L.append("")   # a line right under a markdown table would be read as another row
         L.extend("- " + n for n in MENTION_NOTES)
+    L.extend(roles_lines(run, sm, fmt))
+    L.extend(memory_lines(run, sm, name, fmt))
 
     if sm["top_sources"]:
         L.append(_h("Sources the engines cite most (not yours)", fmt))
@@ -2777,6 +3187,7 @@ def render(run, fmt="text"):
                        + ["no tracked brand named", "searched yes/no/unknown", "most cited"], rows, fmt))
         L.append("")   # a line right under a markdown table would be read as another row
         L.extend("- " + n for n in BY_QUESTION_NOTES)
+        L.extend(ladder_lines(sm, name, fmt))
 
     if o["answered"] and sm.get("tracked_pages"):
         w = 200 if fmt == "md" else 70        # URLs are evidence: md shows them whole
@@ -2797,6 +3208,7 @@ def render(run, fmt="text"):
                          pct(t["mentioned_rate"])] for t in sm["by_tier"]], fmt))
 
     L.extend(search_lines(sm, fmt))
+    L.extend(first_search_lines(sm, name, fmt))
 
     lg = run["ledger"]
     L.append(_h("Ledger", fmt))
@@ -3369,10 +3781,16 @@ def cmd_run(args):
         raise ConfigError("--runs must be from 1 to %d" % MAX_RUNS)
     max_calls = args.max_calls or cfg.max_calls
     budget = args.budget_usd if args.budget_usd is not None else cfg.budget_usd
+    no_search = cfg.no_search_pass or args.no_search_pass
     active, status = plan(engines, cfg.prices, budget, args.allow_unpriced)
-    planned = len(queries) * len(active) * runs
-    print("plan: %d questions × %d engines × %d = %d questions to ask (cap %d%s)" % (
-        len(queries), len(active), runs, planned, max_calls, "" if budget is None else ", budget " + money(budget)))
+    offline = len(queries) * sum(1 for e, _ in active if no_search_ok(e)) * runs if no_search else 0
+    planned = len(queries) * len(active) * runs + offline
+    print("plan: %d questions × %d engines × %d = %d questions to ask%s (cap %d%s)" % (
+        len(queries), len(active), runs, planned - offline,
+        ", + %d with web search off (the no-search pass) = %d" % (offline, planned) if no_search else "",
+        max_calls, "" if budget is None else ", budget " + money(budget)))
+    if no_search:
+        print("\n".join("  " + x for x in no_search_lines([e for e, _ in active])))
     for e in engines:
         if status[e["id"]] == "no_key":
             print("  %s: not measured — %s" % (e["id"], key_issue(e)))
@@ -3394,11 +3812,22 @@ def cmd_run(args):
         print("error: nothing can be measured — export at least one API key", file=sys.stderr)
         return 3
     run = execute(cfg.brand, cfg.competitors, engines, queries, runs, cfg.country, cfg.prices, max_calls, budget,
-                  args.allow_unpriced, progress=_progress_printer(args.quiet))
+                  args.allow_unpriced, progress=_progress_printer(args.quiet), no_search_pass=no_search)
     path = save_run(cfg, run)
     print(_printable(render(run, args.format if args.format in ("text", "md") else "text")))
     print("saved %s" % _shown(path))
     return 0 if run["summary"]["overall"]["answered"] else 3
+
+
+def no_search_lines(active):
+    """What a plan with the no-search pass says about it, before anything is spent: the cost first."""
+    off = [e["id"] for e in active if no_search_ok(e)]
+    out = ["no-search pass: paid, %s more per ask with web search off (%s), to see whether the model names the "
+           "brand from its training alone" % (_n(len(off), "call"), ", ".join(off) or "no engine")]
+    out += ["%s: not in the no-search pass, %s" % (e["id"], "its Sonar models search on every call"
+                                                  if e["provider"] == "perplexity" else "an :online model searches "
+                                                  "whatever the request says") for e in active if not no_search_ok(e)]
+    return out
 
 
 def cmd_ask(args):
@@ -3645,6 +4074,8 @@ _PLAN = {"type": "object", "required": ["questions", "engines_active", "runs", "
                         "runs": {"type": "integer", "description": "asks per question per engine"},
                         "planned_calls": {"type": "integer"}, "max_calls": {"type": "integer"},
                         "budget_usd": _NUM_OR_NULL,
+                        "no_search_calls": {"type": "integer", "description": "of planned_calls, those of the "
+                                                                              "no-search pass (web search off)"},
                         "not_measured": {"type": "array", "items": {
                             "type": "object", "required": ["engine", "reason"],
                             "properties": {"engine": {"type": "string"},
@@ -3939,7 +4370,13 @@ class MCPServer(object):
                  "dry_run": {"type": "boolean"}, "engines": eng,
                  "limit": {"type": "integer", "minimum": 1, "description": "Only the first N questions."},
                  "max_calls": {"type": "integer", "minimum": 1},
-                 "budget_usd": {"type": "number", "minimum": 0}}, "additionalProperties": False},
+                 "budget_usd": {"type": "number", "minimum": 0},
+                 "no_search_pass": {"type": "boolean",
+                                    "description": "Paid: about doubles the calls, within the same caps. Also asks "
+                                                   "every question with web search off, to see whether the model "
+                                                   "names the brand from its training alone. Default: the config's "
+                                                   "no_search_pass (off)."}},
+                 "additionalProperties": False},
              "outputSchema": OUT_RUN,
              "annotations": self._hints(False, False, True)},
             {"name": "list_runs", "title": "List saved runs",
@@ -4311,10 +4748,16 @@ class MCPServer(object):
         if b is not None:
             budget = b if budget is None else min(b, budget)
         active, status = plan(engines, cfg.prices, budget, False)
-        planned = len(queries) * len(active) * cfg.runs
-        lines = ["plan: %d questions × %d engines × %d = %d (cap %d%s)" % (
-            len(queries), len(active), cfg.runs, planned, max_calls,
+        nsp = args.get("no_search_pass")
+        no_search = nsp if isinstance(nsp, bool) else cfg.no_search_pass
+        offline = len(queries) * sum(1 for e, _ in active if no_search_ok(e)) * cfg.runs if no_search else 0
+        planned = len(queries) * len(active) * cfg.runs + offline
+        lines = ["plan: %d questions × %d engines × %d = %d%s (cap %d%s)" % (
+            len(queries), len(active), cfg.runs, planned - offline,
+            ", + %d with web search off = %d" % (offline, planned) if no_search else "", max_calls,
             "" if budget is None else ", budget " + money(budget))]
+        if no_search:
+            lines += ["- " + x for x in no_search_lines([e for e, _ in active])]
         lines += ["- %s: not measured (%s)" % (e["id"], status[e["id"]]) for e in engines
                   if status[e["id"]] != "measured"]
         lines += ["- warning: %s" % _cut(w, 200) for w in cfg.warnings]      # a mistyped cap, before anything is spent
@@ -4323,6 +4766,7 @@ class MCPServer(object):
         out = {"dry_run": bool(args.get("dry_run")), "run_id": None, "summary": None,
                "plan": {"questions": len(queries), "engines_active": [e["id"] for e, _ in active], "runs": cfg.runs,
                         "planned_calls": planned, "max_calls": max_calls, "budget_usd": budget,
+                        "no_search_calls": offline,
                         "not_measured": [{"engine": e["id"], "reason": status[e["id"]]} for e in engines
                                          if status[e["id"]] != "measured"]}}
         if args.get("dry_run"):
@@ -4339,7 +4783,8 @@ class MCPServer(object):
             raise ConfigError("a run is already in progress; wait for it to finish or cancel it")
         try:
             run = execute(cfg.brand, cfg.competitors, engines, queries, cfg.runs, cfg.country, cfg.prices, max_calls,
-                          budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None)
+                          budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None,
+                          no_search_pass=no_search)
         finally:
             self.run_lock.release()
         if ctx is not None and ctx.stop.is_set():
@@ -4640,6 +5085,9 @@ def main(argv=None, prog="geo_score.py watch"):
                    "one call per engine); needs prices or provider-reported cost")
     p.add_argument("--allow-unpriced", action="store_true", help="with a budget, also run engines with no prices")
     p.add_argument("--dry-run", action="store_true", help="print the plan and exit")
+    p.add_argument("--no-search-pass", action="store_true",
+                   help="paid: about doubles the calls. Also ask every question with web search off, to see whether "
+                        "the model names the brand from its training alone (no_search_pass in the config)")
     p.add_argument("--format", choices=["text", "md"], default="text")
     p.add_argument("-q", "--quiet", action="store_true")
     p = with_config(sub.add_parser("ask", help="one question, every engine, not saved"))

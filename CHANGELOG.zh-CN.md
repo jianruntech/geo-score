@@ -5,6 +5,25 @@
 ## [Unreleased]
 
 ### 新增
+- **`watch` 在引用率之外新增四项测量**（guide/watch-methodology.zh-CN.md 第 10 节）。每一项单独报告，从不并进引用率、标题率、合并或
+  `watch diff`；旧版本保存的运行出报告时也会重新算出这些项；「未测量」从不当作 0。
+  - **第一条搜索：** `summary.first_search` 在暴露了搜索词的回答里（OpenAI、Anthropic、Gemini），统计第一条搜索词含本品牌、含被跟踪竞品的
+    条数，再把「第一条搜索词含本品牌」和「回答提到本品牌」交叉成表，全部问题和不提品牌的问题各一份，并按引擎给出。报告：「The first
+    search each answer ran」。
+  - **不联网测试：** 配置里的 `no_search_pass: true`、`watch run --no-search-pass` 或 MCP `run` 工具的 `no_search_pass`，会关掉联网把每道题再问
+    一遍（OpenAI、Claude、Gemini 不带搜索工具，OpenRouter 不带 `web` 插件；Perplexity 和 OpenRouter 的 `:online` 模型每次都会搜索，不测），
+    看模型单凭训练数据会不会提到这个品牌。付费，调用次数约翻倍，默认关闭，受同样的上限约束；`--dry-run` 和 MCP 的 dry run
+    （`no_search_calls`）会先写明。结果存进 `memory_samples`；关掉联网仍然搜索了的回答标记为 `searched_anyway`，不计入。报告：「Named from
+    memory, with web search off」，旁边并列同一引擎联网时的结果；JSON：`summary.memory`。
+  - **条件阶梯题组：** 问题文件里可选的 `ladder` 和 `step` 两列，把基础题（step 0）和逐级加了条件的同一道题编成一组。`summary.ladders`
+    给出每一级的回答数、其中提到和引用本品牌的条数（整体和按引擎），以及 `dropped_at`（提到过之后第一次没有回答提到它的那一级）和
+    `halved_at`。`watch check` 拒绝同一阶梯里重复的 step，对只有一级的阶梯给出提醒。
+  - **入选、举例、排除：** 提到每个被跟踪品牌的回答里，几条把它放进候选名单（以它开头的列表项、标题或表格行，或推荐它的句子），
+    几条拿它举例（跟在 such as、for example、例如、包括……后面），几条排除它（does not support、not suitable、lacks、不支持、不适合、
+    缺少……），几条判断不了（未判定）。是读英文和中文字词的规则，不是模型。JSON：`summary.share_of_voice` 和 `summary.engines` 每一行的
+    `roles`。
+  运行文件 schema 增加这些可选字段（`schema/watch.v1.json`），配置 schema 增加 `no_search_pass`，MCP `run` 工具增加可选参数
+  `no_search_pass`（工具快照已更新）。测试在 `cli/test_geo_watch.py`。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

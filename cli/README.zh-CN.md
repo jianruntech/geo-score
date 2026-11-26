@@ -307,7 +307,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
 | `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），以及按当前 `--runs` 单个问题的引用率能定得多准（标准误最多 0.5/√n），并以 0 退出，有没有 Key 都一样 |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--no-search-pass] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），以及按当前 `--runs` 单个问题的引用率能定得多准（标准误最多 0.5/√n），并以 0 退出，有没有 Key 都一样。`--no-search-pass`（付费：调用次数约翻倍）另外关掉联网把每道题再问一遍 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、每题问的次数、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
@@ -350,6 +350,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `engines[].key_env` / `base_url` | 从另一个环境变量读 Key；指向一个兼容的端点（`https://` 或 `http://localhost`） |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | 服务商调优：联网搜索工具的版本（OpenAI、Anthropic），每条回答的搜索次数和输出 token 数（Anthropic），每次搜索返回的结果数（OpenRouter） |
 | `engines[].timeout` | 等这个引擎回答的秒数，10 到 600（默认 120）。响应慢的接口、或要长时间搜索和推理的模型可能要调大；超时的请求不会重试，但可能照样计费 |
+| `no_search_pass` | **付费：调用次数约翻倍**，仍受同样的上限约束。设为 `true` 时，在每个能不搜索就回答的引擎上（不含 Perplexity）关掉联网把每道题再问一遍，看模型单凭训练数据会不会提到这个品牌。默认 `false` |
 
 OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，不是厂商自家的 App 或搜索：对没有原生搜索的模型（如
 `deepseek/deepseek-chat`），插件用 Exa 搜索（依据 OpenRouter 文档，2026-10-02 核对）。引擎 id 命名的是一条模型路由，不是一个产品。
@@ -365,7 +366,8 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 
 `queries.csv` 有四列：`query_id,query,intent_tier,target_url`。问题要写成买家在 ChatGPT 里会打出来的样子，而且每周保持
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
-品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
+品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。另有两列可选的 `ladder` 和 `step`，用来编条件阶梯：
+基础题（`step` 为 0）和逐级加了条件的同一道题（1、2……）填同一个阶梯 id，见下文「条件阶梯」。
 
 `target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
 `brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。
@@ -452,6 +454,24 @@ Perplexity 未标注来源现在留在这里；`citations` 和 `cited` 的读法
 **重复一致性。** `runs` 大于 1 时，「Repeat consistency of cited domains」按引擎给出同一问题的几条回答所引域名有多一致（每两条带引用的回答
 算 Jaccard 重合度，按问题取平均，再取各问题的中位数），并列出最不一致的问题。不带引用的回答不计入；每题只问一次时写「未测量」。
 只是描述，`watch diff` 不读它。JSON：`summary.engines` 每行的 `consistency`。细节见[guide/watch-methodology.zh-CN.md 第 8 节](../guide/watch-methodology.zh-CN.md#8-一次提问一天一个月)。
+
+**第一条搜索。** 「The first search each answer ran」按引擎给出暴露了搜索词的回答数，以及其中第一条搜索词提到你、提到被跟踪竞品的条数；
+再在不提你的问题里，把「第一条搜索词含你」和「回答提到你」交叉成表。不暴露搜索词的回答（Perplexity、OpenRouter）未测量。
+JSON：`summary.first_search`。
+
+**凭记忆提到（`no_search_pass`）。** 设了 `no_search_pass: true` 或 `--no-search-pass` 时，在能不搜索就回答的引擎上关掉联网把同一个计划再问一遍。
+「Named from memory, with web search off」按引擎给出这些回答里提到你的条数，旁边并列同一引擎联网回答同一批问题时的结果。
+这些回答存在 `memory_samples` 里，和 `samples` 分开，所以引用率、合并和 `watch diff` 都不读它们；关掉联网却仍然搜索了的回答不计入。
+JSON：`summary.memory`。
+
+**条件阶梯。** `ladder` 相同的问题组成一个阶梯，`step` 从低到高。「Condition ladders」给出每一级的回答数、其中提到和引用你的条数，
+并写明从哪一级起没有回答再提到你（`dropped_at`），以及从哪一级起提到你的占比跌到基础题的一半（`halved_at`）。只是计数，不做检验。
+JSON：`summary.ladders`。
+
+**入选、举例、排除。** 「How the answers name each brand」把提到每个被跟踪品牌的回答分成入选（以它开头的列表项或标题，或推荐它的句子）、
+举例（跟在 such as、for example、例如、包括……后面）、排除（does not support、not suitable、lacks、不支持、不适合、缺少……）和未判定。
+是读英文和中文字词的规则，不是模型。JSON：`summary.share_of_voice` 和 `summary.engines` 上的 `roles`。四项的细节见
+[guide/watch-methodology.zh-CN.md 第 10 节](../guide/watch-methodology.zh-CN.md#10-引用率之外第一条搜索模型记忆条件阶梯以及品牌被怎样提到)。
 
 **通过 MCP 使用。** `uvx geo-score@1.8.4 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，

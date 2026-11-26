@@ -534,6 +534,90 @@ A run records what it measured in `recorded` (`spans`, `sources`). A run saved b
 list, and its report says they were not recorded rather than that an engine gave none; its summary is computed
 again when it is reported, and the file is not rewritten.
 
+## 10. Beside the cited rate: the first search, memory, ladders and how a brand is named
+
+Four measures added in 1.10.0. Each is reported beside the cited rate and never merged into it; none enters
+the headline, the intervals of the cited rate, pooling or `watch diff`. Each is computed from what the run file
+saves, so a report on a run saved by an earlier release computes them again, and the file is not rewritten.
+
+### The first search
+
+An engine that searches before it answers turns the question into one or more search queries. OpenAI and
+Anthropic return them with the answer, and Gemini returns its queries; `search_queries` keeps them in the order
+the API returned them, repeats dropped. The first of them is the engine's first move, and it can already name a
+brand: a search for "Acme power station" can only find pages that mention Acme.
+
+`summary.first_search` counts, over the answers that expose at least one query, how many first queries name the
+brand and how many a tracked competitor, with the matcher of `mentioned` (name, aliases and domains). Then it
+crosses the brand in the first query with the brand named in the answer, in a two-by-two table. A question that
+names the brand puts it in the search, so the table that matters is the one over questions that do not name it
+(`unbranded`): there, a brand in the first query is the engine's own choice. The same counts come per engine.
+
+Answers that expose no query are not measured here, never a "no": Perplexity and OpenRouter return none, and
+an OpenAI-compatible `base_url` may strip them. Google does not document its list as the order searched, so for
+Gemini "first" means first in the list. These are counts, with no interval and no test, and the table shows
+two things side by side, not that one caused the other.
+
+### With web search off: the no-search pass
+
+A model can name a brand from what it learned in training, without searching. `no_search_pass: true` in the
+config (or `watch run --no-search-pass`, or the MCP `run` tool's `no_search_pass`) asks every question a second
+time on each engine with web search off: OpenAI's Responses API and Claude's Messages API without the search
+tool, Gemini without `google_search`, OpenRouter without the `web` plugin. **It about doubles the calls**, within
+the same `max_calls` and `budget_usd`; `watch run --dry-run` says so before anything is spent, and the MCP `run`
+tool's dry run gives `no_search_calls` in its plan. Perplexity's Sonar models search on every call, and an
+OpenRouter model with the `:online` suffix searches whatever the request says, so neither is measured there.
+
+These answers go into `memory_samples`, apart from `samples`, so no rate, pool or diff reads them. Nothing can
+be cited without a search, so `summary.memory` counts answers that name the brand, per engine and overall, with
+the Wilson interval and the bootstrap over questions, beside the share of the same engine's answers with search
+that named it, on the same questions. An answer asked with search off that searched or cited anyway (an endpoint
+that adds search) is marked `searched_anyway`, counted, and left out.
+
+A model's training ends months before it is released, so this moves when a provider ships a new model, not when
+a site changes. It answers a different question from the cited rate: does the model know the brand at all.
+
+### Condition ladders
+
+One question rarely stands alone. "Best power station" becomes "best power station for camping", then "for
+camping under $500". A brand named for the broad question can drop out as conditions are added. The question
+file's optional `ladder` and `step` columns group such questions: the same ladder id on each, step 0 for the
+base question and 1, 2… as conditions are added. `watch check` refuses a step used twice on one ladder and warns
+about a ladder with one step.
+
+`summary.ladders` lists each ladder's steps, lowest first, with the answers to each and how many name and cite
+the brand, overall and per engine. `dropped_at` is the first step, after a step whose answers named the brand, at
+which no answer names it; `halved_at` is the first step above the base whose share of answers naming the brand
+is at most half the base's. Each step is one question with a few answers, so these are counts, with no interval
+and no test: ask the ladder more than once (`runs`) before reading a step as real. Each step is also an ordinary
+question and counts in every other table.
+
+### Selected, example, excluded
+
+An answer can name a brand to recommend it, to give it as one example among many, or to rule it out. Counting
+all three as "mentioned" mixes them. For every answer that names a tracked brand, `watch` reads how, by rules
+over the sentences that name it (the sentences of `mention_share`):
+
+- **excluded**: a sentence that names no other tracked brand says the brand does not support something, is not
+  suitable, lacks something, falls short or is not recommended (`does not support`, `not suitable`, `lacks`,
+  `not recommended`, `不支持`, `不适合`, `缺少`, `不推荐` and similar);
+- **selected**: a line that names the brand starts with it, after a list marker, a number, a heading mark, a
+  table bar or bold (the answer's shortlist), or a sentence that names no other tracked brand recommends it
+  (`recommend`, `best`, `top pick`, `推荐`, `首选`, `最适合` and similar);
+- **example**: the brand follows an example cue in its sentence (`such as`, `for example`, `like`, `including`,
+  `例如`, `比如`, `包括`), or 等 closes a list it is in.
+
+A sentence gets at most one label, excluded before selected before example. The answer is excluded when a
+sentence excludes the brand and none selects it, selected in the opposite case, an example when only example
+cues fire, and **undetermined** when no rule fires or one sentence selects it while another excludes it. The four
+add up to the answers that name the brand. They are reported per tracked brand (`roles` on each row of
+`summary.share_of_voice`) and, for your brand, per engine (`roles` on each row of `summary.engines`).
+
+These are rules that read words, not meaning. A caveat ("a good pick, but it lacks an app") reads as excluded,
+sarcasm is not seen, and an exclusion or selection cue in a sentence that names two tracked brands is not used,
+since it may be about the other one. The cue words are English and Chinese; in other languages only the list and
+heading rule reads, and the rest is undetermined. Use the counts to find answers worth reading, not as a verdict.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
@@ -545,7 +629,9 @@ again when it is reported, and the file is not rewritten.
   each question, `summary.searches` with its `modifiers` and `answers_searched_without_queries`,
   `questions_hash`, which two runs share when they asked the same questions, and, from section 9,
   `spans`, `supported_share`, `sources_listed` and `sources_used` on each answer, `supported_share`
-  and `sources` on each row of `summary.engines`, and `recorded`.
+  and `sources` on each row of `summary.engines`, and `recorded`; from section 10, `summary.first_search`,
+  `summary.ladders`, `ladder` and `step` on each question, `roles` on each row of `summary.engines` and
+  `summary.share_of_voice`, and, after a no-search pass, `memory_samples` and `summary.memory`.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool

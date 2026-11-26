@@ -12,7 +12,7 @@
     "competitors": {"type": ["array", "null"], "items": {"$ref": "#/$defs/entity"},
                     "description": "Tracked competitors. Names must differ from each other and from the brand."},
     "queries": {"type": "string", "minLength": 1, "default": "queries.csv",
-                "description": "The question file, relative to this file: a CSV with the columns query_id,query and optionally intent_tier,target_url,branded."},
+                "description": "The question file, relative to this file: a CSV with the columns query_id,query and optionally intent_tier,target_url,branded, and ladder,step (since 1.10.0: a condition ladder's id and the question's step on it, 0 for the base question)."},
     "engines": {"type": ["array", "null"], "minItems": 1, "items": {"$ref": "#/$defs/engine"},
                 "description": "The engines to ask. Omitted or null: ChatGPT, Perplexity, Gemini and Claude through their APIs, with the default model of the running release; `watch init` writes the models out."},
     "country": {"type": ["string", "null"], "pattern": "^([A-Z]{2})?$",
@@ -25,7 +25,9 @@
                    "description": "Spend cap in USD, checked before every call; it can be exceeded by at most one call per engine. null: no budget."},
     "prices": {"type": ["object", "null"], "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]{0,39}$"},
                "additionalProperties": {"$ref": "#/$defs/price"},
-               "description": "Per engine id, USD, for the engines whose provider does not report the cost of a call."}
+               "description": "Per engine id, USD, for the engines whose provider does not report the cost of a call."},
+    "no_search_pass": {"type": ["boolean", "null"], "default": false,
+                       "description": "Paid: about doubles the calls of a run, within the same max_calls and budget_usd. Since 1.10.0. true: after the usual asks, ask every question again with web search off, on each engine that can answer without searching (not Perplexity), to see whether the model names the brand from its training alone. Saved in memory_samples and summary.memory, never in the cited rate. null or false: off."}
   },
   "$defs": {
     "strings": {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}],

@@ -6,6 +6,31 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [Unreleased]
 
 ### Added
+- **Four `watch` measures beside the cited rate** (guide/watch-methodology.md, section 10). Each is reported apart and
+  never merged into the cited rate, the headline, pooling or `watch diff`, and each is recomputed for runs saved by
+  earlier releases; "not measured" is never a zero.
+  - **The first search:** `summary.first_search` counts, over answers that expose their search queries (OpenAI,
+    Anthropic, Gemini), how many first queries name the brand or a tracked competitor, and crosses the brand in the
+    first query with the brand named in the answer, over all questions and over those that do not name the brand,
+    and per engine. Report: "The first search each answer ran".
+  - **The no-search pass:** `no_search_pass: true` in the config, `watch run --no-search-pass` or the MCP `run` tool's
+    `no_search_pass` asks every question again with web search off (no search tool for OpenAI, Claude and Gemini, no
+    `web` plugin for OpenRouter; Perplexity and OpenRouter `:online` models search on every call and are not measured),
+    to see whether the model names the brand from its training alone. Paid, about double the calls, off by default,
+    within the same caps; `--dry-run` and the MCP dry run (`no_search_calls`) say so first. Saved in `memory_samples`;
+    an answer that searched anyway is marked `searched_anyway` and left out. Report: "Named from memory, with web search
+    off", beside the same engine's answers with search; JSON: `summary.memory`.
+  - **Condition ladders:** optional `ladder` and `step` columns in the question file group a base question (step 0)
+    with the same question under more conditions. `summary.ladders` gives each step's answers and how many name and
+    cite the brand, overall and per engine, with `dropped_at` (the first step after a named one at which no answer
+    names it) and `halved_at`. `watch check` refuses a step used twice on a ladder and warns about a one-step ladder.
+  - **Selected, example, excluded:** of the answers that name each tracked brand, how many put it on their shortlist
+    (a list item, heading or table row that starts with it, or a sentence recommending it), give it as an example
+    (after such as, for example, `例如`, `包括`…), exclude it (does not support, not suitable, lacks, `不支持`,
+    `不适合`, `缺少`…) or cannot be read either way (undetermined). Rules over English and Chinese words, not a model. JSON:
+    `roles` on each row of `summary.share_of_voice` and `summary.engines`.
+  The run schema gains the optional fields (`schema/watch.v1.json`), the config schema `no_search_pass`, and the MCP
+  `run` tool an optional `no_search_pass` argument (the tools snapshot is updated). Tests in `cli/test_geo_watch.py`.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip

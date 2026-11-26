@@ -354,7 +354,7 @@ Here `501` stands for what `id -u` prints for you.
 |---|:-:|---|---|---|---|
 | `score_site` | 1 | Free | No | read-only, open-world | **`url`**, `urls`, `sample` |
 | `ask` | 2 | Paid (your keys) | No | non-destructive, open-world | **`question`**, `engines`, `brand`, `domains` |
-| `run` | 3 | Paid (your keys); `dry_run` is free | A run file under `.geo-score/watch/runs/`, next to the config | non-destructive, open-world | `dry_run`, `engines`, `limit`, `max_calls`, `budget_usd` |
+| `run` | 3 | Paid (your keys); `dry_run` is free | A run file under `.geo-score/watch/runs/`, next to the config | non-destructive, open-world | `dry_run`, `engines`, `limit`, `max_calls`, `budget_usd`, `no_search_pass` |
 | `list_runs` | 3 | Free | No | read-only, idempotent | — |
 | `report` | 3 | Free | No | read-only, idempotent | `run`, `since`, `format` |
 | `diff` | 3 | Free | No | read-only, idempotent | `from`, `to`, `format` |

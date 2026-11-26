@@ -369,7 +369,7 @@ measured" and the readiness report is unchanged.
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv`, with one placeholder question for each of the types `list`, `pricing`, `alternative`, `problem` and `verdict` |
 | `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, warn about a `target_url` it cannot use, and show which engines have keys and prices |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer) and how precisely one question's rate is pinned down at the configured `--runs` (a standard error of at most 0.5/√n), and exits 0, with or without keys |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--no-search-pass] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer) and how precisely one question's rate is pinned down at the configured `--runs` (a standard error of at most 0.5/√n), and exits 0, with or without keys. `--no-search-pass` (paid: about doubles the calls) also asks every question with web search off |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | Several saved runs pooled: those started in the last DAYS days, or from run A to run B, both included. Each must match the newest (same questions, asks per question, engines, models, country and brand domains); otherwise it exits 1 and names every run that differs. Gives the runs, the days they cover, the answers, the headline rate and a row per engine |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
@@ -412,6 +412,7 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 | `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
 | `engines[].timeout` | Seconds to wait for this engine's answer, 10 to 600 (default 120). A slow endpoint, or a model that searches and reasons at length, may need more; a request that timed out is not retried and may still be billed |
+| `no_search_pass` | **Paid: about doubles the calls**, within the same caps. `true` asks every question a second time with web search off, on each engine that can answer without searching (not Perplexity), to see whether the model names the brand from its training alone. Default `false` |
 
 An OpenRouter engine measures that model answering through OpenRouter's `web` plugin, not the vendor's own app
 or search: for a model without native search, such as `deepseek/deepseek-chat`, the plugin searches with Exa
@@ -434,7 +435,9 @@ variables instead, and its value is never printed. The warnings change no exit c
 way a buyer would type them into ChatGPT, and keep the set fixed from week to week. An optional
 fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides the automatic check
 for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
-a nickname the matcher cannot see.
+a nickname the matcher cannot see. Two more optional columns, `ladder` and `step`, group a condition
+ladder: the same ladder id on a base question (`step` 0) and on the same question with more conditions
+(1, 2…); see "Condition ladders" below.
 
 `target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
 or a path that starts with `/`, which is joined to the first of `brand.domains`
@@ -557,6 +560,28 @@ answers to one question cite the same domains (the Jaccard overlap of every two 
 question, the median over questions) and lists the least consistent questions. Answers that cite nothing are left
 out; with one ask per question it says not measured. Descriptive only: `watch diff` does not read it. JSON:
 `consistency` on each row of `summary.engines`. Details: [guide/watch-methodology.md, section 8](../guide/watch-methodology.md#8-one-ask-one-day-one-month).
+
+**The first search.** "The first search each answer ran" counts, per engine, the answers that show their searches
+and how many of their first search queries name you or a tracked competitor, then crosses the brand in the first
+search with the brand named in the answer, over the questions that do not name you. Answers that show no search
+(Perplexity, OpenRouter) are not measured. JSON: `summary.first_search`.
+
+**Named from memory (`no_search_pass`).** With `no_search_pass: true` or `--no-search-pass`, the same plan is asked
+again with web search off, on the engines that can answer without searching. "Named from memory, with web search
+off" gives, per engine, how many of those answers name you, beside the same engine's answers with search on the
+same questions. They are saved in `memory_samples`, apart from `samples`, so the cited rate, pooling and `watch
+diff` never read them; an answer that searched anyway is left out. JSON: `summary.memory`.
+
+**Condition ladders.** Questions that share a `ladder` id form a ladder, lowest `step` first. "Condition ladders"
+gives each step's answers and how many name and cite you, and says at which step no answer named you any more
+(`dropped_at`) and at which the share naming you fell to half the base's (`halved_at`). Counts, no test. JSON:
+`summary.ladders`.
+
+**Selected, example, excluded.** "How the answers name each brand" splits, for every tracked brand, the answers that
+name it into selected (a list item or heading that starts with it, or a sentence recommending it), example (after
+such as, for example, 例如, 包括…), excluded (does not support, not suitable, lacks, 不支持, 不适合, 缺少…) and
+undetermined. Rules over English and Chinese words, not a model. JSON: `roles` on `summary.share_of_voice` and
+`summary.engines`. All four: [guide/watch-methodology.md, section 10](../guide/watch-methodology.md#10-beside-the-cited-rate-the-first-search-memory-ladders-and-how-a-brand-is-named).
 
 **Over MCP.** `uvx geo-score@1.8.4 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
 clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
