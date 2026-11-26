@@ -420,9 +420,50 @@ OpenRouter 带 `:online` 后缀的模型无论请求怎么写都会搜索，所�
 排除和推荐提示词不采用，因为可能说的是另一个。提示词只有英文和中文；其他语言只有列表和标题那条规则起作用，其余都算未判定。
 这些计数用来找出值得细读的回答，不是结论。
 
+## 11. 按国家、用当地说法分开测，以及一份样本能看出多大的变化
+
+### 每个国家、每种语言单独出数
+
+AI 给一个国家的买家引用什么，对下一个国家说明不了多少：同一个品类，用当地人的说法去问，冒出来的品牌和信源都不一样，
+引擎也会区分不同的市场。所以 `watch` 按国家、按语言分别出数，从不合并成一个数。
+
+- **问题从哪个国家问。** 问题文件里可选的 `country` 列（两个字母的国家代码）为这道题单独设定；没填就用配置里的 `country`。
+  支持指定地区的引擎（OpenAI、Claude、Perplexity）收到的是这道题的国家。每个国家的题请用当地买家的说法来写，不要拿一套题翻译。
+- **问题用什么语言写。** 问题文件里可选的 `language` 列（BCP 47 标签，如 `de`、`pt-BR`），没填用配置里的 `language`，
+  再没有就从题面推断：中文、日文、韩文看文字，英、德、法、西、葡、意、荷看几个常用词，看不出来记为 `und`（未确定）。
+  语言不改变发出去的任何内容，只决定报告怎么分组；报告会写明有几道题的语言是从题面推断的。
+
+`summary.by_country` 和 `summary.by_language` 按国家、按语言各给一个比率块，每条回答都计入，和「按问题类型」那张表一样。
+多于一组时报告才打印这两张表，标题率那一行也会说明它合并了几组。一道题在两次运行里从不同国家问，`watch diff` 不配对这道题，合并时也不合并。
+
+### 样本能看出多大的变化
+
+20 道题的一次运行分不出 5 个点的变动和噪声，花钱之前就把这一点说清楚，本身就是测量的一部分。引用率为 p、每次运行 n 个样本时，
+双侧检验在 95% 置信度下有 80% 把握判定为变化的最小变化量是
+
+    (1.96 + 0.84) × sqrt(2 p (1 − p) / n)
+
+单位是引用率的百分点。n 有两种取法，给出上下两个界：按**问题数**算，把同一道题的几条回答当成一条，这正是 `watch diff` 检验的方式（第 4 节）；
+按**回答数**算，把每条回答都当成独立的，实际上并不独立。真实值在两者之间；配对会让它小一点，跨引擎的 Holm 校正会让它大一点。
+等于 100 表示多大的变化都看不出来。
+
+| 每次运行的问题数 | 引用率 50% 时 | 引用率 20% 时 |
+|---|---|---|
+| 10 | 63 个点 | 50 |
+| 20 | 44 | 35 |
+| 50 | 28 | 22 |
+| 100 | 20 | 16 |
+
+- `watch run --dry-run`（以及 MCP `run` 工具的 dry run，在 `plan.detectable` 里）按 50% 的引用率（最坏情况）给出这个数，整体一个，问题文件里每个国家各一个。
+- 报告按标题率给出，引用率按 Agresti 和 Coull 的做法往一半拉一点，即 (引用数 + 2) / (回答数 + 4)，免得 0% 的引用率读成一个不会动的数。
+  `summary.detectable` 里有上下两个界，`by_country` 和 `by_language` 的每一行有各自的值。
+
+它回答的是「这样的运行能看出多大的变化」，不是「有没有变」：后者看 `watch diff` 的结论。和它并列的是计划的分辨力（第 8 节），
+即至少要有几道题朝同一方向变动，比较才可能判定变化。
+
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`；第 11 节的：每个问题上的 `country` 与 `language`、运行的 `language`，以及 `summary.by_country`、`summary.by_language` 与 `summary.detectable`。
 - 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

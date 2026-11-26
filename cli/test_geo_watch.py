@@ -4918,6 +4918,107 @@ class NewSummaryFields(Base):
         self.assertIs(gw.summary_of(dict(run, summary=sm)), sm)
 
 
+# ── 1.10.0: by country, by language, and the change a sample can see ──
+class CountriesAndLanguages(Base):
+    QS = ("query_id,query,intent_tier,target_url,country,language\n"
+          "q1,best power station,list,,,\nq2,beste Powerstation für Camping,list,,de,\n"
+          "q3,最好的移动电源,list,,CN,zh-Hans\nq4,power station,list,,,\n")
+
+    def test_language_is_read_from_the_text_only_when_nothing_sets_it(self):
+        for text, want in (("best portable power station", "en"), ("welche Powerstation ist die beste", "de"),
+                           ("quel est le meilleur", "fr"), ("cuál es la mejor", "es"), ("qual é o melhor", "pt"),
+                           ("qual è il migliore", "it"), ("wat is de beste", "nl"), ("最好的移动电源", "zh"),
+                           ("おすすめのポータブル電源", "ja"), ("휴대용 배터리 추천", "ko"), ("power station", "und"), ("", "und")):
+            self.assertEqual(gw.infer_language(text), want, text)
+        self.assertEqual(gw.question_language({"query": "best x", "language": "pt-BR"}, "de"), ("pt-BR", False))
+        self.assertEqual(gw.question_language({"query": "best x"}, "de"), ("de", False))
+        self.assertEqual(gw.question_language({"query": "best x"}), ("en", True))
+
+    def test_the_question_file_and_the_config_take_country_and_language(self):
+        cfg = RunFile.config(self, {"country": "US", "language": "en"}, queries_csv=self.QS)
+        self.assertEqual(cfg.errors, [])
+        qs = cfg.load_queries()
+        self.assertEqual([(q.get("country"), q.get("language")) for q in qs],
+                         [(None, None), ("DE", None), ("CN", "zh-Hans"), (None, None)])
+        self.assertTrue(RunFile.config(self, {"language": "English"}).errors)
+        for rows, needle in (("q1,x,list,,USA,\n", "country must be a two-letter ISO code"),
+                             ("q1,x,list,,US,english!\n", "language must be a language tag")):
+            with self.assertRaises(gw.ConfigError) as ctx:
+                RunFile.config(self, queries_csv="query_id,query,intent_tier,target_url,country,language\n" + rows
+                               ).load_queries()
+            self.assertIn(needle, str(ctx.exception))
+        sc = config_schema()
+        self.assertEqual(sc["properties"]["language"]["pattern"], "^(%s)?$" % gw.LANGUAGE_RE.pattern.strip("^$"))
+
+    def test_each_country_and_language_is_reported_on_its_own(self):
+        sent = []
+
+        def h(u, hd, b):
+            loc = ((b.get("tools") or [{}])[0].get("user_location") or {}).get("country")
+            sent.append((b["input"][0]["content"], loc))
+            return openai_resp("Lumo.", [("https://lumo.example/a", "")] if "beste" in b["input"][0]["content"] else [])
+        self.fake({"api.openai.com": h})
+        cfg = RunFile.config(self, {"country": "US", "engines": engines("chatgpt-api")}, queries_csv=self.QS)
+        run = gw.execute(cfg.brand, [], cfg.engines, cfg.load_queries(), 1, cfg.country)
+        # a question's own country is what the engine is told
+        self.assertEqual(sorted(sent), sorted([("best power station", "US"), ("beste Powerstation für Camping", "DE"),
+                                               ("最好的移动电源", "CN"), ("power station", "US")]))
+        sm = run["summary"]
+        self.assertEqual([(r["country"], r["questions"], r["cited"]) for r in sm["by_country"]],
+                         [("CN", 1, 0), ("DE", 1, 1), ("US", 2, 0)])
+        self.assertEqual([(r["language"], r["inferred"]) for r in sm["by_language"]],
+                         [("de", 1), ("en", 1), ("und", 1), ("zh-Hans", 0)])
+        text = gw.render(run)
+        self.assertIn("These rates pool 3 countries and 4 languages", text)
+        self.assertIn("By country (where the engines were told the question is asked from)", text)
+        self.assertIn("By language (the language each question is written in)", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        # one country, one language: the tables would repeat the headline, so they are not printed
+        self.fake({"api.openai.com": lambda u, hd, b: openai_resp("Lumo.")})
+        one = gw.execute(brand(), [], engines("chatgpt-api"), queries(2), 1, "US")
+        self.assertEqual(len(one["summary"]["by_country"]), 1)
+        self.assertNotIn("By country", gw.render(one))
+        self.assertNotIn("These rates pool", gw.render(one))
+
+    def test_a_question_asked_from_another_country_is_neither_paired_nor_pooled(self):
+        a = synth("20261005T083000Z", dict((("q%02d" % i, "chatgpt-api"), [True]) for i in range(8)))
+        b = synth("20261012T083000Z", dict((("q%02d" % i, "chatgpt-api"), [False]) for i in range(8)))
+        b["queries"][0]["country"] = "DE"
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["overall"]["n_questions"], 7)
+        self.assertTrue(any("q00: asked from another country" in n for n in d["notes"]))
+        self.assertTrue(any("asked from another country" in w for w in gw.pool_mismatch(a, b)))
+        self.assertEqual(gw.pool_mismatch(a, a), [])
+
+
+class Detectable(Base):
+    def test_the_formula_and_its_bounds(self):
+        self.assertEqual(gw.detectable_pp(0.5, 20), 44.3)        # (1.96 + 0.84) * sqrt(0.5 / 20) * 100
+        self.assertEqual(gw.detectable_pp(0.5, 80), 22.1)
+        self.assertEqual(gw.detectable_pp(0.5, 2), 100.0)        # a rate cannot move further
+        self.assertIsNone(gw.detectable_pp(0.5, 0))
+        d = gw.detectable(10, 60, 30)
+        self.assertEqual((d["rate"], d["questions_pp"], d["answers_pp"]), (0.1875, 28.2, 20.0))
+        self.assertEqual(gw.detectable(0, 40, 40)["rate"], round(2 / 44.0, 4))      # 0 of n is not a rate frozen at 0
+        self.assertIn("no change in the cited rate, however large", gw.detectable_lines(2, 4)[0])
+        self.assertIn("smaller than about 36 pts", gw.detectable_lines(30, 240)[0])
+
+    def test_the_dry_run_and_the_report_say_it(self):
+        cfg = RunFile.config(self, {"engines": engines("chatgpt-api")}, queries_csv=CountriesAndLanguages.QS)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(gw.main(["run", "-c", cfg.path, "--dry-run"]), 0)
+        self.assertIn("detectable: at 95% confidence and 80% power", out.getvalue())
+        self.assertIn("detectable in DE (1 question)", out.getvalue())
+        srv = gw.MCPServer(cfg.path, out=io.StringIO())
+        plan = srv.call({"name": "run", "arguments": {"dry_run": True}})["structuredContent"]["plan"]
+        self.assertEqual((plan["detectable"]["questions"], plan["detectable"]["questions_pp"]), (4, 99.1))
+        self.assertEqual([c["country"] for c in plan["detectable"]["by_country"]], ["CN", "DE", None])
+        run = synth("20261012T083000Z", dict((("q%02d" % i, "chatgpt-api"), [i < 10]) for i in range(30)))
+        self.assertEqual(run["summary"]["detectable"]["questions"], 30)
+        self.assertIn("Smallest change a diff of two runs like this is likely to see", gw.render(run))
+
+
 class PipedDecoy(unittest.TestCase):
     def test_a_geo_watch_py_in_the_current_directory_is_never_loaded(self):
         d = tempfile.mkdtemp(prefix="geo-score-decoy-")

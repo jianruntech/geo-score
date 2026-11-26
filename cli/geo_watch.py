@@ -81,6 +81,7 @@ MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$")
 ENV_RE = re.compile(r"^[A-Z_][A-Z0-9_]{0,63}$")
 RUN_ID_RE = re.compile(r"^(\d{8}T\d{6}Z)(?:-(\d{1,3}))?$")
 COUNTRY_RE = re.compile(r"^[A-Z]{2}$")
+LANGUAGE_RE = re.compile(r"^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$")      # a BCP 47 tag: en, de, zh-Hans, pt-BR
 BASE_URL_RE = re.compile(r"^(https://[^\s/]+|http://(localhost|127\.0\.0\.1)(:\d+)?)(/\S*)?$")
 DOMAIN_RE = re.compile(r"^(?=.{3,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 REDIRECT_HOSTS = ("vertexaisearch.cloud.google.com",)
@@ -189,6 +190,20 @@ POOL_NOTES = [
     "one cluster, and the 95% interval resamples questions: more runs pin down each question's rate, but the interval "
     "narrows only as far as the number of questions allows.",
     "A pooled rate describes the period it covers. It is not a test for a change: compare two runs with watch diff.",
+]
+
+# printed under "By country" and "By language"
+SPLIT_NOTES = [
+    "Each row is its own set of questions and is never merged with another: a brand's standing in one country, asked "
+    "in that country's own words, says little about the next. Every answer counts, questions that name the brand "
+    "included, as in the other tables.",
+    "Country: the question file's country column, else the config's country, which the engines that take a location "
+    "are given (OpenAI, Claude, Perplexity). Language: the question file's language column, else the config's "
+    "language, else read from the question's text (zh, ja, ko by script; en, de, fr, es, pt, it, nl by common words; "
+    "und when the text does not say).",
+    "Smallest change it can see: the change in that row's cited rate that a diff of two such runs has an 80% chance "
+    "to call at 95% confidence, if each question's answers move together (the test counts questions). Fewer questions, "
+    "bigger changes go unseen.",
 ]
 
 # printed under "How the answers name each brand": what the four states are and how they are read
@@ -1332,8 +1347,8 @@ def is_branded(q, brand=None):
 # keeps the two equal); Config warns about any other key, because a typo such as "budget" for "budget_usd" would
 # otherwise drop a spending cap without a word.
 CONFIG_SCHEMA_URL = "https://raw.githubusercontent.com/jianruntech/geo-score/main/schema/watch-config.v1.json"
-CONFIG_KEYS = ("$schema", "brand", "competitors", "queries", "engines", "country", "runs", "max_calls", "budget_usd",
-               "prices", "no_search_pass")
+CONFIG_KEYS = ("$schema", "brand", "competitors", "queries", "engines", "country", "language", "runs", "max_calls",
+               "budget_usd", "prices", "no_search_pass")
 ENTITY_KEYS = ("name", "domains", "url_prefixes", "aliases")
 # the last four tune the provider adapters: tool (OpenAI, Anthropic), max_tokens and max_searches (Anthropic),
 # max_results (OpenRouter)
@@ -1483,6 +1498,12 @@ class Config(object):
         self.country = raw.get("country") or None
         if self.country is not None and not (isinstance(self.country, str) and COUNTRY_RE.match(self.country)):
             err("country must be a two-letter ISO code such as US, or null")
+        # the language the questions are written in, for the report's split by language; null: the question file's
+        # language column, else read from each question's text (infer_language)
+        self.language = raw.get("language") or None
+        if self.language is not None and not (isinstance(self.language, str) and LANGUAGE_RE.match(self.language)):
+            err("language must be a language tag such as en, de or pt-BR, or null")
+            self.language = None
         self.no_search_pass = raw.get("no_search_pass")
         if self.no_search_pass is None:
             self.no_search_pass = False
@@ -1546,8 +1567,19 @@ class Config(object):
             if b and b not in BRANDED_VALUES:
                 problems.append("line %d: branded must be auto, yes or no, not %r" % (n, b))
             vals["branded"] = b or "auto"
-            # optional columns, kept on the question only when set: the condition ladder it belongs to and its
-            # step (0 is the base question)
+            # optional columns, kept on the question only when set: where it is asked from (a country the engines
+            # are given instead of the config's), the language it is written in, and the condition ladder it belongs
+            # to with its step (0 is the base question)
+            for col, rx, what in (("country", COUNTRY_RE, "a two-letter ISO code such as DE"),
+                                  ("language", LANGUAGE_RE, "a language tag such as de or pt-BR")):
+                v = r.get(col)
+                v = v.strip() if isinstance(v, str) else ""
+                if col == "country":
+                    v = v.upper()
+                if v and not rx.match(v):
+                    problems.append("line %d: %s must be %s, not %r" % (n, col, what, _cut(v, 20)))
+                elif v:
+                    vals[col] = v
             lad, st = (r.get(k) for k in ("ladder", "step"))
             lad, st = (x.strip() if isinstance(x, str) else "" for x in (lad, st))
             if lad or st:
@@ -1695,7 +1727,8 @@ def plan(engines, prices, budget, allow_unpriced):
 
 
 def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, max_calls=DEFAULT_MAX_CALLS,
-            budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True, no_search_pass=False):
+            budget=None, allow_unpriced=False, progress=None, stop=None, resolve=True, no_search_pass=False,
+            language=None):
     prices = prices or {}
     started = NOW()
     # target_url is saved as the page it resolves to ("" when unusable), whether or not load_queries saw it first
@@ -1742,7 +1775,8 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
                 continue
             t0 = time.time()
             try:
-                res = CALLERS[e["provider"]](e, key, q["query"], country, search=not offline)
+                # a question's own country, from the question file, wins over the config's
+                res = CALLERS[e["provider"]](e, key, q["query"], q.get("country") or country, search=not offline)
             except EngineError as err:
                 ledger.settle(e["id"], est, 1)
                 fails += 1
@@ -1817,6 +1851,8 @@ def execute(brand, rivals, engines, queries, runs=1, country=None, prices=None, 
            "engines": eng_rows, "queries": queries, "questions_hash": questions_hash(queries),
            "recorded": list(RECORDED), "caps": {"max_calls": max_calls, "budget_usd": budget},
            "ledger": ledger.as_json(), "samples": samples, "notes": NOTES}
+    if language:
+        run["language"] = language
     if no_search_pass:
         run["memory_samples"] = offline
     run["summary"] = summarize(run)
@@ -2000,6 +2036,126 @@ def consistency_block(rows, order):
     return {"questions": len(vals), "answers": answers, "pairs": pairs,
             "median": round(_median([v[0] for v in vals]), 4) if vals else None,
             "lowest": [{"query_id": qid, "answers": n, "jaccard": j} for j, _, qid, n in low]}
+
+
+# ── where a question is asked from, the language it is written in, and what a sample can detect ──
+# A question's language when neither the question file nor the config sets one: the script tells Chinese, Japanese
+# and Korean apart; Latin-script text is read by the function words below, each counted once, and a language wins only
+# with more of its words than any other. Anything else is "und" (undetermined, BCP 47), never a guess.
+_KANA = re.compile("[぀-ヿ]")
+_HANGUL = re.compile("[가-힯ᄀ-ᇿ]")
+_HAN = re.compile("[㐀-䶿一-鿿豈-﫿]")
+LANGUAGE_WORDS = {
+    "en": ("the", "best", "what", "which", "how", "for", "with", "and", "is", "are", "does", "should", "cheapest",
+           "vs", "top", "my", "can", "of", "to"),
+    "de": ("der", "die", "das", "und", "ist", "für", "mit", "welche", "welcher", "welches", "beste", "besten", "wie",
+           "was", "ein", "eine", "nicht", "ich", "günstig", "günstigste"),
+    "fr": ("le", "les", "et", "est", "pour", "avec", "quel", "quelle", "quels", "meilleur", "meilleure", "meilleurs",
+           "comment", "une", "des", "du", "pas", "je", "moins", "cher"),
+    "es": ("el", "los", "las", "y", "es", "para", "con", "cuál", "cuáles", "mejor", "mejores", "cómo", "qué", "una",
+           "del", "por", "barato", "barata"),
+    "pt": ("os", "é", "para", "com", "qual", "quais", "melhor", "melhores", "como", "um", "uma", "não", "em", "do",
+           "da", "barato"),
+    "it": ("il", "gli", "è", "per", "con", "quale", "quali", "migliore", "migliori", "come", "un", "della", "non",
+           "che", "economico"),
+    "nl": ("het", "een", "en", "voor", "met", "welke", "beste", "hoe", "wat", "van", "niet", "ik", "op", "goedkoopste"),
+}
+_LANG_TOKEN = re.compile(r"[^\W\d_]+")
+
+
+def infer_language(text):
+    """A question's language from its text: zh, ja, ko by script; en, de, fr, es, pt, it, nl by function words; und
+    when the text does not say. Used only when neither the question file's language column nor the config's language
+    sets one, and reported as inferred."""
+    t = str(text or "")
+    if _HANGUL.search(t):
+        return "ko"
+    if _KANA.search(t):
+        return "ja"
+    if _HAN.search(t):
+        return "zh"
+    words = set(w.casefold() for w in _LANG_TOKEN.findall(t))
+    hits = sorted(((len(words & set(v)), k) for k, v in LANGUAGE_WORDS.items()), reverse=True)
+    return hits[0][1] if hits[0][0] and hits[0][0] > hits[1][0] else "und"
+
+
+def question_language(q, run_language=None):
+    """(language, inferred) for a saved question: its own language column, else the run's language, else read from
+    its text."""
+    if q.get("language"):
+        return q["language"], False
+    if run_language:
+        return run_language, False
+    return infer_language(q.get("query")), True
+
+
+# What diff can see, in points of the cited rate: the smallest change a two-sided test at 95% confidence has an 80%
+# chance to call, (z(0.975) + z(0.8)) * sqrt(2 p (1 - p) / n), for n answers per run at a cited rate p. Two bounds:
+# n = the questions, as if the answers to one question moved as one (the test diff runs counts questions), and n =
+# the answers, as if every answer were independent. The true figure lies between them; pairing narrows it, Holm's
+# correction across engines widens it.
+Z_CONFIDENCE, Z_POWER = 1.959964, 0.841621
+
+
+def detectable_pp(p, n):
+    """The minimum detectable change, in points of the cited rate, at rate p with n per run; None for n < 1. A rate
+    cannot move more than 100 points, so 100 means no change of any size is likely to be seen."""
+    if not n or n < 1:
+        return None
+    p = min(max(float(p), 0.0), 1.0)
+    return min(100.0, round(100 * (Z_CONFIDENCE + Z_POWER) * math.sqrt(2 * p * (1 - p) / n), 1))
+
+
+def pts_s(x):
+    """A detectable change for a table or a sentence."""
+    return "—" if x is None else "no change of any size" if x >= 100 else "about %.0f pts" % x
+
+
+def detectable(cited, answered, questions):
+    """summary.detectable for a rate block: the rate it assumes (the cited share, pulled towards a half as Agresti and
+    Coull do, (k + 2) / (n + 4), so that 0 of n does not read as a rate that cannot move) and the two bounds."""
+    p = (cited + 2.0) / (answered + 4.0)
+    return {"confidence": 0.95, "power": 0.8, "rate": round(p, 4), "questions": questions, "answers": answered,
+            "questions_pp": detectable_pp(p, questions), "answers_pp": detectable_pp(p, answered)}
+
+
+def detectable_lines(n_questions, n_answers, label=""):
+    """What `watch run --dry-run` prints about the smallest change the plan can see, at a 50% rate (the worst case)."""
+    lo, hi = detectable_pp(0.5, n_answers), detectable_pp(0.5, n_questions)
+    if hi is None:
+        return []
+    if hi >= 100:
+        return ["detectable%s: at 95%% confidence and 80%% power, no change in the cited rate, however large, is likely "
+                "to be told from noise when each question's answers move together (%s if every answer were "
+                "independent), at a 50%% rate, the worst case: add questions" % (label, pts_s(lo))]
+    return ["detectable%s: at 95%% confidence and 80%% power, a change in the cited rate smaller than %s (if each "
+            "question's answers move together; %s if every answer were independent) is likely to read as within "
+            "noise, at a 50%% rate, the worst case" % (label, pts_s(hi), pts_s(lo))]
+
+
+def split_rows(run, ok, brand, key):
+    """summary.by_country or by_language: one rate block per country (or language), every answer counted as in
+    by_tier, with the questions behind it and the change it could detect. Never merged: each row stands alone."""
+    groups, inferred = {}, {}
+    for q in run["queries"]:
+        if key == "country":
+            v, guessed = q.get("country") or run.get("country") or None, False
+        else:
+            v, guessed = question_language(q, run.get("language"))
+        groups.setdefault(v, set()).add(q["query_id"])
+        inferred[v] = inferred.get(v, 0) + (1 if guessed else 0)
+    rid = run.get("run_id") or ""
+    out = []
+    for v in sorted(groups, key=lambda x: (x is None, x or "")):
+        rows = [s for s in ok if s["query_id"] in groups[v]]
+        b = rate_block(rows, _seed(rid, key, v or "none"))
+        d = detectable(b["cited"], b["answered"], b["n_questions"])
+        row = dict(b, questions=len(groups[v]), detectable_pp=d["questions_pp"], detectable_answers_pp=d["answers_pp"])
+        row[key] = v
+        if key == "language":
+            row["inferred"] = inferred[v]
+        out.append(row)
+    return out
 
 
 # ── what the engines searched first ───────────────────────────────────────
@@ -2349,7 +2505,9 @@ def summarize(run):
                  engines=[dict(first_search_block([s for s in ok if s["engine"] == e["id"]], brand, rivals),
                                id=e["id"]) for e in run["engines"]])
     extra = {"first_search": first,
-             "ladders": ladders_block(run["queries"], per_q, brand, [e["id"] for e in run["engines"]])}
+             "ladders": ladders_block(run["queries"], per_q, brand, [e["id"] for e in run["engines"]]),
+             "by_country": split_rows(run, ok, brand, "country"), "by_language": split_rows(run, ok, brand, "language"),
+             "detectable": detectable(headline["cited"], headline["answered"], headline["n_questions"])}
     memory = memory_block(run, ok)
     if memory is not None:
         extra["memory"] = memory
@@ -2380,7 +2538,7 @@ def summary_of(run):
             and all("with_citations" in e and "named_first" in e and "supported_share" in e and "sources" in e
                     and "consistency" in e and "roles" in e for e in sm.get("engines") or []) \
             and all("named_first" in v and "roles" in v for v in sm.get("share_of_voice") or []) \
-            and "first_search" in sm and "ladders" in sm \
+            and "first_search" in sm and "ladders" in sm and "by_country" in sm and "detectable" in sm \
             and ("memory" in sm or not isinstance(run.get("memory_samples"), list)):
         return sm
     return summarize(run)
@@ -2503,6 +2661,12 @@ def diff_runs(a, b):
     edited = [q["query_id"] for q in b["queries"]
               if q["query_id"] in common_q and text_a[q["query_id"]] != text_b[q["query_id"]]]
     common_q -= set(edited)
+    # and so is one asked from another country, set in the question file's country column
+    from_a, from_b = asked_from(a), asked_from(b)
+    relocated = [q["query_id"] for q in b["queries"] if q["query_id"] in common_q and (q.get("country") or any(
+        x["query_id"] == q["query_id"] and x.get("country") for x in a["queries"])) and from_a[q["query_id"]] !=
+        from_b[q["query_id"]]]
+    common_q -= set(relocated)
     ea = dict((e["id"], e) for e in a["engines"])
     eb = dict((e["id"], e) for e in b["engines"])
     notes, rows = [], []
@@ -2520,6 +2684,9 @@ def diff_runs(a, b):
     if edited:
         notes.append("%s%s: question text changed between runs; not compared" % (
             ", ".join(edited[:10]), " and %d more" % (len(edited) - 10) if len(edited) > 10 else ""))
+    if relocated:
+        notes.append("%s%s: asked from another country in the question file; not compared" % (
+            ", ".join(relocated[:10]), " and %d more" % (len(relocated) - 10) if len(relocated) > 10 else ""))
     if a.get("runs") != b.get("runs"):
         notes.append("the runs asked each question %s and %s times; the paired test uses the asks both made "
                      "(the first %s)" % (a.get("runs"), b.get("runs"), min(a.get("runs") or 1, b.get("runs") or 1)))
@@ -2687,12 +2854,20 @@ def pool_mismatch(run, ref):
             why.append("%s model %s (newest %s)" % (eid, ea[eid][1], eb[eid][1]))
     if run.get("country") != ref.get("country"):
         why.append("country %s (newest %s)" % (run.get("country") or "none", ref.get("country") or "none"))
+    moved = sorted(qid for qid, c in asked_from(run).items() if qid in asked_from(ref) and c != asked_from(ref)[qid])
+    if moved:
+        why.append("%s asked from another country (%s)" % (_n(len(moved), "question"), ", ".join(moved[:5])))
     if run.get("channel") != ref.get("channel"):
         why.append("channel %s (newest %s)" % (run.get("channel"), ref.get("channel")))
     if run["brand"].get("domains") != ref["brand"].get("domains") or \
             run["brand"].get("url_prefixes") != ref["brand"].get("url_prefixes"):
         why.append("the brand's domains or URL prefixes differ, so 'cited' was judged differently")
     return why
+
+
+def asked_from(run):
+    """query_id -> the country its question was asked from: its own country column, else the run's country."""
+    return dict((q["query_id"], q.get("country") or run.get("country") or None) for q in run["queries"])
 
 
 def pool_runs(runs, since=None):
@@ -2978,6 +3153,36 @@ def consistency_lines(run, sm, fmt):
     return L
 
 
+def detectable_line(sm):
+    """The report's line under the headline: the smallest change in the headline rate a diff of two such runs is
+    likely to see."""
+    d = sm.get("detectable")
+    if not isinstance(d, dict) or d.get("questions_pp") is None:
+        return []
+    return ["Smallest change a diff of two runs like this is likely to see (95%% confidence, 80%% power): %s if each "
+            "question's answers move together, %s if every answer were independent." % (
+                pts_s(d["questions_pp"]), pts_s(d["answers_pp"]))]
+
+
+def split_lines(sm, key, fmt):
+    """The report's "By country" or "By language": one row each, never merged, shown only when there is more than one."""
+    rows = sm.get("by_" + key) or []
+    if len(rows) < 2:
+        return []
+    title = {"country": "By country (where the engines were told the question is asked from)",
+             "language": "By language (the language each question is written in)"}[key]
+    L = [_h(title, fmt),
+         table([key, "questions", "cited", "95% CI", "mentioned", "smallest change it can see"]
+               + (["inferred from the text"] if key == "language" else []),
+               [[r[key] or "not set", r["questions"], "%d/%d %s" % (r["cited"], r["answered"], pct(r["cited_rate"])),
+                 ci_s(head_ci(r)), pct(r["mentioned_rate"]),
+                 pts_s(r["detectable_pp"])]
+                + (["%d of %d" % (r["inferred"], r["questions"])] if key == "language" else []) for r in rows], fmt),
+         ""]
+    L.extend("- " + n for n in SPLIT_NOTES)
+    return L
+
+
 def roles_lines(run, sm, fmt):
     """The report's "How the answers name each brand": per tracked brand, of the answers that name it, how many put
     it on their shortlist, give it as an example, exclude it, or cannot be read either way."""
@@ -3112,6 +3317,12 @@ def render(run, fmt="text"):
         L.extend(headline_lines(sm, name, fmt))
         L.append("Your site was cited somewhere for %d of %d questions." % (
             sm["questions"]["cited_somewhere"], sm["questions"]["asked"]))
+        L.extend(detectable_line(sm))
+        many = [k for k in ("country", "language") if len(sm.get("by_" + k) or []) > 1]
+        if many:
+            L.append("These rates pool %s; read them %s below, where each is reported on its own." % (
+                " and ".join("%d %s" % (len(sm["by_" + k]), "countries" if k == "country" else "languages")
+                             for k in many), " and ".join("by " + k for k in many)))
 
     L.append(_h("By engine", fmt))
     rows = []
@@ -3206,6 +3417,9 @@ def render(run, fmt="text"):
         L.append(table(["type", "cited", "95% CI", "mentioned"],
                        [[t["tier"], "%d/%d %s" % (t["cited"], t["answered"], pct(t["cited_rate"])), ci_s(head_ci(t)),
                          pct(t["mentioned_rate"])] for t in sm["by_tier"]], fmt))
+    if o["answered"]:
+        L.extend(split_lines(sm, "country", fmt))
+        L.extend(split_lines(sm, "language", fmt))
 
     L.extend(search_lines(sm, fmt))
     L.extend(first_search_lines(sm, name, fmt))
@@ -3806,17 +4020,43 @@ def cmd_run(args):
         if not active:
             print("nothing would be measured: export at least one API key")
         else:
-            print("\n".join(resolution_lines(resolution(len(active), len(queries))) + precision_lines(runs)))
+            print("\n".join(resolution_lines(resolution(len(active), len(queries))) + precision_lines(runs)
+                            + plan_detectable_lines(queries, len(active), runs, cfg.country)))
         return 0
     if not active:
         print("error: nothing can be measured — export at least one API key", file=sys.stderr)
         return 3
     run = execute(cfg.brand, cfg.competitors, engines, queries, runs, cfg.country, cfg.prices, max_calls, budget,
-                  args.allow_unpriced, progress=_progress_printer(args.quiet), no_search_pass=no_search)
+                  args.allow_unpriced, progress=_progress_printer(args.quiet), no_search_pass=no_search,
+                  language=cfg.language)
     path = save_run(cfg, run)
     print(_printable(render(run, args.format if args.format in ("text", "md") else "text")))
     print("saved %s" % _shown(path))
     return 0 if run["summary"]["overall"]["answered"] else 3
+
+
+def plan_detectable(queries, engines_n, runs, country):
+    """The plan's smallest detectable change, at a 50% rate (the worst case): overall, and per country when the
+    question file asks from more than one."""
+    by = {}
+    for q in queries:
+        by.setdefault(q.get("country") or country or None, []).append(q)
+    one = lambda n: {"questions": n, "answers": n * engines_n * runs, "questions_pp": detectable_pp(0.5, n),
+                     "answers_pp": detectable_pp(0.5, n * engines_n * runs)}
+    out = dict(one(len(queries)), confidence=0.95, power=0.8, rate=0.5)
+    if len(by) > 1:
+        out["by_country"] = [dict(one(len(qs)), country=c) for c, qs in sorted(by.items(), key=lambda kv: (
+            kv[0] is None, kv[0] or ""))]
+    return out
+
+
+def plan_detectable_lines(queries, engines_n, runs, country):
+    d = plan_detectable(queries, engines_n, runs, country)
+    out = detectable_lines(d["questions"], d["answers"])
+    for c in d.get("by_country") or []:
+        out += detectable_lines(c["questions"], c["answers"], " in %s (%s)" % (c["country"] or "no country",
+                                                                               _n(c["questions"], "question")))
+    return out
 
 
 def no_search_lines(active):
@@ -4076,6 +4316,11 @@ _PLAN = {"type": "object", "required": ["questions", "engines_active", "runs", "
                         "budget_usd": _NUM_OR_NULL,
                         "no_search_calls": {"type": "integer", "description": "of planned_calls, those of the "
                                                                               "no-search pass (web search off)"},
+                        "detectable": {"type": "object", "description": "dry run only: the smallest change in the "
+                                       "cited rate, in points, a diff of two such runs is likely to see at 95% "
+                                       "confidence and 80% power, at a 50% rate (the worst case): questions_pp if "
+                                       "each question's answers move together, answers_pp if every answer were "
+                                       "independent; per country when the questions are asked from several"},
                         "not_measured": {"type": "array", "items": {
                             "type": "object", "required": ["engine", "reason"],
                             "properties": {"engine": {"type": "string"},
@@ -4772,7 +5017,9 @@ class MCPServer(object):
         if args.get("dry_run"):
             if active:
                 lines += ["- " + x for x in resolution_lines(resolution(len(active), len(queries)))
-                          + precision_lines(cfg.runs)]
+                          + precision_lines(cfg.runs)
+                          + plan_detectable_lines(queries, len(active), cfg.runs, cfg.country)]
+                out["plan"]["detectable"] = plan_detectable(queries, len(active), cfg.runs, cfg.country)
             return "\n".join(lines) + "\n", out
         if not active:
             raise ConfigError("\n".join(lines + ["no engine can run"]))
@@ -4784,7 +5031,7 @@ class MCPServer(object):
         try:
             run = execute(cfg.brand, cfg.competitors, engines, queries, cfg.runs, cfg.country, cfg.prices, max_calls,
                           budget, False, progress=self._progress(token, ctx), stop=ctx.stop if ctx else None,
-                          no_search_pass=no_search)
+                          no_search_pass=no_search, language=cfg.language)
         finally:
             self.run_lock.release()
         if ctx is not None and ctx.stop.is_set():

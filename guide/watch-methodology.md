@@ -618,6 +618,59 @@ sarcasm is not seen, and an exclusion or selection cue in a sentence that names 
 since it may be about the other one. The cue words are English and Chinese; in other languages only the list and
 heading rule reads, and the rest is undetermined. Use the counts to find answers worth reading, not as a verdict.
 
+## 11. Country by country, in the local words, and the change a sample can see
+
+### Each country and language on its own
+
+What an engine cites for a buyer in one country says little about the next: the same category asked in the
+words people use there brings up other brands and other sources, and engines tell different markets apart. So
+`watch` reports each country, and each language, on its own, and never folds them into one number.
+
+- **Where a question is asked from.** The question file's optional `country` column (a two-letter code) sets it
+  for that question; otherwise the config's `country` does. The engines that take a location (OpenAI, Claude,
+  Perplexity) are given that question's country. Write each country's questions in the words buyers there use,
+  rather than translating one set.
+- **The language a question is written in.** The question file's optional `language` column (a BCP 47 tag such
+  as `de` or `pt-BR`), else the config's `language`, else read from the question's text: Chinese, Japanese and
+  Korean by their script, English, German, French, Spanish, Portuguese, Italian and Dutch by a handful of common
+  words, and `und` (undetermined) when the text does not say. The language changes nothing that is sent; it is
+  how the report groups the answers, and the report says how many questions had theirs read from the text.
+
+`summary.by_country` and `summary.by_language` give one rate block per country and per language, every answer
+counted as in the table by question type. The report prints them when there is more than one, and the headline
+then says that it pools them. Two runs in which a question was asked from different countries are not paired by
+`watch diff` for that question, and are not pooled.
+
+### The change a sample can see
+
+A run of 20 questions cannot tell a 5-point move from noise, and saying so before the money is spent is part of
+the measurement. For a cited rate p and n per run, the smallest change that a two-sided test at 95% confidence has
+an 80% chance to call is
+
+    (1.96 + 0.84) × sqrt(2 p (1 − p) / n)
+
+in points of the rate. Two values of n bound it. Counting **questions** treats the answers to one question as
+one, which is how `watch diff` tests (section 4); counting **answers** treats every answer as independent, which
+they are not. The real figure lies between the two; pairing narrows it a little, and Holm's correction across
+engines widens it. A value of 100 means no change of any size is likely to be seen.
+
+| questions per run | at a 50% rate | at a 20% rate |
+|---|---|---|
+| 10 | 63 points | 50 |
+| 20 | 44 | 35 |
+| 50 | 28 | 22 |
+| 100 | 20 | 16 |
+
+- `watch run --dry-run` (and the MCP `run` tool's dry run, as `plan.detectable`) prints it at a 50% rate, the
+  worst case, overall and for each country the question file asks from.
+- The report prints it for the headline, with the cited share pulled towards a half as Agresti and Coull do,
+  (cited + 2) / (answered + 4), so that a rate of 0 does not read as one that cannot move. `summary.detectable`
+  holds both bounds, and each row of `by_country` and `by_language` its own.
+
+It answers "how big a change could these runs show", not "did anything change": that is `watch diff`'s verdict.
+Beside it stands the plan's resolution (section 8), the fewest questions that must move the same way for diff to
+call a change at all.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
@@ -631,7 +684,9 @@ heading rule reads, and the rest is undetermined. Use the counts to find answers
   `spans`, `supported_share`, `sources_listed` and `sources_used` on each answer, `supported_share`
   and `sources` on each row of `summary.engines`, and `recorded`; from section 10, `summary.first_search`,
   `summary.ladders`, `ladder` and `step` on each question, `roles` on each row of `summary.engines` and
-  `summary.share_of_voice`, and, after a no-search pass, `memory_samples` and `summary.memory`.
+  `summary.share_of_voice`, and, after a no-search pass, `memory_samples` and `summary.memory`; from section 11,
+  `country` and `language` on each question and the run's `language`, `summary.by_country`, `summary.by_language`
+  and `summary.detectable`.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
   `diff` and `diff_row` definitions in the same schema.
 - Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool

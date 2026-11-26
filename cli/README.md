@@ -403,7 +403,8 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 |---|---|
 | `brand.domains` / `url_prefixes` | What counts as yours. Subdomains count; a prefix covers a store or profile on someone else's site |
 | `brand.aliases` | Other names the answer may use. Chinese, Japanese and Korean names match anywhere; all others match whole words |
-| `country` | Two-letter code passed to the engines that accept a location: OpenAI, Claude and Perplexity apply it; Gemini and OpenRouter ignore it |
+| `country` | Two-letter code passed to the engines that accept a location: OpenAI, Claude and Perplexity apply it; Gemini and OpenRouter ignore it. A question's own `country` column wins over it |
+| `language` | The language the questions are written in (`en`, `de`, `pt-BR`…), for the report's split by language; it changes nothing that is sent. Default: each question's `language` column, else read from its text |
 | `runs` | Asks per question per engine. `3` gives steadier rates at three times the cost |
 | `max_calls` | Exact cap on questions asked in one run |
 | `budget_usd` | Spend cap, checked before every call; it can be exceeded by at most one call per engine. With a budget, unpriced engines are left out unless `--allow-unpriced` |
@@ -437,7 +438,8 @@ fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides t
 for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
 a nickname the matcher cannot see. Two more optional columns, `ladder` and `step`, group a condition
 ladder: the same ladder id on a base question (`step` 0) and on the same question with more conditions
-(1, 2…); see "Condition ladders" below.
+(1, 2…); see "Condition ladders" below. And `country` and `language` set, for one question, the country the
+engines are told it is asked from and the language it is written in; see "By country and by language" below.
 
 `target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
 or a path that starts with `/`, which is joined to the first of `brand.domains`
@@ -582,6 +584,18 @@ name it into selected (a list item or heading that starts with it, or a sentence
 such as, for example, 例如, 包括…), excluded (does not support, not suitable, lacks, 不支持, 不适合, 缺少…) and
 undetermined. Rules over English and Chinese words, not a model. JSON: `roles` on `summary.share_of_voice` and
 `summary.engines`. All four: [guide/watch-methodology.md, section 10](../guide/watch-methodology.md#10-beside-the-cited-rate-the-first-search-memory-ladders-and-how-a-brand-is-named).
+
+**By country and by language.** Write each target country's questions in the words buyers there use, and give
+them a `country` (and, if you like, a `language`). The report then adds "By country" and "By language", one row
+each, never merged, and says above the tables that the headline pools them; a question asked from another country
+in a later run is neither paired by `watch diff` nor pooled. JSON: `summary.by_country`, `summary.by_language`.
+
+**The smallest change a run can see.** `watch run --dry-run` prints, at a 50% rate (the worst case), the smallest
+change in the cited rate that a diff of two such runs has an 80% chance to call at 95% confidence, overall and per
+country: one figure counting questions (each question's answers moving together, as diff tests) and one counting
+answers. The report prints the same for its headline, and each "By country" and "By language" row its own. JSON:
+`summary.detectable`, `detectable_pp` on each row; the MCP dry run's `plan.detectable`. Details:
+[guide/watch-methodology.md, section 11](../guide/watch-methodology.md#11-country-by-country-in-the-local-words-and-the-change-a-sample-can-see).
 
 **Over MCP.** `uvx geo-score@1.8.4 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
 clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop

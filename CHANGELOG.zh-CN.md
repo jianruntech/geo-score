@@ -24,6 +24,12 @@
     `roles`。
   运行文件 schema 增加这些可选字段（`schema/watch.v1.json`），配置 schema 增加 `no_search_pass`，MCP `run` 工具增加可选参数
   `no_search_pass`（工具快照已更新）。测试在 `cli/test_geo_watch.py`。
+- **`watch` 按国家、按语言分别出数，并给出样本能看出多大的变化**（guide/watch-methodology.zh-CN.md 第 11 节）。问题文件新增可选的
+  `country` 和 `language` 两列，配置新增 `language`：支持指定地区的引擎收到的是这道题自己的国家；语言可以设定，也可以从题面推断
+  （中日韩看文字；英、德、法、西、葡、意、荷看常用词；其余记为 `und`）。`summary.by_country` 和 `summary.by_language` 每组一个比率块，
+  从不合并；多于一组时报告才打印，并说明标题率合并了几组。一道题换了提问国家，`watch diff` 不配对它，合并时也不合并。`watch run
+  --dry-run`、MCP 的 dry run（`plan.detectable`）和报告（`summary.detectable`，以及每行的 `detectable_pp`）给出两次这样的运行比较时，
+  在 95% 置信度、80% 把握下能判定的最小引用率变化，按问题数和按回答数各一个，上限 100 个点。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

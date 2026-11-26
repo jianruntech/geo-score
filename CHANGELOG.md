@@ -31,6 +31,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
     `roles` on each row of `summary.share_of_voice` and `summary.engines`.
   The run schema gains the optional fields (`schema/watch.v1.json`), the config schema `no_search_pass`, and the MCP
   `run` tool an optional `no_search_pass` argument (the tools snapshot is updated). Tests in `cli/test_geo_watch.py`.
+- **`watch` by country and by language, and the change a sample can see** (guide/watch-methodology.md, section 11).
+  The question file takes optional `country` and `language` columns, and the config a `language` key: a question's
+  own country is what the engines that take a location are told, and its language is set, or read from its text
+  (zh, ja, ko by script; en, de, fr, es, pt, it, nl by common words; `und` otherwise). `summary.by_country` and
+  `summary.by_language` give one rate block each, never merged; the report prints them when there is more than one
+  and says that the headline pools them. A question asked from another country is neither paired by `watch diff`
+  nor pooled. `watch run --dry-run`, the MCP dry run (`plan.detectable`) and the report (`summary.detectable`, and
+  `detectable_pp` on each row) give the smallest change in the cited rate that a diff of two such runs has an 80%
+  chance to call at 95% confidence, counting questions and counting answers, capped at 100 points.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip

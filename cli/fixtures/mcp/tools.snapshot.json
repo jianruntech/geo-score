@@ -308,6 +308,10 @@
          }
         ]
        },
+       "detectable": {
+        "description": "dry run only: the smallest change in the cited rate, in points, a diff of two such runs is likely to see at 95% confidence and 80% power, at a 50% rate (the worst case): questions_pp if each question's answers move together, answers_pp if every answer were independent; per country when the questions are asked from several",
+        "type": "object"
+       },
        "engines_active": {
         "items": {
          "type": "string"

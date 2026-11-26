@@ -341,7 +341,8 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `brand.domains` / `url_prefixes` | 哪些算你的。子域名也算；前缀用来覆盖你在别人网站上的店铺页或主页 |
 | `brand.aliases` | 回答里可能用到的其他名字。中文、日文、韩文名按包含匹配，其他名字按整词匹配 |
-| `country` | 两个字母的国家代码，传给支持指定地区的引擎：OpenAI、Claude、Perplexity 会用它；Gemini 和 OpenRouter 忽略它 |
+| `country` | 两个字母的国家代码，传给支持指定地区的引擎：OpenAI、Claude、Perplexity 会用它；Gemini 和 OpenRouter 忽略它。问题自己的 `country` 列优先 |
+| `language` | 问题用什么语言写（`en`、`de`、`pt-BR`……），用于报告按语言分组；不改变发出去的任何内容。默认用每道题的 `language` 列，没填就从题面推断 |
 | `runs` | 每个问题在每个引擎上问几次。设成 `3` 比率更稳，费用也是三倍 |
 | `max_calls` | 单次运行提问次数的硬上限 |
 | `budget_usd` | 花费上限，每次调用前核对一次；最多超出每个引擎一次调用的费用。设了预算时，没有价格的引擎不跑，除非加 `--allow-unpriced` |
@@ -367,7 +368,8 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 `queries.csv` 有四列：`query_id,query,intent_tier,target_url`。问题要写成买家在 ChatGPT 里会打出来的样子，而且每周保持
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
 品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。另有两列可选的 `ladder` 和 `step`，用来编条件阶梯：
-基础题（`step` 为 0）和逐级加了条件的同一道题（1、2……）填同一个阶梯 id，见下文「条件阶梯」。
+基础题（`step` 为 0）和逐级加了条件的同一道题（1、2……）填同一个阶梯 id，见下文「条件阶梯」。还有 `country` 和 `language`
+两列，为单道题设定引擎收到的提问国家和它所用的语言，见下文「按国家、按语言」。
 
 `target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
 `brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。
@@ -472,6 +474,15 @@ JSON：`summary.ladders`。
 举例（跟在 such as、for example、例如、包括……后面）、排除（does not support、not suitable、lacks、不支持、不适合、缺少……）和未判定。
 是读英文和中文字词的规则，不是模型。JSON：`summary.share_of_voice` 和 `summary.engines` 上的 `roles`。四项的细节见
 [guide/watch-methodology.zh-CN.md 第 10 节](../guide/watch-methodology.zh-CN.md#10-引用率之外第一条搜索模型记忆条件阶梯以及品牌被怎样提到)。
+
+**按国家、按语言。** 每个目标国家的题用当地买家的说法来写，并填上 `country`（愿意的话再填 `language`）。报告会加上「By country」和
+「By language」两张表，每组一行，从不合并，并在表格上方说明标题率合并了几组；后一次运行里某道题换了提问国家，`watch diff`
+不配对它，合并时也不合并。JSON：`summary.by_country`、`summary.by_language`。
+
+**一次运行能看出多大的变化。** `watch run --dry-run` 按 50% 的引用率（最坏情况）给出：两次这样的运行做比较时，在 95% 置信度、80% 把握下
+能判定为变化的最小引用率变化，整体一个，每个国家各一个；一个按问题数算（同一道题的几条回答一起动，和 diff 的检验一致），一个按回答数算。
+报告对标题率给出同样的数，「By country」「By language」每一行各有一个。JSON：`summary.detectable`、每行的 `detectable_pp`；
+MCP dry run 的 `plan.detectable`。细节见[guide/watch-methodology.zh-CN.md 第 11 节](../guide/watch-methodology.zh-CN.md#11-按国家用当地说法分开测以及一份样本能看出多大的变化)。
 
 **通过 MCP 使用。** `uvx geo-score@1.8.4 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
