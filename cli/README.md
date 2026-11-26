@@ -122,10 +122,13 @@ zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
 `crawlers` reads the site's own access logs and counts the requests whose user-agent names a crawler of
-[reference/ai-crawlers.md](../reference/ai-crawlers.md): the ten retrieval crawlers `g.reachable` probes and the
-reference's training crawlers, kept apart, with the retrieval crawlers that fetch a page because a user asked a question
-(`ChatGPT-User`, `Claude-User`, `Perplexity-User`) in a section of their own. It is offline and read-only: it sends no
-request, scores nothing, and writes only the files `-o` and `--json-out` name.
+[reference/ai-crawlers.md](../reference/ai-crawlers.md): the ten retrieval crawlers `g.reachable` probes, the
+reference's training crawlers, and the crawlers its log-only table adds from their operators' documentation
+(`Kimi-SearchBot`, `Amzn-SearchBot`, `MistralAI-User`, `ExaSearchBot`, `DuckAssistBot`, `Meta-WebIndexer` and others),
+marked "log only" and read by no score. Retrieval and training crawlers are kept apart, and those that fetch a page
+because a user asked a question (`ChatGPT-User`, `Claude-User`, `Perplexity-User`, and the log-only ones whose role
+is user) have a section of their own. It is offline and read-only: it sends no request, scores nothing, and writes
+only the files `-o` and `--json-out` name.
 
 | Logs | What is read |
 |---|---|
@@ -159,8 +162,8 @@ visitor by visitor:
 
 | Layer | What counts |
 |---|---|
-| indexed | requests from the retrieval crawlers that build an index (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`, `Googlebot`, `Bingbot`, `Applebot`, `Amazonbot`) |
-| read | live fetches a user's question triggered (`ChatGPT-User`, `Claude-User`, `Perplexity-User`) |
+| indexed | requests from the retrieval crawlers that build an index (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`, `Googlebot`, `Bingbot`, `Applebot`, `Amazonbot`, and the log-only ones whose role is search) |
+| read | live fetches a user's question triggered (`ChatGPT-User`, `Claude-User`, `Perplexity-User`, and the log-only ones whose role is user) |
 | clicked | requests from visitors, not crawlers, that arrived from an AI assistant: `utm_source` is one of its aliases or hosts (`chatgpt.com`, `perplexity`, `doubao`…), or else the Referer host is one of its hosts, exactly (`chatgpt.com`, `www.perplexity.ai`, `kimi.moonshot.cn`, `chat.deepseek.com`…); a `utm_medium` of email, newsletter and the like makes it another referral |
 | converted | with `--conversions FILE` (one path a line, a trailing `*` for a prefix): requests for a conversion page within 24 hours after an AI visit from the same address and user-agent; without it, not measured |
 

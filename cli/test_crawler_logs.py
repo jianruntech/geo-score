@@ -62,9 +62,78 @@ class Reference(unittest.TestCase):
         self.assertEqual([(n.strip("`"), o) for n, o, _ in training], gs.TRAINING_UAS)
         self.assertEqual(sorted(gs.LIVE_FETCHERS), sorted(n.strip("`") for n, _, role in retrieval if "user" in role.lower()))
         self.assertEqual([c["name"] for c in gs.LOG_CRAWLERS],
-                         [n for n, _ in gs.RETRIEVAL_UAS] + [n for n, _ in gs.TRAINING_UAS])
+                         [n for n, _ in gs.RETRIEVAL_UAS] + [n for n, _ in gs.TRAINING_UAS]
+                         + [n for n, _, _ in gs.LOG_ONLY_UAS])
         self.assertEqual(schema("crawlers.v1.json")["properties"]["crawlers"]["items"]["properties"]["name"]["enum"],
                          [c["name"] for c in gs.LOG_CRAWLERS])
+        self.assertEqual(schema("crawlers.v1.json")["properties"]["live_fetches"]["properties"]["recent"]["items"]
+                         ["properties"]["crawler"]["enum"], list(gs.LOG_LIVE))
+
+    def test_the_log_only_table_widens_the_count_and_never_the_score(self):
+        log_only = self.table("## Counted in access logs only")
+        self.assertEqual([(n.strip("`"), o, r) for n, o, r in log_only], gs.LOG_ONLY_UAS)
+        self.assertTrue(len(gs.LOG_ONLY_UAS) >= 10)
+        names = set(n.lower() for n, _, _ in gs.LOG_ONLY_UAS)
+        # none is scored, probed or named in g.robots' evidence: the retrieval table and the not-scored tokens are
+        # what they were, and no log-only name is in either
+        self.assertEqual(len(gs.RETRIEVAL_UAS), 10)
+        self.assertEqual(names & set(n.lower() for n, _ in gs.RETRIEVAL_UAS), set())
+        self.assertEqual(names & set(n.lower() for n in gs.NOT_SCORED_TOKENS), set())
+        self.assertEqual(set(r for _, _, r in gs.LOG_ONLY_UAS), {"search", "user", "training"})
+        scored = [c["name"] for c in gs.LOG_CRAWLERS if c["scored"]]
+        self.assertEqual(scored, [n for n, _ in gs.RETRIEVAL_UAS])
+        for n, _, r in gs.LOG_ONLY_UAS:
+            c = next(x for x in gs.LOG_CRAWLERS if x["name"] == n)
+            self.assertEqual((c["kind"], c["live"]), ("training" if r == "training" else "retrieval", r == "user"), n)
+        self.assertTrue(set(gs.LIVE_FETCHERS) < set(gs.LOG_LIVE))
+        # the reference says how the tables relate, and points every log-only row at its operator's page
+        with io.open(os.path.join(ROOT, "reference", "ai-crawlers.md"), encoding="utf-8") as f:
+            ref = f.read()
+        self.assertIn("**How the tables relate.**", ref)
+        for row in re.findall(r"^\| `[^`]+` \| [^|]+ \| (?:search|user|training) \|[^\n]+", ref, re.M):
+            self.assertRegex(row, r"\(\[[A-Z0-9]+\]\) \|$", row)
+        # g.robots never names one in its evidence: a robots.txt that blocks only log-only crawlers scores as before
+        txt = "User-agent: Kimi-SearchBot\nDisallow: /\n\nUser-agent: ExaSearchBot\nDisallow: /\n"
+        self.assertEqual(gs.robots_tier(txt, len(txt))[0], 3)
+        self.assertNotIn("Kimi", gs.robots_tier(txt, len(txt))[1])
+
+    def test_a_log_only_crawler_is_counted_and_marked(self):
+        lines = ["198.51.100.%d - - [20/Nov/2026:09:0%d:00 +0000] \"GET /guide HTTP/1.1\" 200 10 \"-\" \"%s\"" % (i, i, ua)
+                 for i, ua in enumerate([
+                     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Kimi-SearchBot/1.0; +https://www.kimi.com/policies/kimi-crawlers",
+                     "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Kimi-User/1.0; +https://www.kimi.com/policies/kimi-crawlers",
+                     "meta-webindexer/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)",
+                     "Mozilla/5.0 (compatible; ExaSearchBot-Images/1.0; +https://images.crawler.exa.ai)",
+                     "DuckAssistBot/1.2; (+http://duckduckgo.com/duckassistbot.html)",
+                     "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"], 1)]
+        lines.append('192.0.2.9 - - [20/Nov/2026:09:30:00 +0000] "GET /guide HTTP/1.1" 200 10 "https://www.kimi.com/chat/x" '
+                     '"Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0"')
+        d = tempfile.mkdtemp(prefix="geo-score-logonly-")
+        try:
+            p = os.path.join(d, "a.log")
+            with open(p, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n")
+            r = gs.read_crawler_logs([p])
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+        c = by_name(r)
+        self.assertEqual(dict((n, c[n]["requests"]) for n in c if c[n]["requests"]),
+                         {"Kimi-SearchBot": 1, "Kimi-User": 1, "Meta-WebIndexer": 1, "ExaSearchBot-Images": 1,
+                          "DuckAssistBot": 1, "AI2Bot": 1})
+        self.assertFalse(any(c[n]["scored"] for n in c if c[n]["requests"]))
+        self.assertEqual(c["ExaSearchBot"]["requests"], 0)          # the whole token: -Images is another crawler
+        f = r["funnel"]
+        self.assertIn("Kimi-SearchBot", f["indexed"]["crawlers"])
+        self.assertEqual((f["indexed"]["requests"], f["read"]["requests"]), (3, 2))
+        kimi = next(x for x in f["by_assistant"] if x["assistant"] == "Kimi")
+        self.assertEqual((kimi["indexed"], kimi["read"], kimi["clicked"]), (1, 1, 1))
+        self.assertEqual(f["read_to_click"]["pairs"], 1)
+        text = gs.render_crawlers(r, "text")
+        self.assertIn("Kimi-SearchBot (log only)", text)
+        self.assertIn("AI2Bot (log only)", text)
+        self.assertNotIn("GPTBot (log only)", text)
+        if jsonschema is not None:
+            jsonschema.validate(json.loads(json.dumps(r)), schema("crawlers.v1.json"))
 
     def test_a_user_agent_names_a_crawler_by_its_whole_token(self):
         cases = [("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", "Googlebot"),
@@ -115,7 +184,7 @@ class Fixtures(unittest.TestCase):
                          {"OAI-SearchBot": 3, "ChatGPT-User": 2, "Claude-SearchBot": 1, "Claude-User": 1, "PerplexityBot": 2,
                           "Perplexity-User": 1, "Googlebot": 1, "Bingbot": 1, "Applebot": 1, "Amazonbot": 1, "GPTBot": 4,
                           "ClaudeBot": 1, "CCBot": 1, "cohere-ai": 1, "Bytespider": 1, "Meta-ExternalAgent": 1})
-        self.assertEqual(len(self.r["crawlers"]), 16)       # every crawler of the reference, requests or not
+        self.assertEqual(len(self.r["crawlers"]), len(gs.LOG_CRAWLERS))   # every crawler of the reference, requests or not
         oai = self.c["OAI-SearchBot"]
         self.assertEqual((oai["pages"], oai["first"], oai["last"]), (2, "2026-11-18T09:15:02Z", "2026-11-19T10:00:00Z"))
         self.assertEqual(oai["top_pages"][0], {"path": "/pricing", "requests": 2, "ok": 2, "first": "2026-11-18T09:15:02Z",
@@ -277,7 +346,7 @@ class Funnel(unittest.TestCase):
         self.assertIn("OAI-SearchBot", f["indexed"]["crawlers"])
         self.assertNotIn("ChatGPT-User", f["indexed"]["crawlers"])
         self.assertEqual((f["read"]["crawlers"], f["read"]["requests"], f["read"]["pages"]),
-                         (list(gs.LIVE_FETCHERS), 2, 2))
+                         (list(gs.LOG_LIVE), 2, 2))
         # ChatGPT by Referer, ChatGPT by utm_source even with utm_medium=email, Perplexity, Kimi; not google.com, not
         # a ChatGPT Referer under utm_medium=newsletter, not a subdomain, not the stylesheet the page loaded
         self.assertEqual(f["clicked"]["by_assistant"], {"ChatGPT": 2, "Kimi": 1, "Perplexity": 1})
@@ -289,7 +358,7 @@ class Funnel(unittest.TestCase):
                                           "by_assistant": {"ChatGPT": 1}})
         self.assertEqual(f["read_to_click"], {"pairs": 1, "median_seconds": 180, "window_days": 7})
         self.assertEqual([(x["assistant"], x["indexed"], x["read"], x["clicked"], x["converted"]) for x in f["by_assistant"]],
-                         [("ChatGPT", 2, 1, 2, 1), ("Perplexity", 0, 1, 1, 0), ("Kimi", None, None, 1, 0)])
+                         [("ChatGPT", 2, 1, 2, 1), ("Perplexity", 0, 1, 1, 0), ("Kimi", 0, 0, 1, 0)])
         self.assertEqual(f["referral_rules"], "ai-referral-hosts-2026-11")
 
     def test_without_conversions_the_last_layer_is_not_measured(self):
@@ -311,9 +380,10 @@ class Funnel(unittest.TestCase):
             self.assertEqual(gs.ai_referral(path, ref), want, (path, ref))
         hosts = [h for a in gs.AI_ASSISTANTS for h in a[1]]
         self.assertEqual(len(hosts), len(set(hosts)))
+        names = dict((c["name"], c) for c in gs.LOG_CRAWLERS)
         for name, _, _, idx, live in gs.AI_ASSISTANTS:
-            self.assertTrue(idx is None or idx in gs.RETRIEVAL_OPERATORS, name)
-            self.assertTrue(live is None or live in gs.LIVE_FETCHERS, name)
+            self.assertTrue(idx is None or (idx in names and not names[idx]["live"]), name)
+            self.assertTrue(live is None or live in gs.LOG_LIVE, name)
 
     def test_conversion_paths(self):
         conv = gs.load_conversions(fx("conversions.txt"))

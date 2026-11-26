@@ -1,10 +1,19 @@
 # AI crawler user-agents
 
-The list the `g.robots` check checks `robots.txt` against. Consolidated from vendor documentation;
-this is a reference, not original research. Vendors change these —
+The list the `g.robots` check checks `robots.txt` against, and the list `geo-score crawlers` counts in access logs.
+Consolidated from vendor documentation; this is a reference, not original research.
+
+**How the tables relate.** The [retrieval table](#retrieval-crawlers--allow-these-to-be-cited) is the only one a score
+reads: `g.robots` scores robots.txt against its ten crawlers and `g.reachable` probes them (`RETRIEVAL_UAS` in
+`cli/geo_score.py`, held to the table by a test). The [training](#training-crawlers--not-scored) and
+[opt-out](#opt-out-tokens--not-scored) tables are never scored; `g.robots` names them in its evidence when robots.txt
+disallows one. The [log-only table](#counted-in-access-logs-only--not-scored) is read only by `geo-score crawlers`:
+no check scores, names or probes its crawlers. `crawlers` counts the retrieval, training and log-only tables
+together. A crawler moves into the retrieval table only through a rubric change ([governance](../rubric/governance.md)),
+since that changes what the score measures. Vendors change these —
 [open an issue](https://github.com/jianruntech/geo-score/issues) if one is stale.
 
-**Last verified:** 2026-11-07 for Anthropic's article ([A1]); 2026-10-04 for the other training crawlers, the
+**Last verified:** 2026-11-27 for the log-only table; 2026-11-07 for Anthropic's article ([A1]); 2026-10-04 for the other training crawlers, the
 opt-out tokens and Google's controls (each source and its date are under [Sources](#sources)); 2026-09-28 for the
 retrieval table.
 
@@ -61,12 +70,12 @@ no name from the two tables below may appear there.
 Amazon's crawler page now also documents `Amzn-SearchBot` (search, including Alexa) and
 `Amzn-User` (fetches on a user's behalf), and says `Amazonbot`'s crawl may be used to train
 Amazon's models. The table keeps `Amazonbot` as a retrieval crawler until that classification
-is reviewed.
+is reviewed; the other two are in the [log-only table](#counted-in-access-logs-only--not-scored).
 
 Meta's crawler page documents two agents this table does not list ([MT]): `Meta-WebIndexer`,
 which crawls to improve Meta AI's search results and which, Meta says, helps Meta AI cite and link
 a site's content, and `Meta-ExternalFetcher`, which fetches links at a user's request and may
-bypass robots.txt. Neither is checked or probed.
+bypass robots.txt. Neither is checked or probed; both are in the log-only table.
 
 **The probes are unverified.** `g.reachable` sends each vendor's documented user-agent
 string from the auditor's own address, not from the vendor's published IP ranges. For
@@ -100,6 +109,39 @@ whether it is an opt-out token or sends requests of its own: no data.
 | `Applebot-Extended` | Apple | Whether content Applebot crawls may train Apple's foundation models (Apple Intelligence, Services, Developer Tools). It does not crawl, pages that disallow it can still appear in search results, and its rules are not used in ranking ([AP]). **It does not control Apple's AI answers:** Siri and Search answers that draw on Applebot's crawl are opted out of with `nosnippet` ([AP]) |
 | `anthropic-ai` | Anthropic | Not in Anthropic's current crawler article, which names three agents: `ClaudeBot`, `Claude-User`, `Claude-SearchBot` ([A1]). What it controls today: no data |
 
+## Counted in access logs only — not scored
+
+Crawlers their operators document that `geo-score crawlers` counts in a site's own access logs, and nothing
+else reads: `g.robots` does not score them and does not name them in its evidence, and `g.reachable` does not
+probe them, so adding one here never moves a score. `LOG_ONLY_UAS` in `cli/geo_score.py` is this table, and a
+test holds the two equal and keeps every name here out of the retrieval table. Role: `search` builds an index,
+`user` fetches live at a user's request (the funnel's read layer), `training` collects training data. A crawler
+goes in only when its operator documents it; one known only from third-party lists stays out.
+
+| User-agent | Operator | Role | What the operator documents |
+|---|---|---|---|
+| `Kimi-SearchBot` | Moonshot AI | search | Builds the index behind Kimi search; disallowing it keeps the site out of Kimi's search results ([KM]) |
+| `Kimi-User` | Moonshot AI | user | Fetches pages on a user's request; Moonshot says robots.txt rules may not directly apply ([KM]) |
+| `KimiBot` | Moonshot AI | training | Collects content for model training; disallowing it says the content should not be used for training ([KM]) |
+| `Amzn-SearchBot` | Amazon | search | Crawls for Amazon's search experiences, Alexa included; not for generative AI model training ([AZ]) |
+| `Amzn-User` | Amazon | user | Fetches live content for a user's request, as when Alexa needs current information; may not follow all robots.txt directives ([AZ]) |
+| `MistralAI-Index` | Mistral AI | search | Indexes content for Mistral's products; not used for training ([MS]) |
+| `MistralAI-User` | Mistral AI | user | Fetches pages when a user's request needs them ([MS]) |
+| `MistralAI-Training` | Mistral AI | training | Collects content for model training ([MS]) |
+| `ExaSearchBot` | Exa | search | Builds Exa's search index; follows robots.txt ([EX]) |
+| `ExaSearchBot-Images` | Exa | search | Indexes images for Exa's search; falls back to ExaSearchBot's robots.txt rules ([EX]) |
+| `ExaUser` | Exa | user | Fetches pages at a user's request; Exa says robots.txt rules may not apply ([EX]) |
+| `DuckAssistBot` | DuckDuckGo | user | Fetches pages in real time for DuckDuckGo's AI-assisted answers; not used to train AI models. DuckDuckGo does not say whether a user's question triggers each fetch ([DD]) |
+| `Meta-WebIndexer` | Meta | search | Crawls to improve Meta AI's search results, and helps Meta AI cite and link a site's content ([MT]) |
+| `Meta-ExternalFetcher` | Meta | user | Fetches links at a user's request and may bypass robots.txt ([MT]) |
+| `AI2Bot` | Allen Institute for AI | training | Collects web content used to train open language models ([AI2]) |
+
+Meta's crawlers send their tokens in lower case (`meta-webindexer/1.1`), and every token here is matched
+whatever its case. `ExaSearchBot` and `ExaSearchBot-Images` are told apart by the whole token. Moonshot AI
+publishes one address list that is the same for its three crawlers, so `--verify-ips` can confirm a request is
+Moonshot's but not which crawler sent it; Exa publishes no address ranges and signs its requests instead, which
+the command does not check.
+
 ## Google's AI features: which control does what
 
 Google documents a separate control for each part. `Google-Extended` is not the control for appearing in AI
@@ -131,6 +173,9 @@ defined in [`rubric/v1.1.md`](../rubric/v1.1.md) — read the tiers there, not h
 - **`g.reachable`** — whether all 10 actually return 200 with the same main content a
   browser gets. Three tiers, counted out of 10.
 
+The [log-only table](#counted-in-access-logs-only--not-scored) is read by neither check, nor by any other: it only
+widens what `geo-score crawlers` counts in access logs.
+
 One thing worth stating because it is counter-intuitive: **blocking every training crawler and
 every opt-out token costs nothing in the score.** Only the retrieval crawlers affect either check,
 and the rubric scores a site that allows retrieval while refusing training at full marks. That is
@@ -156,6 +201,12 @@ gives one.
   crawlers only: browsers Anthropic hosts to complete tasks for users identify as `Claude-Agent` and are described in
   a separate article it links, not read for this list.
 - **[CC]** Common Crawl, [CCBot](https://commoncrawl.org/ccbot) (undated).
+- **[KM]** Moonshot AI, [Kimi crawlers](https://www.kimi.com/policies/kimi-crawlers) (undated; read 2026-11-27).
+- **[AZ]** Amazon, [Amazonbot](https://developer.amazon.com/amazonbot) (last modified 2026-10-26; read 2026-11-27).
+- **[MS]** Mistral AI, [Robots](https://docs.mistral.ai/robots) (undated; read 2026-11-27).
+- **[EX]** Exa, [ExaSearchBot](https://crawler.exa.ai/) (last updated 2026-11-13), [ExaSearchBot-Images](https://images.crawler.exa.ai/) (last updated 2026-11-13) and [ExaUser](https://exauser.crawler.exa.ai/) (last updated 2026-11-02); read 2026-11-27.
+- **[DD]** DuckDuckGo, [DuckAssistBot](https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot) (undated; read 2026-11-27).
+- **[AI2]** Allen Institute for AI, [Ai2 crawler](https://allenai.org/crawler) (undated; read 2026-11-27).
 - **[MT]** Meta, [Meta Web Crawlers](https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers) (undated; the old address, `https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/`, redirects there).
 
 [GX]: https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers
@@ -166,4 +217,10 @@ gives one.
 [O1]: https://developers.openai.com/api/docs/bots
 [A1]: https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler
 [CC]: https://commoncrawl.org/ccbot
+[KM]: https://www.kimi.com/policies/kimi-crawlers
+[AZ]: https://developer.amazon.com/amazonbot
+[MS]: https://docs.mistral.ai/robots
+[EX]: https://crawler.exa.ai/
+[DD]: https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot
+[AI2]: https://allenai.org/crawler
 [MT]: https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers

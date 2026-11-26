@@ -62,6 +62,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `training`); a date with no time reads as midnight UTC, and JSON log records with the usual field names read as
   they are. `cli/test_crawler_logs.py` (`Funnel`), with new fixtures `funnel.log`, `conversions.txt` and
   `import-records.jsonl`.
+- **`geo-score crawlers` counts more AI crawlers, in logs only.** `reference/ai-crawlers.md` gains a fourth table,
+  "Counted in access logs only — not scored", and a paragraph on how its tables relate: 15 crawlers their operators
+  document (`Kimi-SearchBot`, `Kimi-User`, `KimiBot`, `Amzn-SearchBot`, `Amzn-User`, `MistralAI-Index`,
+  `MistralAI-User`, `MistralAI-Training`, `ExaSearchBot`, `ExaSearchBot-Images`, `ExaUser`, `DuckAssistBot`,
+  `Meta-WebIndexer`, `Meta-ExternalFetcher`, `AI2Bot`), each with its role and its operator's page; tokens known only
+  from third-party lists stay out. Only `crawlers` reads the table (`LOG_ONLY_UAS`): `g.robots`, `g.reachable` and
+  `RETRIEVAL_UAS` are unchanged, so no score moves. Each crawler row gains `scored`, the text views mark these
+  crawlers "log only", their search and user roles join the funnel's indexed and read layers, and Kimi's row of the
+  funnel now has its own crawlers.
 - **`guide/mcp.md` (+ zh): Trae, Kimi Code CLI, OpenClaw and Hermes Agent**, each from its own documentation, read
   on 2026-11-26: where the config lives, its shape, how keys reach the server, and the tool timeout a long `run`
   needs (Trae reads it from `env`, Kimi Code CLI from `toolTimeoutMs`, OpenClaw from `requestTimeoutMs`, Hermes from

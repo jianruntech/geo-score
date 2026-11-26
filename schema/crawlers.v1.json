@@ -214,7 +214,7 @@
     },
     "crawlers": {
       "type": "array",
-      "description": "Every crawler of reference/ai-crawlers.md's retrieval and training tables, in the reference's order, requests or not.",
+      "description": "Every crawler of reference/ai-crawlers.md's retrieval, training and log-only tables, in the reference's order, requests or not. The log-only crawlers (since 1.10.0) are counted here and read by no score.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -250,7 +250,22 @@
               "CCBot",
               "cohere-ai",
               "Bytespider",
-              "Meta-ExternalAgent"
+              "Meta-ExternalAgent",
+              "Kimi-SearchBot",
+              "Kimi-User",
+              "KimiBot",
+              "Amzn-SearchBot",
+              "Amzn-User",
+              "MistralAI-Index",
+              "MistralAI-User",
+              "MistralAI-Training",
+              "ExaSearchBot",
+              "ExaSearchBot-Images",
+              "ExaUser",
+              "DuckAssistBot",
+              "Meta-WebIndexer",
+              "Meta-ExternalFetcher",
+              "AI2Bot"
             ]
           },
           "operator": {
@@ -274,6 +289,10 @@
               "training"
             ],
             "description": "Since 1.10.0. What the crawler is for, in the three AI purposes AI-traffic analytics commonly report: search (a retrieval crawler that builds an index), user (a live fetch a user's question triggers) and training. kind and live say the same; this lines totals up with tools that count by purpose."
+          },
+          "scored": {
+            "type": "boolean",
+            "description": "Since 1.10.0. true for the ten retrieval crawlers g.robots and g.reachable score (RETRIEVAL_UAS); false for the training crawlers and for the crawlers reference/ai-crawlers.md counts in logs only."
           },
           "requests": {
             "type": "integer",
@@ -492,8 +511,15 @@
                 "enum": [
                   "ChatGPT-User",
                   "Claude-User",
-                  "Perplexity-User"
-                ]
+                  "Perplexity-User",
+                  "Kimi-User",
+                  "Amzn-User",
+                  "MistralAI-User",
+                  "ExaUser",
+                  "DuckAssistBot",
+                  "Meta-ExternalFetcher"
+                ],
+                "description": "A crawler whose role is a live fetch: the three of the retrieval table and, since 1.10.0, the log-only crawlers whose role is user."
               },
               "path": {
                 "anyOf": [

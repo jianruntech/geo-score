@@ -43,6 +43,12 @@
   按助手分开，再加上同一页面从实时访问到下一次来自同一助手的点击的间隔中位数，以及 AI 访问落地的页面。Referer、查询串、地址和 UA 只读不抄。
   爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读，用常见字段名导出的 JSON 行日志原样可读。
   测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`import-records.jsonl`。
+- **`geo-score crawlers` 认得更多 AI 爬虫，只用于日志统计。** `reference/ai-crawlers.md` 新增第四张表「只用于日志统计，不计分」，并写明几张表的关系：
+  15 个有官方文档的爬虫（`Kimi-SearchBot`、`Kimi-User`、`KimiBot`、`Amzn-SearchBot`、`Amzn-User`、`MistralAI-Index`、`MistralAI-User`、
+  `MistralAI-Training`、`ExaSearchBot`、`ExaSearchBot-Images`、`ExaUser`、`DuckAssistBot`、`Meta-WebIndexer`、`Meta-ExternalFetcher`、`AI2Bot`），
+  每个写明用途和运营方的页面；只在第三方列表里出现的名字不收。只有 `crawlers` 读这张表（`LOG_ONLY_UAS`）：`g.robots`、`g.reachable` 和
+  `RETRIEVAL_UAS` 不变，分数不会动。爬虫行新增 `scored`，文本视图把这些爬虫标为「log only」，用途为 search 和 user 的分别计入漏斗的收录层和被读层，
+  漏斗里 Kimi 那一行也有了自己的爬虫。
 - **`guide/mcp.md`（及中文版）补上 Trae、Kimi Code CLI、OpenClaw 和 Hermes Agent**，每个都按它自己的官方文档（2026-11-26 读）：配置文件在哪、
   格式、Key 怎么传给服务，以及跑长 `run` 需要的工具超时（Trae 从 `env` 读，Kimi Code CLI 用 `toolTimeoutMs`，OpenClaw 用 `requestTimeoutMs`，
   Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。

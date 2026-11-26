@@ -114,8 +114,10 @@ zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
 `crawlers` 读网站自己的访问日志，统计 UA 写着 [reference/ai-crawlers.md](../reference/ai-crawlers.md) 里那些爬虫的请求：
-`g.reachable` 探测的 10 个检索爬虫，加上参考文件里的训练爬虫，两类分开；因为用户提问才去打开页面的检索爬虫（`ChatGPT-User`、`Claude-User`、
-`Perplexity-User`）单独一节。它离线、只读：不发任何请求，不打分，只写 `-o` 和 `--json-out` 指定的文件。
+`g.reachable` 探测的 10 个检索爬虫、参考文件里的训练爬虫，以及「只用于日志统计」那张表按各家官方文档加的爬虫（`Kimi-SearchBot`、`Amzn-SearchBot`、
+`MistralAI-User`、`ExaSearchBot`、`DuckAssistBot`、`Meta-WebIndexer` 等），后者标为「log only」，任何分数都不读。检索爬虫和训练爬虫分开；因为用户提问
+才去打开页面的爬虫（`ChatGPT-User`、`Claude-User`、`Perplexity-User`，以及日志表里用途为 user 的）单独一节。它离线、只读：不发任何请求，不打分，
+只写 `-o` 和 `--json-out` 指定的文件。
 
 | 日志 | 读哪些字段 |
 |---|---|
@@ -144,8 +146,8 @@ Cloudflare、Vercel 的防火墙字段记为拦截或质询）、请求最多的
 
 | 层 | 统计什么 |
 |---|---|
-| 收录 | 建索引的检索爬虫的请求（`OAI-SearchBot`、`Claude-SearchBot`、`PerplexityBot`、`Googlebot`、`Bingbot`、`Applebot`、`Amazonbot`） |
-| 被读 | 用户提问触发的实时访问（`ChatGPT-User`、`Claude-User`、`Perplexity-User`） |
+| 收录 | 建索引的检索爬虫的请求（`OAI-SearchBot`、`Claude-SearchBot`、`PerplexityBot`、`Googlebot`、`Bingbot`、`Applebot`、`Amazonbot`，以及日志表里用途为 search 的） |
+| 被读 | 用户提问触发的实时访问（`ChatGPT-User`、`Claude-User`、`Perplexity-User`，以及日志表里用途为 user 的） |
 | 被点 | 来自 AI 助手的访客请求（不是爬虫）：`utm_source` 是某个助手的别名或主机（`chatgpt.com`、`perplexity`、`doubao`……），否则看 Referer 的主机是否正好是它的主机（`chatgpt.com`、`www.perplexity.ai`、`kimi.moonshot.cn`、`chat.deepseek.com`……）；`utm_medium` 是 email、newsletter 等时算其他引荐 |
 | 成交 | 加 `--conversions FILE`（每行一个路径，结尾 `*` 表示前缀）时：同一地址和 UA 在一次 AI 访问后 24 小时内请求了转化页；不加则未测量 |
 
