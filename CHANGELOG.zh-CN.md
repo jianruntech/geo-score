@@ -47,6 +47,11 @@
   Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。
   客户端文档没写的设置一律不写。新增生成块 `MCP:agents`：一段可直接粘进仓库 `AGENTS.md` 或 `CLAUDE.md` 的说明，做 AI 可见度检查时用 geo-score，
   花钱前先对 `run` 做 dry run 并给出计划；付费工具按服务声明的列出，版本号固定。生成的安装块写明哪些客户端读标准的 `mcpServers` 配置。只改文档。
+- **量表提案草稿：v1.2 降低 `p1.llms-txt` 的权重**（`rubric/proposals/v1.2-llms-txt-weight.md` 及中文版，`rubric/README.md` 有链接）。按
+  `rubric/governance.zh-CN.md` 第 1 步写，写明我们的利益冲突：方案 A 把这项从 5 分降到 2 分（档位 0、1、2），方案 B 改成 1 分的加分项，方案 C 不改权重；
+  腾出的分留在「可理解」支柱内按比例分配。附 2026-11-27 为止的证据（Google 的指南和表态、Ahrefs 约 3.8 万个 llms.txt 的请求数据、一个服务器日志面板、
+  Zyppy 的因素综述、一项相关性研究）和相反方向的证据，以及用 benchmark/checks.csv 做的初步估算（方案 A：324 个站里 201 个分数变动 −4 到 +4 分，18 个换档）。
+  还没开始征求意见；拉取请求开出后至少 30 天。量表 v1.1、打分代码和所有分数都不变。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA
