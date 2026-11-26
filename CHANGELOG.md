@@ -62,6 +62,15 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `training`); a date with no time reads as midnight UTC, as GEOInflow's log import takes it, and records written for
   that import read as they are. `cli/test_crawler_logs.py` (`Funnel`), with new fixtures `funnel.log`,
   `conversions.txt` and `geoinflow-import.jsonl`.
+- **`guide/mcp.md` (+ zh): Trae, Kimi Code CLI, OpenClaw and Hermes Agent**, each from its own documentation, read
+  on 2026-11-26: where the config lives, its shape, how keys reach the server, and the tool timeout a long `run`
+  needs (Trae reads it from `env`, Kimi Code CLI from `toolTimeoutMs`, OpenClaw from `requestTimeoutMs`, Hermes from
+  `timeout`). TRAE CLI 2.0 gets the lines its documentation gives; Doubao MarsCode, now the Trae plugin, documents no
+  MCP support, so the guide says to use the Trae IDE. A setting a client does not document is not written. A new
+  generated block, `MCP:agents`, gives a passage to paste into a repository's `AGENTS.md` or `CLAUDE.md`: use
+  geo-score for AI visibility questions, and dry-run `run` and show the plan before anything is spent; it names the
+  paid tools as the server declares them and the pinned release. The generated install block names the clients
+  that read the standard `mcpServers` config. Documentation only.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip

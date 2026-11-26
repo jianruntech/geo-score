@@ -539,7 +539,7 @@ The buttons and the lines below run geo-score **1.8.4** from PyPI with `uvx`, wh
 claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp
 ```
 
-**Standard config** (no keys in the file) for any client that reads an `mcpServers` file:
+**Standard config** (no keys in the file) for any client that reads an `mcpServers` file (Cursor, Trae, Kimi Code CLI, LM Studio and others):
 
 ```
 {

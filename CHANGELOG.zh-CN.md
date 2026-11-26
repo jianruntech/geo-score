@@ -42,6 +42,11 @@
   按助手分开，再加上同一页面从实时访问到下一次来自同一助手的点击的间隔中位数，以及 AI 访问落地的页面。Referer、查询串、地址和 UA 只读不抄。
   爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读（GEOInflow 的日志导入就接受这种写法），为那个导入准备的记录原样可读。
   测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`geoinflow-import.jsonl`。
+- **`guide/mcp.md`（及中文版）补上 Trae、Kimi Code CLI、OpenClaw 和 Hermes Agent**，每个都按它自己的官方文档（2026-11-26 读）：配置文件在哪、
+  格式、Key 怎么传给服务，以及跑长 `run` 需要的工具超时（Trae 从 `env` 读，Kimi Code CLI 用 `toolTimeoutMs`，OpenClaw 用 `requestTimeoutMs`，
+  Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。
+  客户端文档没写的设置一律不写。新增生成块 `MCP:agents`：一段可直接粘进仓库 `AGENTS.md` 或 `CLAUDE.md` 的说明，做 AI 可见度检查时用 geo-score，
+  花钱前先对 `run` 做 dry run 并给出计划；付费工具按服务声明的列出，版本号固定。生成的安装块写明哪些客户端读标准的 `mcpServers` 配置。只改文档。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

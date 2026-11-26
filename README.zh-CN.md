@@ -479,7 +479,7 @@ npx skills add jianruntech/geo-score --skill geo-watch     # 按名字只装一�
 claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp
 ```
 
-**标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
+**标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端（Cursor、Trae、Kimi Code CLI、LM Studio 等）：
 
 ```
 {
