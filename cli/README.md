@@ -597,6 +597,16 @@ answers. The report prints the same for its headline, and each "By country" and 
 `summary.detectable`, `detectable_pp` on each row; the MCP dry run's `plan.detectable`. Details:
 [guide/watch-methodology.md, section 11](../guide/watch-methodology.md#11-country-by-country-in-the-local-words-and-the-change-a-sample-can-see).
 
+**Engine changes.** An engine can change how it cites for every brand at once. `watch diff` runs its paired test on
+each tracked competitor too, and when your row changed and at least half of them moved the same way it flags the
+row `possible_engine_change` and names them in the notes. It gives each engine's per-answer benchmarks before and
+after (pages cited, tracked brands named and selected, list items per answer) and notes a shift in pages cited, and
+it names the engine events of [reference/engine-events.md](../reference/engine-events.md) dated between the two runs.
+`watch report` adds the benchmarks ("Per answer, per engine") and the events of the 30 days before the run. None of
+this changes a verdict. JSON: `competitor_moves`, `possible_engine_change`, `per_answer` and `events` in the diff;
+`per_answer` on `summary.engines` and `summary.events`. Details:
+[guide/watch-methodology.md, section 12](../guide/watch-methodology.md#12-engine-changes-competitors-that-move-together-and-per-answer-benchmarks).
+
 **Over MCP.** `uvx geo-score@1.8.4 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
 clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop
 app does not share with your shell, and a GUI client does not start it in your project, so pass

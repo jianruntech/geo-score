@@ -1196,6 +1196,10 @@
           }
          ]
         },
+        "possible_engine_change": {
+         "description": "the verdict is change and at least half the tracked competitors moved the same way: the engine may have moved every brand, not only yours",
+         "type": "boolean"
+        },
         "verdict": {
          "type": "string"
         },
@@ -1204,6 +1208,13 @@
          "type": "string"
         }
        },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "events": {
+      "description": "engine change events reported between the two runs (reference/engine-events.md)",
+      "items": {
        "type": "object"
       },
       "type": "array"
@@ -1250,6 +1261,10 @@
           "type": "null"
          }
         ]
+       },
+       "possible_engine_change": {
+        "description": "the verdict is change and at least half the tracked competitors moved the same way: the engine may have moved every brand, not only yours",
+        "type": "boolean"
        },
        "verdict": {
         "type": "string"

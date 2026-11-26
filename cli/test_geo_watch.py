@@ -5019,6 +5019,100 @@ class Detectable(Base):
         self.assertIn("Smallest change a diff of two runs like this is likely to see", gw.render(run))
 
 
+# ── 1.10.0: engine events, competitors that move together, per-answer benchmarks ──
+def with_rivals(run, cited):
+    """run with Pixa and Trailcell tracked, each answer citing them as cited[(query_id, engine)] says (a set of
+    names), and the summary computed again."""
+    run["competitors"] = [r.as_json() for r in rivals()]
+    for s in run["samples"]:
+        names = cited.get((s["query_id"], s["engine"]), set())
+        s["competitors"] = dict((r.name, {"cited": r.name in names, "rank": 2 if r.name in names else None,
+                                          "mentioned": r.name in names}) for r in rivals())
+        s["citations"] = s["citations"] + [{"url": "https://%s/" % r.domains[0], "domain": r.domains[0], "title": ""}
+                                           for r in rivals() if r.name in names]
+    run["summary"] = gw.summarize(run)
+    return run
+
+
+class EngineChanges(Base):
+    def pair(self, rivals_after):
+        qs = ["q%02d" % i for i in range(10)]
+        a = with_rivals(synth("20261005T083000Z", dict(((q, "chatgpt-api"), [True]) for q in qs)),
+                        dict(((q, "chatgpt-api"), {"Pixa", "Trailcell"}) for q in qs))
+        b = with_rivals(synth("20261012T083000Z", dict(((q, "chatgpt-api"), [False]) for q in qs)),
+                        dict(((q, "chatgpt-api"), rivals_after) for q in qs))
+        return a, b
+
+    def test_the_events_file_and_the_cli_list_are_one_list(self):
+        with io.open(os.path.join(HERE, "..", "reference", "engine-events.json"), encoding="utf-8") as f:
+            ref = json.load(f)
+        self.assertEqual(ref["events"], gw.ENGINE_EVENTS)
+        with io.open(os.path.join(HERE, "..", "reference", "engine-events.md"), encoding="utf-8") as f:
+            md = f.read()
+        for ev in gw.ENGINE_EVENTS:
+            self.assertIn("| %s" % ev["date"], md)
+            self.assertTrue(set(ev["providers"]) <= set(gw.PROVIDERS), ev["id"])
+            self.assertIn(ev["status"], ("reported", "observed"))
+        self.assertEqual([e["id"] for e in gw.events_between("2026-10-01", "2026-10-25", ["openai"])],
+                         [e["id"] for e in gw.ENGINE_EVENTS])
+        self.assertEqual(gw.events_between("2026-10-01", "2026-10-25", ["perplexity"]), [])
+        self.assertEqual(gw.events_between("2026-11-01", "2026-11-25", ["openai"]), [])
+
+    def test_competitors_that_moved_with_you_flag_a_possible_engine_change(self):
+        a, b = self.pair(set())
+        d = gw.diff_runs(a, b)
+        row = d["engines"][0]
+        self.assertEqual(row["verdict"], "change")
+        self.assertTrue(row["possible_engine_change"])
+        self.assertEqual([(m["name"], m["delta_pp"], m["moved"]) for m in row["competitor_moves"]],
+                         [("Pixa", -100.0, True), ("Trailcell", -100.0, True)])
+        self.assertTrue(any("possibly an engine change, not one of yours" in n for n in d["notes"]))
+        # the run dates straddle a reported ChatGPT event
+        self.assertEqual([e["id"] for e in d["events"]], ["2026-10-09-chatgpt-fewer-pages-per-answer"])
+        self.assertTrue(any(n.startswith("engine event reported between these runs: 2026-10-09") for n in d["notes"]))
+        self.assertTrue(any("cites fewer pages per answer: 3.0 before, 0.0 after" in n for n in d["notes"]))
+        self.assertEqual(row["per_answer"]["before"]["citations"], 3.0)
+        text = gw.render_diff(d)
+        self.assertIn("possibly an engine change: see the notes", text)
+        self.assertIn("Tracked competitors over the same asks", text)
+        self.assertIn("Per answer, before → after", text)
+        self.assertEqual(validate(json.loads(json.dumps(d)), watch_schema()["$defs"]["diff"], watch_schema()), [])
+
+    def test_a_drop_of_yours_alone_is_not_flagged(self):
+        a, b = self.pair({"Pixa", "Trailcell"})
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["engines"][0]["verdict"], "change")
+        self.assertFalse(d["engines"][0]["possible_engine_change"])
+        self.assertEqual([m["moved"] for m in d["engines"][0]["competitor_moves"]], [False, False])
+        self.assertFalse(any("possibly an engine change" in n for n in d["notes"]))
+
+    def test_competitors_moving_together_is_noted_even_when_you_did_not_move(self):
+        qs = ["q%02d" % i for i in range(10)]
+        a = with_rivals(synth("20261105T083000Z", dict(((q, "chatgpt-api"), [True]) for q in qs)),
+                        dict(((q, "chatgpt-api"), {"Pixa", "Trailcell"}) for q in qs))
+        b = with_rivals(synth("20261112T083000Z", dict(((q, "chatgpt-api"), [True]) for q in qs)), {})
+        d = gw.diff_runs(a, b)
+        self.assertEqual(d["engines"][0]["verdict"], "within noise")
+        self.assertTrue(any("2 of 2 tracked competitors moved down together" in n for n in d["notes"]))
+        self.assertEqual(d["events"], [])
+
+    def test_the_report_gives_the_benchmarks_and_the_recent_events(self):
+        run = with_rivals(synth("20261020T083000Z", {("q1", "chatgpt-api"): [True], ("q2", "chatgpt-api"): [False]}),
+                          {("q1", "chatgpt-api"): {"Pixa"}})
+        run["samples"][0]["answer"] = "1. **Lumo** – solid.\n2. **Pixa** – cheaper.\n- a third option"
+        run["summary"] = gw.summarize(run)
+        pa = run["summary"]["engines"][0]["per_answer"]
+        self.assertEqual(pa, {"answers": 2, "citations": 1.0, "tracked_named": 1.0, "tracked_selected": 1.0,
+                              "list_items": 1.5})
+        self.assertEqual([e["date"] for e in run["summary"]["events"]], ["2026-10-09", "2026-10-20"])
+        text = gw.render(run)
+        self.assertIn("Per answer, per engine (benchmarks of the engine, not of a brand)", text)
+        self.assertIn("Engine changes reported in the 30 days before this run", text)
+        self.assertEqual(validate(json.loads(json.dumps(run)), watch_schema()), [])
+        self.assertEqual(gw.per_answer_block([], []), {"answers": 0, "citations": None, "tracked_named": None,
+                                                      "tracked_selected": None, "list_items": None})
+
+
 class PipedDecoy(unittest.TestCase):
     def test_a_geo_watch_py_in_the_current_directory_is_never_loaded(self):
         d = tempfile.mkdtemp(prefix="geo-score-decoy-")

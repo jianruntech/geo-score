@@ -40,6 +40,17 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   nor pooled. `watch run --dry-run`, the MCP dry run (`plan.detectable`) and the report (`summary.detectable`, and
   `detectable_pp` on each row) give the smallest change in the cited rate that a diff of two such runs has an 80%
   chance to call at 95% confidence, counting questions and counting answers, capped at 100 points.
+- **Engine changes beside the verdict** (guide/watch-methodology.md, section 12). `reference/engine-events.md` and
+  `reference/engine-events.json` (new) list changes in how an engine cites that were reported in public, with the
+  date, the engine and what was observed, marked reported and not verified; `cli/geo_watch.py` carries the same list
+  (`ENGINE_EVENTS`, held equal by a test). `watch diff` runs its exact paired test on each competitor tracked in both
+  runs (`competitor_moves`), flags a row whose verdict is change while at least half of them moved the same way
+  (`possible_engine_change`, named in the notes), notes competitors that moved together when you did not, gives each
+  row's per-answer benchmarks before and after (`per_answer`: pages cited, tracked brands named and selected, list
+  items) with a note when an engine's pages cited per answer shift by a quarter or more with the same model, and
+  names the events dated between the two runs (`events`). `watch report` adds "Per answer, per engine"
+  (`per_answer` on `summary.engines`) and the events of the 30 days before the run (`summary.events`). No verdict,
+  rate or interval changes.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip

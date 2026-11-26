@@ -461,9 +461,31 @@ AI 给一个国家的买家引用什么，对下一个国家说明不了多少�
 它回答的是「这样的运行能看出多大的变化」，不是「有没有变」：后者看 `watch diff` 的结论。和它并列的是计划的分辨力（第 8 节），
 即至少要有几道题朝同一方向变动，比较才可能判定变化。
 
+## 12. 引擎改版、一起变的竞品，以及每条回答的基准
+
+引擎的引用方式可能一夜之间就变：每条回答引的网页变少，品牌官网的分量变轻，某个信源不再被信任。这种变化会让所有品牌的比率一起变，
+比较结果如果把它读成你自己的变化，就会误导。`watch` 提供三种办法把两者分开。它们都不改变任何比率、区间或结论，只并列在结论旁边。
+
+**同一批提问上的竞品。** 对比较的每一行，`watch diff` 对两次运行都跟踪的每个竞品，在同样的配对提问上做同样的精确配对检验（第 4 节），
+不做多重校正：`competitor_moves` 给出每个竞品变了几个点、p 值，以及 p < 0.05 且至少 6 道题时的 `moved`。这一行的结论是 `change`，
+并且至少一半被跟踪的竞品朝同一方向动了，`possible_engine_change` 就为真，备注里写出是哪几个：可能是引擎让所有品牌一起变了，不只是你。
+这一行没变、但至少一半竞品一起变了时，备注会提示引擎可能对所有品牌都变了。只跟踪一个竞品时，一个就算一半；一个都没跟踪就不标。
+检验是逐个竞品、不校正的，竞品多时可能有一个是碰巧动了；把这个标记当成「值得去看」，不是结论。
+
+**每条回答的基准。** `summary.engines` 的每一行都有 `per_answer`：这个引擎的回答平均每条引用几个网页、提到几个被跟踪品牌、
+把几个放进候选名单（第 10 节的「入选」），以及有几个列表项（以项目符号或序号开头的行）。它们描述的是引擎，不是某个品牌。
+`watch diff` 在每一行给出前后两次的值，只算两次都回答了的问题；同一模型下，某个引擎每条回答引用的网页数变动达到原来的四分之一、
+且至少一个网页时，备注会写出来。配置里没列的品牌看不到，列表项也把所有带项目符号的行都算上，不管是不是品牌：这些是逐次跟踪的基准，
+不是「一条回答推荐了几个品牌」的计数。
+
+**公开报道的引擎改版事件。** [reference/engine-events.md](../reference/engine-events.md) 列出公开报道过的引用方式变化，每条写明日期、引擎和观察到的现象，
+不是我们自己观察到的都标为「报道，未核实」；`cli/geo_watch.py` 里有同一份列表。`watch diff` 写出日期落在两次运行之间、
+且两次都测了的服务商的事件（`events`，并各写一条备注）；`watch report` 写出运行前 30 天内的事件（`summary.events`）。
+这些事件大多是在 App 里看到的，这里测的 API 不一定同一天变，也不一定会变。
+
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`；第 11 节的：每个问题上的 `country` 与 `language`、运行的 `language`，以及 `summary.by_country`、`summary.by_language` 与 `summary.detectable`。
-- 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`；第 11 节的：每个问题上的 `country` 与 `language`、运行的 `language`，以及 `summary.by_country`、`summary.by_language` 与 `summary.detectable`；第 12 节的：`summary.engines` 每一行的 `per_answer`，以及 `summary.events`。
+- 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义，包括第 12 节的 `events`、`competitor_moves`、`possible_engine_change` 与 `per_answer`。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

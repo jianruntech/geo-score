@@ -1,0 +1,31 @@
+{
+  "format": "geo-score/engine-events.v1",
+  "updated": "2026-11-27",
+  "description": "Changes in how an AI engine cites, reported in public, that can move every brand's citation rate at once. cli/geo_watch.py holds the same list in ENGINE_EVENTS (a test keeps them equal); watch diff names the events dated between two runs, and watch report the events of the 30 days before a run. Reported figures are as reported and not verified by geo-score; they describe the engines' consumer products unless surface says otherwise, and the APIs geo-score measures may not follow.",
+  "events": [
+    {
+      "id": "2026-10-09-chatgpt-fewer-pages-per-answer",
+      "date": "2026-10-09",
+      "date_end": null,
+      "engine": "chatgpt",
+      "providers": ["openai"],
+      "surface": "unspecified",
+      "observed": "Pages cited per answer fell from about 27 to about 20, and the share of citations that point to a brand's own website from about 33% to about 24%.",
+      "status": "reported",
+      "verified": false,
+      "source": "A third-party monitoring dataset of several hundred million answers, presented in public in November 2026."
+    },
+    {
+      "id": "2026-10-late-chatgpt-reddit-citations",
+      "date": "2026-10-20",
+      "date_end": "2026-10-31",
+      "engine": "chatgpt",
+      "providers": ["openai"],
+      "surface": "unspecified",
+      "observed": "Citations of reddit.com fell by about 84% in the second half of October.",
+      "status": "reported",
+      "verified": false,
+      "source": "The same dataset, presented in public in November 2026. The exact date was not given; the range is the second half of October."
+    }
+  ]
+}

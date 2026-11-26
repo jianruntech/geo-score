@@ -484,6 +484,13 @@ JSON：`summary.ladders`。
 报告对标题率给出同样的数，「By country」「By language」每一行各有一个。JSON：`summary.detectable`、每行的 `detectable_pp`；
 MCP dry run 的 `plan.detectable`。细节见[guide/watch-methodology.zh-CN.md 第 11 节](../guide/watch-methodology.zh-CN.md#11-按国家用当地说法分开测以及一份样本能看出多大的变化)。
 
+**引擎改版。** 引擎可能让所有品牌的引用一起变。`watch diff` 对每个被跟踪的竞品也做配对检验：你这一行有变化、且至少一半竞品朝同一方向动了，
+就把这一行标为 `possible_engine_change`，并在备注里写出是哪几个。它还给出每个引擎前后两次的每条回答基准（平均每条回答引用的网页、
+提到和入选的被跟踪品牌、列表项），引用网页数明显变动时写备注，并列出 [reference/engine-events.md](../reference/engine-events.md) 里日期落在两次运行之间的引擎改版事件。
+`watch report` 加上这些基准（「Per answer, per engine」）和运行前 30 天内的事件。这些都不改变结论。JSON：比较输出里的 `competitor_moves`、
+`possible_engine_change`、`per_answer` 和 `events`；`summary.engines` 上的 `per_answer` 和 `summary.events`。细节见
+[guide/watch-methodology.zh-CN.md 第 12 节](../guide/watch-methodology.zh-CN.md#12-引擎改版一起变的竞品以及每条回答的基准)。
+
 **通过 MCP 使用。** `uvx geo-score@1.8.4 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，
 所以请传 `-c /absolute/path/geo-score-watch.json`。各客户端的配置、工具表、Key、超时和排查见

@@ -671,6 +671,37 @@ It answers "how big a change could these runs show", not "did anything change": 
 Beside it stands the plan's resolution (section 8), the fewest questions that must move the same way for diff to
 call a change at all.
 
+## 12. Engine changes, competitors that move together, and per-answer benchmarks
+
+An engine can change how it cites from one day to the next: fewer pages per answer, less weight on brands' own
+sites, a source it stops trusting. Such a change moves every brand's rate at once, and a diff that reads it as
+yours misleads. `watch` gives three ways to tell the two apart. None of them changes a rate, an interval or a
+verdict; they sit beside the verdict.
+
+**Competitors over the same asks.** For each diff row, `watch diff` runs the same exact paired test (section 4) on
+every competitor tracked in both runs, over the same paired asks, unadjusted: `competitor_moves` gives each one's
+change in points, its p, and `moved` when p < 0.05 over at least 6 questions. When the row's verdict is `change` and
+at least half the tracked competitors moved the same way, `possible_engine_change` is true and the notes name them:
+the engine may have moved every brand, not only yours. When the row did not change but at least half the
+competitors moved together, a note says the engine may have changed for every brand. With one tracked competitor,
+that one is half; with none, nothing is flagged. The test is per competitor and unadjusted, so with many
+competitors one may move by chance; read the flag as a prompt to look, not as a finding.
+
+**Per-answer benchmarks.** Each row of `summary.engines` carries `per_answer`: the mean, over that engine's
+answers, of the pages each cites, of the tracked brands it names and puts on its shortlist (section 10's
+`selected`), and of its list items (lines that open with a bullet or a number). They describe the engine, not a
+brand. `watch diff` gives them before and after for each row, over the answers to the questions both runs
+answered, and notes an engine whose pages cited per answer moved by at least a quarter, and by at least one page,
+with the same model. Brands the config does not list are not seen, and list items count every bulleted line,
+brands or not: they are benchmarks to track from run to run, not a count of the brands an answer recommends.
+
+**Reported engine events.** [reference/engine-events.md](../reference/engine-events.md) lists changes in how an engine
+cites that were reported in public, each with a date, an engine and what was observed, marked as reported and not
+verified unless we observed it ourselves; `cli/geo_watch.py` carries the same list. `watch diff` names the events
+dated between the two runs (`events`, and a note each), for the providers both runs measured; `watch report` names
+those of the 30 days before the run (`summary.events`). Most were seen in the consumer apps, and the APIs measured
+here may not change on the same day, or at all.
+
 ## Where the fields are
 
 - Run files: [schema/watch.v1.json](../schema/watch.v1.json), `summary.headline`,
@@ -686,9 +717,10 @@ call a change at all.
   `summary.ladders`, `ladder` and `step` on each question, `roles` on each row of `summary.engines` and
   `summary.share_of_voice`, and, after a no-search pass, `memory_samples` and `summary.memory`; from section 11,
   `country` and `language` on each question and the run's `language`, `summary.by_country`, `summary.by_language`
-  and `summary.detectable`.
+  and `summary.detectable`; from section 12, `per_answer` on each row of `summary.engines` and `summary.events`.
 - Diff output (`watch diff --format json`, or the MCP `diff` tool with `format: json`): the
-  `diff` and `diff_row` definitions in the same schema.
+  `diff` and `diff_row` definitions in the same schema, with section 12's `events`, `competitor_moves`,
+  `possible_engine_change` and `per_answer`.
 - Pooled output (`watch report --since DAYS` or `--runs A..B` with `--format json`, or the MCP `report` tool
   with `since`): the `pooled` definition in the same schema.
 - Commands and flags: [cli/README.md](../cli/README.md).

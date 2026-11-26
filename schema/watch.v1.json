@@ -98,7 +98,9 @@
           "sources": {"$ref": "#/$defs/sources_summary"},
           "consistency": {"$ref": "#/$defs/consistency_summary"},
           "roles": {"$ref": "#/$defs/roles",
-                    "description": "Since 1.10.0. Of this engine's answers that name the brand, how many select it, give it as an example, exclude it, or cannot be read either way."}}}},
+                    "description": "Since 1.10.0. Of this engine's answers that name the brand, how many select it, give it as an example, exclude it, or cannot be read either way."},
+          "per_answer": {"$ref": "#/$defs/per_answer",
+                         "description": "Since 1.10.0. Benchmarks of this engine over its answers, which an engine change moves for every brand."}}}},
         "share_of_voice": {"type": "array", "items": {"$ref": "#/$defs/rate", "properties": {
           "name": {"type": "string"}, "you": {"type": "boolean"},
           "named_first": {"type": "integer", "minimum": 0,
@@ -146,6 +148,8 @@
                         "description": "Since 1.10.0. One rate block per language the questions are written in (a question's language, else the run's, else inferred from its text; und when the text does not say), every answer counted, never merged."},
         "detectable": {"$ref": "#/$defs/detectable",
                        "description": "Since 1.10.0. For the headline rate: the smallest change a diff of two runs like this is likely to see."},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/engine_event"},
+                   "description": "Since 1.10.0. The engine change events of reference/engine-events.md in the 30 days before the run started, for the providers it measured."},
         "notes": {"type": "array", "items": {"type": "string"}}
       }}
   },
@@ -176,7 +180,9 @@
         "gained": {"type": "array", "items": {"type": "object"}},
         "notes": {"type": "array", "items": {"type": "string"}},
         "alpha": {"type": "number", "description": "Threshold on p_adjusted for a change."},
-        "min_questions": {"type": "integer", "description": "Fewer questions answered in both runs than this gives the verdict 'too few questions to tell'."}
+        "min_questions": {"type": "integer", "description": "Fewer questions answered in both runs than this gives the verdict 'too few questions to tell'."},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/engine_event"},
+                   "description": "Since 1.10.0. The engine change events of reference/engine-events.md dated between the two runs' start (both days included; an event over a range counts when the range overlaps), for the providers both runs measured. Each is also named in notes."}
       }},
     "pooled": {"type": "object", "additionalProperties": false,
       "description": "Since 1.6.0. What `watch report --since DAYS` or `watch report --runs A..B` prints with --format json (and the MCP report tool with since): several saved runs counted as one set of answers. Every run pooled asked the same questions (the same questions_hash) as many times each (the same runs, so every run weighs the same) on the same engines with the same providers and models, from the same country, with the same brand domains and URL prefixes as the newest; otherwise the command refuses and names the runs that differ. Not stored in run files.",
@@ -230,7 +236,17 @@
         "verdict": {"enum": ["change", "within noise", "too few questions to tell", "not measured"]},
         "note": {"type": ["string", "null"]},
         "warning": {"type": "string",
-                    "description": "Engine rows only, since 1.6.0. Present when the share of this engine's answers carrying any citation fell from at least 50% to below 5% with the same model, and the later run answered at least 5 questions on this engine. An adapter reads one answer format, so a provider that changed its format reads as an engine that stopped citing. The verdict is left as computed; the same words are in the diff's notes."}
+                    "description": "Engine rows only, since 1.6.0. Present when the share of this engine's answers carrying any citation fell from at least 50% to below 5% with the same model, and the later run answered at least 5 questions on this engine. An adapter reads one answer format, so a provider that changed its format reads as an engine that stopped citing. The verdict is left as computed; the same words are in the diff's notes."},
+        "competitor_moves": {"type": "array",
+          "description": "Since 1.10.0. Each competitor tracked in both runs, over the same paired asks as this row: the change in its cited share and the exact paired test's p, unadjusted. moved: p < alpha, a change, and at least min_questions questions.",
+          "items": {"type": "object", "additionalProperties": false, "required": ["name", "delta_pp", "p_paired", "moved"],
+            "properties": {"name": {"type": "string"}, "delta_pp": {"type": "number"},
+                           "p_paired": {"type": "number", "minimum": 0, "maximum": 1}, "moved": {"type": "boolean"}}}},
+        "possible_engine_change": {"type": "boolean",
+                                   "description": "Since 1.10.0. The row's verdict is change and at least half the tracked competitors moved the same way (competitor_moves): the engine may have moved every brand, not only yours. The verdict is left as computed; the notes say which competitors moved."},
+        "per_answer": {"type": "object", "additionalProperties": false, "required": ["before", "after"],
+                       "description": "Since 1.10.0. The row's per-answer benchmarks in each run, over the answers to the questions both runs answered.",
+                       "properties": {"before": {"$ref": "#/$defs/per_answer"}, "after": {"$ref": "#/$defs/per_answer"}}}
       }},
     "by_question": {"type": "object", "additionalProperties": false,
       "description": "One question's answers, counted. Every number is a count of answers (status ok) over every engine and ask, never a rate.",
@@ -320,6 +336,25 @@
           "items": {"type": "object", "additionalProperties": false, "required": ["query_id", "answers", "jaccard"],
             "properties": {"query_id": {"type": "string"}, "answers": {"type": "integer", "minimum": 2},
                            "jaccard": {"type": "number", "minimum": 0, "maximum": 1}}}}}},
+    "per_answer": {"type": "object", "additionalProperties": false,
+      "required": ["answers", "citations", "tracked_named", "tracked_selected", "list_items"],
+      "description": "Means over answers (status ok), null when there is none: pages cited, tracked brands (yours and the competitors) named and selected (roles), and list items (lines that open with a bullet or a number, brands or not).",
+      "properties": {
+        "answers": {"type": "integer", "minimum": 0},
+        "citations": {"type": ["number", "null"], "minimum": 0},
+        "tracked_named": {"type": ["number", "null"], "minimum": 0},
+        "tracked_selected": {"type": ["number", "null"], "minimum": 0},
+        "list_items": {"type": ["number", "null"], "minimum": 0}}},
+    "engine_event": {"type": "object", "additionalProperties": false,
+      "required": ["id", "date", "date_end", "engine", "observed", "status"],
+      "description": "An entry of reference/engine-events.json: a change in how an engine cites, reported in public. As reported, not verified by geo-score unless status says so.",
+      "properties": {
+        "id": {"type": "string"},
+        "date": {"type": "string", "pattern": "^\\d{4}-\\d\\d-\\d\\d$"},
+        "date_end": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d\\d-\\d\\d$"},
+        "engine": {"type": "string"},
+        "observed": {"type": "string"},
+        "status": {"enum": ["reported", "observed"]}}},
     "split_rate": {"allOf": [{"$ref": "#/$defs/rate"}], "type": "object",
       "required": ["questions", "detectable_pp", "detectable_answers_pp"],
       "properties": {

@@ -30,6 +30,12 @@
   从不合并；多于一组时报告才打印，并说明标题率合并了几组。一道题换了提问国家，`watch diff` 不配对它，合并时也不合并。`watch run
   --dry-run`、MCP 的 dry run（`plan.detectable`）和报告（`summary.detectable`，以及每行的 `detectable_pp`）给出两次这样的运行比较时，
   在 95% 置信度、80% 把握下能判定的最小引用率变化，按问题数和按回答数各一个，上限 100 个点。
+- **结论旁边加上引擎改版的线索**（guide/watch-methodology.zh-CN.md 第 12 节）。新增 `reference/engine-events.md` 和 `reference/engine-events.json`，
+  列出公开报道过的引擎引用方式变化（日期、引擎、现象），标为「报道，未核实」；`cli/geo_watch.py` 里有同一份列表（`ENGINE_EVENTS`，测试保证两者一致）。
+  `watch diff` 对两次都跟踪的每个竞品也做精确配对检验（`competitor_moves`）；某一行结论是 change、且至少一半竞品朝同一方向动了，就标为
+  `possible_engine_change` 并在备注里写出；你没变而竞品一起变时也写备注；每一行给出前后两次的每条回答基准（`per_answer`：引用的网页、
+  提到和入选的被跟踪品牌、列表项），同一模型下引用网页数变动达到四分之一以上时写备注；并列出日期落在两次运行之间的事件（`events`）。
+  `watch report` 增加「Per answer, per engine」（`summary.engines` 上的 `per_answer`）和运行前 30 天内的事件（`summary.events`）。结论、比率和区间都不变。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

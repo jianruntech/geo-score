@@ -192,6 +192,16 @@ POOL_NOTES = [
     "A pooled rate describes the period it covers. It is not a test for a change: compare two runs with watch diff.",
 ]
 
+# printed under "Per answer, per engine"
+PER_ANSWER_NOTES = [
+    "Means over each engine's answers: pages it cites, tracked brands (yours and your competitors) it names and puts "
+    "on its shortlist (selected, as in \"How the answers name each brand\"), and list items (lines that open with a "
+    "bullet or a number). Brands your config does not list are not counted; list items count every bulleted line, "
+    "brands or not.",
+    "Track them from run to run: when an engine starts citing fewer pages or listing fewer options, every brand's "
+    "rate moves with it, and watch diff says so beside its verdict.",
+]
+
 # printed under "By country" and "By language"
 SPLIT_NOTES = [
     "Each row is its own set of questions and is never merged with another: a brand's standing in one country, asked "
@@ -249,6 +259,38 @@ MEMORY_NOTES = [
     "A model's training ends months before its release: this moves when the provider ships a new model, not when your "
     "site changes. Never pooled with the cited rate, and watch diff does not read it.",
 ]
+
+# Changes in how an engine cites, reported in public, that can move every brand's rate at once: reference/engine-events.md,
+# and the same list as reference/engine-events.json (test_geo_watch.py holds the two equal). watch diff names the events
+# dated between two runs, watch report those of the ENGINE_EVENT_DAYS before a run, for the providers they measured.
+ENGINE_EVENT_DAYS = 30
+ENGINE_EVENTS = [
+    {'id': "2026-10-09-chatgpt-fewer-pages-per-answer",
+     'date': "2026-10-09",
+     'date_end': None,
+     'engine': "chatgpt",
+     'providers': ["openai"],
+     'surface': "unspecified",
+     'observed': "Pages cited per answer fell from about 27 to about 20, and the share of citations that point to a brand's own website from about 33% to about 24%.",
+     'status': "reported",
+     'verified': False,
+     'source': "A third-party monitoring dataset of several hundred million answers, presented in public in November 2026."},
+    {'id': "2026-10-late-chatgpt-reddit-citations",
+     'date': "2026-10-20",
+     'date_end': "2026-10-31",
+     'engine': "chatgpt",
+     'providers': ["openai"],
+     'surface': "unspecified",
+     'observed': "Citations of reddit.com fell by about 84% in the second half of October.",
+     'status': "reported",
+     'verified': False,
+     'source': "The same dataset, presented in public in November 2026. The exact date was not given; the range is the second half of October."},
+]
+# A list item, for per_answer.list_items: a line that opens with a bullet or a number and has text after it
+_LIST_ITEM = re.compile(r"^[ \t]*(?:[-*+•·]|\d{1,2}[.)、])[ \t]+\S", re.M)
+# watch diff notes an engine whose pages cited per answer moved by at least this share of what they were, and by at
+# least one page, with the same model
+PER_ANSWER_SHIFT = 0.25
 
 # Swapped out by the tests; nothing else should touch these.
 NOW = lambda: datetime.datetime.now(datetime.timezone.utc)
@@ -2353,6 +2395,15 @@ def memory_block(run, ok_search):
                 searched_anyway=sum(1 for s in ms if isinstance(s, dict) and s.get("searched_anyway")))
 
 
+def recent_events(run):
+    """summary.events: the ENGINE_EVENTS of the ENGINE_EVENT_DAYS before the run started, for the providers it
+    measured."""
+    t = run_time(run.get("run_id") or "") or NOW()
+    lo = (t - datetime.timedelta(days=ENGINE_EVENT_DAYS)).strftime("%Y-%m-%d")
+    return events_between(lo, t.strftime("%Y-%m-%d"), set(e.get("provider") for e in run["engines"]
+                                                          if e.get("status") == "measured"))
+
+
 def summarize(run):
     brand = Entity(run["brand"], you=True)
     rivals = [Entity(c) for c in run.get("competitors") or []]
@@ -2401,7 +2452,7 @@ def summarize(run):
                    searched_without_queries=sum(1 for s in eo if searched_without_queries(s, e.get("provider"))),
                    supported_share=support_block(eo, brand), sources=sources_block(eo, brand),
                    consistency=consistency_block(eo, order), roles=roles_count(roles[id(s)][0] for s in eo),
-                   **firsts(eo, 0))
+                   per_answer=per_answer_block(eo, ents), **firsts(eo, 0))
         engines.append(row)
 
     everything = block(ok, "overall")
@@ -2507,7 +2558,8 @@ def summarize(run):
     extra = {"first_search": first,
              "ladders": ladders_block(run["queries"], per_q, brand, [e["id"] for e in run["engines"]]),
              "by_country": split_rows(run, ok, brand, "country"), "by_language": split_rows(run, ok, brand, "language"),
-             "detectable": detectable(headline["cited"], headline["answered"], headline["n_questions"])}
+             "detectable": detectable(headline["cited"], headline["answered"], headline["n_questions"]),
+             "events": recent_events(run)}
     memory = memory_block(run, ok)
     if memory is not None:
         extra["memory"] = memory
@@ -2536,9 +2588,10 @@ def summary_of(run):
             and "by_question" in sm and "tracked_pages" in sm \
             and "answers_searched_without_queries" in (sm.get("searches") or {}) \
             and all("with_citations" in e and "named_first" in e and "supported_share" in e and "sources" in e
-                    and "consistency" in e and "roles" in e for e in sm.get("engines") or []) \
+                    and "consistency" in e and "roles" in e and "per_answer" in e for e in sm.get("engines") or []) \
             and all("named_first" in v and "roles" in v for v in sm.get("share_of_voice") or []) \
             and "first_search" in sm and "ladders" in sm and "by_country" in sm and "detectable" in sm \
+            and "events" in sm \
             and ("memory" in sm or not isinstance(run.get("memory_samples"), list)):
         return sm
     return summarize(run)
@@ -2564,12 +2617,12 @@ def citations_vanished(eid, sa, sb):
             "(check one answer with `watch ask --engines %s`)" % (eid, was, len(sa), now, len(sb), eid))
 
 
-def _asks(run, common_q, engines):
-    """(query_id, engine) -> whether each answered ask cited the brand, in ask order."""
+def _asks(run, common_q, engines, hit=lambda s: s["cited"]):
+    """(query_id, engine) -> whether each answered ask cited the brand (or what hit reads), in ask order."""
     out = {}
     rows = [s for s in run["samples"] if s["status"] == "ok" and s["engine"] in engines and s["query_id"] in common_q]
     for s in sorted(rows, key=lambda s: s.get("run") or 1):
-        out.setdefault((s["query_id"], s["engine"]), []).append(bool(s["cited"]))
+        out.setdefault((s["query_id"], s["engine"]), []).append(bool(hit(s)))
     return out
 
 
@@ -2772,6 +2825,61 @@ def diff_runs(a, b):
                     cur[0], cur[1] = True, cur[1] or s["quoted_url"]
         return out
 
+    # Did the tracked competitors move with you? Each one's citations over the same paired asks, the same exact test,
+    # unadjusted. When at least half of them moved the same way as a row that changed, that row may describe the engine.
+    names = [c["name"] for c in b.get("competitors") or [] if c.get("name") in
+             set(x.get("name") for x in a.get("competitors") or [])]
+    rival_pairs = {}
+    for n in names:
+        hit = lambda s, n=n: bool(s["competitors"].get(n, {}).get("cited"))
+        xa, xb = _asks(a, common_q, set(common_e), hit), _asks(b, common_q, set(common_e), hit)
+        rival_pairs[n] = dict((u, (xs[:min(len(xs), len(xb[u]))], xb[u][:min(len(xs), len(xb[u]))]))
+                              for u, xs in xa.items() if xb.get(u))
+    ents_a = [Entity(a["brand"], you=True)] + [Entity(c) for c in a.get("competitors") or []]
+    ents_b = [Entity(b["brand"], you=True)] + [Entity(c) for c in b.get("competitors") or []]
+    for r in rows + [overall]:
+        eid = r["engine"]
+        moves = []
+        for n in names:
+            sub = rival_pairs[n] if eid == "all engines" else dict((u, v) for u, v in rival_pairs[n].items() if u[1] == eid)
+            dp, p, nq = _shift(sub)
+            if dp is not None:
+                moves.append({"name": n, "delta_pp": dp, "p_paired": round(p, 4),
+                              "moved": bool(p < ALPHA and dp and nq >= MIN_PAIRED)})
+        r["competitor_moves"] = moves
+        sign = (r.get("delta_pp") or 0) > 0
+        same = [m for m in moves if m["moved"] and (m["delta_pp"] > 0) == sign]
+        r["possible_engine_change"] = bool(r.get("verdict") == "change" and same and 2 * len(same) >= len(moves))
+        if r["possible_engine_change"]:
+            notes.append("%s: %d of %d tracked competitors moved the same way (%s): possibly an engine change, not one "
+                         "of yours" % (eid, len(same), len(moves), ", ".join("%s %+d pts" % (m["name"], round(m["delta_pp"]))
+                                                                            for m in same)))
+        elif r.get("verdict") != "change" and len(moves) >= 2:
+            up = [m for m in moves if m["moved"] and m["delta_pp"] > 0]
+            down = [m for m in moves if m["moved"] and m["delta_pp"] < 0]
+            for grp, word in ((up, "up"), (down, "down")):
+                if 2 * len(grp) >= len(moves):
+                    notes.append("%s: %d of %d tracked competitors moved %s together (%s): the engine may have changed "
+                                 "for every brand" % (eid, len(grp), len(moves), word,
+                                                      ", ".join("%s %+d pts" % (m["name"], round(m["delta_pp"]))
+                                                                for m in grp)))
+        sa = pick(a, eid) if eid != "all engines" else all_a
+        sb = pick(b, eid) if eid != "all engines" else all_b
+        r["per_answer"] = {"before": per_answer_block(sa, ents_a), "after": per_answer_block(sb, ents_b)}
+        pa, pb = r["per_answer"]["before"]["citations"], r["per_answer"]["after"]["citations"]
+        if eid != "all engines" and not r.get("note") and pa is not None and pb is not None and pa and \
+                abs(pb - pa) >= max(1.0, PER_ANSWER_SHIFT * pa):
+            notes.append("%s cites %s pages per answer: %.1f before, %.1f after, with the same model; a change in how "
+                         "the engine cites moves every brand's rate (reference/engine-events.md)" % (
+                             eid, "fewer" if pb < pa else "more", pa, pb))
+    measured = set(e.get("provider") for e in a["engines"] if e["id"] in common_e) & \
+        set(e.get("provider") for e in b["engines"] if e["id"] in common_e)
+    events = events_between((a.get("started_at") or "")[:10], (b.get("started_at") or "")[:10], measured)
+    for ev in events:
+        notes.append("engine event reported between these runs: %s%s, %s: %s (%s; reference/engine-events.md)" % (
+            ev["date"], " to " + ev["date_end"] if ev.get("date_end") else "", ev["engine"], ev["observed"],
+            "reported, not verified" if ev["status"] == "reported" else ev["status"]))
+
     ca, cb = cited_where(a), cited_where(b)
     qtext = dict((q["query_id"], q["query"]) for q in b["queries"])
     lost = [{"query_id": q, "engine": e, "query": qtext.get(q, ""), "was": ca[(q, e)][1]}
@@ -2779,7 +2887,56 @@ def diff_runs(a, b):
     gained = [{"query_id": q, "engine": e, "query": qtext.get(q, ""), "now": cb[(q, e)][1]}
               for (q, e) in sorted(cb) if cb[(q, e)][0] and (q, e) in ca and not ca[(q, e)][0]]
     return {"from": a["run_id"], "to": b["run_id"], "overall": overall, "engines": rows,
-            "lost": lost, "gained": gained, "notes": notes, "alpha": ALPHA, "min_questions": MIN_PAIRED}
+            "lost": lost, "gained": gained, "notes": notes, "alpha": ALPHA, "min_questions": MIN_PAIRED,
+            "events": events}
+
+
+# ── engine changes: events, competitors that move together, per-answer benchmarks ──
+def per_answer_block(rows, entities):
+    """summary.engines[].per_answer: over these answers (status ok), the mean number of pages each cites, of tracked
+    brands (yours and the competitors) each names and puts on its shortlist (roles: selected), and of list items it
+    has. Benchmarks of the engine, not of a brand: when they move for every brand at once, the engine changed."""
+    n = len(rows)
+    if not n:
+        return {"answers": 0, "citations": None, "tracked_named": None, "tracked_selected": None, "list_items": None}
+    named = selected = items = cites = 0
+    for s in rows:
+        text = s.get("answer") or ""
+        roles = mention_roles(text, entities)
+        named += sum(1 for r in roles if r is not None)
+        selected += sum(1 for r in roles if r == "selected")
+        items += len(_LIST_ITEM.findall(text))
+        cites += len(_citation_list(s.get("citations")) or [])
+    mean = lambda k: round(k / float(n), 2)
+    return {"answers": n, "citations": mean(cites), "tracked_named": mean(named), "tracked_selected": mean(selected),
+            "list_items": mean(items)}
+
+
+def events_between(start, end, providers):
+    """The ENGINE_EVENTS dated from start to end (ISO dates, both included), for the providers given; an event over a
+    range counts when the range overlaps."""
+    out = []
+    for ev in ENGINE_EVENTS:
+        lo, hi = ev["date"], ev.get("date_end") or ev["date"]
+        if hi >= start and lo <= end and set(ev["providers"]) & set(providers):
+            out.append({"id": ev["id"], "date": ev["date"], "date_end": ev.get("date_end"), "engine": ev["engine"],
+                        "observed": ev["observed"], "status": ev["status"]})
+    return out
+
+
+def _shift(pairs):
+    """(delta_pp, p, questions) of one brand's citations over paired asks, as _paired tests them, without the
+    interval: the exact paired test, McNemar or the sign-flip test."""
+    by_q = {}
+    for (q, _), (xs, ys) in pairs.items():
+        by_q[q] = by_q.get(q, 0) + sum(ys) - sum(xs)
+    asks = [(x, y) for xs, ys in pairs.values() for x, y in zip(xs, ys)]
+    if not asks:
+        return None, None, 0
+    lost = sum(1 for x, y in asks if x and not y)
+    gained = sum(1 for x, y in asks if y and not x)
+    p = mcnemar_p(gained, lost) if len(asks) == len(by_q) else signflip_p(list(by_q.values()))
+    return round(100.0 * (gained - lost) / len(asks), 1), p, len(by_q)
 
 
 def drops(d):
@@ -3275,6 +3432,30 @@ def memory_lines(run, sm, name, fmt):
     return L
 
 
+def per_answer_lines(run, sm, fmt):
+    """The report's "Per answer, per engine": benchmarks of each engine that a change in the engine moves for every
+    brand, and the engine events reported in the days before the run."""
+    rows = [[e["id"], e["per_answer"]["answers"], "%.1f" % e["per_answer"]["citations"],
+             "%.1f" % e["per_answer"]["tracked_named"], "%.1f" % e["per_answer"]["tracked_selected"],
+             "%.1f" % e["per_answer"]["list_items"]]
+            for e in sm["engines"] if (e.get("per_answer") or {}).get("answers")]
+    L = []
+    if rows:
+        L += [_h("Per answer, per engine (benchmarks of the engine, not of a brand)", fmt),
+              table(["engine", "answers", "pages cited", "tracked brands named", "tracked brands selected",
+                     "list items"], rows, fmt), ""]
+        L.extend("- " + n for n in PER_ANSWER_NOTES)
+    evs = sm.get("events") or []
+    if evs:
+        L += [_h("Engine changes reported in the %d days before this run" % ENGINE_EVENT_DAYS, fmt)]
+        L += ["- %s%s, %s: %s (%s)" % (ev["date"], " to " + ev["date_end"] if ev.get("date_end") else "", ev["engine"],
+                                       ev["observed"], "reported, not verified" if ev["status"] == "reported"
+                                       else ev["status"]) for ev in evs]
+        L.append("- These describe the consumer products unless reference/engine-events.md says otherwise; the APIs "
+                 "measured here may not follow.")
+    return L
+
+
 def headline_lines(sm, name, fmt):
     """The headline rate and the line for questions that name the brand, from a summary or a pooled report."""
     o, h, br = sm["overall"], sm["headline"], sm["branded"]
@@ -3358,6 +3539,7 @@ def render(run, fmt="text"):
     L.extend(support_lines(run, sm, fmt))
     L.extend(sources_lines(run, sm, fmt))
     L.extend(consistency_lines(run, sm, fmt))
+    L.extend(per_answer_lines(run, sm, fmt))
 
     if len(sm["share_of_voice"]) > 1:
         L.append(_h("Share of voice", fmt))
@@ -3523,7 +3705,9 @@ def render_diff(d, fmt="text"):
                      "—" if r["delta_pp"] is None else "%+d pts" % round(r["delta_pp"]),
                      "%+d to %+d" % (round(ci[0]), round(ci[1])) if ci else "—",
                      "—" if p is None else "%.3f" % p, r["verdict"],
-                     r["note"] or ("no citations at all: see the notes" if r.get("warning") else "")])
+                     r["note"] or ("no citations at all: see the notes" if r.get("warning") else
+                                   "possibly an engine change: see the notes" if r.get("possible_engine_change")
+                                   else "")])
     L.append("")
     L.append(table(["", "before", "after", "change", "95% CI", "p (Holm)", "verdict", ""], rows, fmt))
     L.append("")
@@ -3535,6 +3719,23 @@ def render_diff(d, fmt="text"):
                  "number of rows compared (m rows need m x 2/2^n < %.2f; Tarone's screen). Such a row is left out of "
                  "the correction rather than called within noise. Add questions to tell a change from noise."
                  % (d.get("min_questions", MIN_PAIRED), d.get("alpha", ALPHA)))
+    pa = [r for r in d["engines"] if (r.get("per_answer") or {}).get("before", {}).get("answers")
+          and r["per_answer"]["after"].get("answers")]
+    if pa:
+        f = lambda r, k: "%.1f → %.1f" % (r["per_answer"]["before"][k], r["per_answer"]["after"][k])
+        L.append(_h("Per answer, before → after (benchmarks of the engine, not of a brand)", fmt))
+        L.append(table(["engine", "pages cited", "tracked brands named", "list items"],
+                       [[r["engine"], f(r, "citations"), f(r, "tracked_named"), f(r, "list_items")] for r in pa], fmt))
+        L.append("")
+    if any(r.get("competitor_moves") for r in [d["overall"]] + d["engines"]):
+        L.append(_h("Tracked competitors over the same asks", fmt))
+        L.append(table(["", "competitor", "change", "p (exact, unadjusted)", "moved"],
+                       [[r["engine"], m["name"], "%+d pts" % round(m["delta_pp"]), "%.3f" % m["p_paired"],
+                         "yes" if m["moved"] else "no"]
+                        for r in [d["overall"]] + d["engines"] for m in r.get("competitor_moves") or []], fmt))
+        L.append("")
+        L.append("When at least half the tracked competitors moved the same way as a row that changed, the row is "
+                 "flagged as possibly an engine change: the engine moved every brand, not only yours.")
     if d["lost"]:
         L.append(_h("Citations lost (%d)" % len(d["lost"]), fmt))
         L.append(table(["id", "engine", "question", "was citing"],
@@ -4284,11 +4485,17 @@ _ROW = {"type": "object", "properties": {
                           description="95% interval for delta_pp, in percentage points"),
     "p_adjusted": _NUM_OR_NULL,
     "warning": {"type": "string", "description": "present when this engine's answers stopped carrying citations "
-                                                 "with the same model: its API's answer format may have changed"}}}
+                                                 "with the same model: its API's answer format may have changed"},
+    "possible_engine_change": {"type": "boolean", "description": "the verdict is change and at least half the tracked "
+                                                                 "competitors moved the same way: the engine may have "
+                                                                 "moved every brand, not only yours"}}}
 OUT_DIFF = {"type": "object", "description": "Two runs compared (schema/watch.v1.json, $defs/diff).",
             "required": ["from", "to", "overall", "engines"],
             "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "overall": _ROW,
-                           "engines": {"type": "array", "items": _ROW}}}
+                           "engines": {"type": "array", "items": _ROW},
+                           "events": {"type": "array", "description": "engine change events reported between the two "
+                                                                      "runs (reference/engine-events.md)",
+                                      "items": {"type": "object"}}}}
 OUT_RUNS = {"type": "object", "required": ["runs"],
             "properties": {"runs": {"type": "array", "items": {
                 "type": "object", "required": ["run_id"],
