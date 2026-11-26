@@ -4205,7 +4205,7 @@ def cmd_run(args):
         ", + %d with web search off (the no-search pass) = %d" % (offline, planned) if no_search else "",
         max_calls, "" if budget is None else ", budget " + money(budget)))
     if no_search:
-        print("\n".join("  " + x for x in no_search_lines([e for e, _ in active])))
+        print("\n".join("  " + x for x in no_search_lines([e for e, _ in active], offline)))
     for e in engines:
         if status[e["id"]] == "no_key":
             print("  %s: not measured — %s" % (e["id"], key_issue(e)))
@@ -4260,11 +4260,11 @@ def plan_detectable_lines(queries, engines_n, runs, country):
     return out
 
 
-def no_search_lines(active):
+def no_search_lines(active, extra):
     """What a plan with the no-search pass says about it, before anything is spent: the cost first."""
     off = [e["id"] for e in active if no_search_ok(e)]
-    out = ["no-search pass: paid, %s more per ask with web search off (%s), to see whether the model names the "
-           "brand from its training alone" % (_n(len(off), "call"), ", ".join(off) or "no engine")]
+    out = ["no-search pass: paid, %s more: every question again with web search off on %s, to see whether the model "
+           "names the brand from its training alone" % (_n(extra, "call"), ", ".join(off) or "no engine")]
     out += ["%s: not in the no-search pass, %s" % (e["id"], "its Sonar models search on every call"
                                                   if e["provider"] == "perplexity" else "an :online model searches "
                                                   "whatever the request says") for e in active if not no_search_ok(e)]
@@ -5209,7 +5209,7 @@ class MCPServer(object):
             ", + %d with web search off = %d" % (offline, planned) if no_search else "", max_calls,
             "" if budget is None else ", budget " + money(budget))]
         if no_search:
-            lines += ["- " + x for x in no_search_lines([e for e, _ in active])]
+            lines += ["- " + x for x in no_search_lines([e for e, _ in active], offline)]
         lines += ["- %s: not measured (%s)" % (e["id"], status[e["id"]]) for e in engines
                   if status[e["id"]] != "measured"]
         lines += ["- warning: %s" % _cut(w, 200) for w in cfg.warnings]      # a mistyped cap, before anything is spent

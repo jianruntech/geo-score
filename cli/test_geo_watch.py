@@ -4811,7 +4811,7 @@ class NoSearchPass(Base):
             code = gw.main(["run", "-c", cfg.path, "--dry-run"])
         self.assertEqual(code, 0, err.getvalue())
         self.assertIn("6 questions to ask, + 3 with web search off (the no-search pass) = 9", out.getvalue())
-        self.assertIn("no-search pass: paid", out.getvalue())
+        self.assertIn("no-search pass: paid, 3 calls more: every question again with web search off on chatgpt-api", out.getvalue())
         self.assertIn("perplexity-api: not in the no-search pass", out.getvalue())
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
             self.assertEqual(gw.main(["run", "-c", cfg.path, "--max-calls", "7"]), 1)
