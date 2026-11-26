@@ -227,7 +227,8 @@ ROLE_NOTES = [
     "example when that is all it is, and undetermined when no rule fires or one sentence selects it while another "
     "excludes it. The cue words are English and Chinese; in other languages only the list and heading rule reads.",
     "Rules read words, not meaning: a caveat (\"but it lacks an app\") reads as excluded and sarcasm is not seen. "
-    "Counts of answers, never part of the cited rate, and watch diff does not read them.",
+    "Counts of answers, never part of the cited rate, and watch diff does not read them. The rules have not been "
+    "checked against a hand-labelled sample: label one before quoting these counts outside a working report.",
 ]
 # printed under "The first search each answer ran"
 FIRST_SEARCH_NOTES = [

@@ -618,6 +618,12 @@ sarcasm is not seen, and an exclusion or selection cue in a sentence that names 
 since it may be about the other one. The cue words are English and Chinese; in other languages only the list and
 heading rule reads, and the rest is undetermined. Use the counts to find answers worth reading, not as a verdict.
 
+**Before quoting them.** The rules have not been checked against a labelled sample yet, so their accuracy is not
+known. Before these counts are quoted outside a working report (in a client deliverable, a case study or a public
+claim), label a sample of real answers by hand, at least a few dozen per language, without seeing what the rules
+said, and report the share the rules got right for each state beside the counts. Until then, quote the answers
+themselves, not the counts.
+
 ## 11. Country by country, in the local words, and the change a sample can see
 
 ### Each country and language on its own
