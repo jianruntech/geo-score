@@ -695,12 +695,14 @@ answered, and notes an engine whose pages cited per answer moved by at least a q
 with the same model. Brands the config does not list are not seen, and list items count every bulleted line,
 brands or not: they are benchmarks to track from run to run, not a count of the brands an answer recommends.
 
-**Reported engine events.** [reference/engine-events.md](../reference/engine-events.md) lists changes in how an engine
-cites that were reported in public, each with a date, an engine and what was observed, marked as reported and not
-verified unless we observed it ourselves; `cli/geo_watch.py` carries the same list. `watch diff` names the events
-dated between the two runs (`events`, and a note each), for the providers both runs measured; `watch report` names
-those of the 30 days before the run (`summary.events`). Most were seen in the consumer apps, and the APIs measured
-here may not change on the same day, or at all.
+**Engine events.** [reference/engine-events.md](../reference/engine-events.md) lists changes in how an engine cites,
+each with a date, an engine and what was observed, but only those anyone can check again: observed by geo-score
+with a method that can be repeated, or documented by the engine's operator in a public, dated source. Figures
+reported by others that cannot be checked are left out. The list is empty for now; `cli/geo_watch.py` carries the
+same list. `watch diff` names the events dated between the two runs (`events`, and a note each), for the providers
+both runs measured; `watch report` names those of the 30 days before the run (`summary.events`). An event seen in
+an app may not reach the API on the same day, or at all. The two signals above come from the runs themselves and
+do not depend on the list.
 
 ## Where the fields are
 

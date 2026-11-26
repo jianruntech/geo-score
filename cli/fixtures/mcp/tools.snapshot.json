@@ -1213,7 +1213,7 @@
       "type": "array"
      },
      "events": {
-      "description": "engine change events reported between the two runs (reference/engine-events.md)",
+      "description": "engine change events reported between the two runs (reference/engine-events.md: events observed or documented in public only)",
       "items": {
        "type": "object"
       },

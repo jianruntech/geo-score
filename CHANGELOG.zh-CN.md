@@ -31,7 +31,8 @@
   --dry-run`、MCP 的 dry run（`plan.detectable`）和报告（`summary.detectable`，以及每行的 `detectable_pp`）给出两次这样的运行比较时，
   在 95% 置信度、80% 把握下能判定的最小引用率变化，按问题数和按回答数各一个，上限 100 个点。
 - **结论旁边加上引擎改版的线索**（guide/watch-methodology.zh-CN.md 第 12 节）。新增 `reference/engine-events.md` 和 `reference/engine-events.json`，
-  列出公开报道过的引擎引用方式变化（日期、引擎、现象），标为「报道，未核实」；`cli/geo_watch.py` 里有同一份列表（`ENGINE_EVENTS`，测试保证两者一致）。
+  列出引擎引用方式的变化（日期、引擎、现象），只收录我们自己观测到或引擎运营方公开写明、能复核的事件，目前暂无；`cli/geo_watch.py` 里有同一份列表
+  （`ENGINE_EVENTS`，测试保证两者一致）。
   `watch diff` 对两次都跟踪的每个竞品也做精确配对检验（`competitor_moves`）；某一行结论是 change、且至少一半竞品朝同一方向动了，就标为
   `possible_engine_change` 并在备注里写出；你没变而竞品一起变时也写备注；每一行给出前后两次的每条回答基准（`per_answer`：引用的网页、
   提到和入选的被跟踪品牌、列表项），同一模型下引用网页数变动达到四分之一以上时写备注；并列出日期落在两次运行之间的事件（`events`）。

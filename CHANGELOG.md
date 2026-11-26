@@ -41,9 +41,9 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   `detectable_pp` on each row) give the smallest change in the cited rate that a diff of two such runs has an 80%
   chance to call at 95% confidence, counting questions and counting answers, capped at 100 points.
 - **Engine changes beside the verdict** (guide/watch-methodology.md, section 12). `reference/engine-events.md` and
-  `reference/engine-events.json` (new) list changes in how an engine cites that were reported in public, with the
-  date, the engine and what was observed, marked reported and not verified; `cli/geo_watch.py` carries the same list
-  (`ENGINE_EVENTS`, held equal by a test). `watch diff` runs its exact paired test on each competitor tracked in both
+  `reference/engine-events.json` (new) list changes in how an engine cites, with the date, the engine and what was
+  observed, but only those geo-score observed itself or the engine's operator documented in a public, dated source;
+  none is listed yet. `cli/geo_watch.py` carries the same list (`ENGINE_EVENTS`, held equal by a test). `watch diff` runs its exact paired test on each competitor tracked in both
   runs (`competitor_moves`), flags a row whose verdict is change while at least half of them moved the same way
   (`possible_engine_change`, named in the notes), notes competitors that moved together when you did not, gives each
   row's per-answer benchmarks before and after (`per_answer`: pages cited, tracked brands named and selected, list

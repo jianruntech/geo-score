@@ -5034,6 +5034,12 @@ def with_rivals(run, cited):
     return run
 
 
+# an event made up for the tests: the published list is empty until an event is observed or documented
+FAKE_EVENT = {"id": "test-event", "date": "2026-10-09", "date_end": None, "engine": "chatgpt", "providers": ["openai"],
+              "surface": "api", "observed": "a made-up event for the tests", "status": "observed", "verified": True,
+              "source": "https://example.com/test"}
+
+
 class EngineChanges(Base):
     def pair(self, rivals_after):
         qs = ["q%02d" % i for i in range(10)]
@@ -5043,33 +5049,47 @@ class EngineChanges(Base):
                         dict(((q, "chatgpt-api"), rivals_after) for q in qs))
         return a, b
 
-    def test_the_events_file_and_the_cli_list_are_one_list(self):
+    def test_the_events_file_and_the_cli_list_are_one_list_and_hold_only_checkable_events(self):
         with io.open(os.path.join(HERE, "..", "reference", "engine-events.json"), encoding="utf-8") as f:
             ref = json.load(f)
         self.assertEqual(ref["events"], gw.ENGINE_EVENTS)
+        # nothing is listed until geo-score observes an event or its operator documents one
+        self.assertEqual(gw.ENGINE_EVENTS, [])
         with io.open(os.path.join(HERE, "..", "reference", "engine-events.md"), encoding="utf-8") as f:
             md = f.read()
+        self.assertIn("None yet.", md)
         for ev in gw.ENGINE_EVENTS:
-            self.assertIn("| %s" % ev["date"], md)
+            self.assertIn(ev["id"], md)
             self.assertTrue(set(ev["providers"]) <= set(gw.PROVIDERS), ev["id"])
-            self.assertIn(ev["status"], ("reported", "observed"))
-        self.assertEqual([e["id"] for e in gw.events_between("2026-10-01", "2026-10-25", ["openai"])],
-                         [e["id"] for e in gw.ENGINE_EVENTS])
-        self.assertEqual(gw.events_between("2026-10-01", "2026-10-25", ["perplexity"]), [])
-        self.assertEqual(gw.events_between("2026-11-01", "2026-11-25", ["openai"]), [])
+            self.assertIn(ev["status"], gw.EVENT_STATUS)
+            self.assertIn("https://", ev["source"], ev["id"])
+        self.assertEqual(sorted(gw.EVENT_STATUS), sorted(watch_schema()["$defs"]["engine_event"]["properties"]["status"]["enum"]))
+
+    def test_events_are_matched_by_date_and_provider(self):
+        with mock.patch.object(gw, "ENGINE_EVENTS", [FAKE_EVENT, dict(FAKE_EVENT, id="range", date="2026-10-20",
+                                                                      date_end="2026-10-31")]):
+            self.assertEqual([e["id"] for e in gw.events_between("2026-10-01", "2026-10-25", ["openai"])],
+                             ["test-event", "range"])
+            self.assertEqual([e["id"] for e in gw.events_between("2026-10-25", "2026-11-05", ["openai"])], ["range"])
+            self.assertEqual(gw.events_between("2026-10-01", "2026-10-25", ["perplexity"]), [])
+            self.assertEqual(gw.events_between("2026-11-01", "2026-11-25", ["openai"]), [])
+        self.assertEqual(gw.events_between("2026-01-01", "2026-12-31", ["openai"]), [])
 
     def test_competitors_that_moved_with_you_flag_a_possible_engine_change(self):
         a, b = self.pair(set())
-        d = gw.diff_runs(a, b)
+        self.assertEqual(gw.diff_runs(a, b)["events"], [])          # no event listed: the flag stands on the runs alone
+        with mock.patch.object(gw, "ENGINE_EVENTS", [FAKE_EVENT]):
+            d = gw.diff_runs(a, b)
         row = d["engines"][0]
         self.assertEqual(row["verdict"], "change")
         self.assertTrue(row["possible_engine_change"])
         self.assertEqual([(m["name"], m["delta_pp"], m["moved"]) for m in row["competitor_moves"]],
                          [("Pixa", -100.0, True), ("Trailcell", -100.0, True)])
         self.assertTrue(any("possibly an engine change, not one of yours" in n for n in d["notes"]))
-        # the run dates straddle a reported ChatGPT event
-        self.assertEqual([e["id"] for e in d["events"]], ["2026-10-09-chatgpt-fewer-pages-per-answer"])
-        self.assertTrue(any(n.startswith("engine event reported between these runs: 2026-10-09") for n in d["notes"]))
+        # the run dates straddle the (made-up) event
+        self.assertEqual([e["id"] for e in d["events"]], ["test-event"])
+        self.assertTrue(any(n.startswith("engine event between these runs: 2026-10-09, chatgpt: a made-up event for "
+                                         "the tests (observed by geo-score") for n in d["notes"]))
         self.assertTrue(any("cites fewer pages per answer: 3.0 before, 0.0 after" in n for n in d["notes"]))
         self.assertEqual(row["per_answer"]["before"]["citations"], 3.0)
         text = gw.render_diff(d)
@@ -5100,7 +5120,9 @@ class EngineChanges(Base):
         run = with_rivals(synth("20261020T083000Z", {("q1", "chatgpt-api"): [True], ("q2", "chatgpt-api"): [False]}),
                           {("q1", "chatgpt-api"): {"Pixa"}})
         run["samples"][0]["answer"] = "1. **Lumo** – solid.\n2. **Pixa** – cheaper.\n- a third option"
-        run["summary"] = gw.summarize(run)
+        self.assertEqual(gw.summarize(run)["events"], [])
+        with mock.patch.object(gw, "ENGINE_EVENTS", [FAKE_EVENT, dict(FAKE_EVENT, id="later", date="2026-10-20")]):
+            run["summary"] = gw.summarize(run)
         pa = run["summary"]["engines"][0]["per_answer"]
         self.assertEqual(pa, {"answers": 2, "citations": 1.0, "tracked_named": 1.0, "tracked_selected": 1.0,
                               "list_items": 1.5})

@@ -260,32 +260,14 @@ MEMORY_NOTES = [
     "site changes. Never pooled with the cited rate, and watch diff does not read it.",
 ]
 
-# Changes in how an engine cites, reported in public, that can move every brand's rate at once: reference/engine-events.md,
-# and the same list as reference/engine-events.json (test_geo_watch.py holds the two equal). watch diff names the events
-# dated between two runs, watch report those of the ENGINE_EVENT_DAYS before a run, for the providers they measured.
+# Changes in how an engine cites that can move every brand's rate at once: reference/engine-events.md, and the same list
+# as reference/engine-events.json (test_geo_watch.py holds the two equal). Only events geo-score observed itself, or that
+# the engine's operator documented in a public, dated source anyone can re-read, are listed; none is yet. watch diff
+# names the events dated between two runs, watch report those of the ENGINE_EVENT_DAYS before a run, for the providers
+# they measured. An event is named beside a verdict, never read as one.
 ENGINE_EVENT_DAYS = 30
-ENGINE_EVENTS = [
-    {'id': "2026-10-09-chatgpt-fewer-pages-per-answer",
-     'date': "2026-10-09",
-     'date_end': None,
-     'engine': "chatgpt",
-     'providers': ["openai"],
-     'surface': "unspecified",
-     'observed': "Pages cited per answer fell from about 27 to about 20, and the share of citations that point to a brand's own website from about 33% to about 24%.",
-     'status': "reported",
-     'verified': False,
-     'source': "A third-party monitoring dataset of several hundred million answers, presented in public in November 2026."},
-    {'id': "2026-10-late-chatgpt-reddit-citations",
-     'date': "2026-10-20",
-     'date_end': "2026-10-31",
-     'engine': "chatgpt",
-     'providers': ["openai"],
-     'surface': "unspecified",
-     'observed': "Citations of reddit.com fell by about 84% in the second half of October.",
-     'status': "reported",
-     'verified': False,
-     'source': "The same dataset, presented in public in November 2026. The exact date was not given; the range is the second half of October."},
-]
+ENGINE_EVENTS = []
+EVENT_STATUS = {"observed": "observed by geo-score", "documented": "documented by the operator"}
 # A list item, for per_answer.list_items: a line that opens with a bullet or a number and has text after it
 _LIST_ITEM = re.compile(r"^[ \t]*(?:[-*+•·]|\d{1,2}[.)、])[ \t]+\S", re.M)
 # watch diff notes an engine whose pages cited per answer moved by at least this share of what they were, and by at
@@ -2876,9 +2858,9 @@ def diff_runs(a, b):
         set(e.get("provider") for e in b["engines"] if e["id"] in common_e)
     events = events_between((a.get("started_at") or "")[:10], (b.get("started_at") or "")[:10], measured)
     for ev in events:
-        notes.append("engine event reported between these runs: %s%s, %s: %s (%s; reference/engine-events.md)" % (
+        notes.append("engine event between these runs: %s%s, %s: %s (%s; reference/engine-events.md)" % (
             ev["date"], " to " + ev["date_end"] if ev.get("date_end") else "", ev["engine"], ev["observed"],
-            "reported, not verified" if ev["status"] == "reported" else ev["status"]))
+            EVENT_STATUS.get(ev["status"], ev["status"])))
 
     ca, cb = cited_where(a), cited_where(b)
     qtext = dict((q["query_id"], q["query"]) for q in b["queries"])
@@ -3449,10 +3431,9 @@ def per_answer_lines(run, sm, fmt):
     if evs:
         L += [_h("Engine changes reported in the %d days before this run" % ENGINE_EVENT_DAYS, fmt)]
         L += ["- %s%s, %s: %s (%s)" % (ev["date"], " to " + ev["date_end"] if ev.get("date_end") else "", ev["engine"],
-                                       ev["observed"], "reported, not verified" if ev["status"] == "reported"
-                                       else ev["status"]) for ev in evs]
-        L.append("- These describe the consumer products unless reference/engine-events.md says otherwise; the APIs "
-                 "measured here may not follow.")
+                                       ev["observed"], EVENT_STATUS.get(ev["status"], ev["status"])) for ev in evs]
+        L.append("- reference/engine-events.md says where each was seen; the APIs measured here may not change on the "
+                 "same day as an app.")
     return L
 
 
@@ -4494,7 +4475,8 @@ OUT_DIFF = {"type": "object", "description": "Two runs compared (schema/watch.v1
             "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "overall": _ROW,
                            "engines": {"type": "array", "items": _ROW},
                            "events": {"type": "array", "description": "engine change events reported between the two "
-                                                                      "runs (reference/engine-events.md)",
+                                                                      "runs (reference/engine-events.md: events "
+                                                                      "observed or documented in public only)",
                                       "items": {"type": "object"}}}}
 OUT_RUNS = {"type": "object", "required": ["runs"],
             "properties": {"runs": {"type": "array", "items": {
