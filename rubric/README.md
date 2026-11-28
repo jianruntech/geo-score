@@ -48,11 +48,6 @@ Who can propose a change, how long it stays open for comment, independent review
 interest and how the rubric relates to standards bodies: [governance.md](governance.md) ·
 [简体中文](governance.zh-CN.md).
 
-Proposals written up before they open for comment sit in [proposals/](proposals/). Each says its status at the
-top; none changes a score until a new version is released. Open now: a draft for v1.2 that would lower the weight
-of `p1.llms-txt` ([v1.2-llms-txt-weight.md](proposals/v1.2-llms-txt-weight.md) ·
-[简体中文](proposals/v1.2-llms-txt-weight.zh-CN.md)), not yet open for comment.
-
 ## How to score without the skill
 
 The rubric is a plain specification. To score a site by hand:

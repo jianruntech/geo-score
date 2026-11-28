@@ -80,15 +80,6 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   geo-score for AI visibility questions, and dry-run `run` and show the plan before anything is spent; it names the
   paid tools as the server declares them and the pinned release. The generated install block names the clients
   that read the standard `mcpServers` config. Documentation only.
-- **A draft rubric proposal: lower the weight of `p1.llms-txt` in v1.2** (`rubric/proposals/v1.2-llms-txt-weight.md`
-  + zh, linked from `rubric/README.md`). Written as step 1 of `rubric/governance.md`, with our conflict of interest
-  stated: option A takes the check from 5 points to 2 (tiers 0, 1, 2), option B moves it to a 1-point bonus, option C
-  keeps the weights; the freed points stay in the Understandable pillar, shared pro rata. The evidence as of
-  2026-11-27 (Google's guidance and statements, Ahrefs' request data on about 38,000 llms.txt files, a server-log
-  panel, Zyppy's factor review, a correlation study) with what points the other way, and a preliminary estimate from
-  benchmark/checks.csv of what would move (option A: 201 of 324 scores by −4 to +4 points, 18 band changes). Not
-  open for comment yet; at least 30 days once its pull request opens. Rubric v1.1, the scoring code and every score
-  are unchanged.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip
