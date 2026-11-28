@@ -3,7 +3,7 @@ name: geo-baseline
 description: "Set up a fixed set of about 20 buyer questions and measure, once, how ChatGPT, Claude, Gemini and Perplexity answer them through their APIs with the user's own keys: how often the answers cite the user's pages, how often they name the brand, which of the user's URLs they cite, and what they say when they name it, each recorded apart, with 95% intervals. Use when the user wants an AI visibility baseline, a starting point before GEO work, share of voice in AI answers against competitors, or a question set to re-test later under the same conditions. Paid: questions x engines x runs API calls on the user's keys, shown in a dry run and asked only after a yes. Leaves geo/geo-score-watch.json, geo/queries.csv, the run file and geo/baseline-<date>.md in the repository. Measures only."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -22,9 +22,9 @@ what `geo-watch` needs to call a change a change. This is level 3 of geo-score.
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.8.4` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.8.4` and use `geo-score`. Or the MCP server (`status`, `run`, `report`):
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp`, started with
+- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.9.0` and use `geo-score`. Or the MCP server (`status`, `run`, `report`):
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`, started with
   `-c /absolute/path/geo/geo-score-watch.json` after `mcp`.
 - **API keys come from the environment only** (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` or
   `GOOGLE_API_KEY`, `PERPLEXITY_API_KEY`, `OPENROUTER_API_KEY`). Never ask for one in the chat or write one to a file.
@@ -36,7 +36,7 @@ what `geo-watch` needs to call a change a change. This is level 3 of geo-score.
 1. **Write the config** (free):
 
    ```bash
-   uvx geo-score@1.8.4 watch init --dir geo --brand "Acme" --domain acme.com \
+   uvx geo-score@1.9.0 watch init --dir geo --brand "Acme" --domain acme.com \
      --competitor "Rival=rival.com" --competitor "Other=other.com" --country US
    ```
 
@@ -51,7 +51,7 @@ what `geo-watch` needs to call a change a change. This is level 3 of geo-score.
 3. **Check and set the caps** (free):
 
    ```bash
-   uvx geo-score@1.8.4 watch check -c geo/geo-score-watch.json
+   uvx geo-score@1.9.0 watch check -c geo/geo-score-watch.json
    ```
 
    It validates the questions, warns when too many name the brand, and lists which engines have a key and a price.
@@ -60,20 +60,20 @@ what `geo-watch` needs to call a change a change. This is level 3 of geo-score.
 4. **Show the plan** (free, no call):
 
    ```bash
-   uvx geo-score@1.8.4 watch run --dry-run -c geo/geo-score-watch.json
+   uvx geo-score@1.9.0 watch run --dry-run -c geo/geo-score-watch.json
    ```
 
    It prints questions × engines × runs, the caps, the engines that will not run and why, and the fewest questions
    that must move the same way before `watch diff` can call a change. Tell the user the number of paid calls and the
    providers, and wait for a yes.
-5. **Run it** (paid): `uvx geo-score@1.8.4 watch run -c geo/geo-score-watch.json`. The run is saved under
+5. **Run it** (paid): `uvx geo-score@1.9.0 watch run -c geo/geo-score-watch.json`. The run is saved under
    `geo/.geo-score/watch/runs/`.
 6. **Export the reports** (free, read from the saved run):
 
    ```bash
-   uvx geo-score@1.8.4 watch report -c geo/geo-score-watch.json --format md -o geo/baseline-2026-11-22.report.md
-   uvx geo-score@1.8.4 watch report -c geo/geo-score-watch.json --format csv -o geo/baseline-2026-11-22.csv
-   uvx geo-score@1.8.4 watch runs -c geo/geo-score-watch.json
+   uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --format md -o geo/baseline-2026-11-22.report.md
+   uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --format csv -o geo/baseline-2026-11-22.csv
+   uvx geo-score@1.9.0 watch runs -c geo/geo-score-watch.json
    ```
 
 7. **Write `geo/baseline-<date>.md`**, three records kept apart, each figure copied from the run or the report:

@@ -3,7 +3,7 @@ name: ai-crawler-logs
 description: "Read the site's own access logs, offline, and report which AI crawlers actually came: GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, PerplexityBot, Perplexity-User, Googlebot and the rest of the reference list, training crawlers kept apart from retrieval crawlers, with the pages each requested, how often, first and last time, the status codes (4xx, 5xx, refused or challenged), a timeline of live fetches made because a user asked an AI a question, and the sitemap pages no crawler requested. Use when the user asks whether ChatGPT, Claude or Perplexity crawls their site, which pages AI bots fetch, AI bot traffic in server logs, whether a firewall blocks AI crawlers, or whether GPTBot hits are real. Free, no API key, nothing sent anywhere. Leaves geo/crawler-logs-<date>.md and .json in the repository. Measures only."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -24,8 +24,8 @@ given, and sends nothing anywhere.
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.8.4` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.8.4` and use `geo-score`.
+- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.9.0` and use `geo-score`.
 - **Logs it reads:** nginx and Apache combined (and Apache's vhost_combined), Vercel log drain JSON lines,
   Cloudflare Logpush HTTP request JSON lines, and other JSON lines that carry a user agent and a path (nginx's JSON
   `log_format`, Caddy). Plain or gzip; `-` reads standard input. Ask the user where their logs are; do not go looking
@@ -39,7 +39,7 @@ given, and sends nothing anywhere.
 
    ```bash
    mkdir -p geo
-   uvx geo-score@1.8.4 crawlers /path/to/access.log /path/to/access.log.1.gz \
+   uvx geo-score@1.9.0 crawlers /path/to/access.log /path/to/access.log.1.gz \
      --format md -o geo/crawler-logs-2026-11-23.md --json-out geo/crawler-logs-2026-11-23.json
    ```
 

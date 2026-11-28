@@ -3,7 +3,7 @@ name: citation-gaps
 description: "List the buyer questions where AI answers from ChatGPT, Claude, Gemini or Perplexity cite a competitor and not the user's site, which competitor and which pages they cite instead, and the third-party domains the engines lean on most in the category. Use when the user asks why competitors show up in AI answers and they do not, which questions they lose to a competitor in AI search, competitor citation gaps, AI share of voice by question, or which review sites and forums AI cites in their market. Free: reads runs already saved by geo-baseline or geo-watch, with no API call. Leaves geo/citation-gaps-<date>.md in the repository. Measures only: it writes no content briefs or pages."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -24,9 +24,9 @@ It needs at least one saved run with competitors in the config. None yet? Run `g
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.8.4` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.8.4` and use `geo-score`. Or the MCP server's free `report` and `list_runs` tools:
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp`.
+- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.9.0` and use `geo-score`. Or the MCP server's free `report` and `list_runs` tools:
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`.
 - Nothing here calls an engine, so no API key is needed.
 
 ## Steps
@@ -34,10 +34,10 @@ It needs at least one saved run with competitors in the config. None yet? Run `g
 1. **Export the latest run** (free):
 
    ```bash
-   uvx geo-score@1.8.4 watch report -c geo/geo-score-watch.json --format json -o geo/citation-gaps-run.json
+   uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --format json -o geo/citation-gaps-run.json
    ```
 
-   Pass a run id to read another run, and `uvx geo-score@1.8.4 watch runs -c geo/geo-score-watch.json` lists them.
+   Pass a run id to read another run, and `uvx geo-score@1.9.0 watch runs -c geo/geo-score-watch.json` lists them.
 2. **Read four parts of `summary`**:
    - `gaps`: the questions where a competitor is cited and the user is not, in any answer, with the competitors and
      the number of answers;

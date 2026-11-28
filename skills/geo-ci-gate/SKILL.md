@@ -3,7 +3,7 @@ name: geo-ci-gate
 description: "Add a GitHub Actions workflow that scores the user's site with geo-score on every push to main, after each preview deployment, or on a schedule, and fails the build when an AI crawler gate drops to zero, the AI readiness score falls below a floor, or checks lose points against a committed baseline. Use when the user wants to catch deploys that lock AI crawlers out (a robots.txt edit, a firewall rule, a switch to client-side rendering), keep a GEO or AI visibility score from regressing, add an AI readiness check to CI or pull requests, or get a job summary and an artifact with the score. Free: no API key. Leaves .github/workflows/geo-score.yml in the repository. It detects regressions; it does not fix the site."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -29,7 +29,7 @@ changes nothing on the site.
   once the job summary shows the number. One site's score moves within about plus or minus 5 between runs, so a floor
   about 5 below the current score fails on real drops rather than noise.
 - See what the job would decide before committing it, on the same release:
-  `uvx geo-score@1.8.4 https://example.com --fail-under 40 --fail-on-gate` exits 1 when the job would fail, 2 when
+  `uvx geo-score@1.9.0 https://example.com --fail-under 40 --fail-on-gate` exits 1 when the job would fail, 2 when
   the site cannot be scored, 0 otherwise.
 - This skill is free: the Action needs no API key and no secret.
 
@@ -49,7 +49,7 @@ changes nothing on the site.
      score:
        runs-on: ubuntu-24.04
        steps:
-         - uses: jianruntech/geo-score@v1.8.4
+         - uses: jianruntech/geo-score@v1.9.0
            id: geo
            with:
              url: https://example.com
@@ -61,7 +61,7 @@ changes nothing on the site.
            with: {name: geo-score-report, path: geo-score.json}
    ```
 
-   `jianruntech/geo-score@v1.8.4` pins the Action to the release this skill describes, and the other action is pinned
+   `jianruntech/geo-score@v1.9.0` pins the Action to the release this skill describes, and the other action is pinned
    to a full commit SHA with its version in a comment, so the job runs the same code every time.
 2. **Preview deployments** (only when the host posts a GitHub deployment status for each preview): replace the `on:`
    block with `deployment_status:`, add `if: github.event.deployment_status.state == 'success'` under `score:`, and
@@ -75,7 +75,7 @@ changes nothing on the site.
    ```yaml
          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
            with: {persist-credentials: false}
-         - uses: jianruntech/geo-score@v1.8.4
+         - uses: jianruntech/geo-score@v1.9.0
            id: geo
            with:
              url: https://example.com

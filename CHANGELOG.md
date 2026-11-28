@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-11-28
+
 ### Added
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
@@ -1572,7 +1574,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.8.4...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/jianruntech/geo-score/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/jianruntech/geo-score/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/jianruntech/geo-score/compare/v1.8.1...v1.8.2

@@ -3,7 +3,7 @@ name: ai-citation-check
 description: "Ask ChatGPT, Claude, Gemini and Perplexity one buyer question each through their search-enabled APIs, with the user's own API keys, and record whom each answer cites and names: the user's site, competitors, or third-party pages. Use when the user asks whether ChatGPT or Perplexity cites or recommends them, who AI recommends for a question, whether they show up in AI answers, or wants a quick AI citation check before setting up weekly tracking. Paid: one API call per question per engine with a key, billed by the provider; the plan is shown first and nothing is asked without a yes. Leaves geo/citations/<date>-<id>.json and geo/citations/<date>.md in the repository. Measures only: it never rewrites pages."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -25,9 +25,9 @@ One answer per engine is an anecdote. For a rate, a trend or a before-and-after,
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.8.4` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.8.4` and use `geo-score`. Or the MCP server's `ask` tool:
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp`.
+- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.9.0` and use `geo-score`. Or the MCP server's `ask` tool:
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`.
 - **API keys come from the environment only**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (or
   `GOOGLE_API_KEY`), `PERPLEXITY_API_KEY`, `OPENROUTER_API_KEY`. Any subset works. Never ask the user to paste a key
   into the chat, never print one, never write one into a file.
@@ -39,7 +39,7 @@ One answer per engine is an anecdote. For a rate, a trend or a before-and-after,
 1. **Set up the config** (free; skip when `geo/geo-score-watch.json` exists):
 
    ```bash
-   uvx geo-score@1.8.4 watch init --dir geo --brand "Acme" --domain acme.com --competitor "Rival=rival.com"
+   uvx geo-score@1.9.0 watch init --dir geo --brand "Acme" --domain acme.com --competitor "Rival=rival.com"
    ```
 
    It writes `geo/geo-score-watch.json`, with the models pinned, and `geo/queries.csv` with placeholder rows.
@@ -48,8 +48,8 @@ One answer per engine is an anecdote. For a rate, a trend or a before-and-after,
 3. **Show the plan and the cost** (free, no call is made):
 
    ```bash
-   uvx geo-score@1.8.4 watch check -c geo/geo-score-watch.json
-   uvx geo-score@1.8.4 watch run --dry-run -c geo/geo-score-watch.json
+   uvx geo-score@1.9.0 watch check -c geo/geo-score-watch.json
+   uvx geo-score@1.9.0 watch run --dry-run -c geo/geo-score-watch.json
    ```
 
    `watch check` lists which engines have a key and a price; the dry run prints questions × engines = calls. Tell
@@ -58,7 +58,7 @@ One answer per engine is an anecdote. For a rate, a trend or a before-and-after,
 
    ```bash
    mkdir -p geo/citations
-   uvx geo-score@1.8.4 watch ask -c geo/geo-score-watch.json "best invoicing app for freelancers" \
+   uvx geo-score@1.9.0 watch ask -c geo/geo-score-watch.json "best invoicing app for freelancers" \
      --format json > geo/citations/2026-11-22-q01.json
    ```
 

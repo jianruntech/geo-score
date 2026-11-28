@@ -3,7 +3,7 @@ name: geo-readiness-audit
 description: "Score a website 0-100 for AI search readiness (GEO, AEO) against the open AIV rubric v1.1, and list the gaps worth the most points first. Free, no API key. Use when the user asks for a GEO audit, an AI visibility or AI readiness score, whether ChatGPT, Claude, Perplexity or Google AI Overviews can reach, read and cite their site, what to look at first for AI search, or wants the same pages re-scored after a change. Leaves geo/audit-<host>-<date>.md and .json in the repository. It measures only: it never writes fixes, markup or copy."
 license: MIT
 metadata:
-  version: 1.8.4
+  version: 1.9.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -25,10 +25,10 @@ site, not whether they *do*.
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.8.4` runs the release from PyPI and needs only [uv](https://docs.astral.sh/uv/).
-  Without uv: `pipx install geo-score==1.8.4`, then use `geo-score` wherever this file says `uvx geo-score@1.8.4`.
+- The CLI: `uvx geo-score@1.9.0` runs the release from PyPI and needs only [uv](https://docs.astral.sh/uv/).
+  Without uv: `pipx install geo-score==1.9.0`, then use `geo-score` wherever this file says `uvx geo-score@1.9.0`.
 - Or the MCP server, whose `score_site` tool returns the same report:
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.8.4 mcp`.
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`.
 - Ask whose site it is if that is not obvious. Only audit sites the user is authorised to audit.
 
 ## Steps
@@ -37,7 +37,7 @@ site, not whether they *do*.
 
    ```bash
    mkdir -p geo
-   uvx geo-score@1.8.4 https://example.com --json-out geo/audit-example.com-2026-11-22.json
+   uvx geo-score@1.9.0 https://example.com --json-out geo/audit-example.com-2026-11-22.json
    ```
 
    Use the host for `<host>` and today's date for `<date>`. Add `--explain` to print the evidence behind every
@@ -61,7 +61,7 @@ site, not whether they *do*.
 4. **Re-score after a change** on the same pages, so the comparison is like for like:
 
    ```bash
-   uvx geo-score@1.8.4 https://example.com --baseline geo/audit-example.com-2026-11-22.json \
+   uvx geo-score@1.9.0 https://example.com --baseline geo/audit-example.com-2026-11-22.json \
      --json-out geo/audit-example.com-2026-12-06.json
    ```
 
