@@ -4,8 +4,6 @@
 
 ## [Unreleased]
 
-## [1.9.0] — 2026-11-28
-
 ### 新增
 - **`watch` 在引用率之外新增四项测量**（guide/watch-methodology.zh-CN.md 第 10 节）。每一项单独报告，从不并进引用率、标题率、合并或
   `watch diff`；旧版本保存的运行出报告时也会重新算出这些项；「未测量」从不当作 0。
@@ -56,6 +54,10 @@
   Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。
   客户端文档没写的设置一律不写。新增生成块 `MCP:agents`：一段可直接粘进仓库 `AGENTS.md` 或 `CLAUDE.md` 的说明，做 AI 可见度检查时用 geo-score，
   花钱前先对 `run` 做 dry run 并给出计划；付费工具按服务声明的列出，版本号固定。生成的安装块写明哪些客户端读标准的 `mcpServers` 配置。只改文档。
+
+## [1.9.0] — 2026-11-28
+
+### 新增
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

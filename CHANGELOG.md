@@ -5,8 +5,6 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
-## [1.9.0] — 2026-11-28
-
 ### Added
 - **Four `watch` measures beside the cited rate** (guide/watch-methodology.md, section 10). Each is reported apart and
   never merged into the cited rate, the headline, pooling or `watch diff`, and each is recomputed for runs saved by
@@ -82,6 +80,10 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
   geo-score for AI visibility questions, and dry-run `run` and show the plan before anything is spent; it names the
   paid tools as the server declares them and the pinned release. The generated install block names the clients
   that read the standard `mcpServers` config. Documentation only.
+
+## [1.9.0] — 2026-11-28
+
+### Added
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip
