@@ -281,6 +281,10 @@
      "max_calls": {
       "minimum": 1,
       "type": "integer"
+     },
+     "no_search_pass": {
+      "description": "Paid: about doubles the calls, within the same caps. Also asks every question with web search off, to see whether the model names the brand from its training alone. Default: the config's no_search_pass (off).",
+      "type": "boolean"
      }
     },
     "type": "object"
@@ -304,6 +308,10 @@
          }
         ]
        },
+       "detectable": {
+        "description": "dry run only: the smallest change in the cited rate, in points, a diff of two such runs is likely to see at 95% confidence and 80% power, at a 50% rate (the worst case): questions_pp if each question's answers move together, answers_pp if every answer were independent; per country when the questions are asked from several",
+        "type": "object"
+       },
        "engines_active": {
         "items": {
          "type": "string"
@@ -311,6 +319,10 @@
         "type": "array"
        },
        "max_calls": {
+        "type": "integer"
+       },
+       "no_search_calls": {
+        "description": "of planned_calls, those of the no-search pass (web search off)",
         "type": "integer"
        },
        "not_measured": {
@@ -1184,6 +1196,10 @@
           }
          ]
         },
+        "possible_engine_change": {
+         "description": "the verdict is change and at least half the tracked competitors moved the same way: the engine may have moved every brand, not only yours",
+         "type": "boolean"
+        },
         "verdict": {
          "type": "string"
         },
@@ -1192,6 +1208,13 @@
          "type": "string"
         }
        },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "events": {
+      "description": "engine change events reported between the two runs (reference/engine-events.md: events observed or documented in public only)",
+      "items": {
        "type": "object"
       },
       "type": "array"
@@ -1238,6 +1261,10 @@
           "type": "null"
          }
         ]
+       },
+       "possible_engine_change": {
+        "description": "the verdict is change and at least half the tracked competitors moved the same way: the engine may have moved every brand, not only yours",
+        "type": "boolean"
        },
        "verdict": {
         "type": "string"

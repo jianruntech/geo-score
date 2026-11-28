@@ -214,7 +214,7 @@
     },
     "crawlers": {
       "type": "array",
-      "description": "Every crawler of reference/ai-crawlers.md's retrieval and training tables, in the reference's order, requests or not.",
+      "description": "Every crawler of reference/ai-crawlers.md's retrieval, training and log-only tables, in the reference's order, requests or not. The log-only crawlers (since 1.10.0) are counted here and read by no score.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -250,7 +250,22 @@
               "CCBot",
               "cohere-ai",
               "Bytespider",
-              "Meta-ExternalAgent"
+              "Meta-ExternalAgent",
+              "Kimi-SearchBot",
+              "Kimi-User",
+              "KimiBot",
+              "Amzn-SearchBot",
+              "Amzn-User",
+              "MistralAI-Index",
+              "MistralAI-User",
+              "MistralAI-Training",
+              "ExaSearchBot",
+              "ExaSearchBot-Images",
+              "ExaUser",
+              "DuckAssistBot",
+              "Meta-WebIndexer",
+              "Meta-ExternalFetcher",
+              "AI2Bot"
             ]
           },
           "operator": {
@@ -266,6 +281,18 @@
           "live": {
             "type": "boolean",
             "description": "A retrieval crawler that fetches a page because a user's question asked for it (ChatGPT-User, Claude-User, Perplexity-User)."
+          },
+          "purpose": {
+            "enum": [
+              "search",
+              "user",
+              "training"
+            ],
+            "description": "Since 1.10.0. What the crawler is for, in the three AI purposes AI-traffic analytics commonly report: search (a retrieval crawler that builds an index), user (a live fetch a user's question triggers) and training. kind and live say the same; this lines totals up with tools that count by purpose."
+          },
+          "scored": {
+            "type": "boolean",
+            "description": "Since 1.10.0. true for the ten retrieval crawlers g.robots and g.reachable score (RETRIEVAL_UAS); false for the training crawlers and for the crawlers reference/ai-crawlers.md counts in logs only."
           },
           "requests": {
             "type": "integer",
@@ -484,8 +511,15 @@
                 "enum": [
                   "ChatGPT-User",
                   "Claude-User",
-                  "Perplexity-User"
-                ]
+                  "Perplexity-User",
+                  "Kimi-User",
+                  "Amzn-User",
+                  "MistralAI-User",
+                  "ExaUser",
+                  "DuckAssistBot",
+                  "Meta-ExternalFetcher"
+                ],
+                "description": "A crawler whose role is a live fetch: the three of the retrieval table and, since 1.10.0, the log-only crawlers whose role is user."
               },
               "path": {
                 "anyOf": [
@@ -548,6 +582,261 @@
           }
         }
       ]
+    },
+    "funnel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "indexed",
+        "read",
+        "clicked",
+        "converted",
+        "read_to_click",
+        "by_assistant",
+        "referral_rules"
+      ],
+      "description": "Since 1.10.0. Four layers, each counted on its own, not followed visitor by visitor: indexed (requests from the retrieval crawlers that build an index), read (the live fetches a user's question triggers), clicked (visits whose utm_source or Referer names an AI assistant) and converted (with --conversions: requests for a conversion path within 24 hours of an AI visit from the same address and user-agent). Nothing in it is part of any score.",
+      "properties": {
+        "indexed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "crawlers",
+            "requests",
+            "pages",
+            "pages_2xx"
+          ],
+          "properties": {
+            "crawlers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The crawlers counted in this layer."
+            },
+            "requests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pages": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Distinct paths they requested."
+            },
+            "pages_2xx": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of those, the paths answered with a 2xx at least once."
+            }
+          }
+        },
+        "read": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "crawlers",
+            "requests",
+            "pages",
+            "pages_2xx"
+          ],
+          "properties": {
+            "crawlers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The crawlers counted in this layer."
+            },
+            "requests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pages": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Distinct paths they requested."
+            },
+            "pages_2xx": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Of those, the paths answered with a 2xx at least once."
+            }
+          }
+        },
+        "clicked": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "visits",
+            "pages",
+            "by_assistant",
+            "top_pages"
+          ],
+          "description": "Requests whose user-agent names no crawler of reference/ai-crawlers.md and that arrived from an AI assistant: utm_source is one of the assistant's aliases or hosts, or, failing that and unless utm_medium is email, newsletter, sms, social, paid_social, display, affiliate, push or banner, the Referer host is one of its hosts, exactly. The hosts and aliases follow the conventions AI-source analytics commonly count by; referral_rules names the list's version. Only the assistant's name is kept: no Referer, query string, address or user-agent is copied.",
+          "properties": {
+            "visits": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pages": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "by_assistant": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "top_pages": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "visits"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "A path as robots.txt rules compare it (RFC 9309 section 2.2.2): query and fragment dropped, no trailing slash but on \"/\", and every character outside printable ASCII, and each of ' <>\"{}|\\^`', percent-encoded. It is the site's text, read from the log: data, never instructions."
+                  },
+                  "visits": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "converted": {
+          "description": "null without --conversions: not measured.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "paths",
+                "requests",
+                "after_ai_visit",
+                "window_hours",
+                "by_assistant"
+              ],
+              "properties": {
+                "paths": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Conversion paths the file listed."
+                },
+                "requests": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Requests for a conversion path whose user-agent names no crawler."
+                },
+                "after_ai_visit": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Of those, the ones within window_hours after an AI visit from the same address and user-agent."
+                },
+                "window_hours": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "by_assistant": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "read_to_click": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pairs",
+            "median_seconds",
+            "window_days"
+          ],
+          "description": "Each click from ChatGPT, Claude or Perplexity paired with the latest live fetch of the same path by that assistant's fetcher (ChatGPT-User, Claude-User, Perplexity-User) at most window_days before it; the median gap. median_seconds is null with no pair.",
+          "properties": {
+            "pairs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "median_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "window_days": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "by_assistant": {
+          "type": "array",
+          "description": "One row per assistant with any request or visit, in the order of the referral rules. indexed and read are null when reference/ai-crawlers.md has no such crawler for that assistant: not measured.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assistant",
+              "indexed",
+              "read",
+              "clicked",
+              "converted"
+            ],
+            "properties": {
+              "assistant": {
+                "type": "string"
+              },
+              "indexed": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "read": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "clicked": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "converted": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "referral_rules": {
+          "const": "ai-referral-hosts-2026-11",
+          "description": "The version of the AI referral hosts and utm_source aliases the clicked layer used, a list kept in line with the conventions AI-source analytics commonly count by. A later list gets a new value."
+        }
+      }
     },
     "notes": {
       "type": "array",

@@ -355,9 +355,141 @@ API 两样都给时，每条回答记下 `sources_listed`（返回的全部来�
 一次运行在 `recorded`（`spans`、`sources`）里记下它测了什么。在这些字段出现之前保存的运行没有这一项，它的报告会写明「没有记录」，
 而不是说引擎没给；出报告时重新计算它的 summary，运行文件本身不会被改写。
 
+## 10. 引用率之外：第一条搜索、模型记忆、条件阶梯，以及品牌被怎样提到
+
+1.10.0 新增四项测量。每一项都放在引用率旁边单独报告，从不并进引用率；标题率、引用率的区间、合并（pooling）和 `watch diff`
+都不读它们。它们都从运行文件保存的内容算出，所以对旧版本保存的运行出报告时会重新计算，文件本身不改写。
+
+### 第一条搜索
+
+引擎在回答前先搜索时，会把问题变成一条或几条搜索词。OpenAI 和 Anthropic 随回答返回这些搜索词，Gemini 返回它的查询；
+`search_queries` 按 API 返回的顺序保存，去掉重复。第一条是引擎的第一步，它可能已经带上某个品牌：搜「Acme 移动电源」，
+只能找到提到 Acme 的页面。
+
+`summary.first_search` 在至少暴露了一条搜索词的回答里，数第一条搜索词含本品牌的有几条、含某个被跟踪竞品的有几条，
+用的是判断 `mentioned` 的同一个匹配器（名称、别名和域名）。再把「第一条搜索词含本品牌」和「回答提到本品牌」交叉成一张二乘二表。
+问题本身提到品牌时，搜索词自然会带上它，所以要看的是不提品牌的问题那张表（`unbranded`）：在那里，第一条搜索词带上品牌是引擎自己的选择。
+同样的计数也按引擎给出。
+
+没有暴露搜索词的回答在这里**未测量**，不算「没有」：Perplexity 和 OpenRouter 不返回搜索词，OpenAI 兼容的 `base_url` 也可能把它们去掉。
+Google 没有说明它的查询列表就是搜索的先后顺序，所以对 Gemini 来说「第一条」只是列表里的第一条。这些是计数，没有区间也没有检验；
+那张表只把两件事并排放着，不说明一件导致了另一件。
+
+### 关掉联网再问一遍：不联网测试
+
+模型可以不搜索，凭训练时学到的东西提到一个品牌。配置里写 `no_search_pass: true`（或 `watch run --no-search-pass`，或 MCP `run` 工具的
+`no_search_pass`），每道题会在每个引擎上关掉联网再问一遍：OpenAI 的 Responses API 和 Claude 的 Messages API 不带搜索工具，
+Gemini 不带 `google_search`，OpenRouter 不带 `web` 插件。**调用次数约翻一倍**，仍受同一个 `max_calls` 和 `budget_usd` 约束；
+`watch run --dry-run` 在花钱之前就会写明，MCP `run` 工具的 dry run 在计划里给出 `no_search_calls`。Perplexity 的 Sonar 模型每次调用都会搜索，
+OpenRouter 带 `:online` 后缀的模型无论请求怎么写都会搜索，所以这两种不测。
+
+这些回答存进 `memory_samples`，和 `samples` 分开，所以任何比率、合并和比较都不会读到它们。不搜索就无从引用，所以 `summary.memory`
+数的是提到本品牌的回答，按引擎和整体给出，带 Wilson 区间和按问题的自助法区间，旁边并列同一引擎联网回答同一批问题时提到品牌的比例。
+关掉联网问、却仍然搜索或引用了的回答（某些端点会自己加上搜索），标记为 `searched_anyway`，单独计数，并且不计入。
+
+模型的训练数据在发布前几个月就截止了，所以这一项随服务商换新模型而变，不随网站改动而变。它回答的是另一个问题：模型到底认不认识这个品牌。
+
+### 条件阶梯题组
+
+一道题很少单独出现。「最好的移动电源」会变成「露营用的移动电源」，再变成「500 美元以内、露营用的」。泛问时被提到的品牌，
+条件一多可能就掉出去了。问题文件里可选的 `ladder` 和 `step` 两列把这样的题编成一组：同一组填同一个阶梯 id，基础题的 step 是 0，
+每加一层条件依次是 1、2……。`watch check` 拒绝同一阶梯里重复的 step，对只有一级的阶梯给出提醒。
+
+`summary.ladders` 按 step 从低到高列出每个阶梯的各级：每级的回答数，以及其中提到、引用本品牌的条数，整体和按引擎各一份。
+`dropped_at` 是在某一级提到过本品牌之后、第一次没有任何回答提到它的那一级；`halved_at` 是基础题之上、提到本品牌的回答占比
+不到基础题一半的第一级。每一级只是一道题、几条回答，所以这些是计数，没有区间也没有检验：把阶梯多问几遍（`runs`）再下结论。
+每一级同时也是一道普通的题，照常计入其他所有表。
+
+### 入选、举例、排除
+
+回答提到一个品牌，可能是在推荐它，可能只是举它当许多例子之一，也可能是在排除它。三种都算「提到」，会把它们混在一起。
+对每条提到被跟踪品牌的回答，`watch` 用规则读提到它的句子（和 `mention_share` 同一套分句）：
+
+- **排除**：一句只提到这一个被跟踪品牌的话，说它不支持什么、不适合、缺少什么、做得不够或不推荐（`does not support`、`not suitable`、
+  `lacks`、`not recommended`、`不支持`、`不适合`、`缺少`、`不推荐` 等）；
+- **入选**：提到品牌的那一行以它开头，前面只有列表符号、序号、标题符号、表格竖线或加粗（这是回答给出的候选名单），
+  或一句只提到这一个被跟踪品牌的话推荐它（`recommend`、`best`、`top pick`、`推荐`、`首选`、`最适合` 等）；
+- **举例**：品牌在同一句里跟在举例提示词后面（`such as`、`for example`、`like`、`including`、`例如`、`比如`、`包括`），
+  或在一串并列里由「等」收尾。
+
+每句话最多一个标签，优先级是排除、入选、举例。整条回答：有句子排除它、没有句子让它入选，算排除；反过来算入选；只有举例提示词时算举例；
+一条规则都没命中，或一句让它入选、另一句排除它，算**未判定**。四类加起来等于提到这个品牌的回答数。报告按被跟踪品牌给出
+（`summary.share_of_voice` 每一行的 `roles`），本品牌另按引擎给出（`summary.engines` 每一行的 `roles`）。
+
+这些是读字面的规则，不读意思。带保留意见的推荐（「不错，但缺少 App」）会读成排除，反讽读不出来；一句话里同时提到两个被跟踪品牌时，
+排除和推荐提示词不采用，因为可能说的是另一个。提示词只有英文和中文；其他语言只有列表和标题那条规则起作用，其余都算未判定。
+这些计数用来找出值得细读的回答，不是结论。
+
+**对外引用之前。** 这套规则还没有用人工标注的样本检验过，准确率未知。在工作报告以外的地方引用这些计数（交付给客户的材料、案例、公开说法）之前，
+先拿一批真实回答人工标注，每种语言至少几十条，标注时不看规则的判断结果；再按每一类报告规则判对的比例，和计数放在一起。在那之前，对外只引用回答原文，不引用计数。
+
+## 11. 按国家、用当地说法分开测，以及一份样本能看出多大的变化
+
+### 每个国家、每种语言单独出数
+
+AI 给一个国家的买家引用什么，对下一个国家说明不了多少：同一个品类，用当地人的说法去问，冒出来的品牌和信源都不一样，
+引擎也会区分不同的市场。所以 `watch` 按国家、按语言分别出数，从不合并成一个数。
+
+- **问题从哪个国家问。** 问题文件里可选的 `country` 列（两个字母的国家代码）为这道题单独设定；没填就用配置里的 `country`。
+  支持指定地区的引擎（OpenAI、Claude、Perplexity）收到的是这道题的国家。每个国家的题请用当地买家的说法来写，不要拿一套题翻译。
+- **问题用什么语言写。** 问题文件里可选的 `language` 列（BCP 47 标签，如 `de`、`pt-BR`），没填用配置里的 `language`，
+  再没有就从题面推断：中文、日文、韩文看文字，英、德、法、西、葡、意、荷看几个常用词，看不出来记为 `und`（未确定）。
+  语言不改变发出去的任何内容，只决定报告怎么分组；报告会写明有几道题的语言是从题面推断的。
+
+`summary.by_country` 和 `summary.by_language` 按国家、按语言各给一个比率块，每条回答都计入，和「按问题类型」那张表一样。
+多于一组时报告才打印这两张表，标题率那一行也会说明它合并了几组。一道题在两次运行里从不同国家问，`watch diff` 不配对这道题，合并时也不合并。
+
+### 样本能看出多大的变化
+
+20 道题的一次运行分不出 5 个点的变动和噪声，花钱之前就把这一点说清楚，本身就是测量的一部分。引用率为 p、每次运行 n 个样本时，
+双侧检验在 95% 置信度下有 80% 把握判定为变化的最小变化量是
+
+    (1.96 + 0.84) × sqrt(2 p (1 − p) / n)
+
+单位是引用率的百分点。n 有两种取法，给出上下两个界：按**问题数**算，把同一道题的几条回答当成一条，这正是 `watch diff` 检验的方式（第 4 节）；
+按**回答数**算，把每条回答都当成独立的，实际上并不独立。真实值在两者之间；配对会让它小一点，跨引擎的 Holm 校正会让它大一点。
+等于 100 表示多大的变化都看不出来。
+
+| 每次运行的问题数 | 引用率 50% 时 | 引用率 20% 时 |
+|---|---|---|
+| 10 | 63 个点 | 50 |
+| 20 | 44 | 35 |
+| 50 | 28 | 22 |
+| 100 | 20 | 16 |
+
+- `watch run --dry-run`（以及 MCP `run` 工具的 dry run，在 `plan.detectable` 里）按 50% 的引用率（最坏情况）给出这个数，整体一个，问题文件里每个国家各一个。
+- 报告按标题率给出，引用率按 Agresti 和 Coull 的做法往一半拉一点，即 (引用数 + 2) / (回答数 + 4)，免得 0% 的引用率读成一个不会动的数。
+  `summary.detectable` 里有上下两个界，`by_country` 和 `by_language` 的每一行有各自的值。
+
+它回答的是「这样的运行能看出多大的变化」，不是「有没有变」：后者看 `watch diff` 的结论。和它并列的是计划的分辨力（第 8 节），
+即至少要有几道题朝同一方向变动，比较才可能判定变化。
+
+## 12. 引擎改版、一起变的竞品，以及每条回答的基准
+
+引擎的引用方式可能一夜之间就变：每条回答引的网页变少，品牌官网的分量变轻，某个信源不再被信任。这种变化会让所有品牌的比率一起变，
+比较结果如果把它读成你自己的变化，就会误导。`watch` 提供三种办法把两者分开。它们都不改变任何比率、区间或结论，只并列在结论旁边。
+
+**同一批提问上的竞品。** 对比较的每一行，`watch diff` 对两次运行都跟踪的每个竞品，在同样的配对提问上做同样的精确配对检验（第 4 节），
+不做多重校正：`competitor_moves` 给出每个竞品变了几个点、p 值，以及 p < 0.05 且至少 6 道题时的 `moved`。这一行的结论是 `change`，
+并且至少一半被跟踪的竞品朝同一方向动了，`possible_engine_change` 就为真，备注里写出是哪几个：可能是引擎让所有品牌一起变了，不只是你。
+这一行没变、但至少一半竞品一起变了时，备注会提示引擎可能对所有品牌都变了。只跟踪一个竞品时，一个就算一半；一个都没跟踪就不标。
+检验是逐个竞品、不校正的，竞品多时可能有一个是碰巧动了；把这个标记当成「值得去看」，不是结论。
+
+**每条回答的基准。** `summary.engines` 的每一行都有 `per_answer`：这个引擎的回答平均每条引用几个网页、提到几个被跟踪品牌、
+把几个放进候选名单（第 10 节的「入选」），以及有几个列表项（以项目符号或序号开头的行）。它们描述的是引擎，不是某个品牌。
+`watch diff` 在每一行给出前后两次的值，只算两次都回答了的问题；同一模型下，某个引擎每条回答引用的网页数变动达到原来的四分之一、
+且至少一个网页时，备注会写出来。配置里没列的品牌看不到，列表项也把所有带项目符号的行都算上，不管是不是品牌：这些是逐次跟踪的基准，
+不是「一条回答推荐了几个品牌」的计数。
+
+**引擎改版事件。** [reference/engine-events.md](../reference/engine-events.md) 列出引擎引用方式的变化，每条写明日期、引擎和观察到的现象，
+但只收录谁都能复核的：我们自己用可重复的方法观测到的，或者引擎运营方在公开、有日期的来源里写明的。别人报道、无法复核的数字一律不收。
+目前这份清单是空的；`cli/geo_watch.py` 里有同一份列表。`watch diff` 写出日期落在两次运行之间、且两次都测了的服务商的事件（`events`，
+并各写一条备注）；`watch report` 写出运行前 30 天内的事件（`summary.events`）。在 App 里看到的变化，API 不一定同一天变，也不一定会变。
+上面两种线索来自运行本身，不依赖这份清单。
+
 ## 字段在哪里
 
-- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`。
-- 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义。
+- 运行文件：[schema/watch.v1.json](../schema/watch.v1.json)，包括 `summary.headline`、`summary.branded`、`summary.brand_flags`，每个比率块里的 `cited_ci_clustered` 与 `n_questions`，`summary.engines` 每一行的 `with_citations` 与 `with_searches`，`summary.engines` 和 `summary.share_of_voice` 每一行的 `named_first`、`any_named` 与 `mention_share`，每条回答及其 `competitors` 里每个竞品的 `mention_order` 与 `mention_share`，`summary.by_question`，每个问题上的 `brand_in_query`、`competitor_in_query` 与 `branded`，`summary.searches` 及其中的 `modifiers` 与 `answers_searched_without_queries`，`questions_hash`（两次运行问的是同一组问题时，它们的 `questions_hash` 相同），以及第 9 节的：每条回答上的 `spans`、`supported_share`、`sources_listed` 与 `sources_used`，`summary.engines` 每一行的 `supported_share` 与 `sources`，以及 `recorded`；第 10 节的：`summary.first_search`、`summary.ladders`，每个问题上的 `ladder` 与 `step`，`summary.engines` 与 `summary.share_of_voice` 每一行的 `roles`，以及做过不联网测试的运行里的 `memory_samples` 与 `summary.memory`；第 11 节的：每个问题上的 `country` 与 `language`、运行的 `language`，以及 `summary.by_country`、`summary.by_language` 与 `summary.detectable`；第 12 节的：`summary.engines` 每一行的 `per_answer`，以及 `summary.events`。
+- 比较输出（`watch diff --format json`，或 MCP `diff` 工具带 `format: json`）：同一 schema 中的 `diff` 与 `diff_row` 定义，包括第 12 节的 `events`、`competitor_moves`、`possible_engine_change` 与 `per_answer`。
 - 合并输出（`watch report --since DAYS` 或 `--runs A..B` 带 `--format json`，或 MCP `report` 工具带 `since`）：同一 schema 中的 `pooled` 定义。
 - 命令与参数：[CLI 说明](../cli/README.zh-CN.md)。

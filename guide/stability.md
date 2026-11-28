@@ -49,7 +49,9 @@ JSON is the contract), the wording of error messages other than the bot-challeng
 JSON `kind`), colours, the order of evidence strings, the order of MCP tools and the
 wording of their descriptions,
 the benchmark numbers (they are a dated measurement, see `benchmark/` and [Benchmark data](#benchmark-data)),
-the default model of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`), and the
+the default model of each engine in level 2 and 3 (pin models in your `geo-score-watch.json`), the entries of
+`reference/engine-events.json` that `watch diff` and `watch report` name (they are added and corrected in any
+release; the shape of `events` in the JSON is the contract), and the
 copyable CI examples in `examples/ci/` (they pin a release and third-party actions by commit SHA, and
 change in any release).
 

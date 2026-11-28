@@ -12,11 +12,13 @@
     "competitors": {"type": ["array", "null"], "items": {"$ref": "#/$defs/entity"},
                     "description": "Tracked competitors. Names must differ from each other and from the brand."},
     "queries": {"type": "string", "minLength": 1, "default": "queries.csv",
-                "description": "The question file, relative to this file: a CSV with the columns query_id,query and optionally intent_tier,target_url,branded."},
+                "description": "The question file, relative to this file: a CSV with the columns query_id,query and optionally intent_tier,target_url,branded, and, since 1.10.0, country,language (where the question is asked from, which the engines are given instead of the config's country, and the language it is written in) and ladder,step (a condition ladder's id and the question's step on it, 0 for the base question)."},
     "engines": {"type": ["array", "null"], "minItems": 1, "items": {"$ref": "#/$defs/engine"},
                 "description": "The engines to ask. Omitted or null: ChatGPT, Perplexity, Gemini and Claude through their APIs, with the default model of the running release; `watch init` writes the models out."},
     "country": {"type": ["string", "null"], "pattern": "^([A-Z]{2})?$",
-                "description": "Two-letter ISO code passed to the engines that accept a location, or null (an empty string also means none)."},
+                "description": "Two-letter ISO code passed to the engines that accept a location, or null (an empty string also means none). A question's own country column in the question file wins over it."},
+    "language": {"type": ["string", "null"], "pattern": "^([a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2})?$",
+                 "description": "Since 1.10.0. The language the questions are written in, a BCP 47 tag such as en, de or pt-BR, for the report's split by language; it changes nothing that is sent. null (or an empty string): each question's own language column, else read from its text (zh, ja, ko by script; en, de, fr, es, pt, it, nl by common words; und otherwise)."},
     "runs": {"type": "integer", "minimum": 1, "maximum": 10, "default": 1,
              "description": "Asks per question per engine."},
     "max_calls": {"type": "integer", "minimum": 1, "default": 120,
@@ -25,7 +27,9 @@
                    "description": "Spend cap in USD, checked before every call; it can be exceeded by at most one call per engine. null: no budget."},
     "prices": {"type": ["object", "null"], "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]{0,39}$"},
                "additionalProperties": {"$ref": "#/$defs/price"},
-               "description": "Per engine id, USD, for the engines whose provider does not report the cost of a call."}
+               "description": "Per engine id, USD, for the engines whose provider does not report the cost of a call."},
+    "no_search_pass": {"type": ["boolean", "null"], "default": false,
+                       "description": "Paid: about doubles the calls of a run, within the same max_calls and budget_usd. Since 1.10.0. true: after the usual asks, ask every question again with web search off, on each engine that can answer without searching (not Perplexity), to see whether the model names the brand from its training alone. Saved in memory_samples and summary.memory, never in the cited rate. null or false: off."}
   },
   "$defs": {
     "strings": {"anyOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}],

@@ -1,0 +1,6 @@
+{
+  "format": "geo-score/engine-events.v1",
+  "updated": "2026-11-27",
+  "description": "Changes in how an AI engine cites that can move every brand's citation rate at once. Only events geo-score observed itself, with a method anyone can repeat, or that the engine's operator documented in a public, dated source anyone can re-read, are listed. None is yet. cli/geo_watch.py holds the same list in ENGINE_EVENTS (a test keeps them equal); watch diff names the events dated between two runs, and watch report the events of the 30 days before a run.",
+  "events": []
+}

@@ -7,6 +7,55 @@
 ## [1.9.0] — 2026-11-28
 
 ### 新增
+- **`watch` 在引用率之外新增四项测量**（guide/watch-methodology.zh-CN.md 第 10 节）。每一项单独报告，从不并进引用率、标题率、合并或
+  `watch diff`；旧版本保存的运行出报告时也会重新算出这些项；「未测量」从不当作 0。
+  - **第一条搜索：** `summary.first_search` 在暴露了搜索词的回答里（OpenAI、Anthropic、Gemini），统计第一条搜索词含本品牌、含被跟踪竞品的
+    条数，再把「第一条搜索词含本品牌」和「回答提到本品牌」交叉成表，全部问题和不提品牌的问题各一份，并按引擎给出。报告：「The first
+    search each answer ran」。
+  - **不联网测试：** 配置里的 `no_search_pass: true`、`watch run --no-search-pass` 或 MCP `run` 工具的 `no_search_pass`，会关掉联网把每道题再问
+    一遍（OpenAI、Claude、Gemini 不带搜索工具，OpenRouter 不带 `web` 插件；Perplexity 和 OpenRouter 的 `:online` 模型每次都会搜索，不测），
+    看模型单凭训练数据会不会提到这个品牌。付费，调用次数约翻倍，默认关闭，受同样的上限约束；`--dry-run` 和 MCP 的 dry run
+    （`no_search_calls`）会先写明。结果存进 `memory_samples`；关掉联网仍然搜索了的回答标记为 `searched_anyway`，不计入。报告：「Named from
+    memory, with web search off」，旁边并列同一引擎联网时的结果；JSON：`summary.memory`。
+  - **条件阶梯题组：** 问题文件里可选的 `ladder` 和 `step` 两列，把基础题（step 0）和逐级加了条件的同一道题编成一组。`summary.ladders`
+    给出每一级的回答数、其中提到和引用本品牌的条数（整体和按引擎），以及 `dropped_at`（提到过之后第一次没有回答提到它的那一级）和
+    `halved_at`。`watch check` 拒绝同一阶梯里重复的 step，对只有一级的阶梯给出提醒。
+  - **入选、举例、排除：** 提到每个被跟踪品牌的回答里，几条把它放进候选名单（以它开头的列表项、标题或表格行，或推荐它的句子），
+    几条拿它举例（跟在 such as、for example、例如、包括……后面），几条排除它（does not support、not suitable、lacks、不支持、不适合、
+    缺少……），几条判断不了（未判定）。是读英文和中文字词的规则，不是模型。JSON：`summary.share_of_voice` 和 `summary.engines` 每一行的
+    `roles`。
+  运行文件 schema 增加这些可选字段（`schema/watch.v1.json`），配置 schema 增加 `no_search_pass`，MCP `run` 工具增加可选参数
+  `no_search_pass`（工具快照已更新）。测试在 `cli/test_geo_watch.py`。
+- **`watch` 按国家、按语言分别出数，并给出样本能看出多大的变化**（guide/watch-methodology.zh-CN.md 第 11 节）。问题文件新增可选的
+  `country` 和 `language` 两列，配置新增 `language`：支持指定地区的引擎收到的是这道题自己的国家；语言可以设定，也可以从题面推断
+  （中日韩看文字；英、德、法、西、葡、意、荷看常用词；其余记为 `und`）。`summary.by_country` 和 `summary.by_language` 每组一个比率块，
+  从不合并；多于一组时报告才打印，并说明标题率合并了几组。一道题换了提问国家，`watch diff` 不配对它，合并时也不合并。`watch run
+  --dry-run`、MCP 的 dry run（`plan.detectable`）和报告（`summary.detectable`，以及每行的 `detectable_pp`）给出两次这样的运行比较时，
+  在 95% 置信度、80% 把握下能判定的最小引用率变化，按问题数和按回答数各一个，上限 100 个点。
+- **结论旁边加上引擎改版的线索**（guide/watch-methodology.zh-CN.md 第 12 节）。新增 `reference/engine-events.md` 和 `reference/engine-events.json`，
+  列出引擎引用方式的变化（日期、引擎、现象），只收录我们自己观测到或引擎运营方公开写明、能复核的事件，目前暂无；`cli/geo_watch.py` 里有同一份列表
+  （`ENGINE_EVENTS`，测试保证两者一致）。
+  `watch diff` 对两次都跟踪的每个竞品也做精确配对检验（`competitor_moves`）；某一行结论是 change、且至少一半竞品朝同一方向动了，就标为
+  `possible_engine_change` 并在备注里写出；你没变而竞品一起变时也写备注；每一行给出前后两次的每条回答基准（`per_answer`：引用的网页、
+  提到和入选的被跟踪品牌、列表项），同一模型下引用网页数变动达到四分之一以上时写备注；并列出日期落在两次运行之间的事件（`events`）。
+  `watch report` 增加「Per answer, per engine」（`summary.engines` 上的 `per_answer`）和运行前 30 天内的事件（`summary.events`）。结论、比率和区间都不变。
+- **`geo-score crawlers`：从抓取到成交的漏斗。** JSON 里的 `funnel`，以及文本和 Markdown 视图里的一节：收录（建索引的检索爬虫的请求）、被读（实时访问）、
+  被点（`utm_source` 或 Referer 主机指向 AI 助手的访问，按和常见 AI 来源统计口径一致的主机与 utm 清单，`referral_rules` 写明版本：ChatGPT、Claude、Perplexity、Gemini、Copilot、
+  Kimi、DeepSeek、豆包、千问、元宝等），以及加新参数 `--conversions FILE` 时的成交（同一地址和 UA 在 AI 访问后 24 小时内到达转化页）。每层一个数，
+  按助手分开，再加上同一页面从实时访问到下一次来自同一助手的点击的间隔中位数，以及 AI 访问落地的页面。Referer、查询串、地址和 UA 只读不抄。
+  爬虫行新增 `purpose`（`search`、`user`、`training`）；只有日期没有时间的记录按 UTC 零点读，用常见字段名导出的 JSON 行日志原样可读。
+  测试 `cli/test_crawler_logs.py`（`Funnel`），新夹具 `funnel.log`、`conversions.txt`、`import-records.jsonl`。
+- **`geo-score crawlers` 认得更多 AI 爬虫，只用于日志统计。** `reference/ai-crawlers.md` 新增第四张表「只用于日志统计，不计分」，并写明几张表的关系：
+  15 个有官方文档的爬虫（`Kimi-SearchBot`、`Kimi-User`、`KimiBot`、`Amzn-SearchBot`、`Amzn-User`、`MistralAI-Index`、`MistralAI-User`、
+  `MistralAI-Training`、`ExaSearchBot`、`ExaSearchBot-Images`、`ExaUser`、`DuckAssistBot`、`Meta-WebIndexer`、`Meta-ExternalFetcher`、`AI2Bot`），
+  每个写明用途和运营方的页面；只在第三方列表里出现的名字不收。只有 `crawlers` 读这张表（`LOG_ONLY_UAS`）：`g.robots`、`g.reachable` 和
+  `RETRIEVAL_UAS` 不变，分数不会动。爬虫行新增 `scored`，文本视图把这些爬虫标为「log only」，用途为 search 和 user 的分别计入漏斗的收录层和被读层，
+  漏斗里 Kimi 那一行也有了自己的爬虫。
+- **`guide/mcp.md`（及中文版）补上 Trae、Kimi Code CLI、OpenClaw 和 Hermes Agent**，每个都按它自己的官方文档（2026-11-26 读）：配置文件在哪、
+  格式、Key 怎么传给服务，以及跑长 `run` 需要的工具超时（Trae 从 `env` 读，Kimi Code CLI 用 `toolTimeoutMs`，OpenClaw 用 `requestTimeoutMs`，
+  Hermes 用 `timeout`）。TRAE CLI 2.0 只写它文档给出的几行；豆包 MarsCode 已并入 Trae 插件，文档里没有 MCP 支持，指南写明改用 Trae IDE。
+  客户端文档没写的设置一律不写。新增生成块 `MCP:agents`：一段可直接粘进仓库 `AGENTS.md` 或 `CLAUDE.md` 的说明，做 AI 可见度检查时用 geo-score，
+  花钱前先对 `run` 做 dry run 并给出计划；付费工具按服务声明的列出，版本号固定。生成的安装块写明哪些客户端读标准的 `mcpServers` 配置。只改文档。
 - **`geo-score crawlers LOG…`：网站自己的访问日志里的 AI 爬虫**，离线读取（只用标准库，不发任何请求）。能读 nginx 和 Apache 的
   combined 日志（以及 vhost_combined）、Vercel 日志流和 Cloudflare Logpush 的 JSON 行，以及带 UA 和路径的其他 JSON 行（nginx 的 JSON
   log_format、Caddy），纯文本、gzip 或标准输入都行，一行一行读：超过 64 KiB 的行跳过不读，认不出格式的行只记行号，从不抄内容。它统计 UA

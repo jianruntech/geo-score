@@ -8,6 +8,80 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 ## [1.9.0] — 2026-11-28
 
 ### Added
+- **Four `watch` measures beside the cited rate** (guide/watch-methodology.md, section 10). Each is reported apart and
+  never merged into the cited rate, the headline, pooling or `watch diff`, and each is recomputed for runs saved by
+  earlier releases; "not measured" is never a zero.
+  - **The first search:** `summary.first_search` counts, over answers that expose their search queries (OpenAI,
+    Anthropic, Gemini), how many first queries name the brand or a tracked competitor, and crosses the brand in the
+    first query with the brand named in the answer, over all questions and over those that do not name the brand,
+    and per engine. Report: "The first search each answer ran".
+  - **The no-search pass:** `no_search_pass: true` in the config, `watch run --no-search-pass` or the MCP `run` tool's
+    `no_search_pass` asks every question again with web search off (no search tool for OpenAI, Claude and Gemini, no
+    `web` plugin for OpenRouter; Perplexity and OpenRouter `:online` models search on every call and are not measured),
+    to see whether the model names the brand from its training alone. Paid, about double the calls, off by default,
+    within the same caps; `--dry-run` and the MCP dry run (`no_search_calls`) say so first. Saved in `memory_samples`;
+    an answer that searched anyway is marked `searched_anyway` and left out. Report: "Named from memory, with web search
+    off", beside the same engine's answers with search; JSON: `summary.memory`.
+  - **Condition ladders:** optional `ladder` and `step` columns in the question file group a base question (step 0)
+    with the same question under more conditions. `summary.ladders` gives each step's answers and how many name and
+    cite the brand, overall and per engine, with `dropped_at` (the first step after a named one at which no answer
+    names it) and `halved_at`. `watch check` refuses a step used twice on a ladder and warns about a one-step ladder.
+  - **Selected, example, excluded:** of the answers that name each tracked brand, how many put it on their shortlist
+    (a list item, heading or table row that starts with it, or a sentence recommending it), give it as an example
+    (after such as, for example, `例如`, `包括`…), exclude it (does not support, not suitable, lacks, `不支持`,
+    `不适合`, `缺少`…) or cannot be read either way (undetermined). Rules over English and Chinese words, not a model. JSON:
+    `roles` on each row of `summary.share_of_voice` and `summary.engines`.
+  The run schema gains the optional fields (`schema/watch.v1.json`), the config schema `no_search_pass`, and the MCP
+  `run` tool an optional `no_search_pass` argument (the tools snapshot is updated). Tests in `cli/test_geo_watch.py`.
+- **`watch` by country and by language, and the change a sample can see** (guide/watch-methodology.md, section 11).
+  The question file takes optional `country` and `language` columns, and the config a `language` key: a question's
+  own country is what the engines that take a location are told, and its language is set, or read from its text
+  (zh, ja, ko by script; en, de, fr, es, pt, it, nl by common words; `und` otherwise). `summary.by_country` and
+  `summary.by_language` give one rate block each, never merged; the report prints them when there is more than one
+  and says that the headline pools them. A question asked from another country is neither paired by `watch diff`
+  nor pooled. `watch run --dry-run`, the MCP dry run (`plan.detectable`) and the report (`summary.detectable`, and
+  `detectable_pp` on each row) give the smallest change in the cited rate that a diff of two such runs has an 80%
+  chance to call at 95% confidence, counting questions and counting answers, capped at 100 points.
+- **Engine changes beside the verdict** (guide/watch-methodology.md, section 12). `reference/engine-events.md` and
+  `reference/engine-events.json` (new) list changes in how an engine cites, with the date, the engine and what was
+  observed, but only those geo-score observed itself or the engine's operator documented in a public, dated source;
+  none is listed yet. `cli/geo_watch.py` carries the same list (`ENGINE_EVENTS`, held equal by a test). `watch diff` runs its exact paired test on each competitor tracked in both
+  runs (`competitor_moves`), flags a row whose verdict is change while at least half of them moved the same way
+  (`possible_engine_change`, named in the notes), notes competitors that moved together when you did not, gives each
+  row's per-answer benchmarks before and after (`per_answer`: pages cited, tracked brands named and selected, list
+  items) with a note when an engine's pages cited per answer shift by a quarter or more with the same model, and
+  names the events dated between the two runs (`events`). `watch report` adds "Per answer, per engine"
+  (`per_answer` on `summary.engines`) and the events of the 30 days before the run (`summary.events`). No verdict,
+  rate or interval changes.
+- **`geo-score crawlers`: the funnel from crawl to conversion.** `funnel` in the JSON and a section in the text and
+  Markdown views: indexed (requests from the retrieval crawlers that build an index), read (live fetches), clicked
+  (visits whose `utm_source` or Referer host names an AI assistant, by a host and alias list kept in line with the
+  conventions AI-source analytics commonly count by: ChatGPT, Claude, Perplexity, Gemini, Copilot, Kimi, DeepSeek,
+  Doubao, Qwen, Yuanbao and others; `referral_rules` names its version) and, with the new `--conversions FILE`, converted (a conversion page within 24 hours of an AI visit
+  from the same address and user-agent), one figure each, per assistant, with the median time from a live fetch of a
+  page to the next click from the same assistant onto it, and the pages AI visits landed on. The Referer, query
+  string, address and user-agent are read and never copied. Crawler rows gain `purpose` (`search`, `user`,
+  `training`); a date with no time reads as midnight UTC, and JSON log records with the usual field names read as
+  they are. `cli/test_crawler_logs.py` (`Funnel`), with new fixtures `funnel.log`, `conversions.txt` and
+  `import-records.jsonl`.
+- **`geo-score crawlers` counts more AI crawlers, in logs only.** `reference/ai-crawlers.md` gains a fourth table,
+  "Counted in access logs only — not scored", and a paragraph on how its tables relate: 15 crawlers their operators
+  document (`Kimi-SearchBot`, `Kimi-User`, `KimiBot`, `Amzn-SearchBot`, `Amzn-User`, `MistralAI-Index`,
+  `MistralAI-User`, `MistralAI-Training`, `ExaSearchBot`, `ExaSearchBot-Images`, `ExaUser`, `DuckAssistBot`,
+  `Meta-WebIndexer`, `Meta-ExternalFetcher`, `AI2Bot`), each with its role and its operator's page; tokens known only
+  from third-party lists stay out. Only `crawlers` reads the table (`LOG_ONLY_UAS`): `g.robots`, `g.reachable` and
+  `RETRIEVAL_UAS` are unchanged, so no score moves. Each crawler row gains `scored`, the text views mark these
+  crawlers "log only", their search and user roles join the funnel's indexed and read layers, and Kimi's row of the
+  funnel now has its own crawlers.
+- **`guide/mcp.md` (+ zh): Trae, Kimi Code CLI, OpenClaw and Hermes Agent**, each from its own documentation, read
+  on 2026-11-26: where the config lives, its shape, how keys reach the server, and the tool timeout a long `run`
+  needs (Trae reads it from `env`, Kimi Code CLI from `toolTimeoutMs`, OpenClaw from `requestTimeoutMs`, Hermes from
+  `timeout`). TRAE CLI 2.0 gets the lines its documentation gives; Doubao MarsCode, now the Trae plugin, documents no
+  MCP support, so the guide says to use the Trae IDE. A setting a client does not document is not written. A new
+  generated block, `MCP:agents`, gives a passage to paste into a repository's `AGENTS.md` or `CLAUDE.md`: use
+  geo-score for AI visibility questions, and dry-run `run` and show the plan before anything is spent; it names the
+  paid tools as the server declares them and the pinned release. The generated install block names the clients
+  that read the standard `mcpServers` config. Documentation only.
 - **`geo-score crawlers LOG…`: the AI crawlers in the site's own access logs**, read offline (standard library only;
   no request is sent). It reads nginx and Apache combined logs (and vhost_combined), Vercel log drain and Cloudflare
   Logpush JSON lines, and other JSON lines with a user agent and a path (nginx's JSON log_format, Caddy), plain or gzip

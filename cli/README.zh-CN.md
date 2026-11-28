@@ -109,12 +109,15 @@ python3 geo_score.py diff before.json after.json [--format text|md|json] [--fail
 python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # 来了哪些 AI 爬虫、拿到了什么
 python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
 python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+python3 cli/geo_score.py crawlers access.log --conversions conversions.txt        # 漏斗一直算到成交
 zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
 `crawlers` 读网站自己的访问日志，统计 UA 写着 [reference/ai-crawlers.md](../reference/ai-crawlers.md) 里那些爬虫的请求：
-`g.reachable` 探测的 10 个检索爬虫，加上参考文件里的训练爬虫，两类分开；因为用户提问才去打开页面的检索爬虫（`ChatGPT-User`、`Claude-User`、
-`Perplexity-User`）单独一节。它离线、只读：不发任何请求，不打分，只写 `-o` 和 `--json-out` 指定的文件。
+`g.reachable` 探测的 10 个检索爬虫、参考文件里的训练爬虫，以及「只用于日志统计」那张表按各家官方文档加的爬虫（`Kimi-SearchBot`、`Amzn-SearchBot`、
+`MistralAI-User`、`ExaSearchBot`、`DuckAssistBot`、`Meta-WebIndexer` 等），后者标为「log only」，任何分数都不读。检索爬虫和训练爬虫分开；因为用户提问
+才去打开页面的爬虫（`ChatGPT-User`、`Claude-User`、`Perplexity-User`，以及日志表里用途为 user 的）单独一节。它离线、只读：不发任何请求，不打分，
+只写 `-o` 和 `--json-out` 指定的文件。
 
 | 日志 | 读哪些字段 |
 |---|---|
@@ -137,6 +140,26 @@ Cloudflare、Vercel 的防火墙字段记为拦截或质询）、请求最多的
 
 加 `--sitemap FILE`（本地的 `sitemap.xml` 或 `.xml.gz`）或 `--urls FILE`（每行一个网址或路径），报告会列出清单里没有任何检索爬虫、
 没有任何训练爬虫请求过的页面，以及请求过但从没拿到 2xx 的页面。
+
+
+**漏斗：收录、被读、被点、成交。** 四层，每层一个数，各自计数，不逐个访客追踪：
+
+| 层 | 统计什么 |
+|---|---|
+| 收录 | 建索引的检索爬虫的请求（`OAI-SearchBot`、`Claude-SearchBot`、`PerplexityBot`、`Googlebot`、`Bingbot`、`Applebot`、`Amazonbot`，以及日志表里用途为 search 的） |
+| 被读 | 用户提问触发的实时访问（`ChatGPT-User`、`Claude-User`、`Perplexity-User`，以及日志表里用途为 user 的） |
+| 被点 | 来自 AI 助手的访客请求（不是爬虫）：`utm_source` 是某个助手的别名或主机（`chatgpt.com`、`perplexity`、`doubao`……），否则看 Referer 的主机是否正好是它的主机（`chatgpt.com`、`www.perplexity.ai`、`kimi.moonshot.cn`、`chat.deepseek.com`……）；`utm_medium` 是 email、newsletter 等时算其他引荐 |
+| 成交 | 加 `--conversions FILE`（每行一个路径，结尾 `*` 表示前缀）时：同一地址和 UA 在一次 AI 访问后 24 小时内请求了转化页；不加则未测量 |
+
+另外给出：同一页面从实时访问到下一次来自同一助手的点击，间隔的中位数（ChatGPT-User 对 ChatGPT、Claude-User 对 Claude、Perplexity-User 对 Perplexity，
+7 天以内）；按助手分开的漏斗（参考列表里没有对应爬虫的助手，收录和被读显示 `—`，即未测量）；AI 访问落地最多的页面。Referer、查询串、地址和 UA
+只用来判断请求属于哪一类，从不抄录；只保留助手名和路径。既不带 Referer 也不带 `utm_source` 的 App（很多手机 App 如此）看不到。JSON：`funnel`。
+
+**和常见 AI 来源统计口径一致。** 引荐主机和 `utm_source` 别名按常见 AI 来源统计的口径整理，主机完全匹配，所以这里算一次 AI 访问，
+那些工具里也算一次；JSON 里的 `referral_rules` 写明清单版本（`ai-referral-hosts-2026-11`）。每个爬虫行带 `purpose`（`search`、`user` 或 `training`），
+即这类工具常报的三种 AI 用途，总数能对上。用常见字段名导出的 JSON 行日志（`time` 或 `timestamp`、`ip` 或 `remote_addr`、`path` 或 `url`、`status`、
+`userAgent` 或 `user_agent`）原样可读，只有日期没有时间的记录按 UTC 零点读。`crawlers` 不做的事：在浏览器里统计访问、在两次运行之间保存任何东西、
+下载地址段，或把请求原样写出：不导出原始记录，因为那会带上地址和 UA。
 
 `--format json`（或 `--json`）遵循 [`schema/crawlers.v1.json`](../schema/crawlers.v1.json)。退出码：`0` 日志读完；`2` 有文件读不了、
 所有文件里没有一行是上述格式的访问日志、IP 段文件或页面清单不可用，或者参数错误；加了 `--json` 时，退出码 2 会输出
@@ -307,7 +330,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | 写出 `geo-score-watch.json`（模型写死在里面）和 `queries.csv`，后者给 `list`、`pricing`、`alternative`、`problem`、`verdict` 每种类型各放一个占位问题 |
 | `watch check` | 校验配置和问题，按 `intent_tier` 统计每种类型有几个问题，对用不了的 `target_url` 给出警告，显示哪些引擎配了 Key、有没有价格 |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），以及按当前 `--runs` 单个问题的引用率能定得多准（标准误最多 0.5/√n），并以 0 退出，有没有 Key 都一样 |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--no-search-pass] [--format text\|md] [-q]` | 把所有问题问一遍，运行结果存到 `.geo-score/watch/runs/` 下。`--dry-run` 只打印计划和它的分辨力（至少要有几个问题朝同一方向变动，`watch diff` 才能判定变化；问题集比这还少时打印 `this plan cannot detect a change`），以及按当前 `--runs` 单个问题的引用率能定得多准（标准误最多 0.5/√n），并以 0 退出，有没有 Key 都一样。`--no-search-pass`（付费：调用次数约翻倍）另外关掉联网把每道题再问一遍 |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | 查看一次保存下来的运行（默认最近一次）。`csv` 每条回答一行：`week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | 合并多次保存下来的运行：最近 DAYS 天内开始的，或从运行 A 到运行 B（两头都算）。每一次都必须与最新一次一致（问题、每题问的次数、引擎、模型、`country` 和品牌域名都相同），否则以 1 退出，并列出每一次不一致的运行。给出合并了哪些运行、覆盖几天、多少条回答、标题引用率，以及每个引擎一行 |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | 在两次运行都回答了的问题上逐个引擎比较前后（默认最近两次）：变化了多少个百分点并附 95% 区间、跨引擎做 Holm 校正的精确配对检验，以及结论（`change`、`within noise`、`too few questions to tell` 或 `not measured`）。还会列出丢掉的和新增的引用。同一 id 下文字改过的问题不参与比较，并在说明里点名。`--fail-on-drop` 在有结论是变差的 `change` 时以退出码 4 退出 |
@@ -341,7 +364,8 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 |---|---|
 | `brand.domains` / `url_prefixes` | 哪些算你的。子域名也算；前缀用来覆盖你在别人网站上的店铺页或主页 |
 | `brand.aliases` | 回答里可能用到的其他名字。中文、日文、韩文名按包含匹配，其他名字按整词匹配 |
-| `country` | 两个字母的国家代码，传给支持指定地区的引擎：OpenAI、Claude、Perplexity 会用它；Gemini 和 OpenRouter 忽略它 |
+| `country` | 两个字母的国家代码，传给支持指定地区的引擎：OpenAI、Claude、Perplexity 会用它；Gemini 和 OpenRouter 忽略它。问题自己的 `country` 列优先 |
+| `language` | 问题用什么语言写（`en`、`de`、`pt-BR`……），用于报告按语言分组；不改变发出去的任何内容。默认用每道题的 `language` 列，没填就从题面推断 |
 | `runs` | 每个问题在每个引擎上问几次。设成 `3` 比率更稳，费用也是三倍 |
 | `max_calls` | 单次运行提问次数的硬上限 |
 | `budget_usd` | 花费上限，每次调用前核对一次；最多超出每个引擎一次调用的费用。设了预算时，没有价格的引擎不跑，除非加 `--allow-unpriced` |
@@ -350,6 +374,7 @@ python3 geo_score.py acme.com --ask "…" --brand "Acme Inc" --json   # 结果�
 | `engines[].key_env` / `base_url` | 从另一个环境变量读 Key；指向一个兼容的端点（`https://` 或 `http://localhost`） |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | 服务商调优：联网搜索工具的版本（OpenAI、Anthropic），每条回答的搜索次数和输出 token 数（Anthropic），每次搜索返回的结果数（OpenRouter） |
 | `engines[].timeout` | 等这个引擎回答的秒数，10 到 600（默认 120）。响应慢的接口、或要长时间搜索和推理的模型可能要调大；超时的请求不会重试，但可能照样计费 |
+| `no_search_pass` | **付费：调用次数约翻倍**，仍受同样的上限约束。设为 `true` 时，在每个能不搜索就回答的引擎上（不含 Perplexity）关掉联网把每道题再问一遍，看模型单凭训练数据会不会提到这个品牌。默认 `false` |
 
 OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，不是厂商自家的 App 或搜索：对没有原生搜索的模型（如
 `deepseek/deepseek-chat`），插件用 Exa 搜索（依据 OpenRouter 文档，2026-10-02 核对）。引擎 id 命名的是一条模型路由，不是一个产品。
@@ -365,7 +390,9 @@ OpenRouter 引擎测的是这个模型经 OpenRouter 的 `web` 插件作答，�
 
 `queries.csv` 有四列：`query_id,query,intent_tier,target_url`。问题要写成买家在 ChatGPT 里会打出来的样子，而且每周保持
 同一组问题不变。可选的第五列 `branded`（`auto`、`yes` 或 `no`；留空即 `auto`）用来覆盖对「问题里有没有提到品牌」的自动判断。
-品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。
+品牌名同时是一个常用词时用 `no`；匹配器认不出的昵称用 `yes`。另有两列可选的 `ladder` 和 `step`，用来编条件阶梯：
+基础题（`step` 为 0）和逐级加了条件的同一道题（1、2……）填同一个阶梯 id，见下文「条件阶梯」。还有 `country` 和 `language`
+两列，为单道题设定引擎收到的提问国家和它所用的语言，见下文「按国家、按语言」。
 
 `target_url` 可以不填，填了就是这个问题追踪的你的那一个页面。写完整的 `http(s)` 网址，或者以 `/` 开头的路径；路径会接在
 `brand.domains` 的第一个域名后面（`/pricing` 变成 `https://acme.com/pricing`）。
@@ -452,6 +479,40 @@ Perplexity 未标注来源现在留在这里；`citations` 和 `cited` 的读法
 **重复一致性。** `runs` 大于 1 时，「Repeat consistency of cited domains」按引擎给出同一问题的几条回答所引域名有多一致（每两条带引用的回答
 算 Jaccard 重合度，按问题取平均，再取各问题的中位数），并列出最不一致的问题。不带引用的回答不计入；每题只问一次时写「未测量」。
 只是描述，`watch diff` 不读它。JSON：`summary.engines` 每行的 `consistency`。细节见[guide/watch-methodology.zh-CN.md 第 8 节](../guide/watch-methodology.zh-CN.md#8-一次提问一天一个月)。
+
+**第一条搜索。** 「The first search each answer ran」按引擎给出暴露了搜索词的回答数，以及其中第一条搜索词提到你、提到被跟踪竞品的条数；
+再在不提你的问题里，把「第一条搜索词含你」和「回答提到你」交叉成表。不暴露搜索词的回答（Perplexity、OpenRouter）未测量。
+JSON：`summary.first_search`。
+
+**凭记忆提到（`no_search_pass`）。** 设了 `no_search_pass: true` 或 `--no-search-pass` 时，在能不搜索就回答的引擎上关掉联网把同一个计划再问一遍。
+「Named from memory, with web search off」按引擎给出这些回答里提到你的条数，旁边并列同一引擎联网回答同一批问题时的结果。
+这些回答存在 `memory_samples` 里，和 `samples` 分开，所以引用率、合并和 `watch diff` 都不读它们；关掉联网却仍然搜索了的回答不计入。
+JSON：`summary.memory`。
+
+**条件阶梯。** `ladder` 相同的问题组成一个阶梯，`step` 从低到高。「Condition ladders」给出每一级的回答数、其中提到和引用你的条数，
+并写明从哪一级起没有回答再提到你（`dropped_at`），以及从哪一级起提到你的占比跌到基础题的一半（`halved_at`）。只是计数，不做检验。
+JSON：`summary.ladders`。
+
+**入选、举例、排除。** 「How the answers name each brand」把提到每个被跟踪品牌的回答分成入选（以它开头的列表项或标题，或推荐它的句子）、
+举例（跟在 such as、for example、例如、包括……后面）、排除（does not support、not suitable、lacks、不支持、不适合、缺少……）和未判定。
+是读英文和中文字词的规则，不是模型。JSON：`summary.share_of_voice` 和 `summary.engines` 上的 `roles`。四项的细节见
+[guide/watch-methodology.zh-CN.md 第 10 节](../guide/watch-methodology.zh-CN.md#10-引用率之外第一条搜索模型记忆条件阶梯以及品牌被怎样提到)。
+
+**按国家、按语言。** 每个目标国家的题用当地买家的说法来写，并填上 `country`（愿意的话再填 `language`）。报告会加上「By country」和
+「By language」两张表，每组一行，从不合并，并在表格上方说明标题率合并了几组；后一次运行里某道题换了提问国家，`watch diff`
+不配对它，合并时也不合并。JSON：`summary.by_country`、`summary.by_language`。
+
+**一次运行能看出多大的变化。** `watch run --dry-run` 按 50% 的引用率（最坏情况）给出：两次这样的运行做比较时，在 95% 置信度、80% 把握下
+能判定为变化的最小引用率变化，整体一个，每个国家各一个；一个按问题数算（同一道题的几条回答一起动，和 diff 的检验一致），一个按回答数算。
+报告对标题率给出同样的数，「By country」「By language」每一行各有一个。JSON：`summary.detectable`、每行的 `detectable_pp`；
+MCP dry run 的 `plan.detectable`。细节见[guide/watch-methodology.zh-CN.md 第 11 节](../guide/watch-methodology.zh-CN.md#11-按国家用当地说法分开测以及一份样本能看出多大的变化)。
+
+**引擎改版。** 引擎可能让所有品牌的引用一起变。`watch diff` 对每个被跟踪的竞品也做配对检验：你这一行有变化、且至少一半竞品朝同一方向动了，
+就把这一行标为 `possible_engine_change`，并在备注里写出是哪几个。它还给出每个引擎前后两次的每条回答基准（平均每条回答引用的网页、
+提到和入选的被跟踪品牌、列表项），引用网页数明显变动时写备注，并列出 [reference/engine-events.md](../reference/engine-events.md) 里日期落在两次运行之间的引擎改版事件。
+`watch report` 加上这些基准（「Per answer, per engine」）和运行前 30 天内的事件。这些都不改变结论。JSON：比较输出里的 `competitor_moves`、
+`possible_engine_change`、`per_answer` 和 `events`；`summary.engines` 上的 `per_answer` 和 `summary.events`。细节见
+[guide/watch-methodology.zh-CN.md 第 12 节](../guide/watch-methodology.zh-CN.md#12-引擎改版一起变的竞品以及每条回答的基准)。
 
 **通过 MCP 使用。** `uvx geo-score@1.9.0 mcp`（用 pipx 安装后是 `geo-score-mcp`，在克隆的仓库里是 `geo_score.py mcp`）通过 stdio 把三级都提供给 Agent，配置和上限都一样。
 它从自己的环境变量读 Key，而桌面应用和你的 shell 并不共享环境变量；图形界面客户端也不会在你的项目目录里启动它，

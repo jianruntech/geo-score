@@ -117,14 +117,18 @@ needs only `geo_score.py`.
 python3 cli/geo_score.py crawlers /var/log/nginx/access.log access.log.1.gz      # which AI crawlers came, and what they got
 python3 cli/geo_score.py crawlers access.log --format md -o geo/crawler-logs.md --json-out geo/crawler-logs.json
 python3 cli/geo_score.py crawlers access.log --verify-ips GPTBot=gptbot.json --sitemap sitemap.xml
+python3 cli/geo_score.py crawlers access.log --conversions conversions.txt        # the funnel down to conversions
 zcat access.log.*.gz | python3 cli/geo_score.py crawlers -
 ```
 
 `crawlers` reads the site's own access logs and counts the requests whose user-agent names a crawler of
-[reference/ai-crawlers.md](../reference/ai-crawlers.md): the ten retrieval crawlers `g.reachable` probes and the
-reference's training crawlers, kept apart, with the retrieval crawlers that fetch a page because a user asked a question
-(`ChatGPT-User`, `Claude-User`, `Perplexity-User`) in a section of their own. It is offline and read-only: it sends no
-request, scores nothing, and writes only the files `-o` and `--json-out` name.
+[reference/ai-crawlers.md](../reference/ai-crawlers.md): the ten retrieval crawlers `g.reachable` probes, the
+reference's training crawlers, and the crawlers its log-only table adds from their operators' documentation
+(`Kimi-SearchBot`, `Amzn-SearchBot`, `MistralAI-User`, `ExaSearchBot`, `DuckAssistBot`, `Meta-WebIndexer` and others),
+marked "log only" and read by no score. Retrieval and training crawlers are kept apart, and those that fetch a page
+because a user asked a question (`ChatGPT-User`, `Claude-User`, `Perplexity-User`, and the log-only ones whose role
+is user) have a section of their own. It is offline and read-only: it sends no request, scores nothing, and writes
+only the files `-o` and `--json-out` name.
 
 | Logs | What is read |
 |---|---|
@@ -152,6 +156,32 @@ downloads a range file.
 
 `--sitemap FILE` (a local `sitemap.xml` or `.xml.gz`) or `--urls FILE` (one URL or path a line) adds the listed pages
 no retrieval crawler, and no training crawler, requested, and those requested but never answered with a 2xx.
+
+**The funnel: indexed, read, clicked, converted.** Four layers, each one figure, counted apart rather than followed
+visitor by visitor:
+
+| Layer | What counts |
+|---|---|
+| indexed | requests from the retrieval crawlers that build an index (`OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`, `Googlebot`, `Bingbot`, `Applebot`, `Amazonbot`, and the log-only ones whose role is search) |
+| read | live fetches a user's question triggered (`ChatGPT-User`, `Claude-User`, `Perplexity-User`, and the log-only ones whose role is user) |
+| clicked | requests from visitors, not crawlers, that arrived from an AI assistant: `utm_source` is one of its aliases or hosts (`chatgpt.com`, `perplexity`, `doubao`…), or else the Referer host is one of its hosts, exactly (`chatgpt.com`, `www.perplexity.ai`, `kimi.moonshot.cn`, `chat.deepseek.com`…); a `utm_medium` of email, newsletter and the like makes it another referral |
+| converted | with `--conversions FILE` (one path a line, a trailing `*` for a prefix): requests for a conversion page within 24 hours after an AI visit from the same address and user-agent; without it, not measured |
+
+Beside them: the median time from a live fetch of a page to the next click from the same assistant onto that page
+(ChatGPT-User to ChatGPT, Claude-User to Claude, Perplexity-User to Perplexity, within 7 days), the funnel per
+assistant (an assistant with no crawler in the reference shows `—` for indexed and read: not measured), and the
+pages AI visits landed on most. The Referer, the query string, the address and the user-agent are read to classify
+a request and never copied; only the assistant's name and the path are kept. An app that sends neither a Referer nor
+`utm_source`, as many mobile apps do, is not seen. JSON: `funnel`.
+
+**Counted the way AI-source analytics count.** The referral hosts and `utm_source` aliases follow the conventions
+AI-source analytics commonly count by, matched exactly, so an AI visit here is one there; `referral_rules` in the
+JSON names the list's version (`ai-referral-hosts-2026-11`). Each crawler row carries `purpose` (`search`, `user` or
+`training`), the three AI purposes such tools report, so totals line up. Log records exported as JSON lines with the
+usual field names (`time` or `timestamp`, `ip` or `remote_addr`, `path` or `url`, `status`, `userAgent` or
+`user_agent`) read as they are, and a date with no time reads as midnight UTC. What `crawlers` does not do: count
+visits in the browser, keep anything between runs, download address ranges, or write any request out again: there is
+no export of raw records, since those would carry addresses and user-agents.
 
 `--format json` (or `--json`) follows [`schema/crawlers.v1.json`](../schema/crawlers.v1.json). Exit codes: `0` the
 logs were read, `2` a file could not be read, no line in any file is an access log in a format above, a range or page
@@ -369,7 +399,7 @@ measured" and the readiness report is unchanged.
 |---|---|
 | `watch init [--dir D] [--brand NAME] [--domain D]… [--competitor NAME=DOMAIN]… [--country CC] [--force]` | Write `geo-score-watch.json` (models pinned) and `queries.csv`, with one placeholder question for each of the types `list`, `pricing`, `alternative`, `problem` and `verdict` |
 | `watch check` | Validate the config and the questions, count the questions of each `intent_tier`, warn about a `target_url` it cannot use, and show which engines have keys and prices |
-| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer) and how precisely one question's rate is pinned down at the configured `--runs` (a standard error of at most 0.5/√n), and exits 0, with or without keys |
+| `watch run [--dry-run] [--engines a,b] [--limit N] [--runs N] [--max-calls N] [--budget-usd X] [--allow-unpriced] [--no-search-pass] [--format text\|md] [-q]` | Ask everything and save the run under `.geo-score/watch/runs/`. `--dry-run` prints the plan and its resolution, the fewest questions that must move the same way for `watch diff` to call a change (and `this plan cannot detect a change` when the set has fewer) and how precisely one question's rate is pinned down at the configured `--runs` (a standard error of at most 0.5/√n), and exits 0, with or without keys. `--no-search-pass` (paid: about doubles the calls) also asks every question with web search off |
 | `watch report [RUN] --format text\|md\|csv\|json [-o FILE]` | A saved run. `csv` has one row per answer: `week, query_id, query, intent_tier, engine, cited, quoted_url, rank, other_domains_cited, note, branded, target_cited` |
 | `watch report --since DAYS\|--runs A..B [--format text\|md\|json] [-o FILE]` | Several saved runs pooled: those started in the last DAYS days, or from run A to run B, both included. Each must match the newest (same questions, asks per question, engines, models, country and brand domains); otherwise it exits 1 and names every run that differs. Gives the runs, the days they cover, the answers, the headline rate and a row per engine |
 | `watch diff [A] [B] [--format text\|md\|json] [--fail-on-drop]` | Before and after, per engine, on the questions both runs answered: the change in points with a 95% interval, an exact paired test Holm-corrected across engines, and a verdict (`change`, `within noise`, `too few questions to tell` or `not measured`). Also lists citations lost and gained. A question whose text changed under the same id is not compared, and a note names it. `--fail-on-drop` exits 4 when a verdict is a change for the worse |
@@ -403,7 +433,8 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 |---|---|
 | `brand.domains` / `url_prefixes` | What counts as yours. Subdomains count; a prefix covers a store or profile on someone else's site |
 | `brand.aliases` | Other names the answer may use. Chinese, Japanese and Korean names match anywhere; all others match whole words |
-| `country` | Two-letter code passed to the engines that accept a location: OpenAI, Claude and Perplexity apply it; Gemini and OpenRouter ignore it |
+| `country` | Two-letter code passed to the engines that accept a location: OpenAI, Claude and Perplexity apply it; Gemini and OpenRouter ignore it. A question's own `country` column wins over it |
+| `language` | The language the questions are written in (`en`, `de`, `pt-BR`…), for the report's split by language; it changes nothing that is sent. Default: each question's `language` column, else read from its text |
 | `runs` | Asks per question per engine. `3` gives steadier rates at three times the cost |
 | `max_calls` | Exact cap on questions asked in one run |
 | `budget_usd` | Spend cap, checked before every call; it can be exceeded by at most one call per engine. With a budget, unpriced engines are left out unless `--allow-unpriced` |
@@ -412,6 +443,7 @@ or `$GEO_SCORE_WATCH_CONFIG`); `watch init` writes into `--dir` (default `.`).
 | `engines[].key_env` / `base_url` | Read the key from another variable; point at a compatible endpoint (`https://` or `http://localhost`) |
 | `engines[].tool`, `max_searches`, `max_tokens`, `max_results` | Provider tuning: the web-search tool version (OpenAI, Anthropic), searches and output tokens per answer (Anthropic), results per search (OpenRouter) |
 | `engines[].timeout` | Seconds to wait for this engine's answer, 10 to 600 (default 120). A slow endpoint, or a model that searches and reasons at length, may need more; a request that timed out is not retried and may still be billed |
+| `no_search_pass` | **Paid: about doubles the calls**, within the same caps. `true` asks every question a second time with web search off, on each engine that can answer without searching (not Perplexity), to see whether the model names the brand from its training alone. Default `false` |
 
 An OpenRouter engine measures that model answering through OpenRouter's `web` plugin, not the vendor's own app
 or search: for a model without native search, such as `deepseek/deepseek-chat`, the plugin searches with Exa
@@ -434,7 +466,10 @@ variables instead, and its value is never printed. The warnings change no exit c
 way a buyer would type them into ChatGPT, and keep the set fixed from week to week. An optional
 fifth column, `branded` (`auto`, `yes` or `no`; empty means `auto`), overrides the automatic check
 for questions that name the brand. Use `no` when the brand name is also a common word, and `yes` for
-a nickname the matcher cannot see.
+a nickname the matcher cannot see. Two more optional columns, `ladder` and `step`, group a condition
+ladder: the same ladder id on a base question (`step` 0) and on the same question with more conditions
+(1, 2…); see "Condition ladders" below. And `country` and `language` set, for one question, the country the
+engines are told it is asked from and the language it is written in; see "By country and by language" below.
 
 `target_url` is optional: the one page of yours a question tracks. Write an absolute `http(s)` URL,
 or a path that starts with `/`, which is joined to the first of `brand.domains`
@@ -557,6 +592,50 @@ answers to one question cite the same domains (the Jaccard overlap of every two 
 question, the median over questions) and lists the least consistent questions. Answers that cite nothing are left
 out; with one ask per question it says not measured. Descriptive only: `watch diff` does not read it. JSON:
 `consistency` on each row of `summary.engines`. Details: [guide/watch-methodology.md, section 8](../guide/watch-methodology.md#8-one-ask-one-day-one-month).
+
+**The first search.** "The first search each answer ran" counts, per engine, the answers that show their searches
+and how many of their first search queries name you or a tracked competitor, then crosses the brand in the first
+search with the brand named in the answer, over the questions that do not name you. Answers that show no search
+(Perplexity, OpenRouter) are not measured. JSON: `summary.first_search`.
+
+**Named from memory (`no_search_pass`).** With `no_search_pass: true` or `--no-search-pass`, the same plan is asked
+again with web search off, on the engines that can answer without searching. "Named from memory, with web search
+off" gives, per engine, how many of those answers name you, beside the same engine's answers with search on the
+same questions. They are saved in `memory_samples`, apart from `samples`, so the cited rate, pooling and `watch
+diff` never read them; an answer that searched anyway is left out. JSON: `summary.memory`.
+
+**Condition ladders.** Questions that share a `ladder` id form a ladder, lowest `step` first. "Condition ladders"
+gives each step's answers and how many name and cite you, and says at which step no answer named you any more
+(`dropped_at`) and at which the share naming you fell to half the base's (`halved_at`). Counts, no test. JSON:
+`summary.ladders`.
+
+**Selected, example, excluded.** "How the answers name each brand" splits, for every tracked brand, the answers that
+name it into selected (a list item or heading that starts with it, or a sentence recommending it), example (after
+such as, for example, 例如, 包括…), excluded (does not support, not suitable, lacks, 不支持, 不适合, 缺少…) and
+undetermined. Rules over English and Chinese words, not a model. JSON: `roles` on `summary.share_of_voice` and
+`summary.engines`. All four: [guide/watch-methodology.md, section 10](../guide/watch-methodology.md#10-beside-the-cited-rate-the-first-search-memory-ladders-and-how-a-brand-is-named).
+
+**By country and by language.** Write each target country's questions in the words buyers there use, and give
+them a `country` (and, if you like, a `language`). The report then adds "By country" and "By language", one row
+each, never merged, and says above the tables that the headline pools them; a question asked from another country
+in a later run is neither paired by `watch diff` nor pooled. JSON: `summary.by_country`, `summary.by_language`.
+
+**The smallest change a run can see.** `watch run --dry-run` prints, at a 50% rate (the worst case), the smallest
+change in the cited rate that a diff of two such runs has an 80% chance to call at 95% confidence, overall and per
+country: one figure counting questions (each question's answers moving together, as diff tests) and one counting
+answers. The report prints the same for its headline, and each "By country" and "By language" row its own. JSON:
+`summary.detectable`, `detectable_pp` on each row; the MCP dry run's `plan.detectable`. Details:
+[guide/watch-methodology.md, section 11](../guide/watch-methodology.md#11-country-by-country-in-the-local-words-and-the-change-a-sample-can-see).
+
+**Engine changes.** An engine can change how it cites for every brand at once. `watch diff` runs its paired test on
+each tracked competitor too, and when your row changed and at least half of them moved the same way it flags the
+row `possible_engine_change` and names them in the notes. It gives each engine's per-answer benchmarks before and
+after (pages cited, tracked brands named and selected, list items per answer) and notes a shift in pages cited, and
+it names the engine events of [reference/engine-events.md](../reference/engine-events.md) dated between the two runs.
+`watch report` adds the benchmarks ("Per answer, per engine") and the events of the 30 days before the run. None of
+this changes a verdict. JSON: `competitor_moves`, `possible_engine_change`, `per_answer` and `events` in the diff;
+`per_answer` on `summary.engines` and `summary.events`. Details:
+[guide/watch-methodology.md, section 12](../guide/watch-methodology.md#12-engine-changes-competitors-that-move-together-and-per-answer-benchmarks).
 
 **Over MCP.** `uvx geo-score@1.9.0 mcp` (`geo-score-mcp` after a pipx install, `geo_score.py mcp` from a
 clone) serves all three levels to an agent over stdio, with the same config and caps. It reads keys from its own environment, which a desktop

@@ -479,7 +479,7 @@ npx skills add jianruntech/geo-score --skill geo-watch     # 按名字只装一�
 claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp
 ```
 
-**标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端：
+**标准配置**（文件里不写 Key），适用于任何读取 `mcpServers` 配置文件的客户端（Cursor、Trae、Kimi Code CLI、LM Studio 等）：
 
 ```
 {
@@ -509,7 +509,7 @@ Claude Desktop 不读你 shell 里的 `PATH`：`command` 请填 `which uvx` 输�
 |---|:-:|---|---|---|---|
 | `score_site` | 1 | 免费 | 否 | 只读、访问外部 | **`url`**、`urls`、`sample` |
 | `ask` | 2 | 付费（你的 Key） | 否 | 非破坏性、访问外部 | **`question`**、`engines`、`brand`、`domains` |
-| `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd` |
+| `run` | 3 | 付费（你的 Key）；`dry_run` 免费 | 运行文件，存到配置文件旁的 `.geo-score/watch/runs/` | 非破坏性、访问外部 | `dry_run`、`engines`、`limit`、`max_calls`、`budget_usd`、`no_search_pass` |
 | `list_runs` | 3 | 免费 | 否 | 只读、幂等 | — |
 | `report` | 3 | 免费 | 否 | 只读、幂等 | `run`、`since`、`format` |
 | `diff` | 3 | 免费 | 否 | 只读、幂等 | `from`、`to`、`format` |

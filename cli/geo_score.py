@@ -13,7 +13,9 @@ Levels 2 and 3 live in geo_watch.py next to this file.
 No dependencies. Python 3.8+. Reads only public URLs.
 Rubric: https://github.com/jianruntech/geo-score
 """
-import argparse, concurrent.futures as cf, datetime, fnmatch, html, io, json, os, re, sys, textwrap, threading, time, zlib
+import argparse, concurrent.futures as cf, datetime, fnmatch, hashlib, html, io, json, os, re, sys, textwrap, threading
+import time, zlib
+from collections import Counter
 import http.client, ipaddress, socket, urllib.error, urllib.parse, urllib.request
 try:
     import ssl
@@ -4446,9 +4448,34 @@ RETRIEVAL_OPERATORS = {"OAI-SearchBot": "OpenAI", "ChatGPT-User": "OpenAI", "Cla
                        "Googlebot": "Google", "Bingbot": "Microsoft", "Applebot": "Apple", "Amazonbot": "Amazon"}
 # the retrieval crawlers that fetch a page live because a user's question asked for it, not to build an index
 LIVE_FETCHERS = ("ChatGPT-User", "Claude-User", "Perplexity-User")
-LOG_CRAWLERS = ([{"name": n, "operator": RETRIEVAL_OPERATORS[n], "kind": "retrieval", "live": n in LIVE_FETCHERS}
-                 for n, _ in RETRIEVAL_UAS] +
-                [{"name": n, "operator": o, "kind": "training", "live": False} for n, o in TRAINING_UAS])
+# The third table of reference/ai-crawlers.md: crawlers its operators document that only `crawlers` counts, never
+# g.robots or g.reachable, so adding one never moves a score. (name, operator, role: search builds an index, user
+# fetches live at a user's request, training collects training data.) cli/test_crawler_logs.py holds it to the table.
+LOG_ONLY_UAS = [
+    ("Kimi-SearchBot", "Moonshot AI", "search"),
+    ("Kimi-User", "Moonshot AI", "user"),
+    ("KimiBot", "Moonshot AI", "training"),
+    ("Amzn-SearchBot", "Amazon", "search"),
+    ("Amzn-User", "Amazon", "user"),
+    ("MistralAI-Index", "Mistral AI", "search"),
+    ("MistralAI-User", "Mistral AI", "user"),
+    ("MistralAI-Training", "Mistral AI", "training"),
+    ("ExaSearchBot", "Exa", "search"),
+    ("ExaSearchBot-Images", "Exa", "search"),
+    ("ExaUser", "Exa", "user"),
+    ("DuckAssistBot", "DuckDuckGo", "user"),
+    ("Meta-WebIndexer", "Meta", "search"),
+    ("Meta-ExternalFetcher", "Meta", "user"),
+    ("AI2Bot", "Allen Institute for AI", "training"),
+]
+LOG_CRAWLERS = ([{"name": n, "operator": RETRIEVAL_OPERATORS[n], "kind": "retrieval", "live": n in LIVE_FETCHERS,
+                  "scored": True} for n, _ in RETRIEVAL_UAS] +
+                [{"name": n, "operator": o, "kind": "training", "live": False, "scored": False} for n, o in TRAINING_UAS] +
+                [{"name": n, "operator": o, "kind": "training" if r == "training" else "retrieval", "live": r == "user",
+                  "scored": False} for n, o, r in LOG_ONLY_UAS])
+# every crawler the logs count as a live fetch: the scored three and the log-only ones whose role is user
+LOG_LIVE = tuple(x["name"] for x in LOG_CRAWLERS if x["live"])
+TRAINING_NAMES = frozenset(n for n, _ in TRAINING_UAS)
 # a product token in a user-agent, whole: "Googlebot/2.1" names Googlebot, "Googlebot-Image/1.0" does not
 _LOG_UA = re.compile(r"(?<![A-Za-z0-9_-])(%s)(?![A-Za-z0-9_-])" % "|".join(
     re.escape(x["name"]) for x in sorted(LOG_CRAWLERS, key=lambda x: -len(x["name"]))), re.I)
@@ -4463,10 +4490,56 @@ LOG_JSON_PAGES = 1000
 _LOG_BLOCK_ACTIONS = frozenset(["block", "drop", "deny", "challenge", "jschallenge", "managedchallenge",
                                 "managed_challenge", "connectionclose", "rate_limit", "ratelimit"])
 _LOG_REFUSED = (401, 403, 429)
+# The funnel (read_crawler_logs' funnel): indexed (the retrieval crawlers that build an index), read (the live fetches a
+# user's question triggers), clicked (visits that arrive from an AI assistant) and, with --conversions, converted.
+# A visit arrives from an assistant when its utm_source is one of the assistant's aliases or hosts, or, failing that,
+# when its Referer host is one of the assistant's hosts, exactly (lower case, no port); a utm_medium of email,
+# newsletter and the like makes it another kind of referral. The hosts and aliases follow the conventions AI-source
+# analytics commonly count by (the funnel's referral_rules names this list's version, AI_REFERRAL_RULES), so an AI
+# visit here is one there. (assistant, its hosts, its utm_source aliases, its index crawler and live fetcher in
+# reference/ai-crawlers.md, or None)
+AI_REFERRAL_RULES = "ai-referral-hosts-2026-11"
+AI_ASSISTANTS = [
+    ("ChatGPT", ("chatgpt.com", "chat.openai.com"), ("chatgpt", "openai"), "OAI-SearchBot", "ChatGPT-User"),
+    ("Claude", ("claude.ai",), ("claude",), "Claude-SearchBot", "Claude-User"),
+    ("Perplexity", ("perplexity.ai", "www.perplexity.ai", "app.perplexity.ai"), ("perplexity",), "PerplexityBot",
+     "Perplexity-User"),
+    ("Gemini", ("gemini.google.com",), ("gemini",), "Googlebot", None),
+    ("Copilot", ("copilot.microsoft.com",), ("copilot",), "Bingbot", None),
+    ("Kimi", ("kimi.com", "www.kimi.com", "kimi.ai", "www.kimi.ai", "kimi.moonshot.cn"), ("kimi",), "Kimi-SearchBot",
+     "Kimi-User"),
+    ("DeepSeek", ("chat.deepseek.com",), ("deepseek",), None, None),
+    ("Doubao", ("doubao.com", "www.doubao.com"), ("doubao",), None, None),
+    ("Coze", ("coze.cn", "www.coze.cn", "code.coze.cn"), ("coze",), None, None),
+    ("Trae", ("www.trae.cn",), ("trae",), None, None),
+    ("Qwen", ("qianwen.com", "www.qianwen.com", "chat.qwen.ai"), ("qwen", "qianwen"), None, None),
+    ("Yuanbao", ("yuanbao.tencent.com",), ("yuanbao",), None, None),
+    ("ima", ("ima.qq.com",), ("ima",), None, None),
+    ("ChatGLM", ("chatglm.cn",), ("chatglm",), None, None),
+    ("Metaso", ("metaso.cn",), ("metaso",), None, None),
+    ("Spark", ("xinghuo.xfyun.cn",), ("xinghuo",), None, None),
+    ("MiniMax", ("agent.minimax.io",), ("minimax",), None, None),
+    ("StepFun", ("chat.stepfun.com",), ("stepfun",), None, None),
+    ("Tiangong", ("www.tiangong.cn",), ("tiangong",), None, None),
+    ("Nami AI", ("www.n.cn",), ("namiai",), None, None),
+    ("SenseChat", ("chat.sensetime.com",), (), None, None),
+    ("Yiyan", ("yiyan.baidu.com",), ("yiyan",), None, None),
+    ("Manus", ("manus.im",), ("manus",), None, None),
+    ("Cue", ("cue.im",), ("cue",), None, None),
+]
+_AI_HOST = dict((h, a[0]) for a in AI_ASSISTANTS for h in a[1])
+_AI_UTM = dict([(x, a[0]) for a in AI_ASSISTANTS for x in a[2]] + list(_AI_HOST.items()))
+_OTHER_MEDIA = frozenset(["email", "e-mail", "newsletter", "sms", "social", "paid_social", "paid-social", "display",
+                          "affiliate", "push", "banner"])
+LOG_CLICKS_MAX = 200000         # AI visits and conversion requests kept to pair them; past it they are counted only
+LOG_LIVE_TIMES_MAX = 1000       # live fetch times kept per crawler and page, to time the step from read to click
+CONVERSION_HOURS = 24           # a conversion counts after an AI visit by the same address and user-agent this recent
+READ_TO_CLICK_DAYS = 7          # a click pairs with its page's latest live fetch at most this many days before it
 _COMBINED = re.compile(
     r'^(?:(?P<vhost>\S+) )?(?P<ip>\S+) \S+ \S+ \[(?P<time>[^\]]{1,64})\] "(?P<req>(?:[^"\\]|\\.){0,8192})" '
-    r'(?P<status>\d{3}|-) \S+(?: "(?:[^"\\]|\\.){0,8192}" "(?P<ua>(?:[^"\\]|\\.){0,8192})")?')
-_ISO_TIME = re.compile(r"^(\d{4})-(\d\d)-(\d\d)[T ](\d\d):(\d\d):(\d\d)(?:[.,]\d+)?\s*(Z|[+-]\d\d:?\d\d)?$", re.I)
+    r'(?P<status>\d{3}|-) \S+(?: "(?P<ref>(?:[^"\\]|\\.){0,8192})" "(?P<ua>(?:[^"\\]|\\.){0,8192})")?')
+_ISO_TIME = re.compile(r"^(\d{4})-(\d\d)-(\d\d)(?:[T ](\d\d):(\d\d):(\d\d)(?:[.,]\d+)?)?\s*(Z|[+-]\d\d:?\d\d)?$",
+                       re.I)
 _CLF_TIME = re.compile(r"^(\d\d)/([A-Za-z]{3})/(\d{4}):(\d\d):(\d\d):(\d\d) ([+-]\d{4})$")
 _MONTHS = dict((m, i) for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
                                               "nov", "dec"], 1))
@@ -4475,7 +4548,8 @@ _UTC = datetime.timezone.utc
 
 def _log_time(v):
     """A log timestamp as an aware UTC datetime, or None: epoch seconds, milliseconds, microseconds or nanoseconds
-    (told apart by size), ISO 8601 / RFC 3339 (no offset is read as UTC), or Apache's 10/Oct/2026:13:55:36 -0700."""
+    (told apart by size), ISO 8601 / RFC 3339 (no offset is read as UTC; a date alone is midnight), or Apache's
+    10/Oct/2026:13:55:36 -0700."""
     try:
         if isinstance(v, bool):
             return None
@@ -4497,7 +4571,8 @@ def _log_time(v):
                 if tz and tz.upper() != "Z":
                     tz = tz.replace(":", "")
                     off = (int(tz[1:3]) * 60 + int(tz[3:5])) * (1 if tz[0] == "+" else -1)
-                t = (datetime.datetime(int(y), int(mo), int(d), int(h), int(mi), int(se), tzinfo=_UTC)
+                # a date alone, as some log exports write it, is midnight UTC
+                t = (datetime.datetime(int(y), int(mo), int(d), int(h or 0), int(mi or 0), int(se or 0), tzinfo=_UTC)
                      - datetime.timedelta(minutes=off))
             else:
                 m = _CLF_TIME.match(s)
@@ -4559,12 +4634,13 @@ def _log_json(obj):
         p = obj["proxy"]
         return "vercel", {"time": p.get("timestamp") or obj.get("timestamp"), "ip": p.get("clientIp"),
                           "path": p.get("path") or obj.get("path"), "status": p.get("statusCode") or obj.get("statusCode"),
-                          "ua": _first(p, ["userAgent"]), "action": p.get("wafAction")}
+                          "ua": _first(p, ["userAgent"]), "action": p.get("wafAction"), "ref": _first(p, ["referer"])}
     if "ClientRequestUserAgent" in obj or "EdgeResponseStatus" in obj:
         return "cloudflare", {"time": obj.get("EdgeStartTimestamp"), "ip": obj.get("ClientIP"),
                               "path": obj.get("ClientRequestURI") or obj.get("ClientRequestPath"),
                               "status": obj.get("EdgeResponseStatus"), "ua": obj.get("ClientRequestUserAgent"),
-                              "action": obj.get("SecurityAction") or obj.get("WAFAction")}
+                              "action": obj.get("SecurityAction") or obj.get("WAFAction"),
+                              "ref": obj.get("ClientRequestReferer")}
     ua = _first(obj, ["user_agent", "userAgent", "http_user_agent", "ua", "useragent", "user-agent", "User-Agent",
                       "request.headers.User-Agent", "request.headers.user-agent", "headers.User-Agent",
                       "headers.user-agent", "http.user_agent", "http.request.headers.user-agent"])
@@ -4581,7 +4657,9 @@ def _log_json(obj):
                                        "request.client_ip", "http.client_ip", "x_forwarded_for"]),
                     "path": path, "status": _first(obj, ["status", "status_code", "statusCode", "response_status",
                                                          "http.status_code", "response.status"]),
-                    "ua": ua, "action": None}
+                    "ua": ua, "action": None,
+                    "ref": _first(obj, ["referer", "referrer", "http_referer", "http_referrer", "request.headers.Referer",
+                                        "request.headers.referer", "headers.Referer", "headers.referer", "http.referer"])}
 
 
 def parse_log_line(line):
@@ -4606,13 +4684,65 @@ def parse_log_line(line):
         parts = m.group("req").split(" ")
         fmt = "combined"
         f = {"ip": m.group("ip"), "path": parts[1] if len(parts) > 1 else None, "status": m.group("status"),
-             "ua": (m.group("ua") or "").replace('\\"', '"').replace("\\x22", '"') or None, "action": None}
+             "ua": (m.group("ua") or "").replace('\\"', '"').replace("\\x22", '"') or None, "action": None,
+             "ref": m.group("ref")}
         raw_time = m.group("time")
     ua = f["ua"] if isinstance(f["ua"], str) else None
     action = f["action"].lower().replace(" ", "") if isinstance(f["action"], str) else ""
     return fmt, {"time": _log_time(raw_time), "ip": f["ip"] if isinstance(f["ip"], str) else None,
                  "path": _log_path(f["path"]), "status": _log_status(f["status"]), "ua": ua,
-                 "firewall": action in _LOG_BLOCK_ACTIONS}
+                 "firewall": action in _LOG_BLOCK_ACTIONS, "assistant": ai_referral(f["path"], f.get("ref"))}
+
+
+def ai_referral(raw_path, referer):
+    """The AI assistant a request arrived from (AI_ASSISTANTS), or None: its utm_source first, then its Referer host.
+    Only the assistant's name is kept; the Referer and the query string are never stored."""
+    q = {}
+    if isinstance(raw_path, str) and "?" in raw_path:
+        try:
+            q = urllib.parse.parse_qs(raw_path.split("?", 1)[1].split("#", 1)[0][:2048])
+        except ValueError:
+            q = {}
+    src = (q.get("utm_source") or [""])[0].strip().lower()
+    if src in _AI_UTM:
+        return _AI_UTM[src]
+    if (q.get("utm_medium") or [""])[0].strip().lower() in _OTHER_MEDIA:
+        return None
+    if not isinstance(referer, str) or "://" not in referer[:12]:
+        return None
+    try:
+        host = (urllib.parse.urlsplit(referer[:2048]).hostname or "").lower()
+    except ValueError:
+        return None
+    return _AI_HOST.get(host)
+
+
+def load_conversions(path):
+    """--conversions FILE: the paths that count as a conversion, one a line (a thank-you page, an order confirmation);
+    a trailing * matches every path that starts with what comes before it. [(path, prefix)], as _log_path gives them."""
+    try:
+        with io.open(path, encoding="utf-8-sig", errors="replace") as fh:
+            lines = fh.read(4 * 1024 * 1024).splitlines()
+    except OSError as e:
+        raise ScoreError("cannot read %s: %s" % (path, e.strerror or e), kind="usage") from None
+    out = []
+    for x in lines:
+        x = x.strip()
+        if not x or x.startswith("#"):
+            continue
+        star = x.endswith("*")
+        p = _log_path(x[:-1] if star else x)
+        if p and (p, star) not in out:
+            out.append((p, star))
+    if not out:
+        raise ScoreError("%s lists no conversion path (one path a line, such as /thank-you, or /order/done*)" % path,
+                         kind="usage")
+    return out
+
+
+def _converts(path, conversions):
+    return bool(path) and any(path == p or (star and (path.startswith(p.rstrip("/") + "/") or path.startswith(p)))
+                              for p, star in conversions)
 
 
 def log_crawler(ua):
@@ -4733,10 +4863,13 @@ def _iso(t):
     return t.strftime("%Y-%m-%dT%H:%M:%SZ") if t else None
 
 
-def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
+def read_crawler_logs(paths, ranges=None, pages=None, page_source=None, conversions=None):
     """The crawlers report (schema/crawlers.v1.json) for the access logs at paths. ranges: {crawler: [networks]} from
-    --verify-ips; pages: the pages of a --sitemap or --urls file, to find the ones no crawler requested."""
+    --verify-ips; pages: the pages of a --sitemap or --urls file, to find the ones no crawler requested; conversions:
+    the paths of --conversions, for the funnel's last layer."""
     ranges = ranges or {}
+    clicks, convs, live_times = [], [], {}
+    over = {"clicks": 0, "conversions": 0}
     crawl = dict((x["name"], {"requests": 0, "first": None, "last": None, "codes": {}, "blocked": 0, "firewall": 0,
                               "verified": 0, "not_in_ranges": 0, "unverified": 0, "pages": {},
                               "pages_not_kept": 0}) for x in LOG_CRAWLERS)
@@ -4769,6 +4902,20 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
                     window[1] = t if window[1] is None or t > window[1] else window[1]
                 name = log_crawler(f["ua"])
                 if name is None:
+                    # a visitor, not a crawler: a click from an AI assistant, and with --conversions a conversion. Who
+                    # it was is kept only as a hash of address and user-agent, in memory, to pair the two
+                    if f["assistant"] or (conversions and _converts(f["path"], conversions)):
+                        who = hashlib.sha256(("%s\x00%s" % (f["ip"], f["ua"])).encode("utf-8", "replace")).digest()[:8]
+                        if f["assistant"]:
+                            if len(clicks) < LOG_CLICKS_MAX:
+                                clicks.append((t, f["assistant"], f["path"], who, f["status"]))
+                            else:
+                                over["clicks"] += 1
+                        if conversions and _converts(f["path"], conversions):
+                            if len(convs) < LOG_CLICKS_MAX:
+                                convs.append((t, who))
+                            else:
+                                over["conversions"] += 1
                     continue
                 st["ai_requests"] += 1
                 c = crawl[name]
@@ -4805,6 +4952,10 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
                             pg[1] = t if pg[1] is None or t < pg[1] else pg[1]
                             pg[2] = t if pg[2] is None or t > pg[2] else pg[2]
                 if kind[name]["live"]:
+                    if t and p and (len(live_times) < LOG_PAGES_MAX or (name, p) in live_times):
+                        lt = live_times.setdefault((name, p), [])
+                        if len(lt) < LOG_LIVE_TIMES_MAX:
+                            lt.append(t)
                     live.append({"time": _iso(t), "crawler": name, "path": p, "status": code, "verification": vs})
                     if len(live) > 2 * LOG_LIVE_MAX:
                         live.sort(key=lambda e: e["time"] or "")
@@ -4829,6 +4980,8 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
         codes = c["codes"]
         band = lambda lo, codes=codes: sum(v for k, v in codes.items() if k.isdigit() and lo <= int(k) < lo + 100)
         rows.append({"name": x["name"], "operator": x["operator"], "kind": x["kind"], "live": x["live"],
+                     "scored": x["scored"],
+                     "purpose": "training" if x["kind"] == "training" else "user" if x["live"] else "search",
                      "requests": c["requests"], "first": _iso(c["first"]), "last": _iso(c["last"]),
                      "pages": len(c["pages"]) + c["pages_not_kept"],
                      "status": {"2xx": band(200), "3xx": band(300), "4xx": band(400), "5xx": band(500),
@@ -4849,6 +5002,7 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
             unserved = [p for p in pages if p in asked and p not in served]
             missing[k] = {"not_requested": len(never), "not_requested_paths": never[:LOG_JSON_PAGES],
                           "requested_never_2xx": len(unserved), "requested_never_2xx_paths": unserved[:LOG_JSON_PAGES]}
+    funnel = crawl_funnel(crawl, clicks, convs, conversions, live_times, over)
     notes = ["A user-agent is a claim: anyone can send GPTBot's. %s" % (
                  "Requests from a crawler with a range file were checked against it; the rest are unverified."
                  if ranges else "No request here was checked against an address range (--verify-ips), so every "
@@ -4856,10 +5010,16 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
              "These logs show what reached the server that wrote them. A CDN or cache in front of it may have answered "
              "requests that never reached this log, and a CDN's own log may show refusals this one cannot.",
              "Pages are counted by path: query strings and fragments are dropped, and a trailing slash is ignored.",
-             "Only the crawlers of reference/ai-crawlers.md are counted. Requests from other agents, and from the same "
-             "vendors under other names, are not.",
+             "Only the crawlers of reference/ai-crawlers.md are counted: its retrieval and training tables, and its "
+             "table of crawlers counted in logs only (marked \"log only\"), which no score reads. Requests from other "
+             "agents, and from the same vendors under other names, are not.",
              "This counts requests. It says nothing about whether a page was cited, and nothing here is part of any "
-             "score."]
+             "score.",
+             "The funnel's layers are counted apart, not followed visitor by visitor: indexed and read are crawler "
+             "requests, clicked counts visits whose utm_source or Referer names an AI assistant (an app that sends "
+             "neither, as many mobile apps do, is not seen), and converted pairs a conversion page with an earlier AI "
+             "visit from the same address and user-agent, which a changed address or a shared one can break or fake. "
+             "\"—\" is not measured: no crawler of reference/ai-crawlers.md stands for that assistant."]
     if any(s["too_long"] for s in files):
         notes.append("Lines longer than %d bytes were skipped unread." % LOG_LINE_MAX)
     if any(c["pages_not_kept"] for c in crawl.values()):
@@ -4878,7 +5038,74 @@ def read_crawler_logs(paths, ranges=None, pages=None, page_source=None):
             "live_fetches": {"total": sum(sum(d.values()) for d in live_days.values()),
                              "by_day": [dict(day=d, **dict(sorted(v.items()))) for d, v in sorted(live_days.items())],
                              "recent": live[-LOG_LIVE_MAX:]},
-            "pages_not_requested": missing, "notes": notes}
+            "pages_not_requested": missing, "funnel": funnel, "notes": notes}
+
+
+def crawl_funnel(crawl, clicks, convs, conversions, live_times, over):
+    """The funnel of schema/crawlers.v1.json: indexed, read, clicked and converted, one figure each, per assistant, and
+    the median time from a live fetch of a page to the next click from that assistant onto it."""
+    def layer(names):
+        names = [n for n in names if n]
+        pages = set(p for n in names for p in crawl[n]["pages"])
+        ok = set(p for n in names for p, v in crawl[n]["pages"].items() if v[3])
+        return {"crawlers": names, "requests": sum(crawl[n]["requests"] for n in names), "pages": len(pages),
+                "pages_2xx": len(ok)}
+    index = [x["name"] for x in LOG_CRAWLERS if x["kind"] == "retrieval" and not x["live"]]
+    clicked = {"visits": len(clicks) + over["clicks"], "pages": len(set(c[2] for c in clicks if c[2])),
+               "by_assistant": dict(sorted(Counter(c[1] for c in clicks).items())),
+               "top_pages": [{"path": p, "visits": n} for p, n in sorted(Counter(c[2] for c in clicks if c[2]).items(),
+                                                                         key=lambda kv: (-kv[1], kv[0]))[:50]]}
+    converted = None
+    if conversions is not None:
+        seen = {}
+        for t, a, _, who, _ in clicks:
+            if t:
+                seen.setdefault(who, []).append((t, a))
+        after = Counter()
+        window = datetime.timedelta(hours=CONVERSION_HOURS)
+        for t, who in convs:
+            hit = [v for v in seen.get(who, []) if t and v[0] <= t <= v[0] + window]
+            if hit:
+                after[max(hit)[1]] += 1
+        converted = {"paths": len(conversions), "requests": len(convs) + over["conversions"],
+                     "after_ai_visit": sum(after.values()), "window_hours": CONVERSION_HOURS,
+                     "by_assistant": dict(sorted(after.items()))}
+    fetcher = dict((a[0], a[4]) for a in AI_ASSISTANTS)
+    lags = []
+    for t, a, p, _, _ in clicks:
+        lt = live_times.get((fetcher.get(a), p)) if t and p and fetcher.get(a) else None
+        before = [x for x in lt or [] if x <= t and t - x <= datetime.timedelta(days=READ_TO_CLICK_DAYS)]
+        if before:
+            lags.append((t - max(before)).total_seconds())
+    lags.sort()
+    med = None
+    if lags:
+        m = len(lags) // 2
+        med = lags[m] if len(lags) % 2 else (lags[m - 1] + lags[m]) / 2.0
+    by = []
+    for name, _, _, idx, live in AI_ASSISTANTS:
+        row = {"assistant": name, "indexed": crawl[idx]["requests"] if idx else None,
+               "read": crawl[live]["requests"] if live else None,
+               "clicked": clicked["by_assistant"].get(name, 0),
+               "converted": converted["by_assistant"].get(name, 0) if converted else None}
+        if row["indexed"] or row["read"] or row["clicked"]:
+            by.append(row)
+    return {"indexed": layer(index), "read": layer(LOG_LIVE), "clicked": clicked, "converted": converted,
+            "read_to_click": {"pairs": len(lags), "median_seconds": None if med is None else round(med),
+                              "window_days": READ_TO_CLICK_DAYS},
+            "by_assistant": by, "referral_rules": AI_REFERRAL_RULES}
+
+
+def _span(sec):
+    if sec is None:
+        return "—"
+    if sec < 120:
+        return "%d s" % sec
+    if sec < 7200:
+        return "%d min" % round(sec / 60.0)
+    if sec < 172800:
+        return "%.1f h" % (sec / 3600.0)
+    return "%.1f days" % (sec / 86400.0)
 
 
 def _when(iso):
@@ -4943,7 +5170,8 @@ def render_crawlers(r, fmt="text"):
             continue
         L += _log_table(["crawler", "operator", "requests", "pages", "first", "last", "2xx", "3xx", "4xx", "5xx",
                          "blocked", "user-agent check"],
-                        [[x["name"], x["operator"], x["requests"], x["pages"], _when(x["first"]), _when(x["last"]),
+                        [[x["name"] + ("" if x["scored"] or x["name"] in TRAINING_NAMES else " (log only)"), x["operator"], x["requests"], x["pages"], _when(x["first"]),
+                          _when(x["last"]),
                           x["status"]["2xx"], x["status"]["3xx"], x["status"]["4xx"], x["status"]["5xx"],
                           x["status"]["blocked"], checked(x)] for x in rows], md)
     absent = [x["name"] for x in r["crawlers"] if not x["requests"]]
@@ -4951,13 +5179,48 @@ def render_crawlers(r, fmt="text"):
         L += ["", "Not in these logs: %s." % ", ".join(absent)]
     lf = r["live_fetches"]
     if lf["total"]:
-        names = [x for x in LIVE_FETCHERS if any(x in d for d in lf["by_day"])]
+        names = [x for x in LOG_LIVE if any(x in d for d in lf["by_day"])]
         L += head("Live fetches by day (UTC)")
         L += _log_table(["day"] + names, [[d["day"]] + [d.get(n, 0) for n in names] for d in lf["by_day"]], md)
         L += head("The most recent live fetches")
         L += _log_table(["time", "crawler", "status", "page"],
                         [[_when(e["time"]), e["crawler"], e["status"] or "—", quote(e["path"]) if e["path"] else "—"]
                          for e in reversed(lf["recent"][-20:])], md)
+    fn = r.get("funnel")
+    if fn:
+        cv = fn["converted"]
+        L += head("The funnel: indexed, read, clicked, converted")
+        L += _log_table(["layer", "what counts", "requests or visits", "pages"],
+                        [["indexed", "index crawlers requested a page (%s)" % ", ".join(fn["indexed"]["crawlers"][:3] + ["…"]),
+                          "{:,}".format(fn["indexed"]["requests"]), fn["indexed"]["pages"]],
+                         ["read", "live fetches a user's question triggered (%s)" % ", ".join(fn["read"]["crawlers"][:3] + ["…"]),
+                          "{:,}".format(fn["read"]["requests"]), fn["read"]["pages"]],
+                         ["clicked", "visits that arrived from an AI assistant (Referer or utm_source)",
+                          "{:,}".format(fn["clicked"]["visits"]), fn["clicked"]["pages"]],
+                         ["converted", "a conversion page within %d h of an AI visit, same address and user-agent"
+                          % (cv["window_hours"] if cv else CONVERSION_HOURS),
+                          "{:,}".format(cv["after_ai_visit"]) if cv else "not measured (--conversions FILE)", "—"]], md)
+        rc = fn["read_to_click"]
+        L.append("")
+        L.append("Each layer counts every crawler of its role in reference/ai-crawlers.md, the log-only table "
+                 "included.")
+        L.append("")
+        L.append("From read to click: %s" % (
+            "median %s over %s (a click paired with the latest live fetch of the same page by the same assistant's "
+            "fetcher, up to %d days before)" % (_span(rc["median_seconds"]), _plural(rc["pairs"], "click"),
+                                               rc["window_days"]) if rc["pairs"] else
+            "no click from ChatGPT, Claude or Perplexity followed a live fetch of the same page by its fetcher"))
+        if fn["by_assistant"]:
+            L += head("The funnel by assistant")
+            L += _log_table(["assistant", "indexed", "read", "clicked", "converted"],
+                            [[x["assistant"], "—" if x["indexed"] is None else "{:,}".format(x["indexed"]),
+                              "—" if x["read"] is None else "{:,}".format(x["read"]), "{:,}".format(x["clicked"]),
+                              "—" if x["converted"] is None else "{:,}".format(x["converted"])]
+                             for x in fn["by_assistant"]], md)
+        if fn["clicked"]["top_pages"]:
+            L += head("Pages AI visits landed on most")
+            L += _log_table(["visits", "page"], [[x["visits"], quote(x["path"])] for x in fn["clicked"]["top_pages"][:LOG_SHOWN]],
+                            md)
     if seen:
         L += head("Pages each crawler requested most")
         for x in seen:
@@ -5025,6 +5288,9 @@ def crawlers_main(argv, prog="geo-score crawlers"):
     pages.add_argument("--sitemap", metavar="FILE", help="a local sitemap.xml (or .xml.gz): list its pages no "
                                                          "crawler requested")
     pages.add_argument("--urls", metavar="FILE", help="a local list of URLs or paths, one a line: the same")
+    ap.add_argument("--conversions", metavar="FILE",
+                    help="a local list of conversion paths, one a line (a thank-you page; a trailing * matches a "
+                         "prefix): the funnel then counts conversions within 24 hours of an AI visit")
     a = ap.parse_args(argv)
     fmt = "json" if a.json else a.format
     ranges = {}
@@ -5035,7 +5301,8 @@ def crawlers_main(argv, prog="geo-score crawlers"):
     if a.sitemap or a.urls:
         src = a.sitemap or a.urls
         page_list = load_page_list(src, "sitemap" if a.sitemap else "urls")
-    rep = read_crawler_logs(a.logs, ranges, page_list, os.path.basename(src) if src else None)
+    conv = load_conversions(a.conversions) if a.conversions else None
+    rep = read_crawler_logs(a.logs, ranges, page_list, os.path.basename(src) if src else None, conv)
     js = json.dumps(rep, ensure_ascii=False, indent=2) + "\n"
     out = js if fmt == "json" else render_crawlers(rep, fmt)
     if a.json_out:
