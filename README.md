@@ -19,7 +19,7 @@ returns with its answer, recorded as returned, not guessed ([example](#what-the-
 [![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-skill-blue.svg)](SKILL.md)
 [![MCP server](https://img.shields.io/badge/MCP-server-A9854C.svg)](#mcp-server)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](.github/CONTRIBUTING.md)
-[![AIV readiness of the leaderboard page, measured 2026-11-28 with geo-score 1.9.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
+[![AIV readiness of the leaderboard page, measured 2026-11-28 with geo-score 1.10.0](docs/aiv-badge.svg)](https://www.jianruntech.com/leaderboard)
 [![PyPI](https://img.shields.io/pypi/v/geo-score?color=1E5C46)](https://pypi.org/project/geo-score/)
 [![Latest release](https://img.shields.io/github/v/release/jianruntech/geo-score?display_name=tag&color=A9854C)](https://github.com/jianruntech/geo-score/releases/latest)
 
@@ -29,12 +29,12 @@ returns with its answer, recorded as returned, not guessed ([example](#what-the-
 |---|---|
 | Claude Code plugin: the skills and the MCP server | `/plugin marketplace add jianruntech/geo-score`, then `/plugin install geo-score@jianruntech` |
 | Skills for any agent, with the [skills CLI](https://github.com/vercel-labs/skills) | `npx skills add jianruntech/geo-score --full-depth` |
-| The CLI, nothing else installed (needs [uv](https://docs.astral.sh/uv/)) | `uvx geo-score@1.9.0 example.com` |
-| MCP server in Claude Code ([every other client](guide/mcp.md)) | `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp` |
+| The CLI, nothing else installed (needs [uv](https://docs.astral.sh/uv/)) | `uvx geo-score@1.10.0 example.com` |
+| MCP server in Claude Code ([every other client](guide/mcp.md)) | `claude mcp add --scope user geo-score -- uvx geo-score@1.10.0 mcp` |
 
 The skills CLI needs `--full-depth` for this repository: without it, the root `SKILL.md` hides the `skills/` folder
 and only `geo-score` is offered. One skill: `npx skills add jianruntech/geo-score --skill ai-search-fanout`. No uv?
-`pipx install geo-score==1.9.0`, or the one-file `curl | python3` line in [Quick start](#quick-start), which needs
+`pipx install geo-score==1.10.0`, or the one-file `curl | python3` line in [Quick start](#quick-start), which needs
 nothing installed.
 
 The score is free, needs no key, and is computed against a **published, versioned rubric** that anyone can recompute.
@@ -67,7 +67,7 @@ results, so this repository publishes none of them
 ([why](benchmark/prereg/round0/RESULTS-wave0.md#deviations-from-the-plan)); read those terms before you keep Gemini's.
 
 ```
-$ uvx geo-score@1.9.0 watch ask -c geo/geo-score-watch.json "best portable power station for camping"
+$ uvx geo-score@1.10.0 watch ask -c geo/geo-score-watch.json "best portable power station for camping"
 Q: best portable power station for camping
 
 chatgpt-api (gpt-6-luna) — not cited · mentioned · competitors cited: Pixa
@@ -96,7 +96,7 @@ lists the searches that recur and how many carry a year or a ranking word; the
 ## Skills
 
 Nine skills, each answering one question and leaving a file in your repository. They follow the
-[Agent Skills](https://agentskills.io/specification) format, run the pinned CLI (`uvx geo-score@1.9.0`) or the MCP
+[Agent Skills](https://agentskills.io/specification) format, run the pinned CLI (`uvx geo-score@1.10.0`) or the MCP
 server, and measure only: none writes fixes, markup or copy ([scope](#scope--what-this-does-not-do)).
 
 | Skill | What it leaves in your repository | Example prompt |
@@ -126,7 +126,7 @@ was: the full audit, including the three checks the CLI leaves to off-site searc
 3. **Is anything moving?** `geo-baseline` (once) → `geo-watch` (every week, with a significance test) →
    `citation-gaps` (the questions competitors win).
 
-> **Version:** the current release is `geo-score==1.9.0` on [PyPI](https://pypi.org/project/geo-score/), with its tag,
+> **Version:** the current release is `geo-score==1.10.0` on [PyPI](https://pypi.org/project/geo-score/), with its tag,
 > wheel and checksums on [GitHub Releases](https://github.com/jianruntech/geo-score/releases); what changed is in the
 > [changelog](CHANGELOG.md). Every `uvx`, `pipx` and download line on this page, and every skill, is pinned to that
 > release (`scripts/release.py --bump` moves them together), so the tool you run is the one these pages describe. The
@@ -380,14 +380,14 @@ All three levels. Levels 2 and 3 need `cli/geo_watch.py` next to `cli/geo_score.
 both; a clone, or both files downloaded, works too. Neither line below needs git or a build step.
 
 ```bash
-uvx geo-score@1.9.0 example.com            # run it without installing (needs uv)
-pipx install geo-score==1.9.0              # or install the geo-score command
+uvx geo-score@1.10.0 example.com            # run it without installing (needs uv)
+pipx install geo-score==1.10.0              # or install the geo-score command
 geo-score example.com --explain            # every check, with the evidence behind it
 ```
 
 Without access to PyPI, install the same wheel from the release:
-`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.9.0/geo_score-1.9.0-py3-none-any.whl`.
-From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.9.0`.
+`pipx install https://github.com/jianruntech/geo-score/releases/download/v1.10.0/geo_score-1.10.0-py3-none-any.whl`.
+From source (needs git): `pipx install git+https://github.com/jianruntech/geo-score@v1.10.0`.
 Standard library only, whichever you pick. Release downloads carry a `SHA256SUMS` file, and the wheel and
 sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifying-a-download)).
 
@@ -396,7 +396,7 @@ sdist on PyPI match it byte for byte ([how to check](.github/SECURITY.md#verifyi
 
 **CLI** — level 1 is one file with no dependencies, and every report records how long its run took
 (`elapsed_s`). Levels 2 and 3 add `cli/geo_watch.py` from the same release. With the package from PyPI,
-`uvx geo-score@1.9.0` (or `geo-score`, after `pipx install geo-score==1.9.0`) takes the place of
+`uvx geo-score@1.10.0` (or `geo-score`, after `pipx install geo-score==1.10.0`) takes the place of
 `python3 cli/geo_score.py` below, all three levels included.
 
 ```bash
@@ -433,7 +433,7 @@ Python 3.8+, standard library only, nothing to install. It reads public URLs and
 a score against a **published, versioned rubric** — not a black box.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.9.0/cli/geo_score.py \
+curl -sL https://raw.githubusercontent.com/jianruntech/geo-score/v1.10.0/cli/geo_score.py \
   | python3 - stripe.com --brief
 ```
 
@@ -511,7 +511,7 @@ repository, since it reads the rubric files beside it; each task skill is one fi
 `uvx`. The Claude Code plugin (`/plugin marketplace add jianruntech/geo-score`, then
 `/plugin install geo-score@jianruntech`) loads all of them with the MCP server ([details](guide/mcp.md#claude-code-plugin)).
 Without Node.js, or for the release rather than main, clone the release tag into your own skills folder instead:
-`git clone --branch v1.9.0 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`, and copy
+`git clone --branch v1.10.0 --depth 1 https://github.com/jianruntech/geo-score ~/.claude/skills/geo-score`, and copy
 the task skills you want from its `skills/` folder into `~/.claude/skills/`.
 
 How close the CLI comes without the skill: [How accurate is it?](#how-accurate-is-it)
@@ -520,23 +520,23 @@ How close the CLI comes without the skill: [How accurate is it?](#how-accurate-i
 
 `geo-score-mcp` is a local MCP server (stdio, Python standard library only). It gives an agent the
 same three levels as the CLI: score a site for free, ask the AI engines one question, and track a
-question set week over week. `uvx geo-score@1.9.0 mcp` runs it from PyPI (`geo-score-mcp` after a pipx install), and
+question set week over week. `uvx geo-score@1.10.0 mcp` runs it from PyPI (`geo-score-mcp` after a pipx install), and
 `python3 cli/geo_score.py mcp` runs it from a clone.
 
 <!-- BEGIN MCP:install -->
-<!-- Generated by scripts/mcp_docs.py for version 1.9.0; edit the script, not this block. -->
+<!-- Generated by scripts/mcp_docs.py for version 1.10.0; edit the script, not this block. -->
 
-[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS45LjAiLCJtY3AiXX0%3D)
-[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.9.0%2522%252C%2522mcp%2522%255D%257D)
-[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.9.0%2522%252C%2522mcp%2522%255D%257D)
-[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS45LjAiLCJtY3AiXX0%3D)
+[![Add geo-score to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS4xMC4wIiwibWNwIl19)
+[![Install geo-score in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.10.0%2522%252C%2522mcp%2522%255D%257D)
+[![Install geo-score in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522geo-score%2522%252C%2522command%2522%253A%2522uvx%2522%252C%2522args%2522%253A%255B%2522geo-score%25401.10.0%2522%252C%2522mcp%2522%255D%257D)
+[![Add geo-score to LM Studio](https://img.shields.io/badge/LM_Studio-Install_Server-4338CA?style=flat-square)](https://lmstudio.ai/install-mcp?name=geo-score&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJnZW8tc2NvcmVAMS4xMC4wIiwibWNwIl19)
 
-The buttons and the lines below run geo-score **1.9.0** from PyPI with `uvx`, which needs only [uv](https://docs.astral.sh/uv/): no git and no build step. They add no keys of their own, but a server started from a shell that exports a provider key (Claude Code passes its environment on) can use it. For a server that cannot spend, add `--read-only` after `mcp`.
+The buttons and the lines below run geo-score **1.10.0** from PyPI with `uvx`, which needs only [uv](https://docs.astral.sh/uv/): no git and no build step. They add no keys of their own, but a server started from a shell that exports a provider key (Claude Code passes its environment on) can use it. For a server that cannot spend, add `--read-only` after `mcp`.
 
 **Claude Code**
 
 ```bash
-claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp
+claude mcp add --scope user geo-score -- uvx geo-score@1.10.0 mcp
 ```
 
 **Standard config** (no keys in the file) for any client that reads an `mcpServers` file (Cursor, Trae, Kimi Code CLI, LM Studio and others):
@@ -546,7 +546,7 @@ claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp
   "mcpServers": {
     "geo-score": {
       "command": "uvx",
-      "args": ["geo-score@1.9.0", "mcp"]
+      "args": ["geo-score@1.10.0", "mcp"]
     }
   }
 }
@@ -554,9 +554,9 @@ claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp
 
 Claude Desktop does not read your shell's `PATH`: put the full path that `which uvx` prints in `command`.
 
-Without access to PyPI, the release wheel: `uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.9.0/geo_score-1.9.0-py3-none-any.whl geo-score-mcp`
+Without access to PyPI, the release wheel: `uvx --from https://github.com/jianruntech/geo-score/releases/download/v1.10.0/geo_score-1.10.0-py3-none-any.whl geo-score-mcp`
 
-From source (needs git): `uvx --from git+https://github.com/jianruntech/geo-score@v1.9.0 geo-score-mcp`
+From source (needs git): `uvx --from git+https://github.com/jianruntech/geo-score@v1.10.0 geo-score-mcp`
 <!-- END MCP:install -->
 
 <details>
@@ -630,7 +630,7 @@ you, your competitors, or the third-party pages (forums, review sites) the engin
 instead. Keys are read from the environment; geo-score never writes them anywhere.
 
 ```bash
-git clone --branch v1.9.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
+git clone --branch v1.10.0 --depth 1 https://github.com/jianruntech/geo-score && cd geo-score/cli
 export OPENAI_API_KEY=… PERPLEXITY_API_KEY=…         # any subset of engines works
 python3 geo_score.py acme.com --ask "invoicing app for freelancers"        # level 2
 python3 geo_score.py watch init --brand Acme --domain acme.com --competitor "Rival=rival.com"

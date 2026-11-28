@@ -5,6 +5,8 @@ The **rubric** is versioned separately from the repository — see `rubric/`.
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-11-28
+
 ### Added
 - **Four `watch` measures beside the cited rate** (guide/watch-methodology.md, section 10). Each is reported apart and
   never merged into the cited rate, the headline, pooling or `watch diff`, and each is recomputed for runs saved by
@@ -1650,7 +1652,8 @@ Corrections made in that window are listed under *Fixed before first tag*.
 Remediation (fix templates, content rewriting, per-engine tactics) is deliberately
 out of scope. See [Scope](README.md#scope--what-this-does-not-do).
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/jianruntech/geo-score/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/jianruntech/geo-score/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/jianruntech/geo-score/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3

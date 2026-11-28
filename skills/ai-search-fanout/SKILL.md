@@ -3,7 +3,7 @@ name: ai-search-fanout
 description: "Show what ChatGPT and Claude actually searched for before answering a question (the query fan-out), read from the searches each API returns with its answer rather than guessed: the search text, how often each search recurs across a question set, and how many carry a year or a ranking or comparison word. Use when the user asks what AI searched for, which search queries ChatGPT ran, query fan-out, what keywords an AI answer was built on, or why an engine cited the pages it cited. Reads answers already saved by ai-citation-check or geo-watch for free; new answers are paid, on the user's own API keys, after a plan and a yes. Leaves geo/fanout-<date>.md in the repository. Measures only: it suggests no keywords or content."
 license: MIT
 metadata:
-  version: 1.9.0
+  version: 1.10.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -40,9 +40,9 @@ answers' `search_queries` instead, or run the set without Gemini.
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.9.0` and use `geo-score`. Or the MCP server (`ask` and `report` tools):
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`.
+- The CLI: `uvx geo-score@1.10.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.10.0` and use `geo-score`. Or the MCP server (`ask` and `report` tools):
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.10.0 mcp`.
 - Look for answers already saved before asking anything new: `geo/citations/*.json` (from `ai-citation-check`) and
   the runs under `geo/.geo-score/watch/runs/` (from `geo-baseline` and `geo-watch`). Reading them is free.
 
@@ -54,8 +54,8 @@ answers' `search_queries` instead, or run the set without Gemini.
 2. **A question set, from saved runs** (free, no call), one run at a time:
 
    ```bash
-   uvx geo-score@1.9.0 watch runs -c geo/geo-score-watch.json
-   uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --format json -o geo/fanout-run.json
+   uvx geo-score@1.10.0 watch runs -c geo/geo-score-watch.json
+   uvx geo-score@1.10.0 watch report -c geo/geo-score-watch.json --format json -o geo/fanout-run.json
    ```
 
    `watch runs` lists the saved runs; `watch report` reads the latest, or the run id you pass. A pooled report

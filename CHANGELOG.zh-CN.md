@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-11-28
+
 ### 新增
 - **`watch` 在引用率之外新增四项测量**（guide/watch-methodology.zh-CN.md 第 10 节）。每一项单独报告，从不并进引用率、标题率、合并或
   `watch diff`；旧版本保存的运行出报告时也会重新算出这些项；「未测量」从不当作 0。
@@ -1069,7 +1071,8 @@ v1.0 与 v1.1 的分数**不可直接比较**。v1.0 的量表与已发布的五
 量表 v1.0：5 个支柱共 **29 项检查**，名义满分 100，每项有达标条件和计分类型，三态计分与分数段；附 `SKILL.md`、
 AI 爬虫 UA 列表、各引擎选源方式说明和示例报告。详细条目见[英文版](CHANGELOG.md#100--2026-09-08)。
 
-[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/jianruntech/geo-score/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/jianruntech/geo-score/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/jianruntech/geo-score/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/jianruntech/geo-score/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/jianruntech/geo-score/compare/v1.8.2...v1.8.3

@@ -3,7 +3,7 @@ name: ai-crawler-access
 description: "Check whether AI crawlers can get into a website and see its content without JavaScript: robots.txt read the way each retrieval crawler reads it (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Googlebot, Bingbot, Applebot, Amazonbot), a live request as each one, and whether the main text is in the server-rendered HTML. Free, no API key. Use when the user asks whether GPTBot, ClaudeBot, PerplexityBot or ChatGPT can crawl or read their site, whether robots.txt or a firewall blocks AI bots, whether a deploy broke AI crawler access, or whether a JavaScript-rendered site is invisible to AI. Leaves geo/crawler-access-<host>-<date>.md in the repository. Measures only: it writes no robots.txt or firewall rules."
 license: MIT
 metadata:
-  version: 1.9.0
+  version: 1.10.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -23,9 +23,9 @@ outside the score. Until a crawler can reach the content, nothing else on the si
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.9.0` and use `geo-score`. Or the MCP server's `score_site` tool:
-  `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`.
+- The CLI: `uvx geo-score@1.10.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.10.0` and use `geo-score`. Or the MCP server's `score_site` tool:
+  `claude mcp add --scope user geo-score -- uvx geo-score@1.10.0 mcp`.
 - If `geo/audit-<host>-<date>.json` from `geo-readiness-audit` already exists for today, read it instead of
   scoring again.
 - Only check sites the user is authorised to check.
@@ -36,7 +36,7 @@ outside the score. Until a crawler can reach the content, nothing else on the si
 
    ```bash
    mkdir -p geo
-   uvx geo-score@1.9.0 https://example.com --json-out geo/audit-example.com-2026-11-22.json
+   uvx geo-score@1.10.0 https://example.com --json-out geo/audit-example.com-2026-11-22.json
    ```
 
 2. **Read the three gates** from `checks[]`: `g.robots` (robots.txt), `g.reachable` (a live request as each of the

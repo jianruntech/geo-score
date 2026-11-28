@@ -3,7 +3,7 @@ name: geo-watch
 description: "Re-run a fixed AI-answer question set every week and say whether the user's citation rate in ChatGPT, Claude, Gemini and Perplexity answers changed, with a paired significance test: change, within noise, or too few questions to tell, per engine, plus the citations lost and gained. Use when the user asks to track AI visibility weekly, whether AI citations went up or down, whether last month's GEO work moved anything, for a monthly AI share-of-voice report, or to schedule tracking in CI. Needs a baseline from geo-baseline. Paid: each run is questions x engines x runs API calls on the user's own keys, shown in a dry run first; reports and diffs of saved runs are free. Leaves the run file and geo/watch-<date>.md in the repository. Measures only."
 license: MIT
 metadata:
-  version: 1.9.0
+  version: 1.10.0
   rubric: "v1.1"
   homepage: "https://github.com/jianruntech/geo-score"
 ---
@@ -26,9 +26,9 @@ No `geo/geo-score-watch.json` or no saved run yet? Start with `geo-baseline`.
 
 ## Before you start
 
-- The CLI: `uvx geo-score@1.9.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
-  geo-score==1.9.0` and use `geo-score`. Or the MCP server (`status`, `run`, `diff`, `report`, and the
-  `weekly_watch` prompt): `claude mcp add --scope user geo-score -- uvx geo-score@1.9.0 mcp`, with
+- The CLI: `uvx geo-score@1.10.0` (needs [uv](https://docs.astral.sh/uv/)); without uv, `pipx install
+  geo-score==1.10.0` and use `geo-score`. Or the MCP server (`status`, `run`, `diff`, `report`, and the
+  `weekly_watch` prompt): `claude mcp add --scope user geo-score -- uvx geo-score@1.10.0 mcp`, with
   `-c /absolute/path/geo/geo-score-watch.json` after `mcp`.
 - **API keys come from the environment only.** Never ask for one in the chat or write one to a file.
 - Keep the conditions fixed: the same `geo/queries.csv`, engines, models, country and `runs`, ideally on the same
@@ -36,23 +36,23 @@ No `geo/geo-score-watch.json` or no saved run yet? Start with `geo-baseline`.
 
 ## Steps
 
-1. **Check** (free): `uvx geo-score@1.9.0 watch check -c geo/geo-score-watch.json` validates the config and lists
-   the keys and prices; `uvx geo-score@1.9.0 watch runs -c geo/geo-score-watch.json` lists the saved runs with the
+1. **Check** (free): `uvx geo-score@1.10.0 watch check -c geo/geo-score-watch.json` validates the config and lists
+   the keys and prices; `uvx geo-score@1.10.0 watch runs -c geo/geo-score-watch.json` lists the saved runs with the
    first characters of their `questions_hash`, which two runs share when they asked the same questions.
-2. **Show the plan** (free, no call): `uvx geo-score@1.9.0 watch run --dry-run -c geo/geo-score-watch.json`. Tell
+2. **Show the plan** (free, no call): `uvx geo-score@1.10.0 watch run --dry-run -c geo/geo-score-watch.json`. Tell
    the user how many paid calls it makes, on which providers, and wait for a yes.
-3. **Run** (paid): `uvx geo-score@1.9.0 watch run -c geo/geo-score-watch.json`.
+3. **Run** (paid): `uvx geo-score@1.10.0 watch run -c geo/geo-score-watch.json`.
 4. **Compare and report** (free):
 
    ```bash
-   uvx geo-score@1.9.0 watch diff -c geo/geo-score-watch.json --format md > geo/watch-2026-11-22.md
-   uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --format md -o geo/watch-2026-11-22.report.md
+   uvx geo-score@1.10.0 watch diff -c geo/geo-score-watch.json --format md > geo/watch-2026-11-22.md
+   uvx geo-score@1.10.0 watch report -c geo/geo-score-watch.json --format md -o geo/watch-2026-11-22.report.md
    ```
 
    `watch diff` compares the latest two runs (or `A B`, two run ids): per engine and overall, the change in points
    with a 95% interval, the Holm-adjusted p and a verdict (`change`, `within noise`, `too few questions to tell`,
    `not measured`), then the citations lost and gained. A run whose model differs from the previous one is flagged.
-5. **For a month at a time** (free): `uvx geo-score@1.9.0 watch report -c geo/geo-score-watch.json --since 30
+5. **For a month at a time** (free): `uvx geo-score@1.10.0 watch report -c geo/geo-score-watch.json --since 30
    --format md` pools the runs of the last 30 days that match the newest one (same questions, asks, engines,
    models, country and brand domains) and refuses otherwise, naming each run that differs. A pooled rate describes
    a period; it is not a test for a change.
